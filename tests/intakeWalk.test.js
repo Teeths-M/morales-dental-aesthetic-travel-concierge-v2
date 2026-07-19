@@ -179,6 +179,18 @@ describe('what the walk produces is a usable medical record', () => {
     expect(payload.guardian_contact).toBeTruthy();
   });
 
+  it('collects the passport expiry, and asks for it AFTER the travel date', () => {
+    // The sentinel measures validity at the travel date, so asking for the
+    // passport first would mean checking against today and missing a passport
+    // that expires mid-trip.
+    const { visited, answers } = walkIntake();
+    expect(visited).toContain('passport_expiry_date');
+    expect(visited.indexOf('passport_expiry_date')).toBeGreaterThan(visited.indexOf('preferred_date'));
+
+    const payload = buildConsultationPayload(answers);
+    expect(payload.passport_expiry_date).toBeTruthy();
+  });
+
   it('carries a multi-procedure selection all the way to the payload', () => {
     const { answers } = walkIntake({
       answerOverrides: {

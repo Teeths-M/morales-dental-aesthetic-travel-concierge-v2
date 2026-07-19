@@ -1,97 +1,48 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, CheckCircle2, Globe, XCircle, ExternalLink, Upload, Loader2, Shield, RefreshCw, Pencil } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { AlertTriangle, CheckCircle2, Globe, XCircle, ExternalLink } from 'lucide-react';
 import { getEvisaLink } from '@/lib/visaMatrix';
 import { useVisaRequirement } from '@/hooks/useVisaRequirement';
-import { base44 } from '@/api/base44Client';
+import { passportSentinel } from '@/lib/travelReadiness';
 
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+/* THE PASSPORT SCAN WAS REMOVED HERE — DO NOT REINSTATE IT AS IT WAS.
+ *
+ * This section used to offer "Upload Your Passport", send the image to
+ * `Core.UploadFile` and hand the resulting URL to `extractPassportData`:
+ *
+ *     const { file_url } = await base44.integrations.Core.UploadFile({ file });
+ *     await base44.functions.invoke('extractPassportData', { file_url });
+ *
+ * `Core.UploadFile` is the GENERAL bucket, not `UploadPrivateFile`. The image
+ * went up unencrypted, before any encryption, and nothing deleted it
+ * afterwards — passport number, date of birth, full name and nationality, left
+ * sitting in general storage. The upload box directly above it promised
+ * "Document is encrypted, access-controlled, and audited", which was not true
+ * of this path.
+ *
+ * The identical defect was found and fixed in VaultUploader.jsx; this file was
+ * missed. Scanning was only ever an autofill convenience — every field it
+ * populated is typed manually below, and the checks that actually protect the
+ * patient (6-month sentinel, visa requirement) run off those typed values, not
+ * off the image.
+ *
+ * If OCR comes back it must: encrypt on device first, use UploadPrivateFile,
+ * take explicit consent, and delete the source after extraction.
+ * A red-team invariant guards this file against the old pattern returning.
+ */
 
 export default function PassportVaultSection({ form, update, ipCountry }) {
-  const [scanState, setScanState] = useState('idle'); // idle | uploading | scanning | done | error
-  const [scanError, setScanError] = useState(null);
-  const [warnings, setWarnings] = useState([]);
-  const [extracted, setExtracted] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const fileRef = useRef(null);
-
   // ── 6-Month Sentinel Rule ──────────────────────────────────────────────────
-  const passportWarning = useMemo(() => {
-    if (!form.passport_expiry_date) return null;
-    const expiry = new Date(form.passport_expiry_date);
-    const referenceDate = form.preferred_date ? new Date(form.preferred_date) : new Date();
-    const diffDays = Math.ceil((expiry.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays < 180 ? diffDays : null;
-  }, [form.passport_expiry_date, form.preferred_date]);
+  const passportWarning = useMemo(
+    () => passportSentinel(form.passport_expiry_date, form.preferred_date),
+    [form.passport_expiry_date, form.preferred_date]
+  );
 
   // ── Visa requirement (live source, matrix fallback) ────────────────────────
   const { status: visaStatus } = useVisaRequirement(form.nationality, form.procedure_country);
   const evisaLink = getEvisaLink(form.procedure_country);
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-
-    if (!ACCEPTED.includes(file.type)) {
-      setScanError('That file type isn\'t supported. Please choose a photo (JPG or PNG) or a PDF.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setScanError(`Your file is ${sizeMB} MB — too large. Please choose a file under 10 MB.`);
-      return;
-    }
-
-    setScanError(null);
-    setWarnings([]);
-    setScanState('uploading');
-
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-      setScanState('scanning');
-
-      const res = await base44.functions.invoke('extractPassportData', { file_url });
-      const { extracted: data, warnings: w } = res.data;
-
-      if (data.passport_number) update('passport_number', data.passport_number);
-      if (data.issue_date) update('passport_issue_date', data.issue_date);
-      if (data.expiry_date) update('passport_expiry_date', data.expiry_date);
-      if (data.nationality) update('nationality', data.nationality);
-      if (data.full_name && !form.patient_name) update('patient_name', data.full_name);
-
-      setExtracted(data);
-      setWarnings(w || []);
-      setScanState('done');
-      setEditMode(false);
-    } catch (_err) {
-      const isOffline = !navigator.onLine;
-      setScanError(
-        isOffline
-          ? "You're offline. Please connect to the internet and try again."
-          : "We couldn't read your passport. That's okay — please try again, or enter your details manually below."
-      );
-      setScanState('error');
-    }
-  };
-
-  const handleRescan = () => {
-    setScanState('idle');
-    setExtracted(null);
-    setWarnings([]);
-    setScanError(null);
-    setEditMode(false);
-    // Reset form passport fields
-    update('passport_number', '');
-    update('passport_issue_date', '');
-    update('passport_expiry_date', '');
-    if (fileRef.current) fileRef.current.value = '';
-  };
-
-  const isScanning = scanState === 'uploading' || scanState === 'scanning';
 
   return (
     <div className="space-y-5 pt-2">
@@ -112,144 +63,61 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
         </div>
       )}
 
-      {/* Upload Zone — shown for idle and after a scan error so user can retry */}
-      {(scanState === 'idle' || scanState === 'error') && (
+      {/* Typed, not scanned — see the note at the top of this file. Only the
+          expiry date does any protective work; the rest is here because the
+          clinic needs it eventually, and all of it is optional now. */}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="sm:col-span-2">
+          <Label className="text-xs text-slate-600">
+            Passport Expiry Date <span className="text-slate-400 font-normal">— so we can check you&rsquo;re clear to travel</span>
+          </Label>
+          <Input
+            type="date"
+            value={form.passport_expiry_date || ''}
+            onChange={e => update('passport_expiry_date', e.target.value)}
+            className="mt-1"
+          />
+        </div>
         <div>
-          <div
-            onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all group"
-          >
-            <div className="w-12 h-12 rounded-full bg-slate-100 group-hover:bg-emerald-100 flex items-center justify-center mx-auto mb-3 transition-colors">
-              <Upload className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
-            </div>
-            <p className="text-sm font-semibold text-slate-700">Upload Your Passport <span className="font-normal text-slate-400">— optional</span></p>
-            <p className="text-xs text-slate-400 mt-1">Photo or PDF · JPEG, PNG, WEBP · Max 10MB</p>
-            <p className="text-xs text-slate-500 mt-1">No rush — you can add this later, once you're ready to travel.</p>
-            <p className="text-xs text-emerald-600 mt-2 font-medium">🔒 Document is encrypted, access-controlled, and audited</p>
-            <input
-              ref={fileRef}
-              type="file"
-              accept={ACCEPTED.join(',')}
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
-          {scanError && (
-            <p className="mt-2 text-xs text-red-600 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5" /> {scanError}
-            </p>
-          )}
+          <Label className="text-xs text-slate-600">Passport Number <span className="text-slate-400 font-normal">— optional</span></Label>
+          <Input
+            value={form.passport_number || ''}
+            onChange={e => update('passport_number', e.target.value)}
+            className="mt-1 font-mono tracking-widest"
+          />
         </div>
-      )}
+        <div>
+          <Label className="text-xs text-slate-600">Issue Date <span className="text-slate-400 font-normal">— optional</span></Label>
+          <Input
+            type="date"
+            value={form.passport_issue_date || ''}
+            onChange={e => update('passport_issue_date', e.target.value)}
+            className="mt-1"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-slate-500">
+        No rush — you can add these later, once you&rsquo;re ready to travel.
+      </p>
 
-      {/* Scanning State */}
-      {isScanning && (
-        <div className="flex flex-col items-center gap-3 py-8 bg-slate-50 border border-slate-200 rounded-2xl">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <div className="text-center">
-            <p className="text-sm font-semibold text-slate-700">
-              {scanState === 'uploading' ? 'Uploading securely...' : 'Reading passport with AI...'}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              {scanState === 'scanning' ? 'Extracting document fields — usually takes 5-10 seconds' : 'Preparing file...'}
+      {/* 6-Month Sentinel — now outside the old scan block, so it fires
+          whenever an expiry date exists rather than only after a successful
+          scan. A patient who typed their expiry manually was previously given
+          no warning at all. */}
+      {passportWarning !== null && (
+        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-amber-800">Passport Sentinel Alert</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              {passportWarning < 0
+                ? <>Your passport expires <strong>before your travel date</strong>. You&rsquo;ll need to renew it before you can fly.</>
+                : <>Your passport has <strong>{passportWarning} days</strong> of validity left at your travel date — less than the 6-month minimum most destinations require. Please renew before travel.</>}
             </p>
           </div>
         </div>
       )}
 
-      {/* Done — show extracted fields */}
-      {scanState === 'done' && extracted && (
-        <div className="space-y-4">
-          {/* Success Banner */}
-          <div className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-emerald-800">Passport scanned successfully</p>
-                <p className="text-xs text-emerald-600">
-                  Confidence: <span className="font-semibold capitalize">{extracted.confidence || 'high'}</span>
-                  {extracted.unreadable_fields?.length > 0 && (
-                    <span className="ml-2 text-amber-600">· Some fields may need review</span>
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEditMode(m => !m)}>
-                <Pencil className="w-3 h-3" /> {editMode ? 'Done' : 'Edit'}
-              </Button>
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-slate-500" onClick={handleRescan}>
-                <RefreshCw className="w-3 h-3" /> Re-scan
-              </Button>
-            </div>
-          </div>
-
-          {/* Extracted Fields — read-only tiles or editable inputs */}
-          {editMode ? (
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
-                <Label className="text-xs text-slate-600">Passport Number</Label>
-                <Input value={form.passport_number || ''} onChange={e => update('passport_number', e.target.value)} className="mt-1 font-mono tracking-widest" />
-              </div>
-              <div>
-                <Label className="text-xs text-slate-600">Issue Date</Label>
-                <Input type="date" value={form.passport_issue_date || ''} onChange={e => update('passport_issue_date', e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs text-slate-600">Expiry Date</Label>
-                <Input type="date" value={form.passport_expiry_date || ''} onChange={e => update('passport_expiry_date', e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs text-slate-600">Nationality</Label>
-                <Input value={form.nationality || ''} onChange={e => update('nationality', e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs text-slate-600">Full Name (as on passport)</Label>
-                <Input value={extracted.full_name || ''} readOnly className="mt-1 bg-slate-50" />
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {[
-                { label: 'Passport No.', value: form.passport_number, mono: true },
-                { label: 'Expiry Date', value: form.passport_expiry_date },
-                { label: 'Issue Date', value: form.passport_issue_date },
-                { label: 'Full Name', value: extracted.full_name },
-                { label: 'Nationality', value: form.nationality },
-                { label: 'Date of Birth', value: extracted.date_of_birth },
-              ].map(({ label, value, mono }) => (
-                <div key={label} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
-                  <p className="text-xs text-slate-400 font-medium">{label}</p>
-                  <p className={`text-sm font-semibold text-slate-800 mt-0.5 truncate ${mono ? 'font-mono tracking-wider' : ''}`}>
-                    {value || <span className="text-slate-300 font-normal italic">Not detected</span>}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Extraction Warnings */}
-          {warnings.map((w, i) => (
-            <div key={i} className="flex items-start gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
-              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-800 font-medium">{w}</p>
-            </div>
-          ))}
-
-          {/* 6-Month Sentinel Warning */}
-          {passportWarning !== null && (
-            <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
-              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-amber-800">⚠️ Passport Sentinel Alert</p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  Your passport expires in <strong>{passportWarning} days</strong> — less than the 6-month minimum required by most international destinations. Please renew before travel.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Visa Matrix Status ── */}
       {form.nationality && form.procedure_country && (

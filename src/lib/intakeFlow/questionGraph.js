@@ -314,6 +314,21 @@ export const QUESTION_GRAPH = [
     requiresAuth: true,
   },
   {
+    // Asked AFTER preferred_date on purpose: the sentinel measures validity at
+    // the travel date, not today, so a passport that looks fine now but expires
+    // during the trip is only catchable once both dates are known. Together
+    // with nationality + destination (already collected) this is everything
+    // needed to tell someone they can actually make the trip — no document
+    // upload, which is a privacy cost the check does not need. See
+    // lib/travelReadiness.js.
+    id: 'passport_expiry_date',
+    targetFields: ['passport_expiry_date'],
+    question: 'When does your passport expire?',
+    deterministicReason: 'so I can check you can actually travel on your dates — passport rules and visa lead times catch people out after they have already committed',
+    inputType: INPUT_TYPES.DATE,
+    requiresAuth: true,
+  },
+  {
     id: 'duration_of_stay',
     targetFields: ['duration_of_stay'],
     question: 'How long can you stay for recovery?',

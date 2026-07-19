@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Pencil, Check } from 'lucide-react';
+import { Sparkles, Pencil, Check, PlaneTakeoff, AlertTriangle } from 'lucide-react';
 import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import { deriveIntake } from '@/lib/intakeFlow/derivedFields';
+import { travelReadiness } from '@/lib/travelReadiness';
+import { useVisaRequirement } from '@/hooks/useVisaRequirement';
 import { useNavigate } from 'react-router-dom';
 import JourneyBeginsStep from './JourneyBeginsStep';
 import { CALM } from '@/lib/brandTokens';
@@ -126,6 +128,19 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
   const [corrections, setCorrections] = useState({});
 
   const { prefilled, insights } = deriveIntake({ answers, safetyStatus, costEstimate, doctorSearch });
+
+  // Can they actually make this trip? Checked here, at the last beat before
+  // they commit, so nobody discovers an expired passport or a four-week visa
+  // queue after they have already arranged surgery abroad.
+  const { status: visaStatus } = useVisaRequirement(
+    answers.nationality,
+    answers.destination_country !== UNSPECIFIED ? answers.destination_country : null
+  );
+  const readiness = travelReadiness({
+    passportExpiry: answers.passport_expiry_date,
+    travelDate: answers.preferred_date,
+    visaStatus,
+  });
 
   const handleCorrect = (field, value) => {
     setCorrections((c) => ({ ...c, [field]: value }));
@@ -259,6 +274,43 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
           </div>
         ))}
       </div>
+
+      {/* Travel readiness. Deliberately does NOT block the send button: an
+          expired passport is fixable, and refusing the consultation would just
+          push them somewhere that never warns them at all. Telling them now,
+          in plain language, is the whole point — the disappointment we're
+          avoiding is the one that arrives after they've committed. */}
+      {readiness.issues.length > 0 && (
+        <div style={{ marginTop: 20, padding: '16px 18px', borderRadius: 16, background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(217,119,6,0.35)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <PlaneTakeoff className="w-4 h-4" style={{ color: '#b45309' }} aria-hidden="true" />
+            <h3 style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#b45309', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              Before you travel
+            </h3>
+          </div>
+          <p style={{ margin: '0 0 12px', fontSize: 12.5, color: CALM.textSoft, lineHeight: 1.6 }}>
+            {readiness.issues.length === 1
+              ? 'One thing to sort out — better to know now than at the airport.'
+              : `${readiness.issues.length} things to sort out — better to know now than at the airport.`}
+          </p>
+          {readiness.issues.map((issue) => (
+            <div key={issue.code} style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <AlertTriangle
+                className="w-3.5 h-3.5"
+                style={{ color: issue.severity === 'blocking' ? '#dc2626' : '#b45309', flexShrink: 0, marginTop: 2 }}
+                aria-hidden="true"
+              />
+              <div>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: CALM.text }}>{issue.title}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: CALM.textSoft, lineHeight: 1.55 }}>{issue.detail}</p>
+              </div>
+            </div>
+          ))}
+          <p style={{ margin: '14px 0 0', fontSize: 11.5, color: CALM.textFaint, lineHeight: 1.55 }}>
+            You can still send this to your care team — they&rsquo;ll help you sort it out before anything is booked.
+          </p>
+        </div>
+      )}
 
       {submitError && (
         <p style={{ margin: '16px 0 0', fontSize: 13, color: '#dc2626', textAlign: 'center' }}>{submitError}</p>

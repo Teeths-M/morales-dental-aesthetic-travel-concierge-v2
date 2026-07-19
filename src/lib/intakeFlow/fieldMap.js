@@ -64,6 +64,10 @@ export function buildConsultationPayload(answers, verification = {}) {
     previous_procedures_notes: answers.previous_procedures_notes || '',
     has_companion: !!answers.has_companion,
     preferred_date: answers.preferred_date || '',
+    // Drives the 6-month sentinel and the visa lead-time warning. Typed by the
+    // patient — deliberately never OCR'd from an uploaded passport image, see
+    // the note at the top of components/booking/PassportVaultSection.jsx.
+    passport_expiry_date: answers.passport_expiry_date || '',
     duration_of_stay: answers.duration_of_stay || '',
     clinical_boundary_acknowledged: !!answers.clinical_boundary_acknowledged,
     clinical_boundary_acknowledged_at: answers.clinical_boundary_acknowledged

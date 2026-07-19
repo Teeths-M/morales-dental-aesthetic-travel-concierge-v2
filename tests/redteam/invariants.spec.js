@@ -1164,3 +1164,30 @@ test('INTAKE: M never derives a medical fact about a patient', () => {
   expect(src, 'deriveIntake must filter SAFETY_INPUT_FIELDS out of its return')
     .toMatch(/prefilled:\s*prefilled\.filter\(\s*\(\w+\)\s*=>\s*!SAFETY_INPUT_FIELDS\.has\(/);
 });
+
+test('VAULT: no passport image is uploaded before it is encrypted', () => {
+  // A passport carries number, date of birth, full name and nationality. The
+  // "scan your passport" convenience sent the raw image to Core.UploadFile —
+  // the GENERAL bucket, not UploadPrivateFile — handed the URL to an OCR
+  // function, and never deleted it, all under a banner promising the document
+  // was encrypted. It was fixed once in VaultUploader and left in
+  // PassportVaultSection, so this guards BOTH and any future sibling.
+  //
+  // Comments are stripped first: both files now explain the removal in prose
+  // that names the very APIs being banned, and an unstripped scan would either
+  // fail on the explanation or pass on it.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  for (const file of [
+    'src/components/vault/VaultUploader.jsx',
+    'src/components/booking/PassportVaultSection.jsx',
+  ]) {
+    const code = strip(read(file));
+
+    expect(code, `${file}: Core.UploadFile puts the document in general storage — use UploadPrivateFile, and only after encryption`)
+      .not.toMatch(/Core\.UploadFile\b/);
+
+    expect(code, `${file}: extractPassportData takes a URL to an unencrypted image; OCR may only return behind encrypt-first + explicit consent + delete-after`)
+      .not.toMatch(/extractPassportData/);
+  }
+});
