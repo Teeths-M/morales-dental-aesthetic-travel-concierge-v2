@@ -94,7 +94,7 @@ export default function ProcedureSelectionGate({ children }) {
                   <Stethoscope size={24} strokeWidth={1.5} style={{ color: GOLD }} />
                 </div>
                 <h2 id="procedure-gate-title" style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-                  What would you like to explore?
+                  Let&rsquo;s start with what you&rsquo;re considering.
                 </h2>
                 {/* Framing. This screen used to sell: coloured savings badges,
                     "Free consultation", "No commitment". The savings went
@@ -108,8 +108,8 @@ export default function ProcedureSelectionGate({ children }) {
                     and hard-blocks RED; the directories now gate on
                     isDoctorVerified), so we can lead with them. */}
                 <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-                  Pick what you&rsquo;re considering — you can change it at any time.
-                  We check every combination for safety before anything is booked.
+                  You can change this at any time. I check every combination for
+                  safety before anything is booked.
                 </p>
               </div>
 

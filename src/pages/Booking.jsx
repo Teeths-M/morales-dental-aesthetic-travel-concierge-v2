@@ -927,7 +927,7 @@ export default function Booking() {
             <div className="flex items-center gap-2.5 px-6 py-2.5 border-b border-slate-100" style={{ background: 'linear-gradient(90deg, rgba(212,175,55,0.06), rgba(212,175,55,0.02))' }}>
               <span style={{ fontSize: 14 }}>🔓</span>
               <p className="text-xs text-slate-600 m-0">
-                <strong style={{ color: '#92740f' }}>No account needed to start.</strong> Fill out the form freely — we'll ask you to sign in only when you're ready to submit.
+                <strong style={{ color: '#92740f' }}>No account needed to start.</strong> Tell me as much or as little as you like — I'll only ask you to sign in when you're ready to send this to your concierge.
               </p>
             </div>
           )}

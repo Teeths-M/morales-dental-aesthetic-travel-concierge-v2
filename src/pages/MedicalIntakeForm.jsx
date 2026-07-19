@@ -624,7 +624,7 @@ export default function MedicalIntakeForm() {
               disabled={submitting}
               className="gap-2 bg-gradient-to-r from-emerald-700 to-blue-800 text-white hover:opacity-90 min-w-[160px]"
             >
-              {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : <><CheckCircle2 className="w-4 h-4" /> Submit Intake</>}
+              {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : <><CheckCircle2 className="w-4 h-4" /> Send to my concierge</>}
             </Button>
           )}
         </div>
