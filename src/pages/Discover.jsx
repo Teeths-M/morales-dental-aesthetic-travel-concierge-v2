@@ -30,6 +30,7 @@ import DoctorFilterPanel from "@/components/discover/DoctorFilterPanel";
 import PageHeroBand from "@/components/layout/PageHeroBand";
 import cityData from "@/lib/cityData.json";
 import { SERVED_COUNTRIES } from "@/lib/countryCity";
+import { isDoctorVerified } from "@/components/doctor/DoctorVerifiedBadge";
 
 // id = keyword matched against DoctorSpecialty.procedure_name (case-insensitive includes)
 // Must align with en_name values in MasterProcedure entity (see seedMasterProcedures)
@@ -98,7 +99,14 @@ export default function Discover() {
         if (!specialtyByDoctor.has(spec.doctor_id)) specialtyByDoctor.set(spec.doctor_id, []);
         specialtyByDoctor.get(spec.doctor_id).push(spec);
       }
-      return { doctors: allDoctors, specialtyByDoctor };
+      /* This page's subtitle reads "Browse verified specialists". It was
+         filtering on status: "active" only — active is not verified, so an
+         unverified doctor appeared under a verification claim. Same defect
+         fixed on /providers; this second listing was missed on the first pass.
+
+         Gated on the shared isDoctorVerified so the two directories and the
+         per-doctor badge can never disagree about who counts as verified. */
+      return { doctors: allDoctors.filter(isDoctorVerified), specialtyByDoctor };
     },
     staleTime: 10 * 60 * 1000,
   });
