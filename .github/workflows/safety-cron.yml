@@ -112,6 +112,20 @@ jobs:
           fi
 
           if [ -n "$FAILED" ]; then
-            echo "::warning::Safety jobs returned an error:$FAILED — investigate. A 402 usually means exhausted Base44 integration credits; a 403 means CRON_SECRET does not match between GitHub and Base44."
+            # Deliberately an ERROR, not a warning. A green tick on a run where
+            # safety jobs failed is the same class of problem this workflow was
+            # written to fix: a monitor that reports success while not
+            # monitoring. If these fail, nobody is being watched — say so loudly.
+            echo "::error::SAFETY JOBS FAILED:$FAILED — patients are NOT being monitored until this is resolved."
+            echo ""
+            echo "How to read the HTTP codes above:"
+            echo "  404 — function is not published to Base44. Publish it."
+            echo "  500 — published, but running PRE-cronAuth code: it calls"
+            echo "        base44.auth.me() before checking the header, which throws"
+            echo "        with no session. No scheduler can drive it. Publish the fix."
+            echo "  403 — published with the guard, but CRON_SECRET does not match"
+            echo "        between GitHub and Base44."
+            echo "  402 — Base44 integration credits exhausted."
+            exit 1
           fi
           echo "Done."
