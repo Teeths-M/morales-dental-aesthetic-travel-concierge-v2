@@ -990,11 +990,22 @@ export default function Booking() {
 
           {/* Navigation */}
           <div className="border-t border-slate-200 bg-slate-50">
+          {/* The safety-stop message was: "Your SAFE-T assessment requires
+              review before proceeding. A member of our team will contact you
+              within 24 hours."
+
+              Two problems. "SAFE-T assessment" is our engine's name, which tells
+              a patient nothing at the moment they have just been stopped. And
+              "within 24 hours" is a turnaround nothing in this codebase enforces
+              or measures — exactly the kind of number the M Principle forbids
+              inventing, and the patient is asked to trust it at the most
+              consequential point in the flow. */}
           {step === 11 && showValidation &&
            (form.safet_risk_level === 'elevated' || form.safet_risk_level === 'review') && (
             <p className="text-sm text-red-600 px-6 pt-4">
-              Your SAFE-T assessment requires review before proceeding.
-              A member of our team will contact you within 24 hours.
+              Based on your answers, a clinician needs to look at this personally
+              before you continue. We&rsquo;ll reach out to you directly — you don&rsquo;t
+              need to do anything else right now.
             </p>
           )}
           {error && (

@@ -433,6 +433,25 @@ function LoadingShell() {
 
 function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentChange }) {
   const blocked = requireConsent && !consented;
+  const [nudge, setNudge] = React.useState(false);
+
+  /* "Begin" used to be rendered disabled until the consent box was ticked, with
+     no explanation anywhere on the card. Someone who didn't notice the checkbox
+     tapped a dead button and nothing happened — no message, no movement, no way
+     to find out why. That is the trap the M Ease Manifesto exists to prevent.
+
+     The gate itself is non-negotiable (consent is a compliance control, and it
+     is re-checked server-side), so the button still cannot proceed without it.
+     What changed is that it now ANSWERS: tap it and the consent box is pointed
+     at and the reason is stated. A blocked action must always say what unblocks
+     it. */
+  const handleClick = () => {
+    if (blocked) { setNudge(true); return; }
+    onBegin();
+  };
+
+  React.useEffect(() => { if (consented) setNudge(false); }, [consented]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -492,27 +511,44 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
       </p>
 
       {requireConsent && (
-        <div style={{ marginBottom: 20 }}>
+        <motion.div
+          style={{
+            marginBottom: 20,
+            borderRadius: 16,
+            outline: nudge ? '2px solid #047857' : '2px solid transparent',
+            outlineOffset: 2,
+            transition: 'outline-color 0.25s ease',
+          }}
+          animate={nudge ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+          transition={{ duration: 0.4 }}
+        >
           <DataProcessingConsent checked={consented} onChange={onConsentChange} theme="light" />
-        </div>
+        </motion.div>
+      )}
+
+      {nudge && (
+        <p role="alert" style={{ margin: '0 0 12px', fontSize: 12.5, lineHeight: 1.5, color: '#047857', textAlign: 'left', fontWeight: 600 }}>
+          Please tick the box above so we can begin — it&rsquo;s how you tell us it&rsquo;s alright to
+          handle your information.
+        </p>
       )}
 
       <button
         type="button"
-        onClick={onBegin}
-        disabled={blocked}
+        onClick={handleClick}
+        aria-disabled={blocked}
         style={{
           width: '100%',
           padding: '15px 20px',
           borderRadius: 999,
-          cursor: blocked ? 'not-allowed' : 'pointer',
+          cursor: 'pointer',
           background: TEAL,
           border: 'none',
           color: '#fff',
           fontSize: 14,
           fontWeight: 700,
           letterSpacing: '0.02em',
-          opacity: blocked ? 0.5 : 1,
+          opacity: blocked ? 0.55 : 1,
           transition: 'opacity 0.2s ease',
         }}
       >
