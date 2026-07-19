@@ -421,7 +421,18 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ escalated2h, escalated3h, escalated5h, escalated9h, checked: allCheckIns.length });
-  } catch (_) {
+  } catch (err) {
+    /* This used to be `catch (_)` — the error was discarded and the caller got
+       a bare "An internal error occurred." Nothing was written anywhere, so
+       this function could fail every run for weeks with no way to find out
+       why: not from the response, not from Base44's Logs page, not from the
+       scheduler. A safety job that fails silently is worse than one that fails
+       loudly, and this one guards the missed-check-in escalation ladder.
+
+       The message still goes nowhere near the client — the response body is
+       unchanged, so nothing leaks. The detail goes to the server log, which is
+       the only place it is safe and the only place it is useful. */
+    console.error('[escalateSoloCheckIn] FAILED:', err instanceof Error ? err.stack || err.message : String(err));
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
