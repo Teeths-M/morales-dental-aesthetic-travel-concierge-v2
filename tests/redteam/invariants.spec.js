@@ -1218,3 +1218,47 @@ test('INTAKE: answers survive navigating away mid-conversation', () => {
   expect(code, 'the draft must not be removed on a server save — later answers would be left unprotected')
     .not.toMatch(/removeItem\(GUEST_DRAFT_KEY/);
 });
+
+test('PARTNERS: nothing automated may mark a background check passed', () => {
+  // A background check is about a person's criminal record. The only automated
+  // signal this platform has is an AI scan of uploaded documents for tampering
+  // and forgery — which says nothing about the holder. initiatePartnerVerification
+  // used to write background_check_status:'passed' off that scan, and
+  // activateVerifiedDoctor then read it as one of three clearances required to
+  // make someone bookable by a patient.
+  //
+  // Only verifyDoctorBackground may set it, where a human decides and the
+  // decision is recorded with their identity and audit-chained.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  const auto = strip(read('base44/functions/initiatePartnerVerification/entry.ts'));
+  expect(auto, 'an automated scan must never mark a background check passed')
+    .not.toMatch(/background_check_status:\s*['"]passed['"]/);
+
+  // And the gate must still refuse anything that is not positively cleared —
+  // 'pending' is the default, so treating it as acceptable would open the door
+  // for every partner who has simply never been checked.
+  const gate = strip(read('base44/functions/activatePartner/entry.ts'));
+  expect(gate, 'activatePartner must gate on background_check_status')
+    .toMatch(/background_check_status/);
+  expect(gate, "only 'passed' and 'manual_override' may count as cleared")
+    .toMatch(/PASSED\s*=\s*new Set\(\[\s*['"]passed['"],\s*['"]manual_override['"]\s*\]\)/);
+});
+
+test('CLAIMS: the app does not advertise checks it does not perform', () => {
+  // Nothing examines criminal history, and hotels have no verification path at
+  // all. These three lines said otherwise on the two highest-traffic surfaces.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  expect(strip(read('src/components/home/HowItWorksModal.jsx')),
+    'do not claim background-checked physicians until a background check exists')
+    .not.toMatch(/background.?checked/i);
+
+  expect(strip(read('src/components/home/LuxuryHero.jsx')),
+    'do not claim vetted hotels — there is no hotel verification path')
+    .not.toMatch(/vetted hotels/i);
+
+  expect(strip(read('src/components/dashboard/PreDepartureBriefing.jsx')),
+    'do not claim vetted transport until drivers gate on a cleared background check')
+    .not.toMatch(/vetted transport/i);
+});

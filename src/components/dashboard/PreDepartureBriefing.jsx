@@ -43,7 +43,12 @@ function offlineBriefing(country, procedure, evnScore) {
     threatLevel: risk?.label || 'Moderate',
     precautions: [
       'Always travel with your Morales emergency card accessible.',
-      `Your Morales concierge has pre-arranged vetted transport in ${country}.`,
+      // "Vetted" implied a completed check on the driver. Until activatePartner
+      // gates on a cleared background check, what is actually true is narrower
+      // and still worth saying: the transfer is arranged by M and every handoff
+      // is logged, timed and located — which is the protection that holds even
+      // when a check would not have caught anything.
+      `Your Morales concierge has pre-arranged your transport in ${country}, and every handover is confirmed and logged.`,
       'Keep your Emergency PIN memorised — accessible from any device without internet.',
       'Share your Guardian Link with a trusted family member before departure.',
     ],

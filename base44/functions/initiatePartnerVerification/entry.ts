@@ -188,10 +188,31 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // with no human touch. ──────────────────────────────────────────────────
     let autoActivationResult: { activated: boolean; reason?: string } = { activated: false };
     if (partner_type === 'doctor' && newStatus === 'auto_verified') {
+      /* `background_check_status: 'passed'` USED TO BE SET HERE. It is gone.
+       *
+       * What ran before this line is an AI scan of the documents the applicant
+       * uploaded, looking for tampering, forgery and AI-generated images. That
+       * is a document-authenticity check. It is not a background check: nothing
+       * in this path — or anywhere in the platform — looks at criminal history.
+       * Writing 'passed' recorded a check that had never been performed, and
+       * `activateVerifiedDoctor` then read that record as one of the three
+       * clearances it requires before making someone bookable by a patient.
+       *
+       * Leaving it at its 'pending' default means auto-activation now refuses
+       * (activateVerifiedDoctor returns CHECKS_NOT_COMPLETE) and the applicant
+       * routes to manual review — which is the correct outcome when nobody has
+       * actually checked. `verifyDoctorBackground` remains the only thing that
+       * may mark this passed, because a human decides there and the decision is
+       * recorded with their identity and audit-chained.
+       *
+       * Known and deliberately left alone: the two lines below stamp 'passed'
+       * off the same AI scan. They are at least about the documents that were
+       * scanned, whereas a background check is about a person's record. The
+       * real licence check lives in runDoctorVerification (issuing-board API) —
+       * worth a separate look, not a silent widening of this fix. */
       await base44.asServiceRole.entities.Doctor.update(partner_id, {
         license_verification_status: 'passed',
         identity_verification_status: 'passed',
-        background_check_status: 'passed',
         verification_method: 'ai_auto_clear_scan',
       });
 

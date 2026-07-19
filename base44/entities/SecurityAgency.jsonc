@@ -68,6 +68,28 @@
     "insurance_doc_url": {
       "type": "string"
     },
+    // The same three clearances Doctor, Companion and TaxiService already
+    // carry. SecurityAgency had none of them — the partner type that puts a
+    // person physically alongside a sedated or recovering patient was the only
+    // one with no per-check state to gate activation on, so there was nothing
+    // for an activation gate to read. Added so activatePartner can refuse to
+    // make a security agency bookable until each one is positively cleared.
+    "identity_verification_status": {
+      "type": "string",
+      "enum": ["pending", "passed", "failed", "manual_override"],
+      "default": "pending"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": ["pending", "passed", "failed", "manual_override"],
+      "default": "pending",
+      "description": "Criminal-record clearance. Only ever set by a human decision — no automated scan may mark this passed."
+    },
+    "license_verification_status": {
+      "type": "string",
+      "enum": ["pending", "passed", "failed", "manual_override"],
+      "default": "pending"
+    },
     "verification_status": {
       "type": "string",
       "enum": [

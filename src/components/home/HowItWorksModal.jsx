@@ -47,7 +47,13 @@ const scenes = [
     id: 4,
     tag: 'STEP 3 — VERIFIED SPECIALISTS',
     headline: 'Matched with trusted specialists.',
-    sub: 'Only board-certified, background-checked physicians in accredited facilities. Every credential verified.',
+    // Was "board-certified, background-checked physicians". The licence check
+    // is real and specific — runDoctorVerification queries the issuing medical
+    // board's own registry. "Background-checked" is not: nothing on the
+    // platform examines criminal history, and the AI scan that used to mark it
+    // passed only inspected uploaded documents for forgery. Claiming it made
+    // this the strongest-sounding and least true line on the page.
+    sub: 'Every licence checked against the issuing medical board before a doctor is listed. Verified credentials, accredited facilities.',
     emotion: '"I can trust this doctor."',
     icon: BadgeCheck,
     bg: 'from-[#060B16] to-[#0d1220]',

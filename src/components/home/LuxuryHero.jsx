@@ -21,7 +21,13 @@ const CONTENT = {
   nonmedical: {
     headline:    'THE WORLD,\nEFFORTLESSLY YOURS.',
     subheadline: '24/7 protection — even at 35,000 feet.',
-    body:        'Wherever you land, Morales is already there. Verified transfers, vetted hotels, personal companions, and a safety net that follows you across every border and time zone.',
+    // Was "Verified transfers, vetted hotels". Neither is checked today —
+    // hotels have no verification path at all, and drivers have no cleared
+    // background check. Replaced with what the platform genuinely does: every
+    // handoff between transfers, hotel and clinic is confirmed and logged, so
+    // nobody is unaccounted for. That is the real differentiator anyway, and
+    // unlike "vetted" it is true.
+    body:        'Wherever you land, Morales is already there. Every transfer, hotel and clinic handover confirmed and logged, personal companions, and a safety net that follows you across every border and time zone.',
     cta:         { label: 'Plan My Journey', path: '/travel-intake' },
   },
 };
