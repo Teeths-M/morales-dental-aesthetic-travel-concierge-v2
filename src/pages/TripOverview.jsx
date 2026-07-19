@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { BackButton } from '@/components/nav/BackButton';
+import LoadingState from '@/components/ui-system/LoadingState';
 
 export default function TripOverview() {
   const [user, setUser] = useState(null);
@@ -128,13 +129,18 @@ export default function TripOverview() {
   };
 
   if (loading && travelRequests.length === 0) {
+    /* Was a centred spinner on an otherwise empty page. This is the screen a
+       patient opens to check their own trip, so a blank page with a wheel in
+       the middle reads as "nothing here" at the moment they are looking for
+       reassurance. Cards in the shape of the trip read as "it's coming". */
     return (
       <div className="flex min-h-screen bg-slate-50">
         <DashboardSidebar />
-        <main className="flex-1 p-8 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-slate-600">Loading your trip details...</p>
+        <main className="flex-1 p-8">
+          <div className="max-w-4xl">
+            <div className="h-7 w-56 rounded-lg bg-slate-200 animate-pulse mb-2" />
+            <div className="h-4 w-80 rounded bg-slate-100 animate-pulse mb-8" />
+            <LoadingState rows={3} variant="card" dark={false} label="Loading your trip details" />
           </div>
         </main>
       </div>
