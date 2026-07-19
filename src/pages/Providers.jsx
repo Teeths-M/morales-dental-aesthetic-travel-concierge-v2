@@ -309,7 +309,7 @@ export default function Providers() {
                   {/* Photo */}
                   <div style={{ height: 180, background: 'linear-gradient(135deg, #0C1A1D, #1a2f38)', position: 'relative', flexShrink: 0 }}>
                     {doctor.photo_url?.trim() ? (
-                      <img src={doctor.photo_url} alt={doctor.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { /** @type {HTMLImageElement} */(e.target).style.display = 'none'; }} />
+                      <img loading="lazy" decoding="async" src={doctor.photo_url} alt={doctor.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { /** @type {HTMLImageElement} */(e.target).style.display = 'none'; }} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56, fontWeight: 700, color: GOLD, opacity: 0.6 }}>
                         {doctor.full_name?.charAt(0) || 'D'}

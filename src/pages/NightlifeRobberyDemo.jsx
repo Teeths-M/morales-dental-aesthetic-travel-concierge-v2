@@ -366,7 +366,7 @@ export default function NightlifeRobberyDemo({ minimal = false }) {
             <div className="rounded-2xl p-4" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
               <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: GOLD }}>Patient Profile</p>
               <div className="flex items-center gap-3 mb-4">
-                <img src="https://i.pravatar.cc/150?img=12" alt="Marco Delgado"
+                <img loading="lazy" decoding="async" src="https://i.pravatar.cc/150?img=12" alt="Marco Delgado"
                   className="w-14 h-14 rounded-full flex-shrink-0"
                   style={{ border: `3px solid ${GOLD}`, boxShadow: `0 0 14px rgba(212,175,55,0.35)`, objectFit: 'cover' }}
                 />

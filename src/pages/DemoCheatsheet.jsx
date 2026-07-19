@@ -13,7 +13,7 @@ function QRImg({ value, size = 140, dark = '#060B16' }) {
   const encoded = encodeURIComponent(value);
   const color = dark.replace('#', '');
   return (
-    <img
+    <img loading="lazy" decoding="async"
       src={`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&color=${color}&bgcolor=ffffff&margin=2&format=png`}
       width={size} height={size}
       alt="QR code"

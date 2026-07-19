@@ -114,7 +114,7 @@ function PartnerCard({ card, language }) {
       {/* Image — subtle 5% zoom on hover, not the aggressive 10% */}
       <div className="relative h-60 overflow-hidden">
         <div className={`absolute inset-0 bg-gradient-to-br ${card.bg} opacity-20 group-hover:opacity-30 transition-opacity duration-500`} />
-        <img
+        <img loading="lazy" decoding="async"
           src={card.img}
           alt={card.alt}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"

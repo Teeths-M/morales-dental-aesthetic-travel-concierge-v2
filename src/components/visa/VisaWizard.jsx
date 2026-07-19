@@ -243,7 +243,7 @@ export default function VisaWizard({ onResult }) {
                     {passport.code === 'OTHER' ? (
                       <span className="text-2xl">ðŸŒ</span>
                     ) : (
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={`https://flagcdn.com/w40/${passport.code.toLowerCase()}.png`}
                         width="32"
                         alt={passport.name}
@@ -273,7 +273,7 @@ export default function VisaWizard({ onResult }) {
                       {c.code === 'OTHER' ? (
                         <span className="text-base">ðŸŒ</span>
                       ) : (
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
                           srcSet={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png 2x`}
                           width="20"

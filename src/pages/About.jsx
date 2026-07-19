@@ -45,7 +45,7 @@ export default function About() {
         </motion.div>
 
         <div className="relative rounded-2xl overflow-hidden aspect-video mb-20" style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-          <img
+          <img loading="lazy" decoding="async"
             src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/ac09f3ff8_generated_81131568.png"
             alt="Modern architecture detail"
             className="w-full h-full object-cover"

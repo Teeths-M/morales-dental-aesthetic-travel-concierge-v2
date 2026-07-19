@@ -157,7 +157,7 @@ export default function OurExpertsTeaser() {
               onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
             >
               {/* Photo */}
-              <img
+              <img loading="lazy" decoding="async"
                 src={proc.image}
                 alt={`${proc.name} result`}
                 className="w-full h-full object-cover absolute inset-0 transition-transform duration-700 group-hover:scale-105"

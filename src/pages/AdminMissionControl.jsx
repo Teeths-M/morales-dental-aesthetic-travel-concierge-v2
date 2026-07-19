@@ -83,7 +83,7 @@ function PatientCard({ c, medguardScore, evnScore, _onContact }) {
       <div className="p-4">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
-            <img src="https://i.pravatar.cc/150?img=47" alt={c.client_name}
+            <img loading="lazy" decoding="async" src="https://i.pravatar.cc/150?img=47" alt={c.client_name}
               className="w-9 h-9 rounded-full object-cover flex-shrink-0"
               style={{ border: `2px solid ${risk.color}` }} />
             <div className="min-w-0">

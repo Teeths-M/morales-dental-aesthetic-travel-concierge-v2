@@ -503,7 +503,7 @@ export default function DoctorDashboard() {
                   {editing ? (
                     <label className="w-32 h-32 rounded-full bg-secondary/50 flex items-center justify-center cursor-pointer hover:bg-secondary/70 transition-colors group relative">
                       {formData.photo_url && formData.photo_url.trim() ? (
-                        <img src={formData.photo_url} alt={formData.full_name} className="w-full h-full rounded-full object-cover" />
+                        <img loading="lazy" decoding="async" src={formData.photo_url} alt={formData.full_name} className="w-full h-full rounded-full object-cover" />
                       ) : (
                         <div className="text-center">
                           <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
@@ -520,7 +520,7 @@ export default function DoctorDashboard() {
                   ) : (
                     <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-semibold overflow-hidden flex-shrink-0">
                       {formData.photo_url && formData.photo_url.trim() ? (
-                        <img src={formData.photo_url} alt={formData.full_name} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+                        <img loading="lazy" decoding="async" src={formData.photo_url} alt={formData.full_name} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
                       ) : null}
                       {!formData.photo_url || !formData.photo_url.trim() ? (
                         formData.full_name?.charAt(0) || 'D'

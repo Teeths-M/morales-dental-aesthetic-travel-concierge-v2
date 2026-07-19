@@ -241,7 +241,7 @@ export default function MyQuotes() {
                   <div style={{ width: 56, height: 56, borderRadius: 12, flexShrink: 0, overflow: 'hidden',
                     background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {d.photo_url
-                      ? <img src={d.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ? <img loading="lazy" decoding="async" src={d.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <Stethoscope size={22} color={GOLD} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>

@@ -28,7 +28,7 @@ export function IdentityCard({ name, role, photoUrl, sublabel }) {
         onContextMenu={e => e.preventDefault()}
       >
         {photoUrl ? (
-          <img
+          <img loading="lazy" decoding="async"
             src={photoUrl}
             alt={role}
             draggable={false}
@@ -84,7 +84,7 @@ export function IdentityUpload({ label, hint, photoUrl, onUpload, uploading, cap
       >
         {photoUrl ? (
           <>
-            <img src={photoUrl} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img loading="lazy" decoding="async" src={photoUrl} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 10px',
               background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',

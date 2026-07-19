@@ -1000,3 +1000,79 @@ test('CLAIMS: the booking gate cannot advertise a free consultation while one is
   // And the real number should be stated up front rather than hidden.
   expect(code, 'the gate should state the actual fee').toMatch(/\$49/);
 });
+
+test('PERF: heavy admin-only vendors are never forced into the eager bundle', () => {
+  // recharts (404 KB) sat in the object form of manualChunks. That hoists it
+  // into the entry's static graph, so Vite emitted a <link rel="modulepreload">
+  // for it in index.html — every visitor downloaded 404 KB of charting library
+  // for two admin pages they will never open. Both pages are lazy routes; the
+  // chunking config was overriding that.
+  //
+  // Removing it took the eager payload from 1280 KB to 876 KB. recharts still
+  // ships, as a lazy chunk, when an admin actually opens Analytics.
+  const cfg = read('vite.config.js');
+  const code = cfg.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  const manual = code.slice(code.indexOf('manualChunks'), code.indexOf('manualChunks') + 500);
+  for (const heavy of ['recharts', 'leaflet']) {
+    // leaflet is listed but not currently preloaded; recharts must stay out
+    // entirely. Guard the one that actually regressed.
+    if (heavy === 'recharts') {
+      expect(manual, 'recharts must not be pinned into a manual vendor chunk — it forces an eager preload')
+        .not.toContain("'recharts'");
+    }
+  }
+
+  // And the pages using it must stay lazy, or the chunk becomes eager again.
+  const routes = read('src/routes/adminRoutes.jsx');
+  for (const page of ['AdminAnalytics', 'RiskOptimizationDashboard']) {
+    expect(routes, `${page} must stay lazy-loaded, or recharts becomes eager again`)
+      .toContain(`lazy(() => import('@/pages/${page}'))`);
+  }
+});
+
+test('PERF: images are lazy, except above-the-fold and emergency-critical ones', () => {
+  // 70 <img> tags, 0 with loading="lazy". But blanket-lazying is wrong: a lazy
+  // above-the-fold image DELAYS Largest Contentful Paint, because the browser
+  // must finish layout before it will start the request. Lazy helps what is
+  // off-screen and hurts what isn't.
+  const walk = (dir, out = []) => {
+    for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(rel, out);
+      else if (/\.jsx$/.test(e.name)) out.push(rel);
+    }
+    return out;
+  };
+
+  let lazied = 0;
+  const wrongfullyLazy = [];
+
+  for (const rel of walk('src')) {
+    const src = read(rel);
+    let i = 0;
+    while (true) {
+      const idx = src.indexOf('<img', i);
+      if (idx === -1) break;
+      let end = idx, depth = 0;
+      while (end < src.length) {
+        const ch = src[end];
+        if (ch === '{') depth++;
+        else if (ch === '}') depth--;
+        else if (ch === '>' && depth === 0) break;
+        end++;
+      }
+      const tag = src.slice(idx, end + 1);
+      const isLazy = /loading="lazy"/.test(tag);
+      if (isLazy) lazied++;
+
+      // The brand mark is above the fold; the SOS QR is the point of an
+      // emergency screen. Neither may be deferred.
+      if (isLazy && /(morales-m-mark|qrDataUrl)/.test(tag)) wrongfullyLazy.push(rel);
+      i = end + 1;
+    }
+  }
+
+  expect(wrongfullyLazy, `these must load eagerly:\n${wrongfullyLazy.join('\n')}`).toEqual([]);
+  expect(lazied, 'the lazy-loading pass must not be silently reverted').toBeGreaterThanOrEqual(30);
+});

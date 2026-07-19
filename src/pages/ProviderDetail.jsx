@@ -59,7 +59,7 @@ export default function ProviderDetail() {
               {/* Photo */}
               <div className="w-32 h-32 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
                 {provider.photo_url ? (
-                  <img src={provider.photo_url} alt={provider.full_name} className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={provider.photo_url} alt={provider.full_name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="font-display text-4xl text-muted-foreground">{provider.full_name?.[0]}</span>
@@ -126,7 +126,7 @@ export default function ProviderDetail() {
                       {/* Thumbnail */}
                       <div className="relative w-full h-48 bg-secondary/50 flex items-center justify-center overflow-hidden">
                         {item.type === 'image' ? (
-                          <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <img loading="lazy" decoding="async" src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
                           <>
                             <video src={item.url} className="w-full h-full object-cover" />
@@ -164,7 +164,7 @@ export default function ProviderDetail() {
                     <X className="w-6 h-6 text-white" />
                   </button>
                   {selectedMedia.type === 'image' ? (
-                    <img src={selectedMedia.url} alt={selectedMedia.title} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+                    <img loading="lazy" decoding="async" src={selectedMedia.url} alt={selectedMedia.title} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
                   ) : (
                     <video src={selectedMedia.url} controls autoPlay className="max-w-full max-h-[85vh] object-contain rounded-lg" />
                   )}

@@ -16,7 +16,7 @@ export default function DoctorSearchCard({ doctor, onBook, onViewProfile }) {
           onClick={onViewProfile}
         >
           {doctor.photo_url ? (
-            <img
+            <img loading="lazy" decoding="async"
               src={doctor.photo_url}
               alt={doctor.full_name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

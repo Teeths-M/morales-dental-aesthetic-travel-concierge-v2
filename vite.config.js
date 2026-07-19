@@ -24,7 +24,6 @@ export default defineConfig(({ command }) => {
             'vendor-query': ['@tanstack/react-query'],
             'vendor-motion': ['framer-motion'],
             'vendor-maps': ['leaflet', 'react-leaflet'],
-            'vendor-charts': ['recharts'],
           },
         },
       },

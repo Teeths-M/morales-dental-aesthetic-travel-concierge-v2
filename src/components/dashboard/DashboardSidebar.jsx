@@ -79,7 +79,7 @@ function ProfileAvatar({ photo, onUpload }) {
           }}
         >
           {photo ? (
-            <img src={photo} alt="Profile" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={photo} alt="Profile" className="w-full h-full object-cover" />
           ) : (
             <span className="text-white font-serif font-semibold text-xl">M</span>
           )}

@@ -31,7 +31,7 @@ export function MedicalSlideshowBackground({ step }) {
           transition={{ duration: 0.9, ease: 'easeOut' }}
           className="absolute inset-0"
         >
-          <img
+          <img loading="lazy" decoding="async"
             src={slide.image}
             alt=""
             className="w-full h-full object-cover"
@@ -69,7 +69,7 @@ export default function MedicalSlideshow({ step }) {
           transition={{ duration: 0.7, ease: 'easeOut' }}
           className="absolute inset-0"
         >
-          <img src={slide.image} alt="" className="w-full h-full object-cover" />
+          <img loading="lazy" decoding="async" src={slide.image} alt="" className="w-full h-full object-cover" />
           <div className={`absolute inset-0 bg-gradient-to-tr ${slide.gradient}`} />
         </motion.div>
       </AnimatePresence>

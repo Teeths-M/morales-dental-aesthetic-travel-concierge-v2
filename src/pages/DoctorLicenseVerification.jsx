@@ -328,7 +328,7 @@ export default function DoctorLicenseVerification() {
                   <div>
                     <p className="text-sm text-slate-500 mb-2">License Document</p>
                     <div className="border rounded-lg overflow-hidden">
-                      <img 
+                      <img loading="lazy" decoding="async" 
                         src={selectedDoctor.license_url} 
                         alt="Medical License" 
                         className="w-full h-auto max-h-96 object-contain bg-slate-50"

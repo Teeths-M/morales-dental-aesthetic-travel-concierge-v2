@@ -230,7 +230,7 @@ function UserCard({ user, result, scenarioId }) {
     >
       {/* User header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <img src={user.avatar} alt={user.name} style={{ width: 52, height: 52, borderRadius: '50%', border: `2px solid ${user.color}50`, background: '#0f172a', flexShrink: 0 }} />
+        <img loading="lazy" decoding="async" src={user.avatar} alt={user.name} style={{ width: 52, height: 52, borderRadius: '50%', border: `2px solid ${user.color}50`, background: '#0f172a', flexShrink: 0 }} />
         {/* minWidth 0 so the name/tag block can shrink — a flex item defaults
             to min-width:auto and otherwise refuses to go below its text. */}
         <div style={{ minWidth: 0 }}>

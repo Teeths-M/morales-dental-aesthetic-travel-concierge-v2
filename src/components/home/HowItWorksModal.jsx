@@ -762,7 +762,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                     className="w-10 h-10 rounded-full overflow-hidden"
                     style={{ border: `2px solid ${GOLD}60`, boxShadow: `0 0 14px ${GOLD}30` }}
                   >
-                    <img
+                    <img loading="lazy" decoding="async"
                       src="/images/how-it-works-face.jpg"
                       alt="Care coordinator"
                       className="w-full h-full object-cover"

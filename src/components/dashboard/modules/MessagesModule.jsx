@@ -216,7 +216,7 @@ export default function MessagesModule() {
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {c.photo_url
-                        ? <img src={c.photo_url} alt={c.name} className="w-full h-full object-cover" />
+                        ? <img loading="lazy" decoding="async" src={c.photo_url} alt={c.name} className="w-full h-full object-cover" />
                         : <span className="text-white font-semibold text-sm">{c.avatar}</span>}
                     </div>
                     {c.online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />}
@@ -252,7 +252,7 @@ export default function MessagesModule() {
             <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 bg-slate-50">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center overflow-hidden">
                 {contact?.photo_url
-                  ? <img src={contact.photo_url} alt={contact.name} className="w-full h-full object-cover" />
+                  ? <img loading="lazy" decoding="async" src={contact.photo_url} alt={contact.name} className="w-full h-full object-cover" />
                   : <span className="text-white font-semibold text-xs">{contact?.avatar}</span>}
               </div>
               <div>

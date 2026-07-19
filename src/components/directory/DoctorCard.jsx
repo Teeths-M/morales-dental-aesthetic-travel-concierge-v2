@@ -36,7 +36,7 @@ export default function DoctorCard({ doctor }) {
           {/* Avatar */}
           <div className="flex-shrink-0">
             {doctor.photo_url ? (
-              <img src={doctor.photo_url} alt={doctor.full_name} className="w-14 h-14 rounded-xl object-cover" />
+              <img loading="lazy" decoding="async" src={doctor.photo_url} alt={doctor.full_name} className="w-14 h-14 rounded-xl object-cover" />
             ) : (
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
                 <span className="text-primary font-display font-semibold text-lg">{initials}</span>

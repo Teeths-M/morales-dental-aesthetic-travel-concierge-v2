@@ -619,7 +619,7 @@ function DashboardHome({ user, consultations, language }) {
               <div key={doc.id} className="bg-white rounded-xl border border-emerald-100 p-3">
                 <div className="flex items-center gap-2">
                   {doc.photo_url ? (
-                    <img src={doc.photo_url} alt={doc.name} className="w-8 h-8 rounded-full object-cover" />
+                    <img loading="lazy" decoding="async" src={doc.photo_url} alt={doc.name} className="w-8 h-8 rounded-full object-cover" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
                       <span className="text-emerald-700 font-semibold text-xs">{doc.name?.charAt(0)}</span>

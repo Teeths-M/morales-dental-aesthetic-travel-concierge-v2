@@ -61,7 +61,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore, languag
       {/* Image — taller for visual impact */}
       {proc.image && (
         <div className="w-full h-48 overflow-hidden relative">
-          <img
+          <img loading="lazy" decoding="async"
             src={proc.image}
             alt={proc.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"

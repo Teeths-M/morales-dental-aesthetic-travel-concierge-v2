@@ -406,7 +406,7 @@ function MedGuardDemo({ initialScene = 0 }) {
           <div className="flex items-start justify-between gap-4 mb-5">
             {/* Patient info */}
             <div className="flex items-center gap-3">
-              <img src="https://i.pravatar.cc/150?img=47" alt="Maria" className="w-12 h-12 rounded-full object-cover"
+              <img loading="lazy" decoding="async" src="https://i.pravatar.cc/150?img=47" alt="Maria" className="w-12 h-12 rounded-full object-cover"
                 style={{ border: `2px solid ${scene.color}` }} />
               <div>
                 <p className="text-base font-bold text-white">{scene.patient}</p>

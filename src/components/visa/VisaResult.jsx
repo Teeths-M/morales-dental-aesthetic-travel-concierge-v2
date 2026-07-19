@@ -185,7 +185,7 @@ export default function VisaResult({ result, onReset }) {
                 className="absolute inset-0 cursor-pointer group"
                 onClick={() => setVideoPlaying(true)}
               >
-                <img
+                <img loading="lazy" decoding="async"
                   src={`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`}
                   alt="Video thumbnail"
                   className="w-full h-full object-cover"

@@ -119,7 +119,7 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
               {/* Thumbnail */}
               <div className="relative w-full h-48 bg-secondary/50 flex items-center justify-center overflow-hidden group">
                 {item.type === 'image' ? (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={item.url}
                     alt={item.title}
                     className="w-full h-full object-cover"
