@@ -106,9 +106,17 @@ export default function ConciergeIntake() {
     if (cartItems.length === 0) return;
     if (answers.procedure_interest || answers.selected_procedures?.length) return;
     cartSeededRef.current = true;
+    // Carry EVERY procedure in the cart, not just the first. This used to seed
+    // `cartItems[0]` and then explicitly blank `selected_procedures`, so a
+    // patient who built a three-procedure cart on /procedures and walked into
+    // the conversation had two of them silently dropped from their answers.
+    // The cart itself still held all three — which is why the safety engine
+    // and the RED block kept working — but the record they submitted did not,
+    // and that is the one a doctor reads.
+    const enums = cartItems.map((i) => i.procedure_enum).filter(Boolean);
     seedAnswers({
-      procedure_interest: cartItems[0].procedure_enum || 'other',
-      selected_procedures: [],
+      procedure_interest: enums[0] || 'other',
+      selected_procedures: enums,
       procedures_from_cart: true,
     });
   }, [isLoading, cartItems, answers.procedure_interest, answers.selected_procedures, seedAnswers]);
@@ -388,9 +396,12 @@ function buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPrevi
     } else if (doctorSearch.status === 'done') {
       const matched = doctorSearch.data?.matched_doctors ?? [];
       const count = matched.length;
+      // A green tick means "I did this for you". Finding nobody is not that.
+      // The copy stays — expanding the network for this procedure is true and
+      // worth saying — but it sits as ongoing work, not as a completed win.
       items.push({
         label: count > 0 ? `${count} verified surgeon${count === 1 ? '' : 's'} found` : 'Expanding our network for your procedure',
-        state: 'done',
+        state: count > 0 ? 'done' : 'pending',
       });
       // Explainability — only real, returned fields; never a fabricated stat.
       const top = matched[0];
@@ -411,10 +422,15 @@ function buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPrevi
     if (costEstimate.status === 'done') {
       const low = costEstimate.data?.estimatedTotalLow;
       const high = costEstimate.data?.estimatedTotalHigh;
-      items.push({
-        label: low != null ? `Estimated investment: $${low.toLocaleString()}–$${high.toLocaleString()}` : 'Cost estimate ready',
-        state: 'done',
-      });
+      // "Cost estimate ready" with no numbers behind it was the worst of the
+      // three: it claimed a finished piece of work and then had nothing to
+      // show. If there is no range, there is no item.
+      if (low != null) {
+        items.push({
+          label: `Estimated investment: $${low.toLocaleString()}–$${high.toLocaleString()}`,
+          state: 'done',
+        });
+      }
     } else if (costEstimate.status === 'loading') {
       items.push({ label: 'Estimating your investment...', state: 'pending' });
     }
@@ -424,7 +440,14 @@ function buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPrevi
     if (partnerPreview.status === 'done') {
       const travel = partnerPreview.data?.travel_agency_count ?? 0;
       const taxi = partnerPreview.data?.taxi_service_count ?? 0;
-      items.push({ label: `${travel} travel & ${taxi} transfer partners ready`, state: 'done' });
+      // "0 travel & 0 transfer partners ready ✓" was a green tick celebrating
+      // an empty result. Nothing replaces it when the counts are zero: the
+      // checklist is a record of what M has actually done for this patient,
+      // and inventing a reassurance here ("your coordinator will arrange it")
+      // would be promising something no code behind this screen guarantees.
+      if (travel + taxi > 0) {
+        items.push({ label: `${travel} travel & ${taxi} transfer partners ready`, state: 'done' });
+      }
     } else if (partnerPreview.status === 'loading') {
       items.push({ label: 'Checking destination partners...', state: 'pending' });
     }

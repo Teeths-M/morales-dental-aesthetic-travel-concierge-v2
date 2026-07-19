@@ -31,6 +31,15 @@ export function buildConsultationPayload(answers, verification = {}) {
     email: answers.email || '',
     phone: answers.phone || '',
     procedure_interest: answers.procedure_interest || 'other',
+    // The full set, not just the first. The intake explicitly invites more than
+    // one ("You can choose more than one") and the safety engine scores all of
+    // them, but only procedure_interest was ever persisted — so a patient who
+    // asked for three procedures produced a record naming one. The doctor
+    // reviewing that case, and any quote built from it, were both working from
+    // an incomplete picture of what was actually requested.
+    selected_procedures: Array.isArray(answers.selected_procedures) && answers.selected_procedures.length
+      ? answers.selected_procedures
+      : (answers.procedure_interest ? [answers.procedure_interest] : []),
     destination_country: resolved(answers.destination_country),
     procedure_country: resolved(answers.procedure_country) || resolved(answers.destination_country),
     preferred_doctor_id: resolved(answers.preferred_doctor_id),

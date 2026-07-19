@@ -224,6 +224,24 @@
     "cultural_notes": {
       "type": "string"
     },
+    // Every procedure the patient asked for, not just the first.
+    //
+    // `procedure_interest` above is a single-value enum, but the intake asks
+    // "You can choose more than one" and the safety engine scores the whole
+    // set — stacking two procedures is the exact thing the RED block exists to
+    // catch. Without this field the record handed to the reviewing doctor said
+    // the patient wanted one procedure when they had asked for three, which is
+    // both a clinical misrepresentation and the wrong basis for a quote.
+    //
+    // `procedure_interest` stays as the primary/first choice so every existing
+    // consumer (matching, pricing, routing) is unaffected.
+    "selected_procedures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "All procedures the patient selected, in the order chosen. procedure_interest mirrors the first."
+    },
     "medical_conditions": {
       "type": "array",
       "items": {
