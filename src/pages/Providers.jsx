@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, X } from 'lucide-react';
 import { fuzzyScore, fuzzyMatches } from '@/lib/fuzzyMatch';
-import { isDoctorVerified } from '@/components/doctor/DoctorVerifiedBadge';
+import { isDoctorVerified } from '@/lib/doctorVerification';
 
 const PROCEDURE_FILTERS = ['All', 'Dental', 'Aesthetic', 'Rhinoplasty', 'Liposuction', 'Veneers', 'Implants'];
 const GOLD = '#D4AF37';

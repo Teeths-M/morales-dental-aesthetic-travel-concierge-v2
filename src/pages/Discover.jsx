@@ -30,7 +30,7 @@ import DoctorFilterPanel from "@/components/discover/DoctorFilterPanel";
 import PageHeroBand from "@/components/layout/PageHeroBand";
 import cityData from "@/lib/cityData.json";
 import { SERVED_COUNTRIES } from "@/lib/countryCity";
-import { isDoctorVerified } from "@/components/doctor/DoctorVerifiedBadge";
+import { isDoctorVerified } from "@/lib/doctorVerification";
 
 // id = keyword matched against DoctorSpecialty.procedure_name (case-insensitive includes)
 // Must align with en_name values in MasterProcedure entity (see seedMasterProcedures)

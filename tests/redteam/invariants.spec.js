@@ -973,8 +973,11 @@ test('PROVIDERS: the directory cannot list a doctor it calls verified', () => {
 
   // And the gate must be the shared one — a hand-copied state list already
   // drifted once (guessed 'manually_verified', wrongly included 'auto_verified').
+  // The gate moved to @/lib/doctorVerification so it could be tested without
+  // importing React; DoctorVerifiedBadge re-exports it, so either path is the
+  // same single definition and both are accepted here.
   expect(code, 'must import the shared gate, not re-implement it')
-    .toMatch(/import \{ isDoctorVerified \} from '@\/components\/doctor\/DoctorVerifiedBadge'/);
+    .toMatch(/import \{ isDoctorVerified \} from ['"]@\/(lib\/doctorVerification|components\/doctor\/DoctorVerifiedBadge)['"]/);
   expect(code, 'must not hand-roll its own verified-state list')
     .not.toMatch(/new Set\(\[['"]verified['"]/);
 });
