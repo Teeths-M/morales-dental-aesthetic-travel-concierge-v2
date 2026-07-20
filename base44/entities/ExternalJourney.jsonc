@@ -9,6 +9,7 @@
     "doctor_name": { "type": "string" },
     "doctor_license": { "type": "string", "description": "Optional licence number for a registry check" },
     "clinic_name": { "type": "string" },
+    "booking_url": { "type": "string", "description": "Link the patient booked through — validated http(s) only; identifies the exact provider for the intelligence check" },
     "procedures": { "type": "array", "items": { "type": "string" }, "description": "Canonical procedure names for safety scoring" },
     "destination_country": { "type": "string" },
     "destination_city": { "type": "string" },

@@ -181,6 +181,26 @@ Deno.serve(async (req) => {
     const activity_type = String(b.activity_type || '').trim();
     const external_journey_id = b.external_journey_id ? String(b.external_journey_id) : '';
 
+    // Booking link the patient booked through — optional, validated at the
+    // boundary: http(s) only, real hostname, capped length. Anything else is
+    // treated as absent rather than rejected (the field is a courtesy, not a
+    // gate). Never fetched by this function directly — it is handed to the
+    // internet-context intelligence check as one more identifying signal, so
+    // the check looks at the EXACT provider the patient means instead of a
+    // same-named lookalike.
+    let booking_url = '';
+    {
+      const rawUrl = String(b.booking_url || '').trim().slice(0, 300);
+      if (rawUrl) {
+        try {
+          const u = new URL(/^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`);
+          if ((u.protocol === 'https:' || u.protocol === 'http:') && u.hostname.includes('.')) {
+            booking_url = u.toString();
+          }
+        } catch (_) { /* implausible URL — treat as not provided */ }
+      }
+    }
+
     if (isNonMedical) {
       if (!activity_name || !venue_name || !country) return Response.json({ error: 'Activity, venue, and destination country are required.' }, { status: 400 });
     } else {
@@ -200,7 +220,7 @@ Deno.serve(async (req) => {
 Activity: ${sanitizePromptInput(activity_name, 120)}
 Venue/Organizer: ${sanitizePromptInput(venue_name, 160)}
 Type: ${sanitizePromptInput(activity_type, 80)}
-Location: ${sanitizePromptInput([city, country].filter(Boolean).join(', '), 120)}
+Location: ${sanitizePromptInput([city, country].filter(Boolean).join(', '), 120)}${booking_url ? `\nBooking page the traveller used (patient-provided data, verify it matches the venue): ${sanitizePromptInput(booking_url, 300)}` : ''}
 Report only publicly findable safety concerns (scams, dangerous areas, unreliable operators). Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"note":string}`,
           response_json_schema: { type: 'object', properties: {
             credibility: { type: 'string' }, red_flags: { type: 'array', items: { type: 'string' } }, note: { type: 'string' } } },
@@ -283,8 +303,11 @@ Report only publicly findable safety concerns (scams, dangerous areas, unreliabl
             detail: 'No dangerous combination detected in what you listed.' });
         }
       } else {
+        // Copy kept truthful: BYOJ collects the itinerary, not a medical
+        // history, so no "full SAFE-T scan" is promised — a coordinator
+        // review is what actually happens after enrollment.
         checks.push({ key: 'procedures', label: 'Procedure safety', status: 'verified', completed: true,
-          detail: 'A single procedure — no combination risk. A full SAFE-T scan runs once you’re enrolled.' });
+          detail: 'A single procedure — no combination risk. Your coordinator reviews your case once you’re enrolled.' });
       }
 
       // ── 4. Provider intel ───────────────────────────────────────────────────
@@ -308,7 +331,7 @@ Report only publicly findable safety concerns (scams, dangerous areas, unreliabl
             prompt: `You are a verification analyst for a medical-travel safety platform. A patient has ALREADY booked with this provider. Report only what is publicly findable.
 Doctor: ${sanitizePromptInput(doctor_name, 120)}
 Clinic: ${sanitizePromptInput(clinic_name, 160)}
-Location: ${sanitizePromptInput([city, country].filter(Boolean).join(', '), 120)}
+Location: ${sanitizePromptInput([city, country].filter(Boolean).join(', '), 120)}${booking_url ? `\nBooking page the patient used (patient-provided data — check whether this site actually belongs to the named doctor/clinic; a mismatch or impersonation is a red flag): ${sanitizePromptInput(booking_url, 300)}` : ''}
 Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"note":string}`,
             response_json_schema: { type: 'object', properties: {
               credibility: { type: 'string' }, red_flags: { type: 'array', items: { type: 'string' } }, note: { type: 'string' } } },
@@ -378,6 +401,7 @@ Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"not
       verification_result: { checks, summary },
       verified_at: nowISO,
       escalation_id,
+      booking_url,
       origin: 'byoj',
       journey_type: isNonMedical ? 'non_medical' : 'medical',
     };

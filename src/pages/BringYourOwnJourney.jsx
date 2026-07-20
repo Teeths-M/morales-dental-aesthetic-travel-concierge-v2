@@ -22,6 +22,9 @@ export default function BringYourOwnJourney() {
     destination_country: '', destination_city: '',
     doctor_name: '', clinic_name: '', procedures: [], surgery_date: '', doctor_license: '',
     activity_name: '', venue_name: '', activity_type: '',
+    // Link to the page the patient actually booked through — lets verification
+    // look at the exact provider they mean, not a same-named lookalike.
+    booking_url: '',
   });
   const [result, setResult] = useState(null);
   const [enrollResult, setEnrollResult] = useState(null);

@@ -1,10 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDown, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDown, Search, Link2, X, AlertTriangle } from 'lucide-react';
 import cityData from '@/lib/cityData.json';
 import { SERVED_COUNTRIES } from '@/lib/countryCity';
 import { procedureCategories } from '@/components/procedures/ProcedureData';
 import { fuzzyMatches } from '@/lib/fuzzyMatch';
 import SearchSelect from '@/components/ui-system/SearchSelect';
+import { getViolations } from '@/lib/procedureCompatibility';
+
+/** Light client-side URL sanity check — the server re-validates at the boundary. */
+function isPlausibleUrl(raw) {
+  if (!raw) return true; // optional field
+  try {
+    const u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return !!u.hostname && u.hostname.includes('.');
+  } catch { return false; }
+}
 
 const COUNTRIES = [...SERVED_COUNTRIES].sort((a, b) => a.localeCompare(b));
 function citiesFor(country) {
@@ -38,9 +48,23 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
   }, []);
   const procs = form.procedures || [];
   const isNonMedical = form.journey_type === 'non_medical';
+  const urlOk = isPlausibleUrl((form.booking_url || '').trim());
   const canVerify = isNonMedical
     ? form.activity_name?.trim() && form.venue_name?.trim() && form.destination_country?.trim()
     : form.doctor_name?.trim() && form.clinic_name?.trim() && form.destination_country?.trim();
+
+  // SAFE-T4life scans the moment procedures are picked — the same deterministic
+  // RED engine as /intake, running on-device, before any network call. This is
+  // an ADVISORY here, never a wall: the patient already booked elsewhere, so
+  // blocking "Verify" would close the exact safety path that alerts a
+  // coordinator (a flag NEVER closes a safety path). The server re-runs the
+  // same rules unbypassably inside verifyExternalJourney.
+  const combinationRisk = useMemo(
+    () => (isNonMedical || procs.length < 2
+      ? { violations: [], isBlocked: false }
+      : getViolations(procs.map((p) => ({ name: p, title: p })))),
+    [isNonMedical, procs]
+  );
 
   const q = procSearch.trim();
   const matchTitle = (t) => !q || t.toLowerCase().includes(q.toLowerCase()) || fuzzyMatches(q, t, 72);
@@ -174,13 +198,44 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
           <input type="date" className={textInput} value={form.surgery_date || ''}
             onChange={(e) => update('surgery_date', e.target.value)} />
         </Field>
+
+        <Field icon={Link2} label="Booking link (optional)">
+          <input type="url" className={textInput}
+            placeholder={isNonMedical ? 'Link to the venue or booking page' : 'Link to the doctor or clinic page you booked through'}
+            value={form.booking_url || ''}
+            onChange={(e) => update('booking_url', e.target.value)} />
+          {!urlOk && (
+            <p className="text-[11px] text-red-500 mt-1 mb-0">That doesn’t look like a web link — check it, e.g. clinicname.com</p>
+          )}
+        </Field>
       </div>
 
       {procs.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3">
           {procs.map((p) => (
-            <span key={p} className="text-[11px] text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2.5 py-1">{p}</span>
+            // The whole chip removes the pick — choosing wrong must never trap
+            // anyone into reopening a menu to hunt for the un-toggle.
+            <button key={p} type="button" onClick={() => toggleProc(p)}
+              title={`Remove ${p}`}
+              className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2.5 py-1 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors">
+              {p} <X className="w-3 h-3" />
+            </button>
           ))}
+        </div>
+      )}
+
+      {combinationRisk.isBlocked && (
+        <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3.5">
+          <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide font-bold text-red-600 m-0 mb-1">
+            <AlertTriangle className="w-3.5 h-3.5" /> Dangerous combination detected
+          </p>
+          <p className="text-[12.5px] text-red-700 m-0 leading-relaxed">
+            {combinationRisk.violations[0]?.pairLabel}: {combinationRisk.violations[0]?.reason}
+          </p>
+          <p className="text-[12px] text-red-600/80 m-0 mt-1.5">
+            You’ve already booked, so we won’t stop you here — verify anyway and a Morales coordinator
+            is alerted to help you re-stage this safely with your provider.
+          </p>
         </div>
       )}
 

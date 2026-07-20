@@ -103,3 +103,48 @@ test.describe('R4 manual entry only', () => {
     expect(src).toMatch(/protection_only: true/);
   });
 });
+
+// ── R6 (2026-07-19) — SAFE-T scans on pick; a flag never closes the path ──────
+test.describe('R6 combination risk is shown instantly and never walls the patient', () => {
+  test('SOURCE: the picker runs the real deterministic RED engine on-device', () => {
+    const src = read('src/components/byoj/ItineraryIntakeBar.jsx');
+    // The same engine as /intake — never a local copy, never an LLM.
+    expect(src).toMatch(/import \{ getViolations \} from '@\/lib\/procedureCompatibility'/);
+    expect(src).toMatch(/Dangerous combination detected/);
+  });
+
+  test('SOURCE: a RED combination does NOT disable Verify — verification IS the escalation path', () => {
+    const src = read('src/components/byoj/ItineraryIntakeBar.jsx');
+    // canVerify must not consult the violation result: the patient already
+    // booked elsewhere, and pressing Verify is what alerts a coordinator (R2).
+    const canVerifyDecl = src.slice(src.indexOf('const canVerify'), src.indexOf('const canVerify') + 300);
+    expect(canVerifyDecl).not.toMatch(/isBlocked|combinationRisk|violations/);
+  });
+
+  test('SOURCE: a wrong procedure pick is removable from the visible chips', () => {
+    const src = read('src/components/byoj/ItineraryIntakeBar.jsx');
+    expect(src).toMatch(/Remove \$\{p\}/); // chip itself un-picks — no menu hunt
+  });
+});
+
+// ── R7 (2026-07-19) — booking link is validated, sanitized, and never fetched ──
+test.describe('R7 the booking link is a signal, not an attack surface', () => {
+  test('SOURCE: server validates scheme + hostname at the boundary and caps length', () => {
+    const src = read('base44/functions/verifyExternalJourney/entry.ts');
+    expect(src).toMatch(/u\.protocol === 'https:' \|\| u\.protocol === 'http:'/);
+    expect(src).toMatch(/\.slice\(0, 300\)/);
+  });
+
+  test('SOURCE: the URL passes through the prompt sanitizer and is never fetched directly', () => {
+    const src = read('base44/functions/verifyExternalJourney/entry.ts');
+    expect(src).toMatch(/sanitizePromptInput\(booking_url/);
+    expect(src).not.toMatch(/fetch\(\s*booking_url/); // no server-side request to a user URL
+  });
+
+  test('SOURCE: the false "full SAFE-T scan on enrollment" promise stays dead', () => {
+    // BYOJ collects an itinerary, not a medical history — a "full SAFE-T scan"
+    // cannot run on it, so the product must not promise one.
+    const src = read('base44/functions/verifyExternalJourney/entry.ts');
+    expect(src).not.toMatch(/full SAFE-T scan runs once/i);
+  });
+});
