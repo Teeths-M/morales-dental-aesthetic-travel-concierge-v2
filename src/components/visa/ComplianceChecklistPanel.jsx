@@ -39,21 +39,30 @@ export default function ComplianceChecklistPanel({ caseId }) {
   const [result, setResult] = useState(null);
   const [checklist, setChecklist] = useState(null);
   const [expandedCats, setExpandedCats] = useState({});
+  const [error, setError] = useState('');
 
   const generate = async () => {
     if (!passport || !destination) return;
     setLoading(true);
-    const res = await base44.functions.invoke('generateComplianceChecklist', {
-      passport_country: passport,
-      destination_country: destination,
-      medical_purpose: purpose,
-      case_id: caseId || null
-    });
-    if (res.data?.checklist) {
-      setChecklist(res.data.checklist);
-      setResult(res.data.policy);
+    setError('');
+    try {
+      const res = await base44.functions.invoke('generateComplianceChecklist', {
+        passport_country: passport,
+        destination_country: destination,
+        medical_purpose: purpose,
+        case_id: caseId || null
+      });
+      if (res.data?.checklist) {
+        setChecklist(res.data.checklist);
+        setResult(res.data.policy);
+      } else {
+        setError('Could not generate a checklist — please try again.');
+      }
+    } catch (_e) {
+      setError('Could not generate a checklist — please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const toggleTask = (idx) => {
@@ -115,6 +124,7 @@ export default function ComplianceChecklistPanel({ caseId }) {
             placeholder="e.g. Rhinoplasty and recovery — 14 day stay" />
         </div>
 
+        {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
         <Button onClick={generate} disabled={!passport || !destination || loading}
           className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 hover:opacity-90 text-white rounded-xl py-2.5 font-semibold disabled:opacity-50">
           {loading ? (

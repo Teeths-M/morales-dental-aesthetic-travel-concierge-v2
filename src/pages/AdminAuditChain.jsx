@@ -15,13 +15,18 @@ export default function AdminAuditChain() {
     setLoading(true);
     setError(null);
     setResult(null);
-    const res = await base44.functions.invoke('verifyAuditChain', {});
-    if (res.data?.error) {
-      setError(res.data.error);
-    } else {
-      setResult(res.data);
+    try {
+      const res = await base44.functions.invoke('verifyAuditChain', {});
+      if (res.data?.error) {
+        setError(res.data.error);
+      } else {
+        setResult(res.data);
+      }
+    } catch (err) {
+      setError(err?.data?.error || err?.message || 'Could not run verification — please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

@@ -27,6 +27,7 @@ export default function BaggageTracker({ caseId }) {
   const [showLost, setShowLost] = useState(null);
   const [form, setForm] = useState({ bag_label: '', bag_number: 1, airline_pnr: '', airline_code: '', flight_number: '', origin_airport: '', destination_airport: '' });
   const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState('');
 
   useEffect(() => { loadBags(); }, [caseId]);
 
@@ -39,11 +40,17 @@ export default function BaggageTracker({ caseId }) {
 
   const handleRegister = async () => {
     setRegistering(true);
-    await base44.functions.invoke('registerLuggageToken', { case_id: caseId, ...form });
-    setShowRegister(false);
-    setForm({ bag_label: '', bag_number: bags.length + 1, airline_pnr: '', airline_code: '', flight_number: '', origin_airport: '', destination_airport: '' });
-    loadBags();
-    setRegistering(false);
+    setRegisterError('');
+    try {
+      await base44.functions.invoke('registerLuggageToken', { case_id: caseId, ...form });
+      setShowRegister(false);
+      setForm({ bag_label: '', bag_number: bags.length + 1, airline_pnr: '', airline_code: '', flight_number: '', origin_airport: '', destination_airport: '' });
+      loadBags();
+    } catch (_e) {
+      setRegisterError('Could not register this bag — please try again.');
+    } finally {
+      setRegistering(false);
+    }
   };
 
   const updateStatus = async (bag, newStatus) => {
@@ -177,6 +184,7 @@ export default function BaggageTracker({ caseId }) {
                   </div>
                 ))}
               </div>
+              {registerError && <p className="text-xs text-red-600 mt-3">{registerError}</p>}
               <div className="flex gap-3 mt-5">
                 <Button onClick={handleRegister} disabled={!form.bag_label || registering}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl">

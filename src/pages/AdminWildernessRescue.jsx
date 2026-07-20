@@ -84,6 +84,10 @@ export default function AdminWildernessRescue() {
         description: 'It is unchanged. Retry before standing down.',
         duration: 12000,
       });
+      // Must reset before returning — otherwise every action button for this
+      // incident (dispatch/acknowledge/resolve) stays disabled forever, which
+      // directly contradicts the "retry" the toast above just asked for.
+      setActionLoading(l => ({ ...l, [incident.id]: null }));
       return;
     }
 

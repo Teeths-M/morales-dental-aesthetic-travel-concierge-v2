@@ -245,7 +245,14 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     // This is now PBKDF2-SHA256 @600k like everything else. It was previously
     // an unsalted single-round SHA-256, written unconditionally and accepted as
     // a fallback, which reduced the whole scheme to that weakest link.
-    await saveLocalPIN(pin, userEmail, hint);
+    // Guarded like the saveVaultPIN call above it — an unguarded throw here
+    // (crypto/storage failure) used to leave "Activate Emergency PIN"/"Save
+    // New PIN" stuck disabled forever with loading never reset.
+    try {
+      await saveLocalPIN(pin, userEmail, hint);
+    } catch (err) {
+      console.error('[EmergencyPINSetup] local PIN save failed:', err);
+    }
 
     // Step 2: Save to server (if online and not already handled above)
     if (!isChangingExisting && navigator.onLine) {

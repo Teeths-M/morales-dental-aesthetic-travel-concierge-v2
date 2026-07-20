@@ -29,6 +29,7 @@ export default function MonetizationDashboard() {
     subscription_tier: 'starter', subscription_amount_usd: 50, status: 'active'
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => { loadPlans(); }, []);
 
@@ -47,10 +48,16 @@ export default function MonetizationDashboard() {
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.entities.MonetizationPlan.create({ ...newPlan, billing_cycle_start: new Date().toISOString().split('T')[0] });
-    setShowAdd(false);
-    setSaving(false);
-    loadPlans();
+    setSaveError('');
+    try {
+      await base44.entities.MonetizationPlan.create({ ...newPlan, billing_cycle_start: new Date().toISOString().split('T')[0] });
+      setShowAdd(false);
+      loadPlans();
+    } catch (_e) {
+      setSaveError('Could not create this plan — please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const planTypeStats = {};
@@ -211,6 +218,7 @@ export default function MonetizationDashboard() {
                 </div>
               )}
             </div>
+            {saveError && <p className="text-xs text-red-600 mt-3">{saveError}</p>}
             <div className="flex gap-3 mt-5">
               <Button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
                 {saving ? 'Saving...' : 'Create Plan'}

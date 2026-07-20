@@ -17,6 +17,7 @@ export default function LuggageFinderPortal() {
   const [form, setForm] = useState({ finder_name: '', finder_phone: '', finder_email: '', current_location: '' });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -32,38 +33,44 @@ export default function LuggageFinderPortal() {
   const handleSubmit = async () => {
     if (!form.finder_name || !form.current_location) return;
     setSubmitting(true);
+    setSubmitError('');
 
-    // Update bag status to 'found'
-    const history = [...(bag.status_history || []), {
-      status: 'found',
-      location: form.current_location,
-      timestamp: new Date().toISOString(),
-      source: 'finder_scan'
-    }];
+    try {
+      // Update bag status to 'found'
+      const history = [...(bag.status_history || []), {
+        status: 'found',
+        location: form.current_location,
+        timestamp: new Date().toISOString(),
+        source: 'finder_scan'
+      }];
 
-    await base44.asServiceRole.entities.LuggageToken.update(bag.id, {
-      current_status: 'found',
-      last_seen_location: form.current_location,
-      status_history: history,
-      last_updated_at: new Date().toISOString(),
-      return_coordinated_at: new Date().toISOString()
-    });
+      await base44.asServiceRole.entities.LuggageToken.update(bag.id, {
+        current_status: 'found',
+        last_seen_location: form.current_location,
+        status_history: history,
+        last_updated_at: new Date().toISOString(),
+        return_coordinated_at: new Date().toISOString()
+      });
 
-    // Notify owner + admin via email — no owner details shown to finder
-    if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
-      to: bag.patient_email,
-      subject: '🎉 Your Lost Bag Has Been Found!',
-      body: `Great news! Someone found your bag.\n\nBag: ${bag.bag_label}\nFound by: ${form.finder_name}\nLocation: ${form.current_location}\n${form.finder_phone ? `Finder phone: ${form.finder_phone}` : ''}\n${form.finder_email ? `Finder email: ${form.finder_email}` : ''}\n\nYour concierge team will coordinate the return. We'll be in touch shortly.\n\nMorales Medical`
-    });
+      // Notify owner + admin via email — no owner details shown to finder
+      if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
+        to: bag.patient_email,
+        subject: '🎉 Your Lost Bag Has Been Found!',
+        body: `Great news! Someone found your bag.\n\nBag: ${bag.bag_label}\nFound by: ${form.finder_name}\nLocation: ${form.current_location}\n${form.finder_phone ? `Finder phone: ${form.finder_phone}` : ''}\n${form.finder_email ? `Finder email: ${form.finder_email}` : ''}\n\nYour concierge team will coordinate the return. We'll be in touch shortly.\n\nMorales Medical`
+      });
 
-    if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
-      to: 'admin@moralesmedical.com',
-      subject: `🧳 Luggage Found — ${bag.token_code}`,
-      body: `Lost bag has been found via QR scan.\n\nToken: ${bag.token_code}\nBag: ${bag.bag_label}\nOwner case: ${bag.case_id}\nFound by: ${form.finder_name} at ${form.current_location}\nFinder contact: ${form.finder_phone || form.finder_email || 'None provided'}`
-    });
+      if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
+        to: 'admin@moralesmedical.com',
+        subject: `🧳 Luggage Found — ${bag.token_code}`,
+        body: `Lost bag has been found via QR scan.\n\nToken: ${bag.token_code}\nBag: ${bag.bag_label}\nOwner case: ${bag.case_id}\nFound by: ${form.finder_name} at ${form.current_location}\nFinder contact: ${form.finder_phone || form.finder_email || 'None provided'}`
+      });
 
-    setSubmitted(true);
-    setSubmitting(false);
+      setSubmitted(true);
+    } catch (_e) {
+      setSubmitError('Could not notify the owner — please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return (
@@ -138,6 +145,7 @@ export default function LuggageFinderPortal() {
               </div>
             </div>
 
+            {submitError && <p className="text-center text-xs text-red-500 mt-4">{submitError}</p>}
             <Button onClick={handleSubmit}
               disabled={!form.finder_name || !form.current_location || submitting}
               className="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold">

@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Send, Eye, CheckCircle2, AlertCircle, Loader2,
   Stethoscope, Plane, Car, Users, Zap
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const GROUPS = [
   { id: 'doctors', label: 'Doctors', icon: Stethoscope, color: 'text-blue-600', desc: 'Send portal links to all active doctors' },
@@ -29,12 +30,17 @@ export default function BroadcastPortalLinksPanel() {
     if (selected.length === 0) return;
     setLoading(true);
     setResult(null);
-    const res = await base44.functions.invoke('broadcastPortalLinks', {
-      dry_run: dryRun,
-      target_groups: selected,
-    });
-    setResult(res.data);
-    setLoading(false);
+    try {
+      const res = await base44.functions.invoke('broadcastPortalLinks', {
+        dry_run: dryRun,
+        target_groups: selected,
+      });
+      setResult(res.data);
+    } catch (err) {
+      toast.error('Broadcast failed: ' + (err.message || 'please try again'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const _byType = (type) => result?.details?.sent?.filter(r => r.type === type) || [];

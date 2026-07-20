@@ -34,16 +34,24 @@ export default function IQ200EnginePanel({ caseId, userRole = null }) {
 
   const fetchStatus = useCallback(async () => {
     setLoading(true);
-    const res = await base44.functions.invoke('iq200HandshakeEngine', {
-      action: 'get_status',
-      case_id: CASE_ID,
-    });
-    if (res.data?.statuses) {
-      setStatuses(res.data.statuses);
-      setCompleted(res.data.completed || 0);
+    try {
+      const res = await base44.functions.invoke('iq200HandshakeEngine', {
+        action: 'get_status',
+        case_id: CASE_ID,
+      });
+      if (res.data?.statuses) {
+        setStatuses(res.data.statuses);
+        setCompleted(res.data.completed || 0);
+      }
+    } catch (_e) {
+      // Unguarded before: a failed initial fetch left `loading` stuck true,
+      // which also hid the "Initialize iQ200 Engine" button forever (it only
+      // renders once !loading), stranding the panel with nothing actionable.
+      toast({ title: 'Could not load handshake status', description: 'Please try refreshing.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [CASE_ID]);
+  }, [CASE_ID, toast]);
 
   const fetchAuditLogs = useCallback(async () => {
     const res = await base44.entities.AuditLog.filter({ case_id: CASE_ID }, '-created_date', 20);
@@ -60,13 +68,18 @@ export default function IQ200EnginePanel({ caseId, userRole = null }) {
 
   const handleInitialize = async () => {
     setInitializing(true);
-    await base44.functions.invoke('iq200HandshakeEngine', {
-      action: 'create_touchpoints',
-      case_id: CASE_ID,
-    });
-    await fetchStatus();
-    setInitializing(false);
-    toast({ title: 'iQ200 Engine Initialized', description: '8 touchpoint handshakes created for this case.' });
+    try {
+      await base44.functions.invoke('iq200HandshakeEngine', {
+        action: 'create_touchpoints',
+        case_id: CASE_ID,
+      });
+      await fetchStatus();
+      toast({ title: 'iQ200 Engine Initialized', description: '8 touchpoint handshakes created for this case.' });
+    } catch (_e) {
+      toast({ title: 'Could not initialize the iQ200 Engine', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setInitializing(false);
+    }
   };
 
   const handleConfirm = async (touchpointId, notes) => {

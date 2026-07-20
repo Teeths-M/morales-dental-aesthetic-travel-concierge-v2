@@ -61,19 +61,23 @@ function ChangeCard({ change, currentUser, onAction }) {
   const handleAction = async (action) => {
     setActing(true);
     setActionError('');
-    const res = await base44.functions.invoke('processConfigApproval', {
-      change_id: change.id,
-      action,
-      deny_reason: denyReason || undefined,
-    });
-    if (res.data?.error) {
-      setActionError(res.data.error);
+    try {
+      const res = await base44.functions.invoke('processConfigApproval', {
+        change_id: change.id,
+        action,
+        deny_reason: denyReason || undefined,
+      });
+      if (res.data?.error) {
+        setActionError(res.data.error);
+        return;
+      }
+      setShowConfirm(null);
+      onAction();
+    } catch (err) {
+      setActionError(err?.data?.error || err?.message || 'Could not process this action — please try again.');
+    } finally {
       setActing(false);
-      return;
     }
-    setShowConfirm(null);
-    setActing(false);
-    onAction();
   };
 
   return (
@@ -235,17 +239,21 @@ function RequestChangeModal({ onClose, onSuccess }) {
     if (!form.change_reason.trim()) { setError('Please provide a reason for this change.'); return; }
 
     setSubmitting(true);
-    const res = await base44.functions.invoke('requestConfigChange', {
-      config_key: form.config_key,
-      config_label: selectedConfig?.label,
-      requested_value: parsedValue,
-      change_reason: form.change_reason,
-    });
-    setSubmitting(false);
-
-    if (res.data?.error) { setError(res.data.error); return; }
-    onSuccess();
-    onClose();
+    try {
+      const res = await base44.functions.invoke('requestConfigChange', {
+        config_key: form.config_key,
+        config_label: selectedConfig?.label,
+        requested_value: parsedValue,
+        change_reason: form.change_reason,
+      });
+      if (res.data?.error) { setError(res.data.error); return; }
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err?.data?.error || err?.message || 'Could not submit this request — please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

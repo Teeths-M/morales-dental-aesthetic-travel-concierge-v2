@@ -17,17 +17,25 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
   const [city, setCity] = useState(defaultCity || '');
   const [briefing, setBriefing] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const fetchBriefing = async (forceRefresh = false) => {
     if (!country) return;
     setLoading(true);
-    const res = await base44.functions.invoke('getSpaceIntelBriefing', {
-      destination_country: country,
-      destination_city: city,
-      force_refresh: forceRefresh
-    });
-    if (res.data?.briefing) setBriefing(res.data.briefing);
-    setLoading(false);
+    setError('');
+    try {
+      const res = await base44.functions.invoke('getSpaceIntelBriefing', {
+        destination_country: country,
+        destination_city: city,
+        force_refresh: forceRefresh
+      });
+      if (res.data?.briefing) setBriefing(res.data.briefing);
+      else setError('No briefing available for this destination yet.');
+    } catch (_e) {
+      setError('Could not load the safety briefing — please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const geoRisk = briefing ? RISK_CONFIG[briefing.geopolitical_risk] : null;
@@ -53,6 +61,7 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
           {loading ? 'Analyzing...' : 'Get Briefing'}
         </Button>
       </div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
 
       <AnimatePresence>
         {briefing && (

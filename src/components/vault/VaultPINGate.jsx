@@ -85,16 +85,22 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
         return;
       }
       
-      const isValid = await verifyPIN(pinString, storedSalt, storedHash);
-      
-      if (isValid) {
-        onPINVerified();
-      } else {
-        setError('Incorrect PIN. Please try again.');
-        setPin(['', '', '', '']);
-        inputRefs[0]?.current?.focus();
+      try {
+        const isValid = await verifyPIN(pinString, storedSalt, storedHash);
+        if (isValid) {
+          onPINVerified();
+        } else {
+          setError('Incorrect PIN. Please try again.');
+          setPin(['', '', '', '']);
+          inputRefs[0]?.current?.focus();
+        }
+      } catch (_e) {
+        // A crypto/storage failure here used to leave "Unlock Vault" stuck
+        // disabled forever with no explanation.
+        setError('Could not verify your PIN on this device. Please try again.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
       return;
     }
     

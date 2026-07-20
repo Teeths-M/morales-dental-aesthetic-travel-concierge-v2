@@ -80,55 +80,65 @@ export default function AdventureSafetyCenter() {
     const handshakeDue = new Date(new Date(endAt).getTime() + 2 * 60 * 60 * 1000).toISOString();
     const checklist = getChecklist(selectedType.id);
 
-    const session = await base44.entities.ActivitySession.create({
-      case_id: caseId || '',
-      patient_id: user.id,
-      patient_email: user.email,
-      patient_name: user.full_name,
-      activity_name: selectedType.label,
-      activity_category: selectedType.category,
-      risk_level: selectedType.risk,
-      scheduled_start_at: startAt,
-      scheduled_end_at: endAt,
-      handshake_due_at: handshakeDue,
-      handshake_status: 'pending',
-      status: 'registered',
-      location: form.location,
-      operator_name: form.operator,
-      iso_checklist_items: checklist,
-    });
+    try {
+      const session = await base44.entities.ActivitySession.create({
+        case_id: caseId || '',
+        patient_id: user.id,
+        patient_email: user.email,
+        patient_name: user.full_name,
+        activity_name: selectedType.label,
+        activity_category: selectedType.category,
+        risk_level: selectedType.risk,
+        scheduled_start_at: startAt,
+        scheduled_end_at: endAt,
+        handshake_due_at: handshakeDue,
+        handshake_status: 'pending',
+        status: 'registered',
+        location: form.location,
+        operator_name: form.operator,
+        iso_checklist_items: checklist,
+      });
 
-    // Log to AuditLog (actor derived from session server-side)
-    await auditService.log({
-      event_type: 'handshake_created',
-      resource_type: 'ActivitySession',
-      resource_id: session.id,
-      resource_name: selectedType.label,
-      case_id: caseId || '',
-      details: { action: 'activity_registered', risk_level: selectedType.risk, location: form.location },
-    });
+      // Log to AuditLog (actor derived from session server-side)
+      await auditService.log({
+        event_type: 'handshake_created',
+        resource_type: 'ActivitySession',
+        resource_id: session.id,
+        resource_name: selectedType.label,
+        case_id: caseId || '',
+        details: { action: 'activity_registered', risk_level: selectedType.risk, location: form.location },
+      });
 
-    toast({ title: `✅ ${selectedType.label} registered`, description: 'ISO 21101 checklist generated. You\'ll receive a nudge 1hr before.' });
-    setShowForm(false);
-    setSelectedType(null);
-    setForm({ date: '', time: '', duration_hours: 2, location: '', operator: '' });
-    loadSessions();
-    setLoading(false);
+      toast({ title: `✅ ${selectedType.label} registered`, description: 'ISO 21101 checklist generated. You\'ll receive a nudge 1hr before.' });
+      setShowForm(false);
+      setSelectedType(null);
+      setForm({ date: '', time: '', duration_hours: 2, location: '', operator: '' });
+      loadSessions();
+    } catch (_e) {
+      toast({ title: 'Could not register activity', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const submitHandshake = async (sessionId, safe) => {
     setHandshaking(sessionId);
-    await base44.entities.ActivitySession.update(sessionId, {
-      handshake_status: 'completed',
-      handshake_completed_at: new Date().toISOString(),
-      status: safe ? 'completed' : 'escalated',
-    });
-    toast({
-      title: safe ? '✅ Check-in complete — glad you are safe!' : '🚨 Emergency alert sent',
-      variant: safe ? 'default' : 'destructive',
-    });
-    setHandshaking(null);
-    loadSessions();
+    try {
+      await base44.entities.ActivitySession.update(sessionId, {
+        handshake_status: 'completed',
+        handshake_completed_at: new Date().toISOString(),
+        status: safe ? 'completed' : 'escalated',
+      });
+      toast({
+        title: safe ? '✅ Check-in complete — glad you are safe!' : '🚨 Emergency alert sent',
+        variant: safe ? 'default' : 'destructive',
+      });
+      loadSessions();
+    } catch (_e) {
+      toast({ title: 'Could not send check-in', description: 'Please try again — this check-in has NOT been recorded.', variant: 'destructive' });
+    } finally {
+      setHandshaking(null);
+    }
   };
 
   const toggleCheckItem = async (session, idx) => {

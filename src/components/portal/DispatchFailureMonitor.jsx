@@ -55,12 +55,17 @@ export default function DispatchFailureMonitor() {
 
   const handleResolve = async (failure) => {
     setResolvingId(failure.id);
-    await base44.entities.DispatchFailureLog.update(failure.id, {
-      status: 'resolved',
-      resolved_at: new Date().toISOString(),
-    });
-    setFailures(prev => prev.filter(f => f.id !== failure.id));
-    setResolvingId(null);
+    try {
+      await base44.entities.DispatchFailureLog.update(failure.id, {
+        status: 'resolved',
+        resolved_at: new Date().toISOString(),
+      });
+      setFailures(prev => prev.filter(f => f.id !== failure.id));
+    } catch (err) {
+      toast.error('Could not mark resolved: ' + err.message);
+    } finally {
+      setResolvingId(null);
+    }
   };
 
   if (loading) {
