@@ -81,7 +81,16 @@ export default function VisaAIChat() {
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `${SYSTEM_PROMPT}\n\nConversation history:\n${history}\n\nPatient: ${userMsg}\n\nSAFE-T VISA ASSISTâ„¢:`,
       });
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      // Without a response_json_schema, InvokeLLM does not reliably return a
+      // plain string -- it can come back as { result } or { text }. Storing
+      // it raw as `content` crashed the render below (`msg.content.split`)
+      // whenever that happened. Same coercion already used in
+      // PlatformGuideOrb.jsx and GlobalEventBroadcaster.jsx for this exact call shape.
+      const text = typeof response === 'string' ? response : (response?.result || response?.text || '');
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: text || "I'm here to help — could you rephrase that?",
+      }]);
     } catch (_e) {
       setMessages(prev => [...prev, {
         role: 'assistant',

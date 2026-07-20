@@ -123,7 +123,13 @@ export default function VisaWizard({ onResult }) {
         Write 2â€“3 sentences in a warm, calm, non-intimidating tone explaining their situation and next steps.
         Keep it simple â€” like explaining to a nervous traveler. No bullet points, just flowing friendly text.`
       });
-      aiSummary = resp;
+      // Without a response_json_schema, InvokeLLM can come back as
+      // { result }/{ text } instead of a plain string -- storing it raw used
+      // to hand an object down through onResult() to whatever renders
+      // aiSummary. Same coercion as VisaAIChat.jsx for this call shape.
+      const text = typeof resp === 'string' ? resp : (resp?.result || resp?.text || '');
+      if (!text) throw new Error('InvokeLLM returned no usable text');
+      aiSummary = text;
     } catch (_e) {
       aiSummary = `Based on your ${passport?.name} passport, your travel to ${destination?.name} for ${purpose?.label} requires the following steps. Please review the document checklist carefully and reach out to our concierge team if you need assistance.`;
     }

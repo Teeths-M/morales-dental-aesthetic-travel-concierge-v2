@@ -179,8 +179,15 @@ export default function TravelConcierge() {
         add_context_from_internet: true,
         model: 'gemini_3_flash'
       });
-      
-      setVisaRequirements(response.data);
+
+      // Without a response_json_schema, InvokeLLM can come back as a plain
+      // string or as { result }/{ text } -- `response.data` assumed a shape
+      // this call never actually returns, and an object landing in
+      // visaRequirements would crash the render ("Objects are not valid as
+      // a React child"). Same coercion as the other InvokeLLM call sites.
+      const text = typeof response === 'string' ? response : (response?.result || response?.text || '');
+      if (!text) throw new Error('InvokeLLM returned no usable text');
+      setVisaRequirements(text);
       toast({
         title: 'Visa Requirements Checked',
         description: 'AI has analyzed the visa requirements for your destination.',

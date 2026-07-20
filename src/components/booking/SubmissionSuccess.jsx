@@ -62,7 +62,13 @@ Patient Profile:
 
 Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure and situation. Format as simple plain text with one tip per line starting with an emoji. Be specific, warm, and concise. Maximum 3 lines total.`,
       });
-      setPreparation(resp);
+      // Without a response_json_schema, InvokeLLM can come back as an object
+      // ({ result }/{ text }) rather than a plain string -- storing it raw
+      // used to crash the render below (`preparation.split`). Same coercion
+      // as VisaAIChat.jsx/VisaWizard.jsx for this call shape.
+      const text = typeof resp === 'string' ? resp : (resp?.result || resp?.text || '');
+      if (!text) throw new Error('InvokeLLM returned no usable text');
+      setPreparation(text);
       setPreparationLoaded(true);
     } catch {
       setPreparation('💧 Stay well-hydrated in the days before your procedure.\n🛌 Prioritize rest and sleep to support your body\'s readiness.\n🧘 Practice calming breathing exercises to manage pre-procedure nerves.\n✈️ Begin arranging your travel documents and companion support now.');
