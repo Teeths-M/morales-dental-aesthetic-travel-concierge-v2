@@ -174,7 +174,8 @@ export async function governedAICall(base44, options) {
     context = {}
   } = options;
 
-  // Guard: respect System Pause — asServiceRole.integrations bypasses the Proxy
+  // Guard: respect System Pause explicitly (belt and braces on top of the
+  // integrations Proxy in systemPause.js).
   try {
     const { isSystemPaused } = await import('@/lib/systemPause');
     if (isSystemPaused()) {
@@ -186,7 +187,12 @@ export async function governedAICall(base44, options) {
   const profile = AIPerformanceProfile.getProfile(useCase);
 
   try {
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    // User-scoped: this module runs in the browser, where asServiceRole is a
+    // THROWING getter (backend-only) — the old service-role call could never
+    // succeed; every governedAICall landed in the fallback handler. (No
+    // frontend caller invokes this today, but if one ever does, it now works
+    // and is correctly intercepted by the System Pause proxy.)
+    const result = await base44.integrations.Core.InvokeLLM({
       model: profile.model,
       prompt: `${AISystemPrompt.base}\n\n${prompt}`,
       response_json_schema

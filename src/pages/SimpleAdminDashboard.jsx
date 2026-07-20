@@ -29,7 +29,10 @@ export default function SimpleAdminDashboard() {
   const { data: allCases = [], isLoading, refetch } = useQuery({
     queryKey: ['admin_all_cases', refreshKey],
     queryFn: async () => {
-      const result = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 500);
+      // User-scoped: asServiceRole throws in the browser (backend-only) — the
+      // main admin case list was always empty because of it. Admin RLS on
+      // CaseRecord permits this read directly.
+      const result = await base44.entities.CaseRecord.list('-created_date', 500);
       return result || [];
     },
     staleTime: 30000, // Keep data fresh for 30 seconds

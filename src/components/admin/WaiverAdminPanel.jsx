@@ -21,7 +21,10 @@ export default function WaiverAdminPanel({ caseRecord }) {
 
   const { data: waivers = [], isLoading } = useQuery({
     queryKey: ['waivers', caseRecord?.id],
-    queryFn: () => base44.asServiceRole.entities.WaiverRequest.filter({ case_id: caseRecord.id }),
+    // User-scoped on purpose: asServiceRole THROWS in the browser (backend-only,
+    // no serviceToken client-side) — this query silently returned nothing for
+    // months. Admin RLS on WaiverRequest permits this read directly.
+    queryFn: () => base44.entities.WaiverRequest.filter({ case_id: caseRecord.id }),
     enabled: !!caseRecord?.id,
   });
 

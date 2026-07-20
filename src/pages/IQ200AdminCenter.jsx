@@ -342,13 +342,14 @@ export default function IQ200AdminCenter() {
   const [seedDemoMessage, setSeedDemoMessage] = useState('');
   const { data: cases = [], isLoading, isError: casesError, refetch } = useQuery({
     queryKey: ['iq200_cases'],
-    queryFn: () => base44.asServiceRole.entities.CaseRecord.filter({}, '-created_date', 50),
+    // User-scoped: asServiceRole throws in the browser (backend-only).
+    queryFn: () => base44.entities.CaseRecord.filter({}, '-created_date', 50),
     refetchInterval: 300_000,
   });
 
   const { data: consultations = [], isError: consultationsError } = useQuery({
     queryKey: ['consultations_for_iq200'],
-    queryFn: () => base44.asServiceRole.entities.Consultation.filter({}, '-created_date', 50),
+    queryFn: () => base44.entities.Consultation.filter({}, '-created_date', 50),
   });
 
   const loadError = (casesError || consultationsError) ? 'Failed to load. Please refresh.' : null;

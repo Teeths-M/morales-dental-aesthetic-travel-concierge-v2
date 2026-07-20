@@ -313,7 +313,9 @@ export default function AdminConfigApprovals() {
 
   const { data: allChanges = [], isLoading, refetch } = useQuery({
     queryKey: ['system_config_changes'],
-    queryFn: () => base44.asServiceRole.entities.SystemConfigChange.list('-created_date', 100),
+    // User-scoped: asServiceRole throws in the browser (backend-only). Admin
+    // RLS on SystemConfigChange permits this read directly.
+    queryFn: () => base44.entities.SystemConfigChange.list('-created_date', 100),
     staleTime: 30000,
   });
 

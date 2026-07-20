@@ -70,7 +70,9 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
         notes: `Escalate button clicked via crisis panel. Case priority set to Critical.`,
       };
 
-      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+      // User-scoped: asServiceRole throws in the browser (backend-only) — this
+      // escalation write ALWAYS failed. Admin RLS permits the update directly.
+      await base44.entities.CaseRecord.update(caseRecord.id, {
         case_priority: 'Critical',
         fallback_state: {
           ...fallback,
@@ -88,7 +90,9 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
       onLogged?.();
       onClose();
     } catch (e) {
-      toast.error('Failed to log intervention: ' + e.message);
+      // Raw e.message is for the console, not the operator (Wiz #10).
+      console.error('[FallbackCrisisAlert] intervention log failed:', e?.message);
+      toast.error('Failed to log intervention — the case was NOT escalated. Try again.');
     } finally {
       setLoading(false);
     }
@@ -103,7 +107,7 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
         actor: 'Admin',
         notes: 'Marked resolved via admin crisis panel.',
       };
-      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+      await base44.entities.CaseRecord.update(caseRecord.id, {
         fallback_state: {
           ...fallback,
           in_flux: false,

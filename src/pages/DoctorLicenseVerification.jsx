@@ -49,7 +49,9 @@ export default function DoctorLicenseVerification() {
 
   const { data: doctors = [], isLoading, refetch } = useQuery({
     queryKey: ['doctors-verification'],
-    queryFn: () => base44.asServiceRole.entities.Doctor.list('-created_date', 200),
+    // User-scoped: asServiceRole throws in the browser (backend-only) — this
+    // console listed zero doctors for months because of it.
+    queryFn: () => base44.entities.Doctor.list('-created_date', 200),
   });
 
   const verifyMutation = useMutation({

@@ -64,8 +64,9 @@ async function mountApp() {
   // pick up the paused state set on any other device. Zero integration credits used.
   await syncPauseFromServer().catch(() => {});
 
-  // Mobile/tablet: base44.asServiceRole.integrations may initialize lazily after
-  // the first applyPauseIntercept() call. Retry after 1.5s to catch that window.
+  // Mobile/tablet: base44.integrations may initialize lazily after the first
+  // applyPauseIntercept() call. Retry after 1.5s to catch that window. (There
+  // is no service-role path in the browser — that getter is backend-only.)
   if (isSystemPaused()) {
     setTimeout(() => applyPauseIntercept(), 1500);
   }
@@ -128,7 +129,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   // 1. Belt-and-suspenders: re-apply from localStorage instantly (works offline)
   //    Calling applyPauseIntercept() again is safe — it skips already-proxied paths
-  //    but picks up asServiceRole.integrations if it was lazy-initialized since last call.
+  //    but picks up base44.integrations if it was lazy-initialized since last call.
   if (isSystemPaused()) applyPauseIntercept();
   // 2. Throttle: only hit the server once per 30 seconds to avoid spam
   const now = Date.now();

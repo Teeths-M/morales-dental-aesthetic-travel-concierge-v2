@@ -168,7 +168,9 @@ export default function SatelliteDevicePanel() {
 
   const { data: devices = [], isLoading } = useQuery({
     queryKey: ['satellite-devices'],
-    queryFn:  () => base44.asServiceRole.entities.SatelliteDevice.list('-created_date', 100),
+    // User-scoped: asServiceRole throws in the browser (backend-only). Admin
+    // RLS on SatelliteDevice permits this read directly.
+    queryFn:  () => base44.entities.SatelliteDevice.list('-created_date', 100),
     staleTime: 60_000,
   });
 

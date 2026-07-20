@@ -3,12 +3,18 @@
  * System Pause — stops all Base44 API calls to conserve integration credits.
  *
  * Cross-device sync: pause state is stored in both localStorage (instant, this
- * device) AND in the SystemConfigChange entity (server-side, all devices).
- * On every app startup, syncPauseFromServer() is called before React mounts,
- * so a phone or tablet automatically picks up the paused state set on the laptop.
+ * device) AND in the SystemConfigChange entity (server-side). On startup,
+ * syncPauseFromServer() runs before React mounts.
+ *
+ * HONEST LIMIT: the server flag is read/written with the normal user-scoped
+ * client, and SystemConfigChange RLS is admin-only — so cross-device sync works
+ * between devices signed in as ADMIN (the audience that pauses the system) and
+ * silently stays local-only for everyone else. This used to claim
+ * "asServiceRole bypasses RLS so all devices can read the flag without auth" —
+ * false: asServiceRole is a THROWING getter in the browser (backend-only), so
+ * the server sync never worked anywhere. Local pause always worked.
  *
  * Entity reads do NOT consume integration credits — only functions.invoke does.
- * asServiceRole bypasses RLS so all devices can read the flag without auth.
  */
 import { base44 } from '@/api/base44Client';
 
@@ -19,7 +25,6 @@ const ADMIN_EMAIL  = 'admin@moralesmedical.com';
 // Stash the real methods so we can restore them on resume
 let _originalInvoke              = null;
 let _originalIntegrations        = null;
-let _originalServiceIntegrations = null;
 
 // ── BroadcastChannel — instant cross-tab pause/resume (iOS 15.4+, all modern Android) ──
 // When admin pauses on any tab, ALL other open tabs receive the signal in <10ms.
@@ -123,13 +128,10 @@ export function applyPauseIntercept() {
     }
   } catch (_) {}
 
-  // Proxy base44.asServiceRole.integrations (service-role calls — the main bypass path)
-  try {
-    if (!_originalServiceIntegrations && base44.asServiceRole?.integrations) {
-      _originalServiceIntegrations = base44.asServiceRole.integrations;
-      base44.asServiceRole.integrations = makeIntegrationProxy(base44.asServiceRole.integrations, 'asServiceRole.integration');
-    }
-  } catch (_) {}
+  // NOTE deliberately NO asServiceRole proxy: service role does not exist in
+  // the browser (the getter throws — backend-only), so there is no
+  // service-role bypass path to intercept client-side. The block that tried
+  // was dead code whose try/catch ate the throw.
 }
 
 export function removePauseIntercept() {
@@ -141,17 +143,15 @@ export function removePauseIntercept() {
     base44.integrations = _originalIntegrations;
     _originalIntegrations = null;
   }
-  if (_originalServiceIntegrations && base44.asServiceRole) {
-    base44.asServiceRole.integrations = _originalServiceIntegrations;
-    _originalServiceIntegrations = null;
-  }
 }
 
 // ── Server-side sync (entity reads — zero integration credits) ────────────────
 
 async function getServerRecord() {
   try {
-    const rows = await base44.asServiceRole.entities.SystemConfigChange.filter(
+    // User-scoped: works for admin sessions (SystemConfigChange RLS is
+    // admin-only); everyone else lands in the catch → local-only pause.
+    const rows = await base44.entities.SystemConfigChange.filter(
       { config_key: CONFIG_KEY }, '-created_date', 1
     );
     return rows[0] ?? null;
@@ -163,12 +163,12 @@ async function writeServerPauseState(paused) {
     const existing = await getServerRecord();
     const now = new Date().toISOString();
     if (existing) {
-      await base44.asServiceRole.entities.SystemConfigChange.update(existing.id, {
+      await base44.entities.SystemConfigChange.update(existing.id, {
         requested_value: { paused },
         applied_at:      now,
       });
     } else {
-      await base44.asServiceRole.entities.SystemConfigChange.create({
+      await base44.entities.SystemConfigChange.create({
         config_key:          CONFIG_KEY,
         config_label:        'System Pause — conserves integration credits',
         requested_by_id:     'admin',

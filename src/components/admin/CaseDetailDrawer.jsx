@@ -57,14 +57,17 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
 
   useEffect(() => {
     if (caseRecord) {
-      base44.asServiceRole.entities.Doctor.filter({ status: 'active' }).then(setDoctors).catch(() => {});
+      // User-scoped: asServiceRole is a THROWING getter in the browser — this
+      // line used to throw synchronously inside the effect (the .catch could
+      // not save it), crashing the whole drawer to the ErrorBoundary.
+      base44.entities.Doctor.filter({ status: 'active' }).then(setDoctors).catch(() => {});
     }
   }, [caseRecord?.id]);
 
   // Fetch linked WorkflowEvent for risk info
   const { data: workflowEvents = [] } = useQuery({
     queryKey: ['workflow_event', caseRecord?.consultation_id],
-    queryFn: () => base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id: caseRecord.consultation_id }),
+    queryFn: () => base44.entities.WorkflowEvent.filter({ consultation_id: caseRecord.consultation_id }),
     enabled: !!caseRecord?.consultation_id,
   });
   const workflow = workflowEvents[0] || null;
@@ -80,7 +83,7 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
 
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus) => {
-      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, { status: newStatus });
+      await base44.entities.CaseRecord.update(caseRecord.id, { status: newStatus });
     },
     onSuccess: () => {
       toast.success('Status updated');
@@ -101,7 +104,7 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
     setAssigningDoctor(true);
     try {
       if (workflow) {
-        await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, {
+        await base44.entities.WorkflowEvent.update(workflow.id, {
           assigned_doctor_id: doctorId,
           stage: 'doctor',
           last_update_summary: `Doctor manually reassigned by admin on ${new Date().toISOString()}`,

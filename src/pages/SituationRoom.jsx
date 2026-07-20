@@ -161,10 +161,12 @@ export default function SituationRoom() {
     queryKey: ['situation-room-cases', tick],
     queryFn: async () => {
       const statuses = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
+      // User-scoped: asServiceRole is a THROWING getter in the browser — the
+      // `?.` never helped (the getter itself throws), so this always rejected
+      // and the room always fell back to demo data. Admin RLS permits the read.
       const results  = await Promise.allSettled(
         statuses.map(s =>
-          (base44.asServiceRole?.entities?.CaseRecord?.filter({ status: s }, '-updated_date', 20) ?? Promise.resolve([]))
-            .catch(() => [])
+          base44.entities.CaseRecord.filter({ status: s }, '-updated_date', 20).catch(() => [])
         )
       );
       return results.flatMap(r => r.status === 'fulfilled' ? (r.value || []) : []);
@@ -182,8 +184,8 @@ export default function SituationRoom() {
   const { data: livePositions = [] } = useQuery({
     queryKey: ['situation-room-live-positions', tick],
     queryFn: async () => {
-      const rows = await (base44.asServiceRole?.entities?.LiveLocation
-        ?.filter({ is_active: true }, '-updated_date', 200) ?? Promise.resolve([]))
+      const rows = await base44.entities.LiveLocation
+        .filter({ is_active: true }, '-updated_date', 200)
         .catch(() => []);
       // IP geo resolves to the ISP's registered city (wrong country under a
       // VPN), so a GPS fix always wins for the same case.
@@ -220,8 +222,8 @@ export default function SituationRoom() {
   const { data: auditFeed = [] } = useQuery({
     queryKey: ['situation-room-feed', tick],
     queryFn: async () => {
-      const rows = await (base44.asServiceRole?.entities?.AuditLog
-        ?.list('-timestamp', 40) ?? Promise.resolve([]))
+      const rows = await base44.entities.AuditLog
+        .list('-timestamp', 40)
         .catch(() => []);
       return rows.map((r) => {
         const style = FEED_EVENT_STYLE[r.event_type] || FEED_EVENT_STYLE._default;

@@ -1257,6 +1257,56 @@ test('INTAKE: an unreachable safety validator BLOCKS submission — and says so 
   expect(code, 'the isBlocked hard stop must survive').toMatch(/if\s*\(safetyPayload\.isBlocked\)/);
 });
 
+test('FRONTEND: base44.asServiceRole never spreads — it throws in every browser', () => {
+  // Service role only exists inside Base44-hosted backend functions. In the
+  // browser the SDK's asServiceRole getter THROWS (no serviceToken), and even
+  // optional chaining can't save a caller — the getter itself runs. Every
+  // frontend touch is therefore a broken feature wearing a plausible screen:
+  // empty admin boards, "no dietary profile" over real allergies, blank
+  // first-responder manifests. 10 admin files were swapped to the user-scoped
+  // client on 2026-07-19; the files below still contain real call sites and
+  // are scheduled for backend endpoints (deployment-gated).
+  //
+  // This is a RATCHET:
+  //   - a file NOT on the list may never reference asServiceRole in code
+  //   - a file ON the list that no longer references it must be REMOVED
+  // So the list only shrinks, and the class of bug cannot come back.
+  const ALLOWED = new Set([
+    'src/components/companion/DietaryInfoCard.jsx',   // W-C: companion read endpoint
+    'src/components/partner-dashboard/TaxiServiceDashboard.jsx', // W-C: driver cases endpoint
+    'src/pages/DoctorCasesDashboard.jsx',             // W-C: confirm/decline endpoint
+    'src/pages/EmergencyManifest.jsx',                // W-B: extend verifyEmergencyPIN
+    'src/pages/LuggageFinderPortal.jsx',              // W-B: public finder endpoint
+    'src/pages/PortalLocalDoctor.jsx',                // W-B: token loader endpoint
+    'src/pages/PortalTravelAgency.jsx',               // W-B: server-side revision writes
+    'src/pages/SurveyPage.jsx',                       // W-B: get-survey-by-token endpoint
+  ]);
+
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const offenders = [];
+  const stale = [];
+
+  const walk = (dir) => {
+    for (const entry of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) { walk(rel); continue; }
+      if (!/\.(jsx?|tsx?)$/.test(entry.name)) continue;
+      const hasRef = strip(read(rel)).includes('asServiceRole');
+      if (ALLOWED.has(rel)) {
+        if (!hasRef) stale.push(rel);
+      } else if (hasRef) {
+        offenders.push(rel);
+      }
+    }
+  };
+  walk('src');
+
+  expect(offenders, `these frontend files touch asServiceRole (throws in the browser — use the user-scoped client or a backend function): ${offenders.join(', ')}`)
+    .toEqual([]);
+  expect(stale, `these files were fixed — remove them from the ratchet allowlist so it keeps shrinking: ${stale.join(', ')}`)
+    .toEqual([]);
+});
+
 test('PARTNERS: nothing automated may mark a background check passed', () => {
   // A background check is about a person's criminal record. The only automated
   // signal this platform has is an AI scan of uploaded documents for tampering

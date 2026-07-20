@@ -185,8 +185,12 @@ export default function AdminMissionControl() {
     queryKey: ['mission-control-cases'],
     queryFn: async () => {
       const statuses = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
+      // User-scoped: asServiceRole is a THROWING getter in the browser — even
+      // `?.` couldn't save this (the getter itself throws), so the whole
+      // queryFn rejected and the board ALWAYS fell back to demo cases. Admin
+      // RLS on CaseRecord permits this read directly.
       const results = await Promise.allSettled(
-        statuses.map(s => base44.asServiceRole?.entities?.CaseRecord?.filter({ status: s }, '-updated_date', 20).catch(() => []) ?? Promise.resolve([]))
+        statuses.map(s => base44.entities.CaseRecord.filter({ status: s }, '-updated_date', 20).catch(() => []))
       );
       return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
     },
