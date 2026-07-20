@@ -39,6 +39,7 @@ export default function RecoveryModePanel({ caseId }) {
   const [showActivate, setShowActivate] = useState(false);
   const [activateForm, setActivateForm] = useState({ surgery_type: '', surgery_complexity: 'moderate' });
   const [activating, setActivating] = useState(false);
+  const [error, setError] = useState('');
   const audioCtx = useRef(null);
 
   useEffect(() => { loadSession(); }, [caseId]);
@@ -72,30 +73,48 @@ export default function RecoveryModePanel({ caseId }) {
 
   const handleActivate = async () => {
     setActivating(true);
-    await base44.functions.invoke('activateRecoveryMode', {
-      case_id: caseId,
-      surgery_type: activateForm.surgery_type,
-      surgery_complexity: activateForm.surgery_complexity
-    });
-    setShowActivate(false);
-    loadSession();
-    setActivating(false);
+    setError('');
+    try {
+      await base44.functions.invoke('activateRecoveryMode', {
+        case_id: caseId,
+        surgery_type: activateForm.surgery_type,
+        surgery_complexity: activateForm.surgery_complexity
+      });
+      setShowActivate(false);
+      loadSession();
+    } catch (_e) {
+      setError('We couldn’t activate Recovery Mode — please try again.');
+    } finally {
+      setActivating(false);
+    }
   };
 
+  // No try/catch here used to mean a failed invoke (network blip, or the
+  // backend rejecting the call) left "I Need Help — Escalate to Concierge"
+  // permanently disabled with no error shown — the one button on this panel
+  // that must never silently fail closed on the patient.
   const handleCheckin = async (idx, escalate = false) => {
     setSubmitting(true);
+    setError('');
     playGentleChime();
-    await base44.functions.invoke('submitRecoveryCheckin', {
-      session_id: session.id,
-      checkin_index: idx,
-      pain_level: checkinData.pain_level,
-      notes: checkinData.notes,
-      escalate
-    });
-    setShowCheckin(null);
-    setCheckinData({ pain_level: 5, notes: '' });
-    loadSession();
-    setSubmitting(false);
+    try {
+      await base44.functions.invoke('submitRecoveryCheckin', {
+        session_id: session.id,
+        checkin_index: idx,
+        pain_level: checkinData.pain_level,
+        notes: checkinData.notes,
+        escalate
+      });
+      setShowCheckin(null);
+      setCheckinData({ pain_level: 5, notes: '' });
+      loadSession();
+    } catch (_e) {
+      setError(escalate
+        ? 'We couldn’t reach your care team — please try again, or use the SOS button for immediate help.'
+        : 'We couldn’t save your check-in — please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return (
@@ -109,7 +128,7 @@ export default function RecoveryModePanel({ caseId }) {
       <Moon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
       <p className="text-sm font-medium text-slate-600 mb-1">Recovery Mode Not Active</p>
       <p className="text-xs text-slate-400 mb-4">Activate after your procedure completes to enable gentle check-ins, notification silencing, and concierge escalation.</p>
-      <Button onClick={() => setShowActivate(true)} size="sm" className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
+      <Button onClick={() => { setError(''); setShowActivate(true); }} size="sm" className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
         Activate Recovery Mode
       </Button>
 
@@ -137,6 +156,7 @@ export default function RecoveryModePanel({ caseId }) {
                   </select>
                 </div>
               </div>
+              {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
               <div className="flex gap-3 mt-4">
                 <Button onClick={handleActivate} disabled={!activateForm.surgery_type || activating}
                   className="flex-1 bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
@@ -212,7 +232,7 @@ export default function RecoveryModePanel({ caseId }) {
             </span>
           </div>
           <p className="text-xs text-slate-500 mb-3">How are you feeling right now?</p>
-          <Button onClick={() => { setShowCheckin(nextCheckin.idx); playGentleChime(); }}
+          <Button onClick={() => { setError(''); setShowCheckin(nextCheckin.idx); playGentleChime(); }}
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3 font-semibold">
             <Heart className="w-4 h-4 mr-2" /> Complete Check-in
           </Button>
@@ -236,7 +256,7 @@ export default function RecoveryModePanel({ caseId }) {
             <p className="text-xs text-red-600">Something urgent? 1-tap escalation to your care team</p>
           </div>
           {nextCheckin && (
-            <button onClick={() => { setShowCheckin(nextCheckin.idx); setCheckinData({ ...checkinData }); }}
+            <button onClick={() => { setError(''); setShowCheckin(nextCheckin.idx); setCheckinData({ ...checkinData }); }}
               className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5" /> SOS
             </button>
@@ -269,6 +289,7 @@ export default function RecoveryModePanel({ caseId }) {
                 placeholder="Any symptoms, concerns, or notes? (optional)"
                 className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300 mb-4" rows={3} />
 
+              {error && <p className="text-xs text-red-600 text-center mb-3">{error}</p>}
               <div className="space-y-2">
                 <Button onClick={() => handleCheckin(showCheckin, false)} disabled={submitting}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3">

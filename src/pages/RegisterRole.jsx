@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ArrowRight, Car, HeartPulse, Plane, UserRound } from 'lucide-react';
-import { useAuth } from '@/lib/AuthContext';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 
 const roles = [
@@ -39,30 +38,24 @@ const roles = [
 ];
 
 export default function RegisterRole() {
-  const { isAuthenticated, authChecked, navigateToLogin } = useAuth();
-
-  useEffect(() => {
-    if (authChecked && !isAuthenticated) {
-      navigateToLogin(`${window.location.origin}/register-role`);
-    }
-  }, [authChecked, isAuthenticated, navigateToLogin]);
-
   const handleRoleSelect = async (role) => {
     localStorage.setItem('signupRole', role.role);
-    await saveUserOnboardingProfile({
-      role: role.role,
-      status: 'started',
-      profileData: {
-        selected_role: role.role,
-        selected_from: 'register_role'
-      }
-    });
+    // Best-effort tracking only — saveUserOnboardingProfile requires an
+    // authenticated user, but this page is reachable by anyone deciding how
+    // to sign up (including as the "Back" destination from every partner
+    // signup flow), so a rejection here must never block the navigation.
+    try {
+      await saveUserOnboardingProfile({
+        role: role.role,
+        status: 'started',
+        profileData: {
+          selected_role: role.role,
+          selected_from: 'register_role'
+        }
+      });
+    } catch (_e) { /* non-fatal — role selection still proceeds */ }
     window.location.href = role.path;
   };
-
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen w-full bg-[#020B0D] text-white pt-32 pb-16 px-6 relative overflow-hidden">
