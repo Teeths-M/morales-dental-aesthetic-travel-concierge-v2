@@ -1425,6 +1425,41 @@ test('SAFETY: a high-risk condition escalates an already-selected procedure comb
     .toMatch(/getViolations\(items,\s*form\.medical_conditions/);
 });
 
+test('SAFETY: MedicalIntakeForm re-checks an already-selected procedure combo and only ever pauses on RED (never auto-refunds/re-quotes)', () => {
+  // MedicalIntakeForm.jsx runs AFTER procedures were already selected and
+  // possibly already paid for (Booking/ConciergeIntake/the /procedures cart).
+  // It is the first point some entry paths collect the FULL medical history,
+  // so a disclosed HIGH_RISK_CONDITIONS entry here can retroactively turn an
+  // already-cleared combination into a genuine RED. Portia's explicit call:
+  // the system may only PAUSE an already-committed case — resolution (refund,
+  // re-quote, or proceed) is always a human decision, never automated here.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+  const form = strip(read('src/pages/MedicalIntakeForm.jsx'));
+
+  expect(form, 'must import the safety engine to re-run the check')
+    .toContain('getViolations');
+  expect(form, 'must reconstruct safety-engine procedure names from the enum keys already on the consultation')
+    .toContain('toSafetyEngineName');
+  expect(form, 'must fall back from selected_procedures to procedure_interest, same as ConciergeIntake')
+    .toMatch(/selected_procedures\?\.\s*length[\s\S]{0,80}procedure_interest/);
+  expect(form, 'must re-run getViolations with the freshly submitted conditions')
+    .toMatch(/getViolations\(items,\s*form\.medical_conditions/);
+
+  // On RED: flag + pause, reusing the exact fields Booking.jsx already sets so
+  // iq200Pipeline's create-time gate holds a not-yet-created CaseRecord too.
+  expect(form, 'a RED result must set high_risk_medical_review on the consultation')
+    .toContain('high_risk_medical_review = true');
+  expect(form, 'an already-existing CaseRecord must be paused to Admin-Review')
+    .toMatch(/CaseRecord\.update\([\s\S]{0,60}status:\s*'Admin-Review'/);
+  expect(form, 'a human must be alerted — notifySlackHighRisk must be invoked')
+    .toContain("notifySlackHighRisk");
+
+  // Never automate the resolution — no payment/refund/re-quote action anywhere
+  // in this file. A future edit that "helpfully" wires one up must fail here.
+  expect(form, 'MedicalIntakeForm must never touch payment/refund state')
+    .not.toMatch(/payment_status|refund|requestDoctorQuotes/i);
+});
+
 test('FRONTEND: base44.asServiceRole never spreads — it throws in every browser', () => {
   // Service role only exists inside Base44-hosted backend functions. In the
   // browser the SDK's asServiceRole getter THROWS (no serviceToken), and even

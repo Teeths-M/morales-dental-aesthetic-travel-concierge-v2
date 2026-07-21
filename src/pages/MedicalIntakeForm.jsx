@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import PhoneField from '@/components/ui-system/PhoneField';
+import { getViolations } from '@/lib/procedureCompatibility';
+import { toSafetyEngineName } from '@/lib/intakeFlow/procedureSafetyNameMap';
 
 // ── Static option sets ─────────────────────────────────────────────────────
 const MEDICAL_CONDITIONS = [
@@ -397,6 +399,7 @@ export default function MedicalIntakeForm() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [flaggedForReview, setFlaggedForReview] = useState(false);
   const [user, setUser] = useState(null);
 
   // Persist step so resume returns to the same step
@@ -486,8 +489,67 @@ export default function MedicalIntakeForm() {
         patient_name: form.patient_name || user.full_name || '',
       };
 
+      let flagged = false;
+
       if (consultations.length > 0) {
-        await base44.entities.Consultation.update(consultations[0].id, intakePayload);
+        const existing = consultations[0];
+
+        // ── Safety re-check ────────────────────────────────────────────────
+        // Procedures were already selected before this form ran (Booking step 8,
+        // ConciergeIntake, or the /procedures cart). This is the first point some
+        // entry paths collect the FULL medical history — a disclosed
+        // HIGH_RISK_CONDITIONS entry here can retroactively turn an
+        // already-selected, already-cleared combination into a genuine RED (see
+        // procedureCompatibility.js's conditionRedFlag rule). The consultation
+        // may already be paid or further along the pipeline, so this is a PAUSE
+        // only — never an automatic refund or re-quote. Resolving the hold is
+        // always a human (admin/doctor) decision.
+        const enumKeys = existing.selected_procedures?.length
+          ? existing.selected_procedures
+          : (existing.procedure_interest ? [existing.procedure_interest] : []);
+        const items = enumKeys.map(toSafetyEngineName).filter(Boolean).map(name => ({ title: name, name }));
+        const { violations, isBlocked } = getViolations(items, form.medical_conditions || []);
+
+        if (isBlocked) {
+          flagged = true;
+          // Reuses the exact fields Booking.jsx already sets for a high-risk
+          // condition — iq200Pipeline's `create` action checks
+          // `high_risk_medical_review` and auto-holds a new CaseRecord at
+          // Admin-Review (and notifies Slack) if one doesn't exist yet.
+          intakePayload.high_risk_medical_review = true;
+          intakePayload.high_risk_flagged_condition = violations[0].pairLabel;
+          intakePayload.status = 'Admin-Review';
+        }
+
+        await base44.entities.Consultation.update(existing.id, intakePayload);
+
+        if (isBlocked) {
+          try {
+            const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 1);
+            if (cases.length > 0) {
+              const caseRecord = cases[0];
+              await base44.entities.CaseRecord.update(caseRecord.id, {
+                status: 'Admin-Review',
+                timeline_log: [
+                  ...(caseRecord.timeline_log || []),
+                  {
+                    timestamp: new Date().toISOString(),
+                    action: 'high_risk_hold',
+                    details: `Case held for Senior Medical Review — medical history disclosed after procedure selection: ${violations[0].pairLabel}. ${violations[0].reason}`,
+                  },
+                ],
+              });
+              base44.functions.invoke('notifySlackHighRisk', { case_id: caseRecord.id }).catch(() => {});
+            }
+            // No CaseRecord yet? The high_risk_medical_review flag written above
+            // is enough — iq200Pipeline's create action holds new CaseRecords at
+            // Admin-Review and notifies Slack itself when that flag is set.
+          } catch {
+            // A CaseRecord lookup/update failure must never block the intake
+            // save that already succeeded above — the Consultation flag is the
+            // durable source of truth either way.
+          }
+        }
       } else {
         await base44.entities.Consultation.create({
           ...intakePayload,
@@ -499,6 +561,7 @@ export default function MedicalIntakeForm() {
       clearDraft();
       try { localStorage.removeItem(STEP_KEY); } catch {}
       draftIdRef.current = null;
+      setFlaggedForReview(flagged);
       setSubmitted(true);
     } catch (err) {
       console.error("[MedicalIntakeForm] submit failed:", err);
@@ -525,12 +588,21 @@ export default function MedicalIntakeForm() {
               what now. No turnaround time is promised — none is enforced in
               code — but "nothing is required of you" is true and is the thing
               that actually lowers the anxiety. */}
-          <div className="text-left rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 mb-6">
-            <p className="text-sm font-semibold text-slate-700 mb-1">There&rsquo;s nothing you need to do next.</p>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              We&rsquo;ll let you know here in the app once your doctor has reviewed it. You don&rsquo;t need to watch your inbox.
-            </p>
-          </div>
+          {flaggedForReview ? (
+            <div className="text-left rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 mb-6">
+              <p className="text-sm font-semibold text-amber-800 mb-1">Your Senior Medical Team is reviewing one detail before we move forward.</p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                Something in your combined procedure and medical history needs a closer look from a licensed provider &mdash; this is a normal part of keeping your trip safe, not a rejection. We&rsquo;ll reach out here in the app as soon as the review is complete.
+              </p>
+            </div>
+          ) : (
+            <div className="text-left rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 mb-6">
+              <p className="text-sm font-semibold text-slate-700 mb-1">There&rsquo;s nothing you need to do next.</p>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                We&rsquo;ll let you know here in the app once your doctor has reviewed it. You don&rsquo;t need to watch your inbox.
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <Button onClick={() => navigate('/dashboard')} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white">Go to Dashboard</Button>
