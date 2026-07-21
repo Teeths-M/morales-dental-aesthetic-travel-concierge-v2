@@ -6,6 +6,7 @@ const CartContext = createContext();
 const STORAGE_KEY = 'morales_consultation_cart';
 const COUNTRY_KEY = 'morales_procedure_country';
 const CITY_KEY = 'morales_procedure_city';
+const CONDITIONS_KEY = 'morales_procedure_conditions';
 
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState(() => {
@@ -25,16 +26,43 @@ export const CartProvider = ({ children }) => {
     try { return localStorage.getItem(CITY_KEY) || ''; } catch { return ''; }
   });
 
+  // Disclosed medical conditions (Section4MedicalHistory / ConditionsPickStep
+  // labels) — collected in a different step than procedures in every real
+  // flow, but the safety verdict below must react to whichever arrives last.
+  const [medicalConditions, setMedicalConditionsState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CONDITIONS_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  // Callers (e.g. ConciergeIntake) re-assert the current answer on every
+  // render via a useEffect keyed on this function reference — bail out to
+  // the SAME array when content hasn't actually changed, or that effect's own
+  // dependency on this (otherwise-new-every-render) function would re-fire
+  // forever: new reference → effect runs → setState → new reference → ...
+  const setMedicalConditions = (conditions) => {
+    const next = conditions || [];
+    setMedicalConditionsState(prev => {
+      const unchanged = prev.length === next.length && prev.every((c, i) => c === next[i]);
+      if (unchanged) return prev;
+      try { localStorage.setItem(CONDITIONS_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
   // ── Safety Watcher: reactive risk profile ────────────────────────────────────
-  // Re-evaluated on every cart change. `locked` is true when the combined risk
-  // profile reaches RED (Golden M certification threshold exceeded).
+  // Re-evaluated on every cart OR condition change. `locked` is true when the
+  // combined risk profile reaches RED (Golden M certification threshold
+  // exceeded) — which a disclosed high-risk condition can now trigger on its
+  // own, even for a procedure pair that would otherwise sit at YELLOW.
   const [safetyStatus, setSafetyStatus] = useState(() => ({ ...analyseCompatibility([]), violations: [] }));
 
   useEffect(() => {
-    const analysis   = analyseCompatibility(items);
-    const { violations } = getViolations(items);
+    const analysis   = analyseCompatibility(items, medicalConditions);
+    const { violations } = getViolations(items, medicalConditions);
     setSafetyStatus({ ...analysis, violations });
-  }, [items]);
+  }, [items, medicalConditions]);
 
   const locked = safetyStatus.level === 'RED';
 
@@ -107,7 +135,7 @@ export const CartProvider = ({ children }) => {
   const getTotalCount = () => items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount, procedureCountry, setProcedureCountry, procedureCity, setProcedureCity, safetyStatus, locked, pivotViolations, openPivot, closePivot, acceptRecommendation }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount, procedureCountry, setProcedureCountry, procedureCity, setProcedureCity, medicalConditions, setMedicalConditions, safetyStatus, locked, pivotViolations, openPivot, closePivot, acceptRecommendation }}>
       {children}
     </CartContext.Provider>
   );

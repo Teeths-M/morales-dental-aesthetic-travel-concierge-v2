@@ -75,7 +75,7 @@ export default function ConciergeIntake() {
     isAuthenticated,
   });
   const { doctorSearch, costEstimate, partnerPreview } = useIntakeBackgroundSearch({ answers, isAuthenticated });
-  const { items: cartItems, addItem, pivotViolations, safetyStatus, clearCart } = useCart();
+  const { items: cartItems, addItem, pivotViolations, safetyStatus, clearCart, setMedicalConditions } = useCart();
 
   const [safetyReadoutAcknowledged, setSafetyReadoutAcknowledged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -171,6 +171,19 @@ export default function ConciergeIntake() {
       addItem({ name: safetyName, title: safetyName });
     });
   }, [answers.procedures_from_cart, answers.procedure_interest, answers.selected_procedures, cartItems, addItem]);
+
+  // The medical-conditions question is answered AFTER procedures in this
+  // conversation (questionGraph.js asks procedure_interest before
+  // medical_conditions_other) — a patient who arrived with procedures already
+  // in the cart from /procedures has already passed the RED-lock gate before
+  // disclosing a condition here. Feeding it into the same shared cart context
+  // lets SafetyWatcher (already globally mounted, already reacting to any
+  // GREEN/YELLOW→RED transition) re-evaluate and open SafetyPivotOverlay the
+  // moment a high-risk condition turns an already-selected combination
+  // dangerous — no new UI, this is the same machinery the CTAs use.
+  useEffect(() => {
+    setMedicalConditions(answers.medical_conditions || []);
+  }, [answers.medical_conditions, setMedicalConditions]);
 
   // Shows the "let me evaluate this" narration once per new violation event —
   // resets the moment pivotViolations goes from empty back to non-empty

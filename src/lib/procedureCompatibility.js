@@ -1,15 +1,22 @@
 // @ts-nocheck — pre-existing type gaps in src/lib utility
 /**
  * SAFE-T4LIFE™ Procedure Compatibility Engine
- * 
+ *
  * DISCLAIMER: Procedure compatibility guidance is informational only and does
  * not replace evaluation by a licensed medical professional.
- * 
+ *
  * This engine classifies procedure combinations into GREEN / YELLOW / RED
  * based on anesthesia burden, surgical stress, recovery overlap, and known
  * clinical interaction patterns. It NEVER makes medical decisions — it flags
  * cases that require enhanced provider review.
+ *
+ * Optionally condition-aware: callers that already know the patient's
+ * disclosed medical conditions (Section4MedicalHistory / ConditionsPickStep)
+ * pass them in as a second argument so a combination that would otherwise
+ * sit in the YELLOW review band escalates to a hard RED block instead.
  */
+
+import { HIGH_RISK_CONDITIONS } from '@/lib/medicalSafetyGate';
 
 // ─── Procedure Profile Database ──────────────────────────────────────────────
 // Each procedure has: anesthesiaHrs, recoveryDays, stressLevel (1-10),
@@ -260,17 +267,22 @@ function anyPairMatches(titles, rulesets) {
 
 /**
  * Analyse a list of procedure items from the cart and return a compatibility result.
- * 
+ *
  * @param {Array} items  Cart items (must have .title or .name)
+ * @param {string[]} [conditions]  Disclosed medical conditions (Section4MedicalHistory /
+ *   ConditionsPickStep labels, e.g. 'Diabetes', 'Heart Disease') — optional; a combination
+ *   already at ≥5 hrs combined anesthesia escalates from YELLOW to RED when a
+ *   HIGH_RISK_CONDITIONS entry is present.
  * @returns {{ level: 'GREEN'|'YELLOW'|'RED', reasons: string[], totalAnesthesiaHrs: number, totalRecoveryDays: number, totalStress: number }}
  */
-export function analyseCompatibility(items) {
+export function analyseCompatibility(items, conditions = []) {
   if (!items || items.length <= 1) {
     return { level: 'GREEN', reasons: [], totalAnesthesiaHrs: 0, totalRecoveryDays: 0, totalStress: 0 };
   }
 
   const titles = items.map(i => i.title || i.name).filter(Boolean);
   const profiles = titles.map(t => ({ title: t, ...(PROCEDURE_PROFILES[t] || { anesthesiaHrs: 0, recoveryDays: 0, stress: 3, group: 'unknown', minorSurgery: false }) }));
+  const flaggedCondition = conditions.find(c => HIGH_RISK_CONDITIONS.includes(c)) || null;
 
   // ── Compute aggregates ──
   const totalAnesthesiaHrs = profiles.reduce((s, p) => s + p.anesthesiaHrs, 0);
@@ -282,8 +294,13 @@ export function analyseCompatibility(items) {
   const reasons = [];
   let level = 'GREEN';
 
+  // Computed once, up front, so it can override the GREEN fast-track below —
+  // a condition-driven RED must never be skipped just because the pair is
+  // ordinarily whitelisted as commonly combined.
+  const conditionRedFlag = !!flaggedCondition && totalAnesthesiaHrs >= 5;
+
   // ── GREEN fast-track: 1-2 items explicitly in green list ──
-  if (titles.length === 2 && anyPairMatches(titles, GREEN_COMBINATIONS)) {
+  if (!conditionRedFlag && titles.length === 2 && anyPairMatches(titles, GREEN_COMBINATIONS)) {
     return { level: 'GREEN', reasons: [], totalAnesthesiaHrs, totalRecoveryDays: maxRecoveryDays, totalStress };
   }
 
@@ -302,6 +319,17 @@ export function analyseCompatibility(items) {
   // ── RED: 3+ major surgeries simultaneously ──
   if (majorSurgeries >= 3) {
     reasons.push(`${majorSurgeries} high-complexity procedures selected simultaneously. A staged treatment plan is commonly recommended in these cases.`);
+    level = 'RED';
+  }
+
+  // ── RED: disclosed high-risk condition + ≥5 hrs combined anesthesia ──
+  // A condition the condition-blind engine above never sees (diabetes impairs
+  // anesthetic metabolism; blood/heart/seizure disorders each compound
+  // differently) turns what would otherwise be a routine review-tier
+  // combination into a genuine contraindication. Reuses the engine's own
+  // existing 5 hrs YELLOW floor rather than inventing a new number.
+  if (conditionRedFlag) {
+    reasons.push(`With ${flaggedCondition} on file, the estimated combined anesthesia time (~${totalAnesthesiaHrs.toFixed(1)} hrs) for this selection requires provider review before it can proceed.`);
     level = 'RED';
   }
 
@@ -420,7 +448,7 @@ export const DISCLAIMER = 'Procedure compatibility guidance is informational onl
  * Returns [] when nothing safe can be assembled — the caller must then fall
  * back to routing them to a doctor rather than inventing a plan.
  */
-export function suggestFirstStage(titles) {
+export function suggestFirstStage(titles, anesthesiaCeiling = 8) {
   const profileOf = (t) => PROCEDURE_PROFILES[t] || { stress: 3, anesthesiaHrs: 0 };
 
   const isSafeSet = (set) => {
@@ -431,7 +459,7 @@ export function suggestFirstStage(titles) {
     }
     const profiles = set.map(profileOf);
     if (profiles.filter(p => p.stress >= 6).length >= 3) return false;
-    if (profiles.reduce((s, p) => s + (p.anesthesiaHrs || 0), 0) > 8) return false;
+    if (profiles.reduce((s, p) => s + (p.anesthesiaHrs || 0), 0) > anesthesiaCeiling) return false;
     return true;
   };
 
@@ -480,7 +508,7 @@ function stageRecommendation(stage, later) {
   };
 }
 
-export function getViolations(items) {
+export function getViolations(items, conditions = []) {
   if (!items || items.length < 2) return { violations: [], isBlocked: false };
 
   const titles = items.map(i => i.title || i.name).filter(Boolean);
@@ -522,6 +550,23 @@ export function getViolations(items) {
       pairLabel: `Combined Anesthesia > ${totalAnesthesiaHrs.toFixed(1)} Hours`,
       reason: `Total estimated anesthesia time (~${totalAnesthesiaHrs.toFixed(1)} hrs) exceeds the safe ceiling for elective procedures. Beyond 8 hours, the risk of anesthesia awareness, hypothermia, and post-operative cognitive dysfunction increases significantly.`,
       code: 'ANESTHESIA_OVERLOAD',
+      ...stageRecommendation(stage, later),
+    });
+  }
+
+  // Disclosed high-risk condition + ≥5 hrs combined anesthesia — a
+  // combination the condition-blind checks above would leave at YELLOW.
+  // Staged with a 4.99hr ceiling (not 5) so the recommended first stage is
+  // itself strictly under the ">= 5" trigger — a suggestion sitting exactly
+  // at the boundary would immediately re-trip this same rule.
+  const flaggedCondition = conditions.find(c => HIGH_RISK_CONDITIONS.includes(c));
+  if (flaggedCondition && totalAnesthesiaHrs >= 5 && violations.length === 0) {
+    const stage = suggestFirstStage(titles, 4.99);
+    const later = titles.filter(t => !stage.includes(t));
+    violations.push({
+      pairLabel: `${flaggedCondition} + Combined Anesthesia ~${totalAnesthesiaHrs.toFixed(1)} Hours`,
+      reason: `With ${flaggedCondition} on file, ~${totalAnesthesiaHrs.toFixed(1)} hrs of combined anesthesia carries meaningfully higher risk than the same combination would for a patient without this condition — impaired metabolism, delayed wound healing, and elevated cardiac/glucose stress are all condition-specific factors this selection now needs a licensed provider to weigh in on.`,
+      code: 'METABOLIC_CONFLICT',
       ...stageRecommendation(stage, later),
     });
   }

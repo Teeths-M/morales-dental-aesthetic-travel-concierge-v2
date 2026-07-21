@@ -1085,9 +1085,13 @@ export default function Booking() {
                     );
                     return;
                   }
-                  // Stacking safety check — fires when leaving Procedure & Date step
+                  // Stacking safety check — fires when leaving Procedure & Date step.
+                  // Medical History (step 2) always precedes this step, so any
+                  // disclosed high-risk condition is already known here — pass it
+                  // in so a combination that would otherwise sit at YELLOW can
+                  // escalate to a hard RED block instead.
                   if (step === 8 && items.length >= 2) {
-                    const { violations, isBlocked } = getViolations(items);
+                    const { violations, isBlocked } = getViolations(items, form.medical_conditions || []);
                     if (isBlocked) {
                       setStackingViolations(violations);
                       setShowStackingBlock(true);

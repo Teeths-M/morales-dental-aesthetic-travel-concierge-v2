@@ -1376,6 +1376,55 @@ test('CART: a RED-locked procedure combination cannot reach /intake', () => {
   expect(redCheckIdx, 'the RED check must run before navigating to /intake').toBeLessThan(navigateIdx);
 });
 
+test('SAFETY: a high-risk condition escalates an already-selected procedure combo to RED', () => {
+  // A patient can select procedures on /procedures BEFORE ever disclosing a
+  // medical condition (procedure_interest is asked before medical_conditions
+  // in questionGraph.js), so the RED-lock at selection time is condition-blind
+  // by construction. If disclosing e.g. diabetes afterward doesn't re-run the
+  // safety check, a combination the demo /demo/siobhan dramatizes as blocked
+  // is, for real patients, silently allowed through at YELLOW forever.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+
+  // The engine itself must be condition-aware, not just procedure-aware.
+  const engine = strip(read('src/lib/procedureCompatibility.js'));
+  expect(engine, 'the engine must import the shared high-risk condition list')
+    .toContain('HIGH_RISK_CONDITIONS');
+  expect(engine, 'analyseCompatibility must accept a conditions parameter')
+    .toMatch(/function analyseCompatibility\(items,\s*conditions/);
+  expect(engine, 'getViolations must accept a conditions parameter')
+    .toMatch(/function getViolations\(items,\s*conditions/);
+  expect(engine, 'a disclosed high-risk condition must be able to force RED on its own')
+    .toMatch(/conditionRedFlag[\s\S]{0,80}=[\s\S]{0,40}totalAnesthesiaHrs\s*>=\s*5/);
+
+  // CartContext — the single reactive source SafetyWatcher/SafetyPivotOverlay
+  // and the /procedures CTAs all read from — must factor conditions into the
+  // SAME safetyStatus computation as cart items, not track them separately.
+  const cartContext = strip(read('src/context/CartContext.jsx'));
+  expect(cartContext, 'CartContext must track disclosed medical conditions')
+    .toContain('medicalConditions');
+  expect(cartContext, 'safetyStatus must be computed from items AND medicalConditions')
+    .toMatch(/analyseCompatibility\(items,\s*medicalConditions\)/);
+  expect(cartContext, 'getViolations must also receive medicalConditions')
+    .toMatch(/getViolations\(items,\s*medicalConditions\)/);
+
+  // /intake (the primary flow): whenever the medical_conditions answer
+  // changes, it must be pushed into the shared cart context so the existing
+  // global SafetyWatcher can react — this is the literal "pass procedures
+  // first, conditions arrive later" sequence.
+  const intake = strip(read('src/pages/ConciergeIntake.jsx'));
+  expect(intake, 'ConciergeIntake must read setMedicalConditions from the cart context')
+    .toContain('setMedicalConditions');
+  expect(intake, 'a change to answers.medical_conditions must push into the cart context')
+    .toMatch(/setMedicalConditions\(answers\.medical_conditions/);
+
+  // /booking (classic form): medical history (step 2) always precedes
+  // procedures (step 8), so conditions must be passed into the existing
+  // step-8 stacking check rather than silently ignored.
+  const booking = strip(read('src/pages/Booking.jsx'));
+  expect(booking, 'the step-8 stacking check must pass form.medical_conditions into getViolations')
+    .toMatch(/getViolations\(items,\s*form\.medical_conditions/);
+});
+
 test('FRONTEND: base44.asServiceRole never spreads — it throws in every browser', () => {
   // Service role only exists inside Base44-hosted backend functions. In the
   // browser the SDK's asServiceRole getter THROWS (no serviceToken), and even
