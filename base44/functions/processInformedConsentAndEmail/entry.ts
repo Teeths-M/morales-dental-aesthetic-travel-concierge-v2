@@ -1,4 +1,7 @@
 import { createHandler } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
+
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const DISCLOSURE_TEXT = `
 1. Surgical Risk Acknowledgement: I understand that every medical, dental, and surgical procedure carries inherent biological risks and potential complications including, but not limited to, infection, adverse reactions, and unforeseen surgical events.
@@ -16,6 +19,10 @@ const DISCLOSURE_TEXT = `
    Tier 4 — Restricted Legal Escalation (exclusively in courts of Trinidad and Tobago)
 `;
 
+// LEAK-SCAN-IGNORE-START — this builds the permanent consent+receipt ARCHIVE
+// stored on CaseRecord.informed_consent_email_html (read in-portal); it is no
+// longer what gets emailed. The actual outbound message below is a generic
+// linkOnlyEmail pointing at the portal.
 function buildEmailHtml({ clientName, clientEmail, procedures, signatureData, signatureTimestamp, signatureIp, acceptedArbitration, chargeId, amount }) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -115,6 +122,7 @@ function buildEmailHtml({ clientName, clientEmail, procedures, signatureData, si
 </body>
 </html>`;
 }
+// LEAK-SCAN-IGNORE-END
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
@@ -135,7 +143,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       return Response.json({ error: 'client_email is required' }, { status: 400 });
     }
 
-    // Build email HTML
+    // Build the permanent archive — this is stored on the case, never emailed.
     const emailHtml = buildEmailHtml({
       clientName: client_name || user.full_name || 'Valued Client',
       clientEmail: client_email,
@@ -148,12 +156,19 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       amount,
     });
 
-    // Send email to client
+    // Notify the client — signature image, IP, amount and the legal
+    // disclosure text stay in the portal; the email only links to it.
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: client_email,
       from_name: 'Morales Travel Concierge',
       subject: '⚖️ Informed Consent Confirmed & Payment Receipt — SAFE-T 4LIFE™',
-      body: emailHtml,
+      body: linkOnlyEmail({
+        title: 'Your consent and payment receipt are ready',
+        line: 'View and download your signed consent and payment receipt in your Morales portal.',
+        ctaUrl: `${APP_URL}/dashboard`,
+        ctaLabel: 'Open My Portal',
+        from: 'processInformedConsentAndEmail',
+      }),
     });
 
     const now = new Date().toISOString();

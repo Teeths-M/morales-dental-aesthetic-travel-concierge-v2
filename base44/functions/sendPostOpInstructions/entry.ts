@@ -13,6 +13,9 @@
 
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
+
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -67,57 +70,6 @@ function classifyProcedure(procedureName: string): string {
   return 'general';
 }
 
-function buildInstructionsEmail(
-  patientName: string,
-  procedureName: string,
-  doctorName: string,
-  outcomeNotes: string,
-  standardCare: string[],
-): string {
-  const firstName = patientName?.split(' ')[0] || patientName;
-  const lines: string[] = [
-    `Dear ${firstName},`,
-    ``,
-    `Your ${procedureName} is complete. Below are your care instructions from Dr. ${doctorName} and your Morales care team.`,
-    ``,
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    `FROM YOUR DOCTOR`,
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    ``,
-    outcomeNotes
-      ? outcomeNotes
-      : 'Your procedure went well. Follow the care instructions below.',
-    ``,
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    `POST-OPERATIVE CARE — FOLLOW EXACTLY`,
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    ``,
-  ];
-
-  standardCare.forEach((rule, i) => {
-    lines.push(`${i + 1}. ${rule}`);
-  });
-
-  lines.push(``);
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  lines.push(`CONTACT M IMMEDIATELY IF:`);
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  lines.push(`• Temperature above 38.5°C / 101.3°F`);
-  lines.push(`• Pain that does not improve after taking pain relief`);
-  lines.push(`• Signs of infection: redness, warmth, discharge, or unusual odour`);
-  lines.push(`• Difficulty breathing or chest pain`);
-  lines.push(`• Any symptom that concerns you — we are here 24 hours`);
-  lines.push(``);
-  lines.push(`Open the Morales app → Secure Line.`);
-  lines.push(`Or reply to this email. We check it continuously.`);
-  lines.push(``);
-  lines.push(`You are in safe hands. Rest well.`);
-  lines.push(``);
-  lines.push(`— Dr. ${doctorName} and the Morales Care Team`);
-
-  return lines.join('\n');
-}
-
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { case_id, outcome_notes } = await body<{ case_id: string; outcome_notes?: string }>();
   if (!case_id) return err('case_id is required');
@@ -130,28 +82,37 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const patientName   = caseRecord.client_name   || caseRecord.client_email || 'Patient';
   const patientEmail  = caseRecord.client_email   || '';
   const patientPhone  = caseRecord.client_phone   || '';
-  const doctorName    = caseRecord.doctor_name    || caseRecord.doctor_email || 'your doctor';
   const procedureName = caseRecord.procedures?.[0] || 'your procedure';
   const notes         = outcome_notes || caseRecord.procedure_outcome_notes || '';
   const category      = classifyProcedure(procedureName);
   const standardCare  = STANDARD_CARE[category] || STANDARD_CARE.general;
   const now           = new Date().toISOString();
 
+  // Notify the patient — the doctor's outcome notes and full care
+  // instructions stay on the case, read in-app; outbound is link-only.
   if (patientEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: `Dr. ${doctorName} via Morales`,
+      from_name: 'Morales Care Team',
       to: patientEmail,
-      subject: `Your post-op care instructions — ${procedureName}`,
-      body: buildInstructionsEmail(patientName, procedureName, doctorName, notes, standardCare),
+      subject: 'Your post-op care instructions are ready',
+      body: linkOnlyEmail({
+        title: 'Your post-op care instructions are ready',
+        line: 'Your doctor’s notes and post-procedure care instructions are ready to view in your Morales app.',
+        ctaUrl: `${APP_URL}/dashboard`,
+        ctaLabel: 'Open My Instructions',
+        from: 'sendPostOpInstructions',
+      }),
     }).catch(e => console.error('[sendPostOpInstructions] email failed:', e?.message));
   }
 
-  // SMS — short version with the key rule and Secure Line reminder
   if (patientPhone) {
-    const firstName = patientName.split(' ')[0];
     await sendSms(
       patientPhone,
-      `Morales: ${firstName}, your post-op care instructions have been sent to your email. Key rule: ${standardCare[0]} Questions? Open the app → Secure Line.`,
+      linkOnlySms({
+        line: 'Your post-op care instructions are ready — check your email or open the app.',
+        url: `${APP_URL}/dashboard`,
+        from: 'sendPostOpInstructions',
+      }),
     );
   }
 

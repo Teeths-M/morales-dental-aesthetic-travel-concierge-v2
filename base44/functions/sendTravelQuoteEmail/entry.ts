@@ -1,6 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { renderEmail } from '../_shared/emailTemplate.ts';
 import { createHandler } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — previously an
 // unsigned plain btoa(JSON) token with no signature suffix, which fails that
@@ -67,24 +67,18 @@ Deno.serve(createHandler(async ({ req }) => {
       }
     }
 
-    // Notify the chauffeur
+    // Notify the chauffeur — patient name/itinerary/hotel stay in the portal
+    // the token opens, per the link-only comms policy.
     if (driverEmail) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: driverEmail,
-        subject: `Transfer Request — ${consultation.patient_name} | Morales Medical Travel Safety`,
-        body: renderEmail({
-          appUrl,
-          eyebrow: 'Transit Logistics Request',
-          title: 'Patient ready for transport coordination',
-          intro: 'A patient travel schedule has been logged. Please provide flat-rate pricing for your assigned regional transit legs.',
-          rows: [
-            ['Patient Name', consultation.patient_name],
-            ['Flight Details', flight_itinerary_summary || 'TBD'],
-            ['Hotel', hotel_selection || 'TBD'],
-          ],
-          ctaText: 'Open Transfer Portal',
+        subject: 'Transfer Request — Morales Medical Travel Safety',
+        body: linkOnlyEmail({
+          title: 'A patient is ready for transport coordination',
+          line: 'Please open your transfer portal to provide flat-rate pricing for your assigned regional transit legs. This link is valid for 7 days — please do not share it.',
           ctaUrl: chauffeurPortalUrl,
-          footer: 'This link is valid for 7 days. Please do not share it.',
+          ctaLabel: 'Open Transfer Portal',
+          from: 'sendTravelQuoteEmail',
         }),
       });
     }

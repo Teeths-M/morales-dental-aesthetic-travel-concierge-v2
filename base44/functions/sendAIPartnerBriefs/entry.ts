@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
 
 /**
  * sendAIPartnerBriefs
@@ -15,6 +16,9 @@
 const BRAND = 'Morales Medical Travel Safety';
 
 // ── Role-specific AI prompt builder ──────────────────────────────────────────
+// LEAK-SCAN-IGNORE-START — this builds the InvokeLLM prompt, not an outbound
+// email/SMS body. The AI's output never gets emailed either: the dispatch
+// below only ever sends linkOnlyEmail's generic "your brief is ready" line.
 function buildPrompt(role: string, country: string, ctx: Record<string, string>): string {
   const langLine = country
     ? `\n\nCRITICAL: Detect the primary official language of "${country}" and write your ENTIRE response — including the email subject — in that language. Only use English for medical terms that have no local equivalent.`
@@ -84,23 +88,7 @@ Return JSON: { "subject": "brief email subject line", "body_html": "2 paragraphs
       return `Brief the ${role} partner for patient ${ctx.patient_name} — ${ctx.procedure} — ${ctx.city}, ${ctx.country}. Return JSON: { "subject": "subject", "body_html": "<p>Brief</p>" }${langLine}`;
   }
 }
-
-// ── Branded email HTML wrapper ────────────────────────────────────────────────
-function emailHtml(eyebrow: string, title: string, bodyHtml: string, ctaText?: string, ctaUrl?: string): string {
-  return `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
-<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#29483d;padding:28px 32px;color:#fff;">
-  <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-0.3px;">${BRAND}</div>
-  <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${eyebrow}</div>
-</td></tr>
-<tr><td style="padding:32px;">
-  <h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#13221d;">${title}</h1>
-  <div style="font-size:15px;line-height:1.75;color:#40514a;">${bodyHtml}</div>
-  ${ctaText && ctaUrl ? `<a href="${ctaUrl}" style="display:inline-block;margin-top:24px;background:#29483d;color:#fff;text-decoration:none;padding:13px 26px;border-radius:999px;font-size:14px;font-weight:700;">${ctaText} →</a>` : ''}
-  <p style="margin:28px 0 0;font-size:13px;color:#64746d;">— Morales Concierge Team</p>
-</td></tr></table></td></tr></table></body></html>`;
-}
+// LEAK-SCAN-IGNORE-END
 
 // ── Twilio SMS helper ─────────────────────────────────────────────────────────
 async function sendSms(to: string, msg: string): Promise<void> {
@@ -176,37 +164,37 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const ctx = { patient_name: patientName, origin, procedure: rawProc, procedure_cat: procCat, city, country, date: prefDate, duration, cultural, risk_notes: riskNotes };
 
   // ── Collect all AI jobs ───────────────────────────────────────────────────────
-  type Job = { role: string; lang: string; email: string; phone?: string; eyebrow: string; ctaUrl?: string };
+  type Job = { role: string; lang: string; email: string; phone?: string; eyebrow: string; ctaUrl: string };
   const jobs: Job[]    = [];
   const prompts: string[] = [];
 
   if (caseRecord.doctor_email) {
     const partnerCountry = doctor?.clinic_country || country;
-    jobs.push({ role: 'doctor', lang: partnerCountry, email: caseRecord.doctor_email, phone: doctor?.phone, eyebrow: 'AI Intelligence Brief · Doctor', ctaUrl: `${appUrl}/portal/doctor` });
+    jobs.push({ role: 'doctor', lang: partnerCountry, email: caseRecord.doctor_email, phone: doctor?.phone, eyebrow: 'AI Intelligence Brief · Doctor', ctaUrl: `${appUrl}/doctor-dashboard` });
     prompts.push(buildPrompt('doctor', partnerCountry, ctx));
   }
 
   for (const ag of agencies) {
     const partnerCountry = ag.country || ag.agency_country || '';
-    jobs.push({ role: 'travel_agency', lang: partnerCountry, email: ag.email, eyebrow: 'AI Intelligence Brief · Travel Agency' });
+    jobs.push({ role: 'travel_agency', lang: partnerCountry, email: ag.email, eyebrow: 'AI Intelligence Brief · Travel Agency', ctaUrl: `${appUrl}/travel-agency-dashboard` });
     prompts.push(buildPrompt('travel_agency', partnerCountry, ctx));
   }
 
   for (const tx of taxis) {
     const partnerCountry = tx.operating_country || country;
-    jobs.push({ role: 'taxi', lang: partnerCountry, email: tx.email, phone: tx.phone, eyebrow: 'AI Intelligence Brief · Driver' });
+    jobs.push({ role: 'taxi', lang: partnerCountry, email: tx.email, phone: tx.phone, eyebrow: 'AI Intelligence Brief · Driver', ctaUrl: `${appUrl}/taxi-service-dashboard` });
     prompts.push(buildPrompt('taxi', partnerCountry, ctx));
   }
 
   if (companion?.email) {
     const partnerCountry = companion.country || origin;
-    jobs.push({ role: 'companion', lang: partnerCountry, email: companion.email, phone: companion.phone, eyebrow: 'AI Intelligence Brief · Companion' });
+    jobs.push({ role: 'companion', lang: partnerCountry, email: companion.email, phone: companion.phone, eyebrow: 'AI Intelligence Brief · Companion', ctaUrl: `${appUrl}/companion-dashboard` });
     prompts.push(buildPrompt('companion', partnerCountry, ctx));
   }
 
   if (security?.email) {
     const partnerCountry = security.country || country;
-    jobs.push({ role: 'security', lang: partnerCountry, email: security.email, eyebrow: 'AI Intelligence Brief · Security' });
+    jobs.push({ role: 'security', lang: partnerCountry, email: security.email, eyebrow: 'AI Intelligence Brief · Security', ctaUrl: `${appUrl}/security-agency-dashboard` });
     prompts.push(buildPrompt('security', partnerCountry, ctx));
   }
 
@@ -221,16 +209,32 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const results: Record<string, unknown> = {};
   const sentRoles: string[] = [];
 
+  // The AI-generated brief is exactly the kind of free-text patient detail
+  // that must never leave the platform in a notification body — it's built
+  // from patient name, procedure, cultural notes and (for security) risk
+  // intelligence. It stays in ai_briefs_results on CaseRecord; partners are
+  // only ever told a brief is ready, and open their dashboard to read it.
   jobs.forEach((job, i) => {
     const res = aiResults[i];
     if (res.status === 'fulfilled' && res.value) {
-      const ai = res.value as { subject?: string; body_html?: string };
-      const subj = ai.subject || `AI Partner Brief — ${patientName}`;
-      const html = emailHtml(job.eyebrow, subj, ai.body_html || '', job.ctaUrl ? 'Open Portal' : undefined, job.ctaUrl);
+      const html = linkOnlyEmail({
+        title: job.eyebrow,
+        line: 'A new AI-prepared case brief is ready for you to review.',
+        ctaUrl: job.ctaUrl,
+        ctaLabel: 'Open My Dashboard',
+        brand: BRAND,
+        from: 'sendAIPartnerBriefs',
+      });
       emailTasks.push(
-        base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: job.email, subject: subj, body: html }).catch(() => {})
+        base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: job.email, subject: job.eyebrow, body: html }).catch(() => {})
       );
-      if (job.phone) emailTasks.push(sendSms(job.phone, `Morales: AI case brief for ${patientName.split(' ')[0]} sent — check your email.`));
+      if (job.phone) {
+        emailTasks.push(sendSms(job.phone, linkOnlySms({
+          line: 'A new AI case brief is ready — check your email.',
+          url: job.ctaUrl,
+          from: 'sendAIPartnerBriefs',
+        })));
+      }
       if (!results[job.role]) results[job.role] = { status: 'sent', language: job.lang, email: job.email };
       if (!sentRoles.includes(job.role)) sentRoles.push(job.role);
     } else {

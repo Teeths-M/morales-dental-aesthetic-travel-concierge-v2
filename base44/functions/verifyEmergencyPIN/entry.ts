@@ -293,6 +293,48 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ has_pin: true, hint: records[0].pin_hint || null, is_locked: !!(records[0].locked_until && new Date(records[0].locked_until) > new Date()) });
     }
 
+    // ── GET_MANIFEST: fetch the medical/emergency-contact data an already-verified
+    // pin_session_token is allowed to see. Split from 'verify' on purpose — the
+    // manifest page must never receive PHI as a side effect of PIN validation, only
+    // after re-proving the session token is still live. Was previously fetched
+    // client-side via base44.asServiceRole, which throws in the browser (no
+    // serviceToken) — the caller silently swallowed that and rendered hardcoded
+    // "Unknown" placeholders to a first responder as if they were real data.
+    if (action === 'get_manifest') {
+      const result = await validatePinSession(base44, pin_session_token);
+      if (!result.valid) return Response.json({ error: result.error }, { status: 401 });
+
+      const cases = await base44.asServiceRole.entities.CaseRecord.filter(
+        { client_email: result.session.user_email }, '-created_date', 1
+      );
+      if (!cases.length) return Response.json({ found: false });
+
+      const c = cases[0];
+      return Response.json({
+        found: true,
+        manifest: {
+          full_name: c.client_name || result.session.user_email,
+          blood_type: c.blood_type || 'Unknown',
+          allergies: c.allergies || 'None recorded',
+          medications: c.medications || 'None recorded',
+          medical_conditions: c.medical_conditions || 'None recorded',
+          emergency_contacts: c.emergency_contact
+            ? [{ name: c.emergency_contact, relationship: 'Emergency Contact', phone: c.emergency_contact_phone || 'Not provided' }]
+            : [],
+          passport_last4: c.passport_vault_token ? 'On file' : 'Not on file',
+          procedure: c.procedures?.join(', ') || 'Not specified',
+          doctor_name: c.doctor_selected || 'Not assigned',
+          doctor_phone: c.doctor_email || 'Not available',
+          case_id: c.id,
+          patient_phone: c.client_phone || 'Not on file',
+          client_email: c.client_email || result.session.user_email,
+          client_country: c.client_country || 'Not on file',
+          preferred_language: c.preferred_language || 'English',
+          insurance_info: c.insurance_info || 'Not on file',
+        },
+      });
+    }
+
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
     // SEC-10: Never expose internal error details; SEC-04: PIN hash migration note:

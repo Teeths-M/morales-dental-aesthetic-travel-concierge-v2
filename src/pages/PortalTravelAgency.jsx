@@ -92,16 +92,18 @@ export default function PortalTravelAgency() {
       setLoading(false);
       return;
     }
-    setTokenData(decoded);
-    loadConsultation(decoded.consultation_id, decoded.partner_id);
+    // Keep the raw signed token — getPortalData verifies it server-side and
+    // derives consultation_id/partner_id from the signature itself. Sending
+    // the client-decoded fields instead (as this used to) has no signature to
+    // check, so getPortalData correctly rejects it with "Portal token
+    // required" and every real visit landed on "Failed to load case data."
+    setTokenData({ ...decoded, token });
+    loadConsultation(token);
   }, []);
 
-  const loadConsultation = async (consultationId, partnerId) => {
+  const loadConsultation = async (token) => {
     try {
-      const response = await base44.functions.invoke('getPortalData', {
-        consultation_id: consultationId,
-        partner_id: partnerId,
-      });
+      const response = await base44.functions.invoke('getPortalData', { token });
 
       const c = response.data.consultation;
       if (!c) { setError('Case not found.'); setLoading(false); return; }
@@ -125,14 +127,14 @@ export default function PortalTravelAgency() {
       const newRevisionCount = revisionCount + 1;
 
       if (isRevision) {
-        // Update existing WorkflowEvent record
-        await base44.asServiceRole.entities.WorkflowEvent.update(workflowId, {
-          travel_quote_flight_cost: parseFloat(flightCost) || 0,
-          travel_quote_hotel_cost: parseFloat(hotelCost) || 0,
+        // Revise the existing quote server-side — re-authorised against the
+        // portal token (never trust a client-held workflowId for a write).
+        await base44.functions.invoke('reviseTravelQuote', {
+          token: tokenData.token,
+          flight_cost_usd: parseFloat(flightCost) || 0,
+          hotel_cost_usd: parseFloat(hotelCost) || 0,
           flight_itinerary_summary: flightItinerary,
           hotel_selection: hotelSelection,
-          travel_quote_revised_at: new Date().toISOString(),
-          travel_revision_count: newRevisionCount,
         });
         // Notify admin of the revision
         await base44.functions.invoke('notifyAdminQuoteRevised', {
@@ -164,17 +166,14 @@ export default function PortalTravelAgency() {
       });
 
       // Save logistics fields to CaseRecord so the patient sees them on their Journey Map
-      if (consultation?.id) {
-        const hotelCoordsObj = (hotelLat && hotelLng)
-          ? { lat: parseFloat(hotelLat), lng: parseFloat(hotelLng) }
-          : null;
-        await base44.asServiceRole.entities.CaseRecord.update(consultation.id, {
-          ...(flightNumber   ? { logistics_flight_number: flightNumber } : {}),
-          ...(hotelSelection ? { hotel_name: hotelSelection }            : {}),
-          ...(hotelAddress   ? { hotel_address: hotelAddress }           : {}),
-          ...(hotelCoordsObj ? { hotel_coords: hotelCoordsObj }          : {}),
-        }).catch(() => {});
-      }
+      await base44.functions.invoke('syncTravelLogistics', {
+        token: tokenData.token,
+        flight_number: flightNumber,
+        hotel_name: hotelSelection,
+        hotel_address: hotelAddress,
+        hotel_lat: hotelLat,
+        hotel_lng: hotelLng,
+      }).catch(() => {});
 
       setSubmitted(true);
     } catch (e) {

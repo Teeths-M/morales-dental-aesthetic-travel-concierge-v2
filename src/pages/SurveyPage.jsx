@@ -71,11 +71,18 @@ export default function SurveyPage() {
   useEffect(() => {
     const load = async () => {
       if (!token) { setError('Invalid survey link.'); setLoading(false); return; }
-      const surveys = await base44.asServiceRole.entities.ReputationSurvey.filter({ token });
-      const s = surveys[0];
-      if (!s) { setError('Survey not found.'); setLoading(false); return; }
-      if (s.submitted_at) { setError('This survey has already been completed. Thank you!'); setLoading(false); return; }
-      setSurvey(s);
+      try {
+        // base44.asServiceRole throws in the browser (no serviceToken client-side) —
+        // this used to call it directly, with no try/catch, so the thrown promise
+        // rejection left loading stuck true forever (spinner never resolved).
+        const res = await base44.functions.invoke('getSurveyByToken', { token });
+        const data = res?.data;
+        if (!data?.found) { setError('Survey not found.'); setLoading(false); return; }
+        if (data.submitted) { setError('This survey has already been completed. Thank you!'); setLoading(false); return; }
+        setSurvey({ role: data.role, patient_name: data.patient_name });
+      } catch (_err) {
+        setError('Could not load this survey. Please try the link again.');
+      }
       setLoading(false);
     };
     load();

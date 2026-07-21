@@ -4,17 +4,21 @@ import { computePrevHash } from '../_shared/auditHashChain.ts';
 // ── confirmHandshake ──────────────────────────────────────────────────────────
 // Single entry-point for all handshake state transitions.
 //
+// ORPHANED as of 2026-07-20: grepping the whole repo (not just src/, per the
+// standing lesson that a frontend-only grep can miss workflow/automation/
+// webhook callers) turns up zero real callers anywhere — completeHandshake is
+// the function actually driving the live handshake flow now, including the
+// offline queue below. Do NOT delete without Portia's sign-off first: this
+// may still be a documented/expected surface for a caller outside the repo
+// (a Base44-dashboard automation, an external webhook), which a repo-only
+// grep cannot see either.
+//
 // Actions:
 //   create        — opens a new pending handshake, sets timeout_at = now + 15 min
 //   tap_confirm   — patient/driver taps in-app; accepts GPS coords
 //   sms_confirm   — called internally by processTwilioHandshake after SMS parse
 //   get           — read a single handshake by checkpoint_id
 //   list          — list all handshakes for a case
-//
-// Offline reconciliation:
-//   The frontend writes to the local queue first (offlineHandshakeQueue.js),
-//   then calls this function when online. Pass offline_packet_id so the
-//   record can be matched to its queue entry for deduplication.
 
 const TIMEOUT_MINUTES = 15;
 

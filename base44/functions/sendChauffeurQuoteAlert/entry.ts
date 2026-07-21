@@ -1,6 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { renderEmail } from '../_shared/emailTemplate.ts';
 import { createHandler } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -66,36 +66,19 @@ Deno.serve(createHandler(async ({ req }) => {
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
     const adminUsers = adminEmail ? [{ email: adminEmail }] : [];
 
-    const legRows: Array<[string, string]> = driver_type === 'origin'
-      ? [
-          ['Leg 1 (Home → Airport)', `$${Number(updateData.leg_1_cost_usd).toFixed(2)}`],
-          ['Leg 2 (Airport → Home)', `$${Number(updateData.leg_2_cost_usd).toFixed(2)}`],
-        ]
-      : [
-          ['Leg 3 (Airport → Hotel)', `$${Number(updateData.leg_3_cost_usd).toFixed(2)}`],
-          ['Leg 4 (Hotel → Clinic)', `$${Number(updateData.leg_4_cost_usd).toFixed(2)}`],
-          ['Leg 5 (Clinic → Hotel)', `$${Number(updateData.leg_5_cost_usd).toFixed(2)}`],
-          ['Leg 6 (Hotel → Airport)', `$${Number(updateData.leg_6_cost_usd).toFixed(2)}`],
-        ];
-
+    // Patient name and itemized leg pricing stay in the admin dashboard — the
+    // notification only says a review is waiting, per the link-only comms policy.
     for (const admin of adminUsers) {
       if (!admin.email) continue;
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: admin.email,
-        subject: `⚡ Admin Review Required — Transfer Quote for ${consultation.patient_name}`,
-        body: renderEmail({
-          appUrl,
-          eyebrow: 'Admin Review Required',
-          title: 'Transfer Quote Submitted — Markup Approval Needed',
-          intro: 'A chauffeur has submitted transfer pricing. Case status is now Admin-Review.',
-          rows: [
-            ['Patient', consultation.patient_name],
-            ['Driver Type', driver_type],
-            ...legRows,
-            ['Transfer Total', `$${transferTotal.toFixed(2)}`],
-          ],
-          ctaText: 'Open Admin Dashboard',
+        subject: '⚡ Admin Review Required — Transfer Quote Submitted',
+        body: linkOnlyEmail({
+          title: 'A transfer quote needs markup approval',
+          line: 'A chauffeur has submitted transfer pricing for a case now in Admin-Review.',
           ctaUrl: adminUrl,
+          ctaLabel: 'Open Admin Dashboard',
+          from: 'sendChauffeurQuoteAlert',
         }),
       }).catch(err => console.log(`Admin email skipped for ${admin.email}: ${err.message}`));
     }

@@ -342,6 +342,35 @@ test('ESCROW: release is never scheduled with an in-request timer', () => {
   expect(code, 'release still dispatched').toContain('releaseEscrowPayment');
 });
 
+test('HANDSHAKE: HS4/HS5 confirmed with no GPS still pages admin', () => {
+  // completeHandshake only ever checks that GPS is PRESENT on the two
+  // high-risk checkpoints (hotel check-in, clinic arrival) — it has never
+  // verified the coordinates are actually correct (real proximity checking
+  // needs an expected-location data source that doesn't exist yet, and stays
+  // deferred). This pins the one guarantee that does exist today: a missing
+  // GPS fix on a high-risk step is not silently accepted — an admin alert
+  // fires so a human can verify presence another way.
+  const src = read('base44/functions/completeHandshake/entry.ts');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+
+  expect(code, 'HIGH_RISK_STEPS must still be HS4 (hotel) and HS5 (clinic)')
+    .toMatch(/HIGH_RISK_STEPS\s*=\s*new Set\(\[\s*4,\s*5\s*\]\)/);
+
+  const highRiskBlockStart = code.indexOf('HIGH_RISK_STEPS.has(n)');
+  expect(highRiskBlockStart, 'high-risk checkpoint block must exist').toBeGreaterThan(-1);
+  const highRiskBlock = code.slice(highRiskBlockStart);
+
+  expect(highRiskBlock, 'must check for a missing GPS fix')
+    .toMatch(/!gps_location\?\.lat\s*\|\|\s*!gps_location\?\.lng/);
+  // The admin email send must appear AFTER the missing-GPS check, i.e. inside
+  // that guard — not just present anywhere in the high-risk block (which
+  // would also match the destination-phone-missing alert above it).
+  const missingGpsIdx = highRiskBlock.search(/!gps_location\?\.lat\s*\|\|\s*!gps_location\?\.lng/);
+  const afterGpsCheck = highRiskBlock.slice(missingGpsIdx);
+  expect(afterGpsCheck, 'missing-GPS branch must still alert admin').toMatch(/SendEmail/);
+  expect(afterGpsCheck, 'the alert must name the risk plainly').toMatch(/confirmed HS\$\{n\} .*no GPS/);
+});
+
 test('SOS: the patient confirmation SMS does not go through the admin composer', () => {
   const src = read('base44/functions/triggerSOS/entry.ts');
   const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
@@ -563,6 +592,21 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
     'processPaymentCascade',
     'releaseEscrowPayment',
     'generateItineraryCalendar',
+    'sendAIPartnerBriefs',
+    'sendCompanionMealBrief',
+    'sendHandshakeAlert',
+    'sendChauffeurQuoteAlert',
+    'sendTravelQuoteEmail',
+    'processInformedConsentAndEmail',
+    'schedulePostOpMedReminders',
+    'sendPostOpInstructions',
+    'safeT4LifeScan',
+    'activateMotherTouch',
+    'checkAbandonedBookings',
+    'pipelineOnConsultationFeePaid',
+    'pipelineOnDoctorConfirmed',
+    'checkMissedRecoveryCheckins',
+    'portalHubWorkflow',
   ];
 
   // The identifier may sit anywhere inside the interpolation, not just at its
@@ -587,13 +631,39 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
   for (const name of MIGRATED) {
     const p = join(dir, name, 'entry.ts');
     if (!existsSync(p)) continue;
-    const src = readFileSync(p, 'utf8')
-      .replace(/\/\*[\s\S]*?\*\//g, '')
+    const raw = readFileSync(p, 'utf8');
+
+    // A couple of migrated senders legitimately reference patient fields
+    // OUTSIDE any outbound body: building an LLM prompt (the prompt itself is
+    // never emailed — only the AI's own linkOnlyEmail "your brief is ready"
+    // notification is sent), or a push-notification body (a different
+    // channel this policy doesn't cover — comms-audit.mjs itself only scans
+    // SendEmail/SMS/Twilio/WhatsApp). Marked ranges are exempted explicitly,
+    // by name, rather than loosening the scan for every file.
+    const rawLines = raw.split('\n');
+    const ignoreRanges = [];
+    let ignoreStart = -1;
+    rawLines.forEach((line, i) => {
+      if (line.includes('LEAK-SCAN-IGNORE-START')) ignoreStart = i;
+      if (line.includes('LEAK-SCAN-IGNORE-END') && ignoreStart !== -1) {
+        ignoreRanges.push([ignoreStart, i]);
+        ignoreStart = -1;
+      }
+    });
+    const isIgnored = (i) => ignoreRanges.some(([s, e]) => i >= s && i <= e);
+
+    // Block comments must keep their newlines when stripped (replace matched
+    // non-newline characters only) — collapsing a multi-line /** doc */ block
+    // to '' shifts every later line index, breaking alignment with the
+    // ignoreRanges computed above against the unstripped source.
+    const src = raw
+      .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ''))
       .replace(/^\s*\/\/.*$/gm, '');
-    for (const line of src.split('\n')) {
-      if (IN_PLATFORM.test(line)) continue;
+    src.split('\n').forEach((line, i) => {
+      if (isIgnored(i)) return;
+      if (IN_PLATFORM.test(line)) return;
       if (LEAKY.test(line)) offenders.push(`${name}: ${line.trim().slice(0, 90)}`);
-    }
+    });
   }
   expect(offenders, `outbound bodies carrying private data:\n${offenders.join('\n')}`).toEqual([]);
 });
@@ -1271,16 +1341,12 @@ test('FRONTEND: base44.asServiceRole never spreads — it throws in every browse
   //   - a file NOT on the list may never reference asServiceRole in code
   //   - a file ON the list that no longer references it must be REMOVED
   // So the list only shrinks, and the class of bug cannot come back.
-  const ALLOWED = new Set([
-    'src/components/companion/DietaryInfoCard.jsx',   // W-C: companion read endpoint
-    'src/components/partner-dashboard/TaxiServiceDashboard.jsx', // W-C: driver cases endpoint
-    'src/pages/DoctorCasesDashboard.jsx',             // W-C: confirm/decline endpoint
-    'src/pages/EmergencyManifest.jsx',                // W-B: extend verifyEmergencyPIN
-    'src/pages/LuggageFinderPortal.jsx',              // W-B: public finder endpoint
-    'src/pages/PortalLocalDoctor.jsx',                // W-B: token loader endpoint
-    'src/pages/PortalTravelAgency.jsx',               // W-B: server-side revision writes
-    'src/pages/SurveyPage.jsx',                       // W-B: get-survey-by-token endpoint
-  ]);
+  //
+  // 2026-07-20: the list is now empty — every W-A/W-B/W-C file identified in
+  // the 2026-07-19 audit has been migrated to a user-scoped client call or a
+  // backend function. Kept as an empty Set (not deleted) so the walk below
+  // still runs and a stale re-add is caught immediately.
+  const ALLOWED = new Set([]);
 
   const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   const offenders = [];

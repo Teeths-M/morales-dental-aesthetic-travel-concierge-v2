@@ -23,12 +23,13 @@ export default function TaxiServiceDashboard({ taxi, _language }) {
   const queryClient = useQueryClient();
 
   // Active + pending trip assignments for this driver
+  // base44.asServiceRole throws in the browser (no serviceToken client-side) —
+  // the `?.`/`??` fallback here couldn't save it: the getter throws on access,
+  // before optional chaining can short-circuit, so this always fell through to
+  // the empty-array fallback ("No active assignments right now.").
   const { data: cases = [], isLoading: loadingCases } = useQuery({
     queryKey: ['taxi-cases', taxi?.id],
-    queryFn: () => base44.asServiceRole?.entities?.CaseRecord?.filter(
-      { assigned_driver_id: taxi?.id },
-      '-departure_date', 20
-    ).catch(() => []) ?? Promise.resolve([]),
+    queryFn: async () => (await base44.functions.invoke('getTaxiDriverCases', {}))?.data?.cases ?? [],
     enabled: !!taxi?.id,
     staleTime: 60_000,
     refetchInterval: 300_000,

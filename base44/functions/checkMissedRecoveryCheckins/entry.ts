@@ -1,33 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../_shared/cronAuth.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
-const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-const HAIKU = 'claude-haiku-4-5-20251001';
-
-async function aiMissedCheckinMessages(session: Record<string, unknown>): Promise<{ doctorMsg: string | null; patientMsg: string | null }> {
-  if (!ANTHROPIC_KEY) return { doctorMsg: null, patientMsg: null };
-  const procedure = String(session.procedure_type || session.treatment_plan || 'their procedure');
-  const daysSince = session.last_log_date
-    ? Math.round((Date.now() - new Date(String(session.last_log_date)).getTime()) / 86400_000)
-    : 1;
-  const consecutive = Number(session.consecutive_anomaly_days || 0) + 1;
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: HAIKU, max_tokens: 180,
-        messages: [{ role: 'user', content: `Medical concierge. Patient recovering from ${procedure} missed check-in for ${daysSince} day(s) (${consecutive} consecutive). Write two brief messages. Return JSON: {"doctorMsg":"1-2 sentence clinical note specific to ${procedure} recovery concerns","patientMsg":"1 warm sentence asking patient to check in"}` }],
-      }),
-    });
-    if (!r.ok) return { doctorMsg: null, patientMsg: null };
-    const d = await r.json();
-    const m = (d.content?.[0]?.text || '').trim().match(/\{[\s\S]*\}/);
-    const parsed = m ? JSON.parse(m[0]) : null;
-    return { doctorMsg: parsed?.doctorMsg || null, patientMsg: parsed?.patientMsg || null };
-  } catch { return { doctorMsg: null, patientMsg: null }; }
-}
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // ── checkMissedRecoveryCheckins — cron/scheduled function ─────────────────────
 // Runs every hour via Base44 scheduler.
@@ -143,49 +119,73 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // AI-personalized messages based on procedure type and missed-day count
-      const aiMsgs = await aiMissedCheckinMessages(session);
+      // This is the policy's named example of a non-exempt "missed check-in
+      // reminder" — a missed log has many benign explanations and is not a
+      // confirmed emergency, so every recipient below is link-only, including
+      // the emergency contact. Days-missed/severity stay in RecoverySession
+      // (updated above) and the case file, read in-portal.
+      const doctorDashboardUrl = `${APP_URL}/doctor-dashboard`;
+      const patientDashboardUrl = `${APP_URL}/dashboard`;
 
       // Email doctor
       if (docEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: 'Morales Recovery Monitor',
           to: docEmail,
-          subject: `${severity === 'escalate' ? '🚨' : '⚠️'} Missed Recovery Check-In — ${pName}`,
-          body: `<p>Patient <strong>${pName}</strong> (${pEmail}) has not submitted a recovery check-in today.</p>` +
-            `<p>Days since last log: ${daysSinceLastLog} | Consecutive missed/anomaly days: ${newConsecutive}</p>` +
-            `<p>Case ID: ${session.case_id || '—'}</p>` +
-            (aiMsgs.doctorMsg ? `<p><strong>M AI Note:</strong> ${aiMsgs.doctorMsg}</p>` : `<p>Please attempt to reach the patient to confirm they are well.</p>`),
+          subject: severity === 'escalate' ? '🚨 Missed Recovery Check-In' : '⚠️ Missed Recovery Check-In',
+          body: linkOnlyEmail({
+            title: 'A patient missed their recovery check-in',
+            line: 'One of your patients has not submitted a recovery check-in. Open your dashboard for the case detail and days-missed count.',
+            ctaUrl: doctorDashboardUrl,
+            ctaLabel: 'Open Doctor Dashboard',
+            from: 'checkMissedRecoveryCheckins',
+          }),
         }).catch(() => {});
       }
 
       // SMS doctor if escalated
       if (severity === 'escalate' && docPhone) {
-        await sendSms(docPhone,
-          `Morales: ${pName} has missed recovery check-in for ${newConsecutive} consecutive days. Please contact them.`
-        ).catch(() => {});
+        await sendSms(docPhone, linkOnlySms({
+          line: 'A patient has missed recovery check-in for multiple consecutive days. Please open your dashboard and contact them.',
+          url: doctorDashboardUrl,
+          from: 'checkMissedRecoveryCheckins',
+        })).catch(() => {});
       }
 
-      // SMS patient reminder
+      // Email patient reminder
       if (pEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: 'Morales Recovery Team',
           to: pEmail,
-          subject: 'Recovery Check-In Reminder',
-          body: `<p>Hi ${pName},</p><p>${aiMsgs.patientMsg || 'We noticed you haven\'t submitted your recovery check-in today. Please open the Morales app or reply to this email to let us know how you\'re feeling.'}</p><p>You can also SMS us: RECOVERY <pain 1-10> <mobility 1-5> <appetite 1-5> <GOOD|CONCERNING|BAD></p>`,
+          subject: 'Recovery check-in reminder',
+          body: linkOnlyEmail({
+            title: 'We haven’t heard from you today',
+            line: 'Please open the Morales app to submit your recovery check-in and let us know how you’re feeling.',
+            ctaUrl: patientDashboardUrl,
+            ctaLabel: 'Open My Recovery Check-In',
+            from: 'checkMissedRecoveryCheckins',
+          }),
         }).catch(() => {});
       }
 
       // Emergency contact if 2+ consecutive missed/anomaly days
       if (newConsecutive >= 2 && (ecPhone || ecEmail)) {
-        const ecMsg = `Morales alert: ${pName} has not been reachable for their post-surgical recovery check-in for ${newConsecutive} days. Please check on them. If there is an emergency, contact local services.`;
-        if (ecPhone) await sendSms(ecPhone, ecMsg).catch(() => {});
+        const ecLine = 'Your contact has missed multiple recovery check-ins with their care team. If you are able to check on them directly, please do — if this becomes an emergency, contact local services.';
+        if (ecPhone) {
+          await sendSms(ecPhone, linkOnlySms({ line: ecLine, url: APP_URL, from: 'checkMissedRecoveryCheckins' })).catch(() => {});
+        }
         if (ecEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
             from_name: 'Morales Recovery Monitor',
             to: ecEmail,
-            subject: `Recovery Alert — ${pName}`,
-            body: `<p>${ecMsg}</p><p>If you cannot reach them, we recommend contacting local emergency services or their clinic: ${session.doctor_email || '(see case file)'}.</p>`,
+            subject: 'A recovery check-in alert for your contact',
+            body: linkOnlyEmail({
+              title: 'A check-in alert for your contact',
+              line: ecLine,
+              ctaUrl: APP_URL,
+              ctaLabel: 'Learn More',
+              from: 'checkMissedRecoveryCheckins',
+            }),
           }).catch(() => {});
         }
       }

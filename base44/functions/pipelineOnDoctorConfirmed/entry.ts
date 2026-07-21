@@ -1,6 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
 
 // Inline token encoder — HMAC-signed to match getPortalData's verifyPortalToken.
 // (Previously produced an unsigned btoa(JSON) token with no '.'-suffix signature,
@@ -98,29 +98,28 @@ Deno.serve(async (req) => {
     const labeledDispatches = [];
     const results = { patient: null, travel_agencies: [], chauffeurs: [] };
 
-    // ── 1. NOTIFY PATIENT ────────────────────────────────────────────────────
+    // ── 1. NOTIFY PATIENT — status and next-step detail stay in the dashboard ──
     const patientDashboard = `${appUrl}/dashboard/case-status`;
-    const patientSms = `Hi ${patientName.split(' ')[0]}, wonderful news — your doctor has reviewed and confirmed your case. Our concierge team is now arranging your travel, accommodation, and transfers. You will hear from us within 24 hours with your complete package. — ${BRAND}`;
+    const patientSms = linkOnlySms({
+      line: 'Wonderful news — your doctor has confirmed your case. Track your journey for next steps.',
+      url: patientDashboard,
+      from: 'pipelineOnDoctorConfirmed',
+    });
 
-    const patientEmailHtml = renderEmail({
-      appUrl,
-      eyebrow: 'Doctor Confirmed',
-      title: `Your doctor has confirmed your case, ${patientName}!`,
-      intro: 'Wonderful news — your assigned doctor has reviewed your profile and confirmed your procedure. Our concierge team is now coordinating all travel logistics: flights, accommodation, and local transfers. You will receive your full package proposal within 24–48 hours.',
-      rows: [
-        ['Stage', 'Travel Coordination'],
-        ['Doctor Status', 'Confirmed ✓'],
-        ['Next Update', 'Full package proposal within 24–48 hrs'],
-      ],
-      ctaText: 'Track My Journey',
+    const patientEmailHtml = linkOnlyEmail({
+      title: 'Your doctor has confirmed your case',
+      line: 'Our concierge team is now coordinating all travel logistics — flights, accommodation and local transfers. You will receive your full package proposal within 24–48 hours.',
       ctaUrl: patientDashboard,
+      ctaLabel: 'Track My Journey',
+      brand: BRAND,
+      from: 'pipelineOnDoctorConfirmed',
     });
 
     if (patientPhone && !await isBlackedOut('sms', 'patient', patientPhone)) {
       labeledDispatches.push({ label: 'Patient SMS', provider_type: 'patient', provider_name: patientName, provider_email: patientPhone, dispatch_type: 'sms', fn: () => sendSms(patientPhone, patientSms) });
     }
     if (patientEmail && !await isBlackedOut('email', 'patient', patientEmail)) {
-      labeledDispatches.push({ label: 'Patient Confirmation Email', provider_type: 'patient', provider_name: patientName, provider_email: patientEmail, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: patientEmail, subject: `Your doctor has confirmed — next steps | ${BRAND}`, body: patientEmailHtml }) });
+      labeledDispatches.push({ label: 'Patient Confirmation Email', provider_type: 'patient', provider_name: patientName, provider_email: patientEmail, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: patientEmail, subject: 'Your doctor has confirmed — next steps', body: patientEmailHtml }) });
     }
     results.patient = { email: patientEmail, sms_sent: !!patientPhone };
 
@@ -138,37 +137,32 @@ Deno.serve(async (req) => {
       if (scopedAgencies.length > 0) travelAgencies = scopedAgencies;
     }
 
+    // Patient name/procedure/dates stay in the portal the token opens.
     for (const agency of travelAgencies) {
       const agencyName = agency.agency_name || agency.contact_person || agency.email;
       const token = await encodePortalToken({ consultation_id: consultationId, partner_id: agency.id, portal_type: 'travel' });
       const portalUrl = `${appUrl}/portal/travel?token=${token}`;
 
-      const agencySms = `Hello ${agencyName}, a doctor has confirmed a new patient with Morales. ${patientName} requires a complete travel package. Please open your portal to submit pricing within 48 hours: ${portalUrl} — ${BRAND}`;
+      const agencySms = linkOnlySms({
+        line: 'A doctor has confirmed a new patient. Open your portal to submit a travel quote within 48 hours.',
+        url: portalUrl,
+        from: 'pipelineOnDoctorConfirmed',
+      });
 
-      const procedureLabel = (caseData.procedures || []).join(', ') || 'Medical procedure';
-      const agencyEmailHtml = renderEmail({
-        appUrl,
-        eyebrow: 'Travel Coordination Request',
-        title: `Quote needed: ${patientName}`,
-        intro: `${agencyName}, a doctor has confirmed this patient for their procedure. Please log into your portal below to submit your travel package quote including flights, hotel accommodation, and any relevant package options.`,
-        rows: [
-          ['Patient', patientName],
-          ['Procedure', procedureLabel],
-          ['Preferred Date', caseData.preferred_date || 'To be confirmed'],
-          ['Destination', caseData.procedure_country || '—'],
-          ['Origin', caseData.client_country || '—'],
-          ['Duration of Stay', '—'],
-        ],
-        note: 'Please include pricing for: ✈️ Flights, 🏨 Hotel (recovery), and any all-inclusive package options you can offer.',
-        ctaText: 'Open My Travel Portal',
+      const agencyEmailHtml = linkOnlyEmail({
+        title: 'A travel quote is needed',
+        line: 'A doctor has confirmed a patient for their procedure. Log into your portal to submit your travel package quote — flights, hotel and any package options.',
         ctaUrl: portalUrl,
+        ctaLabel: 'Open My Travel Portal',
+        brand: BRAND,
+        from: 'pipelineOnDoctorConfirmed',
       });
 
       if (agency.phone && !await isBlackedOut('sms', 'vendor', agency.phone)) {
         labeledDispatches.push({ label: `Travel Agency SMS — ${agencyName}`, provider_type: 'travel_agency', provider_name: agencyName, provider_email: agency.phone, dispatch_type: 'sms', fn: () => sendSms(agency.phone, agencySms) });
       }
       if (agency.email && !await isBlackedOut('email', 'vendor', agency.email)) {
-        labeledDispatches.push({ label: `Travel Agency Email — ${agencyName}`, provider_type: 'travel_agency', provider_name: agencyName, provider_email: agency.email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: agency.email, subject: `Travel quote needed — ${patientName} | ${BRAND}`, body: agencyEmailHtml }) });
+        labeledDispatches.push({ label: `Travel Agency Email — ${agencyName}`, provider_type: 'travel_agency', provider_name: agencyName, provider_email: agency.email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: agency.email, subject: 'Travel quote needed', body: agencyEmailHtml }) });
       }
       results.travel_agencies.push({ name: agencyName, email: agency.email, portal_url: portalUrl });
     }
@@ -188,29 +182,26 @@ Deno.serve(async (req) => {
       const token = await encodePortalToken({ consultation_id: consultationId, partner_id: driver.id, portal_type: 'chauffeur' });
       const portalUrl = `${appUrl}/portal/transfer?token=${token}`;
 
-      const driverSms = `Hello ${driverName}, a new patient has been confirmed with Morales. ${patientName} requires medical transfers in your region. Please open your portal to submit your pricing within 48 hours: ${portalUrl} — ${BRAND}`;
+      const driverSms = linkOnlySms({
+        line: 'A new patient has been confirmed and needs medical transfers in your region. Open your portal to submit pricing within 48 hours.',
+        url: portalUrl,
+        from: 'pipelineOnDoctorConfirmed',
+      });
 
-      const driverEmailHtml = renderEmail({
-        appUrl,
-        eyebrow: 'Transfer Quote Request',
-        title: `Transfer pricing needed: ${patientName}`,
-        intro: `${driverName}, a patient has been confirmed by their doctor and we need transfer quotes for their trip. Please submit pricing for each leg via your secure portal below.`,
-        rows: [
-          ['Patient', patientName],
-          ['Service Area', driver.operating_city ? `${driver.operating_city}, ${driver.operating_country}` : driver.operating_country || '—'],
-          ['Legs Required', 'Airport → Hotel → Clinic → Hotel → Airport'],
-          ['Vehicle Types', (driver.vehicle_types || []).join(', ') || '—'],
-        ],
-        note: '🚗 Please submit pricing for all applicable transfer legs. Include any premium vehicle or patient-assistance options.',
-        ctaText: 'Open My Chauffeur Portal',
+      const driverEmailHtml = linkOnlyEmail({
+        title: 'Transfer pricing is needed',
+        line: 'A patient has been confirmed by their doctor and needs transfer quotes. Submit pricing for each leg via your secure portal.',
         ctaUrl: portalUrl,
+        ctaLabel: 'Open My Chauffeur Portal',
+        brand: BRAND,
+        from: 'pipelineOnDoctorConfirmed',
       });
 
       if (driver.phone && !await isBlackedOut('sms', 'vendor', driver.phone)) {
         labeledDispatches.push({ label: `Chauffeur SMS — ${driverName}`, provider_type: 'chauffeur', provider_name: driverName, provider_email: driver.phone, dispatch_type: 'sms', fn: () => sendSms(driver.phone, driverSms) });
       }
       if (driver.email && !await isBlackedOut('email', 'vendor', driver.email)) {
-        labeledDispatches.push({ label: `Chauffeur Email — ${driverName}`, provider_type: 'chauffeur', provider_name: driverName, provider_email: driver.email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: driver.email, subject: `Transfer quote needed — ${patientName} | ${BRAND}`, body: driverEmailHtml }) });
+        labeledDispatches.push({ label: `Chauffeur Email — ${driverName}`, provider_type: 'chauffeur', provider_name: driverName, provider_email: driver.email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: driver.email, subject: 'Transfer quote needed', body: driverEmailHtml }) });
       }
       results.chauffeurs.push({ name: driverName, email: driver.email, portal_url: portalUrl });
     }
@@ -223,52 +214,42 @@ Deno.serve(async (req) => {
 
     if (companion) {
       const companionName = companion.full_name || companion.email;
-      const companionEmailHtml = renderEmail({
-        appUrl,
-        eyebrow: 'Companion Service Quote Request',
-        title: `Companion quote needed: ${patientName}`,
-        intro: `${companionName}, a patient has been confirmed by their doctor and requires a recovery companion. Please review the details and submit your availability and pricing for the recovery period.`,
-        rows: [
-          ['Patient', patientName],
-          ['Procedure(s)', (caseData.procedures || []).join(', ') || '—'],
-          ['Recovery Days', String(caseData.recovery_days || 3)],
-          ['Location', procedureCountry || '—'],
-        ],
-        note: '🍽️ Your quote should cover daily meal delivery, emotional support, and availability for the full recovery period.',
-        ctaText: 'Open Companion Dashboard',
+      const companionEmailHtml = linkOnlyEmail({
+        title: 'A companion quote is needed',
+        line: 'A patient has been confirmed by their doctor and needs a recovery companion. Review the details and submit your availability and pricing.',
         ctaUrl: `${appUrl}/companion-dashboard`,
+        ctaLabel: 'Open Companion Dashboard',
+        brand: BRAND,
+        from: 'pipelineOnDoctorConfirmed',
       });
       if (companion.phone && !await isBlackedOut('sms', 'vendor', companion.phone)) {
         labeledDispatches.push({ label: `Companion SMS — ${companionName}`, provider_type: 'companion', provider_name: companionName, provider_email: companion.phone, dispatch_type: 'sms',
-          fn: () => sendSms(companion.phone, `Hello ${companionName}, a confirmed patient (${patientName}) needs a recovery companion in ${procedureCountry}. Please log in to confirm your availability and pricing: ${appUrl}/companion-dashboard — ${BRAND}`) });
+          fn: () => sendSms(companion.phone, linkOnlySms({
+            line: 'A confirmed patient needs a recovery companion in your region — log in to confirm availability and pricing.',
+            url: `${appUrl}/companion-dashboard`,
+            from: 'pipelineOnDoctorConfirmed',
+          })) });
       }
       if (companion.email && !await isBlackedOut('email', 'vendor', companion.email)) {
         labeledDispatches.push({ label: `Companion Email — ${companionName}`, provider_type: 'companion', provider_name: companionName, provider_email: companion.email, dispatch_type: 'email',
-          fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: companion.email, subject: `Companion quote needed — ${patientName} | ${BRAND}`, body: companionEmailHtml }) });
+          fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: companion.email, subject: 'Companion quote needed', body: companionEmailHtml }) });
       }
     }
 
     // ── 5. NOTIFY CLINIC (doctor's clinic — facility fee quote) ─────────────
     const doctorEmail = caseData.doctor_email;
     if (doctorEmail) {
-      const clinicEmailHtml = renderEmail({
-        appUrl,
-        eyebrow: 'Clinic Facility Fee — Quote Request',
-        title: `Facility fee quote needed: ${patientName}`,
-        intro: `Doctor, as the confirmed physician for this case, please provide the clinic facility fee, anaesthesia cost (if applicable), and post-operative consultation fee so we can finalise the patient's complete package pricing.`,
-        rows: [
-          ['Patient', patientName],
-          ['Procedure(s)', (caseData.procedures || []).join(', ') || '—'],
-          ['Procedure Date', caseData.procedure_date || caseData.preferred_date || 'To be confirmed'],
-          ['Case Reference', caseRecordId.slice(-8).toUpperCase()],
-        ],
-        note: '🏥 Please include: clinic facility fee, anaesthesia (if applicable), and post-op follow-up cost. Submit via your dashboard.',
-        ctaText: 'Open Doctor Dashboard',
+      const clinicEmailHtml = linkOnlyEmail({
+        title: 'A clinic facility fee quote is needed',
+        line: 'As the confirmed physician for this case, please provide the clinic facility fee, anaesthesia cost (if applicable) and post-operative consultation fee in your dashboard.',
         ctaUrl: `${appUrl}/doctor-dashboard`,
+        ctaLabel: 'Open Doctor Dashboard',
+        brand: BRAND,
+        from: 'pipelineOnDoctorConfirmed',
       });
       if (!await isBlackedOut('email', 'vendor', doctorEmail)) {
         labeledDispatches.push({ label: 'Clinic Facility Fee Email', provider_type: 'clinic', provider_name: 'Doctor', provider_email: doctorEmail, dispatch_type: 'email',
-          fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: doctorEmail, subject: `Clinic facility fee quote needed — ${patientName} | ${BRAND}`, body: clinicEmailHtml }) });
+          fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: doctorEmail, subject: 'Clinic facility fee quote needed', body: clinicEmailHtml }) });
       }
     }
 

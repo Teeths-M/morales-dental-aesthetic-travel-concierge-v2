@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { isSystemPaused } from '@/lib/systemPause';
 import { motion } from 'framer-motion';
 import { Heart, CheckCircle2, Loader2, Luggage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,9 +21,17 @@ export default function LuggageFinderPortal() {
   useEffect(() => {
     const load = async () => {
       if (!finderToken || finderToken === 'luggage') { setError('Invalid QR code.'); setLoading(false); return; }
-      const bags = await base44.asServiceRole.entities.LuggageToken.filter({ finder_contact_token: finderToken });
-      if (!bags[0]) { setError('Luggage tag not found.'); setLoading(false); return; }
-      setBag(bags[0]);
+      try {
+        // base44.asServiceRole throws in the browser (no serviceToken client-side) —
+        // this used to call it directly with no try/catch, so the thrown promise
+        // rejection left loading stuck true forever (the finder never saw the form).
+        const res = await base44.functions.invoke('getLuggageByFinderToken', { finder_token: finderToken });
+        const data = res?.data;
+        if (!data?.found) { setError('Luggage tag not found.'); setLoading(false); return; }
+        setBag(data);
+      } catch (_err) {
+        setError('Could not load this luggage tag. Please try scanning again.');
+      }
       setLoading(false);
     };
     load();
@@ -36,35 +43,16 @@ export default function LuggageFinderPortal() {
     setSubmitError('');
 
     try {
-      // Update bag status to 'found'
-      const history = [...(bag.status_history || []), {
-        status: 'found',
-        location: form.current_location,
-        timestamp: new Date().toISOString(),
-        source: 'finder_scan'
-      }];
-
-      await base44.asServiceRole.entities.LuggageToken.update(bag.id, {
-        current_status: 'found',
-        last_seen_location: form.current_location,
-        status_history: history,
-        last_updated_at: new Date().toISOString(),
-        return_coordinated_at: new Date().toISOString()
+      // Status update + owner/admin notification all happen server-side now —
+      // the finder has no case access and asServiceRole cannot be called from
+      // the browser regardless.
+      await base44.functions.invoke('reportLuggageFound', {
+        finder_token: finderToken,
+        finder_name: form.finder_name,
+        finder_phone: form.finder_phone,
+        finder_email: form.finder_email,
+        current_location: form.current_location,
       });
-
-      // Notify owner + admin via email — no owner details shown to finder
-      if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
-        to: bag.patient_email,
-        subject: '🎉 Your Lost Bag Has Been Found!',
-        body: `Great news! Someone found your bag.\n\nBag: ${bag.bag_label}\nFound by: ${form.finder_name}\nLocation: ${form.current_location}\n${form.finder_phone ? `Finder phone: ${form.finder_phone}` : ''}\n${form.finder_email ? `Finder email: ${form.finder_email}` : ''}\n\nYour concierge team will coordinate the return. We'll be in touch shortly.\n\nMorales Medical`
-      });
-
-      if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
-        to: 'admin@moralesmedical.com',
-        subject: `🧳 Luggage Found — ${bag.token_code}`,
-        body: `Lost bag has been found via QR scan.\n\nToken: ${bag.token_code}\nBag: ${bag.bag_label}\nOwner case: ${bag.case_id}\nFound by: ${form.finder_name} at ${form.current_location}\nFinder contact: ${form.finder_phone || form.finder_email || 'None provided'}`
-      });
-
       setSubmitted(true);
     } catch (_e) {
       setSubmitError('Could not notify the owner — please try again.');

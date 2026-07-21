@@ -17,6 +17,9 @@
 
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
+
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 type ProcedureCategory = 'dental' | 'aesthetic' | 'general';
 
@@ -113,49 +116,6 @@ function classifyProcedure(procedureName: string): ProcedureCategory {
   return 'general';
 }
 
-function buildMedEmail(name: string, meds: MedItem[], procedureName: string): string {
-  const firstName = name?.split(' ')[0] || name || 'there';
-  const lines: string[] = [
-    `Dear ${firstName},`,
-    ``,
-    `Your procedure (${procedureName}) is complete. Here is your medication schedule for the next 7 days.`,
-    ``,
-    `Print this email or take a screenshot — follow it exactly.`,
-    ``,
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    `YOUR MEDICATION SCHEDULE`,
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-    ``,
-  ];
-
-  meds.forEach((med, i) => {
-    lines.push(`${i + 1}. ${med.name}`);
-    lines.push(`   Dose: ${med.dose}`);
-    lines.push(`   When: ${med.frequency}`);
-    lines.push(`   Times: ${med.times.join(' · ')}`);
-    lines.push(`   Duration: ${med.duration}`);
-    lines.push(`   Note: ${med.notes}`);
-    lines.push(``);
-  });
-
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  lines.push(`STOP IMMEDIATELY AND CONTACT M IF:`);
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  lines.push(`• Fever above 38.5°C / 101.3°F`);
-  lines.push(`• Severe pain that does not reduce within 45 minutes of pain relief`);
-  lines.push(`• Unusual swelling, redness, or discharge at the surgical site`);
-  lines.push(`• Difficulty breathing or swallowing`);
-  lines.push(`• Any symptom that feels wrong to you — trust your instincts`);
-  lines.push(``);
-  lines.push(`Open the app → Secure Line. We respond immediately.`);
-  lines.push(``);
-  lines.push(`Your care team is checking in every 8 hours. Rest well.`);
-  lines.push(``);
-  lines.push(`— Morales Care Team`);
-
-  return lines.join('\n');
-}
-
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { case_id } = await body<{ case_id: string }>();
   if (!case_id) return err('case_id is required');
@@ -179,13 +139,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     medication_procedure_category: category,
   }).catch(e => console.error('[schedulePostOpMedReminders] case update failed:', e?.message));
 
-  // Send the full schedule email immediately
+  // Notify the patient — the actual schedule (drug names/doses/times) stays
+  // on the case, read in-app; the email is a link-only nudge.
   if (patientEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: 'Morales Care Team',
       to: patientEmail,
-      subject: `Your medication schedule — ${procedureName}`,
-      body: buildMedEmail(patientName, meds, procedureName),
+      subject: 'Your medication schedule is ready',
+      body: linkOnlyEmail({
+        title: 'Your medication schedule is ready',
+        line: 'Your personalised post-procedure medication schedule is ready to view in your Morales app.',
+        ctaUrl: `${APP_URL}/dashboard`,
+        ctaLabel: 'Open My Schedule',
+        from: 'schedulePostOpMedReminders',
+      }),
     }).catch(e => console.error('[schedulePostOpMedReminders] email failed:', e?.message));
   }
 

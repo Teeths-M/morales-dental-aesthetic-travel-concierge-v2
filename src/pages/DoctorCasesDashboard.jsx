@@ -169,14 +169,13 @@ export default function DoctorCasesDashboard() {
     }
   };
 
+  // base44.asServiceRole throws in the browser (no serviceToken client-side) —
+  // both handlers below caught it silently and told the doctor "nothing
+  // changed", every time, regardless of what they clicked.
   const handleConfirm = async (workflow) => {
     setActionLoading(true);
     try {
-      await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, {
-        doctor_status: 'confirmed',
-        doctor_confirmed_date: new Date().toISOString(),
-        last_update_summary: 'Doctor confirmed availability.',
-      });
+      await base44.functions.invoke('respondToDoctorCase', { workflow_id: workflow.id, decision: 'confirmed' });
       setWorkflows(prev => prev.map(w => w.id === workflow.id ? { ...w, doctor_status: 'confirmed' } : w));
     } catch (_e) {
       toast.error('Not confirmed', { description: 'Nothing changed. Please try again.' });
@@ -188,10 +187,7 @@ export default function DoctorCasesDashboard() {
   const handleDecline = async (workflow) => {
     setActionLoading(true);
     try {
-      await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, {
-        doctor_status: 'unavailable',
-        last_update_summary: 'Doctor marked as unavailable.',
-      });
+      await base44.functions.invoke('respondToDoctorCase', { workflow_id: workflow.id, decision: 'unavailable' });
       setWorkflows(prev => prev.map(w => w.id === workflow.id ? { ...w, doctor_status: 'unavailable' } : w));
     } catch (_e) {
       toast.error('Not declined', { description: 'Nothing changed. Please try again.' });

@@ -40,22 +40,19 @@ export default function PortalLocalDoctor() {
       }
 
       try {
-        // Find the referral by portal_token
-        const referrals = await base44.asServiceRole?.entities.LocalDoctorReferral?.filter(
-          { portal_token: token }, '-created_date', 1
-        ) || await base44.entities.LocalDoctorReferral.filter({ portal_token: token }, '-created_date', 1);
+        // base44.asServiceRole throws in the browser (no serviceToken client-side) —
+        // `base44.asServiceRole?.entities...filter(...) || await base44.entities...`
+        // looked like a fallback but isn't one: the getter throws on access, before
+        // `?.` or `||` can evaluate, so every visit fell straight to the catch below.
+        const res = await base44.functions.invoke('getLocalDoctorReferralByToken', { token });
+        const data = res?.data;
+        if (!data?.found) { setError('Referral not found or already processed.'); setLoading(false); return; }
+        setReferral({ created_date: data.created_date });
 
-        if (!referrals.length) { setError('Referral not found or already processed.'); setLoading(false); return; }
-        const ref = referrals[0];
-        setReferral(ref);
-
-        if (ref.status !== 'pending') {
-          setOutcome(ref.status); setLoading(false); return;
+        if (data.status !== 'pending') {
+          setOutcome(data.status); setLoading(false); return;
         }
-
-        // Load case data
-        const cases = await base44.entities.CaseRecord.filter({ id: ref.case_id }, '-created_date', 1);
-        setCaseData(cases[0] || null);
+        setCaseData(data.case || null);
       } catch (_e) {
         setError('Could not load referral. Please try again or contact support.');
       } finally {
@@ -68,11 +65,7 @@ export default function PortalLocalDoctor() {
   const respond = async (decision) => {
     setSubmitting(true);
     try {
-      await base44.entities.LocalDoctorReferral.update(referral.id, {
-        status: decision,
-        doctor_notes: notes || null,
-        responded_at: new Date().toISOString(),
-      });
+      await base44.functions.invoke('respondToLocalDoctorReferral', { token, decision, notes });
       setOutcome(decision);
     } catch {
       setError('Could not save response. Please try again.');

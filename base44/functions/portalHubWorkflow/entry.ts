@@ -1,6 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { renderEmail } from '../_shared/emailTemplate.ts';
 import { createHandler } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 
@@ -113,6 +113,9 @@ Deno.serve(createHandler(async ({ req }) => {
   }
 
   // 3. AI Risk Check (SAFE-T 4LIFE™)
+  // LEAK-SCAN-IGNORE-START — this builds the InvokeLLM prompt, not an
+  // outbound email/SMS body. Neither outbound email below includes any of
+  // this detail; both are generic linkOnlyEmail notifications.
   const riskPrompt = `
 You are the SAFE-T 4LIFE™ medical travel safety AI for Morales Medical Travel Safety.
 
@@ -144,6 +147,7 @@ Return a JSON with:
 - summary: 2-3 sentence plain-English explanation of the assessment
 - recommendation: brief action note for the concierge team
 `;
+  // LEAK-SCAN-IGNORE-END
 
   let riskAssessment = null;
   try {
@@ -183,23 +187,19 @@ Return a JSON with:
     console.log(`Consultation risk update skipped for ${consultation_id}: ${error.message}`);
   }
 
-  // 5. If BLOCKED — notify customer and stop
+  // 5. If BLOCKED — notify customer and stop. Risk summary/flags stay on
+  // WorkflowEvent (already saved above); the email is link-only.
   if (isBlocked) {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: consultation.email,
-        subject: 'Important Update Regarding Your Consultation Request — Morales Medical Travel Safety',
-        body: renderEmail({
-          appUrl,
-          eyebrow: 'SAFE-T review',
+        subject: 'Important update regarding your consultation request',
+        body: linkOnlyEmail({
           title: 'A concierge review is needed',
-          intro: `Dear ${consultation.patient_name}, your SAFE-T 4LIFE review is complete. Before moving forward with ${formatProcedure(consultation.procedure_interest)}, our team needs to speak with you directly to protect your safety and comfort.`,
-          rows: [
-            ['Procedure', formatProcedure(consultation.procedure_interest)],
-            ['Review result', 'Concierge follow-up required'],
-          ],
-          note: [riskAssessment.summary, ...toArray(riskAssessment.flags)].filter(Boolean).join(' | '),
-          footer: 'A member of our concierge team will reach out within 24 hours to discuss your options and next steps.',
+          line: 'Your SAFE-T 4LIFE review is complete and needs a concierge follow-up before moving forward. A member of our team will reach out within 24 hours.',
+          ctaUrl: `${appUrl}/dashboard`,
+          ctaLabel: 'Open My Dashboard',
+          from: 'portalHubWorkflow',
         }),
       });
     } catch (error) {
@@ -249,24 +249,18 @@ Return a JSON with:
     console.log(`Doctor portal URL lookup skipped: ${error.message}`);
   }
 
+  // Patient identity/procedure/date/risk level/notes stay in the doctor
+  // portal the token opens — the notification only says a review is waiting.
   const doctorNotif = {
     partner: 'doctor',
-    email_subject: `New patient approved — ${consultation.patient_name} | ${BRAND}`,
-    email_body: renderEmail({
-      appUrl,
-      eyebrow: 'Doctor request',
-      title: 'New patient ready for scheduling',
-      intro: 'A patient has passed the SAFE-T review and is ready for clinical availability confirmation.',
-      rows: [
-        ['Patient', consultation.patient_name],
-        ['Procedure', formatProcedure(consultation.procedure_interest)],
-        ['Preferred date', consultation.preferred_date || 'Flexible'],
-        ['Risk level', riskLevel],
-        ['Notes', consultation.notes || 'None'],
-      ],
-      ctaText: 'Review in portal',
+    email_subject: 'New patient approved — action required',
+    email_body: linkOnlyEmail({
+      title: 'A new patient is ready for scheduling',
+      line: 'A patient has passed the SAFE-T review and is ready for your clinical availability confirmation. Please review and respond in your portal.',
       ctaUrl: doctorPortalUrl,
-      footer: 'Please confirm availability through the portal or by replying to this email.',
+      ctaLabel: 'Review in Portal',
+      brand: BRAND,
+      from: 'portalHubWorkflow',
     }),
   };
 

@@ -11,6 +11,22 @@ import { verifyVaultPIN } from '@/lib/vault/offlineVaultPIN';
 const MANIFEST_STORAGE_KEY = 'morales_emergency_manifest';
 const MAX_MANIFEST_BYTES = 50 * 1024; // 50 KB — manifest is text-only, prune if oversized
 
+// This page is anonymous (no login), so there is no session to read an email
+// from. The PIN is per-email server-side (EmergencyPIN.filter({ user_email })),
+// so both the online and offline paths need to know whose PIN this device has —
+// discovered from the same local vault-PIN key convention PIN setup writes,
+// never asked for directly (typing an email here would defeat the point of a
+// PIN-only emergency screen).
+function resolveDeviceEmail() {
+  const pbkdf2Key = Object.keys(localStorage).find(k => k.startsWith('morales_vault_pin_'));
+  if (pbkdf2Key) return pbkdf2Key.replace('morales_vault_pin_', '');
+  try {
+    const legacy = JSON.parse(localStorage.getItem('morales_emergency_pin_hash') || 'null');
+    if (legacy?.email) return legacy.email;
+  } catch (_) {}
+  return null;
+}
+
 function safeStoreManifest(data) {
   try {
     const str = JSON.stringify(data);
@@ -107,9 +123,19 @@ export default function EmergencyManifest() {
     }
 
     // --- ONLINE PATH ---
+    // This page is anonymous — there is no session's email to send. verifyEmergencyPIN
+    // requires one (EmergencyPIN records are looked up by user_email), so resolve it
+    // from the same local vault-PIN key PIN setup wrote, before calling the server.
+    const userEmail = resolveDeviceEmail();
+    if (!userEmail) {
+      setError('No Emergency PIN found on this device. Set one up while logged in, then it will work here.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Step 1: Verify PIN to get session
-      const verifyRes = await base44.functions.invoke('verifyEmergencyPIN', { pin });
+      // Step 1: Verify PIN, get a short-lived session token
+      const verifyRes = await base44.functions.invoke('verifyEmergencyPIN', { action: 'verify', user_email: userEmail, pin });
       const verifyData = verifyRes.data;
 
       if (verifyData?.error || !verifyData?.verified) {
@@ -118,62 +144,34 @@ export default function EmergencyManifest() {
         return;
       }
 
-      // Step 2: Fetch patient's case data for manifest
-      const userEmail = verifyData.user_email;
-      let manifestData = {
-        full_name: 'Unknown',
-        blood_type: 'Unknown',
-        allergies: 'None recorded',
-        medications: 'None recorded',
-        medical_conditions: 'None recorded',
-        emergency_contacts: [],
-        passport_last4: 'Not on file',
-        procedure: 'Not specified',
-        doctor_name: 'Not assigned',
-        doctor_phone: 'Not available',
-        case_id: 'N/A',
-        patient_phone: 'Not on file',
-        client_email: userEmail,
-        client_country: 'Not on file',
-        preferred_language: 'English',
-        insurance_info: 'Not on file',
+      // Step 2: Fetch the real manifest server-side, authorised by the session token.
+      // Previously this read base44.asServiceRole.entities.CaseRecord directly from
+      // the browser — that getter throws (no serviceToken client-side), was caught
+      // silently, and left the hardcoded "Unknown"/"None recorded" placeholders above
+      // rendering to a first responder as if they were real data.
+      const manifestRes = await base44.functions.invoke('verifyEmergencyPIN', {
+        action: 'get_manifest', user_email: userEmail, pin_session_token: verifyData.pin_session_token,
+      });
+      const manifestPayload = manifestRes.data;
+
+      if (!manifestPayload?.found) {
+        setError('PIN correct, but no medical profile is on file yet for this account.');
+        setLoading(false);
+        return;
+      }
+
+      const manifestData = {
+        ...manifestPayload.manifest,
         cached_at: new Date().toISOString(),
         cached_version: '2.0',
       };
 
-      // Try to fetch case record for this user
-      try {
-        const cases = await base44.asServiceRole.entities.CaseRecord.filter({ client_email: userEmail }, '-created_date', 1);
-        if (cases && cases.length > 0) {
-          const c = cases[0].data;
-          manifestData = {
-            full_name: c.client_name || userEmail,
-            blood_type: c.blood_type || 'Unknown',
-            allergies: c.allergies || 'None recorded',
-            medications: c.medications || 'None recorded',
-            medical_conditions: c.medical_conditions || 'None recorded',
-            emergency_contacts: c.emergency_contact ? [{ name: c.emergency_contact, relationship: 'Emergency Contact', phone: c.emergency_contact_phone || 'Not provided' }] : [],
-            passport_last4: c.passport_vault_token ? 'On file' : 'Not on file',
-            procedure: c.procedures?.join(', ') || 'Not specified',
-            doctor_name: c.doctor_selected || 'Not assigned',
-            doctor_phone: c.doctor_email || 'Not available',
-            case_id: c.id || cases[0].id,
-            patient_phone: c.client_phone || 'Not on file',
-            client_email: c.client_email || userEmail,
-            client_country: c.client_country || 'Not on file',
-            preferred_language: c.preferred_language || 'English',
-            insurance_info: c.insurance_info || 'Not on file',
-            cached_at: new Date().toISOString(),
-            cached_version: '2.0',
-          };
-        }
-      } catch (_caseErr) {
-      }
-
       safeStoreManifest(manifestData);
       setManifest(manifestData);
     } catch (_) {
-      // Server unreachable — try local PIN + cached manifest
+      // Verify/get_manifest failed or server unreachable — try local PIN + cached
+      // manifest. Never fabricate manifest data here: an honest "couldn't confirm,
+      // call your emergency contact" beats placeholder text read as real.
       try {
         const storedLocal = JSON.parse(localStorage.getItem('morales_emergency_pin_hash') || 'null');
         if (storedLocal) {
@@ -187,7 +185,7 @@ export default function EmergencyManifest() {
           }
         }
       } catch (_) {}
-      setError('Server unreachable and no valid offline fallback. Check your connection.');
+      setError('Could not verify online and no valid offline data is cached. Check your connection.');
     }
     setLoading(false);
   };

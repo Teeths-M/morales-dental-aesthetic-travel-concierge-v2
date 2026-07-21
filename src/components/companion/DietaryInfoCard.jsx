@@ -27,11 +27,15 @@ const RESTRICTION_LABELS = {
 export default function DietaryInfoCard({ caseId }) {
   const { data, isLoading } = useQuery({
     queryKey: ['dietary_profile', caseId],
-    queryFn: () => base44.asServiceRole.entities.DietaryProfile.filter({ case_id: caseId }),
+    // base44.asServiceRole throws in the browser (no serviceToken client-side) —
+    // React Query caught the error at the query layer, so this always rendered
+    // "No dietary profile has been submitted" even when a real profile with
+    // allergies existed. Scoped server-side to the companion's own assignment.
+    queryFn: async () => (await base44.functions.invoke('getCompanionDietaryProfile', { case_id: caseId }))?.data,
     enabled: !!caseId,
   });
 
-  const profile = data?.[0];
+  const profile = data?.profile;
 
   if (isLoading) {
     return (

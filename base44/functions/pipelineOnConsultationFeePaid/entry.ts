@@ -1,6 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
 
 // Inline token encoder (no local imports allowed)
 // FIX: the '.'-suffix was previously crypto.getRandomValues() random bytes — it
@@ -91,37 +91,33 @@ Deno.serve(async (req) => {
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const results = { patient: null, doctor: null };
 
-    // ── 1. NOTIFY PATIENT ────────────────────────────────────────────────────
-    const patientName = consultation.patient_name || 'Valued Patient';
+    // ── 1. NOTIFY PATIENT — status/next-step stay in the dashboard the link opens ──
     const patientEmail = consultation.email;
     const patientPhone = consultation.phone;
     const dashboardUrl = `${appUrl}/dashboard/case-status`;
 
-    const patientSms = `Hi ${patientName}! ✅ Your consultation fee is confirmed. Our team is reviewing your case and will assign you a doctor shortly. Track your journey: ${dashboardUrl} — Morales Medical Travel Safety`;
-
-    const patientEmailHtml = renderEmail({
-      appUrl,
-      eyebrow: 'Consultation Fee Confirmed',
-      title: `You're officially in the queue, ${patientName}!`,
-      intro: 'Your consultation fee payment has been received. Our clinical concierge team is now reviewing your medical profile and will assign a specialist shortly. You will receive updates at each stage of your journey.',
-      rows: [
-        ['Status', 'Fee Paid ✓'],
-        ['Next Step', 'Doctor Assignment'],
-        ['Estimated Update', 'Within 24 hours'],
-      ],
-      ctaText: 'Track My Journey',
-      ctaUrl: dashboardUrl,
-    });
-
     const sendTasks = [];
 
-    if (patientPhone) sendTasks.push(sendSms(patientPhone, patientSms));
+    if (patientPhone) {
+      sendTasks.push(sendSms(patientPhone, linkOnlySms({
+        line: 'Your consultation fee is confirmed. Track your journey for the next steps.',
+        url: dashboardUrl,
+        from: 'pipelineOnConsultationFeePaid',
+      })));
+    }
     if (patientEmail) {
       sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND,
         to: patientEmail,
-        subject: `Your consultation fee is confirmed — ${BRAND}`,
-        body: patientEmailHtml,
+        subject: 'Your consultation fee is confirmed',
+        body: linkOnlyEmail({
+          title: "You're officially in the queue",
+          line: 'Your consultation fee payment has been received. Our clinical concierge team is reviewing your medical profile and will assign a specialist shortly.',
+          ctaUrl: dashboardUrl,
+          ctaLabel: 'Track My Journey',
+          brand: BRAND,
+          from: 'pipelineOnConsultationFeePaid',
+        }),
       }));
     }
 
@@ -143,35 +139,32 @@ Deno.serve(async (req) => {
       let doctor = null;
       try { doctor = await base44.asServiceRole.entities.Doctor.get(doctorId); } catch(e) {}
 
-      const doctorName = doctor?.full_name || 'Doctor';
       const doctorPhone = doctor?.phone;
 
       const token = await encodePortalToken({ consultation_id: consultationId, partner_id: doctorId, portal_type: 'doctor' });
       const doctorPortalUrl = `${appUrl}/portal/doctor/${token}`;
 
-      const doctorSms = `Hello Dr. ${doctorName}, a new patient (${patientName}) has paid their consultation fee and awaits your review. Open your portal to confirm or decline: ${doctorPortalUrl} — Morales Medical Travel Safety`;
-
-      const doctorEmailHtml = renderEmail({
-        appUrl,
-        eyebrow: 'New Patient — Action Required',
-        title: `Case review needed: ${patientName}`,
-        intro: `Dr. ${doctorName}, a patient has paid their consultation fee and is awaiting your confirmation. Please review their medical profile and submit your availability and procedure quote via your secure portal.`,
-        rows: [
-          ['Patient', patientName],
-          ['Procedure', (consultation.procedure_interest || '').replace(/_/g, ' ')],
-          ['Preferred Date', consultation.preferred_date || 'Flexible'],
-          ['Destination', consultation.destination_country || consultation.procedure_country || '—'],
-        ],
-        ctaText: 'Open My Doctor Portal',
-        ctaUrl: doctorPortalUrl,
-      });
-
-      if (doctorPhone) sendTasks.push(sendSms(doctorPhone, doctorSms));
+      // Patient identity/procedure/date stay in the doctor portal the token
+      // opens — the notification only says a review is waiting.
+      if (doctorPhone) {
+        sendTasks.push(sendSms(doctorPhone, linkOnlySms({
+          line: 'A new patient awaits your review. Open your portal to confirm or decline.',
+          url: doctorPortalUrl,
+          from: 'pipelineOnConsultationFeePaid',
+        })));
+      }
       sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND,
         to: doctorEmail,
-        subject: `New patient awaiting your review — ${patientName} | ${BRAND}`,
-        body: doctorEmailHtml,
+        subject: 'New patient awaiting your review',
+        body: linkOnlyEmail({
+          title: 'A new patient needs your review',
+          line: 'A patient has paid their consultation fee and is awaiting your confirmation. Please review their medical profile and submit your availability and quote in your secure portal.',
+          ctaUrl: doctorPortalUrl,
+          ctaLabel: 'Open My Doctor Portal',
+          brand: BRAND,
+          from: 'pipelineOnConsultationFeePaid',
+        }),
       }));
 
       results.doctor = { email: doctorEmail, portal_url: doctorPortalUrl };

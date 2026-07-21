@@ -1,6 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { createHandler } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
+
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -455,12 +458,20 @@ Deno.serve(createHandler(async ({ req }) => {
         prev_hash: await computePrevHash(base44),
       });
 
+      // The critical risk reason/flags stay in the case record (already saved
+      // above) and the admin dashboard — never in an outbound email body.
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: 'SAFE-T 4LIFE™ Critical Alert',
           to: cr.client_email,
           subject: '⚠️ SAFE-T 4LIFE™ — Important Update on Your Medical Travel Plan',
-          body: `<p>Dear ${cr.client_name},</p><p>Your SAFE-T 4LIFE™ safety screening has identified a critical factor that requires immediate review by our medical coordination team before your journey can proceed.</p><p><strong>Factor identified:</strong> ${result.reason}</p><p>A member of our concierge team will contact you within 24 hours.</p><p>— The Morales Medical Travel Team</p>`,
+          body: linkOnlyEmail({
+            title: 'A safety review is needed before you travel',
+            line: 'Our team has identified something in your safety screening that needs review before your journey can proceed. A member of our concierge team will contact you within 24 hours.',
+            ctaUrl: `${APP_URL}/dashboard`,
+            ctaLabel: 'Open My Dashboard',
+            from: 'safeT4LifeScan',
+          }),
         });
       } catch (_) {}
 
@@ -471,8 +482,14 @@ Deno.serve(createHandler(async ({ req }) => {
           await base44.asServiceRole.integrations.Core.SendEmail({
             from_name: 'SAFE-T 4LIFE™ Critical Alert',
             to: adminEmail,
-            subject: `🚨 CRITICAL RISK BLOCK — Case ${caseId} · ${cr.client_name}`,
-            body: `<h2>Critical Risk Intercept Triggered</h2><p><strong>Patient:</strong> ${cr.client_name} (${cr.client_email})</p><p><strong>Case ID:</strong> ${caseId}</p><p><strong>Reason:</strong> ${result.reason}</p><p><strong>All Flags:</strong> ${result.flags.join(', ')}</p><p><strong>Triggered at:</strong> ${now}</p><p>This case has been hard-locked. No administrative override is permitted.</p>`,
+            subject: '🚨 CRITICAL RISK BLOCK — case hard-locked, review required',
+            body: linkOnlyEmail({
+              title: 'A case has been hard-locked by SAFE-T 4LIFE™',
+              line: 'A critical risk factor was intercepted. The case is hard-locked — no administrative override is permitted. Open the admin dashboard for the full detail.',
+              ctaUrl: `${APP_URL}/admin`,
+              ctaLabel: 'Open Admin Dashboard',
+              from: 'safeT4LifeScan',
+            }),
           });
         } catch (_) {}
       }

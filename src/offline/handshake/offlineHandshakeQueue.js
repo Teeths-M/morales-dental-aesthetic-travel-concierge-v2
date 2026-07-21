@@ -4,8 +4,8 @@
  *
  * Mirrors the SOS queue pattern (offlineSosPacket.js) — identical
  * enqueue / getUnsynced / markSynced lifecycle, different storage key
- * and packet shape. Writes to localStorage first; syncs to
- * confirmHandshake backend when connectivity returns.
+ * and packet shape. Writes to localStorage first; syncs to the
+ * completeHandshake backend when connectivity returns.
  *
  * Packet shape matches the OfflineHandshake entity:
  *   { handshake_id, trip_id, type, status, confirmed_by, timestamp,
