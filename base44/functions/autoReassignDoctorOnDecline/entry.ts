@@ -1,5 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
+
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -77,19 +80,18 @@ Deno.serve(async (req) => {
     });
 
     // BUG-R7-04 FIX: hardcoded admin email — use ADMIN_EMAIL env var
+    // Real patient/procedure/doctor detail stays in the admin dashboard the link opens.
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
     if (adminEmail) await base44.asServiceRole.integrations.Core.SendEmail({
       to: adminEmail,
-      subject: `Case Auto-Reassigned: ${consultation.patient_name}`,
-      body: `
-        <h2>Automatic Doctor Reassignment</h2>
-        <p><strong>Patient:</strong> ${consultation.patient_name}</p>
-        <p><strong>Procedure:</strong> ${consultation.procedure_interest}</p>
-        <p><strong>Previous Doctor:</strong> Declined (ID: ${declined_doctor_id})</p>
-        <p><strong>New Doctor:</strong> ${nextDoctor.full_name} (${nextDoctor.clinic_city}, ${nextDoctor.clinic_country})</p>
-        <p><strong>Status:</strong> Portal link sent to new doctor</p>
-        <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
-      `,
+      subject: 'A case was automatically reassigned',
+      body: linkOnlyEmail({
+        title: 'A case was automatically reassigned to a new doctor',
+        line: 'A doctor declined a case and it has been automatically reassigned to the next available match. Open the admin dashboard for the case detail.',
+        ctaUrl: `${APP_URL}/admin`,
+        ctaLabel: 'Open Admin Dashboard',
+        from: 'autoReassignDoctorOnDecline',
+      }),
     });
 
     return Response.json({

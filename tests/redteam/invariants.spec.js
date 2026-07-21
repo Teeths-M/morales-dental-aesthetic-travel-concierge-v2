@@ -607,6 +607,11 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
     'pipelineOnDoctorConfirmed',
     'checkMissedRecoveryCheckins',
     'portalHubWorkflow',
+    'submitRecoveryCheckin',
+    'autoReassignDoctorOnDecline',
+    'onDoctorConfirmed',
+    'runSilentSafetyEscalation',
+    'stripePaymentWebhook',
   ];
 
   // The identifier may sit anywhere inside the interpolation, not just at its
@@ -656,9 +661,18 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
     // non-newline characters only) — collapsing a multi-line /** doc */ block
     // to '' shifts every later line index, breaking alignment with the
     // ignoreRanges computed above against the unstripped source.
+    //
+    // Line-comment strip must anchor leading whitespace to [ \t]*, not \s* —
+    // \s matches \n, so a blank line directly followed by a `//` comment lets
+    // the match's `^` start on the blank line and its `\s*` swallow that blank
+    // line's own newline into the same match, deleting one line net per
+    // occurrence. A 773-line file with ~30 blank-line-then-comment pairs
+    // (routine section-header style) silently lost 31 lines this way, which
+    // shifted every ignoreRange after the first occurrence and produced
+    // phantom offenders out of correctly-exempted emergencyDispatch() bodies.
     const src = raw
       .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ''))
-      .replace(/^\s*\/\/.*$/gm, '');
+      .replace(/^[ \t]*\/\/.*$/gm, '');
     src.split('\n').forEach((line, i) => {
       if (isIgnored(i)) return;
       if (IN_PLATFORM.test(line)) return;

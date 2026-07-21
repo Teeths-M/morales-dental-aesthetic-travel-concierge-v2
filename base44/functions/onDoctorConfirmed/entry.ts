@@ -1,10 +1,8 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
-
-const formatMoney = (value) => value ? `$${Number(value).toLocaleString('en-US')}` : 'To be confirmed';
 
 Deno.serve(async (req) => {
   try {
@@ -18,7 +16,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { workflow_id, quoted_price, notes, only_agency_id, doctor_email, doctor_name } = await req.json();
+    const { workflow_id, only_agency_id, doctor_email } = await req.json();
 
     if (!workflow_id) {
       return Response.json({ error: 'workflow_id is required' }, { status: 400 });
@@ -71,32 +69,26 @@ Deno.serve(async (req) => {
 
     const results = { travel: [], hotel: [], cab: [], patient: null, doctor: null };
 
+    // Real patient/quote/schedule detail stays in the portal each link opens —
+    // these emails only say a new case or request is waiting.
     if (doctor_email) {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: BRAND,
           to: doctor_email,
-          subject: `Procedure confirmed for ${workflow.patient_name} | ${BRAND}`,
-          body: renderEmail({
-            appUrl,
-            eyebrow: 'Doctor confirmation',
-            title: `Confirmed case: ${workflow.patient_name}`,
-            intro: `Hello ${doctor_name || 'Doctor'}, this case has been assigned to you and is now moving into travel coordination.`,
-            rows: [
-              ['Patient', workflow.patient_name],
-              ['Quoted price', formatMoney(quoted_price)],
-              ['Requested date', consultation?.preferred_date ? new Date(consultation.preferred_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not specified'],
-              ['Duration of stay', consultation?.duration_of_stay || 'Not specified'],
-              ['Portal', 'Doctor case management'],
-            ],
-            note: notes || '',
-            ctaText: 'Open portal',
+          subject: `A confirmed case is ready for your review | ${BRAND}`,
+          body: linkOnlyEmail({
+            title: 'A confirmed case is ready for your review',
+            line: 'A case has been assigned to you and is now moving into travel coordination. Open your portal for the case detail and quote.',
             ctaUrl: portalLink,
+            ctaLabel: 'Open Portal',
+            brand: BRAND,
+            from: 'onDoctorConfirmed',
           }),
         });
         results.doctor = 'sent';
       } catch (e) {
-        results.doctor = `failed: ${e.message}`;
+        results.doctor = 'failed';
       }
     }
 
@@ -104,31 +96,25 @@ Deno.serve(async (req) => {
     for (const agency of filteredAgencies) {
       const offersFlights = agency.services_offered?.includes('flights');
       const offersHotels = agency.services_offered?.includes('hotels');
-      const name = agency.agency_name || agency.email;
 
       if (offersFlights) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND,
             to: agency.email,
-            subject: `Travel coordination needed for ${workflow.patient_name} | ${BRAND}`,
-            body: renderEmail({
-              appUrl,
-              eyebrow: 'Travel request',
+            subject: `Travel coordination needed | ${BRAND}`,
+            body: linkOnlyEmail({
               title: 'Flight and itinerary quote needed',
-              intro: `Hello ${name}, a doctor has confirmed this patient and travel planning can begin.`,
-              rows: [
-                ['Patient', workflow.patient_name],
-                ['Doctor quote', formatMoney(quoted_price)],
-                ['Requested service', 'Flights and travel itinerary'],
-              ],
-              note: notes || '',
-              footer: 'Please reply with availability, routing options, and pricing.',
+              line: 'A confirmed patient needs flight and travel itinerary coordination. Open your portal to submit availability, routing, and pricing.',
+              ctaUrl: portalLink,
+              ctaLabel: 'Open Portal',
+              brand: BRAND,
+              from: 'onDoctorConfirmed',
             }),
           });
-          results.travel.push({ email: agency.email, name, status: 'sent' });
+          results.travel.push({ email: agency.email, status: 'sent' });
         } catch (e) {
-          results.travel.push({ email: agency.email, name, status: 'failed', error: e.message });
+          results.travel.push({ email: agency.email, status: 'failed' });
         }
       }
 
@@ -137,52 +123,41 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND,
             to: agency.email,
-            subject: `Recovery lodging needed for ${workflow.patient_name} | ${BRAND}`,
-            body: renderEmail({
-              appUrl,
-              eyebrow: 'Accommodation request',
+            subject: `Recovery lodging needed | ${BRAND}`,
+            body: linkOnlyEmail({
               title: 'Recovery hotel quote needed',
-              intro: `Hello ${name}, this confirmed patient requires recovery-focused accommodation options.`,
-              rows: [
-                ['Patient', workflow.patient_name],
-                ['Requested service', 'Recovery lodging'],
-                ['Status', 'Doctor confirmed'],
-              ],
-              note: notes || '',
-              footer: 'Please reply with room availability, recovery suitability, and pricing.',
+              line: 'A confirmed patient needs recovery-focused accommodation options. Open your portal to submit availability and pricing.',
+              ctaUrl: portalLink,
+              ctaLabel: 'Open Portal',
+              brand: BRAND,
+              from: 'onDoctorConfirmed',
             }),
           });
-          results.hotel.push({ email: agency.email, name, status: 'sent' });
+          results.hotel.push({ email: agency.email, status: 'sent' });
         } catch (e) {
-          results.hotel.push({ email: agency.email, name, status: 'failed', error: e.message });
+          results.hotel.push({ email: agency.email, status: 'failed' });
         }
       }
     }
 
     for (const taxi of taxiServices) {
-      const name = taxi.driver_name || taxi.company_name || taxi.email;
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: BRAND,
           to: taxi.email,
-          subject: `Transfer coordination needed for ${workflow.patient_name} | ${BRAND}`,
-          body: renderEmail({
-            appUrl,
-            eyebrow: 'Transfer request',
+          subject: `Transfer coordination needed | ${BRAND}`,
+          body: linkOnlyEmail({
             title: 'Patient transfer quote needed',
-            intro: `Hello ${name}, this confirmed patient will need reliable local transportation support.`,
-            rows: [
-              ['Patient', workflow.patient_name],
-              ['Requested service', 'Airport, clinic, and hotel transfers'],
-              ['Status', 'Doctor confirmed'],
-            ],
-            note: notes || '',
-            footer: 'Please reply with availability, vehicle details, and pricing.',
+            line: 'A confirmed patient will need local transportation support. Open your portal to submit availability and pricing.',
+            ctaUrl: portalLink,
+            ctaLabel: 'Open Portal',
+            brand: BRAND,
+            from: 'onDoctorConfirmed',
           }),
         });
-        results.cab.push({ email: taxi.email, name, status: 'sent' });
+        results.cab.push({ email: taxi.email, status: 'sent' });
       } catch (e) {
-        results.cab.push({ email: taxi.email, name, status: 'failed', error: e.message });
+        results.cab.push({ email: taxi.email, status: 'failed' });
       }
     }
 
@@ -191,21 +166,18 @@ Deno.serve(async (req) => {
         from_name: BRAND,
         to: workflow.patient_email,
         subject: `Your doctor has confirmed | ${BRAND}`,
-        body: renderEmail({
-          appUrl,
-          eyebrow: 'Care journey update',
+        body: linkOnlyEmail({
           title: 'Your doctor has confirmed',
-          intro: `Dear ${workflow.patient_name}, your doctor has confirmed your procedure. Our concierge team is now coordinating the next steps around travel, lodging, and local transfers.`,
-          rows: [
-            ['Current stage', 'Travel coordination'],
-            ['Next update', 'Full package summary within 24–48 hours'],
-          ],
-          footer: 'Your concierge team will keep you updated as each part of your care journey is confirmed.',
+          line: 'Your doctor has confirmed your procedure. Our concierge team is now coordinating the next steps around travel, lodging, and local transfers.',
+          ctaUrl: `${appUrl}/dashboard`,
+          ctaLabel: 'Open My Journey',
+          brand: BRAND,
+          from: 'onDoctorConfirmed',
         }),
       });
       results.patient = 'sent';
     } catch (e) {
-      results.patient = `failed: ${e.message}`;
+      results.patient = 'failed';
     }
 
     await base44.asServiceRole.entities.WorkflowEvent.update(workflow_id, {

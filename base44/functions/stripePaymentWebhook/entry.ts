@@ -15,6 +15,9 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
+import { linkOnlyEmail } from '../_shared/notify.ts';
+
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 Deno.serve(async (req) => {
   const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
@@ -560,18 +563,22 @@ async function handleConsultationFeePaid(base44, {
           status: 'Admin-Review',
           consultation_fee_paid: true,
         });
-        // Alert admin — NOT the doctor
+        // Alert admin — NOT the doctor. Link-only: the flagged condition is
+        // exactly the kind of PHI this channel must never carry — patient name,
+        // condition, and consultation detail stay in the admin portal.
         const adminEmail = Deno.env.get('ADMIN_EMAIL');
         if (adminEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
             from_name: 'Morales Medical — Senior Review',
             to: adminEmail,
-            subject: `⚠️ Senior Medical Review Required — ${consultation.patient_name}`,
-            body: `<p>A patient has paid their consultation fee and requires <strong>Senior Medical Team review</strong> before doctor assignment.</p>
-              <p><strong>Patient:</strong> ${consultation.patient_name}<br/>
-              <strong>Condition Flagged:</strong> ${consultation.high_risk_flagged_condition || 'High-risk condition'}<br/>
-              <strong>Consultation ID:</strong> ${consultation_id}</p>
-              <p>Please review this case in the admin portal and manually assign a doctor once cleared.</p>`,
+            subject: '⚠️ Senior medical review required',
+            body: linkOnlyEmail({
+              title: 'Senior medical review required',
+              line: 'A patient has paid their consultation fee and is flagged for Senior Medical Team review before doctor assignment. Open the admin portal for the case detail.',
+              ctaUrl: `${APP_URL}/admin`,
+              ctaLabel: 'Open Admin Portal',
+              from: 'stripePaymentWebhook',
+            }),
           }).catch(() => {});
         }
       }

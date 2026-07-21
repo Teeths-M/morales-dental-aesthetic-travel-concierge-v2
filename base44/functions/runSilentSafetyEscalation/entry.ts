@@ -15,6 +15,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { linkOnlyEmail, emergencyDispatch } from '../_shared/notify.ts';
 
 // ── Configurable thresholds (minutes after missed check-in) ─────────────────
 // context_type on SoloCheckIn overrides these defaults per-checkpoint.
@@ -367,13 +368,20 @@ Deno.serve(createHandler(async ({ req }) => {
           smsStatus = 'no_phone';
         }
 
-        // Fallback: email if no phone
+        // Fallback: email if no phone. Own name dropped for consistency with the
+        // link-only policy even though this is the traveler's own check-in.
         if (!patientPhone && ci.user_email) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
               to: ci.user_email,
               subject: `⚠️ Morales Safety Check-In Required`,
-              body: `<p>Hi ${patientName},</p><p>We haven't received your safety check-in. Please confirm you are safe:</p><p><a href="${checkInLink}" style="background:#059669;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:bold;">✅ I'm Safe — Confirm Now</a></p><p style="color:#6b7280;font-size:12px;">This link expires in 24 hours. If you cannot click, log in to your dashboard: ${appUrl}/dashboard</p>`,
+              body: linkOnlyEmail({
+                title: 'A safety check-in is due',
+                line: 'We have not received your scheduled safety check-in. Please open the link to let us know you are safe.',
+                ctaUrl: checkInLink,
+                ctaLabel: "I'm Safe — Confirm Now",
+                from: 'runSilentSafetyEscalation',
+              }),
             });
           } catch (_) {}
         }
@@ -446,7 +454,17 @@ Deno.serve(createHandler(async ({ req }) => {
 
         const guardianUrl = await ensureGuardianLink(base44, ci.case_id, ci.user_email, patientName, emergencyContact);
 
-        const guardianSmsBody = `Morales Safety Alert: ${patientName} missed a required check-in. View last known location: ${guardianUrl || appUrl}`;
+        // Exempt from link-only policy: this is the active-emergency alert to the
+        // patient's own emergency contact that emergencyDispatch() exists for
+        // (Portia, 2026-07-18) — a missed check-in cascading toward "patient
+        // missing" is exactly the scenario the carve-out covers.
+        // LEAK-SCAN-IGNORE-START — authorised emergencyDispatch() carve-out, not a link-only leak.
+        const guardianSmsBody = emergencyDispatch({
+          reason: 'patient_missing',
+          from: 'runSilentSafetyEscalation',
+          body: `Morales Safety Alert: ${patientName} missed a required check-in. View last known location: ${guardianUrl || appUrl}`,
+        });
+        // LEAK-SCAN-IGNORE-END
 
         // SMS to guardian phone if available
         let guardianPhone = caseRecord?.client_phone ? '' : ''; // guardian phone if stored differently
@@ -475,6 +493,7 @@ Deno.serve(createHandler(async ({ req }) => {
             ? `GPS: ${Number(bestLoc.latitude).toFixed(5)}, ${Number(bestLoc.longitude).toFixed(5)}`
             : [bestLoc?.city, bestLoc?.country].filter(Boolean).join(', ') || 'Last known location unavailable';
 
+          // LEAK-SCAN-IGNORE-START — authorised emergencyDispatch() carve-out, not a link-only leak.
           const emailBody = `
 <div style="font-family:sans-serif;max-width:600px;background:#fff;padding:32px;border-radius:12px;border:1px solid #e5e7eb;">
   <div style="background:#dc2626;color:white;padding:16px 24px;border-radius:8px;margin-bottom:24px;">
@@ -493,9 +512,12 @@ Deno.serve(createHandler(async ({ req }) => {
               from_name: 'Morales Safety System',
               to: emergencyContact,
               subject: `🚨 Safety Alert: ${patientName} missed check-in`,
-              body: emailBody,
+              // Exempt: active-emergency alert to the patient's own emergency
+              // contact — see guardianSmsBody above for the same reasoning.
+              body: emergencyDispatch({ reason: 'patient_missing', from: 'runSilentSafetyEscalation', body: emailBody }),
             });
           } catch (_) {}
+          // LEAK-SCAN-IGNORE-END
 
           await logNotification(base44, {
             channel: 'email',
@@ -529,7 +551,15 @@ Deno.serve(createHandler(async ({ req }) => {
 
         const guardianUrl = await ensureGuardianLink(base44, ci.case_id, ci.user_email, patientName, emergencyContact);
 
-        const dispatchBody = `🚨 SECURITY DISPATCH — ${patientName} | Case: ${ci.case_id} | Location: ${locStr} | Overdue: ${Math.round(overdueMins)}min | Missed rounds: ${missedCount} | Tracking: ${guardianUrl || 'N/A'} | Maps: ${mapsUrl || 'N/A'}`;
+        // Exempt: dispatch to the assigned private security partner — a "local
+        // responder" under the same active-emergency carve-out as the guardian alert.
+        // LEAK-SCAN-IGNORE-START — authorised emergencyDispatch() carve-out, not a link-only leak.
+        const dispatchBody = emergencyDispatch({
+          reason: 'patient_missing',
+          from: 'runSilentSafetyEscalation',
+          body: `🚨 SECURITY DISPATCH — ${patientName} | Case: ${ci.case_id} | Location: ${locStr} | Overdue: ${Math.round(overdueMins)}min | Missed rounds: ${missedCount} | Tracking: ${guardianUrl || 'N/A'} | Maps: ${mapsUrl || 'N/A'}`,
+        });
+        // LEAK-SCAN-IGNORE-END
 
         // Notify security partner via SMS if configured
         const securityPhone = caseRecord?.travel_vendor_id ? null : null; // extend when SecurityAgency has phone field
@@ -547,44 +577,40 @@ Deno.serve(createHandler(async ({ req }) => {
         } else {
           // No security partner — immediately alert admin and escalate
           await logDispatchFailure(base44, { case_id: ci.case_id, escalation_level: 4, failure_reason: 'No private security partner assigned' });
-          // Alert admin immediately — don't wait for T+180m
+          // Alert admin immediately — don't wait for T+180m. Admin situational
+          // awareness stays link-only per policy; the real case detail is what
+          // Situation Room shows once they open it.
           const adminEmail = Deno.env.get('ADMIN_EMAIL');
           if (adminEmail) {
             await base44.asServiceRole.integrations.Core.SendEmail({
               to: adminEmail,
               subject: '🚨 URGENT: Security dispatch failed — no partner assigned',
-              body: `Patient case ${ci.case_id} has been missing for 2+ hours. No security partner is assigned. Please contact local authorities immediately.\n\nCase ID: ${ci.case_id}\nEscalation time: ${new Date().toISOString()}`,
+              body: linkOnlyEmail({
+                title: 'Security dispatch failed — no partner assigned',
+                line: 'A traveler has been unreachable for 2+ hours and no security partner is assigned. Open Situation Room now to contact local authorities directly.',
+                ctaUrl: `${appUrl}/admin/situation-room`,
+                ctaLabel: 'Open Situation Room',
+                from: 'runSilentSafetyEscalation',
+              }),
             }).catch(e => console.error('[safety] Admin alert email failed:', e.message));
           }
         }
 
-        // Always email admin on security escalation
+        // Always email admin on security escalation — link-only; full detail
+        // (name, contact, location, timeline) lives in Situation Room.
         if (adminEmail) {
-          const adminEmailBody = `
-<div style="font-family:sans-serif;max-width:600px;background:#fff;padding:24px;border:2px solid #dc2626;border-radius:12px;">
-  <div style="background:#dc2626;color:white;padding:16px;border-radius:8px;margin-bottom:20px;">
-    <h2 style="margin:0;">🚨 SECURITY DISPATCH REQUIRED</h2>
-  </div>
-  <table style="width:100%;border-collapse:collapse;">
-    <tr><td style="padding:6px 0;color:#6b7280;">Traveler</td><td style="font-weight:bold;">${patientName}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td>${ci.user_email}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td>${patientPhone || 'N/A'}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Case ID</td><td>${ci.case_id}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Overdue</td><td>${Math.round(overdueMins)} minutes</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Missed Rounds</td><td>${missedCount}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Last Location</td><td>${locStr}</td></tr>
-  </table>
-  ${mapsUrl ? `<p><a href="${mapsUrl}" style="color:#dc2626;font-weight:bold;">📍 Get Directions to Last Known Location</a></p>` : ''}
-  ${guardianUrl ? `<p><a href="${guardianUrl}" style="color:#1d4ed8;">👁 View Live Guardian Tracking</a></p>` : ''}
-  <p style="color:#dc2626;font-weight:bold;margin-top:16px;">ACTION REQUIRED: Dispatch private security immediately. If no security available, contact local emergency services.</p>
-</div>`;
-
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
               from_name: 'Morales Safety — URGENT',
               to: adminEmail,
-              subject: `🚨 SECURITY DISPATCH: ${patientName} — Case ${ci.case_id}`,
-              body: adminEmailBody,
+              subject: '🚨 SECURITY DISPATCH REQUIRED',
+              body: linkOnlyEmail({
+                title: 'Private security dispatch required',
+                line: 'A traveler has missed check-ins past the security dispatch threshold. Open Situation Room now for their case detail and last known location.',
+                ctaUrl: `${appUrl}/admin/situation-room`,
+                ctaLabel: 'Open Situation Room',
+                from: 'runSilentSafetyEscalation',
+              }),
             });
           } catch (_) {}
         }
@@ -631,46 +657,21 @@ Deno.serve(createHandler(async ({ req }) => {
           police_escalation_required_at: now.toISOString(),
         });
 
-        const guardianUrl = await ensureGuardianLink(base44, ci.case_id, ci.user_email, patientName, emergencyContact);
-
+        // Admin situational awareness stays link-only; the checklist and every
+        // identifying detail live in Situation Room once admin opens it.
         if (adminEmail) {
-          const policeEmailBody = `
-<div style="font-family:sans-serif;max-width:600px;background:#fff;padding:24px;border:3px solid #7c3aed;border-radius:12px;">
-  <div style="background:#7c3aed;color:white;padding:16px;border-radius:8px;margin-bottom:20px;">
-    <h2 style="margin:0;">🚔 POLICE / ADMIN ESCALATION REQUIRED</h2>
-  </div>
-  <p style="color:#374151;font-size:16px;font-weight:bold;">${patientName} has been unreachable for ${Math.round(overdueMins)} minutes. Immediate human intervention required.</p>
-  <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-    <tr><td style="padding:6px 0;color:#6b7280;">Case ID</td><td style="font-weight:bold;">${ci.case_id}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td>${patientPhone || 'N/A'}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td>${ci.user_email}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Last Location</td><td>${locStr}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">SMS Sent</td><td>${ci.traveler_sms_sent_at ? new Date(ci.traveler_sms_sent_at).toLocaleString() : 'No'}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Voice Called</td><td>${ci.traveler_voice_call_at ? new Date(ci.traveler_voice_call_at).toLocaleString() : 'No'}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Guardian Alerted</td><td>${ci.guardian_alerted_at ? new Date(ci.guardian_alerted_at).toLocaleString() : 'No'}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Security Dispatched</td><td>${ci.security_dispatched_at ? new Date(ci.security_dispatched_at).toLocaleString() : 'No'}</td></tr>
-  </table>
-  ${mapsUrl ? `<p><a href="${mapsUrl}" style="color:#dc2626;font-weight:bold;">📍 Last Known Location — Google Maps</a></p>` : ''}
-  ${guardianUrl ? `<p><a href="${guardianUrl}" style="color:#1d4ed8;">👁 Live Guardian Tracking Link</a></p>` : ''}
-  <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin-top:16px;">
-    <p style="color:#92400e;font-weight:bold;margin:0;">ADMIN CHECKLIST — Complete in order:</p>
-    <ol style="color:#92400e;margin:8px 0 0 16px;font-size:14px;">
-      <li>Verify last known location in the tracking link above</li>
-      <li>Call traveler: ${patientPhone || 'No phone on file'}</li>
-      <li>Call emergency contact: ${emergencyContact || 'Not provided'}</li>
-      <li>Contact assigned private security partner</li>
-      <li>Contact local emergency services / police using regional protocol</li>
-    </ol>
-  </div>
-  <p style="color:#dc2626;font-weight:bold;margin-top:16px;">⚠️ Police have NOT been automatically contacted. Admin must initiate as appropriate.</p>
-</div>`;
-
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
               from_name: 'Morales Safety — CRITICAL',
               to: adminEmail,
-              subject: `🚔 POLICE ESCALATION REQUIRED: ${patientName} — ${Math.round(overdueMins)}min overdue`,
-              body: policeEmailBody,
+              subject: '🚔 POLICE / ADMIN ESCALATION REQUIRED',
+              body: linkOnlyEmail({
+                title: 'Police / admin escalation required',
+                line: 'A traveler has been unreachable well past the security dispatch window. Open Situation Room now for the case detail, timeline, and action checklist. Police have NOT been automatically contacted.',
+                ctaUrl: `${appUrl}/admin/situation-room`,
+                ctaLabel: 'Open Situation Room',
+                from: 'runSilentSafetyEscalation',
+              }),
             });
           } catch (_) {}
         }
@@ -703,7 +704,6 @@ Deno.serve(createHandler(async ({ req }) => {
         const staleMins = minutesSince(liveLoc.updated_at);
         if (staleMins >= THRESHOLDS.STALE_SIGNAL_GUARDIAN_MIN && !liveLoc.stale_alerted_30m) {
           const locStr = buildLocationString(liveLoc);
-          const mapsUrl = buildMapsUrl(liveLoc);
           const lossDetectedAt = now.toISOString();
 
           // Freeze last-known coordinates — never interpolate or extrapolate position.
@@ -731,12 +731,19 @@ Deno.serve(createHandler(async ({ req }) => {
           });
 
           // Page admin via email — signal loss could be deliberate jamming/spoofing.
+          // Link-only: real position, timeline, and traveler detail live in Situation Room.
           if (adminEmail) {
             base44.asServiceRole.integrations.Core.SendEmail({
               from_name: 'Morales Safety — Location Alert',
               to: adminEmail,
-              subject: `⚠️ LOCATION SIGNAL LOST — ${ci.user_name || ci.user_email} — ${Math.round(staleMins)}min dark`,
-              body: `Location signal lost for an active solo traveler.\n\nPatient: ${ci.user_name || ci.user_email}\nCase ID: ${ci.case_id}\nSignal dark for: ${Math.round(staleMins)} minutes\nLast known position: ${locStr}\n${mapsUrl ? `Map: ${mapsUrl}` : ''}\nLoss detected at: ${lossDetectedAt}\n\nThis may be a technical failure (device locked, no data) or a deliberate signal block (jamming, spoofing).\n\nACTION: Verify patient status. If unreachable within 10 minutes, escalate to security.`,
+              subject: '⚠️ Location signal lost for an active traveler',
+              body: linkOnlyEmail({
+                title: 'Location signal lost',
+                line: 'An active solo traveler’s location signal has gone dark. This may be a technical failure or a deliberate signal block. Open Situation Room for the last known position and timeline.',
+                ctaUrl: `${appUrl}/admin/situation-room`,
+                ctaLabel: 'Open Situation Room',
+                from: 'runSilentSafetyEscalation',
+              }),
             }).catch(() => {});
           }
         }
