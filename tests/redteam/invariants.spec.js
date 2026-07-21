@@ -1341,6 +1341,41 @@ test('INTAKE: an unreachable safety validator BLOCKS submission — and says so 
   expect(code, 'the isBlocked hard stop must survive').toMatch(/if\s*\(safetyPayload\.isBlocked\)/);
 });
 
+test('CART: a RED-locked procedure combination cannot reach /intake', () => {
+  // A red "Safety Review" banner next to a working "Continue to Consultation"
+  // button is a decoration, not a block. The M Principle requires the
+  // opposite: no path to /intake may exist while analyseCompatibility says RED.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+
+  // The shared CTA (rendered on both the mobile summary and the desktop
+  // sidebar) must branch on the cart's `locked` state, not render an
+  // unconditional <Link to="/intake">.
+  const cartList = strip(read('src/components/procedures/MyProceduresList.jsx'));
+  expect(cartList, 'MyProceduresList must read the cart lock state').toContain('useCart');
+  expect(cartList, 'the CTA must branch on locked before linking to /intake')
+    .toMatch(/locked\s*\?[\s\S]{0,600}Link to="\/intake"/);
+
+  // The catalog page's own "Book a Consultation" button must branch the
+  // same way.
+  const proceduresPage = strip(read('src/pages/Procedures.jsx'));
+  expect(proceduresPage, 'the catalog page CTA must branch on locked before linking to /intake')
+    .toMatch(/locked\s*\?[\s\S]{0,600}Link to="\/intake"/);
+
+  // The one-click "add procedure from modal, then go straight to /intake"
+  // shortcut adds a NEW item whose effect on cart safety isn't reflected in
+  // React state until the next render — it must re-check compatibility on
+  // the PROSPECTIVE cart (existing items + the one just added), not skip
+  // straight to navigate() trusting the stale pre-add lock status.
+  const bookFromModalIdx = proceduresPage.indexOf('const bookFromModal');
+  expect(bookFromModalIdx, 'bookFromModal must exist').toBeGreaterThan(-1);
+  const bookFromModalBody = proceduresPage.slice(bookFromModalIdx, bookFromModalIdx + 900);
+  const redCheckIdx = bookFromModalBody.indexOf("level === 'RED'");
+  const navigateIdx = bookFromModalBody.indexOf("navigate('/intake')");
+  expect(redCheckIdx, 'bookFromModal must re-check compatibility on the prospective cart').toBeGreaterThan(-1);
+  expect(navigateIdx, 'bookFromModal must still navigate on the safe path').toBeGreaterThan(-1);
+  expect(redCheckIdx, 'the RED check must run before navigating to /intake').toBeLessThan(navigateIdx);
+});
+
 test('FRONTEND: base44.asServiceRole never spreads — it throws in every browser', () => {
   // Service role only exists inside Base44-hosted backend functions. In the
   // browser the SDK's asServiceRole getter THROWS (no serviceToken), and even

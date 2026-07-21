@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, Clock, Sparkles, DollarSign } from 'lucide-react';
+import { X, ArrowRight, Clock, Sparkles, DollarSign, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { PricingEngine } from '@/lib/pricingEngine';
 import CompatibilityFirewall from '@/components/procedures/CompatibilityFirewall';
+import { useCart } from '@/context/CartContext';
 
 export default function MyProceduresList({ items, onRemove, onClear }) {
   const [pricingEngine, setPricingEngine] = useState(null);
   const [totalPrice, setTotalPrice] = useState(null);
+  const { locked, safetyStatus, openPivot } = useCart();
 
   // Initialize pricing engine
   useEffect(() => {
@@ -114,15 +116,27 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
         </AnimatePresence>
       </div>
 
-      {/* 2. Continue to Consultation CTA — flows naturally below treatment list */}
+      {/* 2. Continue to Consultation CTA — flows naturally below treatment list.
+          RED-locked carts must not reach /intake: the M Principle is a hard
+          block, not a warning banner next to a working button. */}
       <div className="px-4 pb-4">
-        <Link to="/intake">
-          <button className="w-full py-3 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-95 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
-            <Sparkles className="w-4 h-4" />
-            Continue to Consultation
-            <ArrowRight className="w-4 h-4" />
+        {locked ? (
+          <button
+            onClick={() => openPivot(safetyStatus.violations)}
+            className="w-full py-3 bg-rose-100 hover:bg-rose-200 text-rose-700 font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition-all border border-rose-200"
+          >
+            <ShieldAlert className="w-4 h-4" />
+            Resolve Safety Review to Continue
           </button>
-        </Link>
+        ) : (
+          <Link to="/intake">
+            <button className="w-full py-3 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-95 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
+              <Sparkles className="w-4 h-4" />
+              Continue to Consultation
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </Link>
+        )}
       </div>
 
       {/* 3. SAFE-T4LIFE™ Compatibility Firewall — informational context below CTA */}

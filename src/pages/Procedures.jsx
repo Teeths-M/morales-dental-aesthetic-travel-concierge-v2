@@ -14,6 +14,7 @@ import SmartFallback from '@/components/procedures/SmartFallback';
 import PageHeroBand from '@/components/layout/PageHeroBand';
 
 import { useCart } from '@/context/CartContext';
+import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
 import { getProcedureEnumValue } from '@/components/booking/SectionProcedure';
 
 // One human sentence per category — what does this mean for the patient?
@@ -143,7 +144,7 @@ export default function Procedures() {
   const [selectDoctorProc, setSelectDoctorProc] = useState(null);
   const [language, setLanguage] = useState('en');
   const [searchQuery, setSearchQuery] = useState('');
-  const { items, addItem, removeItem, clearCart, setProcedureCountry, setProcedureCity } = useCart();
+  const { items, addItem, removeItem, clearCart, setProcedureCountry, setProcedureCity, locked, safetyStatus, openPivot } = useCart();
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -167,10 +168,20 @@ export default function Procedures() {
   // that question already answered (doctor choice happens in-flow).
   const bookFromModal = (proc) => {
     const procedureEnumValue = getProcedureEnumValue(proc.title);
-    if (!items.some(i => (i.name || i.title) === proc.title)) {
+    const alreadyIn = items.some(i => (i.name || i.title) === proc.title);
+    if (!alreadyIn) {
       addItem({ name: proc.title, title: proc.title, category: proc.category, procedure_enum: procedureEnumValue });
     }
     setSelectedModal(null);
+
+    // Check the prospective cart (state from addItem() above isn't visible yet
+    // this tick) before navigating — a RED combination must never reach
+    // /intake, even via this one-click "add and go" shortcut.
+    const prospectiveItems = alreadyIn ? items : [...items, { name: proc.title, title: proc.title, category: proc.category, procedure_enum: procedureEnumValue }];
+    if (analyseCompatibility(prospectiveItems).level === 'RED') {
+      openPivot(getViolations(prospectiveItems).violations);
+      return;
+    }
     navigate('/intake');
   };
 
@@ -383,20 +394,30 @@ export default function Procedures() {
                   ? (language === 'es' ? 'Todo lo que nos contaste sigue guardado. Toma el tiempo que necesites aquí — cuando vuelvas, continuarás exactamente donde lo dejaste.' : language === 'fr' ? 'Tout ce que vous nous avez dit est conservé. Prenez le temps qu\'il vous faut ici — à votre retour, vous reprendrez exactement où vous en étiez.' : 'Everything you told us is still saved. Take as long as you like here — when you go back, you\'ll pick up exactly where you left off.')
                   : (language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.')}
               </p>
-              <Link to="/intake">
-                <Button size="lg" className={`font-semibold px-10 ${items.length > 0 ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] hover:opacity-90' : 'bg-white/[0.06] text-white/30 cursor-not-allowed'}`} disabled={items.length === 0}>
-                {midConsultation
-                  ? (language === 'es' ? 'Volver a Mi Consulta' : language === 'fr' ? 'Reprendre Ma Consultation' : 'Back to My Consultation')
-                  : (language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation')} {items.length > 0 && <ArrowRight className="w-4 h-4 ml-2" />}
+              {locked ? (
+                <Button
+                  size="lg"
+                  className="font-semibold px-10 bg-rose-100 text-rose-700 hover:bg-rose-200"
+                  onClick={() => openPivot(safetyStatus.violations)}
+                >
+                  Resolve Safety Review to Continue
                 </Button>
-              </Link>
+              ) : (
+                <Link to="/intake">
+                  <Button size="lg" className={`font-semibold px-10 ${items.length > 0 ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] hover:opacity-90' : 'bg-white/[0.06] text-white/30 cursor-not-allowed'}`} disabled={items.length === 0}>
+                  {midConsultation
+                    ? (language === 'es' ? 'Volver a Mi Consulta' : language === 'fr' ? 'Reprendre Ma Consultation' : 'Back to My Consultation')
+                    : (language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation')} {items.length > 0 && <ArrowRight className="w-4 h-4 ml-2" />}
+                  </Button>
+                </Link>
+              )}
               {items.length === 0 && (
                 <p className="text-center text-xs text-amber-600 mt-3 flex items-center justify-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   Select at least one procedure to continue
                 </p>
               )}
-              {items.length > 0 && (
+              {items.length > 0 && !locked && (
                 <p className="text-center text-xs text-white/40 mt-3">
                   {language === 'es'
                     ? '¿Combinando procedimientos? Añade más primero — verificaremos que sean seguros juntos.'
