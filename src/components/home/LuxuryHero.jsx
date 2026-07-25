@@ -4,11 +4,14 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import LiveJourneyCard from './LiveJourneyCard';
 import { usePlatformMode } from '@/context/PlatformModeContext';
-import { BadgeCheck, Shield, CheckCircle, Play, Heart } from 'lucide-react';
+import { Shield, CheckCircle, Heart } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD       = BRAND.gold;
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
+// TEMP: local watermarked preview only (Storyblocks SBV-348455312) — swap for
+// the licensed, unwatermarked CDN asset before this ever ships to production.
+const HERO_VIDEO = '/hero-preview-TEST.mp4';
 
 /* ── Content by mode ──────────────────────────────────────────────────────── */
 const CONTENT = {
@@ -31,13 +34,6 @@ const CONTENT = {
     cta:         { label: 'Plan My Journey', path: '/travel-intake' },
   },
 };
-
-/* ── Trust badges (ISO, surgeons, concierge) ──────────────────────────────── */
-const TRUST_BADGES = [
-  { icon: BadgeCheck, label: 'Clinics screened to international standards' },
-  { icon: Shield,     label: 'Every Surgeon Verified' },
-  { icon: Heart,      label: 'Safety-First Protocol' },
-];
 
 /* ── Feature cards below hero ─────────────────────────────────────────────── */
 const FEATURES = [
@@ -66,38 +62,72 @@ const AFTER_SURGERY_STEPS = [
   },
 ];
 
-/* ── Rotating lines ────────────────────────────────────────────────────────
- * These used to be three named customer stories — "Rosa flew to Cancún
- * alone…", "James had 12 hours to save his sight…", "Elena's family slept
- * peacefully…" — presented as fact, with no label. None of them happened;
- * James is a demo persona with a /demo/james route. A fabricated testimonial
- * on the first screen a patient reads is the one failure that would make
- * everything else on this platform worthless.
- *
- * Replaced with things M actually does. Each line maps to shipped code:
- *   - the 9-point handshake spine (HS1 Driver Pickup … HS9 Journey Complete)
- *   - guardian access, which is opt-in and revocable (locationConsent.js)
- *   - doctor verification against real registries (runDoctorVerification)
- *
- * If a line here stops being true, delete it. Do not soften it.
+/* ── Hero chat exchange ────────────────────────────────────────────────────
+ * The moment the hero video is built around: her procedure is confirmed
+ * safe, M checks if she's traveling solo, she is, and she's protected.
+ * Shown as an animated phone-notification exchange over the video rather
+ * than baked into the footage itself — easier to change, and matches the
+ * site's own i18n system if this ever needs translating.
  */
-const STORIES = [
-  'Nine checkpoints between your front door and home again.',
-  'Your family can follow every step — only if you say so.',
-  'Every doctor verified against their medical board, not their website.',
+const CHAT_STEPS = [
+  { from: 'm',    text: 'Your procedure is confirmed safe!' },
+  { from: 'user', text: 'Great ❤️' },
+  { from: 'm',    text: 'Traveling solo?' },
+  { from: 'user', text: 'Yes 😊' },
+  { from: 'm',    text: 'You are protected.' },
+  { from: 'user', text: 'Awesome 🙏' },
 ];
+
+function HeroChatBubbles() {
+  const [step, setStep] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    // Reduced motion: show the full exchange at once, settled — no cycling.
+    if (prefersReducedMotion) { setStep(CHAT_STEPS.length); return; }
+    const t = setInterval(() => setStep(s => (s + 1) % (CHAT_STEPS.length + 1)), 1600);
+    return () => clearInterval(t);
+  }, [prefersReducedMotion]);
+
+  const visible = CHAT_STEPS.slice(0, step);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 284 }}>
+      <AnimatePresence>
+        {visible.map((msg, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              alignSelf:      msg.from === 'user' ? 'flex-end' : 'flex-start',
+              background:     msg.from === 'user' ? 'rgba(255,255,255,0.12)' : 'rgba(212,175,55,0.16)',
+              border:         `1px solid ${msg.from === 'user' ? 'rgba(255,255,255,0.18)' : 'rgba(212,175,55,0.4)'}`,
+              backdropFilter: 'blur(12px)',
+              borderRadius:   14,
+              padding:        '9px 16px',
+              fontSize:       'clamp(0.95rem, 1.6vw, 1.05rem)',
+              fontWeight:     600,
+              color:          msg.from === 'user' ? '#fff' : GOLD,
+            }}
+          >
+            {msg.from === 'm' && <span style={{ opacity: 0.55, fontWeight: 800, marginRight: 7 }}>M</span>}
+            {msg.text}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
-  const [storyIdx, setStoryIdx] = useState(0);
   const { mode }    = usePlatformMode();
 
-  useEffect(() => {
-    const t = setInterval(() => setStoryIdx(i => (i + 1) % STORIES.length), 4200);
-    return () => clearInterval(t);
-  }, []);
   const isMedical   = mode === 'medical';
   const content     = isMedical ? CONTENT.medical : CONTENT.nonmedical;
   const prefersReducedMotion = useReducedMotion();
@@ -112,21 +142,41 @@ export default function LuxuryHero() {
         className="relative overflow-hidden"
         style={{ background: '#0b1219', marginTop: '-72px', minHeight: '100svh' }}
       >
-        {/* Full-bleed background — skeleton placeholder prevents layout shift */}
+        {/* Full-bleed background — skeleton placeholder prevents layout shift.
+            Reduced motion: show the static poster frame, no autoplaying video. */}
         <div className="absolute inset-0 img-skeleton">
-          <motion.img
-            src={HERO_IMAGE}
-            alt="Premium medical travel concierge"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: '65% center' }}
-            loading="eager"
-            fetchPriority="high"
-            initial={prefersReducedMotion ? false : { scale: 1.08, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 28, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
-          />
-          {/* Gradient overlays */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 32%, rgba(11,18,25,0.88) 50%, rgba(11,18,25,0.45) 72%, transparent 100%)' }} />
+          {prefersReducedMotion ? (
+            <img
+              src={HERO_IMAGE}
+              alt="A traveler checking her phone before her journey"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: '65% center' }}
+              loading="eager"
+              fetchPriority="high"
+            />
+          ) : (
+            <video
+              key={HERO_VIDEO}
+              src={HERO_VIDEO}
+              poster={HERO_IMAGE}
+              className="w-full h-full object-cover"
+              style={{ objectPosition: '65% center' }}
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          )}
+          {/* Gradient overlays.
+              The left-to-right one was tuned for the desktop 2-column split
+              (dark backing for the text column, clear video behind the card
+              on the right) — on mobile, content stacks full-width over that
+              same gradient, so its solid-black 0-32% band was blacking out
+              most of the video instead of just backing the text. Desktop
+              keeps the original; mobile gets a much lighter flat wash so the
+              footage — the actual point of this hero — stays visible. */}
+          <div className="absolute inset-0 hidden lg:block" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 32%, rgba(11,18,25,0.88) 50%, rgba(11,18,25,0.45) 72%, transparent 100%)' }} />
+          <div className="absolute inset-0 lg:hidden" style={{ background: 'rgba(11,18,25,0.38)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.55) 12%, transparent 32%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.8) 12%, transparent 32%)' }} />
           {/* Gold shimmer */}
@@ -149,48 +199,9 @@ export default function LuxuryHero() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col z-10 lg:pr-20 py-20 lg:py-0"
           >
-            {/* ── LEADERSHIP BADGE ── */}
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.05 }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20, alignSelf: 'flex-start' }}
-            >
-              <div
-                title="The 9 checkpoints: Home pickup · Airport drop-off · Clinic arrival · Pre-procedure check · During procedure · Post-procedure check · Hotel return · Recovery check-in · Home safe"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.35)`, cursor: 'help' }}
-              >
-                <img src="/morales-m-mark.png" alt="M" style={{ width: 14, filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.8))' }} />
-                {/* Was "· No One Is Ever Lost" — an absolute guarantee no
-                    platform can keep, and one bad outcome away from being a
-                    liability rather than a tagline. The count is real (9
-                    handshakes, HS1–HS9) and each one requires a confirmation,
-                    so the claim is now the mechanism instead of the promise. */}
-                <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 800, color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase' }}>We Check On You 9 Times · Every Step Confirmed</span>
-              </div>
-            </motion.div>
-
-            {/* ── STORY TICKER ── */}
-            <div style={{ minHeight: 22, marginBottom: 20 }}>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={storyIdx}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.48, ease: 'easeInOut' }}
-                  style={{
-                     margin: 0,
-                     fontSize: 'clamp(1rem, 1.8vw, 1.05rem)',
-                     fontStyle: 'italic',
-                     color: 'rgba(255,255,255,0.36)',
-                     letterSpacing: '0.01em',
-                     lineHeight: 1.5,
-                   }}
-                >
-                  {STORIES[storyIdx]}
-                </motion.p>
-              </AnimatePresence>
+            {/* ── HERO CHAT EXCHANGE — replaces the badge + story ticker ── */}
+            <div style={{ marginBottom: 20 }}>
+              <HeroChatBubbles />
             </div>
 
             {/* ── COMMANDING HEADLINE ── */}
@@ -217,186 +228,42 @@ export default function LuxuryHero() {
               </motion.h1>
             </AnimatePresence>
 
-            {/* ── CATEGORY ANCHOR — judges need to know the category ── */}
-            {isMedical && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.06 }}
-                className="mb-5"
-                style={{
-                  fontSize:      'clamp(1rem, 2vw, 1.1rem)',
-                  fontWeight:    500,
-                  color:         'rgba(255,255,255,0.50)',
-                  letterSpacing: '0.01em',
-                  lineHeight:    1.4,
-                  margin:        '0 0 16px',
-                }}
-                >
-                The world's first Medical Travel Safety platform.
-              </motion.p>
-            )}
-
-            {/* ── FEAR ACKNOWLEDGMENT — medical mode only ── */}
-            {isMedical && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.7, delay: 0.08 }}
-                className="mb-5"
-                style={{
-                  fontSize:    'clamp(1rem, 2vw, 1.1rem)',
-                  fontStyle:   'italic',
-                  color:       `${GOLD}90`,
-                  lineHeight:  1.6,
-                  fontFamily:  'Georgia, serif',
-                  letterSpacing: '0.01em',
-                }}
-                >
-                Going abroad for surgery is the bravest thing you'll do for yourself.<br />
-                Morales was designed for that exact moment.
-              </motion.p>
-            )}
-
-            {/* ── SUBHEADLINE ── */}
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={`sub-${mode}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                className="mb-3"
-                style={{
-                  fontSize:      'clamp(1.1rem, 2.5vw, 1.35rem)',
-                  fontWeight:    400,
-                  color:         'rgba(255,255,255,0.72)',
-                  lineHeight:    1.5,
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {content.subheadline}
-              </motion.p>
-            </AnimatePresence>
-
-            {/* Body text */}
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={`body-${mode}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.5, delay: 0.15 }}
-                className="mb-9 max-w-full sm:max-w-[440px]"
-                style={{ fontSize: 'clamp(1rem, 1.8vw, 1.1rem)', lineHeight: 1.75, fontWeight: 300, color: 'rgba(255,255,255,0.48)', letterSpacing: '0.01em' }}
-              >
-                {content.body}
-              </motion.p>
-            </AnimatePresence>
-
-            {/* ── CTA ROW — primary + demo side by side ── */}
+            {/* ── CTA — single primary action, nothing competing with it ── */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
               className="flex flex-col gap-3 mb-8"
             >
-              {/* Button row — ONE primary action on mobile; secondary options on desktop only */}
-              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
-                {/* Primary: gold pill */}
-                <Link to={content.cta.path}>
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="group relative w-full sm:w-auto min-h-[56px] px-10 rounded-full text-base font-semibold overflow-hidden transition-shadow duration-300"
-                    style={{
-                      background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
-                      color:         '#060B16',
-                      boxShadow:     `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
-                      letterSpacing: '0.02em',
-                    }}
-                  >
-                    <span className="relative z-10 flex items-center gap-2.5">
-                      {content.cta.label}
-                      <span>→</span>
-                    </span>
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
-                      style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
-                    />
-                  </motion.button>
-                </Link>
+              <Link to={content.cta.path}>
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative w-full sm:w-auto min-h-[56px] px-10 rounded-full text-base font-semibold overflow-hidden transition-shadow duration-300"
+                  style={{
+                    background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
+                    color:         '#060B16',
+                    boxShadow:     `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  <span className="relative z-10 flex items-center gap-2.5">
+                    {content.cta.label}
+                    <span>→</span>
+                  </span>
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
+                    style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
+                  />
+                </motion.button>
+              </Link>
 
-                {/* Secondary: glass demo pill — desktop only, visually subordinate */}
-                <Link to="/demo" className="hidden sm:block">
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
-                    whileTap={{ scale: 0.98 }}
-                    className="min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
-                    style={{
-                      background:    'rgba(255,255,255,0.05)',
-                      backdropFilter: 'blur(16px)',
-                      WebkitBackdropFilter: 'blur(16px)',
-                      border:        `1px solid rgba(212,175,55,0.30)`,
-                      color:         `${GOLD}cc`,
-                      letterSpacing: '0.02em',
-                      boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <Play style={{ width: 14, height: 14, fill: `${GOLD}cc`, flexShrink: 0 }} />
-                    Live Demo
-                  </motion.button>
-                </Link>
-
-                {/* Tertiary: glass pill — desktop only, for patients who booked elsewhere (BYOJ) */}
-                {isMedical && (
-                  <Link to="/protect" className="hidden sm:block">
-                    <motion.button
-                      whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
-                      whileTap={{ scale: 0.98 }}
-                      className="min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
-                      style={{
-                        background:    'rgba(255,255,255,0.05)',
-                        backdropFilter: 'blur(16px)',
-                        WebkitBackdropFilter: 'blur(16px)',
-                        border:        `1px solid rgba(212,175,55,0.30)`,
-                        color:         `${GOLD}cc`,
-                        letterSpacing: '0.02em',
-                        boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
-                      }}
-                    >
-                      <Shield style={{ width: 14, height: 14, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
-                      Booked Elsewhere? Add Safety
-                    </motion.button>
-                  </Link>
-                )}
-              </div>
-
-              {/* No-account signal — directly below buttons, not between them */}
+              {/* No-account signal — directly below the button */}
               {isMedical && (
                 <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', color: 'rgba(255,255,255,0.28)', fontWeight: 500, letterSpacing: '0.04em' }}>
                   No account needed to start
                 </span>
               )}
-            </motion.div>
-
-
-            {/* ── TRUST BADGES — inline row ── */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-10"
-            >
-              {TRUST_BADGES.map(({ icon: Icon, label }, i) => (
-                <div key={label} className="flex items-center gap-1.5">
-                  {i > 0 && <span className="text-white/15 mr-1 hidden sm:inline">·</span>}
-                  <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD }} strokeWidth={2} />
-                  <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>
-                    {label}
-                  </span>
-                </div>
-              ))}
             </motion.div>
 
           </motion.div>
