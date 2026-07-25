@@ -1,0 +1,153 @@
+{
+  "name": "DoctorNomination",
+  "type": "object",
+  "properties": {
+    "nominator_user_id": {
+      "type": "string",
+      "description": "The patient who submitted this nomination"
+    },
+    "nominator_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "doctor_name": {
+      "type": "string"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Lower-cased on write — used to dedupe against existing Doctor records and other nominations"
+    },
+    "clinic_name": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "specialty": {
+      "type": "string"
+    },
+    "review_text": {
+      "type": "string"
+    },
+    "photo_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Private file URLs from Core.UploadPrivateFile — admin-visible only, never public in this phase"
+    },
+    "photo_review_consent": {
+      "type": "boolean",
+      "default": false
+    },
+    "photo_review_consent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "photo_review_consent_version": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_review",
+        "approved",
+        "rejected",
+        "outreach_sent"
+      ],
+      "default": "pending_review"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejection_reason": {
+      "type": "string"
+    },
+    "outreach_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outreach_skipped_reason": {
+      "type": "string",
+      "description": "e.g. 'opted_out' — set when approved but no email was sent"
+    },
+    "outreach_opt_out": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set by optOutDoctorOutreach — suppresses any future outreach send to this doctor_email"
+    },
+    "outreach_opt_out_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "nominator_user_id",
+    "doctor_name",
+    "doctor_email",
+    "country",
+    "review_text",
+    "submitted_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

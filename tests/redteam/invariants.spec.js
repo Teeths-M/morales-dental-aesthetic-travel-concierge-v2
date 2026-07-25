@@ -1834,3 +1834,92 @@ test('PERFORMANCE: AdminImports invalidates the query cache after a successful b
   expect(invalidateIdx, 'invalidateQueries call must exist').toBeGreaterThan(-1);
   expect(successIdx).toBeLessThan(invalidateIdx);
 });
+
+test('DOCTOR NOMINATION: only reviewDoctorNomination can transition a nomination to outreach_sent', () => {
+  const submitSrc = read('base44/functions/submitDoctorNomination/entry.ts');
+  expect(submitSrc, 'submission must never itself mark outreach as sent')
+    .not.toMatch(/status:\s*['"]outreach_sent['"]/);
+  expect(submitSrc, 'submission must never call SendEmail to the nominated doctor')
+    .not.toMatch(/to:\s*email\b|to:\s*doctor_email\b/);
+
+  const reviewSrc = read('base44/functions/reviewDoctorNomination/entry.ts');
+  expect(reviewSrc).toContain("status: 'outreach_sent'");
+});
+
+test('DOCTOR NOMINATION: submitDoctorNomination never creates or verifies a Doctor record — nomination is a lead trigger, not a verification bypass', () => {
+  const src = read('base44/functions/submitDoctorNomination/entry.ts');
+  expect(src).not.toMatch(/entities\.Doctor\.(create|update)/);
+
+  const reviewSrc = read('base44/functions/reviewDoctorNomination/entry.ts');
+  expect(reviewSrc, 'approval must never create/update a Doctor record either')
+    .not.toMatch(/entities\.Doctor\.(create|update)/);
+});
+
+test('DOCTOR NOMINATION: the outreach email never carries the review text, photos, or nominator identity', () => {
+  const src = read('base44/functions/reviewDoctorNomination/entry.ts');
+  const htmlIdx = src.indexOf('renderEmail({');
+  expect(htmlIdx, 'the renderEmail() call must exist').toBeGreaterThan(-1);
+  const emailCallBlock = src.slice(htmlIdx, src.indexOf('});', htmlIdx));
+  expect(emailCallBlock, 'must not interpolate the review text').not.toMatch(/review_text/);
+  expect(emailCallBlock, 'must not interpolate photo refs').not.toMatch(/photo_refs/);
+  expect(emailCallBlock, 'must not interpolate the nominator identity').not.toMatch(/nominator_(email|user_id)/);
+});
+
+test('DOCTOR NOMINATION: approval fails closed on sending when the opt-out token cannot be signed', () => {
+  const src = read('base44/functions/reviewDoctorNomination/entry.ts');
+  const signIdx = src.indexOf('signOptOutToken(');
+  const catchIdx = src.indexOf('opt_out_token_unavailable');
+  expect(signIdx, 'must attempt to sign the opt-out token before sending').toBeGreaterThan(-1);
+  expect(catchIdx, 'must have a fail-closed path when signing fails').toBeGreaterThan(-1);
+  expect(signIdx).toBeLessThan(catchIdx);
+});
+
+test('DOCTOR NOMINATION: opting out suppresses future outreach — reviewDoctorNomination checks it before sending', () => {
+  const src = read('base44/functions/reviewDoctorNomination/entry.ts');
+  const checkIdx = src.indexOf('outreach_opt_out === true');
+  const sendIdx = src.lastIndexOf('integrations.Core.SendEmail');
+  expect(checkIdx, 'the suppression check must exist').toBeGreaterThan(-1);
+  expect(sendIdx, 'the send call must exist').toBeGreaterThan(-1);
+  expect(checkIdx).toBeLessThan(sendIdx);
+});
+
+test('DOCTOR NOMINATION: opt-out and portal tokens fail closed with no secret configured — no default fallback', () => {
+  const src = read('base44/functions/_shared/optOutToken.ts');
+  expect(src).not.toMatch(/\|\|\s*['"]change-me-in-production['"]\s*;?\s*$/m); // no silent default use
+  expect(src).toContain("=== 'change-me-in-production'"); // still rejects the known-bad default
+  expect(src).toContain('OptOutTokenNotConfigured');
+});
+
+test('DOCTOR NOMINATION: no client/user role can read another patient\'s nomination — admin-only read RLS', () => {
+  const src = read('base44/entities/DoctorNomination.jsonc');
+  const readIdx = src.indexOf('"read"');
+  const createIdx = src.indexOf('"create"');
+  expect(readIdx, 'DoctorNomination must define a read RLS block').toBeGreaterThan(-1);
+  const readBlock = src.slice(readIdx, createIdx > readIdx ? createIdx : readIdx + 300);
+  expect(readBlock).toMatch(/admin|platform_admin/);
+  expect(readBlock, 'must not grant a blanket client/user email-match read path')
+    .not.toMatch(/data\.nominator_email|data\.client_email/);
+});
+
+test('DOCTOR NOMINATION: submission is gated to real M patients with a non-cancelled case, and rate-limited', () => {
+  const src = read('base44/functions/submitDoctorNomination/entry.ts');
+  expect(src, 'must check for an existing case before allowing a nomination').toContain('CaseRecord.filter');
+  expect(src, 'must reject cancelled-only case histories').toContain('cancelled_at');
+  expect(src, 'must rate-limit submissions').toContain('checkRateLimit');
+});
+
+test('DOCTOR NOMINATION: role gates are correct on all four edge functions', () => {
+  const reviewSrc = read('base44/functions/reviewDoctorNomination/entry.ts');
+  expect(reviewSrc).toContain('createHandler');
+  const reviewOpts = reviewSrc.slice(reviewSrc.lastIndexOf('allowedRoles'), reviewSrc.lastIndexOf('allowedRoles') + 100);
+  expect(reviewOpts, 'only admin/platform_admin may review a nomination').toMatch(/admin/);
+  expect(reviewOpts, 'a client must not be able to approve their own nomination').not.toMatch(/'client'|"client"/);
+
+  const submitSrc = read('base44/functions/submitDoctorNomination/entry.ts');
+  const submitOpts = submitSrc.slice(submitSrc.lastIndexOf('allowedRoles'), submitSrc.lastIndexOf('allowedRoles') + 100);
+  expect(submitOpts, 'clients must be able to submit a nomination').toMatch(/'client'|"client"/);
+
+  const optOutSrc = read('base44/functions/optOutDoctorOutreach/entry.ts');
+  expect(optOutSrc, 'opt-out must stay public — the doctor has no M account to log in with')
+    .toContain('requireAuth: false');
+});

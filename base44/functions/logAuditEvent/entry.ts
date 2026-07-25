@@ -30,6 +30,11 @@ const ALLOWED_EVENT_TYPES = new Set([
   'recovery_guidance_drafted',
   'recovery_guidance_approved',
   'recovery_guidance_rejected',
+  'doctor_nomination_submitted',
+  'doctor_nomination_approved',
+  'doctor_nomination_rejected',
+  'doctor_nomination_outreach_sent',
+  'doctor_nomination_opted_out',
 ]);
 
 async function sha256(text: string): Promise<string> {
