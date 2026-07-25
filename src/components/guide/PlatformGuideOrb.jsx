@@ -136,21 +136,24 @@ export default function PlatformGuideOrb() {
   const isHomepage = pathname === '/';
   const [pastHero, setPastHero] = useState(!isHomepage);
 
-  // On narrow phones the full-bleed hero copy fills the bottom-left zone the orb
-  // occupies, so a fixed orb overlaps the body text (worst on short viewports like
-  // the 375×667 iPhone SE). Mirror the bubble's hero-gating: on the mobile homepage
-  // keep the orb out of the hero until the user scrolls past it. Desktop and every
-  // inner route are unaffected; the orb reappears on the first scroll.
-  const [isNarrow, setIsNarrow] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches
+  // On narrow phones OR short desktop/laptop browser windows, the full-bleed
+  // hero copy fills the bottom-left zone the orb occupies, so a fixed orb
+  // overlaps the body text (worst on short viewports like the 375×667
+  // iPhone SE, but also a non-maximized laptop window with ~650-800px of
+  // usable height). Mirror the bubble's hero-gating: on the homepage keep
+  // the orb out of the hero until the user scrolls past it, on any window
+  // that's narrow OR short. Tall/wide viewports and every inner route are
+  // unaffected; the orb reappears on the first scroll.
+  const [isCramped, setIsCramped] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 480px), (max-height: 820px)').matches
   );
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = () => setIsNarrow(mq.matches);
+    const mq = window.matchMedia('(max-width: 480px), (max-height: 820px)');
+    const onChange = () => setIsCramped(mq.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
-  const heroBlocksOrb = isHomepage && isNarrow && !pastHero;
+  const heroBlocksOrb = isHomepage && isCramped && !pastHero;
 
   useEffect(() => {
     if (!isHomepage) { setPastHero(true); return; }
