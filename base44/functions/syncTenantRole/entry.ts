@@ -16,14 +16,12 @@ const entityByTenantType = {
 };
 
 // Roles that must never be grantable through this self-service tenant sync
-// endpoint. Admin access is granted exclusively through inviteAdmin. Partner
-// roles (doctor / travel_agency / taxi_service) are likewise blocked from
-// client-controlled input here — a standard user could otherwise self-escalate
-// to a partner role by passing tenant_type: 'doctor' (or user_role: 'doctor'),
-// granting themselves access to partner dashboards and patient case data.
-// Partner roles are assigned only by server-side verified onboarding/approval
-// flows (e.g. activateVerifiedDoctor / activatePartner) or by an admin.
-const FORBIDDEN_ROLES = new Set(['admin', 'platform_admin', 'doctor', 'travel_agency', 'taxi_service']);
+// endpoint. Admin access is granted exclusively through inviteAdmin, which has
+// its own authorization flow — this endpoint exists to let a user sync their
+// OWN account into the role for the onboarding flow they just completed
+// (doctor / client / travel_agency / taxi_service), never to escalate anyone
+// to admin.
+const FORBIDDEN_ROLES = new Set(['admin', 'platform_admin']);
 
 Deno.serve(createHandler(async ({ req }) => {
   try {

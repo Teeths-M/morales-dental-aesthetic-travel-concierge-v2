@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle, Clock, ShieldOff } from 'lucide-react';
-import { VERIFIED_TERMINAL } from '@/lib/doctorVerification';
 
 // ── DoctorVerifiedBadge ───────────────────────────────────────────────────────
 // Patient-facing badge shown on doctor profiles and search cards.
