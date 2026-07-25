@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { linkOnlyEmail } from '../_shared/notify.ts';
 import { createHandler } from '../_shared/createHandler.ts';
+import { createCaseFromConsultation } from '../_shared/createCaseFromConsultation.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -101,131 +102,16 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
-    // CREATE: Ingest consultation into IQ200 pipeline
+    // CREATE: Ingest consultation into IQ200 pipeline. Logic lives in the shared
+    // createCaseFromConsultation() so pipelineOnConsultationFeePaid (a cron/webhook
+    // trigger with no admin session) can create the SAME CaseRecord, the same way,
+    // without going through this admin-only gate — see that module's header comment.
     if (action === 'create') {
-      // BUG-R9-01 FIX: use asServiceRole — consultations are owned by the patient user,
-      // not by the admin triggering the pipeline. user-scoped .get() returns 404.
-      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
-      
-      if (!consultation) {
-        return Response.json({ error: 'Consultation not found' }, { status: 404 });
+      const result = await createCaseFromConsultation(base44, consultation_id);
+      if (result.error) {
+        return Response.json({ error: result.error }, { status: result.status || 500 });
       }
-
-      // IDEMPOTENCY: return existing CaseRecord if already created
-      const existing = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id });
-      if (existing && existing.length > 0) {
-        return Response.json({
-          success: true,
-          case_record: existing[0],
-          already_exists: true,
-          message: 'CaseRecord already exists for this consultation',
-        });
-      }
-
-      // Safe to create — no existing record
-      // BUG-R9-01 FIX: use asServiceRole for the create so the record is system-owned
-      // and visible to all admin functions that query it with asServiceRole.
-      const caseRecord = await base44.asServiceRole.entities.CaseRecord.create({
-        consultation_id: consultation.id,
-        client_name: consultation.patient_name,
-        client_email: consultation.email,
-        client_phone: consultation.phone,
-        client_country: consultation.client_country,
-        emergency_contact: consultation.emergency_contact_name,
-        procedure_country: consultation.destination_country,
-        procedures: [consultation.procedure_interest],
-        consultation_summary: consultation.notes || 'No summary provided',
-        medications: consultation.takes_medications ? consultation.medication_types?.join(', ') : 'None',
-        allergies: consultation.allergies?.join(', ') || 'None',
-        smoking_status: consultation.lifestyle_habits?.includes('Smoking'),
-        alcohol_use: consultation.lifestyle_habits?.includes('Alcohol') ? 'Moderate' : 'None',
-        medical_conditions: consultation.medical_conditions?.join(', ') || 'None',
-        anesthesia_history: consultation.anesthesia_complications ? 'Previous complications' : 'No complications',
-        mental_health_notes: consultation.emotional_notes || 'N/A',
-        pregnancy_status: consultation.pregnancy_status === 'Yes',
-        exercise_level: consultation.activity_level || 'Moderate',
-        status: 'Submitted',
-        safe_t_result: 'PENDING',
-        timeline_log: [{
-          timestamp: new Date().toISOString(),
-          action: 'created',
-          details: 'Case created from consultation'
-        }]
-      });
-
-      // AUTO-ASSIGN: Fetch default doctor from DB (admin-configurable via DefaultDoctorConfig entity)
-      // HIGH-RISK GATE: Skip auto-assignment entirely for flagged consultations.
-      // These stay at Admin-Review until a concierge admin manually clears and assigns.
-      if (consultation.high_risk_medical_review === true) {
-        await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
-          status: 'Admin-Review',
-          timeline_log: [
-            ...(caseRecord.timeline_log || []),
-            {
-              timestamp: new Date().toISOString(),
-              action: 'high_risk_hold',
-              details: `Case held for Senior Medical Review — flagged condition: ${consultation.high_risk_flagged_condition || 'high-risk condition'}. Doctor assignment blocked until admin clears.`
-            }
-          ]
-        });
-
-        // Notify Slack — fire-and-forget, never blocks the pipeline
-        base44.functions.invoke('notifySlackHighRisk', {
-          patient_name: consultation.patient_name,
-          flagged_condition: consultation.high_risk_flagged_condition || 'High-risk condition',
-          procedure: consultation.procedure_interest,
-          case_id: caseRecord.id,
-        }).catch(e => console.error('[iq200Pipeline] Slack notify failed (non-fatal):', e.message));
-      }
-
-      // ── SAFETY-FIRST: deterministic Safe-T scan BEFORE any doctor is contacted ─
-      // MARKETPLACE MODEL: the old single-doctor auto-assignment / load-balancer was
-      // removed. After Safe-T clears, matched specialist doctors are INVITED to quote
-      // and the PATIENT chooses (requestDoctorQuotes → selectDoctorQuote). No doctor is
-      // contacted, and no proposal is sent, until Safe-T has genuinely cleared.
-      try {
-        await base44.functions.invoke('safeT4LifeScan', { caseId: caseRecord.id });
-      } catch (scanError) {
-        console.error('SAFE-T scan failed:', scanError);
-      }
-
-      // Re-read the authoritative safe_t_result the scan wrote to the case.
-      const scanned = await base44.asServiceRole.entities.CaseRecord.get(caseRecord.id).catch(() => caseRecord);
-      const safeTCleared = scanned?.safe_t_result === 'PASSED';
-
-      // A harmless proposal token for later. The proposal is now sent only AFTER the
-      // patient picks a doctor and the package is assembled — NEVER here. Status is no
-      // longer advanced to 'Proposal-Sent' at case creation.
-      const proposalToken = `prop_${caseRecord.id}`;
-      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, { proposal_token: proposalToken }).catch(() => {});
-
-      // ── MARKETPLACE FAN-OUT — FAIL-CLOSED ────────────────────────────────────
-      // Invite matched specialists to quote ONLY when Safe-T cleared AND the case is
-      // not held for high-risk review. Otherwise no doctor is contacted; the case waits
-      // for a human (Admin-Review) or a signed waiver. requestDoctorQuotes re-checks the
-      // same gate defensively.
-      let doctorsInvited = false;
-      if (safeTCleared && consultation.high_risk_medical_review !== true) {
-        try {
-          const r = await base44.functions.invoke('requestDoctorQuotes', { case_id: caseRecord.id });
-          doctorsInvited = !!(r?.data?.fanned_out ?? r?.fanned_out);
-        } catch (e) {
-          console.error('[iq200Pipeline] requestDoctorQuotes failed (non-fatal):', e.message);
-        }
-      }
-
-      return Response.json({
-        status: 'CREATED',
-        case_id: caseRecord.id,
-        proposal_token: proposalToken,
-        safe_t_result: scanned?.safe_t_result || 'PENDING',
-        doctors_invited: doctorsInvited,
-        message: doctorsInvited
-          ? 'Case created. Safe-T cleared — matched specialist doctors invited to quote; the patient will choose.'
-          : (consultation.high_risk_medical_review === true
-            ? 'Case created and held for Senior Medical Review — no doctor contacted.'
-            : 'Case created. Safe-T review initiated — no doctor contacted until it clears.'),
-      });
+      return Response.json(result);
     }
 
     // ADMIN_APPROVE_PROPOSAL: Send proposal to client

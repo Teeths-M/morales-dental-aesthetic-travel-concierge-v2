@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
     if (doctorEmail) {
       const clinicEmailHtml = linkOnlyEmail({
         title: 'A clinic facility fee quote is needed',
-        line: 'As the confirmed physician for this case, please provide the clinic facility fee, anaesthesia cost (if applicable) and post-operative consultation fee in your dashboard.',
+        line: 'As the confirmed physician for this case, please provide the clinic facility fee, anaesthesia cost (if applicable) and post-operative consultation fee in your dashboard. The patient\'s signed liability and arbitration consent is also available to view there, under Active Patients.',
         ctaUrl: `${appUrl}/doctor-dashboard`,
         ctaLabel: 'Open Doctor Dashboard',
         brand: BRAND,

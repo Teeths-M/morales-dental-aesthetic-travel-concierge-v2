@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackButtonLight } from '@/components/nav/BackButton';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +9,9 @@ import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
 import { getCitiesForCountry, hasCityList, cityAfterCountryChange, CITY_PLACEHOLDER } from '@/lib/countryCity';
 import { COUNTRY_NAMES } from '@/lib/countryDialCodes';
+import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
+import SignupAuthGate from '@/components/auth/SignupAuthGate';
+import { saveSignupDraft, loadSignupDraft, clearSignupDraft } from '@/lib/signupDraft';
 
 const BACKGROUND_TYPES = ['Ex-Military', 'Ex-Police', 'Private Security', 'Tactical Response', 'K9 Unit', 'Cyber/Intel'];
 const SERVICES = ['SOS Response', 'Close Protection', 'Airport Escort', 'Medical Escort', 'Armed Guard', 'Surveillance', 'Executive Protection'];
@@ -49,6 +52,7 @@ export default function SecurityAgencySignup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   const [form, setForm] = useState({
     agency_name: '',
@@ -68,6 +72,26 @@ export default function SecurityAgencySignup() {
     license_doc_url: '',
     insurance_doc_url: '',
   });
+
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  // This flow had no draft persistence at all — unlike every sibling signup
+  // (doctor/taxi/travel-agency/companion), so the auth gate added below (see
+  // `submit`) would otherwise lose everything they typed, including uploaded
+  // license/insurance docs, on the OAuth round trip.
+  useEffect(() => {
+    const saved = loadSignupDraft('security_agency');
+    if (saved) {
+      if (saved.data) setForm(saved.data);
+      if (saved.meta?.step != null) setStep(saved.meta.step);
+    }
+    setDraftLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!draftLoaded) return;
+    if (!submitted) saveSignupDraft('security_agency', form, { step });
+  }, [form, step, draftLoaded, submitted]);
 
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
 
@@ -102,6 +126,19 @@ export default function SecurityAgencySignup() {
   const back = () => { setError(''); setStep(s => s - 1); };
 
   const submit = async () => {
+    // The SecurityAgency record below can be created as a guest, but
+    // saveUserOnboardingProfile → syncTenantRole (which grants this account
+    // the 'security_agency' role the security dashboard requires) needs an
+    // authenticated session. This route is fully public and nothing else —
+    // not signup, not admin approval — ever grants that role, so a guest
+    // submission would leave the agency permanently unable to open their own
+    // dashboard. Require sign-in before creating anything.
+    const currentUser = await base44.auth.me().catch(() => null);
+    if (!currentUser) {
+      setShowAuthGate(true);
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -112,6 +149,13 @@ export default function SecurityAgencySignup() {
         submitted_at: new Date().toISOString(),
         verification_status: 'pending_review',
       });
+      try { await saveUserOnboardingProfile({
+        role: 'security_agency',
+        status: 'completed',
+        linkedEntityName: 'SecurityAgency',
+        linkedEntityId: agency.id,
+        profileData: form,
+      }); } catch (_) { /* non-fatal — entity is created */ }
       try {
         await base44.functions.invoke('initiatePartnerVerification', {
           partner_id: agency.id,
@@ -125,6 +169,7 @@ export default function SecurityAgencySignup() {
         partner_type: 'security_agency',
         partner_id: agency.id,
       }).catch(() => { /* non-fatal */ });
+      clearSignupDraft('security_agency');
       setSubmitted(true);
     } catch (_err) {
       setError('Submission failed. Please try again.');
@@ -390,6 +435,14 @@ export default function SecurityAgencySignup() {
           </div>
         </div>
       </div>
+
+      <SignupAuthGate
+        isOpen={showAuthGate}
+        redirectPath="/security-signup"
+        title="One step left — sign in"
+        message="Sign in to finish submitting your agency application. Your form is saved — you'll be right back here to submit."
+        onCancel={() => setShowAuthGate(false)}
+      />
     </div>
   );
 }

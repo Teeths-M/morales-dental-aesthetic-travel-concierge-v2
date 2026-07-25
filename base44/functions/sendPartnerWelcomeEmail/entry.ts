@@ -46,8 +46,15 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       if (!partner) {
         return Response.json({ error: 'Doctor not found' }, { status: 404 });
       }
-      portalType = 'doctor';
-      portalPath = `/portal/doctor`;
+      // A brand-new doctor has zero assigned cases, so a case-scoped portal
+      // token (which is what /portal/doctor/:token actually is — and this link
+      // didn't even match that route's :token path param, it built a ?token=
+      // query string instead) is both the wrong shape and the wrong
+      // destination. This intro copy already describes general dashboard
+      // capabilities (profile, availability, active patients) — send them
+      // to the real, login-gated dashboard, same pattern as companion/security_agency below.
+      portalType = null;
+      portalPath = `/doctor-dashboard`;
       eyebrow = 'Doctor Portal Access';
       title = 'Your secure doctor portal is ready';
       intro = `Welcome ${partner.full_name || partner.email}! Your doctor portal account has been created. You can now access patient consultations, confirm availability, and manage your profile.`;

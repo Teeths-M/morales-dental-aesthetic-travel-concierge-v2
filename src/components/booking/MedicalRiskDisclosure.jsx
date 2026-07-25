@@ -3,7 +3,9 @@ import { Check, AlertTriangle, Trash2, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
-const PILLARS = [
+// Exported so doctor-facing read-only views (e.g. SignedConsentPanel) render
+// the exact same disclosure text the patient signed — one source of truth.
+export const PILLARS = [
   {
     num: '1',
     title: 'Surgical Risk Acknowledgement',

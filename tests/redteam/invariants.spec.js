@@ -1460,6 +1460,162 @@ test('SAFETY: MedicalIntakeForm re-checks an already-selected procedure combo an
     .not.toMatch(/payment_status|refund|requestDoctorQuotes/i);
 });
 
+test('PIPELINE: a real payment reliably creates a CaseRecord — the doctor marketplace is no longer dead on arrival', () => {
+  // Found while wiring the signed-consent-to-doctor feature: iq200Pipeline's
+  // `create` action (the only place a CaseRecord is built) required an admin
+  // session; the one client-side caller (ConsultationFeeModal's
+  // handlePaymentSuccess) ran as the paying PATIENT and always 403'd, silently
+  // falling back to a dashboard redirect; stripePaymentWebhook's payment
+  // handler never called it either. Net effect: no CaseRecord — and therefore
+  // no doctor ever assigned — was created for any real paying patient.
+  // pipelineOnConsultationFeePaid already fires reliably (cron-authorized
+  // entity-trigger on ConsultationFee.fee_paid) and is now the guaranteed
+  // trigger, calling the SAME logic in-process via a shared module rather than
+  // an HTTP round-trip (base44.functions.invoke does not forward the
+  // X-Cron-Secret header a service-to-service call would need).
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+
+  const shared = strip(read('base44/functions/_shared/createCaseFromConsultation.ts'));
+  expect(shared, 'the shared function must create the CaseRecord').toContain('CaseRecord.create(');
+  expect(shared, 'the shared function must be idempotent (never double-create for the same consultation)')
+    .toContain('already_exists');
+
+  const pipeline = strip(read('base44/functions/iq200Pipeline/entry.ts'));
+  expect(pipeline, "iq200Pipeline's create action must delegate to the shared function")
+    .toMatch(/action === 'create'[\s\S]{0,120}createCaseFromConsultation\(/);
+
+  const trigger = strip(read('base44/functions/pipelineOnConsultationFeePaid/entry.ts'));
+  expect(trigger, 'the fee-paid trigger must import the shared case-creation function')
+    .toContain("import { createCaseFromConsultation }");
+  expect(trigger, 'it must call createCaseFromConsultation when no CaseRecord exists yet')
+    .toMatch(/if\s*\(!caseRecord\)[\s\S]{0,200}createCaseFromConsultation\(/);
+});
+
+test('CONSENT: the signed liability/arbitration disclosure is archived onto the CaseRecord and reaches the doctor', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+
+  // The archive must be built from data already durable on the Consultation
+  // (captured at Booking.jsx submission, well before any payment call) — not
+  // from anything a fragile client payment call would need to carry forward.
+  const shared = strip(read('base44/functions/_shared/createCaseFromConsultation.ts'));
+  expect(shared, 'signature/arbitration fields must be copied from the consultation onto the new CaseRecord')
+    .toMatch(/signature_data:\s*consultation\.signature_data/);
+  expect(shared, 'the archive must be built from the shared informedConsentArchive helper')
+    .toContain('buildInformedConsentHtml(');
+  expect(shared, 'the archive must be persisted onto the CaseRecord, not just emailed')
+    .toContain('informed_consent_email_html');
+
+  // ConsultationFeeModal must not ALSO fire the legacy consent email now that
+  // the server-side path is reliable — that would double-send it to the client.
+  const modal = strip(read('src/components/booking/ConsultationFeeModal.jsx'));
+  expect(modal, 'ConsultationFeeModal must not call processInformedConsentAndEmail directly anymore')
+    .not.toContain('processInformedConsentAndEmail');
+
+  // The doctor must actually be able to see it — not just the client.
+  const panel = strip(read('src/components/doctor-dashboard/SignedConsentPanel.jsx'));
+  expect(panel, 'the doctor-facing consent view must never inject server-built HTML')
+    .not.toContain('dangerouslySetInnerHTML');
+  expect(panel, 'it must render the actual signature image the patient drew')
+    .toContain('caseRecord.signature_data');
+
+  const doctorDashboard = strip(read('src/pages/DoctorDashboard.jsx'));
+  expect(doctorDashboard, 'DoctorDashboard must mount the signed-consent view for a doctor\'s cases')
+    .toContain('<SignedConsentPanel');
+
+  const portalDoctor = strip(read('src/pages/PortalDoctor.jsx'));
+  expect(portalDoctor, 'the token-gated doctor portal must also mount it')
+    .toContain('<SignedConsentPanel');
+});
+
+test('ONBOARDING: a guest completing partner signup is sent to sign in before their role is silently lost forever', () => {
+  // Every partner signup route (/doctor-signup, /partner-signup/taxi-service,
+  // /partner-signup/travel-agency) is fully public — reachable and completable
+  // with zero authentication. Each Step3 submit created the partner ENTITY
+  // (Doctor/TaxiService/TravelAgency) as a guest just fine, then called
+  // saveUserOnboardingProfile → syncTenantRole to grant the account the
+  // role its dashboard route requires (DOCTOR_PORTAL_ROLES etc. via
+  // ProtectedRoute). That sync calls base44.auth.me() internally and throws
+  // for a guest — silently swallowed by each caller's own try/catch — so the
+  // entity existed but the account's role was never set. The person would
+  // then sign in, land on their dashboard's ProtectedRoute gate, and see
+  // "Access not available" — permanently, with no self-service recovery,
+  // since re-running the sync itself requires being signed in as the
+  // now-orphaned account with no UI path back to it.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+
+  const files = [
+    { path: 'src/components/doctor-signup/DoctorSignupStep3.jsx', create: 'Doctor.create(' },
+    { path: 'src/components/partner-signup/TaxiServiceSignupStep3.jsx', create: 'TaxiService.create(' },
+    { path: 'src/components/partner-signup/TravelAgencySignupStep3.jsx', create: 'TravelAgency.create(' },
+    { path: 'src/pages/SecurityAgencySignup.jsx', create: 'SecurityAgency.create(' },
+  ];
+
+  for (const { path, create } of files) {
+    const src = strip(read(path));
+    expect(src, `${path} must import the shared signup auth gate`)
+      .toContain("from '@/components/auth/SignupAuthGate'");
+    expect(src, `${path} must check auth.me() before creating the partner entity`)
+      .toMatch(/base44\.auth\.me\(\)\.catch/);
+
+    const authCheckIdx = src.search(/base44\.auth\.me\(\)\.catch/);
+    const createIdx = src.indexOf(create);
+    expect(authCheckIdx, `${path} must have an auth check`).toBeGreaterThan(-1);
+    expect(createIdx, `${path} must create the ${create.split('.')[0]} entity`).toBeGreaterThan(-1);
+    expect(authCheckIdx, `${path} must check auth BEFORE creating the entity, not after`).toBeLessThan(createIdx);
+
+    expect(src, `${path} must actually show the gate when unauthenticated, not just check`)
+      .toMatch(/if\s*\(!currentUser\)[\s\S]{0,60}setShowAuthGate\(true\)/);
+    expect(src, `${path} must mount <SignupAuthGate`).toContain('<SignupAuthGate');
+  }
+
+  // Companion signup splits the check (CompanionSignup.jsx) from the entity
+  // creation + role sync (companionService.js) across two files — same
+  // invariant, different shape, so it's asserted separately rather than
+  // forced into the single-file loop above.
+  const companionPage = strip(read('src/pages/CompanionSignup.jsx'));
+  expect(companionPage, 'CompanionSignup.jsx must import the shared signup auth gate')
+    .toContain("from '@/components/auth/SignupAuthGate'");
+  expect(companionPage, 'CompanionSignup.jsx must check auth.me() before calling submitForm')
+    .toMatch(/base44\.auth\.me\(\)\.catch[\s\S]{0,150}if\s*\(!currentUser\)[\s\S]{0,60}setShowAuthGate\(true\)[\s\S]{0,80}submitForm\(\)/);
+  expect(companionPage, 'CompanionSignup.jsx must mount <SignupAuthGate').toContain('<SignupAuthGate');
+
+  const companionService = strip(read('src/lib/companion/companionService.js'));
+  expect(companionService, 'companionService.js must sync the companion role — this call was missing entirely before')
+    .toMatch(/saveUserOnboardingProfile\(\{[\s\S]{0,40}role:\s*'companion'/);
+});
+
+test('ONBOARDING: the doctor welcome email links to a route that actually exists', () => {
+  // sendPartnerWelcomeEmail built '/portal/doctor?token=...' (query string) for
+  // a brand-new doctor, but the only route matching '/portal/doctor' is
+  // '/portal/doctor/:token' (a PATH param) — the link 404'd. It was also the
+  // wrong destination regardless: that page is a specific case review screen,
+  // and a brand-new doctor has zero assigned cases. Must send them to the
+  // real, login-gated /doctor-dashboard instead — same pattern already used
+  // for the companion/security_agency welcome emails in this same file.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+  const src = strip(read('base44/functions/sendPartnerWelcomeEmail/entry.ts'));
+  const doctorBlockStart = src.indexOf("partner_type === 'doctor'");
+  const doctorBlockEnd = src.indexOf("partner_type === 'travel_agency'");
+  expect(doctorBlockStart, "the doctor branch must exist").toBeGreaterThan(-1);
+  const doctorBlock = src.slice(doctorBlockStart, doctorBlockEnd);
+  expect(doctorBlock, 'the doctor welcome link must point at the real dashboard route')
+    .toContain("portalPath = `/doctor-dashboard`");
+  expect(doctorBlock, 'it must not build a token for a case-scoped portal a brand-new doctor cannot use')
+    .toMatch(/portalType\s*=\s*null/);
+});
+
+test('ONBOARDING: a guest completing client signup never gets stuck on a hung Saving button', () => {
+  // saveUserOnboardingProfile requires an authenticated session; /client-signup
+  // is a public route. An unhandled rejection here used to leave isSaving
+  // stuck true forever for any guest who filled out the form logged out —
+  // this is lower-severity than the partner flows (CLIENT_PORTAL_ROLES
+  // already includes the default 'user' role) but still a real stuck-UI bug.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
+  const src = strip(read('src/pages/ClientSignup.jsx'));
+  expect(src, 'saveUserOnboardingProfile must be wrapped so a guest rejection cannot hang the submit button')
+    .toMatch(/try\s*\{[\s\S]{0,40}await saveUserOnboardingProfile/);
+});
+
 test('FRONTEND: base44.asServiceRole never spreads — it throws in every browser', () => {
   // Service role only exists inside Base44-hosted backend functions. In the
   // browser the SDK's asServiceRole getter THROWS (no serviceToken), and even

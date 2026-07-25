@@ -11,6 +11,7 @@ import CredentialBadge from '@/components/doctors/CredentialBadge';
 import { base44 } from '@/api/base44Client';
 import SurgicalExecutionControls from '@/components/portal/SurgicalExecutionControls';
 import ClinicalExtractionModal from '@/components/doctor/ClinicalExtractionModal';
+import SignedConsentPanel from '@/components/doctor-dashboard/SignedConsentPanel';
 import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
 import { toast } from 'sonner';
 
@@ -480,6 +481,8 @@ export default function PortalDoctor() {
                   </div>
                 )}
               </div>
+
+              <SignedConsentPanel caseRecord={caseData} />
 
               {/* Doctor Notes */}
               <div className="space-y-4">

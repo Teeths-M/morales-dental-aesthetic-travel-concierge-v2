@@ -13,6 +13,7 @@ import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvai
 import ProcedureRequestForm from '@/components/doctor-dashboard/ProcedureRequestForm';
 import DoctorVerificationPanel from '@/components/doctor/DoctorVerificationPanel';
 import DoctorQuoteInbox from '@/components/quotes/DoctorQuoteInbox';
+import SignedConsentPanel from '@/components/doctor-dashboard/SignedConsentPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
@@ -417,6 +418,7 @@ export default function DoctorDashboard() {
                         {c.doctor_confirmation_status === 'PENDING' && (
                           <DateConfirmForm caseId={c.id} />
                         )}
+                        <SignedConsentPanel caseRecord={c} />
                       </motion.div>
                     );
                   })}

@@ -116,19 +116,29 @@ export default function ClientSignup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSaving(true);
-    const _profile = await saveUserOnboardingProfile({
-      role: 'client',
-      status: 'completed',
-      profileData: {
-        ...form,
-        selected_role: 'client',
-        completed_from: 'client_signup'
-      }
-    });
-
+    try {
+      // saveUserOnboardingProfile requires an authenticated session (it calls
+      // base44.auth.me() internally) and this page is reachable without ever
+      // logging in — an unauthenticated submit used to throw here unhandled,
+      // leaving the button stuck on "Saving..." forever. Unlike the partner
+      // signups (doctor/travel-agency/taxi-service), this is safe to make
+      // non-fatal: CLIENT_PORTAL_ROLES already includes the default 'user'
+      // role a fresh account gets, so a guest whose 'client' role sync fails
+      // here can still reach their dashboard after logging in.
+      await saveUserOnboardingProfile({
+        role: 'client',
+        status: 'completed',
+        profileData: {
+          ...form,
+          selected_role: 'client',
+          completed_from: 'client_signup'
+        }
+      });
+    } catch (_e) { /* non-fatal — see comment above */ }
 
     localStorage.setItem('signupRole', 'client');
     await checkUserAuth();
+    setIsSaving(false);
     setShowWelcomeModal(true);
   };
 

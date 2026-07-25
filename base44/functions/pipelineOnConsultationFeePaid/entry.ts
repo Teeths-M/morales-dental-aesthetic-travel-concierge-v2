@@ -1,6 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../_shared/cronAuth.ts';
 import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
+import { createCaseFromConsultation } from '../_shared/createCaseFromConsultation.ts';
 
 // Inline token encoder (no local imports allowed)
 // FIX: the '.'-suffix was previously crypto.getRandomValues() random bytes — it
@@ -130,7 +131,27 @@ Deno.serve(async (req) => {
     try {
       const cases = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id: consultationId });
       caseRecord = cases.length > 0 ? cases[0] : null;
-    } catch(e) { /* no case record yet */ }
+    } catch(e) { /* filter failed — treat as no case record yet */ }
+
+    // ── ENSURE THE CASE EXISTS ────────────────────────────────────────────
+    // Nothing else in this codebase reliably creates a CaseRecord after a real
+    // payment (see createCaseFromConsultation.ts's header comment for the full
+    // history — the client-side call always 403s for a real patient, and the
+    // Stripe webhook never called it either). This fee-paid trigger is the one
+    // point guaranteed to fire for every real payment, so it doubles as the
+    // case-creation trigger. No doctor is assigned yet at this point either
+    // way — that still happens later via the quote marketplace — so the
+    // doctor-notification block below is unaffected by this addition.
+    if (!caseRecord) {
+      try {
+        const created = await createCaseFromConsultation(base44, consultationId);
+        if (created?.case_id) {
+          caseRecord = await base44.asServiceRole.entities.CaseRecord.get(created.case_id).catch(() => null);
+        }
+      } catch (e) {
+        console.error('[pipelineOnConsultationFeePaid] Case creation failed (non-fatal):', e.message);
+      }
+    }
 
     if (!isHighRiskReview && caseRecord && caseRecord.doctor_selected && caseRecord.doctor_email) {
       const doctorId = caseRecord.doctor_selected;

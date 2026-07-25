@@ -1,5 +1,5 @@
 // pages/CompanionSignup.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { useCompanionSignup } from '@/hooks/useCompanionSignup';
@@ -9,6 +9,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, User, Save } from 'lucide-react';
 import { ACCOUNT_TYPES, STEPS } from '@/lib/companion/constants';
 import { getDraftAge } from '@/lib/signupDraft';
+import { base44 } from '@/api/base44Client';
+import SignupAuthGate from '@/components/auth/SignupAuthGate';
 import { AccountTypeSelector } from '@/components/companion/AccountTypeSelector';
 import { AboutYouForm } from '@/components/companion/AboutYouForm';
 import { ExperienceForm } from '@/components/companion/ExperienceForm';
@@ -28,7 +30,8 @@ import { ProgressSteps } from '@/components/companion/ProgressSteps';
 export default function CompanionSignup() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+  const [showAuthGate, setShowAuthGate] = useState(false);
+
   const {
     step,
     accountType,
@@ -44,6 +47,18 @@ export default function CompanionSignup() {
   } = useCompanionSignup();
 
   const handleSubmit = async () => {
+    // createCompanionProfile now syncs this account to the 'companion' role
+    // COMPANION_PORTAL_ROLES requires — that sync needs an authenticated
+    // session. This page is fully public, so require sign-in before
+    // submitting rather than letting the profile get created with no role,
+    // which used to permanently lock the person out of /companion-dashboard.
+    // The form is already auto-saved (signupDraft.js), so nothing is lost.
+    const currentUser = await base44.auth.me().catch(() => null);
+    if (!currentUser) {
+      setShowAuthGate(true);
+      return;
+    }
+
     const result = await submitForm();
     
     if (result.success) {
@@ -175,6 +190,14 @@ export default function CompanionSignup() {
           </p>
         </div>
       </div>
+
+      <SignupAuthGate
+        isOpen={showAuthGate}
+        redirectPath="/companion-signup"
+        title="One step left — sign in"
+        message="Sign in to finish creating your companion profile. Your form is saved — you'll be right back here to submit."
+        onCancel={() => setShowAuthGate(false)}
+      />
     </div>
   );
 }

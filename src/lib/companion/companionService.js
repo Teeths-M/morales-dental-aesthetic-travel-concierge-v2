@@ -1,6 +1,7 @@
 // lib/companion/companionService.js
 import { base44 } from '@/api/base44Client';
 import { ACCOUNT_TYPES } from './constants';
+import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 
 /**
  * Creates a companion profile in the database
@@ -33,6 +34,19 @@ export async function createCompanionProfile(formData, accountType) {
   };
 
   const companion = await base44.entities.Companion.create(companionData);
+  // Grants this account the 'companion' role COMPANION_PORTAL_ROLES requires
+  // to open /companion-dashboard — this call was missing entirely (unlike
+  // doctor/taxi/travel-agency, which at least attempted it), so no companion
+  // signup, ever, could reach their own dashboard. Caller (useCompanionSignup)
+  // gates submission on an authenticated session first, since this throws for
+  // a guest.
+  await saveUserOnboardingProfile({
+    role: 'companion',
+    status: 'completed',
+    linkedEntityName: 'Companion',
+    linkedEntityId: companion.id,
+    profileData: { ...formData, ...companionData },
+  });
   try {
     await base44.functions.invoke('initiatePartnerVerification', {
       partner_id: companion.id,

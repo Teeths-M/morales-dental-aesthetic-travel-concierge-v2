@@ -6,6 +6,7 @@ import { ArrowRight, ChevronLeft, Upload } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
+import SignupAuthGate from '@/components/auth/SignupAuthGate';
 
 export default function TaxiServiceSignupStep3({ formData, setFormData, language, _onNext, onBack, onComplete }) {
   const _t = translations[language];
@@ -15,6 +16,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
   const [licenseConfirmed, setLicenseConfirmed] = useState(false);
   const [insuranceConfirmed, setInsuranceConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -53,6 +55,19 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
 
   const handleSubmit = async () => {
     if (!payoutMethod || !formData.payout_account || !licenseConfirmed || !insuranceConfirmed) {
+      return;
+    }
+
+    // The TaxiService record below can be created as a guest, but
+    // saveUserOnboardingProfile → syncTenantRole (which grants this account
+    // the 'taxi_service' role the chauffeur dashboard requires) needs an
+    // authenticated session — it silently no-ops for a guest, permanently
+    // locking a newly-signed-up driver out of their own dashboard with no
+    // recovery path. Require sign-in before creating anything. The form is
+    // already auto-saved (signupDraft.js), so nothing is lost on the round trip.
+    const currentUser = await base44.auth.me().catch(() => null);
+    if (!currentUser) {
+      setShowAuthGate(true);
       return;
     }
 
@@ -245,10 +260,18 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
           disabled={!canSubmit || isSubmitting}
           className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white gap-2"
         >
-          {isSubmitting ? (language === 'es' ? 'Enviando...' : 'Submitting...') : (language === 'es' ? 'Comenzar a Transportar' : language === 'fr' ? 'Commencer à Transporter' : 'Start Transporting')} 
+          {isSubmitting ? (language === 'es' ? 'Enviando...' : 'Submitting...') : (language === 'es' ? 'Comenzar a Transportar' : language === 'fr' ? 'Commencer à Transporter' : 'Start Transporting')}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
+
+      <SignupAuthGate
+        isOpen={showAuthGate}
+        redirectPath="/partner-signup/taxi-service"
+        title="One step left — sign in"
+        message="Sign in to finish creating your chauffeur account. Your form is saved — you'll be right back here to submit."
+        onCancel={() => setShowAuthGate(false)}
+      />
     </div>
   );
 }

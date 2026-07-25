@@ -6,25 +6,6 @@ import { base44 } from '@/api/base44Client';
 import { useCart } from '@/context/CartContext';
 import { friendlyError } from '@/lib/friendlyError';
 
-async function fireConsentEmail(form, responseData) {
-  try {
-    await base44.functions.invoke('processInformedConsentAndEmail', {
-      consultation_id: form.consultation_id,
-      client_name: form.patient_name,
-      client_email: form.email,
-      procedures: form.procedure_interest,
-      signature_data: form.signature_data || '',
-      signature_timestamp: form.signature_timestamp || new Date().toISOString(),
-      signature_ip_address: form.ip_country_origin || '',
-      accepted_arbitration_clause: !!form.accepted_arbitration_clause,
-      charge_id: responseData?.charge_id,
-      amount: responseData?.amount || 49,
-    });
-  } catch (e) {
-    console.warn('Consent email dispatch failed (non-blocking):', e.message);
-  }
-}
-
 function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, clearCart, handlePaymentSuccess }) {
   const [error, setError] = useState(null);
 
@@ -43,9 +24,12 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
 
       const data = response.data;
 
-      // Already paid — skip Stripe and proceed
+      // Already paid — skip Stripe and proceed. The consent archive + client
+      // email are now handled reliably server-side (pipelineOnConsultationFeePaid
+      // fires createCaseFromConsultation when ConsultationFee.fee_paid flips
+      // true, which already happened for this consultation) — calling
+      // processInformedConsentAndEmail here as well would double-send the email.
       if (data.already_paid) {
-        await fireConsentEmail(form, data);
         clearCart();
         if (handlePaymentSuccess) {
           await handlePaymentSuccess(data);
