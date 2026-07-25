@@ -150,6 +150,8 @@ These areas require extra care. Changes here have audit and safety implications:
 
 **Edge function error exposure** — `createHandler` catches all unhandled errors and returns `{ error: 'An internal error occurred.' }`. Never add a catch block that re-throws `error.message` to the client.
 
+**Entity access control (RLS)** — every `base44/entities/*.jsonc` file controls its own record-level permissions via an `"rls"` field with `read`/`create`/`update`/`delete` rules (`user_condition.role`, `user_condition.id`, `data.<field>`). **An entity with no `"rls"` block at all is fully open — any unauthenticated request can read and write every record.** When adding a new entity, always give it an explicit `rls` block matching one of the existing ownership patterns (patient-owned via `data.<owner_email_field>`, partner-owned, admin-only, or — only if a real unauthenticated page needs it, confirm via frontend grep first — deliberately public with no `rls` block at all, as `Doctor`/`DoctorPricing`/pricing-calculator entities are). Base44's deploy-time validator rejects malformed `rls` JSON for *any* function, not just the offending entity, so keep edits to the four confirmed-valid condition keys. The `User` entity (Base44's own built-in identity table) is intentionally left untouched — locking it down risks breaking login platform-wide and needs its own staged change with a rollback plan, not a batch edit.
+
 ## Constants & Design System
 
 All platform-wide magic strings are in `src/lib/constants.js`: `ROLES`, `CASE_STATUS`, `PAYMENT_STATUS`, `ROUTES`, `CACHE`, `TIME`, `AUDIT_EVENTS`, and more. Import from there — do not define strings inline.
