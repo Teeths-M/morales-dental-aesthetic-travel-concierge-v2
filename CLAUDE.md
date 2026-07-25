@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Keeping This File Current
+
+Before ending substantive work in a session, check whether anything here needs updating: new commands, architecture changes, new or changed invariants, deprecated systems, newly discovered gotchas. Edit the relevant existing section directly — no changelog, no dated entries, this file stays current-state-only. Remove or correct anything no longer true rather than leaving it to go stale. Skip this if the session made no durable/structural changes (pure Q&A, one-off debugging, trivial fixes).
+
 ## The M Principle — Non-Negotiable
 
 > "We built this to save lives, not to make profit."
