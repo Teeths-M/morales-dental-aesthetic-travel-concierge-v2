@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { createKeyedMemoCache } from '../_shared/memoCache.ts';
 
 // ── SAFE-T GEO ENGINE ───────────────────────────────────────────────────────
 // Primary:   ipapi.co   (free, no key, HTTPS, 30k req/month, good Caribbean accuracy)
@@ -10,15 +11,6 @@ import { createHandler } from '../_shared/createHandler.ts';
 // because many T&T routes share Caribbean exchange points with VE networks.
 
 const GEO_CACHE_TTL = 15 * 60 * 1000; // 15 min — shorter to avoid stale results during demos
-const cache = new Map();
-
-function getCache(key) {
-  const item = cache.get(key);
-  if (!item) return null;
-  if (Date.now() - item.ts > GEO_CACHE_TTL) { cache.delete(key); return null; }
-  return item.data;
-}
-function setCache(key, data) { cache.set(key, { data, ts: Date.now() }); }
 
 // Comprehensive CURRENCY_MAP — covers Caribbean, LATAM, Europe, Asia-Pacific
 const CURRENCY_MAP = {
@@ -133,44 +125,37 @@ async function fromIpwhoIs(ip) {
   };
 }
 
+const DEFAULT_FALLBACK = {
+  country: 'Unknown',
+  country_code: 'US',
+  city: null,
+  region: null,
+  timezone: null,
+  latitude: null,
+  longitude: null,
+  currency: 'USD',
+  source: 'default_fallback',
+};
+
+// Try primary then secondary; throws if both fail, so the memo cache never
+// stores a fallback result — matches the original "only cache real hits" rule.
+async function resolveGeo(ip) {
+  try {
+    return await fromIpapiCo(ip);
+  } catch (_e1) {
+    return await fromIpwhoIs(ip);
+  }
+}
+
+// v3 in the key clears stale v1/v2 misidentified entries.
+const geoCache = createKeyedMemoCache(resolveGeo, GEO_CACHE_TTL, (ip) => `geo_v3_${ip}`);
+
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const ip = extractClientIp(req);
-    const cacheKey = `geo_v3_${ip}`; // v3 — clears stale v1/v2 misidentified entries
-
-    const cached = getCache(cacheKey);
-    if (cached) return Response.json({ ...cached, from_cache: true });
-
-    // Try primary, then secondary, then default
-    let result = null;
-
-    try {
-      result = await fromIpapiCo(ip);
-    } catch (e1) {
-      try {
-        result = await fromIpwhoIs(ip);
-      } catch (_e2) {
-        // Both failed — return safe default; never crash the caller
-        result = {
-          country: 'Unknown',
-          country_code: 'US',
-          city: null,
-          region: null,
-          timezone: null,
-          latitude: null,
-          longitude: null,
-          currency: 'USD',
-          source: 'default_fallback',
-        };
-      }
-    }
-
-    if (result.source !== 'default_fallback') {
-      setCache(cacheKey, result);
-    }
-
+    const result = await geoCache(ip).catch(() => DEFAULT_FALLBACK);
     return Response.json(result);
   } catch (_) {
-    return Response.json({ country: 'Unknown', country_code: 'US', currency: 'USD', source: 'default_fallback' });
+    return Response.json(DEFAULT_FALLBACK);
   }
 }, { name: 'getGeolocationAndCurrency', requireAuth: false }));

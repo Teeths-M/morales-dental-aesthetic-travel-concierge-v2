@@ -1,4 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err, Base44Client } from '../_shared/createHandler.ts';
+import { createMemoCache } from '../_shared/memoCache.ts';
 
 // ── intakePartnerAvailabilityPreview ─────────────────────────────────────────
 // Read-only preview of travel/transfer partner coverage for a destination —
@@ -12,6 +13,21 @@ interface PreviewBody {
   destination_city?: string;
 }
 
+// The active+verified partner roster is unfiltered by destination — the same
+// data serves every request, scoped down after the fetch. Partner onboarding
+// is infrequent, so a 10-min TTL absorbs the intake-conversation call volume.
+const PARTNER_ROSTER_TTL_MS = 10 * 60 * 1000;
+
+async function buildPartnerRoster(base44: Base44Client) {
+  const [allAgencies, allTaxis] = await Promise.all([
+    base44.asServiceRole.entities.TravelAgency.filter({ status: 'active', verification_status: 'verified' }, '-created_date', 500),
+    base44.asServiceRole.entities.TaxiService.filter({ status: 'active', verification_status: 'verified' }, '-created_date', 500),
+  ]);
+  return { allAgencies, allTaxis };
+}
+
+const getPartnerRoster = createMemoCache(buildPartnerRoster, PARTNER_ROSTER_TTL_MS);
+
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { destination_country, destination_city } = await body<PreviewBody>();
 
@@ -21,10 +37,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const country = destination_country.toLowerCase();
 
-  const [allAgencies, allTaxis] = await Promise.all([
-    base44.asServiceRole.entities.TravelAgency.filter({ status: 'active', verification_status: 'verified' }, '-created_date', 500),
-    base44.asServiceRole.entities.TaxiService.filter({ status: 'active', verification_status: 'verified' }, '-created_date', 500),
-  ]);
+  const { allAgencies, allTaxis } = await getPartnerRoster(base44);
 
   // Same best-effort country-in-region scoping already used elsewhere in this
   // codebase (pipelineOnDoctorConfirmed, onDoctorConfirmed) — service_regions

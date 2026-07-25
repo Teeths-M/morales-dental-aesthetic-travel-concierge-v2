@@ -9,10 +9,13 @@
  * load time. Print = browser Save as PDF. Zero network calls at print time.
  */
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Printer, ArrowLeft, Shield, AlertTriangle, Heart } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { CACHE } from '@/lib/constants';
+import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 
 const GOLD = '#D4AF37';
 
@@ -160,27 +163,23 @@ function Field({ label, value, highlight = false, danger = false, color = null }
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function EmergencyMedCard() {
-  const [user,    setUser]    = useState(null);
-  const [caseRec, setCaseRec] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [country, setCountry] = useState('Venezuela');
 
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => base44.auth.me().catch(() => null),
+    staleTime: CACHE.MEDIUM,
+  });
+
+  // useActiveCaseRecord is `enabled: !!user?.email`, so a disabled query's own
+  // isLoading never turns true (it never fetches) — fold in userLoading so the
+  // page doesn't briefly render "no case found" before the user lookup settles.
+  const { data: caseRec, isLoading: caseLoading } = useActiveCaseRecord(user?.email);
+  const loading = userLoading || (!!user?.email && caseLoading);
+
   useEffect(() => {
-    async function load() {
-      try {
-        const u = await base44.auth.me();
-        setUser(u);
-        const cases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 5);
-        const active = cases.find(c => !['Completed', 'Closed', 'Cancelled'].includes(c.status)) || cases[0];
-        if (active) {
-          setCaseRec(active);
-          if (active.procedure_country) setCountry(active.procedure_country);
-        }
-      } catch (_) {}
-      setLoading(false);
-    }
-    load();
-  }, []);
+    if (caseRec?.procedure_country) setCountry(caseRec.procedure_country);
+  }, [caseRec?.procedure_country]);
 
   function handlePrint() {
     window.print();

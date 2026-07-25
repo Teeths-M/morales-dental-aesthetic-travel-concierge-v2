@@ -1,7 +1,10 @@
 // @ts-nocheck — pre-existing type gaps; build passes
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { activeCaseQueryKey, fetchActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
+import { CACHE } from '@/lib/constants';
 import { AlertTriangle, Globe2, MapPin, Eye, Smartphone, Shield, Navigation, Mic, Moon, TreePine } from 'lucide-react';
 import { BackButtonLight } from '@/components/nav/BackButton';
 import SOSDropdown from '@/components/emergency/SOSDropdown';
@@ -28,6 +31,7 @@ export default function EmergencyHub() {
   const [activeCase, setActiveCase] = useState(null);
   const [activeTab, setActiveTab] = useState('sos');
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const CASE_CACHE_KEY = 'morales_emergency_active_case';
@@ -51,10 +55,16 @@ export default function EmergencyHub() {
       try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify(u)); } catch (_) {}
       if (u) {
         try {
-          const cases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 1);
-          if (cases[0]) {
-            setActiveCase(cases[0]);
-            try { localStorage.setItem(CASE_CACHE_KEY, JSON.stringify(cases[0])); } catch (_) {}
+          // Shared queryKey/fetcher with EmergencyMedCard.jsx — visiting either
+          // screen reuses the same cached read instead of two independent fetches.
+          const active = await queryClient.fetchQuery({
+            queryKey: activeCaseQueryKey(u.email),
+            queryFn: () => fetchActiveCaseRecord(u.email),
+            staleTime: CACHE.MEDIUM,
+          });
+          if (active) {
+            setActiveCase(active);
+            try { localStorage.setItem(CASE_CACHE_KEY, JSON.stringify(active)); } catch (_) {}
           }
         } catch (_) {}
       }
@@ -62,7 +72,7 @@ export default function EmergencyHub() {
       console.error('[EmergencyHub] Auth failed:', err?.message);
       // Don't set null — keep cached user if available
     }).finally(() => setLoading(false)); // ALWAYS stop loading
-  }, []);
+  }, [queryClient]);
 
   if (loading) return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center">

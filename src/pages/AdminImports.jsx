@@ -1,6 +1,6 @@
 // @ts-nocheck — pre-existing type gaps; build passes
 import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { 
@@ -88,6 +88,7 @@ const IMPORT_CONFIGS = {
 export default function AdminImports() {
   const [selectedType, setSelectedType] = useState(null);
   const [file, setFile] = useState(null);
+  const queryClient = useQueryClient();
 
   const importMutation = useMutation({
     mutationFn: async ({ entityType, fileData }) => {
@@ -112,6 +113,13 @@ export default function AdminImports() {
       toast.success(`Successfully imported ${data.successful || 0} records to ${IMPORT_CONFIGS[variables.entityType].title}`);
       setFile(null);
       setSelectedType(null);
+      // No single consistent queryKey exists across admin screens for a given
+      // entity (e.g. the Doctor list alone is cached under 'doctors',
+      // 'doctors-verification', 'doctors-intel', and 'doctors-all' in
+      // different pages) — invalidate everything rather than maintain a
+      // fragile per-entity key map that would silently go stale itself.
+      // Bulk import is rare/admin-only, so the extra refetch cost is fine.
+      queryClient.invalidateQueries();
     },
     onError: (error) => {
       toast.error(`Import failed: ${error.message}`);

@@ -1,8 +1,10 @@
 // @ts-nocheck — shadcn Card/Badge forwardRef types omit children; pre-existing, not fixable without editing generated primitives
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { CACHE } from '@/lib/constants';
 import {
   Plane, Car, Calendar, MapPin, Star, CheckCircle, Mail, Phone,
   Globe, User, Shield, Heart, Package, FileText
@@ -14,12 +16,52 @@ import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { BackButton } from '@/components/nav/BackButton';
 import LoadingState from '@/components/ui-system/LoadingState';
 
+// Extracted so it can be the queryFn passed to queryClient.fetchQuery below —
+// same TravelRequest.filter + per-partner enrichment as before, just cacheable.
+async function fetchEnrichedTravelRequests(userEmail) {
+  const requests = await base44.entities.TravelRequest.filter(
+    { user_email: userEmail },
+    '-created_date',
+    10
+  );
+
+  return Promise.all(
+    requests.map(async (req) => {
+      const enrichedReq = { ...req };
+
+      if (req.travel_agency_id) {
+        try {
+          const agency = await base44.entities.TravelAgency.get(req.travel_agency_id);
+          enrichedReq.travel_agency = agency;
+        } catch (_) {}
+      }
+
+      if (req.chauffeur_id) {
+        try {
+          const taxi = await base44.entities.TaxiService.get(req.chauffeur_id);
+          enrichedReq.chauffeur = taxi;
+        } catch (_) {}
+      }
+
+      if (req.companion_id) {
+        try {
+          const companion = await base44.entities.Companion.get(req.companion_id);
+          enrichedReq.companion = companion;
+        } catch (_) {}
+      }
+
+      return enrichedReq;
+    })
+  );
+}
+
 export default function TripOverview() {
   const [user, setUser] = useState(null);
   const [travelRequests, setTravelRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTrip, setSelectedTrip] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -29,6 +71,7 @@ export default function TripOverview() {
     if (user) {
       loadTravelRequests();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadTravelRequests = async () => {
@@ -52,41 +95,13 @@ export default function TripOverview() {
     }
 
     try {
-      const requests = await base44.entities.TravelRequest.filter(
-        { user_email: user.email },
-        '-created_date',
-        10
-      );
-
-      // Enrich with partner data
-      const enriched = await Promise.all(
-        requests.map(async (req) => {
-          const enrichedReq = { ...req };
-
-          if (req.travel_agency_id) {
-            try {
-              const agency = await base44.entities.TravelAgency.get(req.travel_agency_id);
-              enrichedReq.travel_agency = agency;
-            } catch (_) {}
-          }
-
-          if (req.chauffeur_id) {
-            try {
-              const taxi = await base44.entities.TaxiService.get(req.chauffeur_id);
-              enrichedReq.chauffeur = taxi;
-            } catch (_) {}
-          }
-
-          if (req.companion_id) {
-            try {
-              const companion = await base44.entities.Companion.get(req.companion_id);
-              enrichedReq.companion = companion;
-            } catch (_) {}
-          }
-
-          return enrichedReq;
-        })
-      );
+      // Cached via React Query (not just localStorage) — revisiting this screen
+      // within staleTime reuses the same in-memory result instead of refetching.
+      const enriched = await queryClient.fetchQuery({
+        queryKey: ['trip-overview', user.email],
+        queryFn: () => fetchEnrichedTravelRequests(user.email),
+        staleTime: CACHE.SHORT,
+      });
 
       setTravelRequests(enriched);
       if (enriched.length > 0) {

@@ -1,8 +1,41 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { createMemoCache } from '../_shared/memoCache.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
+
+// ── Roster cache ─────────────────────────────────────────────────────────────
+// The active/verified doctor roster + specialty list changes on the order of
+// hours-to-days (doctor onboarding, admin approval), not per-request. A 5-min
+// TTL on a warm isolate absorbs repeated intake-session lookups without ever
+// serving anything past that window — see _shared/memoCache.ts.
+const ROSTER_CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function buildDoctorRoster(base44: ReturnType<typeof createClientFromRequest>) {
+  // BUG-R17-01 FIX: use asServiceRole — Doctor and DoctorSpecialty records are owned
+  // by doctor users, not by the calling user. User-scoped entities returns empty for
+  // cross-user data, so every procedure match returned 0 doctors and triggered unnecessary
+  // outreach emails.
+  const activeDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' }, '-created_date', 500);
+
+  // SECURITY: status='active' is a necessary but NOT sufficient condition.
+  // A doctor can have status='active' with verification_status='failed' if a bug or
+  // admin override set them active without completing all checks.
+  // Only doctors in a definitively approved terminal state reach patients.
+  const VERIFIED_STATUSES = new Set(['verified', 'auto_verified', 'manually_approved']);
+  const allDoctors = activeDoctors.filter((doc: any) =>
+    doc.license_verified === true &&
+    VERIFIED_STATUSES.has(doc.verification_status)
+  );
+
+  // Get doctor procedures — bounded query with early termination
+  const doctorProcedures = await base44.asServiceRole.entities.DoctorSpecialty.list('-created_date', 2000); // Bounded to 2000
+
+  return { allDoctors, doctorProcedures };
+}
+
+const getDoctorRoster = createMemoCache(buildDoctorRoster, ROSTER_CACHE_TTL_MS);
 
 // Expands a patient's search term to clinical synonyms so "nose job" finds "rhinoplasty"
 async function expandSynonyms(term: string): Promise<string[]> {
@@ -38,25 +71,10 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Procedure interest required' }, { status: 400 });
     }
 
-    // PERFORMANCE: Bounded queries with indexes — prevents OOM at scale
-    // BUG-R17-01 FIX: use asServiceRole — Doctor and DoctorSpecialty records are owned
-    // by doctor users, not by the calling user. User-scoped entities returns empty for
-    // cross-user data, so every procedure match returned 0 doctors and triggered unnecessary
-    // outreach emails.
-    const activeDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' }, '-created_date', 500);
-
-    // SECURITY: status='active' is a necessary but NOT sufficient condition.
-    // A doctor can have status='active' with verification_status='failed' if a bug or
-    // admin override set them active without completing all checks.
-    // Only doctors in a definitively approved terminal state reach patients.
-    const VERIFIED_STATUSES = new Set(['verified', 'auto_verified', 'manually_approved']);
-    const allDoctors = activeDoctors.filter(doc =>
-      doc.license_verified === true &&
-      VERIFIED_STATUSES.has(doc.verification_status)
-    );
-    
-    // Get doctor procedures — bounded query with early termination
-    const doctorProcedures = await base44.asServiceRole.entities.DoctorSpecialty.list('-created_date', 2000); // Bounded to 2000
+    // PERFORMANCE: Bounded queries with indexes — prevents OOM at scale.
+    // Cached (see buildDoctorRoster/getDoctorRoster above) — this roster changes
+    // on the order of hours-to-days, not per-request.
+    const { allDoctors, doctorProcedures } = await getDoctorRoster(base44);
 
     // AI synonym expansion — "nose job" → ["rhinoplasty","nasal surgery",...] so no patient goes unmatched
     const searchTerms = await expandSynonyms(procedure_interest);

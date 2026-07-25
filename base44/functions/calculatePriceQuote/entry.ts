@@ -1,4 +1,5 @@
 import { createHandler, ok, err, Base44Client } from '../_shared/createHandler.ts';
+import { createMemoCache } from '../_shared/memoCache.ts';
 
 // ── Domain types ──────────────────────────────────────────────────────────────
 interface ProcedurePricing {
@@ -47,8 +48,6 @@ interface PricingIndex {
 // Pricing tables change at most daily. A 5-min TTL eliminates ~99% of DB reads
 // under load. All concurrent requests on the same isolate share one in-flight fetch.
 const CACHE_TTL_MS = 5 * 60 * 1000;
-let cached: { index: PricingIndex; expiresAt: number } | null = null;
-let inFlight: Promise<PricingIndex> | null = null;
 
 function bundleKey(procs: string[]): string {
   return [...procs].sort().join('|');
@@ -95,18 +94,7 @@ async function buildIndex(base44: Base44Client): Promise<PricingIndex> {
   return { byName, countryKey, doctorKey, modifiers, bundleIndex, qtyRule, promoRules };
 }
 
-async function getPricingIndex(base44: Base44Client): Promise<PricingIndex> {
-  const now = Date.now();
-  if (cached && now < cached.expiresAt) return cached.index;
-  if (inFlight) return inFlight;
-  inFlight = buildIndex(base44).then(index => {
-    cached = { index, expiresAt: Date.now() + CACHE_TTL_MS };
-    inFlight = null;
-    return index;
-  });
-  inFlight.catch(() => { inFlight = null; cached = null; });
-  return inFlight;
-}
+const getPricingIndex = createMemoCache<Base44Client, PricingIndex>(buildIndex, CACHE_TTL_MS);
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 Deno.serve(createHandler(async ({ req, base44, user, body }) => {

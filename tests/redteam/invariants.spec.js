@@ -1779,3 +1779,58 @@ test('RECOVERY GUIDANCE: both edge functions gate on the clinical_reviewer role 
     expect(opts, `${fn} must include clinical_reviewer in allowedRoles`).toContain('clinical_reviewer');
   }
 });
+
+test('PERFORMANCE: checkClinicStatus stays live-only — never wired into the memo cache', () => {
+  // checkClinicStatus is the safety gate that must never proceed on cached
+  // "open" status (see its own doc comment). A deliberate exclusion from the
+  // memoCache pattern used elsewhere — this pins that exclusion so a future
+  // "let's cache this too" edit doesn't silently regress the fail-safe read.
+  const src = read('base44/functions/checkClinicStatus/entry.ts');
+  expect(src).not.toMatch(/memoCache/);
+  expect(src).toContain("we never proceed on cached \"open\" status");
+});
+
+test('PERFORMANCE: the shared in-memory cache helper is used by the intended read-heavy functions', () => {
+  const helper = read('base44/functions/_shared/memoCache.ts');
+  expect(helper).toContain('export function createMemoCache');
+  expect(helper).toContain('export function createKeyedMemoCache');
+
+  for (const fn of ['calculatePriceQuote', 'getGeolocationAndCurrency', 'matchDoctorsForProcedure', 'intakePartnerAvailabilityPreview']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} should import the shared memo cache`).toMatch(/from ['"]\.\.\/_shared\/memoCache\.ts['"]/);
+  }
+});
+
+test('PERFORMANCE: getVisaRequirement only ever caches a confirmed-fresh snapshot, never a stale/missing one', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = strip(read('base44/functions/getVisaRequirement/entry.ts'));
+  const freshCheckIdx = src.indexOf('isFresh(cached.last_confirmed_at');
+  const cacheSetIdx = src.indexOf('freshSnapshotCache.set(');
+  expect(freshCheckIdx, 'freshness check must exist').toBeGreaterThan(-1);
+  expect(cacheSetIdx, 'the memo cache write must exist').toBeGreaterThan(-1);
+  // The set() call must be textually inside the `if (cached && isFresh(...))`
+  // block, i.e. appear after the freshness check and before the function's
+  // stale/missing fallback path begins.
+  expect(freshCheckIdx, 'the memo cache must only be populated after the freshness check').toBeLessThan(cacheSetIdx);
+  const stalePathIdx = src.indexOf('fetchVisaRequirement(base44, nat, dest)');
+  expect(stalePathIdx, 'the live re-check call must exist').toBeGreaterThan(-1);
+  expect(cacheSetIdx, 'the cache write must happen before the stale/missing refresh path').toBeLessThan(stalePathIdx);
+});
+
+test('PERFORMANCE: EmergencyHub and EmergencyMedCard share one active-case cache entry, not two independent fetches', () => {
+  const hub = read('src/pages/EmergencyHub.jsx');
+  const card = read('src/pages/EmergencyMedCard.jsx');
+  expect(hub, 'EmergencyHub must use the shared active-case fetcher').toMatch(/from ['"]@\/hooks\/useActiveCaseRecord['"]/);
+  expect(card, 'EmergencyMedCard must use the shared active-case fetcher').toMatch(/from ['"]@\/hooks\/useActiveCaseRecord['"]/);
+  expect(hub).toContain('activeCaseQueryKey');
+  expect(card).toContain('useActiveCaseRecord');
+});
+
+test('PERFORMANCE: AdminImports invalidates the query cache after a successful bulk import', () => {
+  const src = read('src/pages/AdminImports.jsx');
+  const successIdx = src.indexOf('onSuccess:');
+  const invalidateIdx = src.indexOf('invalidateQueries');
+  expect(successIdx, 'onSuccess handler must exist').toBeGreaterThan(-1);
+  expect(invalidateIdx, 'invalidateQueries call must exist').toBeGreaterThan(-1);
+  expect(successIdx).toBeLessThan(invalidateIdx);
+});

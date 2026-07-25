@@ -11,6 +11,21 @@ import { TTL_MS, isFresh } from '../_shared/freshness.ts';
  * the snapshot. Always returns the source and 'last confirmed' date for display.
  * Advisory only — never gates a booking; low-confidence renders as 'unknown'.
  */
+
+// ── Short in-memory layer in front of the Base44 snapshot read only ───────────
+// This sits ON TOP OF the real days-long DB-backed freshness system above — it
+// only absorbs request bursts on a warm isolate (same nationality×destination
+// pair requested repeatedly within a minute), it does not change the 7-day
+// freshness guarantee. Deliberately caches ONLY confirmed-fresh results: a
+// stale/missing snapshot always hits Base44 for real, so this can never delay
+// the self-correcting live-refresh path below (caching a stale negative here
+// would make every call in the window redo the live re-check instead of
+// picking up the just-written fresh record, which would be worse than no
+// cache at all).
+const SNAPSHOT_CACHE_TTL_MS = 60 * 1000;
+const freshSnapshotCache = new Map<string, { snap: Record<string, unknown>; expiresAt: number }>();
+const snapshotKey = (nat: string, dest: string) => `${nat}::${dest}`;
+
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { nationality, destination_country } = await body<{ nationality?: string; destination_country?: string }>();
   if (!nationality || !destination_country) {
@@ -19,14 +34,18 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const nat = nationality.trim();
   const dest = destination_country.trim();
+  const key = snapshotKey(nat, dest);
 
-  // ── Serve fresh cache if we have it ────────────────────────────────────────
-  const existing = await base44.asServiceRole.entities.VisaRequirementSnapshot.filter(
-    { nationality: nat, destination_country: dest }, '-last_confirmed_at', 1,
-  ).catch(() => []);
-  const cached = existing?.[0];
+  // ── Serve fresh cache if we have it (in-memory, then DB-backed) ─────────────
+  const memoHit = freshSnapshotCache.get(key);
+  const cached = (memoHit && Date.now() < memoHit.expiresAt)
+    ? memoHit.snap
+    : (await base44.asServiceRole.entities.VisaRequirementSnapshot.filter(
+        { nationality: nat, destination_country: dest }, '-last_confirmed_at', 1,
+      ).catch(() => []))?.[0];
 
-  if (cached && isFresh(cached.last_confirmed_at, TTL_MS.visa_rule)) {
+  if (cached && isFresh(cached.last_confirmed_at as string, TTL_MS.visa_rule)) {
+    freshSnapshotCache.set(key, { snap: cached, expiresAt: Date.now() + SNAPSHOT_CACHE_TTL_MS });
     return ok({
       fresh: true,
       visa_status: cached.visa_status,
