@@ -24,6 +24,9 @@ export default defineConfig({
     { name: 'public', testMatch: /public\.spec\.js/ },
     // One-time login capture (run headed). Google OAuth can't be automated.
     { name: 'setup', testMatch: /auth\.setup\.js/ },
+    // Same capture, for a second SEPARATE admin-role test account — needed
+    // by the ai-agent project's admin leg (approve a nomination).
+    { name: 'setup-admin', testMatch: /admin\.auth\.setup\.js/ },
     // Post-auth journeys — reuse the session saved by the setup project.
     { name: 'authenticated', testMatch: /journey\.spec\.js/ },
     // Partner signup flows — reuses the saved auth session (same as authenticated).
@@ -33,6 +36,12 @@ export default defineConfig({
     // Morales-specific LIVE edge checks (mobile overlap + unauth endpoint probe).
     // Read-only against the deployed app; no login required.
     { name: 'morales-live', testMatch: /morales-live\.spec\.js/ },
+    // AI-agent-driven journey — an LLM picks what to click/fill from a
+    // natural-language task instead of hardcoded selectors, reusing the
+    // client + admin sessions saved by setup/setup-admin. Manual/local only
+    // (not wired into CI) — needs ANTHROPIC_API_KEY + a test mailbox; skips
+    // itself cleanly when those aren't configured. See tests/e2e/lib/aiAgent.js.
+    { name: 'ai-agent', testMatch: /ai-agent\.spec\.js/, timeout: 180_000 },
     // Internal red-team of the safety-decision layer — deterministic, no browser,
     // no network, no credits. Runs in CI whenever the AI functions change.
     { name: 'redteam', testDir: './tests/redteam', testMatch: /.*\.spec\.js/ },
