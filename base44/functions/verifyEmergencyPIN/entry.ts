@@ -85,10 +85,12 @@ Deno.serve(createHandler(async ({ req }) => {
     }
 
     // ── SETUP: Register or update a PIN ──
-    // First-time setup (no existing record) is allowed without auth — emergency
-    // access is intentionally usable from /emergency-access without login.
-    // Overwriting an EXISTING PIN requires either (a) a valid auth session for
-    // that email, or (b) the current PIN — preventing silent hijacking.
+    // SEC: Both first-time setup AND overwrite require authentication. The
+    // emergency (unauthenticated) flow is only for VERIFYING an existing PIN
+    // from a public terminal — not for creating one. Allowing unauthenticated
+    // first-time setup let an attacker pre-create a PIN for a victim who hadn't
+    // configured one, then use 'verify' to obtain a session token and drain
+    // their emergency vault documents.
     if (action === 'setup') {
       if (!new_pin || new_pin.length !== 6 || !/^\d{6}$/.test(new_pin)) {
         return Response.json({ error: 'PIN must be exactly 6 digits' }, { status: 400 });
@@ -121,14 +123,17 @@ Deno.serve(createHandler(async ({ req }) => {
           failed_attempts: 0, locked_until: null, created_at: now
         });
       } else {
-        // No existing PIN — first-time setup, no auth required.
-        let userId = null;
-        try {
-          const users = await base44.asServiceRole.entities.User.filter({ email: user_email });
-          userId = users[0]?.id;
-        } catch (_) {}
+        // SEC: First-time setup requires an authenticated session for the
+        // target email. See the SETUP comment above for the takeover scenario
+        // this prevents.
+        const authedUser = await base44.auth.me().catch(() => null);
+        if (!authedUser || authedUser.email.toLowerCase() !== String(user_email).toLowerCase()) {
+          return Response.json({
+            error: 'Authentication required to set up an Emergency PIN for the first time. Please log in and try again.'
+          }, { status: 401 });
+        }
         await base44.asServiceRole.entities.EmergencyPIN.create({
-          user_id: userId, user_email, pin_hash: hash, pin_hint: hint || '',
+          user_id: authedUser.id, user_email, pin_hash: hash, pin_hint: hint || '',
           is_active: true, use_count: 0, failed_attempts: 0, created_at: now
         });
       }
