@@ -43,5 +43,60 @@
     "origin": { "type": "string", "default": "byoj" },
     "created_at": { "type": "string", "format": "date-time" }
   },
-  "required": ["patient_email", "doctor_name", "clinic_name", "destination_country"]
+  "required": ["patient_email", "doctor_name", "clinic_name", "destination_country"],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
 }
