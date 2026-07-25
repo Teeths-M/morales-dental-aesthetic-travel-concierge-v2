@@ -18,6 +18,7 @@ export const ROLES = {
   TAXI_SERVICE: 'taxi_service',
   COMPANION: 'companion',
   SECURITY_AGENCY: 'security_agency',
+  CLINICAL_REVIEWER: 'clinical_reviewer',
   ADMIN: 'admin',
   PLATFORM_ADMIN: 'platform_admin',
   USER: 'user',

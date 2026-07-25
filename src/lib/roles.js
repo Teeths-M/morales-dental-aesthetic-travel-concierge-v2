@@ -24,6 +24,7 @@ export const ROLE_TRAVEL_AGENCY  = ROLES.TRAVEL_AGENCY;
 export const ROLE_TAXI_SERVICE   = ROLES.TAXI_SERVICE;
 export const ROLE_COMPANION      = ROLES.COMPANION;
 export const ROLE_SECURITY_AGENCY = ROLES.SECURITY_AGENCY;
+export const ROLE_CLINICAL_REVIEWER = ROLES.CLINICAL_REVIEWER;
 
 // ── Role groups (arrays) ─────────────────────────────────────────────────────
 
@@ -63,6 +64,15 @@ export const COMPANION_PORTAL_ROLES = [ROLES.COMPANION, ...ADMIN_ROLES];
 /** Roles that can access the security agency portal */
 export const SECURITY_AGENCY_PORTAL_ROLES = [ROLES.SECURITY_AGENCY, ...ADMIN_ROLES];
 
+/**
+ * Roles that can access the clinical reviewer portal — a licensed
+ * pharmacist/physician reviewing AI-drafted recovery guidance before it
+ * reaches a patient. Not a PARTNER_ROLES member: unlike doctor/travel-agency/
+ * taxi/companion/security, this role reads PHI and requires a verified
+ * clinical credential, and is granted by admin only (never self-service).
+ */
+export const CLINICAL_REVIEWER_PORTAL_ROLES = [ROLES.CLINICAL_REVIEWER, ...ADMIN_ROLES];
+
 /** Admin-only */
 export const ADMIN_PORTAL_ROLES = ADMIN_ROLES;
 
@@ -76,6 +86,7 @@ export const ALL_AUTHENTICATED_ROLES = [
   ROLES.TAXI_SERVICE,
   ROLES.COMPANION,
   ROLES.SECURITY_AGENCY,
+  ROLES.CLINICAL_REVIEWER,
   ROLES.ADMIN,
   ROLES.PLATFORM_ADMIN,
 ];

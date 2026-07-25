@@ -26,6 +26,7 @@ import SettingsModule from '@/components/dashboard/modules/SettingsModule';
 import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import PostOpRecoveryTracker from '@/components/dashboard/PostOpRecoveryTracker';
+import RecoveryGuidancePanel from '@/components/patient/RecoveryGuidancePanel';
 import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
@@ -554,6 +555,11 @@ function DashboardHome({ user, consultations, language }) {
           <PostOpRecoveryTracker checkIns={postOpCheckIns} />
         </div>
       )}
+
+      {/* Recovery Wellness Guidance — only renders once a reviewer has approved it */}
+      <div className="mb-5">
+        <RecoveryGuidancePanel caseRecord={latestActive || completedCase} />
+      </div>
 
       {showGoldenM && (
         <GoldenMCelebration

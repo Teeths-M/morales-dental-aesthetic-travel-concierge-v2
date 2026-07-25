@@ -1705,3 +1705,77 @@ test('CLAIMS: the app does not advertise checks it does not perform', () => {
     'do not claim vetted transport until drivers gate on a cleared background check')
     .not.toMatch(/vetted transport/i);
 });
+
+test('RECOVERY GUIDANCE: the deterministic decision is written BEFORE the AI is invoked', () => {
+  const src = read('base44/functions/draftRecoveryGuidance/entry.ts');
+  const decisionIdx = src.indexOf("phase: 'decision'");
+  const llmIdx = src.indexOf('InvokeLLM');
+  expect(decisionIdx, 'decision record write must exist').toBeGreaterThan(-1);
+  expect(llmIdx, 'AI drafting call must exist').toBeGreaterThan(-1);
+  expect(decisionIdx, 'decision must be recorded before the AI runs').toBeLessThan(llmIdx);
+});
+
+test('RECOVERY GUIDANCE: the eligibility engine is deterministic and fails closed', () => {
+  const src = read('base44/functions/_shared/recoveryGuidanceRules.ts');
+  expect(src, 'must not call an LLM/AI').not.toMatch(/InvokeLLM|integrations\.Core/);
+  expect(src).toContain('insufficient_information');
+  expect(src).toContain('unknown_procedure');
+  expect(src).toContain('no_active_recovery_session');
+  expect(src).toContain('injection_detected');
+});
+
+test('RECOVERY GUIDANCE: the AI draft schema has no risk/approval field and never names a specific supplement', () => {
+  const src = read('base44/functions/draftRecoveryGuidance/entry.ts');
+  const schemaIdx = src.indexOf('response_json_schema');
+  const schemaBlock = src.slice(schemaIdx, schemaIdx + 400);
+  expect(schemaIdx, 'response_json_schema must exist').toBeGreaterThan(-1);
+  expect(schemaBlock, 'the schema must not let the model return a risk/approval decision')
+    .not.toMatch(/risk_level|approval|approved|dosage|dose/i);
+  expect(src, 'the prompt must forbid naming a specific supplement/product/dose')
+    .toMatch(/MUST NOT name any specific supplement/);
+});
+
+test('RECOVERY GUIDANCE: approval is refused server-side without an explicit interaction attestation', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = strip(read('base44/functions/reviewRecoveryGuidance/entry.ts'));
+  const gateIdx = src.indexOf('interaction_attestation !== true');
+  expect(gateIdx, 'a hard server-side attestation gate must exist').toBeGreaterThan(-1);
+  const approveIdx = src.indexOf("recovery_guidance_text: text");
+  expect(approveIdx, 'the CaseRecord write must exist').toBeGreaterThan(-1);
+  expect(gateIdx, 'the attestation check must precede the CaseRecord write').toBeLessThan(approveIdx);
+});
+
+test('RECOVERY GUIDANCE: only reviewRecoveryGuidance\'s approve branch may write the patient-visible CaseRecord fields', () => {
+  const draftSrc = read('base44/functions/draftRecoveryGuidance/entry.ts');
+  expect(draftSrc, 'the drafting function must never write patient-visible guidance fields')
+    .not.toMatch(/recovery_guidance_text:/);
+
+  const guardSrc = read('src/components/patient/RecoveryGuidancePanel.jsx');
+  expect(guardSrc, 'the patient panel must guard on the approved field before rendering anything')
+    .toMatch(/if\s*\(\s*!caseRecord\?\.recovery_guidance_text\s*\)\s*return null/);
+  const guardCode = guardSrc.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  expect(guardCode, 'must not inject raw HTML').not.toMatch(/dangerouslySetInnerHTML/);
+});
+
+test('RECOVERY GUIDANCE: no patient/generic-user role can read the reviewer-only draft or approval entities', () => {
+  for (const entity of ['RecoveryGuidanceDraft', 'RecoveryGuidanceApproval']) {
+    const src = read(`base44/entities/${entity}.jsonc`);
+    const readIdx = src.indexOf('"read"');
+    const createIdx = src.indexOf('"create"');
+    expect(readIdx, `${entity} must define a read RLS block`).toBeGreaterThan(-1);
+    const readBlock = src.slice(readIdx, createIdx > readIdx ? createIdx : readIdx + 300);
+    expect(readBlock, `${entity} read RLS must be role-gated`).toMatch(/clinical_reviewer|admin|platform_admin/);
+    expect(readBlock, `${entity} must not grant a blanket client/user email-match read path`)
+      .not.toMatch(/data\.client_email|data\.email/);
+  }
+});
+
+test('RECOVERY GUIDANCE: both edge functions gate on the clinical_reviewer role via createHandler', () => {
+  for (const fn of ['draftRecoveryGuidance', 'reviewRecoveryGuidance']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src).toContain('createHandler');
+    const optsIdx = src.lastIndexOf('allowedRoles');
+    const opts = src.slice(optsIdx, optsIdx + 100);
+    expect(opts, `${fn} must include clinical_reviewer in allowedRoles`).toContain('clinical_reviewer');
+  }
+});

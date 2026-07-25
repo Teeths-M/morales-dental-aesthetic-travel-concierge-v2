@@ -381,6 +381,20 @@
       "type": "string",
       "format": "date-time"
     },
+    "recovery_guidance_text": {
+      "type": "string",
+      "description": "Reviewer-approved general recovery wellness guidance (hydration/rest/activity/wound-care). Only ever written by reviewRecoveryGuidance's approve branch — never by the drafting function. Empty/absent means nothing has been approved yet."
+    },
+    "recovery_guidance_reviewer_name": {
+      "type": "string"
+    },
+    "recovery_guidance_reviewer_credential": {
+      "type": "string"
+    },
+    "recovery_guidance_approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "cultural_care_package": {
       "type": "object",
       "properties": {
@@ -892,6 +906,11 @@
         {
           "user_condition": {
             "role": "platform_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "clinical_reviewer"
           }
         }
       ]

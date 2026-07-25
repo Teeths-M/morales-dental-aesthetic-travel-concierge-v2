@@ -16,6 +16,7 @@ import {
   TAXI_SERVICE_PORTAL_ROLES,
   COMPANION_PORTAL_ROLES,
   SECURITY_AGENCY_PORTAL_ROLES,
+  CLINICAL_REVIEWER_PORTAL_ROLES,
   ADMIN_ROLES,
 } from '@/lib/roles';
 
@@ -28,6 +29,7 @@ const TravelAgencyDashboard  = lazy(() => import('@/pages/TravelAgencyDashboard'
 const TaxiServiceDashboard   = lazy(() => import('@/pages/TaxiServiceDashboard'));
 const CompanionDashboard     = lazy(() => import('@/pages/CompanionDashboard'));
 const SecurityAgencyDashboard = lazy(() => import('@/pages/SecurityAgencyDashboard'));
+const ClinicalReviewerDashboard = lazy(() => import('@/pages/ClinicalReviewerDashboard'));
 const PartnerPortal          = lazy(() => import('@/pages/PartnerPortal'));
 const PartnerReviews         = lazy(() => import('@/pages/PartnerReviews'));
 const DoctorSignup           = lazy(() => import('@/pages/DoctorSignup'));
@@ -95,6 +97,10 @@ export const partnerRoutes = (
 
       <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={SECURITY_AGENCY_PORTAL_ROLES} /></ErrorBoundary>}>
         <Route path="/security-agency-dashboard"   element={<ErrorBoundary><SecurityAgencyDashboard /></ErrorBoundary>} />
+      </Route>
+
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={CLINICAL_REVIEWER_PORTAL_ROLES} /></ErrorBoundary>}>
+        <Route path="/clinical-reviewer-dashboard" element={<ErrorBoundary><ClinicalReviewerDashboard /></ErrorBoundary>} />
       </Route>
 
       <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={PARTNER_REVIEW_ROLES} /></ErrorBoundary>}>

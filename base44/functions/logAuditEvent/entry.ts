@@ -27,6 +27,9 @@ const ALLOWED_EVENT_TYPES = new Set([
   'emergency_pin_reset',
   'vault_pin_reset',
   'emergency_pin_failed',
+  'recovery_guidance_drafted',
+  'recovery_guidance_approved',
+  'recovery_guidance_rejected',
 ]);
 
 async function sha256(text: string): Promise<string> {

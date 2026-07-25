@@ -1,0 +1,106 @@
+{
+  "name": "RecoveryGuidanceDraft",
+  "description": "Append-only, hash-chained record of every Recovery Wellness Guidance decision and the AI narration tied to it. Mirrors SafeTScreening's phase pattern: the deterministic decision is written FIRST (phase 'decision'), then the narration (phase 'narration'). prev_hash links each entry to the last so nothing can be silently altered. This entity never reaches a patient directly — only an approved RecoveryGuidanceApproval's final_text, copied onto CaseRecord, is patient-visible.",
+  "type": "object",
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": [
+        "decision",
+        "narration"
+      ],
+      "description": "'decision' = the deterministic engine's output (written before the AI runs). 'narration' = the AI's plain-language draft of general wellness guidance for that finalized decision."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this draft belongs to"
+    },
+    "decision_ref": {
+      "type": "string",
+      "description": "On a narration entry: the id of the decision entry it narrates"
+    },
+    "procedure_type": {
+      "type": "string"
+    },
+    "recovery_day": {
+      "type": "number",
+      "description": "Days since recovery_start_at, computed from RecoverySession.checkins — never the localStorage-only RecoveryMilestoneTracker labels"
+    },
+    "guidance_status": {
+      "type": "string",
+      "enum": [
+        "draft_ready",
+        "insufficient_information"
+      ]
+    },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "factors": {
+      "type": "object",
+      "description": "The factor breakdown from the deterministic engine (procedure category, recovery-day band)"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "fail_closed_reason": {
+      "type": "string",
+      "description": "Set when the engine failed closed to 'insufficient_information' (unknown_procedure, no_active_recovery_session, injection_detected)"
+    },
+    "injection_flagged": {
+      "type": "boolean",
+      "default": false
+    },
+    "draft_text": {
+      "type": "string",
+      "description": "AI-drafted general wellness guidance (narration phase only). Never names a specific supplement, product, or dose — general wellness practices only (hydration, rest, activity limits, wound care). Never contains a risk/safety decision."
+    },
+    "model_id": {
+      "type": "string",
+      "description": "The LLM model that produced the draft (narration phase only)"
+    },
+    "profile_hash": {
+      "type": "string",
+      "description": "SHA-256 of the sanitized profile the decision was computed from"
+    },
+    "prev_hash": {
+      "type": "string",
+      "description": "SHA-256 of the previous RecoveryGuidanceDraft entry — the tamper-evidence chain link"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "phase",
+    "case_id",
+    "prev_hash",
+    "created_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "clinical_reviewer" } },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "clinical_reviewer" } },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "update": {
+      "user_condition": { "role": "platform_admin" }
+    },
+    "delete": {
+      "user_condition": { "role": "platform_admin" }
+    }
+  }
+}

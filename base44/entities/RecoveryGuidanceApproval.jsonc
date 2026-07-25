@@ -1,0 +1,78 @@
+{
+  "name": "RecoveryGuidanceApproval",
+  "description": "The credentialed human sign-off gate for Recovery Wellness Guidance, modeled on SystemConfigChange's approval shape rather than a generic accept/dismiss flag: reviewer identity + credential + an explicit interaction-check attestation are attached to every decision. Nothing here is patient-visible directly — approval copies final_text onto the CaseRecord, same pattern already used for the signed-consent archive.",
+  "type": "object",
+  "properties": {
+    "draft_id": {
+      "type": "string",
+      "description": "The RecoveryGuidanceDraft narration entry this approval resolves"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "reviewer_credential": {
+      "type": "string",
+      "description": "e.g. 'PharmD, License #12345 (CA)' — shown to the patient alongside the approved guidance"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "interaction_attestation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Reviewer confirms they personally reviewed this patient's disclosed medications/allergies/conditions and checked for interactions. Required true before approval can be written — enforced server-side in reviewRecoveryGuidance, not just a UI checkbox."
+    },
+    "final_text": {
+      "type": "string",
+      "description": "The reviewer's final wording — may edit the AI draft_text. This, not draft_text, is what ever reaches a patient."
+    },
+    "rejection_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "draft_id",
+    "case_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "clinical_reviewer" } },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "clinical_reviewer" } },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "clinical_reviewer" } },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "platform_admin" }
+    }
+  }
+}
