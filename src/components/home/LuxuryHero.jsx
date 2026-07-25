@@ -165,6 +165,7 @@ export default function LuxuryHero() {
               muted
               loop
               playsInline
+              preload="auto"
             />
           )}
           {/* Gradient overlays.
