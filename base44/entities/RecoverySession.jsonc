@@ -140,18 +140,14 @@
     },
     "anomaly_status": {
       "type": "string",
-      "enum": [
-        "none",
-        "warning",
-        "escalate"
-      ],
+      "enum": ["none", "warning", "escalate"],
       "default": "none",
       "description": "Current anomaly severity from the latest checkRecoveryAnomaly run"
     },
     "consecutive_anomaly_days": {
       "type": "number",
       "default": 0,
-      "description": "How many consecutive days an anomaly has been detected \u2014 >=2 triggers emergency contact"
+      "description": "How many consecutive days an anomaly has been detected — >=2 triggers emergency contact"
     },
     "last_anomaly_at": {
       "type": "string",
@@ -159,12 +155,12 @@
     },
     "last_log_date": {
       "type": "string",
-      "description": "YYYY-MM-DD of the most recently submitted RecoveryLog \u2014 used by missed check-in cron"
+      "description": "YYYY-MM-DD of the most recently submitted RecoveryLog — used by missed check-in cron"
     },
     "doctor_email": {
       "type": "string",
       "format": "email",
-      "description": "Treating doctor \u2014 receives anomaly notifications"
+      "description": "Treating doctor — receives anomaly notifications"
     },
     "doctor_phone": {
       "type": "string"
@@ -185,18 +181,6 @@
     "patient_email"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
     "read": {
       "$or": [
         {
@@ -206,8 +190,18 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
         }
       ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
     },
     "update": {
       "$or": [
@@ -218,13 +212,27 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     }
   }
 }

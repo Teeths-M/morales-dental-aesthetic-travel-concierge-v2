@@ -5,7 +5,7 @@
     "location_tracking_consent": {
       "type": "boolean",
       "default": false,
-      "description": "Patient gave explicit, affirmative consent to continuous location sharing for this journey. The live beacon does not run without this \u2014 trip shape (solo vs accompanied) must never be treated as consent."
+      "description": "Patient gave explicit, affirmative consent to continuous location sharing for this journey. The live beacon does not run without this — trip shape (solo vs accompanied) must never be treated as consent."
     },
     "location_tracking_consent_at": {
       "type": "string",
@@ -57,10 +57,7 @@
     },
     "origin": {
       "type": "string",
-      "enum": [
-        "morales",
-        "external"
-      ],
+      "enum": ["morales", "external"],
       "default": "morales",
       "description": "external = Bring Your Own Journey (booked outside Morales; provider not vetted by us). Lets an external journey ride the normal protection pipelines while staying visibly distinct to coordinators."
     },
@@ -73,14 +70,8 @@
       "type": "string",
       "description": "Links a BYOJ CaseRecord back to its ExternalJourney intake + verification snapshot."
     },
-    "external_doctor_name": {
-      "type": "string",
-      "description": "BYOJ: the doctor the patient booked externally (not a vetted Morales provider)."
-    },
-    "external_clinic_name": {
-      "type": "string",
-      "description": "BYOJ: the clinic the patient booked externally."
-    },
+    "external_doctor_name": { "type": "string", "description": "BYOJ: the doctor the patient booked externally (not a vetted Morales provider)." },
+    "external_clinic_name": { "type": "string", "description": "BYOJ: the clinic the patient booked externally." },
     "family_visibility_opt_in": {
       "type": "boolean",
       "default": false,
@@ -233,12 +224,10 @@
       "default": 0
     },
     "hotel_name": {
-      "type": "string",
-      "description": "Name of the booked hotel \u2014 entered by travel agency"
+      "type": "string"
     },
     "hotel_address": {
-      "type": "string",
-      "description": "Full street address of the hotel \u2014 entered by travel agency"
+      "type": "string"
     },
     "itinerary_status": {
       "type": "string",
@@ -394,7 +383,7 @@
     },
     "recovery_guidance_text": {
       "type": "string",
-      "description": "Reviewer-approved general recovery wellness guidance (hydration/rest/activity/wound-care). Only ever written by reviewRecoveryGuidance's approve branch \u2014 never by the drafting function. Empty/absent means nothing has been approved yet."
+      "description": "Reviewer-approved general recovery wellness guidance (hydration/rest/activity/wound-care). Only ever written by reviewRecoveryGuidance's approve branch — never by the drafting function. Empty/absent means nothing has been approved yet."
     },
     "recovery_guidance_reviewer_name": {
       "type": "string"
@@ -699,6 +688,8 @@
       "type": "string",
       "default": "1.0"
     },
+
+    // ── Partner Quota Tracking ────────────────────────────────────────────────
     "quotas_requested_at": {
       "type": "string",
       "format": "date-time",
@@ -711,11 +702,7 @@
     },
     "companion_quote_status": {
       "type": "string",
-      "enum": [
-        "PENDING",
-        "SUBMITTED",
-        "CONFIRMED"
-      ],
+      "enum": ["PENDING", "SUBMITTED", "CONFIRMED"],
       "default": "PENDING"
     },
     "clinic_cost": {
@@ -725,11 +712,7 @@
     },
     "clinic_quote_status": {
       "type": "string",
-      "enum": [
-        "PENDING",
-        "SUBMITTED",
-        "CONFIRMED"
-      ],
+      "enum": ["PENDING", "SUBMITTED", "CONFIRMED"],
       "default": "PENDING"
     },
     "all_quotas_confirmed": {
@@ -737,27 +720,26 @@
       "default": false,
       "description": "True when all 4 partner quotas (travel, driver, companion, clinic) are confirmed"
     },
+
+    // ── Package Pricing (post-quota calculation) ──────────────────────────────
     "package_price_full": {
       "type": "number",
       "default": 0,
-      "description": "(base_cost - 49) * 1.25 \u2014 full payment price"
+      "description": "(base_cost - 49) * 1.25 — full payment price"
     },
     "package_price_terms": {
       "type": "number",
       "default": 0,
-      "description": "(base_cost - 49) * 1.30 \u2014 price when paying in two installments"
+      "description": "(base_cost - 49) * 1.30 — price when paying in two installments"
     },
     "package_price_first_installment": {
       "type": "number",
       "default": 0,
-      "description": "package_price_terms * 0.50 \u2014 the 50% upfront amount"
+      "description": "package_price_terms * 0.50 — the 50% upfront amount"
     },
     "payment_type": {
       "type": "string",
-      "enum": [
-        "full_pay",
-        "terms"
-      ],
+      "enum": ["full_pay", "terms"],
       "description": "Patient's chosen payment method"
     },
     "pay_now_email_sent_at": {
@@ -765,6 +747,8 @@
       "format": "date-time",
       "description": "When the Pay Now email was sent to the patient"
     },
+
+    // ── Partner Cascade Tracking ──────────────────────────────────────────────
     "doctor_cascade_sent": {
       "type": "boolean",
       "default": false
@@ -781,6 +765,8 @@
       "type": "boolean",
       "default": false
     },
+
+    // ── Payment Reminder Tracking ─────────────────────────────────────────────
     "payment_reminder_7d_sent": {
       "type": "boolean",
       "default": false
@@ -793,6 +779,8 @@
       "type": "boolean",
       "default": false
     },
+
+    // ── Receipt Storage ───────────────────────────────────────────────────────
     "receipt_vault_id": {
       "type": "string",
       "description": "PassportVault record ID where the payment receipt is stored"
@@ -801,10 +789,12 @@
       "type": "string",
       "description": "HTML content of the most recent payment receipt"
     },
+
+    // ── Travel Date ───────────────────────────────────────────────────────────
     "departure_date": {
       "type": "string",
       "format": "date",
-      "description": "Patient departure date (ISO date) \u2014 synced from Consultation.preferred_date"
+      "description": "Patient departure date (ISO date) — synced from Consultation.preferred_date"
     },
     "procedure_date": {
       "type": "string",
@@ -813,124 +803,72 @@
     },
     "booking_type": {
       "type": "string",
-      "enum": [
-        "medical_package",
-        "travel_only"
-      ],
+      "enum": ["medical_package", "travel_only"],
       "default": "medical_package",
       "description": "medical_package = full medical tourism; travel_only = flight+hotel+taxi only"
     },
-    "share_token": {
-      "type": "string",
-      "description": "Token for public recovery tracker page /track/:token"
-    },
-    "share_token_exp": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Share token expiry"
-    },
-    "travel_reminder_14d_sent": {
-      "type": "boolean",
-      "default": false
-    },
-    "travel_reminder_7d_sent": {
-      "type": "boolean",
-      "default": false
-    },
-    "travel_reminder_3d_sent": {
-      "type": "boolean",
-      "default": false
-    },
-    "travel_reminder_1d_sent": {
-      "type": "boolean",
-      "default": false
-    },
-    "travel_reminder_day_of_sent": {
-      "type": "boolean",
-      "default": false
-    },
-    "abandoned_1_sent": {
-      "type": "boolean",
-      "default": false,
-      "description": "2-hr warm recovery email+SMS sent"
-    },
-    "abandoned_2_sent": {
-      "type": "boolean",
-      "default": false,
-      "description": "24-hr firm reminder email+SMS sent"
-    },
-    "quotas_released_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "When 48-hr quote expiry was triggered"
-    },
-    "sla_breached_travel": {
-      "type": "boolean",
-      "default": false
-    },
-    "sla_breached_driver": {
-      "type": "boolean",
-      "default": false
-    },
-    "sla_breached_companion": {
-      "type": "boolean",
-      "default": false
-    },
-    "sla_breached_clinic": {
-      "type": "boolean",
-      "default": false
-    },
-    "backup_travel_id": {
-      "type": "string",
-      "description": "Backup travel agency dispatched after SLA breach"
-    },
-    "backup_driver_id": {
-      "type": "string",
-      "description": "Backup driver dispatched after SLA breach"
-    },
-    "stripe_customer_id": {
-      "type": "string",
-      "description": "Stripe Customer ID \u2014 enables 1-click balance payment"
-    },
-    "stripe_payment_method_id": {
-      "type": "string",
-      "description": "Saved Stripe payment method for 1-click"
-    },
-    "stripe_payment_method_last4": {
-      "type": "string",
-      "description": "Last 4 digits for display in Pay Now email"
-    },
+
+    // ── Pre-Travel Countdown Reminders ────────────────────────────────────────
+    // ── Recovery Tracker Share Token (Viral Hook) ─────────────────────────────
+    "share_token":     { "type": "string",  "description": "Token for public recovery tracker page /track/:token" },
+    "share_token_exp": { "type": "string",  "format": "date-time", "description": "Share token expiry" },
+
+    "travel_reminder_14d_sent": { "type": "boolean", "default": false },
+    "travel_reminder_7d_sent":  { "type": "boolean", "default": false },
+    "travel_reminder_3d_sent":  { "type": "boolean", "default": false },
+    "travel_reminder_1d_sent":  { "type": "boolean", "default": false },
+    "travel_reminder_day_of_sent": { "type": "boolean", "default": false },
+
+    // ── Abandoned Booking Recovery (Expedia model) ────────────────────────────
+    "abandoned_1_sent":   { "type": "boolean", "default": false, "description": "2-hr warm recovery email+SMS sent" },
+    "abandoned_2_sent":   { "type": "boolean", "default": false, "description": "24-hr firm reminder email+SMS sent" },
+    "quotas_released_at": { "type": "string",  "format": "date-time", "description": "When 48-hr quote expiry was triggered" },
+
+    // ── Partner SLA Breach Tracking (Uber model) ──────────────────────────────
+    "sla_breached_travel":    { "type": "boolean", "default": false },
+    "sla_breached_driver":    { "type": "boolean", "default": false },
+    "sla_breached_companion": { "type": "boolean", "default": false },
+    "sla_breached_clinic":    { "type": "boolean", "default": false },
+    "backup_travel_id":       { "type": "string", "description": "Backup travel agency dispatched after SLA breach" },
+    "backup_driver_id":       { "type": "string", "description": "Backup driver dispatched after SLA breach" },
+
+    // ── Stripe 1-Click Checkout (Stripe model) ────────────────────────────────
+    "stripe_customer_id":     { "type": "string", "description": "Stripe Customer ID — enables 1-click balance payment" },
+    "stripe_payment_method_id":{ "type": "string", "description": "Saved Stripe payment method for 1-click" },
+    "stripe_payment_method_last4": { "type": "string", "description": "Last 4 digits for display in Pay Now email" },
+
+    // ── Logistics & Location (Board Directive: Spatial Awareness) ─────────────
     "clinic_address": {
       "type": "string",
-      "description": "Full street address of the assigned clinic \u2014 entered by doctor on confirmation"
+      "description": "Full street address of the assigned clinic — entered by doctor on confirmation"
     },
     "clinic_coords": {
       "type": "object",
       "description": "GPS coordinates of clinic, set by doctor on confirmation",
       "properties": {
-        "lat": {
-          "type": "number"
-        },
-        "lng": {
-          "type": "number"
-        }
+        "lat": { "type": "number" },
+        "lng": { "type": "number" }
       }
+    },
+    "hotel_name": {
+      "type": "string",
+      "description": "Name of the booked hotel — entered by travel agency"
+    },
+    "hotel_address": {
+      "type": "string",
+      "description": "Full street address of the hotel — entered by travel agency"
     },
     "hotel_coords": {
       "type": "object",
-      "description": "GPS coordinates of hotel \u2014 entered by travel agency",
+      "description": "GPS coordinates of hotel — entered by travel agency",
       "properties": {
-        "lat": {
-          "type": "number"
-        },
-        "lng": {
-          "type": "number"
-        }
+        "lat": { "type": "number" },
+        "lng": { "type": "number" }
       }
     },
     "logistics_flight_number": {
       "type": "string",
-      "description": "Patient's confirmed inbound flight number \u2014 entered by travel agency, e.g. AA123"
+      "description": "Patient's confirmed inbound flight number — entered by travel agency, e.g. AA123"
     },
     "quote_request_id": {
       "type": "string",
@@ -938,29 +876,13 @@
     },
     "pre_op_checklist": {
       "type": "array",
-      "items": {
-        "type": "object"
-      },
+      "items": { "type": "object" },
       "description": "Deterministic pre-op preparation items (sendPreOpInstructions); read in-portal"
     },
-    "pre_op_sent_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "cancellation_reason": {
-      "type": "string"
-    },
-    "cancelled_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "cancelled_by": {
-      "type": "string",
-      "enum": [
-        "patient",
-        "admin"
-      ]
-    }
+    "pre_op_sent_at": { "type": "string", "format": "date-time" },
+    "cancellation_reason": { "type": "string" },
+    "cancelled_at": { "type": "string", "format": "date-time" },
+    "cancelled_by": { "type": "string", "enum": ["patient", "admin"] }
   },
   "required": [
     "client_name",
@@ -968,23 +890,6 @@
     "procedures"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
-    },
     "read": {
       "$or": [
         {
@@ -1009,6 +914,11 @@
           }
         }
       ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
     },
     "update": {
       "$or": [

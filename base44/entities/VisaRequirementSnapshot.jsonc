@@ -1,6 +1,6 @@
 {
   "name": "VisaRequirementSnapshot",
-  "description": "Cached current entry requirement for a nationality \u2192 destination pair, with the source and 'last confirmed' date shown to the user. Re-checked weekly and on selection so it is never served stale.",
+  "description": "Cached current entry requirement for a nationality → destination pair, with the source and 'last confirmed' date shown to the user. Re-checked weekly and on selection so it is never served stale.",
   "type": "object",
   "properties": {
     "nationality": {
@@ -35,7 +35,7 @@
     },
     "confidence": {
       "type": "number",
-      "description": "0-100; low confidence renders as 'unknown \u2014 coordinator will confirm'"
+      "description": "0-100; low confidence renders as 'unknown — coordinator will confirm'"
     },
     "last_confirmed_at": {
       "type": "string",
@@ -54,12 +54,16 @@
     "destination_country"
   ],
   "rls": {
+    "read": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
+    },
     "create": {
       "user_condition": {
         "role": "admin"
       }
     },
-    "read": true,
     "update": {
       "user_condition": {
         "role": "admin"

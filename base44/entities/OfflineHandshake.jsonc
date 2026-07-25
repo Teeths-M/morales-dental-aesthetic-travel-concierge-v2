@@ -148,11 +148,7 @@
     },
     "method": {
       "type": "string",
-      "enum": [
-        "tap",
-        "sms",
-        "system"
-      ],
+      "enum": ["tap", "sms", "system"],
       "description": "How this handshake was confirmed"
     },
     "confirmed_by": {
@@ -200,14 +196,22 @@
     "channel"
   ],
   "rls": {
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
-          "data.patient_email": "{{user.email}}"
+          "user_condition": {
+            "role": "admin"
+          }
         },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
         {
           "user_condition": {
             "role": "admin"
@@ -223,9 +227,6 @@
     "update": {
       "$or": [
         {
-          "data.patient_email": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -238,9 +239,18 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     }
   }
 }

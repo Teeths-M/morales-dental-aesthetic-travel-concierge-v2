@@ -83,8 +83,14 @@
     "companion_id"
   ],
   "rls": {
-    "create": {
+    "read": {
       "$or": [
+        {
+          "data.companion_user_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.id}}"
+        },
         {
           "user_condition": {
             "role": "admin"
@@ -97,14 +103,8 @@
         }
       ]
     },
-    "read": {
+    "create": {
       "$or": [
-        {
-          "data.companion_user_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.id}}"
-        },
         {
           "user_condition": {
             "role": "admin"
@@ -133,11 +133,6 @@
           }
         }
       ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
     }
   }
 }

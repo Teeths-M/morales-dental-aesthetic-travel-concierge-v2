@@ -86,13 +86,10 @@
     "destination_country"
   ],
   "rls": {
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
-          "data.patient_id": "{{user.id}}"
+          "data.patient_email": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -106,10 +103,15 @@
         }
       ]
     },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
+    },
     "update": {
       "$or": [
         {
-          "data.patient_id": "{{user.id}}"
+          "data.patient_email": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -124,9 +126,18 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     }
   }
 }

@@ -65,23 +65,6 @@
     "status"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.client_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
-    },
     "read": {
       "$or": [
         {
@@ -98,6 +81,11 @@
           }
         }
       ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
     },
     "update": {
       "$or": [

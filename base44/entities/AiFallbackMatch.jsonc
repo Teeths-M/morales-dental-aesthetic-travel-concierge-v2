@@ -62,18 +62,6 @@
     "matched_procedures"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.patient_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
     "read": {
       "$or": [
         {
@@ -83,18 +71,49 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
         }
       ]
     },
-    "update": {
+    "create": {
       "user_condition": {
-        "role": "admin"
+        "id": "{{user.id}}"
       }
     },
+    "update": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     }
   }
 }

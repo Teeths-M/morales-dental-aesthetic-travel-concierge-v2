@@ -40,37 +40,5 @@
   "required": [
     "doctor_id",
     "procedure_id"
-  ],
-  "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.doctor_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "read": true,
-    "update": {
-      "$or": [
-        {
-          "data.doctor_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  }
+  ]
 }

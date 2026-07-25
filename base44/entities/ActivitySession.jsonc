@@ -120,9 +120,6 @@
     "activity_name"
   ],
   "rls": {
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
@@ -139,6 +136,11 @@
           }
         }
       ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
     },
     "update": {
       "$or": [
@@ -158,9 +160,18 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     }
   }
 }

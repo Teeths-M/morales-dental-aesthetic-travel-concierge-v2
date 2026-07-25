@@ -2,12 +2,10 @@
   "name": "BehavioralProfile",
   "type": "object",
   "properties": {
-    "user_email": {
-      "type": "string"
-    },
-    "case_id": {
-      "type": "string"
-    },
+    "user_email": { "type": "string" },
+    "case_id":    { "type": "string" },
+
+    // ── Learning phase ─────────────────────────────────────────────────────
     "learning_phase": {
       "type": "boolean",
       "default": true,
@@ -15,13 +13,19 @@
     },
     "learning_started_at": {
       "type": "string",
-      "description": "ISO timestamp \u2014 when observation began"
+      "description": "ISO timestamp — when observation began"
     },
+
+    // ── Behavioral fingerprint ─────────────────────────────────────────────
+    // Built during the learning phase. Stored as a JSON object so the
+    // schema stays flexible as we add new signals over time.
     "fingerprint": {
       "type": "object",
       "description": "Unique behavioral baseline for this user",
       "default": {}
     },
+
+    // ── Live signals ───────────────────────────────────────────────────────
     "last_signal_at": {
       "type": "string",
       "description": "ISO timestamp of the most recent app activity signal"
@@ -31,44 +35,30 @@
       "description": "Rolling 24h buffer: [{ts, type, hour}] for fingerprint updates",
       "default": []
     },
+
+    // ── Anomaly state ──────────────────────────────────────────────────────
     "anomaly_score": {
       "type": "number",
       "default": 0,
-      "description": "0-100 \u2014 current deviation from behavioral fingerprint"
+      "description": "0-100 — current deviation from behavioral fingerprint"
     },
-    "anomaly_reason": {
-      "type": "string"
-    },
-    "context_note": {
+    "anomaly_reason": { "type": "string" },
+    "context_note":  {
       "type": "string",
       "description": "Human-readable explanation of last analysis result"
     },
+
+    // ── Escalation tracking ────────────────────────────────────────────────
     "status": {
       "type": "string",
-      "enum": [
-        "learning",
-        "monitoring",
-        "soft_ping",
-        "check_in_requested",
-        "escalated"
-      ],
+      "enum": ["learning", "monitoring", "soft_ping", "check_in_requested", "escalated"],
       "default": "learning"
     },
-    "last_nudge_at": {
-      "type": "string"
-    },
-    "nudge_count": {
-      "type": "number",
-      "default": 0
-    }
+    "last_nudge_at": { "type": "string" },
+    "nudge_count":   { "type": "number", "default": 0 }
   },
-  "required": [
-    "user_email"
-  ],
+  "required": ["user_email"],
   "rls": {
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
@@ -85,6 +75,11 @@
           }
         }
       ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
     },
     "update": {
       "$or": [
@@ -104,9 +99,18 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     }
   }
 }

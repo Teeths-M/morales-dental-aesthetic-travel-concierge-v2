@@ -48,9 +48,6 @@
     "sent_at"
   ],
   "rls": {
-    "create": {
-      "data.from_user_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
@@ -63,21 +60,9 @@
         }
       ]
     },
-    "update": {
-      "$or": [
-        {
-          "data.from_user_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
+    "create": {
       "user_condition": {
-        "role": "admin"
+        "id": "{{user.id}}"
       }
     }
   }

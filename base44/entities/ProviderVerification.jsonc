@@ -121,18 +121,6 @@
     "provider_email"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.provider_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
     "read": {
       "$or": [
         {
@@ -150,6 +138,11 @@
         }
       ]
     },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
     "update": {
       "$or": [
         {
@@ -163,11 +156,6 @@
           }
         }
       ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "platform_admin"
-      }
     }
   }
 }

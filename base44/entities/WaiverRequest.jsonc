@@ -91,9 +91,6 @@
     "waiver_type"
   ],
   "rls": {
-    "create": {
-      "data.patient_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
@@ -110,6 +107,11 @@
           }
         }
       ]
+    },
+    "create": {
+      "user_condition": {
+        "id": "{{user.id}}"
+      }
     },
     "update": {
       "$or": [
