@@ -16,7 +16,7 @@
     "doctor_email": {
       "type": "string",
       "format": "email",
-      "description": "Lower-cased on write — used to dedupe against existing Doctor records and other nominations"
+      "description": "Lower-cased on write \u2014 used to dedupe against existing Doctor records and other nominations"
     },
     "clinic_name": {
       "type": "string"
@@ -38,7 +38,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Private file URLs from Core.UploadPrivateFile — admin-visible only, never public in this phase"
+      "description": "Private file URLs from Core.UploadPrivateFile \u2014 admin-visible only, never public in this phase"
     },
     "photo_review_consent": {
       "type": "boolean",
@@ -81,12 +81,12 @@
     },
     "outreach_skipped_reason": {
       "type": "string",
-      "description": "e.g. 'opted_out' — set when approved but no email was sent"
+      "description": "e.g. 'opted_out' \u2014 set when approved but no email was sent"
     },
     "outreach_opt_out": {
       "type": "boolean",
       "default": false,
-      "description": "Set by optOutDoctorOutreach — suppresses any future outreach send to this doctor_email"
+      "description": "Set by optOutDoctorOutreach \u2014 suppresses any future outreach send to this doctor_email"
     },
     "outreach_opt_out_at": {
       "type": "string",
@@ -102,6 +102,9 @@
     "submitted_at"
   ],
   "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
     "read": {
       "$or": [
         {
@@ -115,11 +118,6 @@
           }
         }
       ]
-    },
-    "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
     },
     "update": {
       "$or": [

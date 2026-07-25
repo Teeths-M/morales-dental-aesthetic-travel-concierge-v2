@@ -276,12 +276,12 @@
     },
     "handshake_status": {
       "type": "object",
-      "description": "Completed flags per step — keys '1' through '9', values true/false",
+      "description": "Completed flags per step \u2014 keys '1' through '9', values true/false",
       "default": {}
     },
     "handshake_timestamps": {
       "type": "object",
-      "description": "ISO timestamps per completed step — keys '1' through '9'",
+      "description": "ISO timestamps per completed step \u2014 keys '1' through '9'",
       "default": {}
     },
     "trip_phase": {
@@ -311,6 +311,9 @@
     "departure_date"
   ],
   "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
     "read": {
       "$or": [
         {
@@ -322,11 +325,6 @@
           }
         }
       ]
-    },
-    "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
     },
     "update": {
       "$or": [

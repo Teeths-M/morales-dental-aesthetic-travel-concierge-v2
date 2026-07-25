@@ -139,27 +139,25 @@
     "patient_email"
   ],
   "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "read": {
       "$or": [
         {
           "data.patient_email": "{{user.email}}"
         },
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.companion_id": "{{user.id}}"
         },
         {
           "user_condition": {
-            "role": "platform_admin"
+            "role": "admin"
           }
         }
       ]
-    },
-    "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
     },
     "update": {
       "$or": [
@@ -167,35 +165,19 @@
           "data.patient_email": "{{user.email}}"
         },
         {
-          "user_condition": {
-            "role": "companion"
-          }
+          "data.companion_id": "{{user.id}}"
         },
         {
           "user_condition": {
             "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
           }
         }
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

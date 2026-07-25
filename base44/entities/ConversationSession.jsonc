@@ -19,7 +19,7 @@
         "taxi_service"
       ],
       "default": "client",
-      "description": "Which persona's conversational flow this session belongs to — Phase 1 only ever writes 'client'"
+      "description": "Which persona's conversational flow this session belongs to \u2014 Phase 1 only ever writes 'client'"
     },
     "flow_type": {
       "type": "string",
@@ -28,7 +28,7 @@
         "travel_intake"
       ],
       "default": "medical_intake",
-      "description": "Which conversation this is — a user can have one in-progress session per flow_type at once. Distinguishes the medical-patient intake from the travel-only booking intake, since both use role 'client'."
+      "description": "Which conversation this is \u2014 a user can have one in-progress session per flow_type at once. Distinguishes the medical-patient intake from the travel-only booking intake, since both use role 'client'."
     },
     "status": {
       "type": "string",
@@ -50,43 +50,88 @@
     },
     "turn_history": {
       "type": "array",
-      "description": "Capped log of recent turns — the 'never repeat' guarantee and what a human coordinator sees on handoff",
+      "description": "Capped log of recent turns \u2014 the 'never repeat' guarantee and what a human coordinator sees on handoff",
       "items": {
         "type": "object",
         "properties": {
-          "turn_index": { "type": "number" },
-          "step_id": { "type": "string" },
-          "question_shown": { "type": "string" },
-          "user_raw_text": { "type": "string" },
-          "extracted": { "type": "object" },
-          "confidence": { "type": "number" },
-          "narration_shown": { "type": "string" },
-          "timestamp": { "type": "string", "format": "date-time" }
+          "turn_index": {
+            "type": "number"
+          },
+          "step_id": {
+            "type": "string"
+          },
+          "question_shown": {
+            "type": "string"
+          },
+          "user_raw_text": {
+            "type": "string"
+          },
+          "extracted": {
+            "type": "object"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "narration_shown": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       }
     },
     "selected_procedures": {
       "type": "array",
       "description": "Denormalized cache of the cart's procedure names, for server/admin visibility",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "safety_evaluation": {
       "type": "object",
-      "description": "Last computed safety snapshot — audit trail only, never the gating source of truth",
+      "description": "Last computed safety snapshot \u2014 audit trail only, never the gating source of truth",
       "properties": {
-        "level": { "type": "string", "enum": ["GREEN", "YELLOW", "RED"] },
-        "reasons": { "type": "array", "items": { "type": "string" } },
-        "violations": { "type": "array", "items": { "type": "object" } },
-        "evaluated_at": { "type": "string", "format": "date-time" }
+        "level": {
+          "type": "string",
+          "enum": [
+            "GREEN",
+            "YELLOW",
+            "RED"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "evaluated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
       }
     },
     "background_results": {
       "type": "object",
       "description": "Proactive search results fired as soon as prerequisite fields are known",
       "properties": {
-        "doctors": { "type": "object" },
-        "cost_estimate": { "type": "object" },
-        "destination_partners": { "type": "object" }
+        "doctors": {
+          "type": "object"
+        },
+        "cost_estimate": {
+          "type": "object"
+        },
+        "destination_partners": {
+          "type": "object"
+        }
       }
     },
     "checklist_state": {
@@ -96,7 +141,7 @@
     "low_confidence_streak": {
       "type": "number",
       "default": 0,
-      "description": "Consecutive low-confidence turns — deterministic escalation threshold input"
+      "description": "Consecutive low-confidence turns \u2014 deterministic escalation threshold input"
     },
     "handoff_requested": {
       "type": "boolean",
@@ -139,22 +184,40 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
+      "data.user_email": "{{user.email}}"
     },
     "read": {
       "$or": [
-        { "data.user_email": "{{user.email}}" },
-        { "user_condition": { "role": "admin" } },
-        { "user_condition": { "role": "platform_admin" } }
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
       ]
     },
     "update": {
       "$or": [
-        { "data.user_email": "{{user.email}}" },
-        { "user_condition": { "role": "admin" } },
-        { "user_condition": { "role": "platform_admin" } }
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
       ]
     },
     "delete": {

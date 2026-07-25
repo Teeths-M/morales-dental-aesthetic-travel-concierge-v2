@@ -61,30 +61,17 @@
     "base_price"
   ],
   "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
     "read": {
       "$or": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.partner_id": "{{user.id}}"
         },
         {
           "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
-    },
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
             "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
           }
         }
       ]
@@ -92,30 +79,19 @@
     "update": {
       "$or": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.partner_id": "{{user.id}}"
         },
         {
           "user_condition": {
-            "role": "platform_admin"
+            "role": "admin"
           }
         }
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

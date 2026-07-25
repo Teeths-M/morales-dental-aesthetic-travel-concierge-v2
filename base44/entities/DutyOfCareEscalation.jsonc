@@ -1,13 +1,20 @@
 {
   "name": "DutyOfCareEscalation",
   "type": "object",
-  "description": "R2 — append-only, timestamped duty-of-care record. Created whenever BYOJ verification surfaces a concerning finding for a patient who has ALREADY booked elsewhere. A concern must NEVER pass silently: this record + a human-coordinator outreach are mandatory. Append-only — never delete; status updates only.",
+  "description": "R2 \u2014 append-only, timestamped duty-of-care record. Created whenever BYOJ verification surfaces a concerning finding for a patient who has ALREADY booked elsewhere. A concern must NEVER pass silently: this record + a human-coordinator outreach are mandatory. Append-only \u2014 never delete; status updates only.",
   "properties": {
-    "external_journey_id": { "type": "string" },
-    "case_id": { "type": "string" },
-    "patient_email": { "type": "string" },
-    "patient_name": { "type": "string" },
-
+    "external_journey_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string"
+    },
+    "patient_name": {
+      "type": "string"
+    },
     "finding_type": {
       "type": "string",
       "enum": [
@@ -21,83 +28,76 @@
         "other"
       ]
     },
-    "severity": { "type": "string", "enum": ["info", "warning", "critical"], "default": "warning" },
-    "detail": { "type": "string" },
-
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "critical"
+      ],
+      "default": "warning"
+    },
+    "detail": {
+      "type": "string"
+    },
     "coordinator_outreach_status": {
       "type": "string",
-      "enum": ["pending", "notified", "contacted", "resolved"],
+      "enum": [
+        "pending",
+        "notified",
+        "contacted",
+        "resolved"
+      ],
       "default": "pending"
     },
-    "status": { "type": "string", "enum": ["open", "acknowledged", "closed"], "default": "open" },
-
-    "source": { "type": "string", "default": "byoj_verification" },
-
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "acknowledged",
+        "closed"
+      ],
+      "default": "open"
+    },
+    "source": {
+      "type": "string",
+      "default": "byoj_verification"
+    },
     "external_reporting_considered": {
       "type": "boolean",
       "default": false,
       "description": "Placeholder for the OPEN POLICY DECISION on external reporting (medical board / authorities). Not acted on until Portia defines the threshold."
     },
-
-    "detected_at": { "type": "string", "format": "date-time" }
+    "detected_at": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
-  "required": ["patient_email", "finding_type", "detail"],
+  "required": [
+    "patient_email",
+    "finding_type",
+    "detail"
+  ],
   "rls": {
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
-    },
     "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

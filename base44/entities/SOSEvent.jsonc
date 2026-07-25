@@ -89,7 +89,7 @@
     "trigger_type"
   ],
   "rls": {
-    "read": {
+    "create": {
       "$or": [
         {
           "data.patient_email": "{{user.email}}"
@@ -106,10 +106,22 @@
         }
       ]
     },
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     },
     "update": {
       "$or": [

@@ -77,7 +77,7 @@
     "role"
   ],
   "rls": {
-    "read": {
+    "create": {
       "$or": [
         {
           "data.patient_email": "{{user.email}}"
@@ -86,49 +86,23 @@
           "user_condition": {
             "role": "admin"
           }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
         }
       ]
     },
-    "create": {
+    "read": {
       "user_condition": {
-        "id": "{{user.id}}"
+        "role": "admin"
       }
     },
     "update": {
-      "$or": [
-        {
-          "data.patient_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

@@ -72,15 +72,32 @@
     "country"
   ],
   "rls": {
-    "read": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
-    },
     "create": {
       "user_condition": {
         "role": "admin"
       }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.linked_doctor_ids": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "clinical_reviewer"
+          }
+        }
+      ]
     },
     "update": {
       "user_condition": {

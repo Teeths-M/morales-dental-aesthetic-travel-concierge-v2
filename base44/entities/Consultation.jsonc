@@ -50,7 +50,7 @@
     },
     "preferred_doctor_id": {
       "type": "string",
-      "description": "Set when the patient picked a specific doctor during intake instead of leaving it to the care team — optional, most consultations still leave this unset"
+      "description": "Set when the patient picked a specific doctor during intake instead of leaving it to the care team \u2014 optional, most consultations still leave this unset"
     },
     "preferred_doctor_name": {
       "type": "string",
@@ -154,7 +154,7 @@
     "guardian_required": {
       "type": "boolean",
       "default": false,
-      "description": "True when the patient is under 18 — no scheduling proceeds without guardian consent (M Principle)"
+      "description": "True when the patient is under 18 \u2014 no scheduling proceeds without guardian consent (M Principle)"
     },
     "guardian_name": {
       "type": "string",
@@ -224,17 +224,6 @@
     "cultural_notes": {
       "type": "string"
     },
-    // Every procedure the patient asked for, not just the first.
-    //
-    // `procedure_interest` above is a single-value enum, but the intake asks
-    // "You can choose more than one" and the safety engine scores the whole
-    // set — stacking two procedures is the exact thing the RED block exists to
-    // catch. Without this field the record handed to the reviewing doctor said
-    // the patient wanted one procedure when they had asked for three, which is
-    // both a clinical misrepresentation and the wrong basis for a quote.
-    //
-    // `procedure_interest` stays as the primary/first choice so every existing
-    // consumer (matching, pricing, routing) is unaffected.
     "selected_procedures": {
       "type": "array",
       "items": {
@@ -561,13 +550,15 @@
       ],
       "default": "not_required"
     },
-
-    // ── Silent Guardian fields (opt-in, Red Team revised) ──────────────────
     "traveling_companion_type": {
       "type": "string",
-      "enum": ["solo", "partner_family", "group"],
+      "enum": [
+        "solo",
+        "partner_family",
+        "group"
+      ],
       "default": "solo",
-      "description": "How the patient is traveling — drives Guardian Mode sensitivity"
+      "description": "How the patient is traveling \u2014 drives Guardian Mode sensitivity"
     },
     "traveling_solo": {
       "type": "boolean",
@@ -591,12 +582,9 @@
   ],
   "rls": {
     "create": {
-      "data.email": "{{user.email}}",
       "$or": [
         {
-          "user_condition": {
-            "id": "{{user.id}}"
-          }
+          "data.email": "{{user.email}}"
         },
         {
           "user_condition": {

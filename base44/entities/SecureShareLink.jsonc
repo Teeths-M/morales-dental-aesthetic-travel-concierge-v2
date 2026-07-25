@@ -85,27 +85,23 @@
     "expires_at"
   ],
   "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
     "read": {
       "$or": [
         {
           "data.owner_email": "{{user.email}}"
         },
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.recipient_email": "{{user.email}}"
         },
         {
           "user_condition": {
-            "role": "platform_admin"
+            "role": "admin"
           }
         }
       ]
-    },
-    "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
     },
     "update": {
       "$or": [
@@ -116,27 +112,13 @@
           "user_condition": {
             "role": "admin"
           }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
         }
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

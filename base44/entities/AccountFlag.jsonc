@@ -1,10 +1,4 @@
 {
-  // A record that an account tripped the Malicious Action Blocker.
-  //
-  // Append-only in spirit: escalate by raising `tier` and appending to
-  // `incidents`, never by deleting. The audit chain in AuditLog is the
-  // authoritative log; this entity is the enforcement state the middleware
-  // reads on every gated action.
   "name": "AccountFlag",
   "type": "object",
   "properties": {
@@ -27,20 +21,6 @@
       "default": "warned",
       "description": "warned = logged only. restricted = commercial features blocked. locked = all commercial features blocked pending admin review."
     },
-    // ── The line that must never move ────────────────────────────────────────
-    // Decision (Portia, 2026-07-18): a flag NEVER restricts a safety path.
-    // Check-ins, handshakes, SOS, covert SOS, emergency contacts and location
-    // sharing stay available at every tier, permanently and by design.
-    //
-    // The reason is concrete: handshakes are the 9-point safety spine, and
-    // checkStaleLiveLocations escalates on silence. Locking a flagged patient
-    // out of check-ins would manufacture the exact signal that means "this
-    // patient is in trouble" from someone who is fine, while leaving someone
-    // who IS in trouble unable to confirm anything. A person who tried to
-    // cheat us still gets rescued.
-    //
-    // This field exists so the guarantee is data, not a code comment, and so a
-    // regression is visible in the record itself.
     "safety_paths_open": {
       "type": "boolean",
       "default": true,
@@ -52,11 +32,22 @@
       "items": {
         "type": "object",
         "properties": {
-          "code": { "type": "string" },
-          "label": { "type": "string" },
-          "scope": { "type": "string" },
-          "sample": { "type": "string" },
-          "at": { "type": "string", "format": "date-time" }
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       }
     },
@@ -64,72 +55,49 @@
       "type": "number",
       "default": 0
     },
-    "first_flagged_at": { "type": "string", "format": "date-time" },
-    "last_flagged_at": { "type": "string", "format": "date-time" },
-    // The only route back. There is deliberately no self-service appeal: an
-    // appeal button is a loophole, and the system protects the user, not the
-    // abuser. A human must clear it.
-    "cleared_by": { "type": "string" },
-    "cleared_at": { "type": "string", "format": "date-time" },
-    "admin_notes": { "type": "string" }
-  },
-  "required": ["user_email", "tier"],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+    "first_flagged_at": {
+      "type": "string",
+      "format": "date-time"
     },
+    "last_flagged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cleared_by": {
+      "type": "string"
+    },
+    "cleared_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "admin_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_email",
+    "tier"
+  ],
+  "rls": {
     "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

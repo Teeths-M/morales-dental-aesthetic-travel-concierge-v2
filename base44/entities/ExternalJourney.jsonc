@@ -1,50 +1,131 @@
 {
   "name": "ExternalJourney",
   "type": "object",
-  "description": "Bring Your Own Journey — a procedure the patient booked OUTSIDE Morales, enrolled into the protection layer. Morales did not select or vet the provider; see the disclosure fields.",
+  "description": "Bring Your Own Journey \u2014 a procedure the patient booked OUTSIDE Morales, enrolled into the protection layer. Morales did not select or vet the provider; see the disclosure fields.",
   "properties": {
-    "patient_email": { "type": "string" },
-    "patient_name": { "type": "string" },
-
-    "doctor_name": { "type": "string" },
-    "doctor_license": { "type": "string", "description": "Optional licence number for a registry check" },
-    "clinic_name": { "type": "string" },
-    "booking_url": { "type": "string", "description": "Link the patient booked through — validated http(s) only; identifies the exact provider for the intelligence check" },
-    "procedures": { "type": "array", "items": { "type": "string" }, "description": "Canonical procedure names for safety scoring" },
-    "destination_country": { "type": "string" },
-    "destination_city": { "type": "string" },
-    "surgery_date": { "type": "string", "format": "date" },
-    "travel_departure_date": { "type": "string", "format": "date" },
-    "travel_return_date": { "type": "string", "format": "date" },
-
+    "patient_email": {
+      "type": "string"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "doctor_name": {
+      "type": "string"
+    },
+    "doctor_license": {
+      "type": "string",
+      "description": "Optional licence number for a registry check"
+    },
+    "clinic_name": {
+      "type": "string"
+    },
+    "booking_url": {
+      "type": "string",
+      "description": "Link the patient booked through \u2014 validated http(s) only; identifies the exact provider for the intelligence check"
+    },
+    "procedures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Canonical procedure names for safety scoring"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "destination_city": {
+      "type": "string"
+    },
+    "surgery_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "travel_departure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "travel_return_date": {
+      "type": "string",
+      "format": "date"
+    },
     "verification_status": {
       "type": "string",
-      "enum": ["draft", "verified", "concerns", "incomplete"],
+      "enum": [
+        "draft",
+        "verified",
+        "concerns",
+        "incomplete"
+      ],
       "default": "draft",
       "description": "incomplete = live verification could not complete (R5: never shown as verified)"
     },
-    "verification_completeness": { "type": "number", "description": "0-100, how many checks actually completed" },
-    "verification_result": { "type": "object", "description": "Snapshot of per-check results at verification time" },
-    "verified_at": { "type": "string", "format": "date-time" },
-    "escalation_id": { "type": "string", "description": "DutyOfCareEscalation id when a concern was raised" },
-
-    "disclosure_accepted": { "type": "boolean", "default": false },
-    "disclosure_accepted_at": { "type": "string", "format": "date-time" },
-    "disclosure_version": { "type": "string" },
-
-    "plan": { "type": "string", "enum": ["single_journey", "journey_recovery", "always_covered"] },
+    "verification_completeness": {
+      "type": "number",
+      "description": "0-100, how many checks actually completed"
+    },
+    "verification_result": {
+      "type": "object",
+      "description": "Snapshot of per-check results at verification time"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "escalation_id": {
+      "type": "string",
+      "description": "DutyOfCareEscalation id when a concern was raised"
+    },
+    "disclosure_accepted": {
+      "type": "boolean",
+      "default": false
+    },
+    "disclosure_accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "disclosure_version": {
+      "type": "string"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "single_journey",
+        "journey_recovery",
+        "always_covered"
+      ]
+    },
     "payment_status": {
       "type": "string",
-      "enum": ["none", "one_time_pending", "one_time_paid"],
+      "enum": [
+        "none",
+        "one_time_pending",
+        "one_time_paid"
+      ],
       "default": "none"
     },
-
-    "case_id": { "type": "string", "description": "The external-origin CaseRecord that runs the protection pipelines" },
-    "origin": { "type": "string", "default": "byoj" },
-    "created_at": { "type": "string", "format": "date-time" }
+    "case_id": {
+      "type": "string",
+      "description": "The external-origin CaseRecord that runs the protection pipelines"
+    },
+    "origin": {
+      "type": "string",
+      "default": "byoj"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
-  "required": ["patient_email", "doctor_name", "clinic_name", "destination_country"],
+  "required": [
+    "patient_email",
+    "doctor_name",
+    "clinic_name",
+    "destination_country"
+  ],
   "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
     "read": {
       "$or": [
         {
@@ -61,11 +142,6 @@
           }
         }
       ]
-    },
-    "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
     },
     "update": {
       "$or": [
@@ -85,18 +161,9 @@
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

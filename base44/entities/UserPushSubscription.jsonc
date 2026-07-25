@@ -25,6 +25,18 @@
     "subscription"
   ],
   "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "read": {
       "$or": [
         {
@@ -34,18 +46,8 @@
           "user_condition": {
             "role": "admin"
           }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
         }
       ]
-    },
-    "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
     },
     "update": {
       "$or": [
@@ -56,24 +58,17 @@
           "user_condition": {
             "role": "admin"
           }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
         }
       ]
     },
     "delete": {
       "$or": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.user_id": "{{user.id}}"
         },
         {
           "user_condition": {
-            "role": "platform_admin"
+            "role": "admin"
           }
         }
       ]
