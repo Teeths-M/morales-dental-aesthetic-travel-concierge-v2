@@ -163,4 +163,6 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[sendSmsNotification]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-}, { name: 'sendSmsNotification', requireAuth: false }));
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'sendSmsNotification', requireAuth: false, rateLimit: false }));

@@ -206,4 +206,6 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[generateStripePaymentLink]', error.message);
     return Response.json({ error: 'Payment link generation failed.' }, { status: 500 });
   }
-}, { name: 'generateStripePaymentLink', requireAuth: false }));
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'generateStripePaymentLink', requireAuth: false, rateLimit: false }));

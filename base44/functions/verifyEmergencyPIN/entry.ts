@@ -348,4 +348,6 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[verifyEmergencyPIN]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-}, { name: 'verifyEmergencyPIN', requireAuth: false }));
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'verifyEmergencyPIN', requireAuth: false, rateLimit: false }));

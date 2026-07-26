@@ -778,4 +778,6 @@ Deno.serve(createHandler(async ({ req }) => {
   } catch (err) {
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-}, { name: 'runSilentSafetyEscalation', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'runSilentSafetyEscalation', requireAuth: false, rateLimit: false }));

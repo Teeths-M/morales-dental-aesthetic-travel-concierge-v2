@@ -89,4 +89,6 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
   }
 
   return ok({ received: true });
-}, { name: 'requestAccountDeletion', requireAuth: false }));
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'requestAccountDeletion', requireAuth: false, rateLimit: false }));

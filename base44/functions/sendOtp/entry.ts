@@ -150,4 +150,6 @@ export default createHandler(async ({ base44, body }) => {
     return err('We could not send a code by SMS right now. Please use email verification instead, or contact support.', 503);
   }
   return ok({ sent: true, channel: 'phone', mock: true, demo_code: code });
-}, { name: 'sendOtp', requireAuth: false });
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'sendOtp', requireAuth: false, rateLimit: false });

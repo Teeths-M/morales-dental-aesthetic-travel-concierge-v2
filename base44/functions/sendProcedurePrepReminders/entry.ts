@@ -102,4 +102,6 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
   }
 
   return ok({ success: true, reminders_sent: sent.length, breakdown: sent });
-}, { name: 'sendProcedurePrepReminders', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'sendProcedurePrepReminders', requireAuth: false, rateLimit: false }));

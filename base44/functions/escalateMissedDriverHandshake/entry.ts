@@ -196,4 +196,6 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[escalateMissedDriverHandshake]', err);
     return Response.json({ error: 'Internal error' }, { status: 500 });
   }
-}, { name: 'escalateMissedDriverHandshake', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'escalateMissedDriverHandshake', requireAuth: false, rateLimit: false }));

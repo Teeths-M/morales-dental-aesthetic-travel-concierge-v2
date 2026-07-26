@@ -110,7 +110,9 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const result = await analyzeCase(base44, caseRecord);
   return ok(result);
-}, { name: 'runMedGuardAnalysis', requireAuth: false }));
+// Internal service-to-service call (internalOrAdminAuthorized), or an admin
+// session — not public traffic in the same sense as a form submission.
+}, { name: 'runMedGuardAnalysis', requireAuth: false, rateLimit: false }));
 
 async function analyzeCase(base44: any, caseRecord: any) {
   const now           = Date.now();

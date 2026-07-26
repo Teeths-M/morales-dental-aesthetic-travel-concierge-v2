@@ -57,4 +57,6 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
 
   console.log(`[recheckVisaRequirements] due=${due.length} refreshed=${refreshed} changed=${changed}`);
   return ok({ success: true, checked: due.length, refreshed, changed });
-}, { name: 'recheckVisaRequirements', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'recheckVisaRequirements', requireAuth: false, rateLimit: false }));

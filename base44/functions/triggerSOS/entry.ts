@@ -348,4 +348,6 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[triggerSOS]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-}, { name: 'triggerSOS', requireAuth: false }));
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'triggerSOS', requireAuth: false, rateLimit: false }));

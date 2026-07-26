@@ -292,4 +292,6 @@ Deno.serve(createHandler(async ({ req }) => {
   } catch (_) {
     return Response.json({ status: 'error', error: 'Unable to load guardian data. Please try again.' });
   }
-}, { name: 'getGuardianViewData', requireAuth: false }));
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'getGuardianViewData', requireAuth: false, rateLimit: false }));

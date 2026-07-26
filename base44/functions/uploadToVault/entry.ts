@@ -167,4 +167,6 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[uploadToVault]', error);
     return Response.json({ error: 'Upload failed. Please try again.' }, { status: 500 });
   }
-}, { name: 'uploadToVault', requireAuth: false }));
+// Already rate-limited inline above via RateLimitBucket — rateLimit:false here
+// avoids silently double-limiting through two independent mechanisms.
+}, { name: 'uploadToVault', requireAuth: false, rateLimit: false }));

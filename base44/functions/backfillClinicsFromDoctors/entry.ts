@@ -45,4 +45,6 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
   }
 
   return ok({ success: true, scanned_doctors: doctors.length, created });
-}, { name: 'backfillClinicsFromDoctors', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'backfillClinicsFromDoctors', requireAuth: false, rateLimit: false }));

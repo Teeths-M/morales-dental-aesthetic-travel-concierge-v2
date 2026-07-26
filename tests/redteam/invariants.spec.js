@@ -435,6 +435,54 @@ test('AUTH: no edge function is reachable without SOME guard', () => {
   }
 });
 
+test('RATE LIMIT: the shared helper returns a real 429 Response, keyed by IP and user', () => {
+  const src = read('base44/functions/_shared/rateLimit.ts');
+  expect(src, 'must export checkRateLimit').toContain('export async function checkRateLimit');
+  expect(src, 'must export enforceRateLimit').toContain('export async function enforceRateLimit');
+  expect(src, 'denial must be a real 429').toMatch(/status:\s*429/);
+  expect(src, 'must key by IP').toContain('ip:');
+  expect(src, 'must also key by user when available').toContain('user:');
+});
+
+test('RATE LIMIT: createHandler applies a sensible default to public functions unless explicitly opted out', () => {
+  const src = read('base44/functions/_shared/createHandler.ts');
+  expect(src, 'must import the shared rate limiter').toContain("from './rateLimit.ts'");
+  expect(src, 'must define a default public rate limit').toContain('DEFAULT_PUBLIC_RATE_LIMIT');
+  // The default must only kick in for public (requireAuth:false) functions,
+  // and only when the function hasn't set its own policy.
+  expect(src).toMatch(/requireAuth === false\s*\?\s*DEFAULT_PUBLIC_RATE_LIMIT\s*:\s*null/);
+  // false must be distinguished from "unset" — opts.rateLimit === false must
+  // skip enforcement entirely (an object policy of {max:0,...} is falsy-adjacent
+  // but not actually what `=== false` means, so this must be a strict check).
+  expect(src).toContain('opts.rateLimit === false');
+});
+
+test('RATE LIMIT: every function exempted from the default carries rateLimit:false explicitly', () => {
+  // Mirrors the AUTH test's EXEMPT-set pattern above: a pinned list so a
+  // future edit can't silently drop the opt-out (which would then get the
+  // real default applied — safe — or silently rely on unstated behavior —
+  // not safe to assume without checking).
+  const EXEMPT_RATE_LIMIT = [
+    // Already self-limited inline via RateLimitBucket — avoid double-limiting.
+    'confirmPINReset', 'generateStripePaymentLink', 'getGuardianViewData', 'requestAccountDeletion',
+    'requestPINReset', 'sendOtp', 'sendSmsNotification', 'submitDoctorCorrection', 'triggerSOS',
+    'uploadToVault', 'verifyEmergencyPIN',
+    // Cron-only — cronAuthorized/CRON_SECRET is the real gate, verified as each
+    // function's OWN check (not just a value forwarded to another call).
+    'backfillClinicsFromDoctors', 'detectRegulatoryChanges', 'escalateMissedDriverHandshake',
+    'reVerifyDoctorCredentials', 'recheckVisaRequirements', 'remindPendingQuotes',
+    'runSilentSafetyEscalation', 'sendProcedurePrepReminders', 'verifyClinicStatus',
+    // Internal service-to-service (internalOrAdminAuthorized).
+    'runMedGuardAnalysis', 'sendPushNotification',
+    // Signature-verified webhook (COMPLY_ADVANTAGE_WEBHOOK_SECRET).
+    'handleSanctionsWebhook',
+  ];
+  for (const fn of EXEMPT_RATE_LIMIT) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must explicitly opt out of the default rate limit`).toMatch(/rateLimit:\s*false/);
+  }
+});
+
 test('GOLDEN M: the certificate number is stable, not random per render', () => {
   const src = read('src/components/journey/GoldenMCertificate.jsx');
   const code = src.split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n');

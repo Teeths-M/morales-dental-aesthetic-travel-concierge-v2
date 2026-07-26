@@ -59,4 +59,6 @@ Deno.serve(createHandler(async ({ req }) => {
   } catch (error) {
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-}, { name: 'sendPushNotification', requireAuth: false }));
+// Internal service-to-service call only (internalOrAdminAuthorized) — not
+// public traffic in the same sense as a form submission.
+}, { name: 'sendPushNotification', requireAuth: false, rateLimit: false }));

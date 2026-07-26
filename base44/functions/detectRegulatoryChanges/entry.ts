@@ -98,4 +98,6 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
 
   console.log(`[detectRegulatoryChanges] checked=${checked} changed=${changed} baselined=${baselined} unreachable=${unreachable}`);
   return ok({ success: true, checked, changed, baselined, unreachable });
-}, { name: 'detectRegulatoryChanges', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'detectRegulatoryChanges', requireAuth: false, rateLimit: false }));

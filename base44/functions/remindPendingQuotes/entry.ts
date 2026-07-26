@@ -112,4 +112,6 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
   await Promise.allSettled(tasks);
   console.log(`[remindPendingQuotes] sent=${sent} skipped=${skipped} scanned=${(pending as any[]).length}`);
   return ok({ success: true, reminders_sent: sent, skipped });
-}, { name: 'remindPendingQuotes', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'remindPendingQuotes', requireAuth: false, rateLimit: false }));

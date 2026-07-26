@@ -15,6 +15,12 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { reportIncident, generateIncidentCode } from './incidentReporting.ts';
+import { enforceRateLimit } from './rateLimit.ts';
+
+// Sensible default for any public (requireAuth:false) function that doesn't
+// specify its own policy: generous enough not to break legitimate use of a
+// read-only/token-gated endpoint, strict enough to stop scripted abuse.
+const DEFAULT_PUBLIC_RATE_LIMIT = { max: 60, windowSeconds: 60 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -51,6 +57,18 @@ export interface HandlerOptions {
   allowedRoles?: string[];
   /** Function name used in structured logs. */
   name?: string;
+  /**
+   * Rate-limit policy. Omit to get DEFAULT_PUBLIC_RATE_LIMIT automatically
+   * whenever requireAuth is false (no action needed for most public
+   * functions). Pass `false` to explicitly opt out — reserve this for cron
+   * jobs (cronAuthorized/CRON_SECRET is the real gate), internal
+   * service-to-service calls (internalOrAdminAuthorized), signature-verified
+   * webhooks (a low IP ceiling would throttle legitimate provider bursts), or
+   * a function that already rate-limits itself inline via RateLimitBucket
+   * (avoids silently double-limiting through two independent mechanisms).
+   * Pass an explicit `{ max, windowSeconds }` for a custom policy.
+   */
+  rateLimit?: { max: number; windowSeconds: number } | false;
 }
 
 type HandlerFn = (ctx: HandlerContext) => Promise<Response>;
@@ -81,6 +99,28 @@ export function createHandler(fn: HandlerFn, opts: HandlerOptions = {}) {
         }
         if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
           return respond({ error: 'Forbidden' }, 403, requestId);
+        }
+      }
+
+      // ── Rate limit ─────────────────────────────────────────────────────────
+      // Explicit opts.rateLimit wins; otherwise a public function gets the
+      // sensible default automatically, and an authenticated one gets none
+      // (a separate future concern — this covers public endpoints).
+      const effectivePolicy = opts.rateLimit === false
+        ? null
+        : opts.rateLimit ?? (requireAuth === false ? DEFAULT_PUBLIC_RATE_LIMIT : null);
+
+      if (effectivePolicy) {
+        const limited = await enforceRateLimit(base44, req, {
+          functionName: name,
+          max: effectivePolicy.max,
+          windowSeconds: effectivePolicy.windowSeconds,
+          userId: user?.id ?? null,
+        });
+        if (limited) {
+          const headers = new Headers(limited.headers);
+          headers.set('X-Request-Id', requestId);
+          return new Response(limited.body, { status: limited.status, headers });
         }
       }
 

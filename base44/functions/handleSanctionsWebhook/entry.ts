@@ -146,4 +146,7 @@ Deno.serve(createHandler(async ({ base44, req }) => {
   } catch (_) { /* email is non-fatal */ }
 
   return ok({ blocked: true, partner_id: partnerId, partner_type: partnerType });
-}, { name: 'handleSanctionsWebhook', requireAuth: false, allowedRoles: [] }));
+// Signature-verified webhook (COMPLY_ADVANTAGE_WEBHOOK_SECRET / HMAC) — a low
+// IP ceiling would risk throttling legitimate provider bursts; the signature
+// itself is the real gate here, not request volume.
+}, { name: 'handleSanctionsWebhook', requireAuth: false, allowedRoles: [], rateLimit: false }));

@@ -92,4 +92,6 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
 
   console.log(`[verifyClinicStatus] due=${due.length} proposed=${proposed} closed=${closed} unresolved=${unresolved}`);
   return ok({ success: true, checked: due.length, proposed_for_confirmation: proposed, closed, unresolved });
-}, { name: 'verifyClinicStatus', requireAuth: false }));
+// Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
+// scheduler itself would risk throttling legitimate runs.
+}, { name: 'verifyClinicStatus', requireAuth: false, rateLimit: false }));
