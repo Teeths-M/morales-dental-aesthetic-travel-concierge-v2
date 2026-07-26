@@ -26,7 +26,7 @@ function describeInvokeError(err) {
   const status = err?.response?.status ?? err?.status ?? null;
   const body = err?.response?.data;
   if (status === 404) {
-    return 'Not found (404) — this function likely isn\'t published in Base44 yet. Publish CaseRecord/OutcomeRecord/AuditLog and the memory-bank functions, then retry.';
+    return 'Not found (404) — Base44 does not recognize this route at all, which is different from "not yet Published" (see DEPLOY_CHECKLIST.md: an unpublished-but-synced function here returns HTTP 200 with an empty body, not a 404). This usually means Base44 has not synced this function from GitHub yet. Check whether it appears BY NAME in Base44 Builder\'s function list — if it is missing there, clicking Publish will not help until the sync catches up.';
   }
   if (body?.error) {
     return `${body.error}${body.incident_code ? ` (incident ${body.incident_code})` : ''}${status ? ` — HTTP ${status}` : ''}`;
