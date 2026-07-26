@@ -1,5 +1,5 @@
 ﻿// @ts-nocheck — pre-existing type gaps in utility
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
 
 const CartContext = createContext();
@@ -70,7 +70,10 @@ export const CartProvider = ({ children }) => {
   const [pivotViolations, setPivotViolations] = useState([]);
 
   const openPivot = (vs) => setPivotViolations(vs && vs.length > 0 ? vs : safetyStatus.violations);
-  const closePivot = () => setPivotViolations([]);
+  // useCallback: this is in useAndroidBackButton's effect deps — an unstable
+  // reference here tears down and re-adds the native back-button listener on
+  // nearly every cart-state change.
+  const closePivot = useCallback(() => setPivotViolations([]), []);
 
   // Accept the recommendation: remove the conflicting procedure(s) from the cart.
   // Each violation's pairLabel encodes "ProcA + ProcB"; `recommended` names which

@@ -33,21 +33,35 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
     onMutate: async ({ body, message_type }) => {
       await qc.cancelQueries({ queryKey: messagesKey });
       const previous = qc.getQueryData(messagesKey);
-      const optimisticMessage = {
-        id: `optimistic-${Date.now()}`,
-        body, message_type,
-        from_party: viewer,
-        created_at: new Date().toISOString(),
-        _pending: true,
-      };
-      qc.setQueryData(messagesKey, (old) => [...(Array.isArray(old) ? old : []), optimisticMessage]);
+      const optimisticId = `optimistic-${Date.now()}`;
+      // Skip the optimistic append when the thread hasn't loaded yet —
+      // otherwise the cache becomes this one message, isLoading flips false
+      // early, and real prior history is hidden until the next fetch.
+      if (previous !== undefined) {
+        const optimisticMessage = {
+          id: optimisticId,
+          body, message_type,
+          from_party: viewer,
+          created_at: new Date().toISOString(),
+          _pending: true,
+        };
+        qc.setQueryData(messagesKey, (old) => [...(Array.isArray(old) ? old : []), optimisticMessage]);
+      }
       setText('');
-      return { previous };
+      return { hadPrevious: previous !== undefined, optimisticId };
     },
     // A failed send must not leave a bubble that looks delivered — roll back
-    // and hand the draft back so the sender can retry.
+    // and hand the draft back so the sender can retry. Removes only the
+    // failed optimistic entry from whatever the cache holds now, rather than
+    // reverting to the pre-mutation snapshot — a full revert could wipe out
+    // a real message (e.g. a doctor's reply) that arrived via the 20s
+    // background refetch while this send was in flight.
     onError: (_err, variables, context) => {
-      if (context?.previous) qc.setQueryData(messagesKey, context.previous);
+      if (context?.hadPrevious) {
+        qc.setQueryData(messagesKey, (old) =>
+          Array.isArray(old) ? old.filter((m) => m.id !== context.optimisticId) : old
+        );
+      }
       setText(variables.body);
     },
     onSettled: () => { qc.invalidateQueries({ queryKey: ['case-messages'] }); },

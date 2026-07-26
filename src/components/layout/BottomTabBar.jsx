@@ -47,6 +47,17 @@ const TABS = Object.freeze([
   { icon: Globe,           label: 'More',     path: '/dashboard/features' },
 ]);
 
+/**
+ * Pure — exported for unit testing. `/dashboard` itself only matches exactly
+ * (no startsWith) so it doesn't light up for every other /dashboard/* path;
+ * every other tab matches its path as a prefix. Several real /dashboard/*
+ * routes (settings, support, documents, etc.) intentionally match none of
+ * these — they still work, just show no highlighted tab.
+ */
+export function isTabActive(pathname, tabPath) {
+  return pathname === tabPath || (tabPath !== '/dashboard' && pathname.startsWith(tabPath));
+}
+
 export default function BottomTabBar() {
   const location = useLocation();
   useBottomTabBarHeightVar();
@@ -58,7 +69,7 @@ export default function BottomTabBar() {
       aria-label="Primary"
     >
       {TABS.map(({ icon: Icon, label, path }) => {
-        const isActive = location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
+        const isActive = isTabActive(location.pathname, path);
         return (
           <Link
             key={path}

@@ -108,7 +108,7 @@ export default function HeartNotificationCenter({ user }) {
       />
 
       {/* Toast stack — bottom right */}
-      <div className="fixed bottom-6 right-5 z-[9998] flex flex-col gap-2.5 items-end">
+      <div className="fixed bottom-[calc(1.5rem+var(--bottom-tab-bar-height,0px))] right-5 z-[9998] flex flex-col gap-2.5 items-end">
         <AnimatePresence mode="popLayout">
           {notifications.map((n) => (
             <HeartToast key={n.id} notification={n} onDismiss={dismiss} />

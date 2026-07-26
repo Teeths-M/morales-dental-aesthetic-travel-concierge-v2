@@ -116,7 +116,8 @@ export default function FloatingCheckInAlert({ user }) {
           className="fixed z-[9990]"
           style={{
             // Center-bottom on all screen sizes, above SOS + WhatsApp buttons
-            bottom: 88,
+            // and the mobile bottom tab bar.
+            bottom: 'calc(88px + var(--bottom-tab-bar-height, 0px))',
             left: '50%',
             transform: 'translateX(-50%)',
             width: 'min(420px, calc(100vw - 32px))',

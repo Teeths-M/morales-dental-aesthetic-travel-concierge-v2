@@ -61,8 +61,10 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
         // mobile line), render as a fixed bottom action sheet instead of a
         // trigger-anchored popper. `!important` is required because Radix's
         // position="popper" sets inline transform/position styles that only
-        // an !important class can override.
-        "max-lg:!fixed max-lg:!inset-x-0 max-lg:!bottom-0 max-lg:!top-auto max-lg:!left-0 max-lg:!right-0 max-lg:!w-full max-lg:!max-w-full max-lg:!translate-x-0 max-lg:!translate-y-0 max-lg:!rounded-t-2xl max-lg:!rounded-b-none max-lg:!max-h-[70vh] max-lg:pb-[env(safe-area-inset-bottom,0px)]",
+        // an !important class can override. z-[10000] clears FloatingSOSButton
+        // (z-[9999]) — otherwise the SOS/Nearby/WhatsApp pill stack renders on
+        // top of an open sheet's bottom-right corner and blocks taps on it.
+        "max-lg:!fixed max-lg:!inset-x-0 max-lg:!bottom-0 max-lg:!top-auto max-lg:!left-0 max-lg:!right-0 max-lg:!w-full max-lg:!max-w-full max-lg:!translate-x-0 max-lg:!translate-y-0 max-lg:!rounded-t-2xl max-lg:!rounded-b-none max-lg:!max-h-[70vh] max-lg:!z-[10000] max-lg:pb-[env(safe-area-inset-bottom,0px)]",
         className
       )}
       position={position}

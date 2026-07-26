@@ -102,8 +102,8 @@ function NotificationCard({ n, onDismiss }) {
 }
 
 const BOTTOM_STACK_STYLE = `
-  .bottom-notif-stack { bottom: 96px; }
-  @media (max-width: 639px) { .bottom-notif-stack { bottom: 176px; } }
+  .bottom-notif-stack { bottom: calc(96px + var(--bottom-tab-bar-height, 0px)); }
+  @media (max-width: 639px) { .bottom-notif-stack { bottom: calc(176px + var(--bottom-tab-bar-height, 0px)); } }
 `;
 
 export default function GlobalNotificationStack() {

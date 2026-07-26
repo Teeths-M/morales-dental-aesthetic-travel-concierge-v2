@@ -6,6 +6,16 @@ import { toast } from 'sonner';
 import { useCart } from '@/context/CartContext';
 
 const EXIT_CONFIRM_WINDOW_MS = 2000;
+const PIVOT_CLOSE_COOLDOWN_MS = 350;
+
+/**
+ * Pure — true when `now` is close enough to `lastPress` to count as the
+ * confirming second press rather than a fresh first one. Exported for unit
+ * testing; the hook itself is native-only and can't be exercised directly.
+ */
+export function isExitConfirmPress(now, lastPress, windowMs = EXIT_CONFIRM_WINDOW_MS) {
+  return now - lastPress < windowMs;
+}
 
 /**
  * Android hardware back button — inert on web/PWA (Capacitor.isNativePlatform()
@@ -27,21 +37,29 @@ export function useAndroidBackButton() {
   const navigate = useNavigate();
   const { pivotViolations, closePivot } = useCart();
   const lastBackPressRef = useRef(0);
+  const pivotClosedAtRef = useRef(0);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
     const handlePromise = CapacitorApp.addListener('backButton', () => {
+      const now = Date.now();
+      // Swallow a rapid second press landing while SafetyPivotOverlay's own
+      // exit animation is still playing (~300-400ms) — without this, it falls
+      // through to navigate(-1)/exit while the overlay is still visually on screen.
+      if (now - pivotClosedAtRef.current < PIVOT_CLOSE_COOLDOWN_MS) {
+        return;
+      }
       if (pivotViolations.length > 0) {
         closePivot();
+        pivotClosedAtRef.current = now;
         return;
       }
       if (window.history.state && window.history.state.idx > 0) {
         navigate(-1);
         return;
       }
-      const now = Date.now();
-      if (now - lastBackPressRef.current < EXIT_CONFIRM_WINDOW_MS) {
+      if (isExitConfirmPress(now, lastBackPressRef.current)) {
         CapacitorApp.exitApp();
       } else {
         lastBackPressRef.current = now;
