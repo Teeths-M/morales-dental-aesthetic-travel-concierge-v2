@@ -86,7 +86,7 @@ export default function FloatingSOSButton() {
           }}>M</div>
 
           <span className="hidden sm:inline" style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: GOLD, lineHeight: 1 }}>
-            Morales Assist
+            {t('sos.morales_assist')}
           </span>
         </motion.div>
 
@@ -108,7 +108,7 @@ export default function FloatingSOSButton() {
             </div>
             <MapPin style={{ width: 16, height: 16, color: '#00E5FF', filter: 'drop-shadow(0 0 4px rgba(0,229,255,0.55))', flexShrink: 0 }} strokeWidth={2} />
             <span className="hidden sm:inline" style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#00E5FF', lineHeight: 1 }}>
-              Find Nearby
+              {t('sos.find_nearby')}
             </span>
           </motion.div>
         </Link>

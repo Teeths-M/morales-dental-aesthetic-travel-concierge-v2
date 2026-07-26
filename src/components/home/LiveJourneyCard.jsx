@@ -1,71 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BRAND } from '@/lib/brandTokens';
+import { useTranslation } from '@/i18n';
 
 const GOLD = BRAND.gold;
 
-const SCENES = [
-  {
-    chapter: '01',
-    title: 'THE\nPICKUP.',
-    patient: 'María, 67',
-    location: 'Miami International · Terminal D',
-    time: '6:23 AM · Day of surgery',
-    status: 'Escort confirmed',
-    statusNote: 'Driver 4 min away',
-    dot: '#22c55e',
-  },
-  {
-    chapter: '02',
-    title: 'THE\nCLINIC.',
-    patient: 'María, 67',
-    location: 'Cancún Medical Center · Suite 12',
-    time: '11:05 AM · Arrival',
-    status: 'Dr. Arroyo is ready',
-    statusNote: 'Pre-op complete',
-    dot: GOLD,
-  },
-  {
-    chapter: '03',
-    title: 'IN\nSURGERY.',
-    patient: 'María, 67',
-    location: 'Operating Suite 3 · Monitored',
-    time: '12:40 PM · Ongoing',
-    status: 'Procedure in progress',
-    statusNote: '2 family members watching',
-    dot: '#f59e0b',
-  },
-  {
-    chapter: '04',
-    title: 'RECOVERY.',
-    patient: 'María, 67',
-    location: 'Home · Miami, FL',
-    time: '9:00 AM · Check-in 3 of 14',
-    status: 'Recovery on track',
-    statusNote: 'Next M check-in in 2 hours',
-    dot: '#22c55e',
-  },
-  {
-    chapter: '05',
-    title: 'HOME\nSAFE.',
-    patient: 'María, 67',
-    location: 'Cancún → Miami · Flight CM-412',
-    time: '5:15 PM · En route',
-    status: 'Mission complete',
-    statusNote: 'See you next time, María ✦',
-    dot: '#22c55e',
-  },
+const SCENE_META = [
+  { key: 'pickup',   chapter: '01', dot: '#22c55e' },
+  { key: 'clinic',   chapter: '02', dot: GOLD },
+  { key: 'surgery',  chapter: '03', dot: '#f59e0b' },
+  { key: 'recovery', chapter: '04', dot: '#22c55e' },
+  { key: 'home',     chapter: '05', dot: '#22c55e' },
 ];
 
 export default function LiveJourneyCard() {
+  const { t } = useTranslation();
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setIdx(i => (i + 1) % SCENES.length), 4800);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setIdx(i => (i + 1) % SCENE_META.length), 4800);
+    return () => clearInterval(timer);
   }, []);
 
-  const s = SCENES[idx];
+  const meta = SCENE_META[idx];
+  const s = {
+    ...meta,
+    title:      t(`journey_card.${meta.key}_title`),
+    patient:    'María, 67',
+    location:   t(`journey_card.${meta.key}_location`),
+    time:       t(`journey_card.${meta.key}_time`),
+    status:     t(`journey_card.${meta.key}_status`),
+    statusNote: t(`journey_card.${meta.key}_note`),
+  };
 
   return (
     <div
@@ -112,7 +78,7 @@ export default function LiveJourneyCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <div style={{ width: 28, height: 1, background: `${GOLD}50` }} />
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: `${GOLD}65` }}>
-              Stage {s.chapter} of {SCENES.length}
+              {t('journey_card.stage_of', { current: s.chapter, total: SCENE_META.length })}
             </span>
           </div>
 
@@ -169,7 +135,7 @@ export default function LiveJourneyCard() {
 
           {/* Progress indicators */}
           <div style={{ display: 'flex', gap: 6 }}>
-            {SCENES.map((_, i) => (
+            {SCENE_META.map((_, i) => (
               <motion.div
                 key={i}
                 animate={{

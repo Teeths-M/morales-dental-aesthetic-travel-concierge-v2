@@ -6,6 +6,7 @@ import LiveJourneyCard from './LiveJourneyCard';
 import { usePlatformMode } from '@/context/PlatformModeContext';
 import { Shield, CheckCircle, Heart, Play } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
+import { useTranslation } from '@/i18n';
 
 const GOLD       = BRAND.gold;
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
@@ -35,32 +36,8 @@ const CONTENT = {
   },
 };
 
-/* ── Feature cards below hero ─────────────────────────────────────────────── */
-const FEATURES = [
-  { icon: Heart,       title: 'Your Family Stays Close',    desc: 'Share a zero-login link and they watch every checkpoint in real time — like a flight tracker, but for your surgery.' },
-  { icon: Shield,      title: 'Every Checkpoint Confirmed', desc: 'Miss a check-in and we escalate automatically — SMS, voice call, security dispatch, police. You are never alone.' },
-  { icon: CheckCircle, title: 'Verified Specialists Only',  desc: 'Every doctor is screened for credentials, procedure history, and patient outcomes. Only the top 1% earn the Morales badge.' },
-];
-
-
-/* ── Post-surgery protocol — answers the judge's question directly ─────────── */
-const AFTER_SURGERY_STEPS = [
-  {
-    num: '01',
-    title: 'Recovery monitoring starts the moment surgery ends.',
-    desc: 'Your recovery clock starts immediately. Miss a check-in by 45 minutes and Morales escalates automatically — not 24 hours later. 45 minutes.',
-  },
-  {
-    num: '02',
-    title: 'Your family never loses sight of you.',
-    desc: "A zero-login link. A live map. Every checkpoint confirmed in real time. They sleep peacefully. We don't.",
-  },
-  {
-    num: '03',
-    title: 'Six channels before we give up.',
-    desc: 'SMS. Voice call. Companion check. Security dispatch. Local clinic. Emergency services. In sequence — until someone confirms you are safe.',
-  },
-];
+/* ── Feature cards below hero — icons only; copy is localized inside the component ── */
+const FEATURE_ICONS = [Heart, Shield, CheckCircle];
 
 /* ── Hero chat exchange ────────────────────────────────────────────────────
  * The moment the hero video is built around: her procedure is confirmed
@@ -69,27 +46,29 @@ const AFTER_SURGERY_STEPS = [
  * than baked into the footage itself — easier to change, and matches the
  * site's own i18n system if this ever needs translating.
  */
-const CHAT_STEPS = [
-  { from: 'm',    text: 'Your procedure is confirmed safe!' },
-  { from: 'user', text: 'Great ❤️' },
-  { from: 'm',    text: 'Traveling solo?' },
-  { from: 'user', text: 'Yes 😊' },
-  { from: 'm',    text: 'You are protected.' },
-  { from: 'user', text: 'Awesome 🙏' },
-];
-
 function HeroChatBubbles() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const prefersReducedMotion = useReducedMotion();
 
+  const chatSteps = [
+    { from: 'm',    text: t('home.chat_1') },
+    { from: 'user', text: t('home.chat_2') },
+    { from: 'm',    text: t('home.chat_3') },
+    { from: 'user', text: t('home.chat_4') },
+    { from: 'm',    text: t('home.chat_5') },
+    { from: 'user', text: t('home.chat_6') },
+  ];
+
   useEffect(() => {
     // Reduced motion: show the full exchange at once, settled — no cycling.
-    if (prefersReducedMotion) { setStep(CHAT_STEPS.length); return; }
-    const t = setInterval(() => setStep(s => (s + 1) % (CHAT_STEPS.length + 1)), 1600);
-    return () => clearInterval(t);
+    if (prefersReducedMotion) { setStep(chatSteps.length); return; }
+    const timer = setInterval(() => setStep(s => (s + 1) % (chatSteps.length + 1)), 1600);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefersReducedMotion]);
 
-  const visible = CHAT_STEPS.slice(0, step);
+  const visible = chatSteps.slice(0, step);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 284 }}>
@@ -133,12 +112,25 @@ function HeroChatBubbles() {
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
   const { mode }    = usePlatformMode();
+  const { t }       = useTranslation();
 
   const isMedical   = mode === 'medical';
   const content     = isMedical ? CONTENT.medical : CONTENT.nonmedical;
   const prefersReducedMotion = useReducedMotion();
   const _openModal   = useCallback(() => setShowModal(true), []);
   const closeModal  = useCallback(() => setShowModal(false), []);
+
+  const features = [
+    { icon: FEATURE_ICONS[0], title: t('home.feature_family_title'),     desc: t('home.feature_family_desc') },
+    { icon: FEATURE_ICONS[1], title: t('home.feature_checkpoint_title'), desc: t('home.feature_checkpoint_desc') },
+    { icon: FEATURE_ICONS[2], title: t('home.feature_verified_title'),   desc: t('home.feature_verified_desc') },
+  ];
+
+  const afterSurgerySteps = [
+    { num: '01', title: t('home.step1_title'), desc: t('home.step1_desc') },
+    { num: '02', title: t('home.step2_title'), desc: t('home.step2_desc') },
+    { num: '03', title: t('home.step3_title'), desc: t('home.step3_desc') },
+  ];
 
   return (
     <>
@@ -231,7 +223,7 @@ export default function LuxuryHero() {
                   textShadow:    '0 2px 40px rgba(0,0,0,0.5)',
                 }}
               >
-                {content.headline}
+                {isMedical ? t('home.headline_medical') : t('home.headline_nonmedical')}
               </motion.h1>
             </AnimatePresence>
 
@@ -256,7 +248,7 @@ export default function LuxuryHero() {
                     }}
                   >
                     <span className="relative z-10 flex items-center gap-2.5">
-                      {content.cta.label}
+                      {isMedical ? t('home.cta_medical') : t('home.cta_nonmedical')}
                       <span>→</span>
                     </span>
                     <div
@@ -283,7 +275,7 @@ export default function LuxuryHero() {
                     }}
                   >
                     <Play style={{ width: 14, height: 14, fill: `${GOLD}cc`, flexShrink: 0 }} />
-                    Live Demo
+                    {t('home.cta_demo')}
                   </motion.button>
                 </Link>
               </div>
@@ -291,7 +283,7 @@ export default function LuxuryHero() {
               {/* No-account signal — directly below the buttons */}
               {isMedical && (
                 <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', color: 'rgba(255,255,255,0.28)', fontWeight: 500, letterSpacing: '0.04em' }}>
-                  No account needed to start
+                  {t('home.no_account')}
                 </span>
               )}
             </motion.div>
@@ -310,7 +302,7 @@ export default function LuxuryHero() {
       >
         <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-10 sm:py-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-10">
-            {FEATURES.map(({ icon: Icon, title, desc }, i) => (
+            {features.map(({ icon: Icon, title, desc }, i) => (
               <motion.div
                 key={title}
                 initial={{ opacity: 0, y: 20 }}
@@ -369,24 +361,23 @@ export default function LuxuryHero() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
                 <div style={{ width: 24, height: 1, background: `${GOLD}50` }} />
                 <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: `${GOLD}65` }}>
-                  After Surgery
+                  {t('home.after_surgery_eyebrow')}
                 </span>
               </div>
-              <h2 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.8rem)', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 20 }}>
-                "What happens<br />after surgery?"
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.8rem)', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 20, whiteSpace: 'pre-line' }}>
+                "{t('home.after_surgery_q')}"
               </h2>
-              <p style={{ fontSize: 'clamp(1.125rem, 2vw, 1.25rem)', fontStyle: 'italic', color: `${GOLD}90`, lineHeight: 1.6, fontFamily: 'Georgia, serif', marginBottom: 20 }}>
-                That's where Morales<br />becomes most valuable.
+              <p style={{ fontSize: 'clamp(1.125rem, 2vw, 1.25rem)', fontStyle: 'italic', color: `${GOLD}90`, lineHeight: 1.6, fontFamily: 'Georgia, serif', marginBottom: 20, whiteSpace: 'pre-line' }}>
+                {t('home.after_surgery_a')}
               </p>
-              <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1.05rem)', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75, maxWidth: 380 }}>
-                Most platforms track your booking.<br />
-                Morales tracks you — until you are home safe.
+              <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1.05rem)', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75, maxWidth: 380, whiteSpace: 'pre-line' }}>
+                {t('home.after_surgery_p')}
               </p>
             </motion.div>
 
             {/* Right — protocol steps */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingTop: 4 }}>
-              {AFTER_SURGERY_STEPS.map(({ num, title, desc }, i) => (
+              {afterSurgerySteps.map(({ num, title, desc }, i) => (
                 <motion.div
                   key={num}
                   initial={{ opacity: 0, y: 20 }}
