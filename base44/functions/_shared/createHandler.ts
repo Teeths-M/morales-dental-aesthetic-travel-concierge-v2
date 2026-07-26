@@ -25,6 +25,12 @@ export interface AuthUser {
   email: string;
   role: string;
   full_name?: string;
+  /** Set by _shared/anonymizePatientRecords.ts the moment a self-service or
+   *  admin GDPR erasure actually runs (despite the name, it's a completion
+   *  marker, not a pending-request one). Any account carrying it is rejected
+   *  below — otherwise "deletion" was only ever a client-side AuthContext
+   *  redirect, and a stale session or raw API client kept working forever. */
+  account_deletion_requested_at?: string;
 }
 
 export interface HandlerContext {
@@ -70,6 +76,9 @@ export function createHandler(fn: HandlerFn, opts: HandlerOptions = {}) {
           return respond({ error: 'Unauthorized' }, 401, requestId);
         }
         if (!user) return respond({ error: 'Unauthorized' }, 401, requestId);
+        if (user.account_deletion_requested_at) {
+          return respond({ error: 'This account has been deleted.' }, 403, requestId);
+        }
         if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
           return respond({ error: 'Forbidden' }, 403, requestId);
         }

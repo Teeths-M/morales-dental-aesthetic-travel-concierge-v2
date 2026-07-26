@@ -2082,7 +2082,12 @@ test('ACCOUNT DELETION: the shared anonymizer uses the real PassportVault/Passpo
   expect(src).toContain('encrypted_file_uri: null');
   expect(src).not.toContain('encrypted_data');
   expect(src, 'PassportAccessGrant must be revoked via its real gating field').toContain("status: 'revoked'");
-  expect(src).not.toContain('is_active');
+  // Scoped to just the PassportAccessGrant block — is_active is a real field
+  // on other entities added later (LiveLocation, EmergencyPIN, GuardianSession),
+  // it was only ever fake on PassportAccessGrant specifically.
+  const grantBlockIdx = src.indexOf('PassportAccessGrant.filter');
+  const grantBlock = src.slice(grantBlockIdx, src.indexOf('CaseRecord.filter'));
+  expect(grantBlock).not.toContain('is_active');
   // Consultation's real fields are email/patient_name/phone, not the
   // client_* names CaseRecord uses — the old code filtered on client_email
   // and matched zero Consultation rows.
@@ -2106,4 +2111,46 @@ test('ACCOUNT DELETION: new audit event types are registered in both AuditLog an
     expect(entity, `${t} missing from AuditLog.jsonc's enum`).toContain(`"${t}"`);
     expect(allow, `${t} missing from logAuditEvent's ALLOWED_EVENT_TYPES`).toContain(`'${t}'`);
   }
+});
+
+test('ACCOUNT DELETION: the shared anonymizer covers PII beyond the original 6 entities', () => {
+  // A later audit found the original version only touched 6 of ~19 entities
+  // that key PII to a patient's email, directly contradicting SettingsModule's
+  // own "removes your name, contact details... from our systems" copy.
+  const src = read('base44/functions/_shared/anonymizePatientRecords.ts');
+  for (const entity of [
+    'PaymentTransaction', 'LiveLocation', 'LocationBreadcrumb', 'EmergencyPIN',
+    'SOSEvent', 'GuardianSession', 'QuoteMessage', 'SafeTProfile',
+    'BehavioralProfile', 'PostOpCheckIn', 'UserPushSubscription',
+    'DoctorQuoteRequest', 'TravelRequest',
+  ]) {
+    expect(src, `${entity} must be covered by the anonymizer`).toContain(`entities.${entity}.`);
+  }
+  // A different person's email on the same row must never be touched —
+  // only the patient side.
+  expect(src, 'must not redact the guardian\'s own email').not.toContain('guardian_email: redactedEmail');
+  expect(src, 'must not redact the doctor\'s own email').not.toContain('doctor_email: redactedEmail');
+  // UserPushSubscription is the one hard-delete — an anonymized-but-active
+  // subscription would keep silently notifying the deleted account's device.
+  expect(src).toContain('UserPushSubscription.delete(sub.id)');
+  expect(src).toContain('results.deleted.push(`UserPushSubscription');
+});
+
+test('ACCOUNT DELETION: createHandler rejects any request from a deleted account', () => {
+  // Deletion was previously only a client-side AuthContext redirect — no
+  // edge function checked it, so a stale session or raw API client with a
+  // bearer token kept working indefinitely after "deletion." This must be
+  // enforced in the shared middleware, not per-function, so it covers every
+  // requireAuth function uniformly.
+  const src = read('base44/functions/_shared/createHandler.ts');
+  expect(src, 'AuthUser must declare the deletion marker').toContain('account_deletion_requested_at?: string');
+  expect(src, 'must reject a deleted account before role checks').toMatch(
+    /if\s*\(user\.account_deletion_requested_at\)\s*\{\s*return respond\(\{ error:.*\}, 403/
+  );
+  // Must be inside the requireAuth branch, before allowedRoles is checked —
+  // sequencing matters: a deleted admin account must not slip through via role.
+  const deletionCheckIdx = src.indexOf('account_deletion_requested_at)');
+  const rolesCheckIdx = src.indexOf('allowedRoles?.length');
+  expect(deletionCheckIdx, 'deletion check must run before the role check').toBeGreaterThan(0);
+  expect(deletionCheckIdx).toBeLessThan(rolesCheckIdx);
 });
