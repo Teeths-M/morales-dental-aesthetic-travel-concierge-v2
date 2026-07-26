@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { toast } from 'sonner';
-import { useCart } from '@/context/CartContext';
+import { CartContext } from '@/context/CartContext';
 
 const EXIT_CONFIRM_WINDOW_MS = 2000;
 const PIVOT_CLOSE_COOLDOWN_MS = 350;
@@ -35,7 +35,14 @@ export function isExitConfirmPress(now, lastPress, windowMs = EXIT_CONFIRM_WINDO
  */
 export function useAndroidBackButton() {
   const navigate = useNavigate();
-  const { pivotViolations, closePivot } = useCart();
+  // Read CartContext directly (not via useCart) so the hook degrades gracefully
+  // if the provider is unavailable — e.g. during Vite HMR when a replaced
+  // CartContext module creates a new context object that doesn't match the one
+  // the already-mounted CartProvider used. The pivot-close behaviour is a
+  // nice-to-have; navigate-back and exit must still work without it.
+  const cart = useContext(CartContext);
+  const pivotViolations = cart?.pivotViolations;
+  const closePivot = cart?.closePivot;
   const lastBackPressRef = useRef(0);
   const pivotClosedAtRef = useRef(0);
 
@@ -50,7 +57,7 @@ export function useAndroidBackButton() {
       if (now - pivotClosedAtRef.current < PIVOT_CLOSE_COOLDOWN_MS) {
         return;
       }
-      if (pivotViolations.length > 0) {
+      if (pivotViolations && pivotViolations.length > 0 && closePivot) {
         closePivot();
         pivotClosedAtRef.current = now;
         return;
@@ -70,5 +77,5 @@ export function useAndroidBackButton() {
     return () => {
       handlePromise.then((handle) => handle.remove());
     };
-  }, [navigate, pivotViolations, closePivot]);
+  }, [navigate, cart]);
 }

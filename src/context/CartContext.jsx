@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
 
-const CartContext = createContext();
+export const CartContext = createContext();
 const STORAGE_KEY = 'morales_consultation_cart';
 const COUNTRY_KEY = 'morales_procedure_country';
 const CITY_KEY = 'morales_procedure_city';
