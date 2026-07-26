@@ -57,6 +57,12 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
         "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        // Below `lg` (same breakpoint BottomTabBar/DashboardSidebar use as the
+        // mobile line), render as a fixed bottom action sheet instead of a
+        // trigger-anchored popper. `!important` is required because Radix's
+        // position="popper" sets inline transform/position styles that only
+        // an !important class can override.
+        "max-lg:!fixed max-lg:!inset-x-0 max-lg:!bottom-0 max-lg:!top-auto max-lg:!left-0 max-lg:!right-0 max-lg:!w-full max-lg:!max-w-full max-lg:!translate-x-0 max-lg:!translate-y-0 max-lg:!rounded-t-2xl max-lg:!rounded-b-none max-lg:!max-h-[70vh] max-lg:pb-[env(safe-area-inset-bottom,0px)]",
         className
       )}
       position={position}
@@ -86,6 +92,8 @@ const SelectItem = React.forwardRef(({ className, children, ...props }, ref) => 
     ref={ref}
     className={cn(
       "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      // Finger-sized tap targets in the mobile bottom-sheet variant.
+      "max-lg:py-2.5",
       className
     )}
     {...props}>

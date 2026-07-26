@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { LayoutDashboard, Route as RouteIcon, FileText, MessageCircle, Globe } from 'lucide-react';
 
 // Matches Tailwind's default `lg` breakpoint, which this bar hides at (`lg:hidden`).
@@ -62,10 +63,19 @@ export default function BottomTabBar() {
           <Link
             key={path}
             to={path}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0"
+            className="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0"
             aria-current={isActive ? 'page' : undefined}
           >
-            <Icon className={`w-5 h-5 ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
+            {isActive && (
+              <motion.div
+                layoutId="bottom-tab-indicator"
+                className="absolute top-0 w-8 h-0.5 rounded-full bg-slate-900"
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              />
+            )}
+            <motion.div whileTap={{ scale: 0.9 }}>
+              <Icon className={`w-5 h-5 ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
+            </motion.div>
             <span className={`text-[10px] truncate ${isActive ? 'text-slate-900 font-semibold' : 'text-slate-400'}`}>
               {label}
             </span>

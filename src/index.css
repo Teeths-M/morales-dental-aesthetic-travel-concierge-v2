@@ -46,11 +46,12 @@ body {
   -webkit-backface-visibility: hidden;
 }
 
-button, a {
+button, a, [role="tab"], svg {
   transition: opacity 0.1s ease, transform 0.1s ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   will-change: transform;
+  user-select: none;
 }
 
 button:active, a:active {
