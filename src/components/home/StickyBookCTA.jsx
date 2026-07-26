@@ -22,7 +22,7 @@ export default function StickyBookCTA() {
 
   return (
     <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 90,
+      position: 'fixed', bottom: 'var(--bottom-tab-bar-height, 0px)', left: 0, right: 0, zIndex: 90,
       padding: '12px 20px max(16px, env(safe-area-inset-bottom))',
       background: 'rgba(6, 11, 22, 0.96)',
       backdropFilter: 'blur(14px)',

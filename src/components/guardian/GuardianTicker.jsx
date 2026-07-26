@@ -51,8 +51,8 @@ export default function GuardianTicker() {
   return (
     <>
     <style>{`
-      .guardian-ticker-root { bottom: calc(1rem + var(--sticky-cta-height, 0px)); }
-      @media (max-width: 639px) { .guardian-ticker-root { bottom: calc(120px + var(--sticky-cta-height, 0px)); } }
+      .guardian-ticker-root { bottom: calc(1rem + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px)); }
+      @media (max-width: 639px) { .guardian-ticker-root { bottom: calc(120px + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px)); } }
     `}</style>
     <div
       className="guardian-ticker-root fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md pointer-events-none transition-[bottom] duration-300"
