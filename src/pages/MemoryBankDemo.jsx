@@ -51,6 +51,9 @@ export default function MemoryBankDemo() {
     setSeedError(null);
     try {
       const res = await base44.functions.invoke('seedMemoryBankDemo', {});
+      if (res.__paused) {
+        throw new Error('System Pause is on (conserves integration credits) — every backend call, including this one, is being blocked. Resume it from the red banner above, then try again.');
+      }
       if (!res.data?.success) {
         const raw = res.data && Object.keys(res.data).length ? JSON.stringify(res.data) : '(empty response)';
         throw new Error(res.data?.error || `Unexpected response ${raw} — this usually means the function isn't published in Base44 yet.`);
@@ -70,6 +73,9 @@ export default function MemoryBankDemo() {
     setPreviewError(null);
     try {
       const res = await base44.functions.invoke('getMemoryBankDemoPreview', {});
+      if (res.__paused) {
+        throw new Error('System Pause is on (conserves integration credits) — every backend call, including this one, is being blocked. Resume it from the red banner above, then try again.');
+      }
       if (!res.data?.success) {
         setPreviewState('empty');
         return;

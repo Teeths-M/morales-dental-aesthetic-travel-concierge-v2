@@ -105,6 +105,13 @@ export default function AppLayout() {
   const isAdmin   = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup') || pathname.startsWith('/doctor-signup') || pathname.startsWith('/companion-signup') || pathname.startsWith('/security-signup') || pathname.startsWith('/local-doctor-signup') || pathname.startsWith('/demo');
   const isDemo    = pathname.startsWith('/demo');
   const isActualAdmin = pathname.startsWith('/admin');
+  // Every other /demo/* page is a scripted walkthrough that never touches the
+  // real backend, so the pause banner is deliberately hidden there — it would
+  // just be noise. MemoryBankDemo is the one exception: it's a genuine
+  // "live demo, real backend, seeded data" page that calls real functions, so
+  // hiding the banner there means a paused system fails silently with a
+  // confusing "isn't published" error instead of an obvious one-click fix.
+  const isLiveBackendDemo = pathname.startsWith('/demo/memory-bank');
 
   // Pull-to-refresh — overscroll-behavior:none (src/index.css) kills the
   // native gesture app-wide, so this reimplements it for the patient app
@@ -123,8 +130,9 @@ export default function AppLayout() {
     <BiometricGate>
       <CursorSpotlight />
 
-      {/* System Pause banner — only visible on actual admin pages, never on demo pages */}
-      {isActualAdmin && <SystemPauseBanner />}
+      {/* System Pause banner — visible on admin pages, and on the one demo page
+          that actually calls the live backend (see isLiveBackendDemo above) */}
+      {(isActualAdmin || isLiveBackendDemo) && <SystemPauseBanner />}
 
       {/* First-time onboarding wizard — shown once per account */}
       {showOnboarding && !suppressOnboarding && (
