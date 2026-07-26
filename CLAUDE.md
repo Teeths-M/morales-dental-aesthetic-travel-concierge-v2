@@ -128,7 +128,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
 `createHandler` provides: auth gate (`requireAuth` defaults to true), role guard (`allowedRoles`), lazy body parser, structured logging with function name + request ID, `X-Request-Id` / `X-Response-Time` response headers, and generic 500 error body (never leaks `error.message`).
 
-**Never** write `Deno.serve(async (req) => {...})` directly — always use `createHandler`.
+**Never** write `Deno.serve(async (req) => {...})` directly — always use `createHandler`. (Two exceptions exist for functions needing the raw, unparsed request body before `createHandler`'s JSON parsing — `stripePaymentWebhook` and `handleSanctionsWebhook` — both verify a cryptographic signature over the raw body themselves; don't add a third without the same justification.)
+
+**`allowedRoles` is a no-op when `requireAuth: false`** — `createHandler` only reads `allowedRoles` inside its `if (requireAuth)` branch, so passing both together silently protects nothing. A `requireAuth: false` function must gate itself in its own handler body: an internal `base44.auth.me()` check, a token/HMAC/session lookup, or `cronAuthorized()` (`_shared/cronAuth.ts` — admin session or `X-Cron-Secret` header, fails closed if unset). For a function called by *another edge function* with no forwardable user session (`base44.asServiceRole.functions.invoke`, common for webhook-triggered chains), use `_shared/internalAuth.ts`'s `internalOrAdminAuthorized()` instead — same fail-closed contract, but checks a body field (`internal_secret`, reusing `CRON_SECRET`) since custom headers aren't passable through `.functions.invoke()`. Never treat "no user session" alone as proof of a legitimate internal caller — that was a real vulnerability in `sendPushNotification` (fixed 2026-07-25, commit `23862dc9`).
 
 VS Code LSP shows `Cannot find name 'Deno'` and `Cannot find module 'npm:...'` in all edge function files. These are pre-existing config gaps (no Deno type definitions) and are not real errors.
 
