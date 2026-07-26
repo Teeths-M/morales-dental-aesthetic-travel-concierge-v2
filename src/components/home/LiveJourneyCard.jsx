@@ -5,7 +5,7 @@ import { useTranslation } from '@/i18n';
 
 const GOLD = BRAND.gold;
 
-const SCENE_META = [
+const SCENE_META_MEDICAL = [
   { key: 'pickup',   chapter: '01', dot: '#22c55e' },
   { key: 'clinic',   chapter: '02', dot: GOLD },
   { key: 'surgery',  chapter: '03', dot: '#f59e0b' },
@@ -13,24 +13,35 @@ const SCENE_META = [
   { key: 'home',     chapter: '05', dot: '#22c55e' },
 ];
 
-export default function LiveJourneyCard() {
+const SCENE_META_TRAVEL = [
+  { key: 'pickup',  chapter: '01', dot: '#22c55e' },
+  { key: 'arrival', chapter: '02', dot: '#00E5FF' },
+  { key: 'hotel',   chapter: '03', dot: GOLD },
+  { key: 'return',  chapter: '04', dot: '#f59e0b' },
+  { key: 'home',    chapter: '05', dot: '#22c55e' },
+];
+
+export default function LiveJourneyCard({ isMedical = true }) {
   const { t } = useTranslation();
   const [idx, setIdx] = useState(0);
+  const sceneMeta = isMedical ? SCENE_META_MEDICAL : SCENE_META_TRAVEL;
+  const namespace = isMedical ? 'medical' : 'travel';
 
   useEffect(() => {
-    const timer = setInterval(() => setIdx(i => (i + 1) % SCENE_META.length), 4800);
+    const timer = setInterval(() => setIdx(i => (i + 1) % sceneMeta.length), 4800);
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const meta = SCENE_META[idx];
+  const meta = sceneMeta[idx];
   const s = {
     ...meta,
-    title:      t(`journey_card.${meta.key}_title`),
+    title:      t(`journey_card.${namespace}.${meta.key}_title`),
     patient:    'María, 67',
-    location:   t(`journey_card.${meta.key}_location`),
-    time:       t(`journey_card.${meta.key}_time`),
-    status:     t(`journey_card.${meta.key}_status`),
-    statusNote: t(`journey_card.${meta.key}_note`),
+    location:   t(`journey_card.${namespace}.${meta.key}_location`),
+    time:       t(`journey_card.${namespace}.${meta.key}_time`),
+    status:     t(`journey_card.${namespace}.${meta.key}_status`),
+    statusNote: t(`journey_card.${namespace}.${meta.key}_note`),
   };
 
   return (
@@ -78,7 +89,7 @@ export default function LiveJourneyCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <div style={{ width: 28, height: 1, background: `${GOLD}50` }} />
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: `${GOLD}65` }}>
-              {t('journey_card.stage_of', { current: s.chapter, total: SCENE_META.length })}
+              {t('journey_card.stage_of', { current: s.chapter, total: sceneMeta.length })}
             </span>
           </div>
 
@@ -135,7 +146,7 @@ export default function LiveJourneyCard() {
 
           {/* Progress indicators */}
           <div style={{ display: 'flex', gap: 6 }}>
-            {SCENE_META.map((_, i) => (
+            {sceneMeta.map((_, i) => (
               <motion.div
                 key={i}
                 animate={{

@@ -291,7 +291,7 @@ export default function LuxuryHero() {
           </motion.div>
 
           {/* Right column — live patient journey card */}
-          <LiveJourneyCard />
+          <LiveJourneyCard key={mode} isMedical={isMedical} />
         </div>
       </section>
 
