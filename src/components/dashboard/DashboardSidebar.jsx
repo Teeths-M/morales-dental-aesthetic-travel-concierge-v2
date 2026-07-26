@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileText,
@@ -6,6 +6,7 @@ import {
   Stethoscope, Plane, AlertTriangle, Globe, Camera,
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { base44 } from '@/api/base44Client';
 
 const PHOTO_KEY = 'morales_profile_photo';
 const GOLD      = '#D4AF37';
@@ -31,22 +32,15 @@ const NAV_ITEMS = Object.freeze([
 ]);
 
 // ── Profile Avatar — clickable, uploadable ────────────────────────────────────
-function ProfileAvatar({ photo, onUpload }) {
+function ProfileAvatar({ photo, uploading, onUpload }) {
   const [hovered, setHovered] = useState(false);
   const fileRef = useRef(null);
 
   function handleFile(e) {
     const file = e.target.files?.[0];
+    e.target.value = ''; // reset so the same file can be re-selected
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = /** @type {string} */(reader.result);
-      try { localStorage.setItem(PHOTO_KEY, dataUrl); } catch (_) {}
-      onUpload(dataUrl);
-    };
-    reader.readAsDataURL(file);
-    // Reset so the same file can be re-selected
-    e.target.value = '';
+    onUpload(file);
   }
 
   return (
@@ -64,9 +58,10 @@ function ProfileAvatar({ photo, onUpload }) {
         onClick={() => fileRef.current?.click()}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="relative flex-shrink-0 focus:outline-none"
+        className="relative flex-shrink-0 focus:outline-none disabled:opacity-70"
         aria-label="Change profile photo"
         title="Tap to upload your photo"
+        disabled={uploading}
         style={{ width: 48, height: 48 }}
       >
         {/* Avatar */}
@@ -85,19 +80,23 @@ function ProfileAvatar({ photo, onUpload }) {
           )}
         </div>
 
-        {/* Camera overlay on hover */}
+        {/* Camera overlay on hover, or a spinner while the upload is saving */}
         <div
           className="absolute inset-0 rounded-xl flex items-center justify-center transition-opacity duration-200"
           style={{
             background: 'rgba(0,0,0,0.55)',
-            opacity: hovered ? 1 : 0,
+            opacity: hovered || uploading ? 1 : 0,
           }}
         >
-          <Camera className="w-4 h-4 text-white" />
+          {uploading ? (
+            <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+          ) : (
+            <Camera className="w-4 h-4 text-white" />
+          )}
         </div>
 
         {/* Upload badge when no photo */}
-        {!photo && (
+        {!photo && !uploading && (
           <div
             className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
             style={{ background: GOLD, boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}
@@ -112,29 +111,75 @@ function ProfileAvatar({ photo, onUpload }) {
 
 // ── Sidebar content ───────────────────────────────────────────────────────────
 function SidebarContent({ location, onClose = null }) {
-  const { user } = useAuth();
+  const { user, checkUserAuth } = useAuth();
+  // user.profile_photo_url (the durable, server-side copy) wins once loaded;
+  // the localStorage cache only fills the gap before that first resolves, or
+  // for an offline/preview session with no real backend to read from.
   const [photo, setPhoto] = useState(() => {
+    if (user?.profile_photo_url) return user.profile_photo_url;
     try { return localStorage.getItem(PHOTO_KEY) || null; } catch { return null; }
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
+  useEffect(() => {
+    if (user?.profile_photo_url && user.profile_photo_url !== photo) {
+      setPhoto(user.profile_photo_url);
+    }
+  }, [user?.profile_photo_url, photo]);
 
   const _displayName  = user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Patient';
   const fullName     = user?.full_name || 'My Portal';
 
-  const handleUpload = useCallback((dataUrl) => setPhoto(dataUrl), []);
+  const handleUpload = useCallback(async (file) => {
+    // Instant local preview via an object URL — no giant base64 string ever
+    // touches localStorage, so there's no risk of silently hitting its quota.
+    const previewUrl = URL.createObjectURL(file);
+    setPhoto(previewUrl);
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      // FIX: this used to only write a base64 copy of the photo to
+      // localStorage — nothing was ever sent to the backend, so it never
+      // survived a different device/browser, an incognito session, or (as
+      // reported) the Base44 preview environment's storage isolation.
+      // updateMe() is the SDK's purpose-built self-update call for the
+      // current session's own User record — no entity-level RLS change
+      // needed for it (see CLAUDE.md's caution on editing User directly).
+      await base44.auth.updateMe({ profile_photo_url: file_url });
+      setPhoto(file_url);
+      try { localStorage.setItem(PHOTO_KEY, file_url); } catch (_) {}
+      checkUserAuth?.(); // refresh the shared user object so it's current everywhere
+    } catch (err) {
+      console.error('[DashboardSidebar] profile photo save failed:', err);
+      setUploadError('Could not save your photo — please try again.');
+      let fallback = user?.profile_photo_url || null;
+      if (!fallback) {
+        try { fallback = localStorage.getItem(PHOTO_KEY); } catch (_) { fallback = null; }
+      }
+      setPhoto(fallback);
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+      setUploading(false);
+    }
+  }, [checkUserAuth, user?.profile_photo_url]);
 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* ── Header: avatar + name + upload ── */}
       <div className={`${LUXURY_COLORS.header} px-5 py-6 mb-2`}>
         <div className="flex items-center gap-3">
-          <ProfileAvatar photo={photo} onUpload={handleUpload} />
+          <ProfileAvatar photo={photo} uploading={uploading} onUpload={handleUpload} />
 
           <div className="flex-1 min-w-0">
             <p className="text-white font-serif font-semibold text-sm tracking-wide truncate">
               {fullName.toUpperCase()}
             </p>
             <p className="text-amber-400/70 text-[10px] tracking-widest uppercase">Patient Portal</p>
-            {!photo && (
+            {uploadError ? (
+              <p className="text-rose-400 text-[9px] mt-0.5">{uploadError}</p>
+            ) : !photo && (
               <p className="text-white/35 text-[9px] mt-0.5">Tap photo to upload</p>
             )}
           </div>
