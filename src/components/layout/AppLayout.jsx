@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import Footer from './Footer';
 import FloatingSOSButton from './FloatingSOSButton';
 import Header from './Header';
 import BottomTabBar from './BottomTabBar';
+import PullToRefreshIndicator from './PullToRefreshIndicator';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
 import OfflineBanner from './OfflineBanner';
 import { useAuth } from '@/lib/AuthContext';
@@ -103,6 +106,19 @@ export default function AppLayout() {
   const isDemo    = pathname.startsWith('/demo');
   const isActualAdmin = pathname.startsWith('/admin');
 
+  // Pull-to-refresh — overscroll-behavior:none (src/index.css) kills the
+  // native gesture app-wide, so this reimplements it for the patient app
+  // shell only (same scope as BottomTabBar). Refetches only what's actively
+  // mounted on screen, not the whole cache.
+  const queryClient = useQueryClient();
+  const handlePullRefresh = useCallback(
+    () => queryClient.refetchQueries({ type: 'active' }),
+    [queryClient]
+  );
+  const { pullDistance, refreshing } = usePullToRefresh(handlePullRefresh, {
+    enabled: !!user && !isAdmin,
+  });
+
   return (
     <BiometricGate>
       <CursorSpotlight />
@@ -122,6 +138,9 @@ export default function AppLayout() {
         <OfflineBanner />
         <Header />
         <main className={`flex-1 pt-[56px] sm:pt-[72px] ${user && !isAdmin ? 'pb-[70px] lg:pb-0' : ''}`}>
+          {user && !isAdmin && (
+            <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
+          )}
           <Outlet />
         </main>
         <Footer />

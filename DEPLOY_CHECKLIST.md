@@ -152,6 +152,16 @@ Separate from the Base44 publish flow above — these apply when a change touche
   bar on a real small screen — both were adjusted to read a new
   `--bottom-tab-bar-height` CSS variable the bar sets, but that's untested
   outside a browser devtools viewport simulation.
+- **After merging the P3 native-feel pass** (route-fade in `App.jsx`, pull-to-refresh
+  in `src/hooks/usePullToRefresh.js` + `AppLayout.jsx`, optimistic send in
+  `CaseThread.jsx`): pure web/CSS + JS touch listeners, no new native plugin or
+  entity/function — `npm run mobile:sync` only for the routine reason. Two things
+  specifically need a real device/emulator, not just a browser: (1) the
+  pull-to-refresh gesture's threshold/resistance feel — touch-emulated devtools
+  input isn't the same as a finger, and it needs to coexist with the native
+  scroll-momentum Capacitor's WebView already provides; (2) whether the
+  `AnimatePresence` route-fade causes any visible flash/flicker on Android's
+  WebView specifically (desktop Chrome rendering isn't a reliable proxy for it).
 
 ---
 

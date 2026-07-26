@@ -24,11 +24,33 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
       .catch(() => []),
   });
 
+  const messagesKey = ['case-messages', caseId, quoteId];
+
   const post = useMutation({
     mutationFn: ({ body, message_type }) => base44.functions.invoke('postCaseMessage', {
       case_id: caseId, quote_id: quoteId, body, message_type,
     }),
-    onSuccess: () => { setText(''); qc.invalidateQueries({ queryKey: ['case-messages'] }); },
+    onMutate: async ({ body, message_type }) => {
+      await qc.cancelQueries({ queryKey: messagesKey });
+      const previous = qc.getQueryData(messagesKey);
+      const optimisticMessage = {
+        id: `optimistic-${Date.now()}`,
+        body, message_type,
+        from_party: viewer,
+        created_at: new Date().toISOString(),
+        _pending: true,
+      };
+      qc.setQueryData(messagesKey, (old) => [...(Array.isArray(old) ? old : []), optimisticMessage]);
+      setText('');
+      return { previous };
+    },
+    // A failed send must not leave a bubble that looks delivered — roll back
+    // and hand the draft back so the sender can retry.
+    onError: (_err, variables, context) => {
+      if (context?.previous) qc.setQueryData(messagesKey, context.previous);
+      setText(variables.body);
+    },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ['case-messages'] }); },
   });
 
   // The patient's send is an "answer" when the doctor's last message asked for info.
@@ -61,8 +83,13 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
             const mine = m.from_party === viewer;
             return (
               <div key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%',
-                background: mine ? c.mine : c.theirs, borderRadius: 10, padding: '7px 11px' }}>
-                {m.message_type === 'info_request' && (
+                background: mine ? c.mine : c.theirs, borderRadius: 10, padding: '7px 11px',
+                opacity: m._pending ? 0.6 : 1 }}>
+                {m._pending ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: c.sub, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
+                    <Loader2 size={11} className="animate-spin" /> Sending…
+                  </div>
+                ) : m.message_type === 'info_request' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: c.sub, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
                     <HelpCircle size={11} /> Question
                   </div>
