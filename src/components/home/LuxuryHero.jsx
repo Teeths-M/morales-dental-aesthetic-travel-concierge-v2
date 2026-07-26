@@ -113,7 +113,13 @@ function HeroChatBubbles() {
               color:          msg.from === 'user' ? '#fff' : GOLD,
             }}
           >
-            {msg.from === 'm' && <span style={{ opacity: 0.55, fontWeight: 800, marginRight: 7 }}>M</span>}
+            {msg.from === 'm' && (
+              <img
+                src="/morales-m-mark.png"
+                alt=""
+                style={{ width: 18, height: 18, objectFit: 'contain', verticalAlign: 'middle', marginRight: 7, opacity: 0.85 }}
+              />
+            )}
             {msg.text}
           </motion.div>
         ))}
