@@ -40,24 +40,34 @@ const CONTENT = {
 const FEATURE_ICONS = [Heart, Shield, CheckCircle];
 
 /* ── Hero chat exchange ────────────────────────────────────────────────────
- * The moment the hero video is built around: her procedure is confirmed
- * safe, M checks if she's traveling solo, she is, and she's protected.
+ * Medical mode: her procedure is confirmed safe, M checks if she's
+ * traveling solo, she is, and she's protected. Travel mode swaps in the
+ * travel-relevant safety layers (EVN-iQ400 country intelligence, MedGuard
+ * monitoring) instead of surgical language — same beat, mode-appropriate
+ * copy, matching the isMedical pattern already used by LiveJourneyCard.
  * Shown as an animated phone-notification exchange over the video rather
  * than baked into the footage itself — easier to change, and matches the
  * site's own i18n system if this ever needs translating.
  */
-function HeroChatBubbles() {
+function HeroChatBubbles({ isMedical }) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const prefersReducedMotion = useReducedMotion();
 
-  const chatSteps = [
+  const chatSteps = isMedical ? [
     { from: 'm',    text: t('home.chat_1') },
     { from: 'user', text: t('home.chat_2') },
     { from: 'm',    text: t('home.chat_3') },
     { from: 'user', text: t('home.chat_4') },
     { from: 'm',    text: t('home.chat_5') },
     { from: 'user', text: t('home.chat_6') },
+  ] : [
+    { from: 'm',    text: t('home.chat_1_nonmedical') },
+    { from: 'user', text: t('home.chat_2_nonmedical') },
+    { from: 'm',    text: t('home.chat_3_nonmedical') },
+    { from: 'user', text: t('home.chat_4_nonmedical') },
+    { from: 'm',    text: t('home.chat_5_nonmedical') },
+    { from: 'user', text: t('home.chat_6_nonmedical') },
   ];
 
   useEffect(() => {
@@ -200,7 +210,7 @@ export default function LuxuryHero() {
           >
             {/* ── HERO CHAT EXCHANGE — replaces the badge + story ticker ── */}
             <div style={{ marginBottom: 20 }}>
-              <HeroChatBubbles />
+              <HeroChatBubbles key={mode} isMedical={isMedical} />
             </div>
 
             {/* ── COMMANDING HEADLINE ── */}
