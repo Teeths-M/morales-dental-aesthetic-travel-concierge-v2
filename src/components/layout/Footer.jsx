@@ -3,16 +3,27 @@ import { Link } from 'react-router-dom';
 import { Shield, Award, Heart, Headphones, CheckCircle } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import { ROUTES } from '@/lib/constants';
-
-const trustItems = [
-  { icon: Shield,      label: 'Global Intelligence · 195 Countries' },
-  { icon: Award,       label: 'Behavioural Safety AI' },
-  { icon: Heart,       label: '5-Tier Safety Escalation' },
-  { icon: Headphones,  label: '24/7 Concierge · Always On' },
-  { icon: CheckCircle, label: 'Satellite SOS · Zero Signal Ready' },
-];
+import { useTranslation } from '@/i18n';
 
 export default function Footer() {
+  const { t } = useTranslation();
+
+  const trustItems = [
+    { icon: Shield,      label: t('footer.trust_intelligence') },
+    { icon: Award,       label: t('footer.trust_ai') },
+    { icon: Heart,       label: t('footer.trust_escalation') },
+    { icon: Headphones,  label: t('footer.trust_concierge') },
+    { icon: CheckCircle, label: t('footer.trust_sos') },
+  ];
+
+  const badges = [
+    t('footer.badge_countries'),
+    t('footer.badge_intelligence'),
+    t('footer.badge_ai'),
+    t('footer.badge_satellite'),
+    t('footer.badge_golden'),
+  ];
+
   return (
     <footer className="bg-foreground text-background">
       {/* Trust Bar */}
@@ -45,18 +56,18 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-sm text-background/60 leading-relaxed">
-              The world's first complete medical travel protection stack — environmental intelligence, behavioural AI, and GPS handshakes protecting patients across 195 countries.
+              {t('footer.tagline')}
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-sm mb-4 text-background/90">Services</h4>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">{t('footer.services_heading')}</h4>
             <div className="space-y-2.5">
               {[
-                { label: 'Find Doctors',  path: '/providers' },
-                { label: 'Procedures',    path: '/procedures' },
-                { label: 'Visa Assist',   path: '/visa-assist' },
-                { label: 'Travel Safety', path: '/safe-t' },
+                { label: t('nav.find_doctors'),    path: '/providers' },
+                { label: t('nav.procedures'),      path: '/procedures' },
+                { label: t('footer.visa_assist'),   path: '/visa-assist' },
+                { label: t('footer.travel_safety'), path: '/safe-t' },
               ].map(({ label, path }) => (
                 <Link key={path} to={path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{label}</Link>
               ))}
@@ -64,14 +75,14 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-sm mb-4 text-background/90">Portals</h4>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">{t('footer.portals_heading')}</h4>
             <div className="space-y-2.5">
               {[
-                { label: 'Doctor Portal',        path: '/doctor-dashboard' },
-                { label: 'Travel Agency Portal', path: '/travel-agency-dashboard' },
-                { label: 'Chauffeur Portal',     path: '/taxi-service-dashboard' },
-                { label: 'Companion Portal',     path: '/companion-dashboard' },
-                { label: 'Join as Provider',     path: '/partner-signup' },
+                { label: t('footer.doctor_portal'),        path: '/doctor-dashboard' },
+                { label: t('footer.travel_agency_portal'), path: '/travel-agency-dashboard' },
+                { label: t('footer.chauffeur_portal'),     path: '/taxi-service-dashboard' },
+                { label: t('footer.companion_portal'),     path: '/companion-dashboard' },
+                { label: t('footer.join_provider'),        path: '/partner-signup' },
               ].map(({ label, path }) => (
                 <Link key={path} to={path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{label}</Link>
               ))}
@@ -79,11 +90,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-sm mb-4 text-background/90">Company</h4>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">{t('footer.company_heading')}</h4>
             <div className="space-y-2.5">
               {[
-                { label: 'About Us', path: '/about' },
-                { label: 'How It Works', path: '/how-it-works' },
+                { label: t('footer.about_us'), path: '/about' },
+                { label: t('nav.how_it_works'), path: '/how-it-works' },
               ].map(l => (
                 <Link key={l.path} to={l.path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{l.label}</Link>
               ))}
@@ -91,24 +102,18 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-sm mb-4 text-background/90">Contact</h4>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">{t('footer.contact_heading')}</h4>
             <div className="space-y-2.5">
               <a href="mailto:info@moralesconcierge.com" className="block text-sm text-background/50 hover:text-background/80 transition-colors">info@moralesconcierge.com</a>
               <a href="tel:+18005550199" className="block text-sm text-background/50 hover:text-background/80 transition-colors">+1 (800) 555-0199</a>
-              <p className="text-sm text-background/50">Mon–Fri 8am–8pm EST</p>
+              <p className="text-sm text-background/50">{t('footer.hours')}</p>
             </div>
           </div>
         </div>
 
         {/* Leadership badges */}
         <div className="border-t border-background/10 mt-12 pt-6 mb-4 flex flex-wrap justify-center gap-3">
-          {[
-            '🌍 195 Countries Covered',
-            '🛡️ Global Safety Intelligence',
-            '🧠 Behavioural Safety AI',
-            '✈️ Satellite SOS — Zero Signal Ready',
-            '🏆 The Golden Standard for Medical Travel',
-          ].map(b => (
+          {badges.map(b => (
             <span key={b} className="text-[10px] font-semibold px-3 py-1.5 rounded-full border text-background/50 border-background/15">
               {b}
             </span>
@@ -116,11 +121,11 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-background/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-background/40">© 2026 Morales Medical Travel Safety. All rights reserved.</p>
+          <p className="text-xs text-background/40">{t('footer.copyright', { year: new Date().getFullYear() })}</p>
           <div className="flex items-center gap-6">
             <div className="flex gap-6 text-xs text-background/40">
-              <Link to={ROUTES.PRIVACY} className="hover:text-background/60 transition-colors">Privacy Policy</Link>
-              <Link to={ROUTES.TERMS} className="hover:text-background/60 transition-colors">Terms of Service</Link>
+              <Link to={ROUTES.PRIVACY} className="hover:text-background/60 transition-colors">{t('footer.privacy')}</Link>
+              <Link to={ROUTES.TERMS} className="hover:text-background/60 transition-colors">{t('footer.terms')}</Link>
             </div>
             <LanguageSwitcher />
           </div>
