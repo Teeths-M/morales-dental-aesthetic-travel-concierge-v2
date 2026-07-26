@@ -77,5 +77,11 @@ export function useAndroidBackButton() {
     return () => {
       handlePromise.then((handle) => handle.remove());
     };
-  }, [navigate, cart]);
+    // Depend on the narrow, stable values rather than `cart` itself — the
+    // context value is a fresh object on every CartProvider render (it's an
+    // inline object literal), so depending on it directly would re-register
+    // the native listener on every unrelated cart-state change (adding an
+    // item, changing country, etc.), undoing the point of closePivot's own
+    // useCallback in CartContext.jsx.
+  }, [navigate, pivotViolations, closePivot]);
 }
