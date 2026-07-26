@@ -90,7 +90,7 @@
     "credential_verified_date": {
       "type": "string",
       "format": "date-time",
-      "description": "When credentials were last CONFIRMED against the official registry (the 'last verified' shown to users). Only refreshed on a real positive registry hit — never on a guess."
+      "description": "When credentials were last CONFIRMED against the official registry (the 'last verified' shown to users). Only refreshed on a real positive registry hit \u2014 never on a guess."
     },
     "license_last_checked_at": {
       "type": "string",
@@ -232,12 +232,16 @@
     },
     "internet_risk_level": {
       "type": "string",
-      "enum": ["low", "medium", "high"],
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
       "description": "Internet intelligence risk classification"
     },
     "internet_risk_score": {
       "type": "number",
-      "description": "Raw risk score 0–100 (lower = safer)"
+      "description": "Raw risk score 0\u2013100 (lower = safer)"
     },
     "internet_summary": {
       "type": "string",
@@ -259,5 +263,37 @@
     "phone",
     "clinic_country",
     "clinic_city"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": null,
+    "update": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
