@@ -85,6 +85,25 @@
       "type": "string",
       "default": "1.0",
       "description": "PCCP version applied at time of case"
+    },
+    "condition_bucket_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Fixed-taxonomy condition tags (bucketConditions) for the memory-bank recall match. Never raw condition text."
+    },
+    "medication_categories": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Fixed-taxonomy medication category tags (bucketMedicationNames) — names only, never dose/frequency/notes."
+    },
+    "procedure_match_status": {
+      "type": "string",
+      "description": "Carried over from the source CaseRecord as a trust signal for recall results."
+    },
+    "is_demo_seed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marks a row created by seedMemoryBankDemo so the seed/reset function only ever touches its own demo data."
     }
   },
   "required": [

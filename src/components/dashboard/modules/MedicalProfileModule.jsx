@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Shield, AlertTriangle, CheckCircle2, Heart, Activity, Brain, Loader2 } from 'lucide-react';
+import { User, Shield, AlertTriangle, CheckCircle2, Heart, Activity, Brain, Loader2, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import LoadingState from '@/components/ui-system/LoadingState';
+import PostProcedureCarePanel from '@/components/patient/PostProcedureCarePanel';
 
 const riskScores = [
   { label: 'Safety Score',            value: 82, color: '#047857' },
@@ -52,6 +53,22 @@ export default function MedicalProfileModule() {
         { client_email: user.email }, '-created_date', 1
       );
       return cases[0] ?? null;
+    },
+    enabled: !!user?.email,
+    staleTime: 60_000,
+  });
+
+  // Original intake snapshot — a separate entity/shape from CaseRecord (see
+  // CLAUDE.md: Consultation uses arrays, CaseRecord uses comma-strings). Shown
+  // read-only, clearly labeled, rather than silently merged with the editable
+  // profile below.
+  const { data: consultation } = useQuery({
+    queryKey: ['medical-profile-consultation', user?.email],
+    queryFn: async () => {
+      const consultations = await base44.entities.Consultation.filter(
+        { email: user.email }, '-created_date', 1
+      );
+      return consultations[0] ?? null;
     },
     enabled: !!user?.email,
     staleTime: 60_000,
@@ -175,6 +192,60 @@ export default function MedicalProfileModule() {
         <p className="text-xs text-slate-400 mt-0.5">Your health information — kept secure and private</p>
       </div>
 
+      {/* Original Intake Snapshot — read-only, as submitted at booking */}
+      {consultation && (
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+              <ClipboardList className="w-5 h-5 text-slate-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm">Your Original Medical Intake</h3>
+              <p className="text-xs text-slate-400">Submitted at booking — kept as a permanent record</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {(consultation.medical_conditions?.length > 0) && (
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Medical Conditions</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {consultation.medical_conditions.map(c => (
+                    <span key={c} className="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-full px-2.5 py-1">{c}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(consultation.allergies?.length > 0) && (
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Allergies</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {consultation.allergies.map(a => (
+                    <span key={a} className="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-full px-2.5 py-1">{a}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(consultation.medication_types?.length > 0 || consultation.medication_notes) && (
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Medications at Intake</p>
+                <div className="flex flex-wrap gap-1.5 mb-1">
+                  {(consultation.medication_types || []).map(m => (
+                    <span key={m} className="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-full px-2.5 py-1">{m}</span>
+                  ))}
+                </div>
+                {consultation.medication_notes && <p className="text-xs text-slate-500">{consultation.medication_notes}</p>}
+              </div>
+            )}
+            {consultation.pregnancy_status && consultation.pregnancy_status !== 'Not pregnant' && (
+              <p className="text-xs text-slate-500">Pregnancy status at intake: <span className="font-medium text-slate-700">{consultation.pregnancy_status}</span></p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Post-procedure medication schedule and outcome notes, once available */}
+      <PostProcedureCarePanel caseRecord={caseRecord} />
+
       {/* SAFE-T Risk Summary */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
         <div className="flex items-center gap-3 mb-5">
@@ -202,6 +273,12 @@ export default function MedicalProfileModule() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Editable, ongoing profile — distinct from the intake snapshot above */}
+      <div className="pt-2">
+        <h3 className="text-sm font-semibold text-slate-700">Keep Your Profile Updated</h3>
+        <p className="text-xs text-slate-400 mt-0.5">Update this any time — it doesn't change what you originally submitted at booking.</p>
       </div>
 
       {/* Personal Info */}

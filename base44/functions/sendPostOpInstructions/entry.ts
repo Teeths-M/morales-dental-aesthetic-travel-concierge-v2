@@ -14,6 +14,7 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
+import { classifyProcedureCategory } from '../_shared/procedureCategory.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -60,16 +61,6 @@ const STANDARD_CARE: Record<string, string[]> = {
   ],
 };
 
-function classifyProcedure(procedureName: string): string {
-  const lower = (procedureName || '').toLowerCase();
-  if (lower.includes('dental') || lower.includes('implant') || lower.includes('oral') ||
-      lower.includes('teeth') || lower.includes('crown') || lower.includes('veneer')) return 'dental';
-  if (lower.includes('lipo') || lower.includes('rhinoplasty') || lower.includes('facelift') ||
-      lower.includes('bbl') || lower.includes('tummy') || lower.includes('breast') ||
-      lower.includes('aesthetic') || lower.includes('cosmetic')) return 'aesthetic';
-  return 'general';
-}
-
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { case_id, outcome_notes } = await body<{ case_id: string; outcome_notes?: string }>();
   if (!case_id) return err('case_id is required');
@@ -84,7 +75,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const patientPhone  = caseRecord.client_phone   || '';
   const procedureName = caseRecord.procedures?.[0] || 'your procedure';
   const notes         = outcome_notes || caseRecord.procedure_outcome_notes || '';
-  const category      = classifyProcedure(procedureName);
+  const category      = classifyProcedureCategory(procedureName);
   const standardCare  = STANDARD_CARE[category] || STANDARD_CARE.general;
   const now           = new Date().toISOString();
 

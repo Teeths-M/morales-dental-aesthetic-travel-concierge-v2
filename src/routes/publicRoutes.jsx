@@ -73,6 +73,7 @@ const EmergencyMeshBeaconDemo  = lazy(() => import('@/pages/EmergencyMeshBeaconD
 const CoverageMatrix           = lazy(() => import('@/pages/CoverageMatrix'));
 const SiobhanDemo              = lazy(() => import('@/pages/SiobhanDemo'));
 const RecoveryCascadeDemo      = lazy(() => import('@/pages/RecoveryCascadeDemo'));
+const MemoryBankDemo           = lazy(() => import('@/pages/MemoryBankDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
 
@@ -126,6 +127,7 @@ export const publicRoutes = (
     <Route path="/demo/coverage"        element={<ErrorBoundary><CoverageMatrix /></ErrorBoundary>} />
     <Route path="/demo/siobhan"         element={<ErrorBoundary><SiobhanDemo /></ErrorBoundary>} />
     <Route path="/demo/recovery-cascade" element={<ErrorBoundary><RecoveryCascadeDemo /></ErrorBoundary>} />
+    <Route path="/demo/memory-bank"     element={<ErrorBoundary><MemoryBankDemo /></ErrorBoundary>} />
     <Route path="/signup"                element={<ErrorBoundary><SignupLanding /></ErrorBoundary>} />
     <Route path="/nearby"              element={<ErrorBoundary><NearbyHelp /></ErrorBoundary>} />
     <Route path="/recovery-check-in/:token"  element={<ErrorBoundary><RecoveryCheckIn /></ErrorBoundary>} />

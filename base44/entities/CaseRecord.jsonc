@@ -482,6 +482,60 @@
       "type": "string",
       "format": "date-time"
     },
+
+    // ── Stage 11 Doctor Confirmation: Procedure Match + Recommended Meds ─────
+    "procedures_confirmed_by_doctor": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "What the doctor confirms was actually performed at Stage 11. Compared deterministically against `procedures` (what was booked) by computeProcedureMatch."
+    },
+    "procedure_match_status": {
+      "type": "string",
+      "enum": ["not_checked", "matched", "partial_match", "mismatch_flagged"],
+      "default": "not_checked",
+      "description": "Deterministic result of comparing booked vs. doctor-confirmed procedures. Never set by an LLM."
+    },
+    "procedure_match_explanation": {
+      "type": "string",
+      "description": "Deterministic plain-English sentence explaining procedure_match_status. Always present when a match check has run."
+    },
+    "procedure_match_ai_summary": {
+      "type": "string",
+      "description": "Optional LLM narration of the already-decided procedure_match_status. Advisory phrasing only — never changes the status."
+    },
+    "procedure_match_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "doctor_recommended_medications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "dose": { "type": "string" },
+          "frequency": { "type": "string" },
+          "duration": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      },
+      "description": "Doctor's real, structured post-op medication entry for this patient. Empty/absent means the standard default schedule still applies (schedulePostOpMedReminders)."
+    },
+    "doctor_recommended_medications_entered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "medication_source": {
+      "type": "string",
+      "enum": ["doctor_entered", "standard_default"],
+      "description": "Lets the patient-facing panel label whether the shown schedule came from the doctor or the standard protocol."
+    },
+    "is_demo_seed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marks a row created by seedMemoryBankDemo so the seed/reset function only ever touches its own demo data."
+    },
+
     "fallback_state": {
       "type": "object",
       "description": "In-flux routing state when a primary partner misses their confirmation window",

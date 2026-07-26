@@ -18,10 +18,9 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { linkOnlyEmail } from '../_shared/notify.ts';
+import { classifyProcedureCategory, ProcedureCategory } from '../_shared/procedureCategory.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-
-type ProcedureCategory = 'dental' | 'aesthetic' | 'general';
 
 interface MedItem {
   name: string;
@@ -105,17 +104,6 @@ const MED_SCHEDULES: Record<ProcedureCategory, MedItem[]> = {
   ],
 };
 
-function classifyProcedure(procedureName: string): ProcedureCategory {
-  const lower = (procedureName || '').toLowerCase();
-  if (lower.includes('dental') || lower.includes('implant') || lower.includes('crown') ||
-      lower.includes('veneer') || lower.includes('teeth') || lower.includes('tooth') ||
-      lower.includes('oral') || lower.includes('jaw')) return 'dental';
-  if (lower.includes('lipo') || lower.includes('rhinoplasty') || lower.includes('facelift') ||
-      lower.includes('bbl') || lower.includes('augment') || lower.includes('tummy') ||
-      lower.includes('aesthetic') || lower.includes('cosmetic') || lower.includes('breast')) return 'aesthetic';
-  return 'general';
-}
-
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { case_id } = await body<{ case_id: string }>();
   if (!case_id) return err('case_id is required');
@@ -128,15 +116,33 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const patientName  = caseRecord.client_name  || caseRecord.client_email || 'Patient';
   const patientEmail = caseRecord.client_email  || '';
   const procedureName = (caseRecord.procedures?.[0]) || 'Procedure';
-  const category = classifyProcedure(procedureName);
-  const meds = MED_SCHEDULES[category];
+  const category = classifyProcedureCategory(procedureName);
   const now = new Date().toISOString();
+
+  // A real, structured doctor entry always wins over the standard default
+  // template. Absent/empty ⇒ the standard-by-category schedule still applies,
+  // so cases predating this feature see no change in behavior.
+  const doctorMeds: { name: string; dose?: string; frequency?: string; duration?: string; notes?: string }[] =
+    Array.isArray(caseRecord.doctor_recommended_medications) ? caseRecord.doctor_recommended_medications : [];
+  const usingDoctorMeds = doctorMeds.length > 0;
+  const meds: MedItem[] = usingDoctorMeds
+    ? doctorMeds.map((m) => ({
+        name: m.name,
+        dose: m.dose || 'As prescribed by your doctor',
+        frequency: m.frequency || 'As prescribed by your doctor',
+        duration: m.duration || 'As prescribed by your doctor',
+        times: ['See dose/frequency above'],
+        notes: m.notes || '',
+      }))
+    : MED_SCHEDULES[category];
+  const medicationSource = usingDoctorMeds ? 'doctor_entered' : 'standard_default';
 
   // Store schedule on CaseRecord for in-app access
   await base44.asServiceRole.entities.CaseRecord.update(case_id, {
     medication_schedule: meds,
     medication_schedule_set_at: now,
     medication_procedure_category: category,
+    medication_source: medicationSource,
   }).catch(e => console.error('[schedulePostOpMedReminders] case update failed:', e?.message));
 
   // Notify the patient — the actual schedule (drug names/doses/times) stays
@@ -163,7 +169,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     actor_id: 'system',
     actor_name: 'schedulePostOpMedReminders',
     case_id,
-    details: { patient_name: patientName, procedure_category: category, medication_count: meds.length },
+    details: { patient_name: patientName, procedure_category: category, medication_count: meds.length, medication_source: medicationSource },
     sensitive: false,
     timestamp: now,
     prev_hash: await computePrevHash(base44),
@@ -173,6 +179,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     success: true,
     case_id,
     procedure_category: category,
+    medication_source: medicationSource,
     medications_scheduled: meds.length,
     email_sent: !!patientEmail,
   });

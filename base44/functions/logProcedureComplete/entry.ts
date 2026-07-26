@@ -5,6 +5,11 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { resolveCaseIdentity } from '../_shared/resolveCaseIdentity.ts';
+import { computeProcedureMatch } from '../_shared/procedureMatch.ts';
+import { sanitizeFields } from '../_shared/sanitizePromptInput.ts';
+
+const MATCH_NARRATION_MODEL = 'gpt_5_mini';
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -24,32 +29,65 @@ Deno.serve(createHandler(async ({ req }) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
     const body = await req.json();
-    const { case_id, token, outcome_notes } = body;
+    const { case_id, token, outcome_notes, procedures_confirmed_by_doctor, doctor_recommended_medications } = body;
 
-    // Resolve identity: session user OR token-authenticated doctor
-    let resolvedEmail = user?.email || null;
-    let caseRecord = null;
-
-    if (token) {
-      const records = await base44.asServiceRole.entities.CaseRecord.filter({ doctor_portal_token: token });
-      caseRecord = records?.[0] || null;
-      if (!caseRecord) {
-        return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
-      }
-      if (!resolvedEmail) resolvedEmail = caseRecord.doctor_email || 'doctor-via-token';
-    } else if (user && (user.role === 'admin' || user.role === 'platform_admin')) {
-      if (!case_id) return Response.json({ error: 'case_id is required' }, { status: 400 });
-      caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
-      if (!caseRecord) return Response.json({ error: 'CaseRecord not found' }, { status: 404 });
-    } else {
-      return Response.json({ error: 'Unauthorized — provide a valid portal token or admin session' }, { status: 401 });
+    const identity = await resolveCaseIdentity(base44, user, { case_id, token });
+    if (!identity.ok) {
+      return Response.json({ error: identity.error }, { status: identity.status });
     }
+    const { caseRecord, resolvedEmail } = identity;
 
     if (caseRecord.status !== 'SURGICAL_EXECUTION_WINDOW') {
       return Response.json({
         error: `Case is not in SURGICAL_EXECUTION_WINDOW (current: ${caseRecord.status}). Cannot log procedure complete from this state.`
       }, { status: 409 });
     }
+
+    // ── Deterministic procedure-match verification (decided BEFORE any AI call) ─
+    const confirmedProcedures = Array.isArray(procedures_confirmed_by_doctor)
+      ? procedures_confirmed_by_doctor.filter((p: unknown) => typeof p === 'string' && p.trim())
+      : [];
+    const match = computeProcedureMatch(caseRecord.procedures, confirmedProcedures);
+
+    const cleanMeds = Array.isArray(doctor_recommended_medications)
+      ? doctor_recommended_medications
+          .filter((m: any) => m && typeof m.name === 'string' && m.name.trim())
+          .map((m: any) => ({
+            name: String(m.name).trim().slice(0, 200),
+            dose: String(m.dose || '').trim().slice(0, 100),
+            frequency: String(m.frequency || '').trim().slice(0, 100),
+            duration: String(m.duration || '').trim().slice(0, 100),
+            notes: String(m.notes || '').trim().slice(0, 500),
+          }))
+      : [];
+
+    // Optional, advisory-only LLM narration of the already-decided match status.
+    // Never asked to change or re-derive the status — only to phrase it calmly.
+    let matchAiSummary = '';
+    try {
+      const { clean } = sanitizeFields({
+        booked: (caseRecord.procedures || []).join(', '),
+        confirmed: confirmedProcedures.join(', '),
+      }, 500);
+      const narr = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        model: MATCH_NARRATION_MODEL,
+        prompt: `A doctor has confirmed a procedure as complete. A deterministic rules engine has already decided the match status below — you are not deciding anything, only writing one calm, plain-English sentence a coordinator can read at a glance.
+
+Booked procedures: ${clean.booked || '(none recorded)'}
+Doctor-confirmed procedures: ${clean.confirmed || '(none recorded)'}
+Already-decided status: ${match.status}
+
+Write ONE short sentence narrating this status for a care coordinator. Do not suggest a different status. Do not offer clinical advice.
+
+Return JSON only: { "summary": "one short sentence" }`,
+        response_json_schema: {
+          type: 'object',
+          properties: { summary: { type: 'string' } },
+          required: ['summary'],
+        },
+      });
+      matchAiSummary = String(narr?.summary || '');
+    } catch (_) { /* narration is optional — the deterministic explanation always stands */ }
 
     const now = new Date().toISOString();
     const updatedTimeline = [
@@ -76,7 +114,16 @@ Deno.serve(createHandler(async ({ req }) => {
       notification_blackout_active: false,
       notification_blackout_lifted_at: now,
       procedure_complete_logged_at: now,
-      timeline_log: updatedTimeline
+      timeline_log: updatedTimeline,
+      procedures_confirmed_by_doctor: confirmedProcedures,
+      procedure_match_status: match.status,
+      procedure_match_explanation: match.explanation,
+      procedure_match_ai_summary: matchAiSummary,
+      procedure_match_checked_at: now,
+      ...(cleanMeds.length > 0 ? {
+        doctor_recommended_medications: cleanMeds,
+        doctor_recommended_medications_entered_at: now,
+      } : {}),
     });
 
     // Count how many notifications were suppressed during blackout
@@ -149,13 +196,17 @@ Deno.serve(createHandler(async ({ req }) => {
       ).catch(() => {});
     }
 
-    // Auto-send post-op instructions and medication schedule (non-fatal)
+    // Auto-send post-op instructions, medication schedule, and the anonymized
+    // memory-bank write (non-fatal — none of these can undo the transition above).
     await Promise.allSettled([
       base44.functions.invoke('sendPostOpInstructions', {
         case_id: caseRecord.id,
         outcome_notes: outcome_notes || null,
       }),
       base44.functions.invoke('schedulePostOpMedReminders', {
+        case_id: caseRecord.id,
+      }),
+      base44.functions.invoke('writeOutcomeMemory', {
         case_id: caseRecord.id,
       }),
     ]);
@@ -168,6 +219,9 @@ Deno.serve(createHandler(async ({ req }) => {
       procedure_complete_logged_at: now,
       recovery_mode_auto_triggered: true,
       suppressed_notifications_pending: suppressedLogs?.length || 0,
+      procedure_match_status: match.status,
+      procedure_match_explanation: match.explanation,
+      procedure_match_ai_summary: matchAiSummary || null,
       message: `Stage 11 complete. Procedure logged by ${resolvedEmail}. Case moved to 7-Day Recovery. Recovery Mode auto-triggered. ${suppressedLogs?.length || 0} suppressed notifications are in audit log.`
     });
 

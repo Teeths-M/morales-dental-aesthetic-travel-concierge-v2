@@ -6,6 +6,7 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { resolveCaseIdentity } from '../_shared/resolveCaseIdentity.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -14,24 +15,11 @@ Deno.serve(createHandler(async ({ req }) => {
     const body = await req.json();
     const { case_id, token } = body;
 
-    // Resolve identity: session user OR token-authenticated doctor
-    let resolvedEmail = user?.email || null;
-    let caseRecord = null;
-
-    if (token) {
-      const records = await base44.asServiceRole.entities.CaseRecord.filter({ doctor_portal_token: token });
-      caseRecord = records?.[0] || null;
-      if (!caseRecord) {
-        return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
-      }
-      if (!resolvedEmail) resolvedEmail = caseRecord.doctor_email || 'doctor-via-token';
-    } else if (user && (user.role === 'admin' || user.role === 'platform_admin')) {
-      if (!case_id) return Response.json({ error: 'case_id is required' }, { status: 400 });
-      caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
-      if (!caseRecord) return Response.json({ error: 'CaseRecord not found' }, { status: 404 });
-    } else {
-      return Response.json({ error: 'Unauthorized — provide a valid portal token or admin session' }, { status: 401 });
+    const identity = await resolveCaseIdentity(base44, user, { case_id, token });
+    if (!identity.ok) {
+      return Response.json({ error: identity.error }, { status: identity.status });
     }
+    const { caseRecord, resolvedEmail } = identity;
 
     // Idempotency: already in execution window
     if (caseRecord.status === 'SURGICAL_EXECUTION_WINDOW') {

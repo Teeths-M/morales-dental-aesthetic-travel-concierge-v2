@@ -8,15 +8,18 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck, AlertTriangle, CheckCircle2, Loader2,
-  BellOff, Activity, ClipboardCheck
+  BellOff, Activity, ClipboardCheck, Plus, X, Pill
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
 import { friendlyError, safeError } from '@/lib/friendlyError';
+import MemoryBankAdvisoryPanel from '@/components/doctor/MemoryBankAdvisoryPanel';
 
 const SURGICAL_STAGES = ['Procedure-In-Progress', 'SURGICAL_EXECUTION_WINDOW', 'Ready-For-Travel'];
+const EMPTY_MED = { name: '', dose: '', frequency: '', duration: '', notes: '' };
 
 export default function SurgicalExecutionControls({ caseData, token, onStatusChange }) {
   const [loadingHandshake, setLoadingHandshake] = useState(false);
@@ -25,6 +28,38 @@ export default function SurgicalExecutionControls({ caseData, token, onStatusCha
   const [showCompleteForm, setShowCompleteForm] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  const bookedProcedures = caseData?.procedures || [];
+  const [confirmedSet, setConfirmedSet] = useState(() => new Set(bookedProcedures));
+  const [extraProcedures, setExtraProcedures] = useState([]);
+  const [extraProcedureInput, setExtraProcedureInput] = useState('');
+  const [medications, setMedications] = useState([{ ...EMPTY_MED }]);
+
+  const toggleBookedProcedure = (name) => {
+    setConfirmedSet(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+
+  const addExtraProcedure = () => {
+    const val = extraProcedureInput.trim();
+    if (!val || extraProcedures.includes(val)) return;
+    setExtraProcedures(prev => [...prev, val]);
+    setExtraProcedureInput('');
+  };
+
+  const removeExtraProcedure = (val) => {
+    setExtraProcedures(prev => prev.filter(p => p !== val));
+  };
+
+  const updateMedication = (idx, field, value) => {
+    setMedications(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m));
+  };
+
+  const addMedicationRow = () => setMedications(prev => [...prev, { ...EMPTY_MED }]);
+  const removeMedicationRow = (idx) => setMedications(prev => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
 
   const status = caseData?.status;
   const isBlackoutActive = caseData?.notification_blackout_active;
@@ -56,10 +91,18 @@ export default function SurgicalExecutionControls({ caseData, token, onStatusCha
     setLoadingComplete(true);
     setError(null);
     try {
+      const confirmedProcedures = [
+        ...bookedProcedures.filter(p => confirmedSet.has(p)),
+        ...extraProcedures,
+      ];
+      const cleanMedications = medications.filter(m => m.name.trim());
+
       const res = await base44.functions.invoke('logProcedureComplete', {
         case_id: caseData.id,
         token: token || undefined,
-        outcome_notes: outcomeNotes
+        outcome_notes: outcomeNotes,
+        procedures_confirmed_by_doctor: confirmedProcedures,
+        doctor_recommended_medications: cleanMedications,
       });
       if (!res.data?.success) throw safeError(res.data?.error || 'Could not record the procedure as complete.');
       setResult({ type: 'complete', data: res.data });
@@ -90,6 +133,12 @@ export default function SurgicalExecutionControls({ caseData, token, onStatusCha
               <p className="text-xs mt-2 text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
                 {result.data.suppressed_notifications_pending} suppressed notifications are pending in the audit log.
               </p>
+            )}
+            {result.type === 'complete' && result.data.procedure_match_status === 'mismatch_flagged' && (
+              <div className="text-xs mt-2 text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 flex items-start gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                <span>{result.data.procedure_match_explanation || 'What was confirmed differs from what was booked — this has been flagged for review.'}</span>
+              </div>
             )}
           </div>
         </div>
@@ -180,8 +229,55 @@ export default function SurgicalExecutionControls({ caseData, token, onStatusCha
             <motion.div
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-3"
+              className="space-y-4"
             >
+              {/* AI procedure-match verification: doctor confirms what was actually done */}
+              {bookedProcedures.length > 0 && (
+                <div>
+                  <Label className="text-emerald-800 font-medium">Confirm Procedures Performed</Label>
+                  <p className="text-xs text-emerald-700 mt-0.5 mb-2">
+                    Uncheck anything not done, or add a procedure that isn't on the original booking. This is checked automatically against the booking — a difference is flagged for review, it never blocks recovery.
+                  </p>
+                  <div className="space-y-1.5">
+                    {bookedProcedures.map(p => (
+                      <label key={p} className="flex items-center gap-2 bg-white rounded-lg border border-emerald-200 px-3 py-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={confirmedSet.has(p)}
+                          onChange={() => toggleBookedProcedure(p)}
+                          className="rounded"
+                        />
+                        <span className="text-sm text-slate-700">{p}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {extraProcedures.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {extraProcedures.map(p => (
+                        <span key={p} className="text-xs bg-amber-100 border border-amber-300 text-amber-800 rounded-full pl-2.5 pr-1.5 py-1 flex items-center gap-1">
+                          {p}
+                          <button type="button" onClick={() => removeExtraProcedure(p)} className="hover:text-amber-900">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={extraProcedureInput}
+                      onChange={(e) => setExtraProcedureInput(e.target.value)}
+                      placeholder="Add a procedure performed that isn't listed above"
+                      className="bg-white"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtraProcedure(); } }}
+                    />
+                    <Button type="button" variant="outline" onClick={addExtraProcedure} className="gap-1 flex-shrink-0">
+                      <Plus className="w-4 h-4" /> Add
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Label className="text-emerald-800 font-medium">Outcome Notes (optional)</Label>
                 <Textarea
@@ -191,6 +287,42 @@ export default function SurgicalExecutionControls({ caseData, token, onStatusCha
                   className="mt-1.5 h-24 bg-white"
                 />
               </div>
+
+              {/* Doctor-entered recommended medications — replaces the standard default schedule when filled in */}
+              <div>
+                <Label className="text-emerald-800 font-medium flex items-center gap-1.5">
+                  <Pill className="w-4 h-4" /> Recommended Medications (optional)
+                </Label>
+                <p className="text-xs text-emerald-700 mt-0.5 mb-2">
+                  Leave blank to use the standard care protocol for this procedure type instead.
+                </p>
+                <div className="space-y-2">
+                  {medications.map((med, idx) => (
+                    <div key={idx} className="bg-white rounded-lg border border-emerald-200 p-3 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input value={med.name} onChange={(e) => updateMedication(idx, 'name', e.target.value)} placeholder="Medication name" />
+                        <Input value={med.dose} onChange={(e) => updateMedication(idx, 'dose', e.target.value)} placeholder="Dose (e.g. 500mg)" />
+                        <Input value={med.frequency} onChange={(e) => updateMedication(idx, 'frequency', e.target.value)} placeholder="Frequency (e.g. 3x/day)" />
+                        <Input value={med.duration} onChange={(e) => updateMedication(idx, 'duration', e.target.value)} placeholder="Duration (e.g. 7 days)" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Input value={med.notes} onChange={(e) => updateMedication(idx, 'notes', e.target.value)} placeholder="Notes for the patient (optional)" className="flex-1" />
+                        {medications.length > 1 && (
+                          <Button type="button" variant="outline" size="icon" onClick={() => removeMedicationRow(idx)} className="flex-shrink-0">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button type="button" variant="outline" onClick={addMedicationRow} className="gap-1 mt-2">
+                  <Plus className="w-4 h-4" /> Add another medication
+                </Button>
+              </div>
+
+              <MemoryBankAdvisoryPanel caseId={caseData?.id} token={token} />
+
               <div className="flex gap-3">
                 <Button
                   onClick={handleProcedureComplete}

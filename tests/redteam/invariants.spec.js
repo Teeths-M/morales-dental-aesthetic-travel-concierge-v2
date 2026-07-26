@@ -1923,3 +1923,128 @@ test('DOCTOR NOMINATION: role gates are correct on all four edge functions', () 
   expect(optOutSrc, 'opt-out must stay public — the doctor has no M account to log in with')
     .toContain('requireAuth: false');
 });
+
+// ─── Memory Bank (Doctor-Verified Completion + Anonymized Outcomes) ─────────
+// This feature lets a doctor confirm a procedure matches what was booked and
+// enter real medications, then anonymizes the outcome into OutcomeRecord for
+// future reference. The precedent it must not cross: Recovery Wellness
+// Guidance was deliberately scoped to keep AI out of naming medications
+// pending legal review. Here the DOCTOR enters medications (not the AI), and
+// the "memory bank" recall is doctor-only, advisory, and always caveated —
+// never a recommendation pushed at a patient. These tests pin that shape.
+
+test('MEMORY BANK: writeOutcomeMemory never writes patient identity or raw medication/notes text onto OutcomeRecord', () => {
+  const src = read('base44/functions/writeOutcomeMemory/entry.ts');
+  const createIdx = src.indexOf('OutcomeRecord.create({');
+  expect(createIdx, 'OutcomeRecord.create call must exist').toBeGreaterThan(-1);
+  const catchIdx = src.indexOf('.catch(', createIdx);
+  expect(catchIdx, 'the create call must be followed by a .catch').toBeGreaterThan(createIdx);
+  const createCall = src.slice(createIdx, catchIdx);
+
+  for (const leak of ['client_name', 'client_email', 'patient_name', 'doctor_notes', 'outcome_notes']) {
+    expect(createCall, `OutcomeRecord.create must not include ${leak}`).not.toContain(leak);
+  }
+  // Only the fixed-taxonomy bucketing helpers may feed condition/medication tags —
+  // never the patient's raw medical_conditions string or raw medication objects.
+  expect(src, 'condition tags must come from the bucketing helper').toContain('bucketConditions(');
+  expect(src, 'medication tags must come from the bucketing helper').toContain('bucketMedicationNames(');
+  expect(createCall, 'the create call must not pass raw medical_conditions through').not.toContain('caseRecord.medical_conditions,');
+});
+
+test('MEMORY BANK: recallSimilarOutcomes always returns the fixed caveat and never a raw case_id, in both branches', () => {
+  const src = read('base44/functions/recallSimilarOutcomes/entry.ts');
+  const caveatDeclIdx = src.indexOf('RECALL_CAVEAT =');
+  expect(caveatDeclIdx, 'a fixed caveat constant must be declared').toBeGreaterThan(-1);
+
+  const insufficientIdx = src.indexOf("status: 'insufficient_data'");
+  expect(insufficientIdx, 'insufficient_data branch must exist').toBeGreaterThan(-1);
+  const insufficientBlock = src.slice(insufficientIdx, insufficientIdx + 300);
+  expect(insufficientBlock, 'insufficient_data response must carry the caveat').toContain('caveat: RECALL_CAVEAT');
+  expect(insufficientBlock, 'must not leak a raw case_id').not.toMatch(/\bcase_id:/);
+
+  const okIdx = src.indexOf("status: 'ok'");
+  expect(okIdx, 'ok branch must exist').toBeGreaterThan(-1);
+  const okBlock = src.slice(okIdx, okIdx + 500);
+  expect(okBlock, 'ok response must carry the caveat').toContain('caveat: RECALL_CAVEAT');
+  expect(okBlock, 'must not leak a raw case_id').not.toMatch(/\bcase_id:/);
+});
+
+test('MEMORY BANK: recallSimilarOutcomes only ever aggregates — no single-row field make it into the response', () => {
+  const src = read('base44/functions/recallSimilarOutcomes/entry.ts');
+  // The response must be built from computed aggregates (counts/percentages),
+  // never by mapping the raw `overlapping` rows into the payload.
+  expect(src, 'must not return the raw matched rows').not.toMatch(/similar_cases:\s*overlapping/);
+  expect(src, 'must not spread a raw record into the response').not.toMatch(/\.\.\.\s*rec\b/);
+});
+
+test('MEMORY BANK: MemoryBankAdvisoryPanel (doctor-only) is never IMPORTED on a patient-facing surface', () => {
+  // Match the real import statement, not just the bare identifier — the
+  // identifier legitimately appears in explanatory comments (e.g.
+  // PostProcedureCarePanel.jsx documents that it deliberately does NOT render
+  // this panel), which a plain substring check would misflag.
+  const IMPORT_PATTERN = /from ['"]@\/components\/doctor\/MemoryBankAdvisoryPanel['"]/;
+
+  const dashboard = read('src/pages/Dashboard.jsx');
+  expect(dashboard, 'Dashboard must not import the doctor-only memory bank panel').not.toMatch(IMPORT_PATTERN);
+
+  const patientDir = join(ROOT, 'src/components/patient');
+  const offenders = [];
+  for (const name of readdirSync(patientDir)) {
+    if (!name.endsWith('.jsx')) continue;
+    const src = readFileSync(join(patientDir, name), 'utf8');
+    if (IMPORT_PATTERN.test(src)) offenders.push(name);
+  }
+  expect(offenders, `patient-facing files importing the doctor-only panel: ${offenders.join(', ')}`).toEqual([]);
+});
+
+test('MEMORY BANK: the new doctor-facing recall path never queries OutcomeRecord directly from the client', () => {
+  // Scoped to the files this feature introduces — recallSimilarOutcomes'
+  // aggregation must be the only read path a doctor's browser ever exercises.
+  // NOT a blanket ban repo-wide: src/pages/RiskOptimizationDashboard.jsx is a
+  // pre-existing, unrelated admin-only review console (RLS already restricts
+  // OutcomeRecord to admin/platform_admin) that predates this feature and is
+  // out of scope here.
+  const NEW_FILES = [
+    'src/components/doctor/MemoryBankAdvisoryPanel.jsx',
+    'src/components/patient/PostProcedureCarePanel.jsx',
+    'src/pages/MemoryBankDemo.jsx',
+    'src/components/portal/SurgicalExecutionControls.jsx',
+    'src/components/dashboard/modules/MedicalProfileModule.jsx',
+  ];
+  const offenders = NEW_FILES.filter((p) => read(p).includes('entities.OutcomeRecord'));
+  expect(offenders, `client-side OutcomeRecord usage: ${offenders.join(', ')}`).toEqual([]);
+});
+
+test('MEMORY BANK: logProcedureComplete computes the deterministic procedure-match status BEFORE any AI call', () => {
+  const src = read('base44/functions/logProcedureComplete/entry.ts');
+  const matchIdx = src.indexOf('computeProcedureMatch(');
+  const llmIdx = src.indexOf('InvokeLLM');
+  expect(matchIdx, 'computeProcedureMatch call must exist').toBeGreaterThan(-1);
+  expect(llmIdx, 'AI narration call must exist').toBeGreaterThan(-1);
+  expect(matchIdx, 'the deterministic match must be computed before the AI is invoked').toBeLessThan(llmIdx);
+
+  // The CaseRecord write must persist the deterministic result, never the AI's phrasing.
+  expect(src).toContain('procedure_match_status: match.status');
+  expect(src).not.toMatch(/procedure_match_status:\s*matchAiSummary/);
+});
+
+test('MEMORY BANK: a procedure mismatch is flagged, never blocked — the case still moves to recovery', () => {
+  // The status value itself is defined in the deterministic engine, not
+  // re-declared in the caller.
+  const engineSrc = read('base44/functions/_shared/procedureMatch.ts');
+  expect(engineSrc, 'mismatch_flagged must be a defined status').toContain("'mismatch_flagged'");
+
+  const src = read('base44/functions/logProcedureComplete/entry.ts');
+  const statusWriteIdx = src.indexOf("status: 'RECOVERY_PHASE_7_DAY'");
+  expect(statusWriteIdx, 'the recovery-phase transition must exist').toBeGreaterThan(-1);
+  // The match result must be computed once and never branched on to short-circuit
+  // the response — no conditional on match.status precedes an error/4xx return.
+  expect(src, 'a mismatch must not itself trigger an error/blocked response')
+    .not.toMatch(/match\.status\s*===?\s*['"]mismatch_flagged['"][\s\S]{0,150}status:\s*4\d\d/);
+  // The deterministic result is always persisted, unconditionally, alongside
+  // the status transition — not gated behind an if(match.status === ...) branch.
+  const updateIdx = src.indexOf('CaseRecord.update(caseRecord.id, {');
+  const updateBlock = src.slice(updateIdx, src.indexOf('});', updateIdx));
+  expect(updateBlock, 'procedure_match_status must be written unconditionally with the status transition')
+    .toContain('procedure_match_status: match.status');
+});

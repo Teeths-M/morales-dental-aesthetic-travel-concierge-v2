@@ -36,7 +36,9 @@
         "doctor_nomination_approved",
         "doctor_nomination_rejected",
         "doctor_nomination_outreach_sent",
-        "doctor_nomination_opted_out"
+        "doctor_nomination_opted_out",
+        "outcome_memory_written",
+        "memory_bank_recall_viewed"
       ]
     },
     "actor_id": {
