@@ -15,6 +15,28 @@ const GREEN  = '#22c55e';
 
 const DEMO_TOKEN = 'demo-memorybank-token';
 
+/**
+ * This is a diagnostic/demo page, not a patient-facing screen — unlike
+ * friendlyError.js's deliberately soft messaging elsewhere in this app, the
+ * useful thing here is the raw status + body so a 404 (function not yet
+ * Published in Base44) is visibly distinguishable from a real 500.
+ */
+function describeInvokeError(err) {
+  console.error('[MemoryBankDemo]', err);
+  const status = err?.response?.status ?? err?.status ?? null;
+  const body = err?.response?.data;
+  if (status === 404) {
+    return 'Not found (404) — this function likely isn\'t published in Base44 yet. Publish CaseRecord/OutcomeRecord/AuditLog and the memory-bank functions, then retry.';
+  }
+  if (body?.error) {
+    return `${body.error}${body.incident_code ? ` (incident ${body.incident_code})` : ''}${status ? ` — HTTP ${status}` : ''}`;
+  }
+  if (status) {
+    return `Request failed — HTTP ${status}.`;
+  }
+  return err?.message || 'Could not reach the server — please try again.';
+}
+
 export default function MemoryBankDemo() {
   const [seedState, setSeedState] = useState('idle'); // idle | seeding | seeded | error
   const [seedInfo, setSeedInfo] = useState(null);
@@ -22,25 +44,30 @@ export default function MemoryBankDemo() {
 
   const [preview, setPreview] = useState(null);
   const [previewState, setPreviewState] = useState('idle'); // idle | loading | ok | empty | error
+  const [previewError, setPreviewError] = useState(null);
 
   const seedDemo = async () => {
     setSeedState('seeding');
     setSeedError(null);
     try {
       const res = await base44.functions.invoke('seedMemoryBankDemo', {});
-      if (!res.data?.success) throw new Error(res.data?.error || 'Seeding failed');
+      if (!res.data?.success) {
+        const raw = res.data && Object.keys(res.data).length ? JSON.stringify(res.data) : '(empty response)';
+        throw new Error(res.data?.error || `Unexpected response ${raw} — this usually means the function isn't published in Base44 yet.`);
+      }
       setSeedInfo(res.data);
       setSeedState('seeded');
       setPreview(null);
       setPreviewState('idle');
     } catch (err) {
-      setSeedError(err?.message || 'Could not seed the demo — please try again.');
+      setSeedError(describeInvokeError(err));
       setSeedState('error');
     }
   };
 
   const loadPreview = async () => {
     setPreviewState('loading');
+    setPreviewError(null);
     try {
       const res = await base44.functions.invoke('getMemoryBankDemoPreview', {});
       if (!res.data?.success) {
@@ -49,7 +76,8 @@ export default function MemoryBankDemo() {
       }
       setPreview(res.data.case);
       setPreviewState(res.data.case?.medication_schedule?.length ? 'ok' : 'empty');
-    } catch (_err) {
+    } catch (err) {
+      setPreviewError(describeInvokeError(err));
       setPreviewState('error');
     }
   };
@@ -164,7 +192,7 @@ export default function MemoryBankDemo() {
             </p>
           )}
           {previewState === 'error' && (
-            <p className="text-sm text-red-400">Could not load the preview right now.</p>
+            <p className="text-sm text-red-400">{previewError}</p>
           )}
         </div>
       </div>

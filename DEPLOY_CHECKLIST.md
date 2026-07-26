@@ -39,6 +39,9 @@ silently drop it.
 | `User` | `protection_type`, `protection_type_set_at` | First-sign-in answer ("Medical Traveler / Non-Traveler") never persists server-side. The localStorage mirror keeps the UI working on that one device, so **this failure is invisible** — it looks fine until the user changes device. |
 | `CaseRecord` | `location_tracking_consent`, `_at`, `_version`, `_revoked_at` | Location-sharing consent never reaches the server. Tracking still works locally, but a **revocation made on another device will not be honoured**. This one is a privacy failure, not a cosmetic one. |
 | `AccountFlag` | *(entire entity is new)* | The Malicious Action Blocker cannot record a flag. Blocks still refuse the action, but nothing is remembered, `/admin/flags` shows an empty queue that is not actually empty, and repeat offenders never escalate. |
+| `CaseRecord` | `procedures_confirmed_by_doctor`, `procedure_match_status`, `procedure_match_explanation`, `procedure_match_ai_summary`, `procedure_match_checked_at`, `doctor_recommended_medications`, `doctor_recommended_medications_entered_at`, `medication_source`, `is_demo_seed` | Doctor-verified completion (Stage 11) silently drops the procedure-match check and any doctor-entered medications — the patient still gets the old hardcoded default med schedule instead. |
+| `OutcomeRecord` | `condition_bucket_tags`, `medication_categories`, `procedure_match_status`, `is_demo_seed` | The anonymized memory-bank write drops its match tags — `writeOutcomeMemory`/`recallSimilarOutcomes` still "succeed" but never actually match anything, so the memory bank looks permanently empty. |
+| `AuditLog` | `outcome_memory_written`, `memory_bank_recall_viewed` (enum values) | Those two audit events are silently dropped rather than logged. |
 
 ### New functions
 
@@ -46,9 +49,21 @@ silently drop it.
 | --- | --- | --- |
 | `reviewAccountFlag` | The only route back from a block | A restricted account has **no way to be cleared**. The blocker's notification email links to `/admin/flags`, and the buttons there will fail. |
 | `getSafetyContact` | Serves the offline-SOS SMS number | The `sms:` deep link opens a composer with **no recipient**. A patient with no data is expected to already know the number. |
+| `writeOutcomeMemory` | Anonymizes a completed case into `OutcomeRecord` | The memory bank never gets a new entry — `recallSimilarOutcomes` always reports `insufficient_data`. |
+| `recallSimilarOutcomes` | Doctor-only anonymized recall for a similar case | The "Check Memory Bank" panel in the doctor portal 404s or errors instead of returning an aggregate. |
+| `seedMemoryBankDemo` | Seeds `/demo/memory-bank`'s demo case + sample outcomes | "Seed / Reset Demo Data" fails on that page — this is the exact symptom reported 2026-07-26 (a 404-shaped response with neither `success` nor `error`, which is indistinguishable in the UI from a real bug without reading `err.response`). |
+| `getMemoryBankDemoPreview` | Read-only patient-portal preview for the same demo | Step 3 of `/demo/memory-bank` never shows anything. |
+
+Also **republish** `logProcedureComplete`, `logPhysicalIntakeHandshake`,
+`schedulePostOpMedReminders`, and `sendPostOpInstructions` — all four were
+edited (not just newly created) to support the above, so a stale published
+version keeps the old behavior even though the repo has moved on.
 
 `_shared/blocker.ts` and `_shared/violationEngine.ts` are shared modules, not
-endpoints — they deploy with the functions that import them.
+endpoints — they deploy with the functions that import them. Same for
+`_shared/procedureMatch.ts`, `_shared/conditionBuckets.ts`,
+`_shared/medicationCategories.ts`, `_shared/procedureCategory.ts`, and
+`_shared/resolveCaseIdentity.ts`.
 
 ---
 
