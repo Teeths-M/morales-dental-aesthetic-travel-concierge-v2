@@ -116,9 +116,14 @@ Stated plainly rather than assumed working.
 - **All 9 handshakes end to end, airplane mode, real SOS delivery** — needs a
   device, a live backend and integration credits.
 - **RLS on the entities with no in-repo `rls` block** — dashboard-only setting.
-- **~130 functions that exist in the repo but may not be published.** A 404 from
-  a deployed function is indistinguishable from an unpublished one without a
-  calibration probe, so this number is an estimate, not a measurement.
+- **~130 functions that exist in the repo but may not be published.** This number
+  is an estimate, not a measurement — there's no way to enumerate them without
+  probing each one. Confirmed live on 2026-07-26 via `seedMemoryBankDemo`: an
+  unpublished function in this Base44 project does **not** 404 — the call
+  resolves with **HTTP 200 and an empty JSON body** (no `success`, no `error`,
+  no keys at all). `MemoryBankDemo.jsx`'s `describeInvokeError()` handles the
+  404 case, but the real tell to watch for on this platform is a *resolved*
+  call with an empty/keyless response body.
 - **Comms migration is incomplete**: 65 senders still flagged by
   `node scripts/comms-audit.mjs`. Some are expected false positives (emergency
   paths that legitimately carry identity, dead templates). The count is a
