@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import Footer from './Footer';
 import FloatingSOSButton from './FloatingSOSButton';
@@ -31,7 +30,6 @@ const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/doctor-signup', '/co
 export default function AppLayout() {
   const { user } = useAuth();
   const { pathname } = useLocation();
-  const reduceMotion = useReducedMotion();
   useGeoAutoAlign();
 
   // Covert SOS — mounted at the LAYOUT so the 5-tap gesture and the
@@ -143,17 +141,7 @@ export default function AppLayout() {
           {user && !isAdmin && (
             <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
           )}
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={pathname}
-              initial={reduceMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={reduceMotion ? undefined : { opacity: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.15 }}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <Outlet />
         </main>
         <Footer />
 
