@@ -4,11 +4,21 @@ import { createHandler } from '../_shared/createHandler.ts';
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { consultation_id, doctor_question } = await req.json();
+    const { consultation_id, doctor_question, doctor_portal_token } = await req.json();
 
     const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
     if (!consultation) {
       return Response.json({ error: 'Consultation not found' }, { status: 404 });
+    }
+
+    // SECURITY: this emails the real patient with attacker-controlled text if
+    // left unguarded — verify the caller is the doctor actually assigned to
+    // this case via the linked CaseRecord's doctor_portal_token, the same
+    // token PortalDoctor.jsx (a no-login doctor portal) already holds.
+    const cases = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id });
+    const linkedCase = (cases || [])[0];
+    if (!doctor_portal_token || !linkedCase || linkedCase.doctor_portal_token !== doctor_portal_token) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const patientName = consultation.patient_name || 'Patient';

@@ -79,6 +79,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       url:        '/doctor-dashboard',
       type:       'success',
       tag:        `hs5-doctor-${trip_id}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}) ?? Promise.resolve());
     // LEAK-SCAN-IGNORE-END
     sent.push(`doctor:${caseRecord.doctor_email}`);
@@ -105,6 +106,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
           url:        '/companion-dashboard',
           type:       'safe',
           tag:        `hs6-companion-${ca.companion_id}`,
+          internal_secret: Deno.env.get('CRON_SECRET'),
         }).catch(() => {}) ?? Promise.resolve());
         // LEAK-SCAN-IGNORE-END
         sent.push(`companion:${companion.email}`);

@@ -282,6 +282,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       url:        '/dashboard',
       type:       pp.type,
       tag:        `hs-${n}-${trip_id}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}); // non-blocking
   }
 

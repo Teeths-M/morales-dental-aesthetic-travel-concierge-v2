@@ -86,6 +86,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       url:        url,
       type:       'booking',
       tag:        `quota-travel-${case_id}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}) ?? Promise.resolve());
     sent.push('travel_agency');
   }
@@ -115,6 +116,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       url:        url,
       type:       'booking',
       tag:        `quota-driver-${case_id}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}) ?? Promise.resolve());
     sent.push('driver');
   }
@@ -144,6 +146,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       url:        url,
       type:       'companion',
       tag:        `quota-companion-${case_id}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}) ?? Promise.resolve());
     sent.push('companion');
   }
@@ -169,6 +172,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       url:        `${APP_URL}/doctor-dashboard`,
       type:       'success',
       tag:        `quota-clinic-${case_id}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}) ?? Promise.resolve());
     sent.push('clinic');
   }

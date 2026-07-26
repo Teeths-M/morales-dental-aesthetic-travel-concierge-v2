@@ -16,6 +16,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
 import { linkOnlyEmail, emergencyDispatch } from '../_shared/notify.ts';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 // ── Configurable thresholds (minutes after missed check-in) ─────────────────
 // context_type on SoloCheckIn overrides these defaults per-checkpoint.
@@ -256,14 +257,14 @@ async function makeVoiceCall(twilioSid, twilioAuth, from, to, twiml) {
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    // Allow both admin-gated manual invocations and scheduled (no user) runs
-    let isAdmin = false;
-    try {
-      const user = await base44.auth.me();
-      isAdmin = user && (user.role === 'admin' || user.role === 'platform_admin');
-    } catch (_) { isAdmin = false; }
+    // Allow both admin-gated manual invocations and scheduled (cron-secret) runs.
+    // This engine fires real SMS/voice calls and can dispatch private security —
+    // an unauthenticated caller must never be able to trigger the platform-wide
+    // sweep on demand.
+    if (!(await cronAuthorized(req, base44))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    // For scheduled runs the auth header is the service token — always allowed
     const now = new Date();
     const appUrl = Deno.env.get('APP_URL') || 'https://morales.app';
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';

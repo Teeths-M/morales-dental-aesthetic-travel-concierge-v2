@@ -151,6 +151,7 @@ export default function PortalDoctor() {
       await base44.functions.invoke('notifyPatientInfoRequest', {
         consultation_id: caseData?.consultation_id,
         doctor_question: infoRequest,
+        doctor_portal_token: token,
       });
       setInfoRequestSent(true);
       setShowInfoRequest(false);

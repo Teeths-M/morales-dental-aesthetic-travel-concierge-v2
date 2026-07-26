@@ -94,11 +94,39 @@ async function updatePartnerEntity(
   if (entity) await b.asServiceRole.entities[entity].update(partnerId, fields);
 }
 
+const ENTITY_MAP: Record<string, string> = {
+  doctor:          'Doctor',
+  travel_agency:   'TravelAgency',
+  taxi_service:    'TaxiService',
+  companion:       'Companion',
+  security_agency: 'SecurityAgency',
+};
+
+const NAME_FIELD: Record<string, string> = {
+  doctor:          'full_name',
+  travel_agency:   'agency_name',
+  taxi_service:    'company_name',
+  companion:       'full_name',
+  security_agency: 'agency_name',
+};
+
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { partner_id, partner_type, partner_name, partner_email, country } = await body();
-  if (!partner_id || !partner_type || !partner_name) {
-    return err('partner_id, partner_type, and partner_name are required');
+  const { partner_id, partner_type, country } = await body();
+  if (!partner_id || !partner_type) {
+    return err('partner_id and partner_type are required');
   }
+
+  // SECURITY: never screen using a caller-supplied name — that lets an
+  // attacker launder an actually-sanctioned partner as "clear" by searching
+  // an unrelated clean name while still linking the result to the real
+  // partner_id. Always fetch the record server-side and use its own stored
+  // name and email.
+  const entityName = ENTITY_MAP[partner_type];
+  if (!entityName) return err('Unknown partner_type');
+  const partnerRecord = await base44.asServiceRole.entities[entityName].get(partner_id).catch(() => null);
+  if (!partnerRecord) return err('Partner not found', 404);
+  const partner_name  = partnerRecord[NAME_FIELD[partner_type]] || partnerRecord.email || partner_id;
+  const partner_email = partnerRecord.email;
 
   const now = new Date().toISOString();
   const apiKey = Deno.env.get('COMPLY_ADVANTAGE_API_KEY');
@@ -189,4 +217,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }
 
   return ok({ status, provider, hit_count: hitCount, highest_score: highestScore, search_id: searchId });
-}, { name: 'runSanctionsScreening', requireAuth: false, allowedRoles: [] }));
+}, { name: 'runSanctionsScreening', requireAuth: true }));

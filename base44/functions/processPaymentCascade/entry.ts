@@ -61,6 +61,25 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     return err('No completed payment on record for this case — cascade refused.', 403);
   }
 
+  // SECURITY: the caller-supplied payment_type must not be trusted on its own —
+  // a caller who paid a 25%/50% deposit could otherwise claim payment_type:
+  // 'full_pay' and trigger the full partner-payout cascade for money never
+  // received. Classify using the real transaction Stripe's webhook recorded
+  // (deposit_option, set only by the signature-verified stripePaymentWebhook),
+  // matched by stripe_payment_id when provided, else the most recent succeeded
+  // transaction for this case.
+  const matchedTxn = (stripe_payment_id
+    ? (paidTxns as any[]).find(t => t.stripe_payment_intent_id === stripe_payment_id || t.stripe_session_id === stripe_payment_id)
+    : null) || (paidTxns as any[]).sort((a, b) => new Date(b.processed_at || b.created_at || 0).getTime() - new Date(a.processed_at || a.created_at || 0).getTime())[0];
+  const realDepositOption = matchedTxn?.deposit_option;
+  const verifiedPaymentType = realDepositOption === 'Full' ? 'full_pay'
+    : payment_type === 'balance' && realDepositOption !== 'Full' ? 'balance'
+    : realDepositOption === '50%' || realDepositOption === '25%' ? 'terms'
+    : payment_type;
+  if (verifiedPaymentType !== payment_type) {
+    return err('Payment type does not match the verified transaction on record — cascade refused.', 403);
+  }
+
   const caseRef      = case_id.slice(-8).toUpperCase();
   const patientName  = c.client_name;
   const procedureDate = c.procedure_date
@@ -224,6 +243,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       url:        '/dashboard/bookings',
       type:       'payment',
       tag:        `payment-${case_id}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}) : Promise.resolve(),
     base44.asServiceRole.entities.AuditLog.create({
       event_type: 'payment_cascade_triggered', actor_id: 'system', actor_role: 'system',

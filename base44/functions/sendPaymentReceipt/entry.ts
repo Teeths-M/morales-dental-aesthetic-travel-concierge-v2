@@ -74,16 +74,31 @@ function receiptHtml({ clientName, clientEmail, caseRef, receiptNumber, procedur
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, payment_type, amount_paid, stripe_payment_id } = await body();
+  const { case_id, payment_type: claimedPaymentType, amount_paid: claimedAmountPaid, stripe_payment_id: claimedStripeId } = await body();
   if (!case_id) return err('case_id is required');
 
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
   if (!c) return err('Case not found', 404);
 
+  // SECURITY: never trust caller-supplied payment fields for an "official"
+  // receipt — look up the real succeeded PaymentTransaction and use its
+  // values. Falls back to the caller's values only for display fields that
+  // don't carry financial/verification weight (matched only for logging).
+  const paidTxns = await base44.asServiceRole.entities.PaymentTransaction.filter({
+    case_id, status: 'succeeded',
+  }).catch(() => []);
+  const matchedTxn = (claimedStripeId
+    ? (paidTxns as any[]).find(t => t.stripe_payment_intent_id === claimedStripeId || t.stripe_session_id === claimedStripeId)
+    : null) || (paidTxns as any[]).sort((a, b) => new Date(b.processed_at || b.created_at || 0).getTime() - new Date(a.processed_at || a.created_at || 0).getTime())[0];
+  if (!matchedTxn) return err('No verified payment on record for this case — receipt refused.', 403);
+
+  const payment_type      = matchedTxn.deposit_option === 'Full' ? 'full_pay' : (matchedTxn.deposit_option ? 'terms' : (c.payment_type || claimedPaymentType));
+  const stripe_payment_id = matchedTxn.stripe_payment_intent_id || matchedTxn.stripe_session_id || c.stripe_payment_id;
+
   const caseRef       = case_id.slice(-8).toUpperCase();
   const receiptNumber = `REC-${caseRef}-${Date.now().toString(36).toUpperCase()}`;
   const procedures    = (c.procedures || []).join(', ') || 'Your procedure(s)';
-  const amountPaid    = Number(amount_paid || c.amount_paid || 0);
+  const amountPaid     = Number(matchedTxn.raw_amount ?? claimedAmountPaid ?? c.amount_paid ?? 0);
   const isFull        = payment_type === 'full_pay' || c.payment_status === 'Paid In Full';
   const balanceRem    = isFull ? 0 : Number(c.amount_remaining || c.package_price_first_installment || 0);
   const issuedAt      = new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' });
@@ -91,9 +106,9 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const html = receiptHtml({
     clientName: c.client_name, clientEmail: c.client_email, caseRef, receiptNumber,
     procedures, destination: c.procedure_country || 'Your destination',
-    amountPaid, paymentType: payment_type || c.payment_type || 'full_pay',
+    amountPaid, paymentType: payment_type || 'full_pay',
     balanceRemaining: balanceRem, nextDueDate: c.next_payment_due,
-    stripeId: stripe_payment_id || c.stripe_payment_id, issuedAt,
+    stripeId: stripe_payment_id, issuedAt,
   });
 
   const tasks: Promise<unknown>[] = [];

@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(createHandler(async ({ req }) => {
+Deno.serve(createHandler(async ({ req, user }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { event, data } = await req.json();
@@ -11,6 +11,12 @@ Deno.serve(createHandler(async ({ req }) => {
     }
 
     const doctor = data;
+
+    // SECURITY: this creates a real Partner record — a caller may only sync
+    // their own doctor identity, never an arbitrary one.
+    if (!doctor.email || doctor.email.toLowerCase() !== user?.email?.toLowerCase()) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // BUG-R12-04 FIX: Partner entity has no `name` field — the correct field is `email`.
     // Matching by full_name is also unsafe: two doctors with the same name would block the second.
@@ -42,4 +48,4 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[syncDoctorToPortalHub]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-}, { name: 'syncDoctorToPortalHub', requireAuth: false }));
+}, { name: 'syncDoctorToPortalHub', requireAuth: true }));

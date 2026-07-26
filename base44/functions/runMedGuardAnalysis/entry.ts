@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
 
 /**
  * MedGuard™ — Behavioral Safety Prediction Engine
@@ -73,10 +74,19 @@ function getRiskLevel(score: number): { level: string; color: string; action: st
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, run_batch } = await body();
+  const { case_id, run_batch, internal_secret } = await body();
 
-  // ── Batch mode: analyze all active cases ──────────────────────────────────
+  // SECURITY: this fires real SMS to the patient and, at CRITICAL, a "welfare
+  // check" dispatch SMS to a security agency — never trust an anonymous
+  // caller. Batch mode (a platform-wide sweep) and any case_id NOT owned by
+  // the caller both require the internal secret or an admin session.
+  const user = await base44.auth.me().catch(() => null);
+  const isAdmin = !!user && (user.role === 'admin' || user.role === 'platform_admin');
+
   if (run_batch) {
+    if (!isAdmin && !(await internalOrAdminAuthorized(internal_secret, base44))) {
+      return err('Forbidden', 403);
+    }
     const activeCases = await base44.asServiceRole.entities.CaseRecord.filter(
       { status: 'Travel-Coordination' }, '-updated_date', 50
     ).catch(() => []);
@@ -92,6 +102,11 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
   if (!caseRecord) return err('Case not found', 404);
+
+  const ownsCase = !!user && user.email?.toLowerCase() === caseRecord.client_email?.toLowerCase();
+  if (!ownsCase && !isAdmin && !(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
 
   const result = await analyzeCase(base44, caseRecord);
   return ok(result);
@@ -189,6 +204,7 @@ async function analyzeCase(base44: any, caseRecord: any) {
           url:        '/admin/mission-control',
           urgent:     risk.level === 'CRITICAL',
           tag:        `medguard-${caseId}`,
+          internal_secret: Deno.env.get('CRON_SECRET'),
         }).catch(() => {})
         ?? Promise.resolve()
       );

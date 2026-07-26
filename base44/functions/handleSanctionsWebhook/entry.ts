@@ -11,9 +11,11 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
 async function verifyHmacSignature(req: Request, body: string): Promise<boolean> {
   const secret = Deno.env.get('COMPLY_ADVANTAGE_WEBHOOK_SECRET');
   if (!secret) {
-    // No secret configured — allow but log so ops knows to set it.
-    console.warn('[handleSanctionsWebhook] COMPLY_ADVANTAGE_WEBHOOK_SECRET not set — skipping signature check');
-    return true;
+    // Fail closed — an unsigned webhook could otherwise be used to
+    // block an arbitrary legitimate partner. No secret means no requests
+    // are accepted until ops configures it.
+    console.error('[handleSanctionsWebhook] COMPLY_ADVANTAGE_WEBHOOK_SECRET not set — rejecting all requests');
+    return false;
   }
 
   const signature = req.headers.get('X-ComplyAdvantage-Signature') || '';

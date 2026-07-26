@@ -235,6 +235,7 @@ Deno.serve(async (req) => {
           case_id:       caseId,
           force_critical: true,
           source:         'satellite_sos',
+          internal_secret: Deno.env.get('CRON_SECRET'),
         }).catch(() => {}) ?? Promise.resolve()
       );
 

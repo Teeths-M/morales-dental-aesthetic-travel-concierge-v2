@@ -133,6 +133,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     url:        '/dashboard',
     type:       'booking',
     tag:        `booking-${caseRecord.id}`,
+    internal_secret: Deno.env.get('CRON_SECRET'),
   }).catch(() => {});
 
   return ok({ sent_to: clientEmail, case_ref: caseRef });

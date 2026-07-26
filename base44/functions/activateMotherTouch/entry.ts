@@ -190,6 +190,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         url:        '/dashboard',
         type:       'companion',
         tag:        `companion-${case_id}`,
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => {}) ?? Promise.resolve()
     );
   }

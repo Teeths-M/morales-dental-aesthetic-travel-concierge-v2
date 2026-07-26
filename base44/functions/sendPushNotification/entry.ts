@@ -1,18 +1,21 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import webPush from 'npm:web-push@3.6.7';
 import { createHandler } from '../_shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    // Allow admin users OR internal service-to-service calls (no auth header = system call)
-    const user = await base44.auth.me().catch(() => null);
-    const isSystem = !user; // called from another edge function (MedGuard, SOS, etc.)
-    if (!isSystem && user?.role !== 'admin' && user?.role !== 'platform_admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
+    const { user_id, user_email, title, body, url, urgent, tag, internal_secret } = await req.json();
 
-    const { user_id, user_email, title, body, url, urgent, tag } = await req.json();
+    // SECURITY: pushes arbitrary title/body/url to any target user's device —
+    // a fully anonymous caller must never pass this check. Absence of a user
+    // session is NOT evidence of a legitimate internal caller (that was the
+    // bug here); require either an admin session or the shared internal
+    // secret used by other edge functions that invoke this one.
+    if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');

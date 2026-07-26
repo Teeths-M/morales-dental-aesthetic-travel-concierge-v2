@@ -235,6 +235,7 @@ Deno.serve(createHandler(async ({ req }) => {
       url:        '/doctor-dashboard',
       type:       'success',
       tag:        `doc-new-${caseId}`,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {});
 
     return Response.json({

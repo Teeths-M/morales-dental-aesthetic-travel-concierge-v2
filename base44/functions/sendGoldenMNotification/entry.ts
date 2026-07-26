@@ -127,6 +127,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         type:       'golden_m',
         tag:        `golden-m-${trip_id}`,
         urgent:     false,
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => {}) ?? Promise.resolve()
     );
   }
