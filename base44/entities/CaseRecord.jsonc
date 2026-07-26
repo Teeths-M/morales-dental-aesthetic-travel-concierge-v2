@@ -101,6 +101,14 @@
     "emergency_contact": {
       "type": "string"
     },
+    "gdpr_deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set when this case's client PII was redacted by a GDPR/account-deletion erasure. The record itself is retained (financial/medical audit trail) — only PII fields are scrubbed."
+    },
+    "gdpr_deletion_reason": {
+      "type": "string"
+    },
     "procedure_country": {
       "type": "string"
     },

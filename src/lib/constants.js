@@ -171,6 +171,7 @@ export const ROUTES = {
   ABOUT: '/about',
   PRIVACY: '/privacy',
   TERMS: '/terms',
+  DELETE_ACCOUNT: '/request-account-deletion',
   
   // Authenticated
   DASHBOARD: '/dashboard',

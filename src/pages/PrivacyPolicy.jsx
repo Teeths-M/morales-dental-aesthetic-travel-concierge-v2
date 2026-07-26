@@ -90,7 +90,8 @@ export default function PrivacyPolicy() {
 
         <p className="text-xs text-white/30 mt-12 pt-6 border-t border-white/10">
           Questions about this policy, or want to exercise your data rights? Contact us at{' '}
-          <a href="mailto:info@moralesconcierge.com" className="text-white/50 underline">info@moralesconcierge.com</a>.
+          <a href="mailto:info@moralesconcierge.com" className="text-white/50 underline">info@moralesconcierge.com</a>,
+          or <a href="/request-account-deletion" className="text-white/50 underline">request account deletion</a> directly.
         </p>
       </div>
     </div>

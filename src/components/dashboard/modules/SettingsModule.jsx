@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { changeLanguage } from '@/i18n';
-import { Bell, Lock, Globe, User, Eye, CheckCircle2, Brain } from 'lucide-react';
+import { Bell, Lock, Globe, User, Eye, CheckCircle2, Brain, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/AuthContext';
+import { friendlyError } from '@/lib/friendlyError';
 
 const _languages = ['English', 'Español', 'Français', 'Português'];
 
@@ -107,6 +110,105 @@ function ResetSafetyProfileCard({ onReset, isActiveJourney = false }) {
           >
             Cancel
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The account's most destructive, irreversible action — placed last on the
+ * page, below the reversible 72h safety-profile reset. Confirmation requires
+ * re-typing the account's own email rather than a "type DELETE" string:
+ * this app ships 10 languages, and re-typing your own email is
+ * language-agnostic while still confirming the person acting genuinely knows
+ * the account's identity.
+ */
+function DeleteMyAccountCard({ email }) {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [step, setStep] = useState('idle'); // idle | confirm | deleting
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [error, setError] = useState('');
+
+  const canConfirm = !!email && confirmEmail.trim().toLowerCase() === email.toLowerCase();
+
+  async function handleDelete() {
+    setError('');
+    setStep('deleting');
+    try {
+      const res = await base44.functions.invoke('deleteMyAccount', {
+        confirm: true,
+        confirm_email: confirmEmail.trim(),
+      });
+      if (!res.data?.success) {
+        throw new Error(res.data?.error || 'Deletion failed.');
+      }
+      await logout(false);
+      navigate('/');
+    } catch (err) {
+      setError(friendlyError(err, 'Your account could not be deleted. Nothing changed — please try again.', 'DeleteMyAccountCard'));
+      setStep('confirm');
+    }
+  }
+
+  return (
+    <div className="bg-white border border-red-100 rounded-2xl shadow-sm p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+          <Trash2 className="w-5 h-5 text-red-600" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-800 text-sm">Delete My Account</h3>
+          <p className="text-xs text-slate-500">Permanently remove your personal data from Morales</p>
+        </div>
+      </div>
+
+      <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+        This immediately removes your name, contact details, and documents from our systems.
+        Case and payment records required for financial/medical record-keeping are retained but
+        anonymized. This happens right away and cannot be undone.
+      </p>
+
+      {step === 'idle' && (
+        <button
+          onClick={() => setStep('confirm')}
+          className="text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors"
+        >
+          Delete my account →
+        </button>
+      )}
+
+      {(step === 'confirm' || step === 'deleting') && (
+        <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-4 space-y-3">
+          <p className="text-xs text-red-700 leading-relaxed">
+            To confirm, type your account email (<strong>{email || '…'}</strong>) below. This is instant and cannot be reversed.
+          </p>
+          <input
+            type="email"
+            value={confirmEmail}
+            onChange={(e) => setConfirmEmail(e.target.value)}
+            placeholder={email}
+            disabled={step === 'deleting'}
+            className="w-full text-xs px-3 py-2 rounded-lg border border-red-200 focus:outline-none focus:ring-1 focus:ring-red-400"
+          />
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleDelete}
+              disabled={!canConfirm || step === 'deleting'}
+              className="text-xs font-bold text-red-600 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+            >
+              {step === 'deleting' ? 'Deleting…' : 'Yes, permanently delete my account'}
+            </button>
+            <button
+              onClick={() => { setStep('idle'); setConfirmEmail(''); setError(''); }}
+              disabled={step === 'deleting'}
+              className="text-xs text-slate-400 hover:text-slate-600 flex-shrink-0"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -375,6 +477,9 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
       {onResetSafetyProfile && (
         <ResetSafetyProfileCard onReset={onResetSafetyProfile} isActiveJourney={isActiveJourney} />
       )}
+
+      {/* ── Delete My Account — most destructive action, last on the page ── */}
+      <DeleteMyAccountCard email={email} />
 
       <div className="flex justify-end">
         <Button

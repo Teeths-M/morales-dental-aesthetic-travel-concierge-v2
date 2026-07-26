@@ -30,6 +30,7 @@ const ProviderDetail = lazy(() => import('@/pages/ProviderDetail'));
 const HowItWorksPage = lazy(() => import('@/pages/HowItWorksPage'));
 const About         = lazy(() => import('@/pages/About'));
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
+const RequestAccountDeletion = lazy(() => import('@/pages/RequestAccountDeletion'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Procedures    = lazy(() => import('@/pages/Procedures'));
 const PartnerDirectory = lazy(() => import('@/pages/PartnerDirectory'));
@@ -87,6 +88,7 @@ export const publicRoutes = (
     <Route path="/partners"       element={<ErrorBoundary><PartnerDirectory /></ErrorBoundary>} />
     <Route path="/about"          element={<ErrorBoundary><About /></ErrorBoundary>} />
     <Route path="/privacy"        element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
+    <Route path="/request-account-deletion" element={<ErrorBoundary><RequestAccountDeletion /></ErrorBoundary>} />
     <Route path="/terms"          element={<ErrorBoundary><TermsOfService /></ErrorBoundary>} />
     <Route path="/procedures"     element={<ErrorBoundary><Procedures /></ErrorBoundary>} />
     <Route path="/booking"        element={<ErrorBoundary><Booking /></ErrorBoundary>} />

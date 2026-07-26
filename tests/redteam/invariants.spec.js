@@ -2048,3 +2048,62 @@ test('MEMORY BANK: a procedure mismatch is flagged, never blocked — the case s
   expect(updateBlock, 'procedure_match_status must be written unconditionally with the status transition')
     .toContain('procedure_match_status: match.status');
 });
+
+// ── Account deletion (Google Play compliance) ──────────────────────────────────
+
+test('ACCOUNT DELETION: deleteMyAccount only ever targets the caller\'s own session email', () => {
+  // The single most important invariant in this feature: a self-service
+  // deletion function that accepted an arbitrary target email would let any
+  // logged-in user delete anyone's account.
+  const src = read('base44/functions/deleteMyAccount/entry.ts');
+  expect(src, 'must derive the target from the session user').toContain('user!.email');
+  expect(src, 'must never destructure an email/target from the request body').not.toMatch(/const\s*\{[^}]*\b(email|target_email|patient_email)\b[^}]*\}\s*=\s*await body/);
+  expect(src, 'must pass the session-derived email into the shared anonymizer').toContain('anonymizePatientRecords(base44, targetEmail');
+  expect(src, 'requires explicit confirmation').toContain('confirm !== true');
+});
+
+test('ACCOUNT DELETION: requestAccountDeletion is public but rate-limited', () => {
+  const src = read('base44/functions/requestAccountDeletion/entry.ts');
+  expect(src).toContain('requireAuth: false');
+  expect(src, 'public endpoint must stay rate-limited').toContain('RateLimitBucket');
+  // It only files a request — it must never call the shared anonymizer itself.
+  expect(src, 'must not execute deletion directly').not.toContain('anonymizePatientRecords');
+});
+
+test('ACCOUNT DELETION: the shared anonymizer uses the real PassportVault/PassportAccessGrant field names', () => {
+  // Regression guard for a real pre-existing bug: the old inline version of
+  // this logic filtered/wrote owner_email/encrypted_data/is_active — none of
+  // which exist on the real entities (the real fields are user_email/
+  // encrypted_file_uri/status) — so admin GDPR erasure never actually touched
+  // a patient's passport or revoked a live access grant.
+  const src = read('base44/functions/_shared/anonymizePatientRecords.ts');
+  expect(src).toContain('user_email: normalizedEmail');
+  expect(src).not.toContain('owner_email');
+  expect(src).toContain('encrypted_file_uri: null');
+  expect(src).not.toContain('encrypted_data');
+  expect(src, 'PassportAccessGrant must be revoked via its real gating field').toContain("status: 'revoked'");
+  expect(src).not.toContain('is_active');
+  // Consultation's real fields are email/patient_name/phone, not the
+  // client_* names CaseRecord uses — the old code filtered on client_email
+  // and matched zero Consultation rows.
+  const consultationBlockIdx = src.indexOf('Consultation.filter');
+  const consultationBlock = src.slice(consultationBlockIdx, src.indexOf('SoloCheckIn.filter'));
+  expect(consultationBlock).toContain('{ email: normalizedEmail }');
+  expect(consultationBlock).not.toContain('client_email');
+});
+
+test('ACCOUNT DELETION: deletePatientData stays admin-gated after its createHandler migration', () => {
+  const src = read('base44/functions/deletePatientData/entry.ts');
+  expect(src).toContain('createHandler');
+  expect(src).toContain("allowedRoles: ['admin', 'platform_admin']");
+  expect(src).toContain('anonymizePatientRecords');
+});
+
+test('ACCOUNT DELETION: new audit event types are registered in both AuditLog and logAuditEvent', () => {
+  const entity = read('base44/entities/AuditLog.jsonc');
+  const allow = read('base44/functions/logAuditEvent/entry.ts');
+  for (const t of ['gdpr_deletion', 'account_deletion_requested', 'account_deletion_completed']) {
+    expect(entity, `${t} missing from AuditLog.jsonc's enum`).toContain(`"${t}"`);
+    expect(allow, `${t} missing from logAuditEvent's ALLOWED_EVENT_TYPES`).toContain(`'${t}'`);
+  }
+});

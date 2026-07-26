@@ -38,7 +38,10 @@
         "doctor_nomination_outreach_sent",
         "doctor_nomination_opted_out",
         "outcome_memory_written",
-        "memory_bank_recall_viewed"
+        "memory_bank_recall_viewed",
+        "gdpr_deletion",
+        "account_deletion_requested",
+        "account_deletion_completed"
       ]
     },
     "actor_id": {

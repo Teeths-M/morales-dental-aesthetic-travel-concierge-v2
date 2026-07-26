@@ -164,6 +164,20 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
+
+      // Account was deleted (self-service or admin GDPR erasure) — no server-side
+      // session-revocation primitive exists in the SDK, so this is how a still-logged-in
+      // device (or a second tab/device) discovers it, next time it checks in.
+      if (currentUser?.account_deletion_requested_at) {
+        await logout(false);
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError({ type: 'account_deleted', message: 'This account has been deleted.' });
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return;
+      }
+
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);

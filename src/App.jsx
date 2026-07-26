@@ -12,6 +12,7 @@ import { CartProvider } from '@/context/CartContext';
 import { PlatformModeProvider } from '@/context/PlatformModeContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import AccountDeletedNotice from '@/components/AccountDeletedNotice';
 import ScrollToTop from './components/ScrollToTop';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { PUBLIC_BYPASS_PATHS } from '@/lib/constants';
@@ -81,6 +82,8 @@ const AuthenticatedApp = () => {
   if (!isBypassPath && authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
+    } else if (authError.type === 'account_deleted') {
+      return <AccountDeletedNotice />;
     } else if (authError.type === 'auth_required') {
       // Only redirect to login for truly protected paths — token/public routes handle their own auth
       const isProtectedPath = ['/dashboard', '/safe-t', '/passport-vault', '/insurance', '/travel-services', '/trip-overview', '/walkie-talkie', '/baggage-tracker', '/nightlife-safety', '/wilderness-safety', '/medical-intake', '/my-reviews'].some(p => currentPath.startsWith(p));

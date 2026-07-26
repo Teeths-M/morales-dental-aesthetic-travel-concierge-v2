@@ -35,6 +35,9 @@ const ALLOWED_EVENT_TYPES = new Set([
   'doctor_nomination_rejected',
   'doctor_nomination_outreach_sent',
   'doctor_nomination_opted_out',
+  'gdpr_deletion',
+  'account_deletion_requested',
+  'account_deletion_completed',
 ]);
 
 async function sha256(text: string): Promise<string> {

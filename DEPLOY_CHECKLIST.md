@@ -42,6 +42,11 @@ silently drop it.
 | `CaseRecord` | `procedures_confirmed_by_doctor`, `procedure_match_status`, `procedure_match_explanation`, `procedure_match_ai_summary`, `procedure_match_checked_at`, `doctor_recommended_medications`, `doctor_recommended_medications_entered_at`, `medication_source`, `is_demo_seed` | Doctor-verified completion (Stage 11) silently drops the procedure-match check and any doctor-entered medications — the patient still gets the old hardcoded default med schedule instead. |
 | `OutcomeRecord` | `condition_bucket_tags`, `medication_categories`, `procedure_match_status`, `is_demo_seed` | The anonymized memory-bank write drops its match tags — `writeOutcomeMemory`/`recallSimilarOutcomes` still "succeed" but never actually match anything, so the memory bank looks permanently empty. |
 | `AuditLog` | `outcome_memory_written`, `memory_bank_recall_viewed` (enum values) | Those two audit events are silently dropped rather than logged. |
+| `User` | `account_deletion_requested_at` | A deleted account's session is never force-logged-out on other devices — the AuthContext gate that checks this field can't fire. |
+| `CaseRecord` | `gdpr_deleted_at`, `gdpr_deletion_reason` | Erased cases lose their redaction timestamp/reason (the PII itself still gets redacted — this is metadata-only). |
+| `Consultation` | `gdpr_deleted_at` | Same as above, for Consultation records. |
+| `AuditLog` | `gdpr_deletion`, `account_deletion_requested`, `account_deletion_completed` (enum values) | Account-deletion audit events are silently dropped rather than logged. |
+| `AccountDeletionRequest` | *(entire entity is new)* | The public `/request-account-deletion` page can't file anything — staff never see a request to action. |
 
 ### New functions
 
@@ -53,17 +58,34 @@ silently drop it.
 | `recallSimilarOutcomes` | Doctor-only anonymized recall for a similar case | The "Check Memory Bank" panel in the doctor portal 404s or errors instead of returning an aggregate. |
 | `seedMemoryBankDemo` | Seeds `/demo/memory-bank`'s demo case + sample outcomes | "Seed / Reset Demo Data" fails on that page — this is the exact symptom reported 2026-07-26 (a 404-shaped response with neither `success` nor `error`, which is indistinguishable in the UI from a real bug without reading `err.response`). |
 | `getMemoryBankDemoPreview` | Read-only patient-portal preview for the same demo | Step 3 of `/demo/memory-bank` never shows anything. |
+| `deleteMyAccount` | Self-service account deletion (Google Play compliance) | The "Delete My Account" button in Settings fails — nobody can delete their own account in-app. |
+| `requestAccountDeletion` | Public, web-accessible deletion request (Google Play compliance — required alongside in-app deletion) | `/request-account-deletion` fails silently for anyone reaching it without the app installed. |
 
 Also **republish** `logProcedureComplete`, `logPhysicalIntakeHandshake`,
-`schedulePostOpMedReminders`, and `sendPostOpInstructions` — all four were
-edited (not just newly created) to support the above, so a stale published
-version keeps the old behavior even though the repo has moved on.
+`schedulePostOpMedReminders`, `sendPostOpInstructions`, and `deletePatientData`
+(migrated to `createHandler` + the new shared anonymizer, and its
+PassportVault/PassportAccessGrant/Consultation field-name bugs were fixed —
+see the note below) — all were edited (not just newly created) to support the
+above, so a stale published version keeps the old behavior even though the
+repo has moved on.
 
 `_shared/blocker.ts` and `_shared/violationEngine.ts` are shared modules, not
 endpoints — they deploy with the functions that import them. Same for
 `_shared/procedureMatch.ts`, `_shared/conditionBuckets.ts`,
-`_shared/medicationCategories.ts`, `_shared/procedureCategory.ts`, and
-`_shared/resolveCaseIdentity.ts`.
+`_shared/medicationCategories.ts`, `_shared/procedureCategory.ts`,
+`_shared/resolveCaseIdentity.ts`, and `_shared/anonymizePatientRecords.ts`.
+
+**Independent bug fixed in this pass, not just new scope:** the admin GDPR-erasure
+logic (`deletePatientData`, now `_shared/anonymizePatientRecords.ts`) previously
+filtered/wrote `PassportVault` using `owner_email`/`encrypted_data` — fields that
+don't exist on that entity (the real fields are `user_email`/`encrypted_file_uri`)
+— so it silently matched zero rows. It also set `PassportAccessGrant.is_active`
+(not a real field; the actual gate is `status`) and filtered `Consultation` on
+`client_email` (the real field is `email`). **Until this republishes, "GDPR
+deletion" in production does not actually remove a patient's passport/ID, revoke
+a live access grant, or touch their Consultation record** — only `CaseRecord`
+and `SoloCheckIn` were ever really redacted. Treat republishing `deletePatientData`
+as high-priority, independent of the Play Store feature it shipped alongside.
 
 ---
 

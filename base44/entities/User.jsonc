@@ -30,6 +30,11 @@
     "protection_type_set_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "account_deletion_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set when this account's data was anonymized (self-service deletion or admin GDPR erasure). AuthContext treats any non-null value as a forced-logout signal. Never cleared — deletion is instant/non-reversible."
     }
   }
 }

@@ -12,6 +12,11 @@
     "phone": {
       "type": "string"
     },
+    "gdpr_deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set when this consultation's PII was redacted by a GDPR/account-deletion erasure."
+    },
     "procedure_interest": {
       "type": "string",
       "enum": [
