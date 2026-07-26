@@ -1,4 +1,4 @@
-const CACHE_NAME      = 'morales-vault-v3';
+const CACHE_NAME      = 'morales-vault-v4'; // v4: install() no longer atomic (see below) — bumped so a device stuck with a partially-cached v3 shell gets a clean rebuild
 const TILE_CACHE_NAME = 'morales-map-tiles-v2';
 // Esri World Imagery + labels overlay (primary) + OSM fallback
 const TILE_RE = /^https:\/\/(server\.arcgisonline\.com|[abc]\.tile\.openstreetmap\.org)\//;
@@ -16,11 +16,20 @@ const APP_SHELL = [
   '/offline-vault-guide',
 ];
 
-// Install: cache app shell
+// Install: cache app shell. cache.addAll() is atomic — if ANY one URL fails
+// to fetch, the whole call rejects and NOTHING gets cached, including
+// '/offline', which the fetch handler below depends on as its last resort.
+// Per-URL cache.add() through allSettled means one flaky/missing shell URL
+// can never blank out caching for every other URL in the list.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const results = await Promise.allSettled(APP_SHELL.map((url) => cache.add(url)));
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.warn(`[sw] failed to precache ${APP_SHELL[i]}:`, r.reason);
+        }
+      });
     })
   );
   self.skipWaiting();
@@ -146,7 +155,20 @@ self.addEventListener('fetch', (event) => {
         // offline shell so navigation never resolves with `undefined`.
         const cached = await caches.match(request);
         if (cached) return cached;
-        return caches.match('/offline');
+        const offlineShell = await caches.match('/offline');
+        if (offlineShell) return offlineShell;
+        // '/offline' itself may never have been cached (e.g. install()
+        // partially failed before the allSettled fix above shipped, or this
+        // is the very first install and it's still in flight). Returning
+        // undefined here is exactly what throws "Failed to convert value to
+        // 'Response'" and hard-fails the navigation — so always fall back to
+        // a real, inline Response as the absolute last resort.
+        return new Response(
+          '<!doctype html><html><body style="margin:0;background:#060B16;color:#fff;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:24px;">' +
+          '<div><p style="font-size:18px;font-weight:700;margin:0 0 8px;">You appear to be offline.</p>' +
+          '<p style="font-size:14px;opacity:0.7;margin:0;">Reconnect and refresh to continue.</p></div></body></html>',
+          { status: 503, headers: { 'Content-Type': 'text/html' } },
+        );
       })
   );
 });
