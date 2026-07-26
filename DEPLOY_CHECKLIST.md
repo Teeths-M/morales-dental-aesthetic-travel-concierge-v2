@@ -130,7 +130,22 @@ Cheap checks that catch the silent failures above.
 
 ---
 
-## 4. Known-unverified at launch
+## 4. Native (Capacitor) build steps
+
+Separate from the Base44 publish flow above — these apply when a change touches
+`src/` and needs to reach the actual Android/iOS app, not just the web/PWA build.
+
+- **After merging `useAndroidBackButton` (Android hardware back-button support,
+  `@capacitor/app`)**: run `npm run mobile:sync` (builds `dist/` and copies it
+  into `android/`, per `capacitor.config.ts`'s own header comment), then a fresh
+  native build. **Not testable from this environment** — no Android SDK or
+  emulator here, so the actual hardware back-button behavior (closing the
+  safety-pivot overlay, navigating back, the double-press-to-exit flow) needs a
+  real on-device or emulator pass before this can be considered verified.
+
+---
+
+## 5. Known-unverified at launch
 
 Stated plainly rather than assumed working.
 

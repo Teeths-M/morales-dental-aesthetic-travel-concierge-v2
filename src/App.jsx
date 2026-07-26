@@ -15,6 +15,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AccountDeletedNotice from '@/components/AccountDeletedNotice';
 import ScrollToTop from './components/ScrollToTop';
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { useAndroidBackButton } from './hooks/useAndroidBackButton';
 import { PUBLIC_BYPASS_PATHS } from '@/lib/constants';
 import SafetyWatcher from '@/components/safety/SafetyWatcher';
 import SafetyPivotOverlay from '@/components/safety/SafetyPivotOverlay';
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
 
   usePushNotifications(user);
+  useAndroidBackButton();
 
   // Allow critical public pages to render immediately without waiting for auth
   const currentPath = window.location.pathname;
