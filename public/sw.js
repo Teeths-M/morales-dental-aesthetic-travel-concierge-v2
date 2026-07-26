@@ -6,6 +6,19 @@ const TILE_RE = /^https:\/\/(server\.arcgisonline\.com|[abc]\.tile\.openstreetma
 // 1×1 transparent PNG — returned when a tile can't load offline
 const BLANK_TILE_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII=';
 
+// The Cache API rejects any attempt to store a 206 Partial Content response
+// (thrown synchronously as "Failed to execute 'put' on 'Cache': Partial
+// response (status code 206) is unsupported") — response.ok is true for 206,
+// so every cache.put() call site needs this guard. Range requests can hit even
+// plain page navigations (browser prefetch, some preview-iframe hosts), so this
+// isn't tile/asset-specific. .catch() below is a safety net for any other
+// unexpected put failure (e.g. quota) — a caching failure must never surface as
+// an unhandled rejection.
+function safeCachePut(cache, request, response) {
+  if (response.status === 206) return;
+  cache.put(request, response).catch((err) => console.warn('[sw] cache.put failed:', err));
+}
+
 const APP_SHELL = [
   '/',
   '/offline',
@@ -68,7 +81,7 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached;
         try {
           const response = await fetch(request);
-          if (response.ok) cache.put(request, response.clone());
+          if (response.ok) safeCachePut(cache, request, response.clone());
           return response;
         } catch (_) {
           // Offline and tile not cached — return blank tile so polyline still renders
@@ -89,7 +102,7 @@ self.addEventListener('fetch', (event) => {
           if (response.ok) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
+              safeCachePut(cache, request, responseClone);
             });
           }
           return response;
@@ -128,7 +141,7 @@ self.addEventListener('fetch', (event) => {
           if (response.ok) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
+              safeCachePut(cache, request, responseClone);
             });
           }
           return response;
@@ -145,7 +158,7 @@ self.addEventListener('fetch', (event) => {
         if (response.ok) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
+            safeCachePut(cache, request, responseClone);
           });
         }
         return response;
