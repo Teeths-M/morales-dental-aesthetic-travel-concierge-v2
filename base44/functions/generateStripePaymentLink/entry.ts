@@ -14,6 +14,14 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 import { getViolations } from '../_shared/procedureCompatibility.ts';
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, validate, Fields } from '../_shared/validate.ts';
+
+const PaymentLinkSchema = strictObject({
+  case_id: Fields.shortText(100),
+  deposit_option: z.enum(['Full', '50%', '25%']),
+  proposal_token: z.string().trim().max(200).optional(),
+  amount: z.coerce.number().optional(),
+});
 
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   const now = new Date();
@@ -48,13 +56,10 @@ Deno.serve(createHandler(async ({ req }) => {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) return Response.json({ error: 'Payment system not configured' }, { status: 503 });
 
-    const { case_id, deposit_option, proposal_token, amount: clientAmountRaw } = await req.json();
-    if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
-
-    const validOptions = ['Full', '50%', '25%'];
-    if (!validOptions.includes(deposit_option)) {
-      return Response.json({ error: 'Invalid deposit_option. Use: Full, 50%, or 25%' }, { status: 400 });
-    }
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(PaymentLinkSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
+    const { case_id, deposit_option, proposal_token, amount: clientAmountRaw } = validated.data;
 
     // Fetch case
     const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);

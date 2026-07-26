@@ -1,5 +1,11 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { strictObject, Fields } from '../_shared/validate.ts';
+
+const ConfirmProcedureDateSchema = strictObject({
+  case_id: Fields.shortText(100),
+  date: Fields.isoDate(),
+});
 
 /**
  * confirmProcedureDate — the chosen doctor commits to a date after selection.
@@ -74,4 +80,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }).catch(() => {});
 
   return ok({ case_id, procedure_date: date, slot_locked: slotLocked });
-}, { name: 'confirmProcedureDate', requireAuth: true, allowedRoles: ['doctor', 'local_doctor', 'admin', 'platform_admin'] }));
+}, { name: 'confirmProcedureDate', requireAuth: true, allowedRoles: ['doctor', 'local_doctor', 'admin', 'platform_admin'], bodySchema: ConfirmProcedureDateSchema }));

@@ -1,5 +1,16 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { z, strictObject } from '../_shared/validate.ts';
+
+// Generous length caps here — the existing sanitize() below does the real
+// truncation (254/2000) and its own looser "@"-presence check; this schema's
+// job is reject-unexpected-fields + basic typing, not to re-validate email
+// format (kept unchanged to avoid rejecting anything the current check
+// already accepts).
+const AccountDeletionSchema = strictObject({
+  email: z.string().max(500).optional().default(''),
+  reason: z.string().max(5000).optional().default(''),
+});
 
 /**
  * requestAccountDeletion — the web-accessible deletion request path (Google
@@ -91,4 +102,4 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
   return ok({ received: true });
 // Already rate-limited inline above via RateLimitBucket — rateLimit:false here
 // avoids silently double-limiting through two independent mechanisms.
-}, { name: 'requestAccountDeletion', requireAuth: false, rateLimit: false }));
+}, { name: 'requestAccountDeletion', requireAuth: false, rateLimit: false, bodySchema: AccountDeletionSchema }));

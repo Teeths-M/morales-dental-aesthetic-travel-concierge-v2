@@ -1,9 +1,22 @@
 import { createHandler, ok, err, type Base44Client } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { linkOnlyEmail } from '../_shared/notify.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
 
 const CONSENT_VERSION = '1.0';
 const MAX_PER_DAY = 5;
+
+const DoctorNominationSchema = strictObject({
+  doctor_name: Fields.shortText(200),
+  doctor_email: z.string().trim().max(254),
+  clinic_name: z.string().trim().max(200).optional().default(''),
+  country: Fields.shortText(100),
+  city: z.string().trim().max(100).optional().default(''),
+  specialty: z.string().trim().max(200).optional().default(''),
+  review_text: Fields.shortText(2000),
+  photo_refs: z.array(z.string().max(2000)).max(20).optional().default([]),
+  photo_review_consent: z.boolean().optional().default(false),
+});
 
 // Same inline rate-limit shape as publicDoctorCheck/submitDoctorCorrection —
 // no shared _shared/rateLimit.ts exists yet in this codebase.
@@ -120,4 +133,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }
 
   return ok({ status: 'submitted', nomination_id: nomination?.id || '' });
-}, { name: 'submitDoctorNomination', requireAuth: true, allowedRoles: ['client', 'user', 'admin', 'platform_admin'] }));
+}, { name: 'submitDoctorNomination', requireAuth: true, allowedRoles: ['client', 'user', 'admin', 'platform_admin'], bodySchema: DoctorNominationSchema }));

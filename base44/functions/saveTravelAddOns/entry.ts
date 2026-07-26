@@ -1,4 +1,16 @@
 ﻿import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+// selected_addon_ids intentionally accepts any string (not an enum of known
+// catalog keys) — the existing lookup already falls back gracefully for an
+// unrecognized id (label/category default, price 0).
+const SaveTravelAddOnsSchema = strictObject({
+  case_id: Fields.shortText(100),
+  selected_addon_ids: z.array(z.string().max(100)).max(50).optional().default([]),
+  peace_of_mind_bundle: z.boolean().optional().default(false),
+  transport_scope: z.string().trim().max(100).optional(),
+  notes_map: z.record(z.string().max(1000)).optional().default({}),
+});
 
 const ADDON_CATALOG = {
   'origin_transfer': { label: 'Origin Airport Pickup', category: 'transport', price_usd: 75 },
@@ -64,4 +76,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }
 
     return Response.json({ record, total_usd: totalUsd, addon_count: selectedAddons.length });
-}, { name: 'saveTravelAddOns' }));
+}, { name: 'saveTravelAddOns', bodySchema: SaveTravelAddOnsSchema }));

@@ -1,6 +1,34 @@
 import { createHandler, ok } from '../_shared/createHandler.ts';
 import { computeSafeT, SafeTProfileInput } from '../_shared/safeTEngine.ts';
 import { sanitizeFields } from '../_shared/sanitizePromptInput.ts';
+import { z, strictObject } from '../_shared/validate.ts';
+
+// Deliberately permissive on types — this is the SAFE-T intake path, and the
+// frontend (SafeTScan.jsx) already fails closed to risk_level:'review' on ANY
+// error from this function. A too-strict schema here would just mean MORE
+// requests fail closed to review, which is the system's own safe default —
+// but tightening types beyond "these are the only allowed field names" adds
+// risk without real benefit, given the deterministic engine below already
+// tolerates loose/ambiguous input by design. .strict() still rejects any
+// field name outside this list, satisfying reject-unexpected-fields.
+const SafeTScreeningSchema = strictObject({
+  procedure: z.any().optional(),
+  age: z.any().optional(),
+  bmi: z.any().optional(),
+  medical_conditions: z.any().optional(),
+  medications: z.any().optional(),
+  allergies: z.any().optional(),
+  lifestyle: z.any().optional(),
+  medication_notes: z.any().optional(),
+  emotional_notes: z.any().optional(),
+  medical_conditions_other: z.any().optional(),
+  anesthesia_complications: z.any().optional(),
+  had_surgery: z.any().optional(),
+  had_complications: z.any().optional(),
+  emotional_concerns: z.any().optional(),
+  pregnancy_status: z.any().optional(),
+  consultation_ref: z.any().optional(),
+});
 
 /**
  * computeSafeTScreening — the hardened SAFE-T path.
@@ -154,4 +182,4 @@ Return JSON only:
     screening_id: decisionId,
     engine_version: decision.engine_version,
   });
-}, { name: 'computeSafeTScreening', requireAuth: true }));
+}, { name: 'computeSafeTScreening', requireAuth: true, bodySchema: SafeTScreeningSchema }));

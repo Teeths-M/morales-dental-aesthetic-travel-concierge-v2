@@ -14,6 +14,17 @@
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const GuardianEscalationSchema = strictObject({
+  consultation_id: Fields.shortText(100),
+  strike: Fields.boundedInt(1, 3).optional().default(1),
+  reason: z.string().trim().max(50).optional().default('missed_checkin'),
+  anomaly_score: z.coerce.number().optional().default(0),
+  tz_offset: z.coerce.number().optional().default(0),
+  context_note: z.string().max(1000).optional().default(''),
+  emergency_bypass: z.boolean().optional().default(false),
+});
 
 const SLEEP_START = 22;
 const SLEEP_END   =  6;
@@ -150,4 +161,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     return ok({ action: 'escalated', strike, requires_human_dispatch: true });
   }
-}, { name: 'guardianEscalation', requireAuth: true }));
+}, { name: 'guardianEscalation', requireAuth: true, bodySchema: GuardianEscalationSchema }));

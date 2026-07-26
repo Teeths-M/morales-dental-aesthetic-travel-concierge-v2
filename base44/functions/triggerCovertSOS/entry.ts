@@ -27,6 +27,12 @@ async function sendSms(to: string, message: string) {
   }).catch(() => {});
 }
 
+// NOTE: deliberately NOT given a bodySchema. This function's entire security
+// property is "always return a benign 200, never reveal anything unusual" —
+// a schema that rejects malformed input with a 400 would let an attacker
+// fingerprint "did the covert trigger fire" by response code. Every field
+// below is already read defensively (destructuring with no required checks),
+// so an odd-shaped body just falls through with defaults, exactly as today.
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {
     case_id,

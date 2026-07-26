@@ -1,4 +1,32 @@
 ﻿import { createHandler } from '../_shared/createHandler.ts';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
+import { z, strictObject, validate, Fields } from '../_shared/validate.ts';
+
+// Action-multiplexed body — z.discriminatedUnion instead of createHandler's
+// bodySchema hook, since each action has a different required shape.
+const WalkieSchema = z.discriminatedUnion('action', [
+  strictObject({
+    action: z.literal('create_session'),
+    case_id: z.string().trim().max(100).optional(),
+    source_language: Fields.shortText(50),
+    target_language: Fields.shortText(50),
+  }),
+  strictObject({
+    action: z.literal('translate_audio'),
+    audio_url: Fields.shortText(2000),
+    source_language: Fields.shortText(50),
+    target_language: Fields.shortText(50),
+    session_token: Fields.shortText(100),
+  }),
+  strictObject({
+    action: z.literal('end_session'),
+    session_token: Fields.shortText(100),
+  }),
+  strictObject({
+    action: z.literal('get_session'),
+    session_token: Fields.shortText(100),
+  }),
+]);
 
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   const now = new Date();
@@ -24,7 +52,10 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const isAuthenticated = await base44.auth.isAuthenticated();
     if (!isAuthenticated) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
-    const { action, case_id, source_language, target_language, audio_url, session_token } = await body();
+    const rawBody = await body();
+    const validated = validate(WalkieSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
+    const { action, case_id, source_language, target_language, audio_url, session_token } = validated.data as any;
 
     // CREATE SESSION
     if (action === 'create_session') {
@@ -110,10 +141,15 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       // Step 2: Translate text using LLM
       console.log('[walkieTalkieTranslate] Translating text...');
       let translatedText = originalText;
-      
+
+      // SEC-11: sanitize transcribed speech before LLM interpolation — a
+      // caller controls this text indirectly via the audio they upload.
+      // Never blocks the translation on a flag; only defuses the text.
+      const safeOriginalText = sanitizePromptInput(originalText, 3000).text;
+
       try {
         const translationResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: `Translate the following text from ${source_language} to ${target_language}. Return ONLY the translation, nothing else: "${originalText}"`,
+          prompt: `Translate the following text from ${source_language} to ${target_language}. Return ONLY the translation, nothing else: "${safeOriginalText}"`,
           add_context_from_internet: false
         });
         translatedText = typeof translationResult === 'string' ? translationResult : originalText;

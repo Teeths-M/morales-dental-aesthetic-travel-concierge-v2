@@ -483,6 +483,86 @@ test('RATE LIMIT: every function exempted from the default carries rateLimit:fal
   }
 });
 
+// ─── Input validation hardening (2026-07-26 security pass) ──────────────────
+
+test('VALIDATION: the shared engine is zod-based, rejects unexpected fields, and never leaks raw errors', () => {
+  const src = read('base44/functions/_shared/validate.ts');
+  expect(src, 'must be zod-based').toContain('npm:zod');
+  expect(src, 'must export the validate helper').toContain('export function validate');
+  expect(src, 'must export strictObject to reject unexpected fields').toContain('export function strictObject');
+  expect(src, 'strictObject must actually call .strict()').toMatch(/\.strict\(\)/);
+  expect(src, 'must not leak a stack trace to the response').not.toContain('.stack');
+  expect(src, 'must not serialize the raw ZodError').not.toMatch(/JSON\.stringify\(result\.error\)/);
+  // validate.ts must not import createHandler.ts — that would create a cycle
+  // with createHandler's own bodySchema hook.
+  expect(src, 'must not import createHandler.ts').not.toContain("from './createHandler.ts'");
+});
+
+test('VALIDATION: createHandler runs bodySchema BEFORE the handler, and short-circuits on failure', () => {
+  const src = read('base44/functions/_shared/createHandler.ts');
+  expect(src, 'must import the shared validator').toContain("from './validate.ts'");
+  expect(src, 'must support an optional bodySchema option').toContain('bodySchema');
+  const hookIdx = src.indexOf('opts.bodySchema');
+  const fnCallIdx = src.indexOf('await fn(');
+  expect(hookIdx, 'bodySchema hook must exist').toBeGreaterThan(-1);
+  expect(hookIdx, 'validation must run before the handler is invoked').toBeLessThan(fnCallIdx);
+});
+
+test('LLM PROMPT: translateEmergencySOS and walkieTalkieTranslate sanitize free text before it reaches the model', () => {
+  const sos = read('base44/functions/translateEmergencySOS/entry.ts');
+  expect(sos, 'must import the sanitizer').toContain("from '../_shared/sanitizePromptInput.ts'");
+  const sanitizeIdx = sos.indexOf('sanitizePromptInput(message');
+  const promptIdx = sos.indexOf('Original message:');
+  expect(sanitizeIdx, 'must sanitize message').toBeGreaterThan(-1);
+  expect(sanitizeIdx, 'sanitize must precede interpolation').toBeLessThan(promptIdx);
+  // Must never gate the SOS translation itself on the sanitizer's flagged result.
+  expect(sos, 'a flagged input must not block the emergency translation').not.toMatch(/\.flagged\s*&&[^;]*return/);
+
+  const walkie = read('base44/functions/walkieTalkieTranslate/entry.ts');
+  expect(walkie, 'must import the sanitizer').toContain("from '../_shared/sanitizePromptInput.ts'");
+  expect(walkie, 'must sanitize transcribed text before translation').toContain('sanitizePromptInput(originalText');
+});
+
+test('VALIDATION: the first hardening batch carries a strict schema; the webhook and covert-SOS exclusions are deliberate', () => {
+  // Mirrors the EXEMPT_RATE_LIMIT pinned-list pattern above: a ratchet so a
+  // future edit can't silently drop a function's schema. The remaining ~270
+  // public functions adopt this same pattern incrementally, using
+  // _shared/validate.ts's exports as the reference.
+  const SCHEMA_HARDENED = [
+    // Payments
+    'generateStripePaymentLink', 'chargeConsultationFee', 'generateConsultationDepositLink',
+    'cancelBooking', 'processPartnerPayout',
+    // Account deletion
+    'requestAccountDeletion',
+    // Doctor/partner submissions
+    'submitDoctorNomination', 'submitDoctorQuote', 'submitDoctorCorrection',
+    'submitPartnerQuote', 'initiatePartnerVerification', 'respondToDoctorCase',
+    // Travel/booking
+    'createTravelRequest', 'saveTravelAddOns', 'confirmProcedureDate',
+    'requestCompanionPackage', 'respondToCompanionJob',
+    // Medical intake
+    'computeSafeTScreening', 'submitDietaryProfile', 'submitPostOpCheckIn',
+    'submitRecoveryCheckin', 'intakeConversationTurn', 'analyzeIntakeCombination',
+    // Emergency/SOS
+    'walkieTalkieTranslate', 'triggerSOS', 'verifyEmergencyPIN',
+    'confirmPINReset', 'requestPINReset', 'guardianCheckIn', 'guardianEscalation',
+  ];
+  expect(SCHEMA_HARDENED.length, 'batch is documented as ~30 functions').toBe(30);
+
+  for (const fn of SCHEMA_HARDENED) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must define a strict schema`).toContain('strictObject(');
+    const isEnforced = /bodySchema\s*:/.test(src) || /validate\(/.test(src);
+    expect(isEnforced, `${fn} must actually apply its schema (bodySchema option or a manual validate() call)`).toBe(true);
+  }
+
+  // Deliberate exclusion, not an oversight: a schema that can reject a
+  // request with a 400 would break this function's entire security property
+  // (always return a benign 200, never reveal whether anything unusual fired).
+  const covert = read('base44/functions/triggerCovertSOS/entry.ts');
+  expect(covert, 'triggerCovertSOS must stay schema-free by design').not.toContain('bodySchema:');
+});
+
 test('GOLDEN M: the certificate number is stable, not random per render', () => {
   const src = read('src/components/journey/GoldenMCertificate.jsx');
   const code = src.split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n');

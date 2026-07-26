@@ -1,4 +1,15 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { z, strictObject } from '../_shared/validate.ts';
+
+// Generous caps — sanitize() below does the real truncation (200/200/200/
+// 4000/254); this schema's job is reject-unexpected-fields + basic typing.
+const DoctorCorrectionSchema = strictObject({
+  doctor_name: z.string().max(500).optional().default(''),
+  clinic: z.string().max(500).optional().default(''),
+  location: z.string().max(500).optional().default(''),
+  message: z.string().max(8000).optional().default(''),
+  contact_email: z.string().max(500).optional().default(''),
+});
 
 /**
  * submitDoctorCorrection — a named doctor (or anyone) can submit real credentials
@@ -74,4 +85,4 @@ export default createHandler(async ({ req, base44, body }) => {
   return ok({ received: true });
 // Already rate-limited inline above via RateLimitBucket — rateLimit:false here
 // avoids silently double-limiting through two independent mechanisms.
-}, { name: 'submitDoctorCorrection', requireAuth: false, rateLimit: false });
+}, { name: 'submitDoctorCorrection', requireAuth: false, rateLimit: false, bodySchema: DoctorCorrectionSchema });

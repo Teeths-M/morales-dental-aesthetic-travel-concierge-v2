@@ -2,6 +2,22 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { guardedStatusUpdate, BOOKING } from '../_shared/bookingState.ts';
 import { appendSample, computeStats } from '../_shared/priceStats.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const LineItemSchema = strictObject({
+  procedure: z.string().trim().max(200),
+  qty: z.coerce.number().optional(),
+  unit_price_usd: z.coerce.number(),
+});
+
+const SubmitDoctorQuoteSchema = strictObject({
+  quote_id: Fields.shortText(100),
+  line_items: z.array(LineItemSchema).max(50).optional().default([]),
+  total_usd: z.coerce.number().optional(),
+  currency: z.string().trim().max(10).optional(),
+  doctor_notes: z.string().max(1000).optional().default(''),
+  reviewed_consultation: z.boolean().optional().default(false),
+});
 
 /**
  * submitDoctorQuote — a matched doctor submits a firm invoice for a patient request.
@@ -125,4 +141,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }).catch(() => {});
 
   return ok({ quote_id, status: 'submitted', total_usd: total });
-}, { name: 'submitDoctorQuote', requireAuth: true, allowedRoles: ['doctor', 'local_doctor', 'admin', 'platform_admin'] }));
+}, { name: 'submitDoctorQuote', requireAuth: true, allowedRoles: ['doctor', 'local_doctor', 'admin', 'platform_admin'], bodySchema: SubmitDoctorQuoteSchema }));

@@ -1,5 +1,16 @@
 import { createHandler } from '../_shared/createHandler.ts';
 import { createHmac } from 'node:crypto';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+// partner_type is a length-capped string, not an enum — the existing if/else
+// chain below already tolerates an unrecognized value (falls through to
+// "Partner not found"); enum-restricting it here would reject a value the
+// current code accepts gracefully.
+const InitiatePartnerVerificationSchema = strictObject({
+  partner_id: Fields.shortText(100),
+  partner_type: Fields.shortText(50),
+  documents: z.array(z.any()).max(50).optional().default([]),
+});
 
 // Doctor auto-activation clear-scan bands.
 // <= CLEAR_THRESHOLD:            "clear" — auto-activate, no human touch.
@@ -303,4 +314,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       auto_verified: autoVerified,
       auto_activated: doctorActuallyActivated,
     });
-}, { name: 'initiatePartnerVerification' }));
+}, { name: 'initiatePartnerVerification', bodySchema: InitiatePartnerVerificationSchema }));

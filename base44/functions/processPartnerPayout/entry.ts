@@ -14,6 +14,38 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, validate, Fields } from '../_shared/validate.ts';
+
+// Action-multiplexed body — discriminated union instead of createHandler's
+// bodySchema hook. partner_type is left as a length-capped string (not an
+// enum) because the existing logic already tolerates an unrecognized value
+// by falling back to COMMISSION_RULES.doctor — enum-restricting it here
+// would reject a value the current code accepts.
+const PayoutSchema = z.discriminatedUnion('action', [
+  strictObject({
+    action: z.literal('check_escrow'),
+    case_id: Fields.shortText(100),
+    partner_id: z.string().trim().max(100).optional(),
+    partner_type: z.string().trim().max(50).optional(),
+    stripe_connect_account_id: z.string().trim().max(200).optional(),
+  }),
+  strictObject({
+    action: z.literal('release_payout'),
+    case_id: Fields.shortText(100),
+    partner_id: z.string().trim().max(100).optional(),
+    partner_type: Fields.shortText(50),
+    stripe_connect_account_id: z.string().trim().max(200).optional(),
+    manual_override_reason: z.string().trim().max(1000).optional(),
+  }),
+  strictObject({
+    action: z.literal('manual_override'),
+    case_id: Fields.shortText(100),
+    partner_id: z.string().trim().max(100).optional(),
+    partner_type: Fields.shortText(50),
+    stripe_connect_account_id: z.string().trim().max(200).optional(),
+    manual_override_reason: z.string().trim().max(1000).optional(),
+  }),
+]);
 
 // Commission tiers by partner type (platform take-rate)
 const COMMISSION_RULES = {
@@ -73,8 +105,10 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { action, case_id, partner_id, partner_type, stripe_connect_account_id, manual_override_reason } = body;
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(PayoutSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
+    const { action, case_id, partner_id, partner_type, stripe_connect_account_id, manual_override_reason } = validated.data as any;
 
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
 

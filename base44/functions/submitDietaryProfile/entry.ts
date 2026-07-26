@@ -1,6 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { reviseAndUpdate } from '../_shared/reviseAndUpdate.ts';
+import { z, strictObject, validate } from '../_shared/validate.ts';
+
+const DietaryProfileSchema = strictObject({
+  case_id: z.string().trim().max(100).optional(),
+  consultation_id: z.string().trim().max(100).optional(),
+  has_food_allergies: z.boolean().optional().default(false),
+  food_allergies_details: z.string().max(2000).optional().default(''),
+  has_medication_allergies: z.boolean().optional().default(false),
+  medication_allergies_details: z.string().max(2000).optional().default(''),
+  dietary_restrictions: z.string().trim().max(100).optional().default('none'),
+  dietary_restrictions_details: z.string().max(2000).optional().default(''),
+  emergency_food_reaction_plan: z.string().max(2000).optional().default(''),
+  patient_acknowledges_accuracy: z.boolean().optional().default(false),
+});
 
 Deno.serve(async (req) => {
   try {
@@ -11,14 +25,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(DietaryProfileSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
     const {
       case_id, consultation_id,
       has_food_allergies, food_allergies_details,
       has_medication_allergies, medication_allergies_details,
       dietary_restrictions, dietary_restrictions_details,
       emergency_food_reaction_plan, patient_acknowledges_accuracy
-    } = body;
+    } = validated.data;
 
     if (!patient_acknowledges_accuracy) {
       return Response.json({ error: 'Patient must confirm accuracy of dietary information before saving.' }, { status: 400 });

@@ -14,10 +14,21 @@
  *   Clears companion_package_requested and status on the case.
  */
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject } from '../_shared/validate.ts';
+
+const RequestCompanionPackageSchema = strictObject({
+  action: z.enum(['request', 'cancel']).optional().default('request'),
+});
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body().catch(() => ({}));
-    const action: string = body.action || 'request';
+    // FIX: this used to redeclare `body` as `const body = await body()` —
+    // redeclaring a destructured parameter with const/let is a SyntaxError
+    // in JS ("Identifier 'body' has already been declared"), confirmed by
+    // running the exact pattern directly. That means this file could not
+    // parse at all, so every call to this function was failing outright.
+    // Renamed the local to `payload`.
+    const payload = await body().catch(() => ({}));
+    const action: string = payload.action || 'request';
 
     // ── Fetch patient's active case ───────────────────────────────────────────
     const cases = await base44.entities.CaseRecord.filter(
@@ -190,4 +201,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       destination: country,
       job_brief: jobBrief,
     });
-}, { name: 'requestCompanionPackage' }));
+}, { name: 'requestCompanionPackage', bodySchema: RequestCompanionPackageSchema }));

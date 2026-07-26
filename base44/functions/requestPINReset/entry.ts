@@ -1,5 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, validate } from '../_shared/validate.ts';
+
+// user_email left optional here — the existing check below already returns
+// the exact "Valid email required" message for anything missing/invalid;
+// this schema's job is reject-unexpected-fields + a length cap.
+const RequestPINResetSchema = strictObject({
+  user_email: z.string().max(254).optional(),
+  pin_type: z.string().max(20).optional(),
+});
 
 // Generates a stateless HMAC-SHA256 reset token and emails it to the user.
 // No new entity needed — token is self-contained with email + expiry.
@@ -37,7 +46,10 @@ async function signToken(data: string): Promise<string> {
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user_email, pin_type } = await req.json().catch(() => ({}));
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(RequestPINResetSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
+    const { user_email, pin_type } = validated.data;
     const pinType = pin_type === 'vault' ? 'vault' : 'emergency';
 
     if (!user_email || !String(user_email).includes('@')) {

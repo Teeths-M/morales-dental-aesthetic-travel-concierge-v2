@@ -13,6 +13,13 @@
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const GuardianCheckInSchema = strictObject({
+  consultation_id: Fields.shortText(100),
+  reason: z.string().trim().max(50).optional().default('scheduled'),
+  tz_offset: z.coerce.number().optional().default(0),
+});
 
 const SLEEP_START = 22; // 10 PM
 const SLEEP_END   =  6; // 6 AM
@@ -88,4 +95,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }).catch(() => {});
 
   return ok({ sent: true, token, reason });
-}, { name: 'guardianCheckIn', requireAuth: true }));
+}, { name: 'guardianCheckIn', requireAuth: true, bodySchema: GuardianCheckInSchema }));

@@ -12,6 +12,15 @@
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const SubmitPostOpCheckInSchema = strictObject({
+  token: Fields.shortText(200),
+  rating: Fields.boundedInt(1, 5),
+  pain_level: Fields.boundedInt(0, 10).optional(),
+  note: z.string().max(2000).optional().default(''),
+  concerns: z.array(z.string().max(200)).max(20).optional().default([]),
+});
 
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { token, rating, pain_level, note, concerns } = await body();
@@ -80,4 +89,4 @@ ${note ? `<tr><td>Patient note</td><td>${note}</td></tr>` : ''}
   }).catch(() => {});
 
   return ok({ success: true, day: rec.day, needs_followup: needsFollowup });
-}, { name: 'submitPostOpCheckIn', requireAuth: false }));
+}, { name: 'submitPostOpCheckIn', requireAuth: false, bodySchema: SubmitPostOpCheckInSchema }));

@@ -16,6 +16,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { reportIncident, generateIncidentCode } from './incidentReporting.ts';
 import { enforceRateLimit } from './rateLimit.ts';
+import { validate, type z } from './validate.ts';
 
 // Sensible default for any public (requireAuth:false) function that doesn't
 // specify its own policy: generous enough not to break legitimate use of a
@@ -69,6 +70,20 @@ export interface HandlerOptions {
    * Pass an explicit `{ max, windowSeconds }` for a custom policy.
    */
   rateLimit?: { max: number; windowSeconds: number } | false;
+  /**
+   * Zod schema (from _shared/validate.ts) the request body must satisfy.
+   * When set, createHandler parses the body once, validates it right after
+   * auth/rate-limit and BEFORE the handler runs, and short-circuits with a
+   * clean 400 on failure (message built only from the schema's own issue
+   * text — never raw validator/stack internals). On success, ctx.body()
+   * returns the validated, coerced, defaulted object, so adding a schema to
+   * an existing function often requires no change to its handler body.
+   *
+   * Omit for a function whose shape depends on the payload itself (e.g. an
+   * `action`-discriminated body) — express those with z.discriminatedUnion
+   * and call validate() manually inside the handler instead.
+   */
+  bodySchema?: z.ZodType<any>;
 }
 
 type HandlerFn = (ctx: HandlerContext) => Promise<Response>;
@@ -132,6 +147,18 @@ export function createHandler(fn: HandlerFn, opts: HandlerOptions = {}) {
         }
         return cached as T;
       };
+
+      // ── Schema validation ───────────────────────────────────────────────────
+      // Runs before the handler so a malformed/oversized/unexpected-field body
+      // never reaches business logic. Replaces the cached body with the
+      // validated (coerced, defaulted) object so handlers keep working
+      // unchanged once a schema is added.
+      if (opts.bodySchema) {
+        const raw = await body();
+        const result = validate(opts.bodySchema, raw);
+        if (!result.ok) return respond({ error: result.message }, 400, requestId);
+        cached = result.data;
+      }
 
       // ── Delegate to handler ────────────────────────────────────────────────
       const response = await fn({ req, base44, user, body, requestId });

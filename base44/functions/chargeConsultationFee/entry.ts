@@ -8,6 +8,14 @@
 
 import { createHandler } from '../_shared/createHandler.ts';
 import Stripe from 'npm:stripe@17.0.0';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const ChargeFeeSchema = strictObject({
+  consultation_id: z.string().trim().max(100).optional(),
+  email: Fields.email(),
+  procedure: z.string().max(200).optional().default(''),
+  destination: z.string().max(200).optional().default(''),
+});
 
 // Sanitize text fields — strip HTML tags to prevent stored XSS
 function sanitizeText(input: unknown, maxLen = 2000): string {
@@ -191,4 +199,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       consultation_fee_id: feeRecord.id,
       amount: 49,
     });
-}, { name: 'chargeConsultationFee' }));
+}, { name: 'chargeConsultationFee', bodySchema: ChargeFeeSchema }));

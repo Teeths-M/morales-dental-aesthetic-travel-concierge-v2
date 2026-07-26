@@ -1,5 +1,13 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { z, strictObject } from '../_shared/validate.ts';
+
+const SubmitPartnerQuoteSchema = strictObject({
+  case_id: z.string().trim().max(100).optional(),
+  consultation_id: z.string().trim().max(100).optional(),
+  partner_type: z.enum(['travel', 'driver', 'companion', 'clinic']),
+  amount: z.coerce.number().optional(),
+});
 
 /**
  * submitPartnerQuote — Automation Gate
@@ -140,4 +148,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     pending_quotes: pending,
     message: `Quote from ${partner_type} saved. Waiting for: ${pending.join(', ')}.`,
   });
-}, { name: 'submitPartnerQuote', requireAuth: true }));
+}, { name: 'submitPartnerQuote', requireAuth: true, bodySchema: SubmitPartnerQuoteSchema }));

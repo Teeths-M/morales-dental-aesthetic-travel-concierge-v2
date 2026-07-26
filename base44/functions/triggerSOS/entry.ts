@@ -1,5 +1,30 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, validate } from '../_shared/validate.ts';
+
+// Deliberately permissive on types (z.any()) for everything but the two
+// fields already required by this function's own logic — this is a live
+// emergency-dispatch path, and a too-strict schema rejecting a real SOS
+// is a far worse outcome than a validator being lenient. .strict() still
+// rejects any field name outside this list.
+const TriggerSOSSchema = strictObject({
+  trigger_type: z.string().max(50),
+  patient_email: z.string().max(254),
+  latitude: z.any().optional(),
+  longitude: z.any().optional(),
+  location_label: z.any().optional(),
+  case_id: z.any().optional(),
+  patient_name: z.any().optional(),
+  patient_phone: z.any().optional(),
+  is_silent: z.any().optional(),
+  destination_country: z.any().optional(),
+  pin_session_token: z.any().optional(),
+  hardware_channels_detected: z.any().optional(),
+  activity_type: z.any().optional(),
+  offline_packet_id: z.any().optional(),
+  emergency_type: z.any().optional(),
+  activity_session_id: z.any().optional(),
+});
 
 // Sliding-window rate limiter using RateLimitBucket entity
 // Returns true if request is allowed, false if rate limit exceeded.
@@ -38,13 +63,15 @@ Deno.serve(createHandler(async ({ req }) => {
     let user = null;
     try { user = await base44.auth.me(); } catch (_) {}
 
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(TriggerSOSSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
     const {
       trigger_type, latitude, longitude, location_label,
       case_id, patient_email, patient_name, patient_phone,
       is_silent, destination_country, pin_session_token,
       hardware_channels_detected = [],   // goTenna, inReach, satellite, sms, qr, webshare
-    } = body;
+    } = validated.data as any;
 
     // Require authentication: either JWT session or PIN session
     if (!user && !pin_session_token) {
@@ -72,7 +99,7 @@ Deno.serve(createHandler(async ({ req }) => {
     const route = SOS_ROUTES[trigger_type] || SOS_ROUTES.police;
 
     // Extra fields for wilderness_injury
-    const { activity_type, offline_packet_id, emergency_type, activity_session_id } = body;
+    const { activity_type, offline_packet_id, emergency_type, activity_session_id } = validated.data as any;
 
     // Translate emergency message to local language
     let translatedMessage = 'EMERGENCY: Medical tourist requires immediate assistance.';

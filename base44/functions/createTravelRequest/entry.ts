@@ -1,5 +1,30 @@
 import { createHandler } from '../_shared/createHandler.ts';
 import { renderEmail } from '../_shared/emailTemplate.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+// Enums mirror base44/entities/TravelRequest.jsonc exactly. departure_date/
+// return_date are left as length-capped strings, not a strict date format —
+// the current code never validated their format either, and this repo's
+// intake flow's exact date format hasn't been confirmed here.
+const CreateTravelRequestSchema = strictObject({
+  origin_city: Fields.shortText(100),
+  origin_country: z.string().trim().max(100).optional(),
+  destination_city: Fields.shortText(100),
+  destination_country: z.string().trim().max(100).optional(),
+  departure_date: Fields.shortText(30),
+  return_date: z.string().trim().max(30).optional(),
+  travelers_count: Fields.boundedInt(1, 20).optional().default(1),
+  travel_class: z.enum(['economy', 'premium_economy', 'business', 'first']).optional().default('economy'),
+  hotel_required: z.boolean().optional().default(true),
+  hotel_star_rating: Fields.boundedInt(3, 5).optional().default(4),
+  hotel_room_type: z.enum(['standard', 'deluxe', 'suite', 'penthouse']).optional().default('deluxe'),
+  transfer_required: z.boolean().optional().default(true),
+  transfer_type: z.enum(['standard', 'luxury', 'vip']).optional().default('standard'),
+  companion_required: z.boolean().optional().default(false),
+  companion_type: z.enum(['tour_guide', 'care_companion', 'luxury_concierge']).optional(),
+  companion_days: Fields.boundedInt(0, 365).optional().default(0),
+  special_requests: z.string().max(2000).optional().default(''),
+});
 
 // Sanitize text fields — strip HTML tags to prevent stored XSS
 function sanitizeText(input: unknown, maxLen = 2000): string {
@@ -151,4 +176,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       total_package_price,
       deposit_amount
     });
-}, { name: 'createTravelRequest' }));
+}, { name: 'createTravelRequest', bodySchema: CreateTravelRequestSchema }));

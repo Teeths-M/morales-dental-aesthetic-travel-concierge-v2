@@ -1,7 +1,14 @@
 import { createHandler, ok } from '../_shared/createHandler.ts';
+import { z, strictObject } from '../_shared/validate.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
+
+const AnalyzeIntakeCombinationSchema = strictObject({
+  conditions: z.array(z.string().max(200)).max(50).optional().default([]),
+  medications: z.array(z.string().max(200)).max(50).optional().default([]),
+  allergies: z.array(z.string().max(200)).max(50).optional().default([]),
+});
 
 Deno.serve(createHandler(async ({ body }) => {
   const { conditions, medications, allergies } = await body<{
@@ -32,4 +39,4 @@ Identify any clinically significant combination that a surgeon must know about b
     const parsed = m ? JSON.parse(m[0]) : null;
     return ok({ warning: parsed?.warning || null, severity: parsed?.severity || null });
   } catch { return ok({ warning: null, severity: null }); }
-}, { name: 'analyzeIntakeCombination', requireAuth: false }));
+}, { name: 'analyzeIntakeCombination', requireAuth: false, bodySchema: AnalyzeIntakeCombinationSchema }));

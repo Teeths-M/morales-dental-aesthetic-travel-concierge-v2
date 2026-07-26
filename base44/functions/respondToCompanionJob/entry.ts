@@ -10,6 +10,13 @@
  * action: 'reject' — marks CompanionAssignment as 'declined'.
  */
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const RespondToCompanionJobSchema = strictObject({
+  assignment_id: Fields.shortText(100),
+  action: z.enum(['accept', 'reject']),
+  reject_reason: z.string().max(1000).optional().default(''),
+});
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { assignment_id, action, reject_reason } = await body().catch(() => ({}));
@@ -175,4 +182,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
-}, { name: 'respondToCompanionJob' }));
+}, { name: 'respondToCompanionJob', bodySchema: RespondToCompanionJobSchema }));

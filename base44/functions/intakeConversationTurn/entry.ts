@@ -1,5 +1,15 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const IntakeTurnSchema = strictObject({
+  step_id: Fields.shortText(100),
+  question_shown: Fields.shortText(1000),
+  deterministic_reason: Fields.shortText(1000),
+  target_fields: z.array(z.string().max(100)).max(20).optional().default([]),
+  user_raw_text: Fields.shortText(2000),
+  known_answers_snapshot: z.record(z.any()).optional().default({}),
+});
 
 // ── intakeConversationTurn ───────────────────────────────────────────────────
 // Powers ONE turn of the conversational patient intake (/intake, Phase 1).
@@ -142,4 +152,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     narration: typeof result.narration === 'string' ? result.narration : '',
     acknowledgement: typeof result.acknowledgement === 'string' ? result.acknowledgement : '',
   });
-}, { name: 'intakeConversationTurn', requireAuth: false }));
+}, { name: 'intakeConversationTurn', requireAuth: false, bodySchema: IntakeTurnSchema }));

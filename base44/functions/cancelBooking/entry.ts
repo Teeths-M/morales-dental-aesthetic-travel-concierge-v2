@@ -1,6 +1,12 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { guardedStatusUpdate, BOOKING, isTerminal } from '../_shared/bookingState.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const CancelBookingSchema = strictObject({
+  case_id: Fields.shortText(100),
+  reason: z.string().max(500).optional().default(''),
+});
 
 /**
  * cancelBooking — first-class, patient-initiated cancellation with per-leg refund.
@@ -102,4 +108,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       ? `Booking cancelled. $${refundable.toLocaleString()} will be refunded; $${nonRefundable.toLocaleString()} already arranged (flights/hotel) is non-refundable.`
       : `Booking cancelled. $${refundable.toLocaleString()} will be refunded.`,
   });
-}, { name: 'cancelBooking', requireAuth: true }));
+}, { name: 'cancelBooking', requireAuth: true, bodySchema: CancelBookingSchema }));

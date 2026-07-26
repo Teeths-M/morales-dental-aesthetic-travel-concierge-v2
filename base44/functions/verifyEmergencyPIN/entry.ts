@@ -1,5 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, Fields, validate } from '../_shared/validate.ts';
+
+// Single flexible schema rather than a per-action discriminated union — the
+// existing top-level check requires action+user_email for EVERY action
+// (including validate_session/revoke_session, which don't actually use
+// user_email — a pre-existing quirk, preserved as-is here), and every other
+// field is already validated ad-hoc per action branch further down.
+const VerifyEmergencyPINSchema = strictObject({
+  action: z.enum(['setup', 'verify', 'validate_session', 'revoke_session', 'get_hint', 'get_manifest']),
+  user_email: Fields.shortText(254),
+  pin: z.string().max(20).optional(),
+  new_pin: z.string().max(20).optional(),
+  hint: z.string().max(200).optional(),
+  pin_session_token: z.string().max(200).optional(),
+});
 
 // Sliding-window rate limiter using RateLimitBucket entity
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
@@ -72,9 +87,10 @@ async function validatePinSession(base44, token) {
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { action, user_email, pin, new_pin, hint, pin_session_token } = await req.json();
-
-    if (!action || !user_email) return Response.json({ error: 'action and user_email required' }, { status: 400 });
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(VerifyEmergencyPINSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
+    const { action, user_email, pin, new_pin, hint, pin_session_token } = validated.data;
 
     // RATE LIMIT: 10 requests per 15 minutes per email (covers setup, verify, validate_session)
     // verify action has its own 5-attempt DB lockout; this is a coarser outer guard

@@ -1,5 +1,20 @@
 import { createHandler } from '../_shared/createHandler.ts';
 import { linkOnlyEmail, emergencyDispatch } from '../_shared/notify.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+// pain_level/escalate are left untyped (z.any()) — both feed the medical-
+// emergency escalation decision below via loose truthy/parseInt handling
+// that already tolerates strings, numbers, or missing values. Restricting
+// their type here could reject a value the existing logic currently
+// handles gracefully (e.g. falls back to 0), which is not a place to add
+// new failure modes to an emergency-escalation path.
+const SubmitRecoveryCheckinSchema = strictObject({
+  session_id: Fields.shortText(200),
+  checkin_index: z.coerce.number().int().min(0),
+  pain_level: z.any().optional(),
+  notes: z.string().max(2000).optional(),
+  escalate: z.any().optional(),
+});
 
 // Pain level at which we stop treating this as a routine escalation and trigger
 // the full emergency cascade: family alert + case emergency flag + urgent admin page.
@@ -132,4 +147,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     await base44.asServiceRole.entities.RecoverySession.update(session.id, updateData);
 
     return Response.json({ success: true, escalated: !!escalate, all_done: allDone, medical_emergency: isMedicalEmergency });
-}, { name: 'submitRecoveryCheckin' }));
+}, { name: 'submitRecoveryCheckin', bodySchema: SubmitRecoveryCheckinSchema }));

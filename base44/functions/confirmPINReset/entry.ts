@@ -1,5 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, validate } from '../_shared/validate.ts';
+
+// All fields optional here on purpose — a missing/malformed token or sig
+// must keep failing the same soft way it already does ({valid:false,
+// reason:'invalid'}, no error status), not a generic 400. .strict() still
+// rejects unexpected field names.
+const ConfirmPINResetSchema = strictObject({
+  token: z.string().max(500).optional(),
+  sig: z.string().max(200).optional(),
+  action: z.string().max(20).optional(),
+  new_pin: z.string().max(20).optional(),
+  pin_type: z.string().max(20).optional(),
+});
 
 // Verifies the HMAC-signed reset token from the email link.
 // action=verify  → returns { valid, email } (used by ResetPIN page on load)
@@ -104,7 +117,10 @@ Deno.serve(createHandler(async ({ req }) => {
     }
 
     const base44 = createClientFromRequest(req);
-    const { token, sig, action, new_pin, pin_type } = await req.json().catch(() => ({}));
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(ConfirmPINResetSchema, rawBody);
+    if (!validated.ok) return Response.json({ valid: false, reason: 'invalid' });
+    const { token, sig, action, new_pin, pin_type } = validated.data;
     const pinType = pin_type === 'vault' ? 'vault' : 'emergency';
 
     if (!token || !sig) {

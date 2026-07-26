@@ -1,4 +1,10 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { z, strictObject, Fields } from '../_shared/validate.ts';
+
+const RespondToDoctorCaseSchema = strictObject({
+  workflow_id: Fields.shortText(100),
+  decision: z.enum(['confirmed', 'unavailable']),
+});
 
 // Same doctor-lookup pattern as getDoctorCases: resolve the caller's own
 // Doctor record by their authenticated email, then confirm the WorkflowEvent
@@ -29,4 +35,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   });
 
   return ok({ success: true });
-}, { name: 'respondToDoctorCase', requireAuth: true, allowedRoles: ['doctor'] }));
+}, { name: 'respondToDoctorCase', requireAuth: true, allowedRoles: ['doctor'], bodySchema: RespondToDoctorCaseSchema }));

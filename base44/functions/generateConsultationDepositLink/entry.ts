@@ -1,8 +1,15 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 import { createHandler } from '../_shared/createHandler.ts';
+import { z, strictObject, validate, Fields } from '../_shared/validate.ts';
 
 const DEPOSIT_AMOUNT = 60;
+
+const DepositLinkSchema = strictObject({
+  case_id: Fields.shortText(100),
+  original_amount: z.coerce.number().optional(),
+  proposal_token: Fields.shortText(200).optional(),
+});
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -13,11 +20,10 @@ Deno.serve(createHandler(async ({ req }) => {
     // the tokenMatch check further down is what actually authorizes anonymous callers.
     const user = await base44.auth.me().catch(() => null);
 
-    const { case_id, original_amount, proposal_token } = await req.json();
-
-    if (!case_id) {
-      return Response.json({ error: 'case_id required' }, { status: 400 });
-    }
+    const rawBody = await req.json().catch(() => ({}));
+    const validated = validate(DepositLinkSchema, rawBody);
+    if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
+    const { case_id, original_amount, proposal_token } = validated.data;
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) {
