@@ -399,16 +399,23 @@ Return JSON only:
     };
 
     // ── Tiered Trust Routing ─────────────────────────────────────────────────────
-    // Low risk    → auto-approved (verification_status: 'verified')
+    // This scan checks online-presence/fraud signals only — it has no visibility
+    // into license, identity, or background checks, so it must never be the thing
+    // that marks a partner "verified" (that's activateVerifiedDoctor's job, gated
+    // on all 3 human-adjudicated sub-checks). Matches verifyClinicStatus's rule:
+    // the AI may only escalate scrutiny, never clear it.
+    // Low risk    → no status change (informational note only)
     // Medium risk → held for manual review (verification_status: 'pending_manual')
     // High risk   → held for manual review, most likely blacklist candidate
-    const tieredStatus = risk_level === 'low' ? 'verified' : 'pending_manual';
+    const tieredStatus = risk_level === 'low' ? null : 'pending_manual';
     const tieredNotes  = risk_level === 'low'
-      ? `Auto-approved by internet intelligence scan (score ${riskScore}/100, low risk).`
+      ? `Internet intelligence scan clear (score ${riskScore}/100, low risk). Does not substitute for license/identity/background verification.`
       : risk_level === 'medium'
         ? `Held for manual review (score ${riskScore}/100, medium risk).`
         : `HELD — high risk (score ${riskScore}/100). Most likely blacklist candidate.`;
-    agentLog.push(`Tiered routing: risk=${risk_level} → verification_status=${tieredStatus}.`);
+    agentLog.push(tieredStatus
+      ? `Tiered routing: risk=${risk_level} → verification_status=${tieredStatus}.`
+      : `Tiered routing: risk=${risk_level} → no status change (internet scan alone cannot verify a partner; license/identity/background checks still required).`);
 
     // ── Persist ──────────────────────────────────────────────────────────────────
     const intelPatch = {
@@ -422,7 +429,8 @@ Return JSON only:
       ...(instagram_handle ? { social_instagram: instagram_handle } : {}),
       ...(tiktok_handle    ? { social_tiktok: tiktok_handle }       : {}),
     };
-    const statusPatch: any = { verification_status: tieredStatus };
+    const statusPatch: any = {};
+    if (tieredStatus) statusPatch.verification_status = tieredStatus;
     if (partner_type === 'doctor') statusPatch.verification_notes = tieredNotes;
 
     if (partner_type === 'doctor')

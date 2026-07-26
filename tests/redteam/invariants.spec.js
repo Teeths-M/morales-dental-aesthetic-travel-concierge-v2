@@ -66,6 +66,11 @@ test('CLINIC: the agent proposes operating for human confirm — it never auto-c
   expect(src).not.toMatch(/operating_status:\s*['"]operating['"]/);
 });
 
+test('DOCTOR: runInternetIntelligence never auto-clears verification_status — only a human can', () => {
+  const src = read('base44/functions/runInternetIntelligence/entry.ts');
+  expect(src).not.toMatch(/verification_status:\s*['"]verified['"]/);
+});
+
 test('PHI: the concierge assistants scrub PHI before the LLM', () => {
   for (const fn of ['moralesAssist', 'safeTAssist']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
