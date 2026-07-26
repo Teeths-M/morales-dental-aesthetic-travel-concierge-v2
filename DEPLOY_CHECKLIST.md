@@ -142,6 +142,16 @@ Separate from the Base44 publish flow above — these apply when a change touche
   emulator here, so the actual hardware back-button behavior (closing the
   safety-pivot overlay, navigating back, the double-press-to-exit flow) needs a
   real on-device or emulator pass before this can be considered verified.
+- **After merging `BottomTabBar`** (mobile primary nav, `src/components/layout/`):
+  pure web/CSS, no new native plugin — `npm run mobile:sync` is only needed for
+  the routine "get the latest web build into the native shell" reason, not a
+  hard blocker. Worth a real on-device/emulator look specifically: fixed-position
+  bottom bars are exactly where `env(safe-area-inset-bottom)` most commonly gets
+  it wrong (home-indicator devices, gesture-nav Android). Also re-check
+  `FloatingSOSButton` and `PlatformGuideOrb` don't visually collide with the new
+  bar on a real small screen — both were adjusted to read a new
+  `--bottom-tab-bar-height` CSS variable the bar sets, but that's untested
+  outside a browser devtools viewport simulation.
 
 ---
 

@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import FloatingSOSButton from './FloatingSOSButton';
 import Header from './Header';
+import BottomTabBar from './BottomTabBar';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
 import OfflineBanner from './OfflineBanner';
 import { useAuth } from '@/lib/AuthContext';
@@ -120,7 +121,7 @@ export default function AppLayout() {
       <div className="min-h-screen flex flex-col">
         <OfflineBanner />
         <Header />
-        <main className="flex-1 pt-[56px] sm:pt-[72px]">
+        <main className={`flex-1 pt-[56px] sm:pt-[72px] ${user && !isAdmin ? 'pb-[70px] lg:pb-0' : ''}`}>
           <Outlet />
         </main>
         <Footer />
@@ -139,6 +140,9 @@ export default function AppLayout() {
 
             {/* Premium floating SOS — authenticated users only */}
             {user && <FloatingSOSButton />}
+
+            {/* Mobile primary nav — hidden at lg:+ where DashboardSidebar's desktop rail takes over */}
+            {user && <BottomTabBar />}
           </>
         )}
 
