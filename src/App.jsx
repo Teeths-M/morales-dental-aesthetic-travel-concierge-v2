@@ -5,7 +5,6 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
@@ -71,7 +70,6 @@ const PageLoader = () => {
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
   const location = useLocation();
-  const reduceMotion = useReducedMotion();
 
   usePushNotifications(user);
   useAndroidBackButton();
@@ -106,35 +104,25 @@ const AuthenticatedApp = () => {
       <SafetyPivotOverlay />
       {/* Suspense boundary catches all lazy page chunks inside route modules */}
       <Suspense fallback={<PageLoader />}>
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={location.pathname}
-            initial={reduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.15 }}
-          >
-            <Routes location={location}>
-              {/* ── Partner portals (includes standalone token-gated vendor portals) ── */}
-              {partnerRoutes}
+        <Routes location={location}>
+          {/* ── Partner portals (includes standalone token-gated vendor portals) ── */}
+          {partnerRoutes}
 
-              {/* ── Client / patient authenticated routes ── */}
-              {clientRoutes}
+          {/* ── Client / patient authenticated routes ── */}
+          {clientRoutes}
 
-              {/* ── Public unauthenticated routes (wrapped in AppLayout) ── */}
-              {publicRoutes}
+          {/* ── Public unauthenticated routes (wrapped in AppLayout) ── */}
+          {publicRoutes}
 
-              {/* ── Admin routes ── */}
-              {adminRoutes}
+          {/* ── Admin routes ── */}
+          {adminRoutes}
 
-              {/* ── Token-gated / public standalone pages ── */}
-              {tokenRoutes}
+          {/* ── Token-gated / public standalone pages ── */}
+          {tokenRoutes}
 
-              {/* ── Catch-all ── */}
-              <Route path="*" element={<PageNotFound />} />
-            </Routes>
-          </motion.div>
-        </AnimatePresence>
+          {/* ── Catch-all ── */}
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
       </Suspense>
     </>
   );
