@@ -57,6 +57,9 @@ import LoadingState from '@/components/ui-system/LoadingState';
 import ErrorState from '@/components/ui-system/ErrorState';
 import { formatDate } from '@/lib/format';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
+import { daysUntil } from '@/lib/dateUtils';
+import { isPrepCoachActive } from '@/lib/prepCoach';
+import ProcedurePrepCoach from '@/components/dashboard/ProcedurePrepCoach';
 import { toast } from 'sonner';
 
 function WhatsAppMini() {
@@ -235,13 +238,11 @@ function DashboardHome({ user, consultations, language }) {
   const matchedDoctors = matchedDoctorsData?.matched_doctors || [];
   const outreachSent = matchedDoctorsData?.outreach_sent || false;
 
-  // PERFORMANCE: Memoize countdown calculation
-  const procedureDate = latestConsultation?.procedure_date || null;
-  const daysUntil = useMemo(() => {
-    const target = procedureDate ? new Date(procedureDate) : new Date('2026-06-14');
-    const today = new Date();
-    return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-  }, [procedureDate]);
+  // Real procedure date lives on CaseRecord (latestActive), not Consultation —
+  // latestConsultation.procedure_date doesn't exist as a field, so this used
+  // to silently fall back to a hardcoded placeholder date every time.
+  const procedureDate = latestActive?.procedure_date || null;
+  const daysUntilProcedure = useMemo(() => daysUntil(procedureDate), [procedureDate]);
 
   return (
     <div className="space-y-6">
@@ -495,6 +496,13 @@ function DashboardHome({ user, consultations, language }) {
         />
       )}
 
+      {/* M Prep Coach — AI-agent countdown + doctor-driven prep checklist,
+          once the doctor has confirmed the procedure and a payment has landed */}
+      <ProcedurePrepCoach
+        caseRecord={latestActive}
+        userName={user?.full_name || user?.name || ''}
+      />
+
       {/* EVN-iQ400 — Environmental Intelligence Layer */}
       {latestConsultation?.procedure_country && (
         <EVNiQ400Card country={latestConsultation.procedure_country} />
@@ -607,8 +615,8 @@ function DashboardHome({ user, consultations, language }) {
             <p className="text-white/70 text-[10px] font-semibold uppercase tracking-[0.25em] mb-2">
               {language === 'es' ? 'Días Hasta el Procedimiento' : language === 'fr' ? 'Jours Jusqu\'à la Procédure' : 'Days Until Procedure'}
             </p>
-            <p className="font-display text-4xl sm:text-5xl text-white" style={{ letterSpacing: '-0.02em' }}>{daysUntil > 0 ? daysUntil : '—'}</p>
-            <p className="text-white/60 text-[12px] mt-1">{procedureDate ? formatDate(procedureDate) : 'Jun 14, 2026'}</p>
+            <p className="font-display text-4xl sm:text-5xl text-white" style={{ letterSpacing: '-0.02em' }}>{daysUntilProcedure > 0 ? daysUntilProcedure : '—'}</p>
+            <p className="text-white/60 text-[12px] mt-1">{procedureDate ? formatDate(procedureDate) : (language === 'es' ? 'Aún no programado' : language === 'fr' ? 'Pas encore programmé' : 'Not yet scheduled')}</p>
           </div>
         </div>
       </motion.div>
@@ -800,8 +808,11 @@ function DashboardHome({ user, consultations, language }) {
         doctorConfirmed={latestConsultation?.status === 'confirmed' || latestConsultation?.journey_stage === 'procedure' || latestConsultation?.journey_stage === 'recovery'}
       />
 
-      {/* Preparation Checklist */}
-      <PreparationChecklist userEmail={user?.email} />
+      {/* Preparation Checklist — generic pre-confirmation tips. Once M Prep
+          Coach takes over (doctor-confirmed + paid), hide this one so the
+          patient sees a single, specific checklist instead of two
+          overlapping "how to prepare" lists on the same dashboard. */}
+      {!isPrepCoachActive(latestActive) && <PreparationChecklist userEmail={user?.email} />}
 
       {/* Quick Actions */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">

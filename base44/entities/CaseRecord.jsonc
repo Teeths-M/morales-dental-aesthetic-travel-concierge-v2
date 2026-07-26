@@ -881,6 +881,12 @@
     "travel_reminder_1d_sent":  { "type": "boolean", "default": false },
     "travel_reminder_day_of_sent": { "type": "boolean", "default": false },
 
+    // ── Pre-Procedure Prep Countdown Reminders (sendProcedurePrepReminders) ───
+    "prep_reminder_7d_sent":     { "type": "boolean", "default": false },
+    "prep_reminder_3d_sent":     { "type": "boolean", "default": false },
+    "prep_reminder_1d_sent":     { "type": "boolean", "default": false },
+    "prep_reminder_day_of_sent": { "type": "boolean", "default": false },
+
     // ── Abandoned Booking Recovery (Expedia model) ────────────────────────────
     "abandoned_1_sent":   { "type": "boolean", "default": false, "description": "2-hr warm recovery email+SMS sent" },
     "abandoned_2_sent":   { "type": "boolean", "default": false, "description": "24-hr firm reminder email+SMS sent" },

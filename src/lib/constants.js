@@ -63,6 +63,13 @@ export const PAYMENT_STATUS = {
   REFUNDED: 'Refunded',
 };
 
+// ── Doctor Confirmation Status (CaseRecord.doctor_confirmation_status) ───────
+export const DOCTOR_CONFIRMATION_STATUS = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  DECLINED: 'DECLINED',
+};
+
 // ── SAFE-T Risk Levels ───────────────────────────────────────────────────────
 export const RISK_LEVELS = {
   LOW: 'Low',
@@ -386,6 +393,7 @@ export const CONSTANTS = {
   ROLES,
   CASE_STATUS,
   PAYMENT_STATUS,
+  DOCTOR_CONFIRMATION_STATUS,
   RISK_LEVELS,
   SAFE_T_RESULT,
   VERIFICATION_STATUS,

@@ -585,6 +585,7 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
   // an outbound body. Add to this list as each remaining sender is migrated.
   const MIGRATED = [
     'sendTravelCountdownReminders',
+    'sendProcedurePrepReminders',
     'requestPartnerQuotas',
     'checkPartnerSLABreaches',
     'sendQuoteReminders',
@@ -2153,4 +2154,56 @@ test('ACCOUNT DELETION: createHandler rejects any request from a deleted account
   const rolesCheckIdx = src.indexOf('allowedRoles?.length');
   expect(deletionCheckIdx, 'deletion check must run before the role check').toBeGreaterThan(0);
   expect(deletionCheckIdx).toBeLessThan(rolesCheckIdx);
+});
+
+// ─── M Prep Coach (2026-07-26) ───────────────────────────────────────────────
+
+test('PREP COACH: sendProcedurePrepReminders is cron-gated and link-only', () => {
+  const src = read('base44/functions/sendProcedurePrepReminders/entry.ts');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  expect(code, 'must use createHandler, not raw Deno.serve').toContain('createHandler(async');
+  expect(code, 'requireAuth must be false (self-gated below)').toContain('requireAuth: false');
+  expect(code, 'must require cron secret or admin session').toContain('cronAuthorized(req, base44)');
+  expect(code, 'no fail-open role check').not.toMatch(/if \((?:user|callerUser) && \1?\w*\.role !==/);
+  expect(src, 'must send via the link-only helper, never a raw SendEmail body with PHI').toContain('linkOnlyEmail(');
+  // Only fires once BOTH the doctor has confirmed AND a payment has landed —
+  // never on doctor-confirmation alone.
+  expect(src).toContain("doctor_confirmation_status === 'CONFIRMED'");
+  expect(src).toContain("PAID_STATUSES.includes(c.payment_status)");
+});
+
+test('PREP COACH: the checklist stays deterministic — AI may narrate, never decide', () => {
+  // Same M-Principle shape as PreDepartureBriefing: the LLM result may only
+  // ever be assigned to the narration message, never merged back into the
+  // checklist items array or persisted onto CaseRecord.
+  const src = read('src/components/dashboard/ProcedurePrepCoach.jsx');
+  const invokeIdx = src.indexOf('InvokeLLM(');
+  // Bounded to the narration effect itself (its closing dependency array is a
+  // stable anchor) — must NOT extend into toggleItem below, which legitimately
+  // calls setItems/CaseRecord.update for the deterministic checklist itself.
+  const effectEndIdx = src.indexOf('[active, caseId, daysLeft, incompleteItems.length, totalCount]');
+  expect(invokeIdx, 'InvokeLLM call must exist').toBeGreaterThan(0);
+  expect(effectEndIdx, 'narration effect end anchor must exist').toBeGreaterThan(invokeIdx);
+  const afterInvoke = src.slice(invokeIdx, effectEndIdx);
+  expect(afterInvoke, 'the LLM result must not be written into the checklist items').not.toMatch(/setItems\(/);
+  expect(afterInvoke, 'the LLM result must not be persisted onto CaseRecord').not.toMatch(/CaseRecord\.update/);
+  expect(afterInvoke, 'the LLM result must only feed the narration message').toMatch(/setMessage\(/);
+  // The prompt itself must carry the same constraint _shared/preOpChecklist.ts
+  // states: AI may phrase/motivate, never invent a step or a clinical specific.
+  expect(src, 'prompt must forbid inventing a new step').toContain('never invent a new preparation step');
+  expect(src, 'prompt must forbid stating a specific fasting/medication instruction').toContain('never state a specific fasting time or medication instruction');
+  // The checklist toggle persists only the locally-held, deterministic items
+  // array — never anything derived from the AI narration state.
+  const toggleIdx = src.indexOf('const toggleItem');
+  const toggleBody = src.slice(toggleIdx, toggleIdx + 400);
+  expect(toggleBody, 'toggle must persist the deterministic items array').toContain('pre_op_checklist: updated');
+});
+
+test('PREP COACH: CaseRecord carries the new milestone flags, default false', () => {
+  const schema = read('base44/entities/CaseRecord.jsonc');
+  for (const field of ['prep_reminder_7d_sent', 'prep_reminder_3d_sent', 'prep_reminder_1d_sent', 'prep_reminder_day_of_sent']) {
+    const idx = schema.indexOf(`"${field}"`);
+    expect(idx, `${field} must exist on CaseRecord`).toBeGreaterThan(0);
+    expect(schema.slice(idx, idx + 80), `${field} must default to false`).toContain('"default": false');
+  }
 });
