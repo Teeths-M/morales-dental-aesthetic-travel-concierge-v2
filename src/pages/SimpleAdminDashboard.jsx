@@ -35,10 +35,10 @@ export default function SimpleAdminDashboard() {
       //
       // Hard timeout: a platform-side stall (e.g. a rate limit that never
       // cleanly returns a response) must never leave this screen spinning
-      // forever — after 12s, give up with a clear error instead of hanging,
+      // forever — after 8s, give up with a clear error instead of hanging,
       // so the error/Retry state below always has a way to be reached.
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("This is taking too long — the server may be busy. Try Retry below.")), 12000)
+        setTimeout(() => reject(new Error("This is taking too long — the server may be busy. Try Retry below.")), 8000)
       );
       const result = await Promise.race([
         base44.entities.CaseRecord.list('-created_date', 500),
@@ -47,6 +47,12 @@ export default function SimpleAdminDashboard() {
       return result || [];
     },
     staleTime: 30000, // Keep data fresh for 30 seconds
+    // Overrides the app-wide 3-retry default: with an 8s timeout per attempt,
+    // 3 retries means a genuine hang can take 30+ seconds to ever reach the
+    // Retry button. One retry keeps a real transient blip covered while
+    // bounding the worst case to well under 20s — after that, the manual
+    // Retry button is a better tool than another blind automatic attempt.
+    retry: 1,
   });
 
   // Without this, a real failure (e.g. a platform rate limit) silently falls
