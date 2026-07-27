@@ -32,7 +32,18 @@ export default function SimpleAdminDashboard() {
       // User-scoped: asServiceRole throws in the browser (backend-only) — the
       // main admin case list was always empty because of it. Admin RLS on
       // CaseRecord permits this read directly.
-      const result = await base44.entities.CaseRecord.list('-created_date', 500);
+      //
+      // Hard timeout: a platform-side stall (e.g. a rate limit that never
+      // cleanly returns a response) must never leave this screen spinning
+      // forever — after 12s, give up with a clear error instead of hanging,
+      // so the error/Retry state below always has a way to be reached.
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("This is taking too long — the server may be busy. Try Retry below.")), 12000)
+      );
+      const result = await Promise.race([
+        base44.entities.CaseRecord.list('-created_date', 500),
+        timeout,
+      ]);
       return result || [];
     },
     staleTime: 30000, // Keep data fresh for 30 seconds
