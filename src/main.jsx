@@ -144,3 +144,15 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
   });
 }
+
+// Browser back/forward cache (bfcache): hitting the browser Back button can
+// restore a frozen snapshot of the app exactly as it was in memory, instead
+// of loading fresh — including a stale version if the app was redeployed in
+// the meantime. event.persisted === true means this load came from that
+// snapshot, not a real navigation; force a real reload so the visitor always
+// gets the current version.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
