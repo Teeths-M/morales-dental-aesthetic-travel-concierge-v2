@@ -1929,10 +1929,21 @@ test('PERFORMANCE: the shared in-memory cache helper is used by the intended rea
   expect(helper).toContain('export function createMemoCache');
   expect(helper).toContain('export function createKeyedMemoCache');
 
-  for (const fn of ['calculatePriceQuote', 'getGeolocationAndCurrency', 'matchDoctorsForProcedure', 'intakePartnerAvailabilityPreview']) {
+  for (const fn of ['calculatePriceQuote', 'matchDoctorsForProcedure', 'intakePartnerAvailabilityPreview']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
     expect(src, `${fn} should import the shared memo cache`).toMatch(/from ['"]\.\.\/_shared\/memoCache\.ts['"]/);
   }
+
+  // getGeolocationAndCurrency is a documented exception: it's still on Base44's
+  // legacy per-function Deno runtime, which rejects a relative import reaching
+  // outside the function's own directory (Base44 support / Estee, 2026-07-26).
+  // Its memoCache.ts is a hand-synced local duplicate — same content, imported
+  // from './memoCache.ts' instead of '../_shared/memoCache.ts'.
+  const geoSrc = read('base44/functions/getGeolocationAndCurrency/entry.ts');
+  expect(geoSrc, 'getGeolocationAndCurrency should import its local duplicate memo cache')
+    .toMatch(/from ['"]\.\/memoCache\.ts['"]/);
+  const geoHelper = read('base44/functions/getGeolocationAndCurrency/memoCache.ts');
+  expect(geoHelper).toContain('export function createKeyedMemoCache');
 });
 
 test('PERFORMANCE: getVisaRequirement only ever caches a confirmed-fresh snapshot, never a stale/missing one', () => {
