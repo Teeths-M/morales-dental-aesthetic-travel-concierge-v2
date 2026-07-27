@@ -18,6 +18,13 @@ import CaseDetailDrawer from '@/components/admin/CaseDetailDrawer';
 import FallbackCrisisAlert from '@/components/admin/FallbackCrisisAlert';
 import AdminLayout from '@/components/layout/AdminLayout';
 
+// Module-level, not component state — a remount resets useState/useEffect
+// back to zero, which defeats a component-level timeout if something keeps
+// remounting this page. This variable lives outside the component's
+// lifecycle, so the 10s clock started below keeps counting across any
+// number of remounts within the same page load.
+let _adminLoadStartedAt = null;
+
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('active');
@@ -66,19 +73,29 @@ export default function SimpleAdminDashboard() {
 
   // Second, independent safety net: the query's own timeout/retry logic
   // (above) assumes CaseRecord.list() eventually settles one way or another.
-  // If something outside that assumption keeps it from ever resolving —
-  // still observed hanging in production even with that logic live and
-  // verified — this is a plain component-level timer with no dependency on
-  // TanStack Query's internal state machine at all, so it fires no matter
-  // what's actually stuck.
+  // Still observed hanging in production even with that logic live and
+  // verified deployed — console showed 80+ repeated warnings on the same
+  // load, consistent with something remounting this page repeatedly, which
+  // would silently reset a normal useState-based timer before it ever
+  // reaches 10s. _adminLoadStartedAt (module-level, see above) makes the
+  // clock survive that: each remount re-checks time already elapsed since
+  // the ORIGINAL start instead of restarting from zero.
   const [stuckTooLong, setStuckTooLong] = useState(false);
   useEffect(() => {
-    if (!isLoading) { setStuckTooLong(false); return; }
-    const timer = setTimeout(() => setStuckTooLong(true), 10000);
+    if (!isLoading) {
+      _adminLoadStartedAt = null;
+      setStuckTooLong(false);
+      return;
+    }
+    if (_adminLoadStartedAt === null) _adminLoadStartedAt = Date.now();
+    const remaining = Math.max(0, 10000 - (Date.now() - _adminLoadStartedAt));
+    if (remaining === 0) { setStuckTooLong(true); return; }
+    const timer = setTimeout(() => setStuckTooLong(true), remaining);
     return () => clearTimeout(timer);
   }, [isLoading, refreshKey]);
 
   const handleRefresh = () => {
+    _adminLoadStartedAt = null; // manual retry gets a fresh 10s budget
     setRefreshKey(prev => prev + 1);
     refetch();
   };
@@ -182,7 +199,7 @@ export default function SimpleAdminDashboard() {
           <p className="text-slate-500 text-sm mb-5">
             {error?.message || "This is taking much longer than it should — the server may be busy or unreachable."}
           </p>
-          <Button onClick={() => { setStuckTooLong(false); refetch(); }}>
+          <Button onClick={() => { _adminLoadStartedAt = null; setStuckTooLong(false); refetch(); }}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
           </Button>
