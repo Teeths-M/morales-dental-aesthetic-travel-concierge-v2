@@ -64,6 +64,20 @@ export default function SimpleAdminDashboard() {
     }
   }, [isError, error, toast]);
 
+  // Second, independent safety net: the query's own timeout/retry logic
+  // (above) assumes CaseRecord.list() eventually settles one way or another.
+  // If something outside that assumption keeps it from ever resolving —
+  // still observed hanging in production even with that logic live and
+  // verified — this is a plain component-level timer with no dependency on
+  // TanStack Query's internal state machine at all, so it fires no matter
+  // what's actually stuck.
+  const [stuckTooLong, setStuckTooLong] = useState(false);
+  useEffect(() => {
+    if (!isLoading) { setStuckTooLong(false); return; }
+    const timer = setTimeout(() => setStuckTooLong(true), 10000);
+    return () => clearTimeout(timer);
+  }, [isLoading, refreshKey]);
+
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
     refetch();
@@ -149,7 +163,7 @@ export default function SimpleAdminDashboard() {
     inRecovery: activeCases.filter(c => c.status === 'Recovery').length,
   };
 
-  if (isLoading) {
+  if (isLoading && !stuckTooLong) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
@@ -160,13 +174,15 @@ export default function SimpleAdminDashboard() {
     );
   }
 
-  if (isError) {
+  if (isError || stuckTooLong) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center max-w-sm">
           <p className="text-slate-900 font-semibold mb-2">Couldn't load cases</p>
-          <p className="text-slate-500 text-sm mb-5">{error?.message || 'Something went wrong reaching the server.'}</p>
-          <Button onClick={() => refetch()}>
+          <p className="text-slate-500 text-sm mb-5">
+            {error?.message || "This is taking much longer than it should — the server may be busy or unreachable."}
+          </p>
+          <Button onClick={() => { setStuckTooLong(false); refetch(); }}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
           </Button>
