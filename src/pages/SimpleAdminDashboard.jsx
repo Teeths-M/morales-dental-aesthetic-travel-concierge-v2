@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
@@ -23,10 +23,10 @@ export default function SimpleAdminDashboard() {
   const [activeTab, setActiveTab] = useState('active');
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
-  const { _toast } = useToast();
+  const { toast } = useToast();
 
   // Fetch all cases in a single query for better performance
-  const { data: allCases = [], isLoading, refetch } = useQuery({
+  const { data: allCases = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin_all_cases', refreshKey],
     queryFn: async () => {
       // User-scoped: asServiceRole throws in the browser (backend-only) — the
@@ -37,6 +37,15 @@ export default function SimpleAdminDashboard() {
     },
     staleTime: 30000, // Keep data fresh for 30 seconds
   });
+
+  // Without this, a real failure (e.g. a platform rate limit) silently falls
+  // through to rendering with an empty case list once retries are exhausted —
+  // indistinguishable from "there really are no cases."
+  useEffect(() => {
+    if (isError) {
+      toast({ title: 'Could not load cases', description: error?.message, variant: 'destructive' });
+    }
+  }, [isError, error, toast]);
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
@@ -129,6 +138,21 @@ export default function SimpleAdminDashboard() {
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-600 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center max-w-sm">
+          <p className="text-slate-900 font-semibold mb-2">Couldn't load cases</p>
+          <p className="text-slate-500 text-sm mb-5">{error?.message || 'Something went wrong reaching the server.'}</p>
+          <Button onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </div>
       </div>
     );
