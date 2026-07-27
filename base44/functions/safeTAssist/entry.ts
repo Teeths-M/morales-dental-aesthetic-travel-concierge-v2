@@ -136,10 +136,14 @@ Deno.serve(async (req) => {
       prompt: fullPrompt,
     });
 
-    // InvokeLLM returns a raw string when no JSON schema is provided
+    // InvokeLLM returns a raw string when no JSON schema is provided, but can
+    // also come back shaped as { result } — same coercion as
+    // SubmissionSuccess.jsx/VisaAIChat.jsx for this call shape.
     let reply: string;
     if (typeof llmResponse === 'string' && llmResponse.trim()) {
       reply = llmResponse.trim();
+    } else if (llmResponse?.result) {
+      reply = String(llmResponse.result);
     } else if (llmResponse?.reply) {
       reply = String(llmResponse.reply);
     } else if (llmResponse?.content) {

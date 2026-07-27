@@ -36,14 +36,19 @@ export default function PayoutEscrowPanel({ caseId, _caseRecord }) {
 
   const checkEscrow = async () => {
     setChecking(true);
-    const res = await base44.functions.invoke('processPartnerPayout', {
-      action: 'check_escrow',
-      case_id: caseId,
-      partner_type: partnerType,
-      partner_id: partnerId || undefined,
-    });
-    setEscrowData(res.data);
-    setChecking(false);
+    try {
+      const res = await base44.functions.invoke('processPartnerPayout', {
+        action: 'check_escrow',
+        case_id: caseId,
+        partner_type: partnerType,
+        partner_id: partnerId || undefined,
+      });
+      setEscrowData(res.data);
+    } catch (e) {
+      toast({ title: 'Could not check escrow status', description: e?.message, variant: 'destructive' });
+    } finally {
+      setChecking(false);
+    }
   };
 
   const releasePayout = async (isOverride = false) => {
@@ -52,21 +57,26 @@ export default function PayoutEscrowPanel({ caseId, _caseRecord }) {
       return;
     }
     setReleasing(true);
-    const res = await base44.functions.invoke('processPartnerPayout', {
-      action: isOverride ? 'manual_override' : 'release_payout',
-      case_id: caseId,
-      partner_type: partnerType,
-      partner_id: partnerId || undefined,
-      stripe_connect_account_id: stripeAccountId || undefined,
-      manual_override_reason: isOverride ? overrideReason : undefined,
-    });
-    setReleasing(false);
-    if (res.data?.success) {
-      toast({ title: `✅ Payout of $${res.data.payout_released} released${res.data.stripe_transfer_id ? ' via Stripe Connect' : ''}` });
-      setEscrowData(null);
-      setShowOverride(false);
-    } else {
-      toast({ title: res.data?.error || 'Payout failed', description: res.data?.message, variant: 'destructive' });
+    try {
+      const res = await base44.functions.invoke('processPartnerPayout', {
+        action: isOverride ? 'manual_override' : 'release_payout',
+        case_id: caseId,
+        partner_type: partnerType,
+        partner_id: partnerId || undefined,
+        stripe_connect_account_id: stripeAccountId || undefined,
+        manual_override_reason: isOverride ? overrideReason : undefined,
+      });
+      if (res.data?.success) {
+        toast({ title: `✅ Payout of $${res.data.payout_released} released${res.data.stripe_transfer_id ? ' via Stripe Connect' : ''}` });
+        setEscrowData(null);
+        setShowOverride(false);
+      } else {
+        toast({ title: res.data?.error || 'Payout failed', description: res.data?.message, variant: 'destructive' });
+      }
+    } catch (e) {
+      toast({ title: 'Payout request failed', description: e?.message || 'Please check the case before retrying — the release may or may not have gone through.', variant: 'destructive' });
+    } finally {
+      setReleasing(false);
     }
   };
 
@@ -177,7 +187,7 @@ export default function PayoutEscrowPanel({ caseId, _caseRecord }) {
                     <button onClick={() => releasePayout(false)} disabled={releasing}
                       className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
                       {releasing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                      Release Payout — ${escrowData.breakdown.partner_payout?.toFixed(2)}
+                      Release Payout{escrowData.breakdown?.partner_payout != null ? ` — $${escrowData.breakdown.partner_payout.toFixed(2)}` : ''}
                     </button>
                   )}
 

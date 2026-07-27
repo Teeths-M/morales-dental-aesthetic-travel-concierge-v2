@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { computeSafeT, SAFET_ENGINE_VERSION } from '../../base44/functions/_shared/safeTEngine.ts';
 import { sanitizePromptInput, sanitizeFields } from '../../base44/functions/_shared/sanitizePromptInput.ts';
 import { scrubPHI } from '../../base44/functions/_shared/scrubPHI.ts';
+import { getViolations } from '../../base44/functions/_shared/procedureCompatibility.ts';
 
 // ── Internal red-team: the safety DECISION layer ──────────────────────────────
 // Because the SAFE-T decision is deterministic, the strongest adversarial test
@@ -86,6 +87,35 @@ test.describe('the engine can never be talked into clearing risk', () => {
 
   test('engine version is stamped for the audit chain', () => {
     expect(computeSafeT({ procedure: 'veneers' }).engine_version).toBe(SAFET_ENGINE_VERSION);
+  });
+});
+
+test.describe('the server-side RED re-check is condition-aware, not just procedure-aware', () => {
+  // validateProcedureSafety exists specifically because a client-side-only
+  // check can be skipped by calling the API directly. Its own comment says
+  // "never trust a client-supplied violations list — this must be recomputed
+  // here." Breast Augmentation + Rhinoplasty totals ~5hrs combined anesthesia
+  // — no procedure-pair rule and no major-surgery-count rule flags this pair
+  // on its own, so a condition-blind server check would pass it through even
+  // though the frontend's getViolations(items, conditions) would block it for
+  // a patient who disclosed a HIGH_RISK_CONDITIONS entry.
+  const items = [
+    { name: 'Breast Augmentation', title: 'Breast Augmentation' },
+    { name: 'Rhinoplasty', title: 'Rhinoplasty' },
+  ];
+
+  test('baseline: this combination is not blocked with no disclosed conditions', () => {
+    expect(getViolations(items, []).isBlocked).toBe(false);
+  });
+
+  test('a disclosed high-risk condition forces a real server-side block', () => {
+    const result = getViolations(items, ['Diabetes']);
+    expect(result.isBlocked, 'server-side getViolations must escalate to RED when a high-risk condition is disclosed').toBe(true);
+    expect(result.violations[0].code).toBe('METABOLIC_CONFLICT');
+  });
+
+  test('a disclosed condition outside HIGH_RISK_CONDITIONS does not falsely trigger the block', () => {
+    expect(getViolations(items, ['Seasonal Allergies']).isBlocked).toBe(false);
   });
 });
 

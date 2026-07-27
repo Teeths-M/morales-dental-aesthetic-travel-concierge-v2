@@ -88,7 +88,7 @@ export default function AdminAnalyticsDashboard() {
     );
   }
 
-  const { summary, _pipeline_funnel, _avg_time_per_stage, doctor_performance } = analytics;
+  const { summary, _pipeline_funnel, _avg_time_per_stage, doctor_performance = [] } = analytics;
 
   return (
     <AdminLayout>

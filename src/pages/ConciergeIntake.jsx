@@ -227,6 +227,7 @@ export default function ConciergeIntake() {
       try {
         safetyCheck = await base44.functions.invoke('validateProcedureSafety', {
           items: cartItems.map((i) => ({ name: i.name, title: i.name })),
+          conditions: answers.medical_conditions || [],
         });
       } catch (safetyErr) {
         console.error('[intake] validateProcedureSafety unreachable — submission blocked (fail closed):', safetyErr?.status, safetyErr?.message);

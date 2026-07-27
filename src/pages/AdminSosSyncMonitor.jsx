@@ -17,13 +17,23 @@ export default function AdminSosSyncMonitor() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
     setLoading(true);
-    const results = await base44.entities.SOSEvent.list('-triggered_at', 100);
-    setEvents(results || []);
-    setLastRefresh(new Date());
-    setLoading(false);
+    try {
+      const results = await base44.entities.SOSEvent.list('-triggered_at', 100);
+      setEvents(results || []);
+      setLastRefresh(new Date());
+      setLoadError(false);
+    } catch {
+      // Keep showing the last-known events — this is the admin's live view of
+      // offline-synced emergency SOS events, so a stale-but-visible list beats
+      // a wiped one. The banner below is what tells them it's stale.
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -81,6 +91,13 @@ export default function AdminSosSyncMonitor() {
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
           Last updated {formatDistanceToNow(lastRefresh, { addSuffix: true })} · Auto-refreshes every 15s
         </p>
+      )}
+
+      {loadError && (
+        <div className="flex items-center gap-2 text-xs" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 12, padding: '10px 14px', color: '#f59e0b' }}>
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          Refresh failed — showing the last data successfully loaded, which may be out of date. Retrying automatically.
+        </div>
       )}
 
       {/* Stats bar */}

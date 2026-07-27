@@ -290,7 +290,10 @@ test.describe('#7 server-side enforcement', () => {
   test('SOURCE: the RED procedure block is re-derived server-side (cannot be skipped by direct API)', () => {
     const src = read('base44/functions/validateProcedureSafety/entry.ts');
     expect(src).toContain("from '../_shared/procedureCompatibility.ts'");
-    expect(src).toContain('getViolations(items)'); // recomputed from raw names, client list never trusted
+    // recomputed from raw names, client list never trusted; conditions are
+    // read from the body too so the condition-aware RED rule can't be
+    // skipped by a direct API call that omits them (see procedureCompatibility.ts)
+    expect(src).toMatch(/getViolations\(items,\s*Array\.isArray\(conditions\)/);
   });
 
   test('SOURCE: the document-upload (vault) endpoint requires auth and rate-limits', () => {

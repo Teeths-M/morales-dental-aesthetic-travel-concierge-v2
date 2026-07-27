@@ -423,6 +423,7 @@ export default function Booking() {
       if (items.length >= 2) {
         const safetyCheck = await base44.functions.invoke('validateProcedureSafety', {
           items: items.map(i => ({ name: i.name, title: i.name })),
+          conditions: data.medical_conditions || [],
         });
         if (safetyCheck?.data?.isBlocked) {
           throw new Error('This procedure combination requires enhanced medical review before booking. Please adjust your selection or contact our care team.');

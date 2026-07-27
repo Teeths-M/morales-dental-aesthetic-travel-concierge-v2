@@ -126,6 +126,18 @@ export const RED_VIOLATION_RULES: RedViolationRule[] = [
 interface CartItem { name?: string; title?: string }
 interface Violation { pairLabel: string; reason: string; code: string }
 
+// Mirrors src/lib/medicalSafetyGate.js's HIGH_RISK_CONDITIONS — must stay in
+// sync. Used below for the same condition-aware RED escalation the frontend
+// twin applies (src/lib/procedureCompatibility.js getViolations).
+const HIGH_RISK_CONDITIONS = [
+  'Heart Disease',
+  'Blood Disorders',
+  'Diabetes',
+  'Hypertension',
+  'Epilepsy',
+  'Autoimmune Disorders',
+];
+
 /**
  * Re-derives the RED violation verdict server-side from raw procedure names.
  * Never trust a client-supplied violations list — this must be recomputed here.
@@ -140,7 +152,7 @@ interface Violation { pairLabel: string; reason: string; code: string }
  * portal), port suggestFirstStage() across rather than re-deriving it, so the
  * two can't disagree about what M advises.
  */
-export function getViolations(items: CartItem[]): { violations: Violation[]; isBlocked: boolean } {
+export function getViolations(items: CartItem[], conditions: string[] = []): { violations: Violation[]; isBlocked: boolean } {
   if (!items || items.length < 2) return { violations: [], isBlocked: false };
 
   const titles = items.map(i => i.title || i.name).filter(Boolean) as string[];
@@ -169,6 +181,19 @@ export function getViolations(items: CartItem[]): { violations: Violation[]; isB
       pairLabel: `Combined Anesthesia > ${totalAnesthesiaHrs.toFixed(1)} Hours`,
       code: 'ANESTHESIA_OVERLOAD',
       reason: `Total estimated anesthesia time (~${totalAnesthesiaHrs.toFixed(1)} hrs) exceeds the safe ceiling for elective procedures. Beyond 8 hours, the risk of anesthesia awareness, hypothermia, and post-operative cognitive dysfunction increases significantly.`,
+    });
+  }
+
+  // Disclosed high-risk condition + >=5 hrs combined anesthesia — the same
+  // rule src/lib/procedureCompatibility.js applies client-side. Re-derived
+  // here (not just trusted from the client) so a direct API call that skips
+  // the frontend's ProcedureStackingBlocker can't bypass this escalation.
+  const flaggedCondition = conditions.find(c => HIGH_RISK_CONDITIONS.includes(c));
+  if (flaggedCondition && totalAnesthesiaHrs >= 5 && violations.length === 0) {
+    violations.push({
+      pairLabel: `${flaggedCondition} + Combined Anesthesia ~${totalAnesthesiaHrs.toFixed(1)} Hours`,
+      code: 'METABOLIC_CONFLICT',
+      reason: `With ${flaggedCondition} on file, ~${totalAnesthesiaHrs.toFixed(1)} hrs of combined anesthesia carries meaningfully higher risk than the same combination would for a patient without this condition — impaired metabolism, delayed wound healing, and elevated cardiac/glucose stress are all condition-specific factors this selection now needs a licensed provider to weigh in on.`,
     });
   }
 

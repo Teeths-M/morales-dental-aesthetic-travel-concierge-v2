@@ -139,6 +139,7 @@ export default function DoctorDashboard() {
       }
 
       const response = await base44.functions.invoke('getMyDoctorProfile', {});
+      if (!response?.data?.doctor) return null;
       return {
         doctor: { ...response.data.doctor, successful_procedures_count: response.data.doctor.successful_procedures_count || 0 },
         specialties: response.data.specialties || [],

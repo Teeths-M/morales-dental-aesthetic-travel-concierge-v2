@@ -8,10 +8,10 @@ import { getViolations } from '../_shared/procedureCompatibility.ts';
 // re-derives the verdict from the raw procedure names so the block cannot be bypassed
 // by going around the frontend. Called from Booking.jsx before every Consultation.create().
 Deno.serve(createHandler(async ({ body }) => {
-  const { items } = await body();
+  const { items, conditions } = await body();
   if (!Array.isArray(items)) return err('items array is required');
 
-  const { violations, isBlocked } = getViolations(items);
+  const { violations, isBlocked } = getViolations(items, Array.isArray(conditions) ? conditions : []);
 
   return ok({
     isBlocked,
