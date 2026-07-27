@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Search, CheckCircle, Clock, Archive, Activity, RefreshCw, Download } from 'lucide-react';
+import { Users, Plane, Search, CheckCircle, Clock, Archive, Activity, RefreshCw, Download, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,31 @@ import AdminLayout from '@/components/layout/AdminLayout';
 // number of remounts within the same page load.
 let _adminLoadStartedAt = null;
 
+// Last-known-good cache — survives a platform rate limit (or any other fetch
+// failure) so the admin never sees a hard "can't load anything" wall once
+// they've loaded successfully at least once on this device. Deliberately
+// localStorage, not React state: it must outlive a full page reload, since
+// that's exactly when someone rechecks the dashboard during an outage.
+const CASES_CACHE_KEY = 'morales_admin_cases_cache_v1';
+
+function readCasesCache() {
+  try {
+    const raw = localStorage.getItem(CASES_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.data) || !parsed?.cachedAt) return null;
+    return parsed;
+  } catch (_) {
+    return null;
+  }
+}
+
+function writeCasesCache(data) {
+  try {
+    localStorage.setItem(CASES_CACHE_KEY, JSON.stringify({ data, cachedAt: new Date().toISOString() }));
+  } catch (_) { /* quota/private-mode — cache is best-effort only */ }
+}
+
 // A 429 needs a different message than a generic failure — "try again" is
 // actively bad advice while a rate limit is active (each retry is another
 // request against the same limit). Same detection the retry option above uses.
@@ -44,7 +69,7 @@ export default function SimpleAdminDashboard() {
   const { toast } = useToast();
 
   // Fetch all cases in a single query for better performance
-  const { data: allCases = [], isLoading, isError, error, refetch } = useQuery({
+  const { data: liveCases = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin_all_cases', refreshKey],
     queryFn: async () => {
       // User-scoped: asServiceRole throws in the browser (backend-only) — the
@@ -62,6 +87,7 @@ export default function SimpleAdminDashboard() {
         base44.entities.CaseRecord.list('-created_date', 500),
         timeout,
       ]);
+      writeCasesCache(result || []);
       return result || [];
     },
     staleTime: 30000, // Keep data fresh for 30 seconds
@@ -120,6 +146,15 @@ export default function SimpleAdminDashboard() {
     setRefreshKey(prev => prev + 1);
     refetch();
   };
+
+  // A failed live fetch (rate limit, timeout, etc.) falls back to the last
+  // successful load on this device rather than showing nothing at all —
+  // stale is still far more useful than a wall when someone needs to check
+  // a case right now. cachedFallback is only read once per error, not on
+  // every render, so it doesn't fight with a subsequent successful refetch.
+  const cachedFallback = (isError || stuckTooLong) ? readCasesCache() : null;
+  const usingCache = !!cachedFallback;
+  const allCases = usingCache ? cachedFallback.data : liveCases;
 
   const handleExport = () => {
     const rows = allCases.map(c => ({
@@ -212,7 +247,12 @@ export default function SimpleAdminDashboard() {
     );
   }
 
-  if (isError || stuckTooLong) {
+  // Only show the hard blocking screen when there's truly nothing to show —
+  // a fresh install/device with no prior successful load. If we have a
+  // cached snapshot, fall through to the real dashboard below with a banner
+  // instead: stale case data is far more useful than a dead end, especially
+  // during an active platform rate limit.
+  if ((isError || stuckTooLong) && !usingCache) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center max-w-sm">
@@ -232,6 +272,15 @@ export default function SimpleAdminDashboard() {
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {usingCache && (
+          <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.35)' }}>
+            <WifiOff className="w-4 h-4 flex-shrink-0" style={{ color: '#f59e0b' }} />
+            <p className="text-sm" style={{ color: '#92400e' }}>
+              Showing cases from your last successful load ({new Date(cachedFallback.cachedAt).toLocaleString()}) —
+              live refresh is currently failing ({describeAdminLoadError(error)}). New or updated cases won't appear until this clears.
+            </p>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold font-display text-white">Patient Journey Dashboard</h1>
