@@ -18,7 +18,7 @@ import { createHandler, ok } from './createHandler.ts';
  * Not authenticated, and not secret: this is the number we publish to patients
  * and tell them to text. Withholding it behind a login would defeat its purpose
  * — the whole point is that it works when nothing else does.
- */
+ */ 
 
 Deno.serve(createHandler(async () => {
   const sms = Deno.env.get('TWILIO_PHONE_NUMBER') || '';

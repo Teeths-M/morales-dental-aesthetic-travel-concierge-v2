@@ -25,7 +25,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const allCheckIns = rawCheckIns.filter(c => caseIds.has(c.case_id));
 
     // Find upcoming check-ins (next 12 hours)
-    const now = new Date();
+    const now = new Date(); 
     const twelveHoursFromNow = new Date(now.getTime() + 12 * 60 * 60 * 1000);
 
     const upcoming = allCheckIns.filter(c => {

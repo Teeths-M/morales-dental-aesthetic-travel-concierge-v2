@@ -131,7 +131,7 @@ const DEFAULT_FALLBACK = {
   city: null,
   region: null,
   timezone: null,
-  latitude: null,
+  latitude: null, 
   longitude: null,
   currency: 'USD',
   source: 'default_fallback',
