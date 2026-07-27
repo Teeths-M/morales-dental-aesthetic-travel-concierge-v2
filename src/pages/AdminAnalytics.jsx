@@ -20,6 +20,7 @@ export default function AdminAnalyticsDashboard() {
     setError(null);
     try {
       const response = await base44.functions.invoke('getAnalyticsDashboard', {});
+      if (!response?.data?.summary) throw new Error('No analytics data returned');
       setAnalytics(response.data);
     } catch (e) {
       setError(e.message);
