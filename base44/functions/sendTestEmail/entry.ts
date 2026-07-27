@@ -1,10 +1,24 @@
 ﻿/**
- * sendTestEmail — fires one of the 5 key email templates to any address.
- * Used by the /demo/emails Email Showcase "Send to my inbox" button.
- * Admin-only. requireAuth is intentionally false so the demo page can call it
- * without a logged-in session — gated instead by a shared demo token.
+ * sendTestEmail — fires one of the 5 key email templates to a fixed demo
+ * inbox. Used by the /demo/emails Email Showcase "Send to my inbox" button.
+ * requireAuth is intentionally false so the public, no-login demo page can
+ * call it — built for buildathon judges.
+ *
+ * SECURITY: this used to accept an arbitrary `to` address with no check at
+ * all (the doc comment here claimed a "shared demo token" gate that was
+ * never actually implemented) — an unauthenticated open relay that could
+ * fire any of the 5 branded templates at any address, under the Morales
+ * name. The real frontend caller (EmailShowcase.jsx) only ever sends its own
+ * hardcoded DEMO_EMAIL constant, so restricting `to` to that same literal
+ * value server-side closes the relay with zero change to the actual demo —
+ * no login requirement needed, since the legitimate use case never needed an
+ * arbitrary address in the first place.
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+
+// Must match DEMO_EMAIL in src/pages/EmailShowcase.jsx — the only legitimate
+// destination for this demo endpoint.
+const ALLOWED_DEMO_RECIPIENT = 'theonmorales@gmail.com';
 
 const GOLD    = '#D4AF37';
 const BRAND   = 'Morales Medical Travel Safety';
@@ -176,11 +190,10 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   if (!to || !template_id) return err('to and template_id required');
 
+  if (to !== ALLOWED_DEMO_RECIPIENT) return err('This demo can only send to the demo inbox.', 403);
+
   const template = TEMPLATES[template_id];
   if (!template) return err(`Unknown template: ${template_id}. Valid: ${Object.keys(TEMPLATES).join(', ')}`);
-
-  // Validate email format
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return err('Invalid email address');
 
   await base44.integrations.Core.SendEmail({
     from_name: `${BRAND} — Demo`,

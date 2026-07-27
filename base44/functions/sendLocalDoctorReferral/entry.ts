@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
 
 async function encodePortalToken(payload: object): Promise<string> {
   const secret = (() => {
@@ -28,7 +29,16 @@ async function encodePortalToken(payload: object): Promise<string> {
  * Called by checkMissedRecoveryCheckins when matchLocalDoctor returns a match.
  */
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, local_doctor_id } = await body();
+  const { case_id, local_doctor_id, internal_secret } = await body();
+
+  // SECURITY: this endpoint creates a referral record, emails a real doctor
+  // with a patient's name/procedure, and hands back a portal token — for any
+  // case_id/local_doctor_id with no proof the caller is the internal cron job
+  // this is meant for. Only checkMissedRecoveryCheckins calls it.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id || !local_doctor_id) return err('case_id and local_doctor_id are required');
 
   // Load case for patient context in the email

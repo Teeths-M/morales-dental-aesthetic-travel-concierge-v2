@@ -208,7 +208,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   if (escrowTasks.length > 0) await Promise.allSettled(escrowTasks);
 
   // Generate itinerary calendar (async, non-blocking)
-  base44.asServiceRole.functions?.invoke?.('generateItineraryCalendar', { case_id }).catch(() => {});
+  base44.asServiceRole.functions?.invoke?.('generateItineraryCalendar', { case_id, internal_secret: Deno.env.get('CRON_SECRET') }).catch(() => {});
 
   // Generate receipt + update case record
   const newPaymentStatus = isFullPay ? 'Paid In Full' : isBalance ? 'Paid In Full' : '50% Paid';

@@ -2340,3 +2340,93 @@ test('PREP COACH: CaseRecord carries the new milestone flags, default false', ()
     expect(schema.slice(idx, idx + 80), `${field} must default to false`).toContain('"default": false');
   }
 });
+
+// ─── Pre-launch auth-gap hardening (2026-07-26) ──────────────────────────────
+// A re-audit of every requireAuth:false function found 7 with no real internal
+// gate at all. 4 got a fix here; 2 were deliberately left alone (SOS-class,
+// and an automation whose caller can't be verified from this repo); ~20 more
+// lower-severity ones (spam/cost only, not PHI/fraud) are pinned below as a
+// tracked "batch 2", same ratchet pattern as EXEMPT_RATE_LIMIT/SCHEMA_HARDENED.
+
+test('PORTAL WRITE: sendTravelQuoteEmail and sendChauffeurQuoteAlert derive consultation_id only from a verified portal token', () => {
+  for (const [fn, portalType] of [['sendTravelQuoteEmail', 'travel'], ['sendChauffeurQuoteAlert', 'chauffeur']]) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must verify the caller's portal token`).toContain('verifyPortalToken(token)');
+    expect(src, `${fn} must check the token's portal_type`).toContain(`verified.portal_type !== '${portalType}'`);
+    expect(src, `${fn} must derive consultation_id from the verified token, not the raw body`)
+      .toContain('const consultation_id = verified.consultation_id;');
+  }
+
+  // Both frontend callers must actually send the token now, not a bare consultation_id.
+  const agency = read('src/pages/PortalTravelAgency.jsx');
+  expect(agency).toMatch(/base44\.functions\.invoke\('sendTravelQuoteEmail',\s*\{\s*token:\s*tokenData\.token,/);
+  expect(agency, 'must no longer send a bare consultation_id to this endpoint').not.toMatch(/sendTravelQuoteEmail',\s*\{\s*consultation_id:/);
+  const chauffeur = read('src/pages/PortalChauffeur.jsx');
+  expect(chauffeur).toMatch(/base44\.functions\.invoke\('sendChauffeurQuoteAlert',\s*\{\s*token:\s*tokenData\.token,/);
+  expect(chauffeur, 'must no longer send a bare consultation_id to this endpoint').not.toMatch(/sendChauffeurQuoteAlert',\s*\{\s*consultation_id:/);
+});
+
+test('INTERNAL CALLERS: sendLocalDoctorReferral and generateItineraryCalendar require internalOrAdminAuthorized', () => {
+  for (const fn of ['sendLocalDoctorReferral', 'generateItineraryCalendar']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must import internalOrAdminAuthorized`).toContain("from '../_shared/internalAuth.ts'");
+    expect(src, `${fn} must call the gate before doing anything`).toContain('await internalOrAdminAuthorized(internal_secret, base44)');
+  }
+
+  // Their real callers must actually pass the secret now.
+  const checkMissed = read('base44/functions/checkMissedRecoveryCheckins/entry.ts');
+  expect(checkMissed, 'must call sendLocalDoctorReferral via the SDK, not the old dead Supabase-style fetch()')
+    .toContain("base44.asServiceRole.functions.invoke('sendLocalDoctorReferral'");
+  expect(checkMissed).toContain('internal_secret: Deno.env.get(\'CRON_SECRET\')');
+  // The old broken pattern is only allowed to remain in the explanatory FIX
+  // comment above — not as a live fetch() call.
+  expect(checkMissed, 'the old broken fetch()-to-/functions/v1/ call must be gone').not.toMatch(/fetch\(`[^`]*\/functions\/v1\//);
+
+  const cascade = read('base44/functions/processPaymentCascade/entry.ts');
+  expect(cascade).toContain("'generateItineraryCalendar', { case_id, internal_secret: Deno.env.get('CRON_SECRET') }");
+});
+
+test('DEMO EMAIL: sendTestEmail can only send to the fixed demo inbox, not an arbitrary address', () => {
+  const src = read('base44/functions/sendTestEmail/entry.ts');
+  expect(src, 'must reject any recipient other than the pinned demo address').toContain("if (to !== ALLOWED_DEMO_RECIPIENT)");
+  const showcase = read('src/pages/EmailShowcase.jsx');
+  const demoEmailMatch = showcase.match(/const DEMO_EMAIL = '([^']+)'/);
+  expect(demoEmailMatch, 'EmailShowcase.jsx must still define DEMO_EMAIL').not.toBeNull();
+  expect(src, "the backend allowlist must match the frontend's DEMO_EMAIL constant")
+    .toContain(`const ALLOWED_DEMO_RECIPIENT = '${demoEmailMatch[1]}'`);
+});
+
+test('AUTH: known-open gaps left deliberately (SOS-class + unverifiable automation caller) stay documented, not silently patched wrong', () => {
+  // activateEmergencyBeacon: SOS-class, must never gate on auth — only the
+  // default IP+user rate limit is the correct mitigation here.
+  const beacon = read('base44/functions/activateEmergencyBeacon/entry.ts');
+  expect(beacon, 'a safety beacon must never require auth').not.toMatch(/requireAuth:\s*true/);
+  expect(beacon, 'must not have grown an internalOrAdminAuthorized gate').not.toContain('internalOrAdminAuthorized');
+
+  // portalHubWorkflow: left open pending confirmation of its Base44-dashboard
+  // automation wiring — but it must keep re-fetching the trusted Consultation
+  // record rather than trusting caller-supplied medical data (the actual
+  // safety property that limits the current gap to replay/spam, not forgery).
+  const hub = read('base44/functions/portalHubWorkflow/entry.ts');
+  expect(hub, 'must still re-fetch the trusted Consultation record').toContain('base44.asServiceRole.entities.Consultation.get(consultation_id)');
+});
+
+test('AUTH: batch-2 unauthenticated comms/LLM endpoints are a tracked worklist, not a silent gap', () => {
+  // Lower severity than the 4 fixed above — link-only comms policy keeps PHI
+  // out of the message bodies, so the realistic harm is spam/cost, not a data
+  // leak. Not fixed in this pass; pinned here so it's a decision, not a miss.
+  const BATCH_2_KNOWN_OPEN = [
+    'calculatePackagePrice', 'notifyAdminQuoteRevised', 'sendGoldenMNotification', 'sendHandshakeAlert',
+    'sendPayNowEmail', 'sendBookingConfirmation', 'requestPartnerQuotas', 'sendAIPartnerBriefs',
+    'sendCompanionMealBrief', 'sendPreOpInstructions', 'flagIntakeHandoff', 'flagProcedureStackingRisk',
+    'iq200HandshakeEngine', 'activateMotherTouch', 'notifySlackAssignment', 'autoTriggerDoctorVerification',
+    'autoPartnerPortalDelivery', 'extractClinicalNote', 'analyzeIntakeCombination',
+    'analyzeDestinationSafety', 'interpretRecoveryCheckIn',
+  ];
+  expect(BATCH_2_KNOWN_OPEN.length, 'batch is documented as ~20 functions').toBe(21);
+  for (const fn of BATCH_2_KNOWN_OPEN) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} is expected to still be requireAuth:false (batch-2 worklist) — update this list if it was fixed`)
+      .toMatch(/requireAuth:\s*false/);
+  }
+});

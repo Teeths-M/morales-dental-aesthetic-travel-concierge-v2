@@ -147,7 +147,7 @@ export default function PortalTravelAgency() {
         setRevisionCount(newRevisionCount);
       } else {
         const result = await base44.functions.invoke('sendTravelQuoteEmail', {
-          consultation_id: tokenData.consultation_id,
+          token: tokenData.token,
           flight_cost_usd: parseFloat(flightCost) || 0,
           hotel_cost_usd: parseFloat(hotelCost) || 0,
           flight_itinerary_summary: flightItinerary,

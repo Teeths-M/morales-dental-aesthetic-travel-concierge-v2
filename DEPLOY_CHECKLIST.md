@@ -165,6 +165,49 @@ Separate from the Base44 publish flow above — these apply when a change touche
 
 ---
 
+## 4b. Pre-launch auth-gap hardening (2026-07-26)
+
+A re-audit of every `requireAuth:false` edge function found 7 with no real
+gate at all — any caller who knew or guessed a `consultation_id`/`case_id`
+could write data or read PHI. Fixed 4, code-only (no new entities/env vars,
+nothing to Publish beyond the normal push-then-Publish flow):
+
+- `sendTravelQuoteEmail` / `sendChauffeurQuoteAlert` — now require the
+  caller's own signed portal token instead of a bare `consultation_id`
+  (closes a pricing-fraud vector: anyone could previously inject fake
+  flight/hotel/leg costs for any case).
+- `sendLocalDoctorReferral` / `generateItineraryCalendar` — now require
+  `internalOrAdminAuthorized()` (their only real callers,
+  `checkMissedRecoveryCheckins` and `processPaymentCascade`, updated to pass
+  `internal_secret`). Also fixed a separate, unrelated dead-code bug found
+  along the way: `checkMissedRecoveryCheckins`'s M Local referral trigger was
+  calling a Supabase-style `/functions/v1/...` URL that never resolved (this
+  backend is Base44), so that referral had never actually fired.
+- `sendTestEmail` — now rejects any recipient other than the one fixed demo
+  address the `/demo/emails` page already hardcodes, closing an open
+  email-relay risk with no login requirement added (the real caller never
+  needed an arbitrary address).
+
+**Left open, deliberately** — flagging for a decision, not forgotten:
+- `activateEmergencyBeacon` has no gate by design (SOS-class, must work with
+  zero session) — already covered by the same default IP+user rate limit
+  every public function gets.
+- `portalHubWorkflow` has a real gap (any `consultation_id` re-triggers the
+  SAFE-T check and re-emails every active doctor), but its code branches on
+  a Base44 entity-automation payload shape, suggesting a dashboard-configured
+  automation may call it directly — invisible from this repo. Gating it
+  wrong risks silently breaking the live intake pipeline, a worse outcome
+  than the current gap (replay/spam only — it always re-fetches the trusted
+  Consultation record, so it can't be used to force-approve forged medical
+  data). **Confirm whether/how a dashboard automation calls this before
+  changing its auth.**
+- ~20 more lower-severity functions (known/guessed case_id triggers an
+  email/SMS/push or LLM call, no auth) are pinned as a tracked "batch 2" in
+  `tests/redteam/invariants.spec.js` — link-only comms policy limits the
+  realistic harm to spam/cost, not a PHI leak, so left for a later pass.
+
+---
+
 ## 5. Known-unverified at launch
 
 Stated plainly rather than assumed working.

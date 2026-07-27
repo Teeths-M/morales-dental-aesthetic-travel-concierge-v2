@@ -192,26 +192,23 @@ Deno.serve(async (req) => {
 
       // M Local referral — when escalated and a case_id is available, try to match
       // a verified home-country doctor and send them a secure referral portal link.
+      //
+      // FIX: this previously called `${SUPABASE_URL||BASE44_URL}/functions/v1/...`
+      // via raw fetch() — a Supabase edge-function URL convention that doesn't
+      // apply here (this backend is Base44), and neither env var is ever set, so
+      // `origin` was always '', the fetch always threw on the invalid URL, and
+      // the catch below silently swallowed it — M Local referral never actually
+      // fired. Use the same base44.asServiceRole.functions.invoke() pattern every
+      // other internal caller in this codebase uses.
       if (severity === 'escalate' && session.case_id) {
         try {
-          const origin = Deno.env.get('SUPABASE_URL') || Deno.env.get('BASE44_URL') || '';
-          const matchResp = await fetch(`${origin}/functions/v1/matchLocalDoctor`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ case_id: session.case_id }),
-          });
-          if (matchResp.ok) {
-            const matchData = await matchResp.json();
-            if (matchData?.data?.matched && matchData.data.doctor?.id) {
-              await fetch(`${origin}/functions/v1/sendLocalDoctorReferral`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  case_id: session.case_id,
-                  local_doctor_id: matchData.data.doctor.id,
-                }),
-              });
-            }
+          const matchResp = await base44.asServiceRole.functions.invoke('matchLocalDoctor', { case_id: session.case_id });
+          if (matchResp?.data?.matched && matchResp.data.doctor?.id) {
+            await base44.asServiceRole.functions.invoke('sendLocalDoctorReferral', {
+              case_id: session.case_id,
+              local_doctor_id: matchResp.data.doctor.id,
+              internal_secret: Deno.env.get('CRON_SECRET'),
+            });
           }
         } catch (_) { /* M Local referral is best-effort — never block main cron */ }
       }

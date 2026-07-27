@@ -1,6 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
 import { linkOnlyEmail } from '../_shared/notify.ts';
+import { verifyPortalToken } from '../_shared/portalToken.ts';
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — previously an
 // unsigned plain btoa(JSON) token with no signature suffix, which fails that
@@ -28,7 +29,19 @@ Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { consultation_id, flight_cost_usd, hotel_cost_usd, flight_itinerary_summary, hotel_selection, taxi_service_id } = body;
+    const { token, flight_cost_usd, hotel_cost_usd, flight_itinerary_summary, hotel_selection, taxi_service_id } = body;
+
+    // SECURITY: consultation_id is derived only from a verified portal token —
+    // this endpoint previously accepted a bare consultation_id from the body
+    // with no proof the caller held the travel agency's portal link for that
+    // case, so anyone who knew/guessed one could inject fake quote figures
+    // straight into Consultation.update() below (a pricing-fraud vector, since
+    // this total flows into calculatePackagePrice).
+    const verified = await verifyPortalToken(token);
+    if (!verified || verified.portal_type !== 'travel') {
+      return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
+    }
+    const consultation_id = verified.consultation_id;
 
     if (!consultation_id) {
       return Response.json({ error: 'consultation_id is required' }, { status: 400 });

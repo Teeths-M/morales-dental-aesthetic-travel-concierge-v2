@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { linkOnlyEmail } from '../_shared/notify.ts';
+import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
 
 /**
  * generateItineraryCalendar — Booking.com Calendar Sync Model
@@ -85,7 +86,15 @@ function googleCalUrl(summary: string, start: string, end: string, description: 
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id } = await body();
+  const { case_id, internal_secret } = await body();
+
+  // SECURITY: returns a full .ics (hotel address, flight/clinic timing) for
+  // any case_id with no proof of ownership or a legitimate internal caller.
+  // Only processPaymentCascade calls this, right after payment lands.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);

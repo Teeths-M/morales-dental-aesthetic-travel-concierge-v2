@@ -43,7 +43,10 @@ export default function PortalChauffeur() {
       setLoading(false); 
       return; 
     }
-    setTokenData(decoded);
+    // Keep the raw signed token — sendChauffeurQuoteAlert verifies it
+    // server-side rather than trusting a client-held consultation_id for a
+    // write (same reasoning as PortalTravelAgency.jsx).
+    setTokenData({ ...decoded, token });
     loadData(decoded.consultation_id, decoded.partner_id);
   }, []);
 
@@ -102,7 +105,7 @@ export default function PortalChauffeur() {
     setSubmitting(true);
     try {
       await base44.functions.invoke('sendChauffeurQuoteAlert', {
-        consultation_id: tokenData.consultation_id,
+        token: tokenData.token,
         driver_type: driverType,
         leg_1_cost_usd: parseFloat(leg1) || 0,
         leg_2_cost_usd: parseFloat(leg2) || 0,
