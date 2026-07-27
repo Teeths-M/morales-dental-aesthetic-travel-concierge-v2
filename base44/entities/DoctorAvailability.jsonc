@@ -45,44 +45,5 @@
     "doctor_id",
     "doctor_email",
     "date"
-  ],
-  "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.doctor_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "read": null,
-    "update": {
-      "$or": [
-        {
-          "data.doctor_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "data.doctor_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+  ]
 }
