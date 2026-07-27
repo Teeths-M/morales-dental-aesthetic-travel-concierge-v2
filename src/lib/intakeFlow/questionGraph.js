@@ -130,6 +130,7 @@ export const DIETARY_OPTIONS = [
  * @property {boolean} [searchFirst] - for a SELECT step: renders an always-visible fuzzy-searchable flat list instead of the ranked-recommendation-cards layout — for large enumerable option sets with no real ranking signal (e.g. nationality), where featuring a "top 5" would be dishonest
  * @property {(answers: object) => boolean} [skipIf] - true means skip this step
  * @property {boolean} [requiresAuth] - gates this step behind sign-in (medical history onward)
+ * @property {string} [minDateField] - for a DATE step: another step's id whose already-collected answer becomes this step's calendar minimum (e.g. return_date can't precede departure_date)
  */
 
 /** @type {QuestionStep[]} */

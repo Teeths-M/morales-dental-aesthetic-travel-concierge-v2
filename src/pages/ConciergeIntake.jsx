@@ -409,6 +409,7 @@ export default function ConciergeIntake() {
                 destinationCountry={answers.destination_country}
                 priceEstimates={priceEstimates}
                 onBack={canGoBack ? goBack : null}
+                answers={answers}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />

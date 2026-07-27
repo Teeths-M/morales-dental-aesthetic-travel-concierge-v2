@@ -1,4 +1,4 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
+﻿import { createHandler, err } from '../_shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
@@ -9,10 +9,21 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       companion_required = false, companion_type, companion_days = 0
     } = await body();
 
-    // Calculate days
+    // Calculate days — validate first. A bad/missing departure_date, or a
+    // return_date that doesn't parse (return_date is optional upstream for
+    // one-way requests, but if a caller sends garbage rather than omitting
+    // it, treat it the same as missing), silently produced NaN nights →
+    // NaN cost that then got written into TravelRequest's numeric fields
+    // instead of failing loudly.
     const start = new Date(departure_date);
-    const end = new Date(return_date);
-    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    if (isNaN(start.getTime())) return err('departure_date is not a valid date');
+    const end = return_date ? new Date(return_date) : null;
+    if (return_date && end !== null && isNaN(end.getTime())) return err('return_date is not a valid date');
+    if (end !== null && end.getTime() < start.getTime()) return err('return_date cannot be before departure_date');
+    // One-way (no return_date): price a single night's stay rather than 0 —
+    // 0 would zero out hotel_cost silently, which reads as "free hotel"
+    // rather than "we don't know the stay length yet".
+    const nights = end ? Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))) : 1;
 
     // Flight pricing (simplified - in production use Amadeus/Sabre API)
     const flightBaseRates = {

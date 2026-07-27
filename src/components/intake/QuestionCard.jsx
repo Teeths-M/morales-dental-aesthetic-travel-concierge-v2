@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format, parseISO, isValid } from 'date-fns';
 import { INPUT_TYPES, UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import HumanHandoffCard from './HumanHandoffCard';
 import MultiProcedureStep from './MultiProcedureStep';
@@ -7,6 +8,7 @@ import DoctorPickStep from './DoctorPickStep';
 import ConditionsPickStep from './ConditionsPickStep';
 import AllergiesPickStep from './AllergiesPickStep';
 import MedicalPickStep from './MedicalPickStep';
+import DateField from './DateField';
 import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
 import { useTranslation } from '@/i18n';
 import { translateStep } from '@/lib/intakeFlow/translateStep';
@@ -47,7 +49,7 @@ const RECOMMENDED_COUNT = 5;
  * recommendation cards, the rest behind "Show More," free-text search behind
  * that (typing is the last resort, never the first interaction).
  */
-export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null, searchFirstOptions = [] }) {
+export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null, searchFirstOptions = [], answers = {} }) {
   const { t } = useTranslation();
   // Display-time localization; the graph's English stays canonical for the
   // LLM context and stored question_shown (backend consistency).
@@ -365,24 +367,33 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
           </div>
         );
 
-      case INPUT_TYPES.DATE:
+      case INPUT_TYPES.DATE: {
+        // A friendly label for the conversation narration ("Aug 9, 2026")
+        // instead of the raw stored ISO string — every other case already
+        // passes a human label as rawText (opt.label, 'Yes'/'No', etc.).
+        const displayDate = (iso) => {
+          const d = iso ? parseISO(iso) : null;
+          return d && isValid(d) ? format(d, 'MMM d, yyyy') : iso;
+        };
+        // Declarative per-step constraint (see questionGraph.js) — e.g. the
+        // return_date step sets minDateField: 'departure_date' so the
+        // calendar can't select a return before the already-picked departure.
+        const minDateIso = step.minDateField ? answers?.[step.minDateField] : null;
+        const minDateParsed = minDateIso ? parseISO(minDateIso) : null;
+        const minDate = minDateParsed && isValid(minDateParsed) ? minDateParsed : undefined;
+
         return (
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (value) commitValue(value, value);
+              if (value) commitValue(displayDate(value), value);
             }}
           >
-            <input
-              type="date"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              style={inputBaseStyle}
-              autoFocus
-            />
+            <DateField value={value} onChange={setValue} minDate={minDate} />
             <SubmitButton disabled={!value} />
           </form>
         );
+      }
 
       default: {
         const type = step.inputType === INPUT_TYPES.EMAIL ? 'email' : step.inputType === INPUT_TYPES.PHONE ? 'tel' : 'text';

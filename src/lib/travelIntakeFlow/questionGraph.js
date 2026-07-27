@@ -96,6 +96,9 @@ export const TRAVEL_QUESTION_GRAPH = [
     question: 'And your return date?',
     deterministicReason: 'so your full itinerary is booked round-trip',
     inputType: INPUT_TYPES.DATE,
+    // The calendar disables any day before the already-collected departure
+    // date (QuestionCard.jsx reads this via `answers[minDateField]`).
+    minDateField: 'departure_date',
   },
   {
     id: 'travelers_count',

@@ -10,6 +10,7 @@ import { buildTravelRequestPayload } from '@/lib/travelIntakeFlow/fieldMap';
 import { ALL_COUNTRIES } from '@/lib/countries';
 import { SERVED_COUNTRY_OPTIONS } from '@/lib/countryCity';
 import { ROUTES } from '@/lib/constants';
+import { friendlyError } from '@/lib/friendlyError';
 import QuestionCard from '@/components/intake/QuestionCard';
 import AuthGateStep from '@/components/intake/AuthGateStep';
 import TravelReviewStep from '@/components/intake/TravelReviewStep';
@@ -100,8 +101,18 @@ export default function TravelIntake() {
 
       setSubmitResult(payload);
       setSubmitted(true);
-    } catch (_) {
-      setSubmitError('Something went wrong sending your travel request. Please try again, or contact us directly.');
+    } catch (error) {
+      // FIX: this used to swallow the real error entirely — a 401 (session
+      // not actually signed in), a 400 (validation reject) and a 500 (real
+      // crash) all showed the identical sentence, making a live failure
+      // undiagnosable without server logs. friendlyError() logs the raw
+      // error to console and maps known statuses (401 → "sign in again") to
+      // a specific, safe message.
+      setSubmitError(friendlyError(
+        error,
+        'Something went wrong sending your travel request. Please try again, or contact us directly.',
+        'TravelIntake',
+      ));
     } finally {
       setSubmitting(false);
     }
@@ -155,6 +166,7 @@ export default function TravelIntake() {
                 dynamicOptions={{ travelPartnerCountries: countryOptions, allCountries: ALL_COUNTRIES }}
                 dynamicOptionsLoading={{ travelPartnerCountries: false, allCountries: false }}
                 onBack={canGoBack ? goBack : null}
+                answers={answers}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />

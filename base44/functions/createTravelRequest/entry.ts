@@ -1,4 +1,4 @@
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler, err } from '../_shared/createHandler.ts';
 import { renderEmail } from '../_shared/emailTemplate.ts';
 import { z, strictObject, Fields } from '../_shared/validate.ts';
 
@@ -99,21 +99,37 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       package_status: 'pricing_requested'
     });
 
-    // Calculate preliminary pricing
-    const pricing = await base44.functions.invoke('calculateTravelPackagePrice', {
-      origin_city,
-      destination_city,
-      departure_date,
-      return_date,
-      travelers_count,
-      travel_class,
-      hotel_star_rating,
-      hotel_room_type,
-      transfer_type,
-      companion_required,
-      companion_type,
-      companion_days
-    });
+    // Calculate preliminary pricing.
+    // FIX: this previously ran with no error handling — any failure here
+    // (the nested invoke rejecting, or a malformed pricing.data) bubbled to
+    // createHandler's outer catch as a bare 500, leaving the TravelRequest
+    // row already created but never priced, and the caller got the same
+    // generic "internal error" as every other failure mode. Wrapped so a
+    // pricing failure is at least identifiable as such (never leaking
+    // error.message, per SEC-10) instead of indistinguishable noise.
+    let pricing;
+    try {
+      pricing = await base44.functions.invoke('calculateTravelPackagePrice', {
+        origin_city,
+        destination_city,
+        departure_date,
+        return_date,
+        travelers_count,
+        travel_class,
+        hotel_star_rating,
+        hotel_room_type,
+        transfer_type,
+        companion_required,
+        companion_type,
+        companion_days
+      });
+      if (typeof pricing?.data?.base_cost !== 'number' || !isFinite(pricing.data.base_cost)) {
+        throw new Error('calculateTravelPackagePrice returned no usable base_cost');
+      }
+    } catch (error) {
+      console.error('[createTravelRequest] pricing calculation failed:', error.message);
+      return err('We could not calculate pricing for this trip — please check your dates and try again.', 502);
+    }
 
     // Update with pricing
     const markup = 0.25; // 25% platform markup
@@ -122,18 +138,23 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const profit = total_package_price - base_cost;
     const deposit_amount = total_package_price * 0.25; // 25% deposit
 
-    await base44.entities.TravelRequest.update(travelRequest.id, {
-      flight_cost: pricing.data.flight_cost,
-      hotel_cost: pricing.data.hotel_cost,
-      transfer_cost: pricing.data.transfer_cost,
-      companion_cost: pricing.data.companion_cost,
-      base_cost,
-      markup_percentage: markup,
-      total_package_price,
-      profit,
-      deposit_amount,
-      amount_remaining: total_package_price - deposit_amount
-    });
+    try {
+      await base44.entities.TravelRequest.update(travelRequest.id, {
+        flight_cost: pricing.data.flight_cost,
+        hotel_cost: pricing.data.hotel_cost,
+        transfer_cost: pricing.data.transfer_cost,
+        companion_cost: pricing.data.companion_cost,
+        base_cost,
+        markup_percentage: markup,
+        total_package_price,
+        profit,
+        deposit_amount,
+        amount_remaining: total_package_price - deposit_amount
+      });
+    } catch (error) {
+      console.error('[createTravelRequest] saving calculated pricing failed:', error.message);
+      return err('Your trip was created but pricing could not be saved — please contact us directly.', 502);
+    }
 
     // Client confirmation — real quote, not a placeholder. BUG FIX: this
     // previously called 'sendTravelQuoteEmail' with {travel_request_id,
