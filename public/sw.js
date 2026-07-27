@@ -1,4 +1,4 @@
-const CACHE_NAME      = 'morales-vault-v4'; // v4: install() no longer atomic (see below) — bumped so a device stuck with a partially-cached v3 shell gets a clean rebuild
+const CACHE_NAME      = 'morales-vault-v5'; // v5: fetch handler now bypasses Vite dev-server module requests (see below) — bumped so a device with a stale v4 worker picks up the fix
 const TILE_CACHE_NAME = 'morales-map-tiles-v2';
 // Esri World Imagery + labels overlay (primary) + OSM fallback
 const TILE_RE = /^https:\/\/(server\.arcgisonline\.com|[abc]\.tile\.openstreetmap\.org)\//;
@@ -69,6 +69,27 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Never intercept Vite dev-server requests (raw unbundled source modules,
+  // HMR client, React refresh runtime). This SW is only ever registered in a
+  // PROD build (main.jsx / usePushNotifications.js both gate registration on
+  // import.meta.env.PROD), but a preview/sandbox host can reuse the same
+  // origin+scope across an earlier PROD session and a later DEV live-edit
+  // session — the leftover SW from the former then controls the latter's
+  // page. Raw source paths like /src/pages/Home.jsx don't match any
+  // extension in the static-asset branch below (.jsx isn't in that list), so
+  // they fell through to the HTML branch, which can serve back cached or
+  // offline HTML in place of the expected JS module — the browser then
+  // throws "Failed to fetch dynamically imported module". Bypassing here
+  // lets the request hit the network exactly like an uncontrolled page.
+  if (
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/@vite') ||
+    url.pathname.startsWith('/@react-refresh') ||
+    url.pathname.startsWith('/node_modules/.vite/')
+  ) {
     return;
   }
 
