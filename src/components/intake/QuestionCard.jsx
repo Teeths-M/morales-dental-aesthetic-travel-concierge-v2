@@ -8,7 +8,6 @@ import DoctorPickStep from './DoctorPickStep';
 import ConditionsPickStep from './ConditionsPickStep';
 import AllergiesPickStep from './AllergiesPickStep';
 import MedicalPickStep from './MedicalPickStep';
-import DateField from './DateField';
 import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
 import { useTranslation } from '@/i18n';
 import { translateStep } from '@/lib/intakeFlow/translateStep';
@@ -376,11 +375,10 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
           return d && isValid(d) ? format(d, 'MMM d, yyyy') : iso;
         };
         // Declarative per-step constraint (see questionGraph.js) — e.g. the
-        // return_date step sets minDateField: 'departure_date' so the
-        // calendar can't select a return before the already-picked departure.
-        const minDateIso = step.minDateField ? answers?.[step.minDateField] : null;
-        const minDateParsed = minDateIso ? parseISO(minDateIso) : null;
-        const minDate = minDateParsed && isValid(minDateParsed) ? minDateParsed : undefined;
+        // return_date step sets minDateField: 'departure_date' so this field
+        // can't select a return before the already-picked departure. Native
+        // <input type="date"> takes the ISO string directly as `min`.
+        const minDateIso = step.minDateField ? answers?.[step.minDateField] : undefined;
 
         return (
           <form
@@ -389,7 +387,14 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
               if (value) commitValue(displayDate(value), value);
             }}
           >
-            <DateField value={value} onChange={setValue} minDate={minDate} />
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              min={minDateIso}
+              style={inputBaseStyle}
+              autoFocus
+            />
             <SubmitButton disabled={!value} />
           </form>
         );
