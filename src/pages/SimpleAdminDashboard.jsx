@@ -25,6 +25,17 @@ import AdminLayout from '@/components/layout/AdminLayout';
 // number of remounts within the same page load.
 let _adminLoadStartedAt = null;
 
+// A 429 needs a different message than a generic failure — "try again" is
+// actively bad advice while a rate limit is active (each retry is another
+// request against the same limit). Same detection the retry option above uses.
+function describeAdminLoadError(err) {
+  const status = err?.response?.status ?? err?.status;
+  if (status === 429) {
+    return "The server is rate-limiting requests right now (too many recent loads). Wait a minute before retrying — clicking Retry immediately won't help.";
+  }
+  return err?.message || "This is taking much longer than it should — the server may be busy or unreachable.";
+}
+
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('active');
@@ -59,7 +70,17 @@ export default function SimpleAdminDashboard() {
     // Retry button. One retry keeps a real transient blip covered while
     // bounding the worst case to well under 20s — after that, the manual
     // Retry button is a better tool than another blind automatic attempt.
-    retry: 1,
+    //
+    // Never retry a 429: this endpoint fetches up to 500 rows, and repeated
+    // page loads/manual retries during a debugging session were enough to
+    // trip Base44's rate limit on it — confirmed live via three consecutive
+    // 429s on this exact query. Auto-retrying into an active rate limit
+    // burns another attempt for nothing and can extend the lockout; the
+    // Retry screen below tells the admin to wait instead.
+    retry: (failureCount, err) => {
+      if (err?.response?.status === 429 || err?.status === 429) return false;
+      return failureCount < 1;
+    },
   });
 
   // Without this, a real failure (e.g. a platform rate limit) silently falls
@@ -67,7 +88,7 @@ export default function SimpleAdminDashboard() {
   // indistinguishable from "there really are no cases."
   useEffect(() => {
     if (isError) {
-      toast({ title: 'Could not load cases', description: error?.message, variant: 'destructive' });
+      toast({ title: 'Could not load cases', description: describeAdminLoadError(error), variant: 'destructive' });
     }
   }, [isError, error, toast]);
 
@@ -197,7 +218,7 @@ export default function SimpleAdminDashboard() {
         <div className="text-center max-w-sm">
           <p className="text-slate-900 font-semibold mb-2">Couldn't load cases</p>
           <p className="text-slate-500 text-sm mb-5">
-            {error?.message || "This is taking much longer than it should — the server may be busy or unreachable."}
+            {isError ? describeAdminLoadError(error) : "This is taking much longer than it should — the server may be busy or unreachable."}
           </p>
           <Button onClick={() => { _adminLoadStartedAt = null; setStuckTooLong(false); refetch(); }}>
             <RefreshCw className="w-4 h-4 mr-2" />
