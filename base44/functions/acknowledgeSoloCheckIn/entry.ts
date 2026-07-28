@@ -25,6 +25,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     const now = new Date().toISOString();
 
+
     // Find the latest pending check-in for this case
     const checkIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
       { case_id, status: 'pending' }, '-scheduled_time', 1
