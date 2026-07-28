@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
@@ -69,7 +69,7 @@ export default function SimpleAdminDashboard() {
   const { toast } = useToast();
 
   // Fetch all cases in a single query for better performance
-  const { data: liveCases = [], isLoading, isError, error, refetch } = useQuery({
+  const { data: liveCases = [], isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['admin_all_cases', refreshKey],
     queryFn: async () => {
       // User-scoped: asServiceRole throws in the browser (backend-only) — the
@@ -112,11 +112,26 @@ export default function SimpleAdminDashboard() {
   // Without this, a real failure (e.g. a platform rate limit) silently falls
   // through to rendering with an empty case list once retries are exhausted —
   // indistinguishable from "there really are no cases."
+  //
+  // hasToastedRef bounds this to ONE toast per completed fetch attempt.
+  // Without it, a new `error` object reference on each failed attempt
+  // re-fires this effect even while isError stays true — combined with the
+  // Retry button being clickable with no cooldown, a burst of manual clicks
+  // during an active rate limit could pile up dozens of duplicate toasts
+  // (each also triggering a device buzz — see use-toast.jsx's toast()).
+  // Reset happens when a new attempt actually starts (isFetching), not on
+  // every render, so exactly one toast is allowed per attempt's outcome.
+  const hasToastedRef = useRef(false);
   useEffect(() => {
-    if (isError) {
+    if (isFetching) {
+      hasToastedRef.current = false;
+      return;
+    }
+    if (isError && !hasToastedRef.current) {
+      hasToastedRef.current = true;
       toast({ title: 'Could not load cases', description: describeAdminLoadError(error), variant: 'destructive' });
     }
-  }, [isError, error, toast]);
+  }, [isFetching, isError, error, toast]);
 
   // Second, independent safety net: the query's own timeout/retry logic
   // (above) assumes CaseRecord.list() eventually settles one way or another.
@@ -260,10 +275,16 @@ export default function SimpleAdminDashboard() {
           <p className="text-slate-500 text-sm mb-5">
             {isError ? describeAdminLoadError(error) : "This is taking much longer than it should — the server may be busy or unreachable."}
           </p>
-          <Button onClick={() => { _adminLoadStartedAt = null; setStuckTooLong(false); refetch(); }}>
+          <Button
+            onClick={() => { _adminLoadStartedAt = null; setStuckTooLong(false); refetch(); }}
+            disabled={isFetching}
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
-            Retry
+            {isFetching ? 'Retrying…' : 'Retry'}
           </Button>
+          {isFetching && (
+            <p className="text-xs text-slate-400 mt-2">Checking — repeated clicks won't speed this up.</p>
+          )}
         </div>
       </div>
     );
@@ -290,8 +311,8 @@ export default function SimpleAdminDashboard() {
             <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5 hidden sm:flex" style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff', background: 'transparent' }} disabled={allCases.length === 0}>
               <Download className="w-4 h-4" /> <span className="hidden md:inline">Export CSV</span>
             </Button>
-            <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1.5" style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff', background: 'transparent' }}>
-              <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Refresh</span>
+            <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1.5" style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff', background: 'transparent' }} disabled={isFetching}>
+              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} /> <span className="hidden sm:inline">{isFetching ? 'Refreshing…' : 'Refresh'}</span>
             </Button>
           </div>
         </div>
