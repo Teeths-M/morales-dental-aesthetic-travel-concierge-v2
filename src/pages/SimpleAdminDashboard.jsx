@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
@@ -50,6 +50,26 @@ function writeCasesCache(data) {
   } catch (_) { /* quota/private-mode — cache is best-effort only */ }
 }
 
+// Module-level, not component/query state — this endpoint has repeatedly
+// tripped Base44's platform rate limit, and something has been observed
+// re-firing this query far more often than a person could be clicking
+// Retry (seen live: a burst of duplicate 429s within seconds of a single
+// fresh page load, in a from-scratch incognito session). Whatever the exact
+// trigger — a remount loop, multiple observers, retryOnMount racing a
+// timeout — the one thing that must never happen is this app making the
+// SAME still-active rate limit worse by hammering it. This hard-caps actual
+// network calls to CaseRecord.list to at most one per COOLDOWN window,
+// no matter how many times React (re)mounts or retries the query.
+const CASE_LIST_MIN_INTERVAL_MS = 5000;
+let _lastCaseListAttemptAt = 0;
+
+// Same reasoning, for the user-facing toast: bounds it to at most one every
+// COOLDOWN window regardless of how many times the effect below fires,
+// so a burst of attempts can't pile up duplicate toasts (and duplicate
+// device buzzes — see use-toast.jsx's toast()).
+const ADMIN_ERROR_TOAST_COOLDOWN_MS = 8000;
+let _lastAdminErrorToastAt = 0;
+
 // A 429 needs a different message than a generic failure — "try again" is
 // actively bad advice while a rate limit is active (each retry is another
 // request against the same limit). Same detection the retry option above uses.
@@ -72,6 +92,17 @@ export default function SimpleAdminDashboard() {
   const { data: liveCases = [], isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['admin_all_cases', refreshKey],
     queryFn: async () => {
+      // Hard floor on actual network calls — see CASE_LIST_MIN_INTERVAL_MS
+      // above. Rejects immediately, without ever touching the network, if
+      // called again too soon after the last real attempt.
+      const sinceLastAttempt = Date.now() - _lastCaseListAttemptAt;
+      if (sinceLastAttempt < CASE_LIST_MIN_INTERVAL_MS) {
+        const throttleErr = new Error(`Checked too recently — please wait ${Math.ceil((CASE_LIST_MIN_INTERVAL_MS - sinceLastAttempt) / 1000)}s before retrying.`);
+        throttleErr.isClientThrottled = true;
+        throw throttleErr;
+      }
+      _lastCaseListAttemptAt = Date.now();
+
       // User-scoped: asServiceRole throws in the browser (backend-only) — the
       // main admin case list was always empty because of it. Admin RLS on
       // CaseRecord permits this read directly.
@@ -104,6 +135,7 @@ export default function SimpleAdminDashboard() {
     // burns another attempt for nothing and can extend the lockout; the
     // Retry screen below tells the admin to wait instead.
     retry: (failureCount, err) => {
+      if (err?.isClientThrottled) return false;
       if (err?.response?.status === 429 || err?.status === 429) return false;
       return failureCount < 1;
     },
@@ -113,24 +145,18 @@ export default function SimpleAdminDashboard() {
   // through to rendering with an empty case list once retries are exhausted —
   // indistinguishable from "there really are no cases."
   //
-  // hasToastedRef bounds this to ONE toast per completed fetch attempt.
-  // Without it, a new `error` object reference on each failed attempt
-  // re-fires this effect even while isError stays true — combined with the
-  // Retry button being clickable with no cooldown, a burst of manual clicks
-  // during an active rate limit could pile up dozens of duplicate toasts
-  // (each also triggering a device buzz — see use-toast.jsx's toast()).
-  // Reset happens when a new attempt actually starts (isFetching), not on
-  // every render, so exactly one toast is allowed per attempt's outcome.
-  const hasToastedRef = useRef(false);
+  // Module-level cooldown (ADMIN_ERROR_TOAST_COOLDOWN_MS above), not a
+  // component ref: a ref resets on every fresh mount, so it can't bound
+  // anything if the component itself is what's firing repeatedly — observed
+  // live as a burst of duplicate toasts within seconds of a single, fresh
+  // page load. This bounds the toast to at most one per cooldown window
+  // no matter what's re-triggering the query underneath it.
   useEffect(() => {
-    if (isFetching) {
-      hasToastedRef.current = false;
-      return;
-    }
-    if (isError && !hasToastedRef.current) {
-      hasToastedRef.current = true;
-      toast({ title: 'Could not load cases', description: describeAdminLoadError(error), variant: 'destructive' });
-    }
+    if (isFetching || !isError) return;
+    const now = Date.now();
+    if (now - _lastAdminErrorToastAt < ADMIN_ERROR_TOAST_COOLDOWN_MS) return;
+    _lastAdminErrorToastAt = now;
+    toast({ title: 'Could not load cases', description: describeAdminLoadError(error), variant: 'destructive' });
   }, [isFetching, isError, error, toast]);
 
   // Second, independent safety net: the query's own timeout/retry logic
