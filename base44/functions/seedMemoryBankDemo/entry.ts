@@ -43,6 +43,7 @@ Deno.serve(createHandler(async ({ base44 }) => {
     await base44.asServiceRole.entities.OutcomeRecord.delete(o.id).catch(() => {});
   }
 
+
   // ── Seed one demo case, ready for Stage 11 (Procedure Complete) ────────────
   const caseRecord = await base44.asServiceRole.entities.CaseRecord.create({
     client_name: 'Elena Ruiz (Demo Patient)',
