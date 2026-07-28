@@ -8,12 +8,24 @@ import { ROLES } from '@/lib/constants';
 const AuthContext = createContext();
 
 // Single source of truth — never duplicate elsewhere
-const PREVIEW_USER = { 
-  role: ROLES.ADMIN, 
-  email: 'preview-admin@base44.app', 
-  full_name: 'Base44 Preview Admin', 
-  isPreviewAdmin: true 
+const PREVIEW_USER = {
+  role: ROLES.ADMIN,
+  email: 'preview-admin@base44.app',
+  full_name: 'Base44 Preview Admin',
+  isPreviewAdmin: true
 };
+
+// A platform-side stall (Base44 API slow/unresponsive) must never leave the
+// auth gate spinning forever — every protected route in the app renders
+// nothing but a spinner until authChecked flips true, so a hung network call
+// here blocks the entire authenticated app, not just one page.
+const AUTH_CHECK_TIMEOUT_MS = 10000;
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ]);
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -53,18 +65,30 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  // Restores the last known signed-in identity from localStorage — used both
+  // when genuinely offline and when Base44's API is reachable but stalls/
+  // errors ambiguously (a platform-side hang isn't proof the session is
+  // invalid, so a slow API shouldn't force a working session out to a login
+  // screen). Never used for a clean 401/403 — that's a real "not authorized"
+  // answer from the server and must not be papered over with stale cache.
+  const restoreCachedIdentity = () => {
+    try {
+      const cachedUserRaw = localStorage.getItem('morales_last_known_user');
+      if (cachedUserRaw) {
+        const cachedUser = JSON.parse(cachedUserRaw);
+        setUser({ ...cachedUser, isOfflineUser: true });
+        setIsAuthenticated(true);
+        return true;
+      }
+    } catch (_) { /* no cached identity */ }
+    return false;
+  };
+
   const checkAppState = async () => {
     // If offline, skip network calls entirely — restore last known identity so
     // offline-capable features (Vault, Emergency Manifest) can still render.
     if (!navigator.onLine) {
-      try {
-        const cachedUserRaw = localStorage.getItem('morales_last_known_user');
-        if (cachedUserRaw) {
-          const cachedUser = JSON.parse(cachedUserRaw);
-          setUser({ ...cachedUser, isOfflineUser: true });
-          setIsAuthenticated(true);
-        }
-      } catch (_) { /* no cached identity — proceed with user: null */ }
+      restoreCachedIdentity();
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
       setAuthChecked(true);
@@ -87,7 +111,11 @@ export const AuthProvider = ({ children }) => {
       });
       
       try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+        const publicSettings = await withTimeout(
+          appClient.get(`/prod/public-settings/by-id/${appParams.appId}`),
+          AUTH_CHECK_TIMEOUT_MS,
+          'Auth check timed out — the server may be busy.'
+        );
         setAppPublicSettings(publicSettings);
         
         // If we got the app public settings successfully, check if user is authenticated
@@ -110,12 +138,11 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingPublicSettings(false);
       } catch (appError) {
         console.error('App state check failed:', appError);
-        
+
         // Handle app-level errors
         if (isPreviewAdmin) {
           setUser(PREVIEW_USER);
           setIsAuthenticated(true);
-          setAuthChecked(true);
           setAuthError(null);
         } else if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
@@ -135,6 +162,13 @@ export const AuthProvider = ({ children }) => {
               message: appError.message
             });
           }
+        } else if (restoreCachedIdentity()) {
+          // Not a clean "you are not authorized" response from the server —
+          // most likely a stalled/timed-out or otherwise flaky platform call
+          // (see AUTH_CHECK_TIMEOUT_MS above). Fall back to the last known
+          // identity instead of blocking indefinitely or force-logging-out
+          // a session that was never actually rejected.
+          setAuthError(null);
         } else {
           setAuthError({
             type: 'unknown',
@@ -143,6 +177,12 @@ export const AuthProvider = ({ children }) => {
         }
         setIsLoadingPublicSettings(false);
         setIsLoadingAuth(false);
+        // Always set, regardless of which branch above ran — previously only
+        // the isPreviewAdmin branch did this, so any other app-state error
+        // (a 403 reason, a timeout, an unknown failure) left authChecked
+        // permanently false and ProtectedRoute spinning forever, since its
+        // gate is `isLoadingAuth || !authChecked`, not authError-driven.
+        setAuthChecked(true);
       }
     } catch (error) {
       // Network error (offline mid-request) — fail gracefully, don't crash
@@ -163,7 +203,11 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      const currentUser = await withTimeout(
+        base44.auth.me(),
+        AUTH_CHECK_TIMEOUT_MS,
+        'Auth check timed out — the server may be busy.'
+      );
 
       // Account was deleted (self-service or admin GDPR erasure) — no server-side
       // session-revocation primitive exists in the SDK, so this is how a still-logged-in
@@ -197,12 +241,24 @@ export const AuthProvider = ({ children }) => {
       } catch (_) { /* storage unavailable — non-fatal */ }
     } catch (error) {
       console.error('User auth check failed:', error);
+
+      // A clean 401/403 is the server actually saying "not authorized" —
+      // that must log the user out, not fall back to stale cache. Anything
+      // else (a timeout, a network blip, a 5xx) is not proof the session is
+      // invalid, so restore the last known identity rather than force a
+      // working session out to a login screen because the platform stalled.
+      const isAuthRejection = error.status === 401 || error.status === 403;
+      if (!isAuthRejection && restoreCachedIdentity()) {
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return;
+      }
+
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
+
+      if (isAuthRejection) {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
