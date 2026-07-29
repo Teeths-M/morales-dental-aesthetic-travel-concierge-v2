@@ -18,8 +18,11 @@ function distanceM(lat1, lng1, lat2, lng2) {
 }
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body().catch(() => ({}));
-    const { case_id, latitude, longitude, accuracy_meters, heading, speed, altitude, source = 'gps' } = body;
+    // `const body = await body()` shadowed the destructured `body` parameter —
+    // a SyntaxError ("Identifier 'body' has already been declared"), so this
+    // file could never even parse, let alone run. Renamed the local.
+    const reqBody = await body().catch(() => ({}));
+    const { case_id, latitude, longitude, accuracy_meters, heading, speed, altitude, source = 'gps' } = reqBody;
 
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
     if (!validCoord(latitude, longitude)) return Response.json({ error: 'Invalid coordinates' }, { status: 400 });

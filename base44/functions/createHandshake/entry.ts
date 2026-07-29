@@ -38,8 +38,11 @@ async function verifyCaseAccess(base44, case_id, user) {
 }
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body();
-    const { action, case_id, checkpoint_type, checkpoint_label, required, expires_hours, handshake_id, notes } = body;
+    // `const body = await body()` shadowed the destructured `body` parameter —
+    // a SyntaxError ("Identifier 'body' has already been declared"), so this
+    // file could never even parse, let alone run. Renamed the local.
+    const reqBody = await body();
+    const { action, case_id, checkpoint_type, checkpoint_label, required, expires_hours, handshake_id, notes } = reqBody;
 
     if (action === 'create') {
       if (!case_id || !checkpoint_type) {

@@ -21,8 +21,11 @@ async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
 }
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body();
-    const { consultation_id, doctor_id } = body;
+    // `const body = await body()` shadowed the destructured `body` parameter —
+    // a SyntaxError ("Identifier 'body' has already been declared"), so this
+    // file could never even parse, let alone run. Renamed the local.
+    const reqBody = await body();
+    const { consultation_id, doctor_id } = reqBody;
 
     if (!consultation_id || !doctor_id) {
       return Response.json({ error: 'consultation_id and doctor_id are required' }, { status: 400 });

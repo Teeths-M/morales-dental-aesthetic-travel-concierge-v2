@@ -12,8 +12,11 @@ function calcAge(dob) {
 }
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body();
-    const { action, case_id, waiver_type, signature_data, declined_reason, declined_by, declined_relationship, ip_address, age_threshold } = body;
+    // `const body = await body()` shadowed the destructured `body` parameter —
+    // a SyntaxError ("Identifier 'body' has already been declared"), so this
+    // file could never even parse, let alone run. Renamed the local.
+    const reqBody = await body();
+    const { action, case_id, waiver_type, signature_data, declined_reason, declined_by, declined_relationship, ip_address, age_threshold } = reqBody;
 
     if (!case_id) {
       return Response.json({ error: 'case_id required' }, { status: 400 });

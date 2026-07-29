@@ -1,8 +1,11 @@
 import { createHandler } from '../_shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body();
-    const { agency_id } = body;
+    // `const body = await body()` shadowed the destructured `body` parameter —
+    // a SyntaxError ("Identifier 'body' has already been declared"), so this
+    // file could never even parse, let alone run. Renamed the local.
+    const payload = await body();
+    const { agency_id } = payload;
 
     if (!agency_id) {
       return Response.json({ error: 'agency_id is required' }, { status: 400 });

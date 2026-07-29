@@ -23,8 +23,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
     const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
 
-    const body = await body();
-    const { dry_run = false, target_groups = ['doctors', 'travel_agencies', 'taxi_services', 'patients'] } = body;
+    // `const body = await body()` shadowed the destructured `body` parameter —
+    // a SyntaxError ("Identifier 'body' has already been declared"), so this
+    // file could never even parse, let alone run. Renamed the local.
+    const reqBody = await body();
+    const { dry_run = false, target_groups = ['doctors', 'travel_agencies', 'taxi_services', 'patients'] } = reqBody;
 
     const twilioReady = accountSid && authToken && fromNumber && accountSid.startsWith('AC');
 

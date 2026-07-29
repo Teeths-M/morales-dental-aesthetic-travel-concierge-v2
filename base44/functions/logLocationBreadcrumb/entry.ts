@@ -7,7 +7,10 @@ function validCoord(v, min, max) {
 }
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body().catch(() => ({}));
+    // `const body = await body()` shadowed the destructured `body` parameter —
+    // a SyntaxError ("Identifier 'body' has already been declared"), so this
+    // file could never even parse, let alone run. Renamed the local.
+    const reqBody = await body().catch(() => ({}));
     const {
       action,
       case_id,
@@ -22,7 +25,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       region,
       timezone,
       breadcrumb_id,
-    } = body;
+    } = reqBody;
 
     // ── LIST ─────────────────────────────────────────────────────────────────
     if (action === 'list') {
