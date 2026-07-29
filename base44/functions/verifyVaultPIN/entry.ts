@@ -1,4 +1,4 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
+﻿import { createHandler } from './createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { pin, action, current_pin } = await body();
