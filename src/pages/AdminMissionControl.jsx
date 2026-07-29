@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Shield, AlertTriangle, Zap, Globe,
   Radio, ArrowRight, RefreshCw, Phone
 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { useAdminCasesShared, ADMIN_CASES_QUERY_KEY, selectByStatus } from '@/hooks/useAdminCasesCache';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 import { COUNTRY_ISO, getRiskLevel } from '@/hooks/useEnvironmentalIntelligence';
 
 const GOLD = '#D4AF37';
+
+const MISSION_CONTROL_STATUSES = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
 
 const DEMO_CASES = [
   { id: 'demo_1', client_name: 'Maria C.',  procedure_country: 'Venezuela', trip_phase: 'arrived',        current_step: 5, client_phone: '+1-555-0101' },
@@ -180,23 +182,13 @@ export default function AdminMissionControl() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [refreshing,  setRefreshing]  = useState(false);
 
-  // Load all active cases
-  const { data: activeCases = [], isLoading } = useQuery({
-    queryKey: ['mission-control-cases'],
-    queryFn: async () => {
-      const statuses = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
-      // User-scoped: asServiceRole is a THROWING getter in the browser — even
-      // `?.` couldn't save this (the getter itself throws), so the whole
-      // queryFn rejected and the board ALWAYS fell back to demo cases. Admin
-      // RLS on CaseRecord permits this read directly.
-      const results = await Promise.allSettled(
-        statuses.map(s => base44.entities.CaseRecord.filter({ status: s }, '-updated_date', 20).catch(() => []))
-      );
-      return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
-    },
-    staleTime: 60_000,
-    refetchInterval: 300_000,
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
+  // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
+  // each independently fetching CaseRecord; this page alone used to fire 5
+  // parallel status-filtered calls every mount and every 5 minutes). Derives
+  // the same 5-status view client-side instead of its own network calls.
+  const { data: allCases = [], isLoading } = useAdminCasesShared();
+  const activeCases = selectByStatus(allCases, MISSION_CONTROL_STATUSES);
 
   // Simulated MedGuard scores (in real use: read from AuditLog last analysis)
   const medguardScores = {};
@@ -223,7 +215,7 @@ export default function AdminMissionControl() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ['mission-control-cases'] });
+    await queryClient.invalidateQueries({ queryKey: ADMIN_CASES_QUERY_KEY });
     setLastRefresh(new Date());
     setTimeout(() => setRefreshing(false), 800);
   };

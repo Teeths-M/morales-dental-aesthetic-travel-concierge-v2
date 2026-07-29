@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useAdminCasesShared, ADMIN_CASES_QUERY_KEY, selectByStatus } from '@/hooks/useAdminCasesCache';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -149,16 +150,12 @@ export default function ClinicalReviewerDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: cases = [], isLoading, refetch, isFetching } = useQuery({
-    queryKey: ['recoveryGuidanceQueue'],
-    queryFn: async () => {
-      const lists = await Promise.all(
-        RECOVERY_STATUSES.map((status) => base44.entities.CaseRecord.filter({ status }, '-created_date', 100).catch(() => [])),
-      );
-      return lists.flat();
-    },
-    staleTime: 30 * 1000,
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
+  // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
+  // each independently fetching CaseRecord). Derives the same 2-status view
+  // client-side instead of its own 2 parallel calls.
+  const { data: allCases = [], isLoading, refetch, isFetching } = useAdminCasesShared();
+  const cases = selectByStatus(allCases, RECOVERY_STATUSES);
 
   const pending = cases.filter((c) => !c.recovery_guidance_text);
   const resolved = cases.filter((c) => !!c.recovery_guidance_text);
@@ -195,7 +192,7 @@ export default function ClinicalReviewerDashboard() {
               key={c.id}
               caseRecord={c}
               currentUser={currentUser}
-              onDone={() => qc.invalidateQueries({ queryKey: ['recoveryGuidanceQueue'] })}
+              onDone={() => qc.invalidateQueries({ queryKey: ADMIN_CASES_QUERY_KEY })}
             />
           ))}
         </div>

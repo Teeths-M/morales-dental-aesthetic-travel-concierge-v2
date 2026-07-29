@@ -6,6 +6,7 @@ import {
   AlertTriangle, Clock, FileText, Shield, Filter
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useAdminCasesShared } from '@/hooks/useAdminCasesCache';
 
 const STATUS_COLORS = {
   succeeded:          'bg-emerald-100 text-emerald-700',
@@ -134,11 +135,10 @@ export default function DisputeArbitrationPanel() {
     staleTime: 30000,
   });
 
-  const { data: cases = [] } = useQuery({
-    queryKey: ['cases_for_arbitration'],
-    queryFn: () => base44.entities.CaseRecord.list('-created_date', 500),
-    staleTime: 60000,
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
+  // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
+  // each independently fetching CaseRecord).
+  const { data: cases = [] } = useAdminCasesShared();
 
   const caseMap = {};
   cases.forEach(c => { caseMap[c.id] = c; });

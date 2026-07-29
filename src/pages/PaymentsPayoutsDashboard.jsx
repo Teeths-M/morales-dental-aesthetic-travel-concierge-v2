@@ -5,6 +5,7 @@ import {
   DollarSign, Scale, CreditCard, TrendingUp, Lock, Search
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useAdminCasesShared, selectSortedByUpdatedDate } from '@/hooks/useAdminCasesCache';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PayoutEscrowPanel from '@/components/payments/PayoutEscrowPanel';
 import DisputeArbitrationPanel from '@/components/payments/DisputeArbitrationPanel';
@@ -19,17 +20,16 @@ export default function PaymentsPayoutsDashboard() {
   const [selectedCaseId, setSelectedCaseId] = useState('');
   const [caseSearch, setCaseSearch] = useState('');
 
-  const { data: cases = [] } = useQuery({
-    queryKey: ['payout_cases'],
-    queryFn: () => base44.entities.CaseRecord.filter({ payment_status: 'Paid In Full' }, '-updated_date', 100),
-    staleTime: 60000,
-  });
-
-  const { data: allCasesForSearch = [] } = useQuery({
-    queryKey: ['payout_all_cases'],
-    queryFn: () => base44.entities.CaseRecord.list('-updated_date', 300),
-    staleTime: 60000,
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
+  // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
+  // each independently fetching CaseRecord). Derives both views client-side
+  // from the shared cache (re-sorted by updated_date) instead of 2 of its
+  // own calls. Known tradeoff: the shared cache holds the 500 most recently
+  // *created* cases, so an old case updated today but outside that window
+  // wouldn't appear here — accepted for now, see useAdminCasesCache.js.
+  const { data: sharedCases = [] } = useAdminCasesShared();
+  const allCasesForSearch = selectSortedByUpdatedDate(sharedCases);
+  const cases = allCasesForSearch.filter(c => c.payment_status === 'Paid In Full');
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['payout_txns'],

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useAdminCasesShared, ADMIN_CASES_QUERY_KEY } from '@/hooks/useAdminCasesCache';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, AlertTriangle, DollarSign, Send,
@@ -340,12 +341,13 @@ export default function IQ200AdminCenter() {
   const [populatingData, setPopulatingData] = useState(false);
   const [seedingDemo, setSeedingDemo] = useState(false);
   const [seedDemoMessage, setSeedDemoMessage] = useState('');
-  const { data: cases = [], isLoading, isError: casesError, refetch } = useQuery({
-    queryKey: ['iq200_cases'],
-    // User-scoped: asServiceRole throws in the browser (backend-only).
-    queryFn: () => base44.entities.CaseRecord.filter({}, '-created_date', 50),
-    refetchInterval: 300_000,
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
+  // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
+  // each independently fetching CaseRecord). This page previously polled
+  // every 5 minutes on its own; dropped in favor of the shared query's own
+  // 30s staleTime, so it no longer adds its own repeat fetch.
+  const { data: allCases = [], isLoading, isError: casesError, refetch } = useAdminCasesShared();
+  const cases = allCases.slice(0, 50);
 
   const { data: consultations = [], isError: consultationsError } = useQuery({
     queryKey: ['consultations_for_iq200'],
@@ -361,7 +363,7 @@ export default function IQ200AdminCenter() {
     await base44.functions.invoke('iq200Pipeline', { action: 'create', consultation_id: consultationId });
     setCreatingCase(null);
     refetch();
-    qc.invalidateQueries({ queryKey: ['iq200_cases'] });
+    qc.invalidateQueries({ queryKey: ADMIN_CASES_QUERY_KEY });
   };
 
   const handlePopulateSampleData = async () => {
@@ -384,7 +386,7 @@ export default function IQ200AdminCenter() {
       const res = await base44.functions.invoke('seedDemoJourney', {});
       setSeedDemoMessage(res.data?.message || 'Demo journey ready.');
       refetch();
-      qc.invalidateQueries({ queryKey: ['iq200_cases'] });
+      qc.invalidateQueries({ queryKey: ADMIN_CASES_QUERY_KEY });
     } catch (error) {
       console.error('Failed to seed demo journey:', error);
       setSeedDemoMessage('Failed to seed demo journey — check console for details.');

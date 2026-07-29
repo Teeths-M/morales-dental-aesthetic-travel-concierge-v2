@@ -15,10 +15,13 @@ import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, Marker } from '
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { base44 } from '@/api/base44Client';
+import { useAdminCasesShared, selectByStatus } from '@/hooks/useAdminCasesCache';
 import { COUNTRY_ISO, getRiskLevel } from '@/hooks/useEnvironmentalIntelligence';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 const GOLD = '#D4AF37';
+
+const SITUATION_ROOM_STATUSES = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
 const HQ   = [25.77, -80.19]; // Miami, FL — Morales HQ
 
 // World bounds — prevents Leaflet from wrapping / tiling the map twice
@@ -157,23 +160,17 @@ export default function SituationRoom() {
     return () => clearInterval(id);
   }, []);
 
-  const { data: activeCases = [] } = useQuery({
-    queryKey: ['situation-room-cases', tick],
-    queryFn: async () => {
-      const statuses = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
-      // User-scoped: asServiceRole is a THROWING getter in the browser — the
-      // `?.` never helped (the getter itself throws), so this always rejected
-      // and the room always fell back to demo data. Admin RLS permits the read.
-      const results  = await Promise.allSettled(
-        statuses.map(s =>
-          base44.entities.CaseRecord.filter({ status: s }, '-updated_date', 20).catch(() => [])
-        )
-      );
-      return results.flatMap(r => r.status === 'fulfilled' ? (r.value || []) : []);
-    },
-    staleTime: 90_000,
-    refetchInterval: 300_000,
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
+  // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
+  // each independently fetching CaseRecord). This page was the worst
+  // offender: 5 parallel status-filtered calls forced every 90 seconds via
+  // `tick` in the queryKey, indefinitely, for as long as the tab stayed
+  // open — a standing drain on the shared rate-limit budget. Now derives
+  // the same 5-status view client-side from the shared cache instead, and
+  // is no longer tied to `tick` (which still drives livePositions/auditFeed
+  // below — those are different entities, not implicated in this).
+  const { data: allCases = [] } = useAdminCasesShared();
+  const activeCases = selectByStatus(allCases, SITUATION_ROOM_STATUSES);
 
   // ── Real live positions ───────────────────────────────────────────────────
   // The map used to plot destination-country centroids only: a dot meant "this

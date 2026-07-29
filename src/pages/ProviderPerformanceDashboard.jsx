@@ -2,6 +2,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useAdminCasesShared } from '@/hooks/useAdminCasesCache';
 import { Star, Clock, Users, TrendingUp, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,11 +55,10 @@ function ProviderRow({ name, type, avgRating, ratingCount, avgResponseHours, cas
 }
 
 export default function ProviderPerformanceDashboard() {
-  const { data: cases = [], isLoading: loadingCases } = useQuery({
-    queryKey: ['provider_perf_cases'],
-    queryFn: () => base44.entities.CaseRecord.list('-created_date', 500),
-    staleTime: 60000,
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
+  // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
+  // each independently fetching CaseRecord).
+  const { data: cases = [], isLoading: loadingCases } = useAdminCasesShared();
 
   const { data: recoverySessions = [], isLoading: loadingRecovery } = useQuery({
     queryKey: ['provider_perf_recovery'],

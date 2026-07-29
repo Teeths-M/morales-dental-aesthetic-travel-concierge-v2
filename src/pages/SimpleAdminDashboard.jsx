@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { Users, Plane, Search, CheckCircle, Clock, Archive, Activity, RefreshCw, Download, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +15,7 @@ import {
 import CaseDetailDrawer from '@/components/admin/CaseDetailDrawer';
 import FallbackCrisisAlert from '@/components/admin/FallbackCrisisAlert';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { useAdminCasesShared, readCasesCache, shouldShowAdminErrorToast, describeAdminLoadError } from '@/hooks/useAdminCasesCache';
 
 // Module-level, not component state — a remount resets useState/useEffect
 // back to zero, which defeats a component-level timeout if something keeps
@@ -25,137 +24,38 @@ import AdminLayout from '@/components/layout/AdminLayout';
 // number of remounts within the same page load.
 let _adminLoadStartedAt = null;
 
-// Last-known-good cache — survives a platform rate limit (or any other fetch
-// failure) so the admin never sees a hard "can't load anything" wall once
-// they've loaded successfully at least once on this device. Deliberately
-// localStorage, not React state: it must outlive a full page reload, since
-// that's exactly when someone rechecks the dashboard during an outage.
-const CASES_CACHE_KEY = 'morales_admin_cases_cache_v1';
-
-function readCasesCache() {
-  try {
-    const raw = localStorage.getItem(CASES_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed?.data) || !parsed?.cachedAt) return null;
-    return parsed;
-  } catch (_) {
-    return null;
-  }
-}
-
-function writeCasesCache(data) {
-  try {
-    localStorage.setItem(CASES_CACHE_KEY, JSON.stringify({ data, cachedAt: new Date().toISOString() }));
-  } catch (_) { /* quota/private-mode — cache is best-effort only */ }
-}
-
-// Module-level, not component/query state — this endpoint has repeatedly
-// tripped Base44's platform rate limit, and something has been observed
-// re-firing this query far more often than a person could be clicking
-// Retry (seen live: a burst of duplicate 429s within seconds of a single
-// fresh page load, in a from-scratch incognito session). Whatever the exact
-// trigger — a remount loop, multiple observers, retryOnMount racing a
-// timeout — the one thing that must never happen is this app making the
-// SAME still-active rate limit worse by hammering it. This hard-caps actual
-// network calls to CaseRecord.list to at most one per COOLDOWN window,
-// no matter how many times React (re)mounts or retries the query.
-const CASE_LIST_MIN_INTERVAL_MS = 5000;
-let _lastCaseListAttemptAt = 0;
-
-// Same reasoning, for the user-facing toast: bounds it to at most one every
-// COOLDOWN window regardless of how many times the effect below fires,
-// so a burst of attempts can't pile up duplicate toasts (and duplicate
-// device buzzes — see use-toast.jsx's toast()).
-const ADMIN_ERROR_TOAST_COOLDOWN_MS = 8000;
-let _lastAdminErrorToastAt = 0;
-
-// A 429 needs a different message than a generic failure — "try again" is
-// actively bad advice while a rate limit is active (each retry is another
-// request against the same limit). Same detection the retry option above uses.
-function describeAdminLoadError(err) {
-  const status = err?.response?.status ?? err?.status;
-  if (status === 429) {
-    return "The server is rate-limiting requests right now (too many recent loads). Wait a minute before retrying — clicking Retry immediately won't help.";
-  }
-  return err?.message || "This is taking much longer than it should — the server may be busy or unreachable.";
-}
+// How many cards to render per tab before requiring "Load More" — the data
+// itself is still fetched in one shot (see useAdminCasesShared), this only
+// bounds the initial DOM/render cost. Stats and search below always run
+// over the full fetched set, never just the visible slice.
+const PAGE_SIZE = 50;
 
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('active');
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [retryTick, setRetryTick] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
+  const [visibleActiveCount, setVisibleActiveCount] = useState(PAGE_SIZE);
+  const [visibleCompletedCount, setVisibleCompletedCount] = useState(PAGE_SIZE);
   const { toast } = useToast();
 
-  // Fetch all cases in a single query for better performance
-  const { data: liveCases = [], isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['admin_all_cases', refreshKey],
-    queryFn: async () => {
-      // Hard floor on actual network calls — see CASE_LIST_MIN_INTERVAL_MS
-      // above. Rejects immediately, without ever touching the network, if
-      // called again too soon after the last real attempt.
-      const sinceLastAttempt = Date.now() - _lastCaseListAttemptAt;
-      if (sinceLastAttempt < CASE_LIST_MIN_INTERVAL_MS) {
-        const throttleErr = new Error(`Checked too recently — please wait ${Math.ceil((CASE_LIST_MIN_INTERVAL_MS - sinceLastAttempt) / 1000)}s before retrying.`);
-        throttleErr.isClientThrottled = true;
-        throw throttleErr;
-      }
-      _lastCaseListAttemptAt = Date.now();
-
-      // User-scoped: asServiceRole throws in the browser (backend-only) — the
-      // main admin case list was always empty because of it. Admin RLS on
-      // CaseRecord permits this read directly.
-      //
-      // Hard timeout: a platform-side stall (e.g. a rate limit that never
-      // cleanly returns a response) must never leave this screen spinning
-      // forever — after 8s, give up with a clear error instead of hanging,
-      // so the error/Retry state below always has a way to be reached.
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("This is taking too long — the server may be busy. Try Retry below.")), 8000)
-      );
-      const result = await Promise.race([
-        base44.entities.CaseRecord.list('-created_date', 500),
-        timeout,
-      ]);
-      writeCasesCache(result || []);
-      return result || [];
-    },
-    staleTime: 30000, // Keep data fresh for 30 seconds
-    // Overrides the app-wide 3-retry default: with an 8s timeout per attempt,
-    // 3 retries means a genuine hang can take 30+ seconds to ever reach the
-    // Retry button. One retry keeps a real transient blip covered while
-    // bounding the worst case to well under 20s — after that, the manual
-    // Retry button is a better tool than another blind automatic attempt.
-    //
-    // Never retry a 429: this endpoint fetches up to 500 rows, and repeated
-    // page loads/manual retries during a debugging session were enough to
-    // trip Base44's rate limit on it — confirmed live via three consecutive
-    // 429s on this exact query. Auto-retrying into an active rate limit
-    // burns another attempt for nothing and can extend the lockout; the
-    // Retry screen below tells the admin to wait instead.
-    retry: (failureCount, err) => {
-      if (err?.isClientThrottled) return false;
-      if (err?.response?.status === 429 || err?.status === 429) return false;
-      return failureCount < 1;
-    },
-  });
+  // Shared across every admin-area page — see useAdminCasesCache.js for why
+  // (Base44's 100-ops/min-per-user rate limit was being tripped by ~9
+  // separate pages each independently fetching CaseRecord).
+  const { data: liveCases = [], isLoading, isFetching, isError, error, refetch } = useAdminCasesShared();
 
   // Without this, a real failure (e.g. a platform rate limit) silently falls
   // through to rendering with an empty case list once retries are exhausted —
-  // indistinguishable from "there really are no cases."
-  //
-  // Module-level cooldown (ADMIN_ERROR_TOAST_COOLDOWN_MS above), not a
-  // component ref: a ref resets on every fresh mount, so it can't bound
-  // anything if the component itself is what's firing repeatedly — observed
-  // live as a burst of duplicate toasts within seconds of a single, fresh
-  // page load. This bounds the toast to at most one per cooldown window
-  // no matter what's re-triggering the query underneath it.
+  // indistinguishable from "there really are no cases." shouldShowAdminErrorToast
+  // is a module-level cooldown (not a component ref): a ref resets on every
+  // fresh mount, so it can't bound anything if something keeps re-firing
+  // this — observed live as a burst of duplicate toasts within seconds of a
+  // single, fresh page load. It bounds the toast to at most one per cooldown
+  // window no matter what's re-triggering the query underneath it, and now
+  // (shared hook) across every admin page, not just this one.
   useEffect(() => {
     if (isFetching || !isError) return;
-    const now = Date.now();
-    if (now - _lastAdminErrorToastAt < ADMIN_ERROR_TOAST_COOLDOWN_MS) return;
-    _lastAdminErrorToastAt = now;
+    if (!shouldShowAdminErrorToast()) return;
     toast({ title: 'Could not load cases', description: describeAdminLoadError(error), variant: 'destructive' });
   }, [isFetching, isError, error, toast]);
 
@@ -180,13 +80,21 @@ export default function SimpleAdminDashboard() {
     if (remaining === 0) { setStuckTooLong(true); return; }
     const timer = setTimeout(() => setStuckTooLong(true), remaining);
     return () => clearTimeout(timer);
-  }, [isLoading, refreshKey]);
+  }, [isLoading, retryTick]);
 
   const handleRefresh = () => {
     _adminLoadStartedAt = null; // manual retry gets a fresh 10s budget
-    setRefreshKey(prev => prev + 1);
+    setRetryTick(prev => prev + 1);
     refetch();
   };
+
+  // Reset render pagination whenever the search narrows/changes — otherwise
+  // a match past the current "Load More" window would be invisible until
+  // clicking through pages that no longer make sense for the new search.
+  useEffect(() => {
+    setVisibleActiveCount(PAGE_SIZE);
+    setVisibleCompletedCount(PAGE_SIZE);
+  }, [searchTerm]);
 
   // A failed live fetch (rate limit, timeout, etc.) falls back to the last
   // successful load on this device rather than showing nothing at all —
@@ -459,16 +367,25 @@ export default function SimpleAdminDashboard() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredActiveCases.map(caseRecord => (
-                      <CaseCard 
-                        key={caseRecord.id} 
-                        caseRecord={caseRecord}
-                        getStatusBadge={getStatusBadge}
-                        onSelect={setSelectedCase}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredActiveCases.slice(0, visibleActiveCount).map(caseRecord => (
+                        <CaseCard
+                          key={caseRecord.id}
+                          caseRecord={caseRecord}
+                          getStatusBadge={getStatusBadge}
+                          onSelect={setSelectedCase}
+                        />
+                      ))}
+                    </div>
+                    {visibleActiveCount < filteredActiveCases.length && (
+                      <div className="flex justify-center pt-2">
+                        <Button variant="outline" onClick={() => setVisibleActiveCount(c => c + PAGE_SIZE)}>
+                          Load More ({filteredActiveCases.length - visibleActiveCount} remaining)
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </TabsContent>
 
@@ -487,16 +404,25 @@ export default function SimpleAdminDashboard() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredCompletedCases.map(caseRecord => (
-                      <CaseCard 
-                        key={caseRecord.id} 
-                        caseRecord={caseRecord}
-                        getStatusBadge={getStatusBadge}
-                        onSelect={setSelectedCase}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredCompletedCases.slice(0, visibleCompletedCount).map(caseRecord => (
+                        <CaseCard
+                          key={caseRecord.id}
+                          caseRecord={caseRecord}
+                          getStatusBadge={getStatusBadge}
+                          onSelect={setSelectedCase}
+                        />
+                      ))}
+                    </div>
+                    {visibleCompletedCount < filteredCompletedCases.length && (
+                      <div className="flex justify-center pt-2">
+                        <Button variant="outline" onClick={() => setVisibleCompletedCount(c => c + PAGE_SIZE)}>
+                          Load More ({filteredCompletedCases.length - visibleCompletedCount} remaining)
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </TabsContent>
             </Tabs>
