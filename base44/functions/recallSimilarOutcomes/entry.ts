@@ -17,12 +17,12 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { resolveCaseIdentity } from '../_shared/resolveCaseIdentity.ts';
-import { classifyProcedureCategory } from '../_shared/procedureCategory.ts';
-import { bucketConditions } from '../_shared/conditionBuckets.ts';
-import { sanitizeFields } from '../_shared/sanitizePromptInput.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from './createHandler.ts';
+import { resolveCaseIdentity } from './resolveCaseIdentity.ts';
+import { classifyProcedureCategory } from './procedureCategory.ts';
+import { bucketConditions } from './conditionBuckets.ts';
+import { sanitizeFields } from './sanitizePromptInput.ts';
+import { computePrevHash } from './auditHashChain.ts';
 
 const NARRATION_MODEL = 'gpt_5_mini';
 const MIN_SIMILAR_CASES = 2;
