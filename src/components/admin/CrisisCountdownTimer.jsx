@@ -1,15 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function CrisisCountdownTimer({ deadline, onExpired }) {
   const [timeLeft, setTimeLeft] = useState(null);
+  const hasFiredRef = useRef(false);
 
   useEffect(() => {
     if (!deadline) return;
+    hasFiredRef.current = false;
 
     const compute = () => {
       const remaining = Math.max(0, new Date(deadline).getTime() - Date.now());
       setTimeLeft(remaining);
-      if (remaining === 0 && onExpired) onExpired();
+      // Guard against firing onExpired on every 1s tick once remaining is
+      // clamped to 0 — it used to re-fire (and re-trigger a refetch)
+      // continuously for as long as an expired deadline stayed mounted.
+      if (remaining === 0 && onExpired && !hasFiredRef.current) {
+        hasFiredRef.current = true;
+        onExpired();
+      }
     };
 
     compute();
