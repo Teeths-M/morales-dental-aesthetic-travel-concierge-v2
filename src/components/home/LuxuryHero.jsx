@@ -289,28 +289,26 @@ export default function LuxuryHero() {
                   </motion.button>
                 </Link>
 
-                {/* Tertiary: glass pill — for patients who already booked elsewhere (BYOJ) */}
-                {isMedical && (
-                  <Link to="/protect">
-                    <motion.button
-                      whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full sm:w-auto min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
-                      style={{
-                        background:    'rgba(255,255,255,0.05)',
-                        backdropFilter: 'blur(16px)',
-                        WebkitBackdropFilter: 'blur(16px)',
-                        border:        `1px solid rgba(212,175,55,0.30)`,
-                        color:         `${GOLD}cc`,
-                        letterSpacing: '0.02em',
-                        boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
-                      }}
-                    >
-                      <Shield style={{ width: 14, height: 14, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
-                      {t('home.cta_byoj')}
-                    </motion.button>
-                  </Link>
-                )}
+                {/* Tertiary: glass pill — for anyone who already booked elsewhere (BYOJ) */}
+                <Link to="/protect">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full sm:w-auto min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                    style={{
+                      background:    'rgba(255,255,255,0.05)',
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
+                      border:        `1px solid rgba(212,175,55,0.30)`,
+                      color:         `${GOLD}cc`,
+                      letterSpacing: '0.02em',
+                      boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <Shield style={{ width: 14, height: 14, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
+                    {t('home.cta_byoj')}
+                  </motion.button>
+                </Link>
               </div>
 
               {/* No-account signal — directly below the buttons */}

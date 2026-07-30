@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
 import { ShieldAlert, Check, Loader2, Users } from 'lucide-react';
 
-// Mirrors base44/functions/_shared/byoj.ts BYOJ_DISCLOSURE_TEXT.
-// DRAFT — pending legal review; not for public launch until counsel signs off.
-const DISCLOSURE =
+// Mirrors base44/functions/_shared/byoj.ts BYOJ_DISCLOSURE_TEXT /
+// BYOJ_DISCLOSURE_TEXT_NONMEDICAL. Legal-approved (BYOJ_DISCLOSURE_STATUS =
+// 'legal_approved', version 'byoj-disclosure-v1').
+const DISCLOSURE_MEDICAL =
   'Morales did not select, vet, or approve this doctor or clinic, and we cannot control their actions or your ' +
   'medical care. What we provide is independent verification of what is publicly knowable, continuous journey ' +
   'monitoring, and 24/7 emergency response. We cannot guarantee a medical outcome. By enrolling, you are choosing ' +
   'Morales as your safety net — not as the party responsible for the procedure itself.';
+const DISCLOSURE_NONMEDICAL =
+  'Morales did not select, vet, or approve this provider or venue, and we cannot control their actions or your ' +
+  'safety during this trip. What we provide is independent verification of what is publicly knowable, continuous ' +
+  'journey monitoring, and 24/7 emergency response. We cannot guarantee an outcome. By enrolling, you are choosing ' +
+  'Morales as your safety net — not as the party responsible for the trip itself.';
 
 /**
  * Enrollment step. The disclosure is an UNAVOIDABLE gate — enroll stays disabled
  * until it's acknowledged. One-time plan only (recurring is intentionally absent).
  */
-export default function ProtectionEnroll({ onEnroll, loading }) {
+export default function ProtectionEnroll({ onEnroll, loading, journeyType = 'medical' }) {
   const [accepted, setAccepted] = useState(false);
   const [family, setFamily] = useState(false);
+  const DISCLOSURE = journeyType === 'medical' ? DISCLOSURE_MEDICAL : DISCLOSURE_NONMEDICAL;
 
   return (
     <div className="space-y-4">

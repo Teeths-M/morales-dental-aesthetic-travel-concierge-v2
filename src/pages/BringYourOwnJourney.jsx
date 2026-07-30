@@ -92,8 +92,9 @@ export default function BringYourOwnJourney() {
             Booked somewhere else? <span className="text-[#D4AF37]">We’ll still protect you.</span>
           </h1>
           <p className="text-[#B7C6CC] text-[15px] max-w-2xl">
-            Tell us the journey you already booked. We’ll verify the doctor and clinic through our real safety
-            engines, then monitor your trip end to end — before, during, and after surgery.
+            {form.journey_type === 'medical'
+              ? "Tell us the journey you already booked. We’ll verify the doctor and clinic through our real safety engines, then monitor your trip end to end — before, during, and after surgery."
+              : "Tell us the trip you already booked. We’ll verify what’s publicly knowable through our real safety engines, then monitor your trip end to end — before, during, and after you’re back home."}
           </p>
         </div>
 
@@ -115,7 +116,7 @@ export default function BringYourOwnJourney() {
 
         {step === 'enroll' && (
           <div className="max-w-2xl">
-            <ProtectionEnroll onEnroll={handleEnroll} loading={loading} />
+            <ProtectionEnroll onEnroll={handleEnroll} loading={loading} journeyType={form.journey_type} />
           </div>
         )}
 

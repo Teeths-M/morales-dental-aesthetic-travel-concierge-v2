@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { aggregateVerification, BYOJ_PLANS, BYOJ_DISCLOSURE_VERSION } from '../../base44/functions/_shared/byoj.ts';
+import { aggregateVerification, BYOJ_PLANS, BYOJ_DISCLOSURE_VERSION, BYOJ_DISCLOSURE_STATUS, BYOJ_DISCLOSURE_TEXT_NONMEDICAL } from '../../base44/functions/_shared/byoj.ts';
 
 // ── Bring Your Own Journey — guards the locked R1–R5 decisions ────────────────
 // Behavioral where the logic is pure; source-invariant where it lives in an edge
@@ -58,18 +58,32 @@ test.describe('R2 a concerning finding never passes silently', () => {
 });
 
 // ── R1 — unavoidable disclosure; service promise not a guarantee ──────────────
-test.describe('R1 disclosure is unavoidable and legal-gated', () => {
+test.describe('R1 disclosure is unavoidable and legal-approved', () => {
   test('SOURCE: enroll is refused without an explicit disclosure acceptance', () => {
     const src = read('base44/functions/enrollExternalJourney/entry.ts');
     expect(src).toMatch(/if \(!disclosure_accepted\)/);
     expect(src).toMatch(/must acknowledge the protection-service disclosure/i);
   });
 
-  test('SOURCE: the service promise is monitoring/alerting/escalation — not prevention/guarantee; copy is legal-gated', () => {
+  test('SOURCE: the service promise is monitoring/alerting/escalation — not prevention/guarantee', () => {
     const src = read('base44/functions/_shared/byoj.ts');
     expect(src).toMatch(/not prevention or a guarantee of outcome/i);
-    expect(src).toMatch(/draft_pending_legal/);
-    expect(BYOJ_DISCLOSURE_VERSION).toMatch(/draft/);
+  });
+
+  // 2026-07-29: legal review of this disclosure (both journey-type variants)
+  // is complete — status/version bumped off the draft markers. If this ever
+  // reverts to 'draft_pending_legal' without a deliberate decision, that's a
+  // regression this test should catch, not silently accept.
+  test('SOURCE: disclosure status/version reflect legal approval, not draft', () => {
+    expect(BYOJ_DISCLOSURE_STATUS).toBe('legal_approved');
+    expect(BYOJ_DISCLOSURE_VERSION).not.toMatch(/draft/);
+  });
+
+  test('SOURCE: the non-medical (Travel-mode) disclosure variant preserves every limitation clause of the medical one', () => {
+    expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/did not select, vet, or approve/i);
+    expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/cannot control their actions/i);
+    expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/cannot guarantee an outcome/i);
+    expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/choosing\s+Morales as your safety net/i);
   });
 });
 

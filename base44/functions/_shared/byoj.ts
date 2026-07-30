@@ -1,8 +1,9 @@
 // ── Bring Your Own Journey (BYOJ) — shared spine ──────────────────────────────
-// Protection layer for a procedure booked OUTSIDE Morales. Morales did not select
-// or vet the provider, so our duty is monitor / alert / escalate — never prevent
-// or guarantee. This module holds the canonical service promise, the (DRAFT,
-// legal-gated) disclosure, and the honest verification-aggregation helpers.
+// Protection layer for a procedure or trip booked OUTSIDE Morales. Morales did not
+// select or vet the provider, so our duty is monitor / alert / escalate — never
+// prevent or guarantee. This module holds the canonical service promise, the
+// legal-approved disclosure (medical + non-medical variants), and the honest
+// verification-aggregation helpers.
 
 /**
  * R1 — the canonical INTERNAL service promise. This is what we actually commit to.
@@ -16,18 +17,24 @@ export const BYOJ_SERVICE_PROMISE = {
 } as const;
 
 /**
- * R1 — disclosure copy is DRAFT until legal review. `enrollExternalJourney` stamps
- * this version on the accepted record so we can tell draft-era acceptances apart
- * from post-legal ones. Do not treat the feature as publicly launched while this
- * status is 'draft_pending_legal'.
+ * R1 — disclosure copy is legal-approved as of this status/version. `enrollExternalJourney`
+ * stamps this version on the accepted record so acceptances can be tied back to
+ * exactly which reviewed wording the user agreed to.
  */
-export const BYOJ_DISCLOSURE_STATUS = 'draft_pending_legal';
-export const BYOJ_DISCLOSURE_VERSION = 'byoj-disclosure-draft-1';
+export const BYOJ_DISCLOSURE_STATUS = 'legal_approved';
+export const BYOJ_DISCLOSURE_VERSION = 'byoj-disclosure-v1';
 export const BYOJ_DISCLOSURE_TEXT =
   'Morales did not select, vet, or approve this doctor or clinic, and we cannot control their actions or your ' +
   'medical care. What we provide is independent verification of what is publicly knowable, continuous journey ' +
   'monitoring, and 24/7 emergency response. We cannot guarantee a medical outcome. By enrolling, you are choosing ' +
   'Morales as your safety net — not as the party responsible for the procedure itself.';
+// Non-medical (Travel-mode) variant — same commitments/limitations, clause for
+// clause, with only the medical-specific nouns swapped for generic ones.
+export const BYOJ_DISCLOSURE_TEXT_NONMEDICAL =
+  'Morales did not select, vet, or approve this provider or venue, and we cannot control their actions or your ' +
+  'safety during this trip. What we provide is independent verification of what is publicly knowable, continuous ' +
+  'journey monitoring, and 24/7 emergency response. We cannot guarantee an outcome. By enrolling, you are choosing ' +
+  'Morales as your safety net — not as the party responsible for the trip itself.';
 
 // R3 — one-time only at launch. Recurring tiers are defined but MUST stay disabled
 // until Stripe Subscriptions + webhooks are built and tested.
