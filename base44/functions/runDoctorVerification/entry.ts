@@ -1,4 +1,5 @@
 import { createHandler } from '../_shared/createHandler.ts';
+import { callGiottoVerification } from '../_shared/giottoVerify.ts';
 
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);
@@ -18,13 +19,15 @@ async function getLastAuditHash(base44) {
 
 // Attempt automated verification via LLM-powered registry lookup
 async function attemptAutoVerification(base44, country, registrationNumber, doctorName, specialty) {
-  try {
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are a medical registry verification assistant. Search the official medical registry for ${country} to verify if a doctor with registration number "${registrationNumber}" and name "${doctorName}" (specialty: ${specialty || 'General'}) is currently licensed and in good standing.
+  const prompt = `You are a medical registry verification assistant. Search the official medical registry for ${country} to verify if a doctor with registration number "${registrationNumber}" and name "${doctorName}" (specialty: ${specialty || 'General'}) is currently licensed and in good standing.
 
 Check using the official registry data and return a JSON result. Be thorough but accurate. If you cannot definitively verify from registry data, return status "unverifiable".
 
-Return JSON only: { "found": boolean, "name_match": boolean, "status": "verified"|"not_found"|"name_mismatch"|"suspended"|"unverifiable", "registry_source": string, "details": string }`,
+Return JSON only: { "found": boolean, "name_match": boolean, "status": "verified"|"not_found"|"name_mismatch"|"suspended"|"unverifiable", "registry_source": string, "details": string }`;
+
+  try {
+    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt,
       add_context_from_internet: true,
       model: 'gemini_3_1_pro',
       response_json_schema: {
@@ -40,6 +43,12 @@ Return JSON only: { "found": boolean, "name_match": boolean, "status": "verified
     });
     return result;
   } catch (_) {
+    // Primary (Base44 InvokeLLM) failed — try the Giotto fallback (buildathon
+    // sponsor resource) before giving up. Returns null if not configured yet
+    // or if it also fails; either way we degrade to 'unverifiable', never a
+    // fabricated pass.
+    const fallback = await callGiottoVerification(prompt);
+    if (fallback) return fallback;
     return { found: false, status: 'unverifiable', details: 'Auto-verification service unavailable' };
   }
 }
