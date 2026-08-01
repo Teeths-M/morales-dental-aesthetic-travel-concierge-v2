@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Plane, Star, DollarSign, MapPin, Globe, Clock, CheckCircle, AlertTriangle, LogOut, FileText } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import PartnerCaseDetailModal from './PartnerCaseDetailModal';
 
 const GOLD = '#D4AF37';
 
 export default function TravelAgencyDashboard({ agency, _language }) {
+  const [viewingCase, setViewingCase] = useState(null);
 
   // Pending quote requests for this agency
   const { data: pendingQuotes = [], isLoading: loadingPending } = useQuery({
@@ -179,11 +181,12 @@ export default function TravelAgencyDashboard({ agency, _language }) {
                       {(c.procedures || []).join(', ') || ''}
                     </p>
                   </div>
-                  <Link to={`/case/${c.id}`}>
-                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-all">
-                      View
-                    </button>
-                  </Link>
+                  <button
+                    onClick={() => setViewingCase(c)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-all"
+                  >
+                    View
+                  </button>
                 </div>
               </div>
             ))}
@@ -229,6 +232,11 @@ export default function TravelAgencyDashboard({ agency, _language }) {
           </button>
         </Link>
       </div>
+
+      <PartnerCaseDetailModal
+        caseRecord={viewingCase}
+        onClose={() => setViewingCase(null)}
+      />
 
     </div>
   );

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Car, Star, DollarSign, MapPin, CheckCircle, AlertTriangle, LogOut, Phone, Navigation } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import PartnerCaseDetailModal from './PartnerCaseDetailModal';
 
 const GOLD = '#D4AF37';
 
@@ -20,6 +21,7 @@ function StatusDot({ online }) {
 export default function TaxiServiceDashboard({ taxi, _language }) {
   const [isOnline, setIsOnline] = useState(taxi?.is_available ?? false);
   const [toggling, setToggling] = useState(false);
+  const [viewingCase, setViewingCase] = useState(null);
   const queryClient = useQueryClient();
 
   // Active + pending trip assignments for this driver
@@ -198,11 +200,12 @@ export default function TaxiServiceDashboard({ taxi, _language }) {
                       </p>
                     )}
                   </div>
-                  <Link to={`/case/${c.id}`}>
-                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-all">
-                      View
-                    </button>
-                  </Link>
+                  <button
+                    onClick={() => setViewingCase(c)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-all"
+                  >
+                    View
+                  </button>
                 </div>
               </div>
             ))}
@@ -248,6 +251,11 @@ export default function TaxiServiceDashboard({ taxi, _language }) {
           </button>
         </Link>
       </div>
+
+      <PartnerCaseDetailModal
+        caseRecord={viewingCase}
+        onClose={() => setViewingCase(null)}
+      />
 
     </div>
   );
