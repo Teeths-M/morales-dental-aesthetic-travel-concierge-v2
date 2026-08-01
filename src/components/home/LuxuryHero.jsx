@@ -10,13 +10,9 @@ import { useTranslation } from '@/i18n';
 
 const GOLD       = BRAND.gold;
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
-// TEMP: local watermarked preview only (Storyblocks SBV-348455312) — swap for
-// the licensed, unwatermarked CDN asset before this ever ships to production.
+// Local watermarked preview (Storyblocks SBV-348455312) — Portia has chosen
+// to ship with the watermark for now rather than wait on the licensed clip.
 const HERO_VIDEO = '/hero-preview-TEST.mp4';
-// Gate the temp clip out of production — it was shipping to real visitors
-// before the licensed video was bought. Flip to true once HERO_VIDEO points
-// at the real, unwatermarked asset.
-const HERO_VIDEO_READY = false;
 
 /* ── Content by mode ──────────────────────────────────────────────────────── */
 const CONTENT = {
@@ -157,7 +153,7 @@ export default function LuxuryHero() {
         {/* Full-bleed background — skeleton placeholder prevents layout shift.
             Reduced motion: show the static poster frame, no autoplaying video. */}
         <div className="absolute inset-0 img-skeleton">
-          {prefersReducedMotion || !HERO_VIDEO_READY ? (
+          {prefersReducedMotion ? (
             <img
               src={HERO_IMAGE}
               alt="A traveler checking her phone before her journey"
