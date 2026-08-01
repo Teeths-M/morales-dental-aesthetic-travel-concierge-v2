@@ -1,6 +1,6 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+import { renderEmail, escapeHtml } from '../_shared/emailTemplate.ts';
 
 // ── flagIntakeHandoff ─────────────────────────────────────────────────────
 // Fires when the conversational intake (/intake) can't confidently continue
@@ -72,7 +72,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const transcriptHtml = turn_history.length
     ? `<div style="margin:22px 0;font-size:13px;color:rgba(238,242,247,0.6);line-height:1.9;">${turn_history
-        .map((t) => `<strong style="color:#EEF2F7;">${t.question_shown}</strong><br/>${t.user_raw_text}`)
+        .map((t) => `<strong style="color:#EEF2F7;">${escapeHtml(t.question_shown)}</strong><br/>${escapeHtml(t.user_raw_text)}`)
         .join('<br/><br/>')}</div>`
     : '';
 

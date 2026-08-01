@@ -1,6 +1,3 @@
-// DUPLICATED from base44/functions/_shared/emailTemplate.ts — see createHandler.ts in this
-// same directory for why. Keep in sync by hand.
-
 /**
  * emailTemplate — Shared premium HTML email wrapper
  *
@@ -28,7 +25,7 @@ const BG_DARK = '#060B16';
 const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
-const escapeHtml = (value: unknown): string => String(value ?? '')
+export const escapeHtml = (value: unknown): string => String(value ?? '')
   .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
   .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 
@@ -83,7 +80,7 @@ export function renderEmail(opts: EmailOptions): string {
     : '';
 
   const noteHtml = note
-    ? `<div style="margin:22px 0;padding:16px 18px;background:rgba(212,175,55,0.08);border-left:3px solid ${GOLD};border-radius:8px;color:rgba(238,242,247,0.7);font-size:13px;line-height:1.6;">${note}</div>`
+    ? `<div style="margin:22px 0;padding:16px 18px;background:rgba(212,175,55,0.08);border-left:3px solid ${GOLD};border-radius:8px;color:rgba(238,242,247,0.7);font-size:13px;line-height:1.6;">${escapeHtml(note)}</div>`
     : '';
 
   return `<!DOCTYPE html>
@@ -125,8 +122,8 @@ export function renderEmail(opts: EmailOptions): string {
       </div>
       <div class="content">
         ${eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : ''}
-        <h1 class="title">${title}</h1>
-        ${intro ? `<p class="intro">${intro}</p>` : ''}
+        <h1 class="title">${escapeHtml(title)}</h1>
+        ${intro ? `<p class="intro">${escapeHtml(intro)}</p>` : ''}
         ${rowsHtml}
         ${noteHtml}
         ${bodyHtml}

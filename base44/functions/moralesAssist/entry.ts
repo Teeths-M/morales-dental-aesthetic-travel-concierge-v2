@@ -1,6 +1,7 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 import { scrubPHI } from '../_shared/scrubPHI.ts';
+import { escapeHtml } from '../_shared/emailTemplate.ts';
 
 // ── moralesAssist ─────────────────────────────────────────────────────────────
 // AI concierge for Morales Assist. Resolves support requests through natural
@@ -147,7 +148,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // If handoff needed: capture full context and notify the care team
   if (needsHandoff) {
     const summary = conv
-      .map(m => `${m.role === 'user' ? 'Client' : 'Morales'}: ${m.content}`)
+      .map(m => `${m.role === 'user' ? 'Client' : 'Morales'}: ${escapeHtml(m.content)}`)
       .join('\n\n');
 
     try {
@@ -157,9 +158,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         body: `
 <h2 style="color:#D4AF37">Morales Assist — Specialist Follow-up Required</h2>
 <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse">
-  <tr><td style="padding:4px 12px 4px 0;color:#888">Client</td><td><strong>${user?.full_name || 'N/A'}</strong> (${user?.email || 'N/A'})</td></tr>
-  ${trip_phase ? `<tr><td style="padding:4px 12px 4px 0;color:#888">Journey phase</td><td>${trip_phase}</td></tr>` : ''}
-  ${case_id    ? `<tr><td style="padding:4px 12px 4px 0;color:#888">Case reference</td><td>${case_id}</td></tr>` : ''}
+  <tr><td style="padding:4px 12px 4px 0;color:#888">Client</td><td><strong>${escapeHtml(user?.full_name || 'N/A')}</strong> (${escapeHtml(user?.email || 'N/A')})</td></tr>
+  ${trip_phase ? `<tr><td style="padding:4px 12px 4px 0;color:#888">Journey phase</td><td>${escapeHtml(trip_phase)}</td></tr>` : ''}
+  ${case_id    ? `<tr><td style="padding:4px 12px 4px 0;color:#888">Case reference</td><td>${escapeHtml(case_id)}</td></tr>` : ''}
 </table>
 <hr style="margin:16px 0"/>
 <h3 style="margin:0 0 8px">Full Conversation</h3>

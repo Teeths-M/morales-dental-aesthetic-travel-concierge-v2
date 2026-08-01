@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { escapeHtml } from '../_shared/emailTemplate.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -21,8 +22,9 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const patientName = consultation.patient_name || 'Patient';
+    const patientName = escapeHtml(consultation.patient_name || 'Patient');
     const patientEmail = consultation.email;
+    const safeQuestion = escapeHtml(doctor_question);
 
     // Email patient
     if (patientEmail) {
@@ -34,7 +36,7 @@ Deno.serve(createHandler(async ({ req }) => {
           <p>Your assigned doctor has reviewed your case and needs some additional information before confirming availability.</p>
           <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:16px;margin:16px 0">
             <p style="margin:0;font-weight:700;color:#92400e;margin-bottom:8px">Doctor's Question:</p>
-            <p style="margin:0;color:#111;font-size:15px">${doctor_question}</p>
+            <p style="margin:0;color:#111;font-size:15px">${safeQuestion}</p>
           </div>
           <p>Please reply to this email or log in to your dashboard to provide the requested information.</p>
           <p style="color:#888;font-size:12px;margin-top:24px">Morales Medical Travel Safety</p>
@@ -56,7 +58,7 @@ Deno.serve(createHandler(async ({ req }) => {
         </table>
         <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:16px;margin:16px 0">
           <p style="margin:0;font-weight:700;color:#92400e;margin-bottom:8px">Doctor's Question:</p>
-          <p style="margin:0">${doctor_question}</p>
+          <p style="margin:0">${safeQuestion}</p>
         </div>
         <p style="font-size:12px;color:#888">The case stage has been updated to 'info_requested'. Please follow up as needed.</p>
       `,

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { escapeHtml } from '../_shared/emailTemplate.ts';
 
 async function generateGrantToken() {
   const rawBytes = new Uint8Array(24);
@@ -146,17 +147,19 @@ Deno.serve(async (req) => {
 
     // Notify patient if approval is needed
     if (!auto_approve) {
+      const safeRequesterName = escapeHtml(requester_name || 'A provider');
+      const safeReason = escapeHtml(access_reason.replace(/_/g, ' '));
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: vault.patient_email,
-        subject: `Passport Access Request — ${requester_name || 'A provider'} needs to view your documents`,
+        subject: `Passport Access Request — ${safeRequesterName} needs to view your documents`,
         body: `
 <html><body style="font-family:Arial,sans-serif;color:#13221d;background:#f5f7f4;padding:28px;">
 <div style="max-width:600px;margin:auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #dde5df;">
   <h2 style="font-family:Georgia,serif;color:#29483d;">Access Request for Your Passport</h2>
-  <p><strong>${requester_name || 'A healthcare provider'}</strong> (${requester_role.replace('_', ' ')}) is requesting to view your encrypted passport document.</p>
+  <p><strong>${safeRequesterName}</strong> (${escapeHtml(requester_role.replace('_', ' '))}) is requesting to view your encrypted passport document.</p>
   <table style="width:100%;border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:20px 0;">
-    <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Reason</td><td style="font-weight:600;">${access_reason.replace(/_/g, ' ')}</td></tr>
-    <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Access Level</td><td style="font-weight:600;">${access_level.replace(/_/g, ' ')}</td></tr>
+    <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Reason</td><td style="font-weight:600;">${safeReason}</td></tr>
+    <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Access Level</td><td style="font-weight:600;">${escapeHtml(access_level.replace(/_/g, ' '))}</td></tr>
     <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Duration</td><td style="font-weight:600;">${hours} hours</td></tr>
     <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Grant Token</td><td><code style="font-size:12px;">${grant_token}</code></td></tr>
   </table>

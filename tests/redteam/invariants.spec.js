@@ -2477,3 +2477,50 @@ test('M RECON: the orchestration loop is fail-closed — a decision failure neve
   const catchBlock = loopBody.slice(loopBody.indexOf('} catch (_) {'), loopBody.indexOf('break;', loopBody.indexOf('} catch (_) {')));
   expect(catchBlock, 'the catch block must not fabricate a briefing').not.toContain('finalBriefing =');
 });
+
+test('XSS HARDENING: every duplicated emailTemplate.ts copy stays byte-identical to the canonical _shared version', () => {
+  // Base44's ~300-function shard bug forces several functions to keep a
+  // local copy of emailTemplate.ts instead of importing across the folder
+  // boundary (see the runMReconAgent self-containment fix). That means the
+  // escaping fix has to be applied in every copy — if one drifts out of
+  // sync, that function silently regresses back to unescaped HTML emails.
+  const canonical = read('base44/functions/_shared/emailTemplate.ts');
+  const dupeDirs = readdirSync(join(ROOT, 'base44/functions')).filter((name) => {
+    if (name === '_shared') return false;
+    return existsSync(join(ROOT, 'base44/functions', name, 'emailTemplate.ts'));
+  });
+  expect(dupeDirs.length, 'expected at least the known self-contained functions to have a local copy').toBeGreaterThan(0);
+  for (const dir of dupeDirs) {
+    const copy = read(`base44/functions/${dir}/emailTemplate.ts`);
+    expect(copy, `base44/functions/${dir}/emailTemplate.ts must match the canonical _shared/emailTemplate.ts exactly`).toBe(canonical);
+  }
+});
+
+test('XSS HARDENING: renderEmail escapes title/intro/note — the fields most callers pass user text through', () => {
+  const src = read('base44/functions/_shared/emailTemplate.ts');
+  expect(src, 'escapeHtml must be exported for other functions to reuse').toContain('export const escapeHtml');
+  expect(src, 'title must be escaped').toContain('${escapeHtml(title)}');
+  expect(src, 'intro must be escaped').toContain('${escapeHtml(intro)}');
+  expect(src, 'note must be escaped').toContain('${escapeHtml(note)}');
+});
+
+test('XSS HARDENING: the 6 fixed call sites still escape their user-submitted fields before building HTML', () => {
+  // Each of these had a confirmed unescaped-user-text-into-HTML-email path.
+  // Source-level check (not just the unit test) so a future edit that
+  // silently drops the escapeHtml() call around the risky field gets caught,
+  // the same pattern used for the M Recon invariants above.
+  const checks = [
+    { file: 'base44/functions/notifyPatientInfoRequest/entry.ts', mustContain: ['escapeHtml(doctor_question)'] },
+    { file: 'base44/functions/flagIntakeHandoff/entry.ts', mustContain: ['escapeHtml(t.question_shown)', 'escapeHtml(t.user_raw_text)'] },
+    { file: 'base44/functions/moralesAssist/entry.ts', mustContain: ["escapeHtml(m.content)"] },
+    { file: 'base44/functions/sendSupportTicket/entry.ts', mustContain: ['escapeHtml(message)'] },
+    { file: 'base44/functions/requestPassportAccess/entry.ts', mustContain: ["escapeHtml(requester_name"] },
+    { file: 'base44/functions/respondToCompanionJob/entry.ts', mustContain: ['escapeHtml(companionDisplay)', 'escapeHtml(assignment.patient_first_name)'] },
+  ];
+  for (const { file, mustContain } of checks) {
+    const src = read(file);
+    for (const needle of mustContain) {
+      expect(src, `${file} must still escape: ${needle}`).toContain(needle);
+    }
+  }
+});

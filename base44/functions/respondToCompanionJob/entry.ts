@@ -11,6 +11,7 @@
  */
 import { createHandler } from '../_shared/createHandler.ts';
 import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { escapeHtml } from '../_shared/emailTemplate.ts';
 
 const RespondToCompanionJobSchema = strictObject({
   assignment_id: Fields.shortText(100),
@@ -86,8 +87,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
           from_name: 'Morales — Companion Assignment',
           to: adminEmail,
           subject: `✅ Companion Accepted — ${companionDisplay} (${assignment.destination_country})`,
-          body: `<p><strong>${companionDisplay}</strong> has accepted the companion job for case <strong>${assignment.case_id}</strong> in ${assignment.destination_country}.</p>
-<p>Patient: ${assignment.patient_first_name}</p>
+          body: `<p><strong>${escapeHtml(companionDisplay)}</strong> has accepted the companion job for case <strong>${escapeHtml(assignment.case_id)}</strong> in ${escapeHtml(assignment.destination_country)}.</p>
+<p>Patient: ${escapeHtml(assignment.patient_first_name)}</p>
 <p>Arrival: ${assignment.arrival_date ? new Date(assignment.arrival_date).toLocaleDateString() : 'TBC'}</p>
 <p>Package fee: $${assignment.package_fee || 650}</p>`,
         }).catch(() => {});
@@ -97,7 +98,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       const companionEmail = assignment.companion_email || user.email;
       const GOLD = '#D4AF37';
       const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-      const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const e = escapeHtml;
       const arrivalStr = assignment.arrival_date ? new Date(assignment.arrival_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'To be confirmed';
       const departureStr = assignment.departure_date ? new Date(assignment.departure_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'To be confirmed';
 

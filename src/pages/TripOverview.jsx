@@ -16,6 +16,19 @@ import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { BackButton } from '@/components/nav/BackButton';
 import LoadingState from '@/components/ui-system/LoadingState';
 
+// Partner-submitted free-text URL fields (e.g. travel_agency.website_url) have
+// no server-side scheme validation — only allow rendering http(s) links as a
+// live href so a javascript: value can't execute when another user clicks it.
+function isHttpUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // Extracted so it can be the queryFn passed to queryClient.fetchQuery below —
 // same TravelRequest.filter + per-partner enrichment as before, just cacheable.
 async function fetchEnrichedTravelRequests(userEmail) {
@@ -354,9 +367,13 @@ export default function TripOverview() {
                             {selectedTrip.travel_agency.website_url && (
                               <div className="flex items-center gap-2 text-sm text-white/80">
                                 <Globe className="w-4 h-4 text-emerald-400" />
-                                <a href={selectedTrip.travel_agency.website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                  Visit Website
-                                </a>
+                                {isHttpUrl(selectedTrip.travel_agency.website_url) ? (
+                                  <a href={selectedTrip.travel_agency.website_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                    Visit Website
+                                  </a>
+                                ) : (
+                                  <span className="text-white/50">{selectedTrip.travel_agency.website_url}</span>
+                                )}
                               </div>
                             )}
                           </div>
