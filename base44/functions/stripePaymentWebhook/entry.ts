@@ -14,49 +14,22 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import Stripe from 'npm:stripe@17.0.0';
 import { linkOnlyEmail } from '../_shared/notify.ts';
+import { verifyStripeSignature } from '../_shared/verifyStripeSignature.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 Deno.serve(async (req) => {
-  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-
-  if (!webhookSecret) {
-    console.error('[stripePaymentWebhook] STRIPE_WEBHOOK_SECRET not configured.');
-    return Response.json({
-      error: 'Webhook secret not configured.',
-      setup_instructions: [
-        '1. Go to Stripe Dashboard → Developers → Webhooks',
-        '2. Add or select your webhook endpoint URL',
-        '3. Copy the "Signing secret" (starts with whsec_)',
-        '4. Add it as STRIPE_WEBHOOK_SECRET in Base44 App Secrets',
-      ],
-    }, { status: 503 });
-  }
-
-  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-  if (!stripeKey) {
-    return Response.json({ error: 'STRIPE_SECRET_KEY not configured.' }, { status: 503 });
-  }
-
-  const signature = req.headers.get('stripe-signature');
-  if (!signature) {
-    return Response.json({ error: 'Missing stripe-signature header' }, { status: 400 });
-  }
-
-  // Read raw body — must NOT parse as JSON before signature verification
-  const body = await req.text();
-  const stripe = new Stripe(stripeKey);
-
-  let event;
-  try {
-    // constructEventAsync is required in Deno (uses SubtleCrypto which is async)
-    event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-  } catch (err) {
-    console.error('[stripePaymentWebhook] Signature verification failed:', err.message);
-    return Response.json({ error: 'Invalid webhook signature' }, { status: 400 });
-  }
+  const { event, errorResponse } = await verifyStripeSignature(req, {
+    secretEnvVars: ['STRIPE_WEBHOOK_SECRET'],
+    setupInstructions: [
+      '1. Go to Stripe Dashboard → Developers → Webhooks',
+      '2. Add or select your webhook endpoint URL',
+      '3. Copy the "Signing secret" (starts with whsec_)',
+      '4. Add it as STRIPE_WEBHOOK_SECRET in Base44 App Secrets',
+    ],
+  });
+  if (errorResponse) return errorResponse;
 
   const base44 = createClientFromRequest(req);
 

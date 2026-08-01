@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, CheckCircle, Loader2, X, AlertTriangle, RefreshCw, WifiOff, Wifi } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import RadioGroup from './FormRadioGroup';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 import {
   buildUploadPacket,
   enqueueUpload,
@@ -23,9 +24,12 @@ const DOC_TYPES = [
   'None / Skip',
 ];
 
-const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+// Sourced from the shared UPLOAD_PRESETS.DOCUMENT_UPLOAD (single source of
+// truth for what counts as an acceptable document across the app) — this
+// component keeps its own richer error-message/offline-queue handling below.
+const ACCEPTED_MIME = UPLOAD_PRESETS.DOCUMENT_UPLOAD.allowedTypes;
 const ACCEPTED_EXT  = '.pdf,.jpg,.jpeg,.png,.webp';
-const MAX_MB        = 10;
+const MAX_MB        = UPLOAD_PRESETS.DOCUMENT_UPLOAD.maxSizeMB;
 const MAX_BYTES     = MAX_MB * 1024 * 1024;
 
 function friendlyError(err, file) {

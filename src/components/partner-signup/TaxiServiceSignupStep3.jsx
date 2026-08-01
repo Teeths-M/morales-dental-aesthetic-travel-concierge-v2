@@ -7,12 +7,15 @@ import { translations } from '@/lib/translations';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import SignupAuthGate from '@/components/auth/SignupAuthGate';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 export default function TaxiServiceSignupStep3({ formData, setFormData, language, _onNext, onBack, onComplete }) {
   const _t = translations[language];
   const [payoutMethod, setPayoutMethod] = useState(formData.payout_method || null);
   const [vehiclePhotoFile, setVehiclePhotoFile] = useState(null);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
   const [licenseConfirmed, setLicenseConfirmed] = useState(false);
   const [insuranceConfirmed, setInsuranceConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,6 +24,10 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setPhotoError(null);
+    const check = validateFile(file, UPLOAD_PRESETS.IMAGE_UPLOAD);
+    if (!check.valid) { setPhotoError(check.error); return; }
 
     setPhotoUploading(true);
     try {
@@ -156,6 +163,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
                 <input type="file" onChange={handlePhotoUpload} accept="image/*" className="hidden" />
               </div>
             </label>
+            {photoError && <p className="text-xs text-red-600 mt-1">{photoError}</p>}
           </div>
         </div>
 

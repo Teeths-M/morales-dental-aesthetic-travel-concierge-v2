@@ -7,9 +7,12 @@ import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
 import { encryptFileWithPassword, storeVaultKey } from '@/lib/vaultEncryption';
 import { friendlyError } from '@/lib/friendlyError';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-const MAX_SIZE_MB = 10;
+// Sourced from the shared UPLOAD_PRESETS.DOCUMENT_UPLOAD — single source of
+// truth for what counts as an acceptable document across the app.
+const ACCEPTED_TYPES = UPLOAD_PRESETS.DOCUMENT_UPLOAD.allowedTypes;
+const MAX_SIZE_MB = UPLOAD_PRESETS.DOCUMENT_UPLOAD.maxSizeMB;
 
 const DOCUMENT_TYPES = [
   { value: 'passport', label: 'ðŸ›‚ Passport', icon: 'ðŸ›‚' },

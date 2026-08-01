@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Upload, CheckCircle2, Clock, AlertTriangle, Shield, Loader2 } from 'lucide-react';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 const requiredDocs = [
   { key: 'xrays', label: 'Dental / Medical X-Rays', status: 'missing', icon: '🦷' },
@@ -56,8 +58,12 @@ export default function DocumentsModule() {
   const handleFile = async (file) => {
     if (!file) return;
     const MAX_MB = 25;
-    if (file.size > MAX_MB * 1024 * 1024) {
-      setUploadMsg({ type: 'error', text: `That file is over ${MAX_MB}MB. Please compress it and try again.` });
+    // Medical imaging (CT/MRI) can legitimately run larger than the app's
+    // usual 10MB document cap, so this keeps its own more generous size
+    // limit but reuses the shared document type allowlist.
+    const check = validateFile(file, { allowedTypes: UPLOAD_PRESETS.DOCUMENT_UPLOAD.allowedTypes, maxSizeMB: MAX_MB });
+    if (!check.valid) {
+      setUploadMsg({ type: 'error', text: check.error });
       return;
     }
     setUploading(file.name);

@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Upload, Trash2, Play, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
   const [portfolioItems, setPortfolioItems] = useState(portfolio || []);
   const [uploading, setUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
 
   const saveToDatabase = async (items) => {
     try {
@@ -18,6 +21,10 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
+
+    setUploadError(null);
+    const invalid = files.map(f => validateFile(f, UPLOAD_PRESETS.PORTFOLIO_MEDIA)).find(r => !r.valid);
+    if (invalid) { setUploadError(invalid.error); return; }
 
     setUploading(true);
     try {
@@ -91,7 +98,8 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
           )}
         </div>
         <p className="text-sm text-muted-foreground mb-4">Upload before/after photos, procedure videos, and testimonials to build client trust.</p>
-        
+        {uploadError && <p className="text-sm text-red-600 mb-3">{uploadError}</p>}
+
         <label className="block w-full">
           <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
             <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />

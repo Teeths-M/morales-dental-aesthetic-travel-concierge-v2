@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send, Phone, Mail, Bell, CheckCircle2, Loader2, Paperclip, X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 import LoadingState from '@/components/ui-system/LoadingState';
 
 const getMessagesLabels = (lang) => ({
@@ -36,6 +38,7 @@ export default function MessagesModule() {
   const [currentUser, setCurrentUser] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const labels = getMessagesLabels(appLanguage);
@@ -118,7 +121,15 @@ export default function MessagesModule() {
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-    
+
+    setUploadError(null);
+    const invalid = files.map(f => validateFile(f, UPLOAD_PRESETS.CHAT_ATTACHMENT)).find(r => !r.valid);
+    if (invalid) {
+      setUploadError(invalid.error);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setUploading(true);
     try {
       const uploadedUrls = [];
@@ -300,6 +311,7 @@ export default function MessagesModule() {
 
             {/* Input */}
             <div className="px-4 py-3 border-t border-slate-100">
+              {uploadError && <p className="text-xs text-red-600 mb-2">{uploadError}</p>}
               {/* Attachment preview */}
               {attachments.length > 0 && (
                 <div className="flex gap-2 mb-3 overflow-x-auto">

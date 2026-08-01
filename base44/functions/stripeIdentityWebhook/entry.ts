@@ -1,38 +1,15 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import Stripe from 'npm:stripe@17.0.0';
+import { verifyStripeSignature } from '../_shared/verifyStripeSignature.ts';
 
 Deno.serve(async (req) => {
   try {
     // SECURITY: this webhook feeds identity_verification_status directly into the
     // 3-gate doctor/partner activation check — an unverified request here lets an
     // attacker forge "verified" identity for any provider_id. Signature check is mandatory.
-    const webhookSecret = Deno.env.get('STRIPE_IDENTITY_WEBHOOK_SECRET') || Deno.env.get('STRIPE_WEBHOOK_SECRET');
-    if (!webhookSecret) {
-      console.error('[stripeIdentityWebhook] STRIPE_IDENTITY_WEBHOOK_SECRET not configured.');
-      return Response.json({ error: 'Webhook secret not configured.' }, { status: 503 });
-    }
-    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeKey) {
-      return Response.json({ error: 'STRIPE_SECRET_KEY not configured.' }, { status: 503 });
-    }
-
-    const signature = req.headers.get('stripe-signature');
-    if (!signature) {
-      return Response.json({ error: 'Missing stripe-signature header' }, { status: 400 });
-    }
-
-    // Read raw body — must NOT parse as JSON before signature verification
-    const body = await req.text();
-    const stripe = new Stripe(stripeKey);
-
-    let event;
-    try {
-      // constructEventAsync is required in Deno (uses SubtleCrypto which is async)
-      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    } catch (err) {
-      console.error('[stripeIdentityWebhook] Signature verification failed:', err.message);
-      return Response.json({ error: 'Invalid webhook signature' }, { status: 400 });
-    }
+    const { event, errorResponse } = await verifyStripeSignature(req, {
+      secretEnvVars: ['STRIPE_IDENTITY_WEBHOOK_SECRET', 'STRIPE_WEBHOOK_SECRET'],
+    });
+    if (errorResponse) return errorResponse;
 
     if (event.type !== 'identity.verification_session.completed') {
       return Response.json({ received: true, skipped: true });

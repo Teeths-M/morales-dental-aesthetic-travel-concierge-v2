@@ -1,6 +1,8 @@
 // @ts-nocheck — CSS spread loses literal types; capture prop is a valid HTML attribute
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Camera, CheckCircle2, User } from 'lucide-react';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 const GOLD = '#D4AF37';
 const CARD = '#0C1A1D';
@@ -66,10 +68,16 @@ export function IdentityCard({ name, role, photoUrl, sublabel }) {
  */
 export function IdentityUpload({ label, hint, photoUrl, onUpload, uploading, capture = 'user' }) {
   const ref = useRef(null);
+  const [error, setError] = useState(null);
 
   const handleChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) { await onUpload(file); e.target.value = ''; }
+    if (!file) return;
+    const check = validateFile(file, UPLOAD_PRESETS.IMAGE_UPLOAD);
+    if (!check.valid) { setError(check.error); e.target.value = ''; return; }
+    setError(null);
+    await onUpload(file);
+    e.target.value = '';
   };
 
   return (
@@ -111,6 +119,7 @@ export function IdentityUpload({ label, hint, photoUrl, onUpload, uploading, cap
       <div style={{ padding: '10px 12px 12px' }}>
         <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</p>
         {hint && <p style={{ margin: '2px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{hint}</p>}
+        {error && <p style={{ margin: '4px 0 0', fontSize: 10, color: '#ef4444', lineHeight: 1.4 }}>{error}</p>}
         <button
           onClick={() => !uploading && ref.current?.click()}
           disabled={uploading}

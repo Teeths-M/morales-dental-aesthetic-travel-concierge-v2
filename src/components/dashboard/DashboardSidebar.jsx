@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 const PHOTO_KEY = 'morales_profile_photo';
 const GOLD      = '#D4AF37';
@@ -132,6 +134,8 @@ function SidebarContent({ location, onClose = null }) {
   const fullName     = user?.full_name || 'My Portal';
 
   const handleUpload = useCallback(async (file) => {
+    const check = validateFile(file, UPLOAD_PRESETS.IMAGE_UPLOAD);
+    if (!check.valid) { setUploadError(check.error); return; }
     // Instant local preview via an object URL — no giant base64 string ever
     // touches localStorage, so there's no risk of silently hitting its quota.
     const previewUrl = URL.createObjectURL(file);

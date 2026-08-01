@@ -7,12 +7,15 @@ import { translations } from '@/lib/translations';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import SignupAuthGate from '@/components/auth/SignupAuthGate';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 export default function TravelAgencySignupStep3({ formData, setFormData, language, _onNext, onBack, onComplete }) {
   const _t = translations[language];
   const [payoutMethod, setPayoutMethod] = useState(formData.payout_method || null);
   const [licenseFile, setLicenseFile] = useState(null);
   const [licenseUploading, setLicenseUploading] = useState(false);
+  const [licenseError, setLicenseError] = useState(null);
   const [confirmed, setConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
@@ -20,6 +23,10 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
   const handleLicenseUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setLicenseError(null);
+    const check = validateFile(file, UPLOAD_PRESETS.DOCUMENT_UPLOAD);
+    if (!check.valid) { setLicenseError(check.error); return; }
 
     setLicenseUploading(true);
     try {
@@ -149,6 +156,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
                 <input type="file" onChange={handleLicenseUpload} accept=".pdf,image/*" className="hidden" />
               </div>
             </label>
+            {licenseError && <p className="text-xs text-red-600 mt-1">{licenseError}</p>}
           </div>
         </div>
 

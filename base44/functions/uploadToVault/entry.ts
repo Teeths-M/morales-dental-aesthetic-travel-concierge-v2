@@ -76,11 +76,15 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'file_name is required' }, { status: 400 });
     }
 
-    if (mime_type && !ALLOWED_MIME_TYPES.has(mime_type)) {
+    // SECURITY: mime_type/file_size_bytes must be REQUIRED, not conditionally
+    // checked — a caller that simply omits either field previously skipped
+    // validation entirely (the original `if (mime_type && ...)` guard only
+    // validated when the field was present, so omitting it bypassed the check).
+    if (!mime_type || typeof mime_type !== 'string' || !ALLOWED_MIME_TYPES.has(mime_type)) {
       return Response.json({ error: 'File type not allowed. Use PDF, JPG, PNG, or WebP.' }, { status: 400 });
     }
 
-    if (file_size_bytes && file_size_bytes > MAX_FILE_SIZE_BYTES) {
+    if (!file_size_bytes || typeof file_size_bytes !== 'number' || file_size_bytes > MAX_FILE_SIZE_BYTES) {
       return Response.json({ error: 'File too large. Maximum 10MB.' }, { status: 400 });
     }
 

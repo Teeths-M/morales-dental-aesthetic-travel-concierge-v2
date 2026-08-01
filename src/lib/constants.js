@@ -246,10 +246,41 @@ export const PAGINATION = {
 };
 
 // ── File Upload Limits ───────────────────────────────────────────────────────
-export const FILE_LIMITS = {
-  MAX_SIZE_MB: 10,
-  MAX_SIZE_BYTES: 10 * 1024 * 1024,
-  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'application/pdf'],
+// Named presets matching the app's real upload contexts. Enforced client-side
+// via validateFile() (src/lib/validateFile.js) at every upload call site —
+// not just left as an <input accept> hint, which is trivially bypassable.
+export const UPLOAD_PRESETS = {
+  IMAGE_UPLOAD: {
+    maxSizeMB: 10,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+  },
+  DOCUMENT_UPLOAD: {
+    maxSizeMB: 10,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+  },
+  CHAT_ATTACHMENT: {
+    maxSizeMB: 10,
+    allowedTypes: [
+      'image/jpeg', 'image/png', 'image/webp', 'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+  },
+  PORTFOLIO_MEDIA: {
+    // Matches what DoctorPortfolio.jsx's own copy already tells doctors ("up
+    // to 100MB") — previously advertised but never actually enforced.
+    maxSizeMB: 100,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'],
+  },
+  ADMIN_IMPORT: {
+    // Admin-only bulk import (AdminImports.jsx) — CSV/JSON, not a patient/
+    // partner-facing upload. Browsers report CSV under several MIME types
+    // depending on OS/app, so the allowlist covers the common variants.
+    maxSizeMB: 10,
+    allowedTypes: ['text/csv', 'application/csv', 'application/vnd.ms-excel', 'application/json'],
+  },
 };
 
 // ── Session Timeouts ─────────────────────────────────────────────────────────
@@ -410,7 +441,7 @@ export const CONSTANTS = {
   ERROR_MESSAGES,
   TIME,
   PAGINATION,
-  FILE_LIMITS,
+  UPLOAD_PRESETS,
   SESSION,
   NOTIFICATION_CHANNEL,
   AUDIT_EVENTS,

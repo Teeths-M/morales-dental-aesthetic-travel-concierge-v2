@@ -415,7 +415,7 @@ test('AUTH: no edge function is reachable without SOME guard', () => {
   //   publicDoctorCheck — the homepage "check your doctor" tool
   //   safeTAssist       — the assistant a patient may reach before signing in
   const EXEMPT = new Set(['publicDoctorCheck', 'safeTAssist']);
-  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|constructEvent|stripe-signature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
+  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
 
   const dir = join(ROOT, 'base44/functions');
   const unguarded = [];
@@ -2523,4 +2523,51 @@ test('XSS HARDENING: the 6 fixed call sites still escape their user-submitted fi
       expect(src, `${file} must still escape: ${needle}`).toContain(needle);
     }
   }
+});
+
+test('STRIPE WEBHOOKS: both signature-verifying webhooks use the shared, single-source verifyStripeSignature helper', () => {
+  const shared = read('base44/functions/_shared/verifyStripeSignature.ts');
+  expect(shared, 'must use the raw body, not JSON.parse, before verification').toContain('await req.text()');
+  expect(shared, "must verify via the Stripe SDK's async constructor (Deno-compatible)").toContain('constructEventAsync');
+
+  for (const fn of ['stripePaymentWebhook', 'stripeIdentityWebhook']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must import the shared verifier, not hand-roll its own`).toContain("from '../_shared/verifyStripeSignature.ts'");
+    expect(src, `${fn} must not construct its own Stripe client to verify webhooks (that would duplicate the shared helper)`).not.toContain('stripe.webhooks.constructEventAsync');
+  }
+});
+
+test('VAULT UPLOAD: mime_type and file_size_bytes are required, not conditionally validated', () => {
+  // A caller that omitted these fields previously bypassed server-side
+  // type/size validation entirely — the original check only ran
+  // `if (mime_type && ...)`, which validates ONLY when the field is present.
+  const src = read('base44/functions/uploadToVault/entry.ts');
+  expect(src, 'mime_type must be required, not just conditionally checked').toContain('!mime_type ||');
+  expect(src, 'file_size_bytes must be required, not just conditionally checked').toContain('!file_size_bytes ||');
+});
+
+test('FILE STORAGE: no function sets a Content-Type/Content-Disposition response header from user-controlled file metadata', () => {
+  // This repo never builds its own file-serving path today — uploaded files
+  // are always served directly from Base44's managed storage (a signed URL
+  // is returned, bytes are never proxied through our own server). If that
+  // ever changes, the response header must never be derived from a
+  // client-supplied mime_type/file_name, or a malicious upload could be
+  // served back in a browser-executable way. Guards the invariant holding
+  // as new functions get added, not just documents it once.
+  const functionsDir = join(ROOT, 'base44/functions');
+  const dirs = readdirSync(functionsDir).filter((name) => name !== '_shared');
+  const offenders = [];
+  for (const dir of dirs) {
+    const entryPath = join(functionsDir, dir, 'entry.ts');
+    if (!existsSync(entryPath)) continue;
+    const src = readFileSync(entryPath, 'utf8');
+    const lines = src.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (/['"]Content-Type['"]|['"]Content-Disposition['"]/.test(lines[i])) {
+        const window = lines.slice(Math.max(0, i - 2), i + 3).join('\n');
+        if (/mime_type|file_name/.test(window)) offenders.push(`${dir}/entry.ts:${i + 1}`);
+      }
+    }
+  }
+  expect(offenders, `these functions appear to set a file response header from user-controlled metadata: ${offenders.join(', ')}`).toEqual([]);
 });

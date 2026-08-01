@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
@@ -58,12 +60,16 @@ export default function LocalDoctorSignup() {
   });
   const [licenseFile, setLicenseFile] = useState(null);
   const [licenseUploading, setLicenseUploading] = useState(false);
+  const [licenseError, setLicenseError] = useState(null);
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handleLicenseUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setLicenseError(null);
+    const check = validateFile(file, UPLOAD_PRESETS.DOCUMENT_UPLOAD);
+    if (!check.valid) { setLicenseError(check.error); return; }
     setLicenseUploading(true);
     try {
       const res = await base44.integrations.Core.UploadFile({ file });
@@ -307,6 +313,7 @@ export default function LocalDoctorSignup() {
                       <input type="file" accept="image/*,.pdf" onChange={handleLicenseUpload} className="hidden" />
                     </div>
                   </label>
+                  {licenseError && <p className="text-sm text-red-400 mt-1">{licenseError}</p>}
                 </div>
                 <Alert className="bg-[#D4AF37]/5 border-[#D4AF37]/20">
                   <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />

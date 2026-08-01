@@ -12,6 +12,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 const IMPORT_TEMPLATES = {
   doctors: [
@@ -128,9 +130,10 @@ export default function AdminImports() {
 
   const handleFileSelect = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-    }
+    if (!selectedFile) return;
+    const check = validateFile(selectedFile, UPLOAD_PRESETS.ADMIN_IMPORT);
+    if (!check.valid) { toast.error(check.error); return; }
+    setFile(selectedFile);
   };
 
   const handleImport = () => {

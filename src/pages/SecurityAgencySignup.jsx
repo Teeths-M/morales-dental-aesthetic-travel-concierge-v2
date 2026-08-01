@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Upload, CheckCircle, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
 import { getCitiesForCountry, hasCityList, cityAfterCountryChange, CITY_PLACEHOLDER } from '@/lib/countryCity';
@@ -104,6 +106,8 @@ export default function SecurityAgencySignup() {
   const uploadFile = async (e, key) => {
     const file = e.target.files[0];
     if (!file) return;
+    const check = validateFile(file, UPLOAD_PRESETS.DOCUMENT_UPLOAD);
+    if (!check.valid) { setError(check.error); return; }
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       set(key, file_url);

@@ -9,12 +9,15 @@ import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import VerificationInfo from './VerificationInfo';
 import { friendlyError } from '@/lib/friendlyError';
 import SignupAuthGate from '@/components/auth/SignupAuthGate';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 
 export default function DoctorSignupStep3({ formData, setFormData, language = 'en', _onNext, onBack, onComplete }) {
   const t = translations[language] || translations['en'];
   const [payoutMethod, setPayoutMethod] = useState(formData.payout_method || null);
   const [licenseFile, setLicenseFile] = useState(null);
   const [licenseUploading, setLicenseUploading] = useState(false);
+  const [licenseError, setLicenseError] = useState(null);
   const [confirmed, setConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -24,6 +27,10 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
   const handleLicenseUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setLicenseError(null);
+    const check = validateFile(file, UPLOAD_PRESETS.DOCUMENT_UPLOAD);
+    if (!check.valid) { setLicenseError(check.error); return; }
 
     setLicenseUploading(true);
     try {
@@ -302,6 +309,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
                 </div>
               </label>
             </div>
+            {licenseError && <p className="text-xs text-red-600">{licenseError}</p>}
             <p className="text-xs text-muted-foreground">{t.verifyNote}</p>
           </div>
         </div>

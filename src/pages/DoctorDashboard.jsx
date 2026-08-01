@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
+import { validateFile } from '@/lib/validateFile';
+import { UPLOAD_PRESETS } from '@/lib/constants';
 import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert, Heart, Stethoscope, Phone, DollarSign, CheckCircle2 } from 'lucide-react';
 import PhoneField from '@/components/ui-system/PhoneField';
 import { IdentityUpload } from '@/components/ThisIsMe';
@@ -186,6 +188,8 @@ export default function DoctorDashboard() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      const check = validateFile(file, UPLOAD_PRESETS.IMAGE_UPLOAD);
+      if (!check.valid) { toast.error(check.error); return; }
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, photo_url: file_url });
     }
@@ -194,6 +198,8 @@ export default function DoctorDashboard() {
   const [uploadingClinic, setUploadingClinic] = useState(false);
   const uploadClinicPhoto = async (file) => {
     if (!doctor?.id) return;
+    const check = validateFile(file, UPLOAD_PRESETS.IMAGE_UPLOAD);
+    if (!check.valid) { toast.error(check.error); return; }
     setUploadingClinic(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
