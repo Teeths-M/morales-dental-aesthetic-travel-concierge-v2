@@ -446,6 +446,7 @@ Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"not
       escalated: !!escalation_id || summary.overall === 'concerns',
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[verifyExternalJourney] error:', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

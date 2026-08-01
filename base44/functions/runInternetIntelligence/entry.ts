@@ -463,6 +463,7 @@ ${(ai?.red_flags?.length ?? 0) > 0 ? `<p><strong>Flags:</strong><ul>${ai.red_fla
 
     return Response.json(result);
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[runInternetIntelligence] error:', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

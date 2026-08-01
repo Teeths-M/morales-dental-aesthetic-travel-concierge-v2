@@ -281,6 +281,7 @@ Deno.serve(async (req) => {
       summary: llmResponse.summary,
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[runSafetyMonitor] error:', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

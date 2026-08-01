@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, message: `${name} has been blacklisted and deactivated` });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[blacklistPartner] error:', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
