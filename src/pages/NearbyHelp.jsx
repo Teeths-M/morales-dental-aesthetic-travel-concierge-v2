@@ -44,18 +44,34 @@ export default function NearbyHelp() {
   const [searching, setSearching]   = useState(false);
   const [_osmFailed, setOsmFailed]   = useState(false);
 
-  useEffect(() => {
+  const locate = useCallback(() => {
     if (!navigator.geolocation) {
       setGeoErr('Location not supported on this device.');
       setGL(false);
       return;
     }
+    setGeoErr(null);
+    setGL(true);
     navigator.geolocation.getCurrentPosition(
       pos => { setLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGL(false); },
-      ()   => { setGeoErr('Enable location access to find nearby help.'); setGL(false); },
-      { enableHighAccuracy: true, timeout: 10000 }
+      err => {
+        // err.code distinguishes WHY geolocation failed — a phone's OS-level
+        // Location toggle being on doesn't mean this site has permission, and
+        // neither of those is the same problem as a weak/slow GPS fix. A single
+        // "enable location access" message was wrong for 2 of these 3 cases.
+        const message = err.code === 1
+          ? "Location is blocked for this page specifically. Check your browser's site permissions (not just your phone's Location setting) and allow access for this site."
+          : err.code === 3
+            ? 'That took too long. Tap Try Again, or move somewhere with a clearer signal.'
+            : "Couldn't get a signal — try moving near a window or outdoors.";
+        setGeoErr(message);
+        setGL(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   }, []);
+
+  useEffect(() => { locate(); }, [locate]);
 
   const search = useCallback(async (cat) => {
     if (!loc) return;
@@ -116,7 +132,16 @@ export default function NearbyHelp() {
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
             style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)' }}>
             <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-            <span className="text-xs text-red-400">{geoErr}</span>
+            <div className="flex-1">
+              <span className="text-xs text-red-400">{geoErr}</span>
+              <button
+                onClick={locate}
+                className="block mt-1.5 text-xs font-semibold underline"
+                style={{ color: '#ff8a8a' }}
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         )}
       </div>
