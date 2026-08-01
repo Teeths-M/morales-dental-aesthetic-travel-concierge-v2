@@ -41,3 +41,4 @@ base44/.app.jsonc
 # Local-only asset previews (watermarked/unlicensed stock footage etc.) —
 # never commit or ship these, they're for local `npm run dev` testing only.
 public/*-TEST.*
+.gstack/
