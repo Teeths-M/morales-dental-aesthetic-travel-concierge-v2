@@ -40,10 +40,15 @@ test.describe('#12 guide orb never overlaps hero body text (375-414px)', () => {
       await page.goto('/', { waitUntil: 'networkidle' });
 
       const orb = page.getByRole('button', { name: 'Open platform guide' });
-      // The hero text we protect: subheadline + body paragraph (medical or non-medical copy).
-      const heroTexts = page.locator('[data-hero]').getByText(
-        /driver picks you up at home|Wherever you land, Morales is already there|world-class medical care|35,000 feet/i
-      );
+      // The hero text we protect: the h1 headline ("NEVER ALONE" / "THE WORLD,
+      // EFFORTLESSLY YOURS."). Previously anchored on the subheadline/body copy
+      // (driver-pickup / 35,000-feet strings) — that copy was removed from the
+      // DOM when the hero was redesigned around HeroChatBubbles, which silently
+      // broke this test at its own precondition (0 matches) ever since, so the
+      // orb-overlap guarantee it exists to protect went unverified. The h1 is
+      // always rendered in both modes and isn't tied to any specific wording,
+      // so it won't go stale the next time hero copy changes.
+      const heroTexts = page.locator('[data-hero] h1');
       const count = await heroTexts.count();
       expect(count, 'expected to find hero copy to measure against').toBeGreaterThan(0);
 
@@ -86,7 +91,12 @@ test.describe('#3 minor without a guardian cannot advance the booking', () => {
 
     // Empty-cart guests hit a procedure picker overlay first — choose one to enter
     // the wizard (otherwise the step-0 form sits behind a click-blocking overlay).
-    const picker = page.getByText('Select a procedure to begin', { exact: false });
+    // Matched by role+accessible name (ProcedureSelectionGate.jsx's real heading is
+    // "Let's start with what you're considering.") rather than the old literal text
+    // "Select a procedure to begin", which never matched that component and let this
+    // whole block silently no-op — the test then hung for the full 60s timeout
+    // fighting the still-open gate's pointer-event interception on live re-run.
+    const picker = page.getByRole('dialog', { name: /considering/i });
     if (await picker.isVisible().catch(() => false)) {
       await page.getByText('Dental Implants', { exact: true }).click();
       await expect(picker).toBeHidden({ timeout: 10000 });
