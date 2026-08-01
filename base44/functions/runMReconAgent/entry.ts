@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { runMReconLoop, DECISION_SCHEMA } from '../_shared/mRecon.ts';
+import { createHandler, ok, err } from './createHandler.ts';
+import { runMReconLoop, DECISION_SCHEMA } from './mRecon.ts';
 
 // M Recon — agentic travel-readiness briefing (demo). See _shared/mRecon.ts
 // for the loop/tool logic; this file only wires it to InvokeLLM and the
