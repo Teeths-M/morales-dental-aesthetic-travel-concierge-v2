@@ -2441,3 +2441,39 @@ test('AUTH: batch-2 unauthenticated comms/LLM endpoints are a tracked worklist, 
       .toMatch(/requireAuth:\s*false/);
   }
 });
+
+test('M RECON: checkRedViolations is always sourced from the real getViolations engine, never fixture-substitutable', () => {
+  // M Recon (buildathon agentic showcase) mixes one real check with four demo
+  // fixtures. The one real check is the deterministic RED engine — it must
+  // never be swapped for a fixture, since that's the one tool result this
+  // demo cannot afford to fake.
+  const src = read('base44/functions/_shared/mRecon.ts');
+  expect(src, 'must import the real deterministic engine').toContain("import { getViolations } from './procedureCompatibility.ts'");
+
+  const caseStart = src.indexOf("case 'checkRedViolations'");
+  const nextCase = src.indexOf('case ', caseStart + 1);
+  const caseBody = src.slice(caseStart, nextCase > -1 ? nextCase : caseStart + 300);
+  expect(caseBody, 'checkRedViolations must call the real engine').toContain('getViolations(');
+  expect(caseBody, 'checkRedViolations must never attach a fixture marker').not.toContain("source: 'demo fixture'");
+
+  // Every other tool IS explicitly marked as a fixture — the honest label
+  // that lets a judge (or the frontend) tell real from demo data apart.
+  for (const fixtureFn of ['fixtureVisaRequirement', 'fixtureClinicStatus', 'fixtureWeatherAlert', 'fixtureDestinationSafety']) {
+    const fnStart = src.indexOf(`export function ${fixtureFn}`);
+    expect(fnStart, `${fixtureFn} must exist`).toBeGreaterThan(-1);
+  }
+  expect((src.match(/source: 'demo fixture'/g) || []).length, 'exactly the 4 fixture tools are marked, no more no less')
+    .toBeGreaterThanOrEqual(4);
+});
+
+test('M RECON: the orchestration loop is fail-closed — a decision failure never produces a fabricated finished briefing', () => {
+  const src = read('base44/functions/_shared/mRecon.ts');
+  const loopStart = src.indexOf('export async function runMReconLoop');
+  const loopBody = src.slice(loopStart);
+  expect(loopBody, 'a decide() throw must be caught').toContain('} catch (_) {');
+  expect(loopBody, 'a caught failure sets an explicit error').toContain("errorMessage = 'reasoning incomplete");
+  // The failure path must not also set finalBriefing in the same branch —
+  // structurally, the catch block only sets errorMessage, never final_briefing.
+  const catchBlock = loopBody.slice(loopBody.indexOf('} catch (_) {'), loopBody.indexOf('break;', loopBody.indexOf('} catch (_) {')));
+  expect(catchBlock, 'the catch block must not fabricate a briefing').not.toContain('finalBriefing =');
+});
