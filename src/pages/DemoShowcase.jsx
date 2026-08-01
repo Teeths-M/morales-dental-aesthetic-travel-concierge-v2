@@ -708,6 +708,7 @@ const TABS = [
   { id: 'siobhan',          label: '🩺 Siobhan — Drop Mic',      link: '/demo/siobhan' },
   { id: 'recovery-cascade', label: '🏥 Recovery Cascade',         link: '/demo/recovery-cascade' },
   { id: 'memory-bank',      label: '🧠 Memory Bank',              link: '/demo/memory-bank' },
+  { id: 'm-recon',          label: '🛰️ M Recon',                  link: '/demo/m-recon' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'safe-t', 'medguard', 'emergency', 'nightlife']);
@@ -894,6 +895,7 @@ export default function DemoShowcase() {
               { to: '/demo/arrival',       label: '🏥 Arrival Intel',       color: GREEN,     border: `1px solid ${GREEN}40` },
               { to: '/demo/intelligence', label: '🔍 Doctor Intel Scan',   color: '#a78bfa', border: '1px solid rgba(167,139,250,0.4)' },
               { to: '/demo/memory-bank',  label: '🧠 Memory Bank',         color: GREEN,     border: `1px solid ${GREEN}40` },
+              { to: '/demo/m-recon',      label: '🛰️ M Recon Agent',       color: '#a78bfa', border: '1px solid rgba(167,139,250,0.4)' },
               // NOTE: the Discharge AI Reader tile was removed here — it points to an
               // auth-gated, LLM-backed page, so on the public no-login demo it dead-ends
               // at the login screen. Show it from inside a logged-in dashboard instead.

@@ -107,11 +107,12 @@ export default function AppLayout() {
   const isActualAdmin = pathname.startsWith('/admin');
   // Every other /demo/* page is a scripted walkthrough that never touches the
   // real backend, so the pause banner is deliberately hidden there — it would
-  // just be noise. MemoryBankDemo is the one exception: it's a genuine
-  // "live demo, real backend, seeded data" page that calls real functions, so
-  // hiding the banner there means a paused system fails silently with a
-  // confusing "isn't published" error instead of an obvious one-click fix.
-  const isLiveBackendDemo = pathname.startsWith('/demo/memory-bank');
+  // just be noise. MemoryBankDemo and MReconDemo are the exceptions: genuine
+  // "live demo, real backend" pages that call real functions (the latter
+  // calls InvokeLLM through runMReconAgent), so hiding the banner there means
+  // a paused system fails silently with a confusing error instead of an
+  // obvious one-click fix.
+  const isLiveBackendDemo = pathname.startsWith('/demo/memory-bank') || pathname.startsWith('/demo/m-recon');
 
   // Pull-to-refresh — overscroll-behavior:none (src/index.css) kills the
   // native gesture app-wide, so this reimplements it for the patient app
