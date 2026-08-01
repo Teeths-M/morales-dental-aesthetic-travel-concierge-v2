@@ -1,13 +1,20 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
 
 /**
  * matchLocalDoctor — finds the best available verified M Local doctor
  * in the patient's home country and returns their profile.
- * Called by checkMissedRecoveryCheckins and interpretRecoveryCheckIn
- * when a post-return concern is detected.
+ * Called by checkMissedRecoveryCheckins when a post-return concern is
+ * detected. Had no auth of any kind — any caller with no proof of being
+ * that internal job could enumerate case_id values by reading the
+ * matched/not-found response. Same guard as its sibling call,
+ * sendLocalDoctorReferral, immediately below it in the same caller.
  */
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id } = await body();
+  const { case_id, internal_secret } = await body();
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
   if (!case_id) return err('case_id is required');
 
   // Load the case to get patient's home country

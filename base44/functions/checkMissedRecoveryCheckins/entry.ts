@@ -202,7 +202,10 @@ Deno.serve(async (req) => {
       // other internal caller in this codebase uses.
       if (severity === 'escalate' && session.case_id) {
         try {
-          const matchResp = await base44.asServiceRole.functions.invoke('matchLocalDoctor', { case_id: session.case_id });
+          const matchResp = await base44.asServiceRole.functions.invoke('matchLocalDoctor', {
+            case_id: session.case_id,
+            internal_secret: Deno.env.get('CRON_SECRET'),
+          });
           if (matchResp?.data?.matched && matchResp.data.doctor?.id) {
             await base44.asServiceRole.functions.invoke('sendLocalDoctorReferral', {
               case_id: session.case_id,
