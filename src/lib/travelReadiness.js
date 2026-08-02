@@ -107,3 +107,38 @@ export function travelReadiness({ passportExpiry, travelDate, visaStatus } = {})
   if (!expiry) return { status: 'unknown', issues };
   return { status: issues.length ? 'attention' : 'ok', issues };
 }
+
+// ── "How do I actually renew this" links ────────────────────────────────────
+// Passport renewal is keyed by NATIONALITY (whoever issued the passport),
+// unlike visaMatrix.js's links which are keyed by destination (who you're
+// entering) — a different lookup, not a copy of that table.
+//
+// There's no browser/fetch tool available in this environment to verify a
+// specific government deep-link is still live, so only a small, very
+// well-known set of root government domains is curated here (the same
+// confidence tier visaMatrix.js's EVISA_LINKS already relies on) — everyone
+// else gets a constructed search URL, never a fabricated link. Same "never
+// invent a URL" reasoning already applied to the video-help link below.
+const PASSPORT_RENEWAL_LINKS = {
+  American: 'https://travel.state.gov/content/travel/en/passports/have-passport/renew.html',
+  British: 'https://www.gov.uk/renew-adult-passport',
+  Canadian: 'https://www.canada.ca/en/immigration-refugees-citizenship/services/canadian-passports/renew.html',
+  Irish: 'https://www.dfa.ie/passportonline/',
+  Australian: 'https://www.passports.gov.au/passports-explained/renew-passport',
+  'New Zealander': 'https://www.passports.govt.nz/renew-your-passport',
+};
+
+export function getPassportRenewalLink(nationality) {
+  if (!nationality) return null;
+  for (const [key, url] of Object.entries(PASSPORT_RENEWAL_LINKS)) {
+    if (nationality.toLowerCase().includes(key.toLowerCase())) return url;
+  }
+  return `https://www.google.com/search?q=${encodeURIComponent(`${nationality} passport renewal official government website`)}`;
+}
+
+export function getPassportHelpLinks(nationality) {
+  return {
+    renewalUrl: getPassportRenewalLink(nationality),
+    videoSearchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`how to renew ${nationality} passport`)}`,
+  };
+}

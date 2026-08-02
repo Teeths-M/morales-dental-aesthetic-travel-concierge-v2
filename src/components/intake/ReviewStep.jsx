@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Pencil, Check, PlaneTakeoff, AlertTriangle } from 'lucide-react';
 import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import { deriveIntake } from '@/lib/intakeFlow/derivedFields';
-import { travelReadiness } from '@/lib/travelReadiness';
+import { travelReadiness, getPassportHelpLinks } from '@/lib/travelReadiness';
 import { useVisaRequirement } from '@/hooks/useVisaRequirement';
 import { getVisaHelpLinks } from '@/lib/visaMatrix';
 import { useNavigate } from 'react-router-dom';
@@ -295,13 +295,21 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
               : `${readiness.issues.length} things to sort out — better to know now than at the airport.`}
           </p>
           {readiness.issues.map((issue) => {
-            // A label alone isn't enough for the two issues that actually
-            // need action taken somewhere else — hand over a real place to
-            // start: the official portal and a current video walkthrough.
+            // A label alone isn't enough for the issues that actually need
+            // action taken somewhere else — hand over a real place to
+            // start: the official portal/renewal link and a current video
+            // walkthrough. Visa and passport issues each get their own
+            // link pair — different actions, different helpers.
             const isVisaIssue = issue.code === 'visa_evisa' || issue.code === 'visa_embassy';
-            const { portalUrl, videoSearchUrl } = isVisaIssue
-              ? getVisaHelpLinks(answers.nationality, answers.destination_country)
-              : {};
+            const isPassportIssue = issue.code === 'passport_expired' || issue.code === 'passport_expiring';
+            let primaryLabel, primaryUrl, videoSearchUrl;
+            if (isVisaIssue) {
+              primaryLabel = 'Apply for your visa →';
+              ({ portalUrl: primaryUrl, videoSearchUrl } = getVisaHelpLinks(answers.nationality, answers.destination_country));
+            } else if (isPassportIssue) {
+              primaryLabel = 'Renew your passport →';
+              ({ renewalUrl: primaryUrl, videoSearchUrl } = getPassportHelpLinks(answers.nationality));
+            }
             return (
               <div key={issue.code} style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                 <AlertTriangle
@@ -312,10 +320,10 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
                 <div>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: CALM.text }}>{issue.title}</p>
                   <p style={{ margin: '2px 0 0', fontSize: 12, color: CALM.textSoft, lineHeight: 1.55 }}>{issue.detail}</p>
-                  {isVisaIssue && (
+                  {(isVisaIssue || isPassportIssue) && (
                     <div style={{ display: 'flex', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
-                      <a href={portalUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: CALM.action, textDecoration: 'none' }}>
-                        Apply for your visa →
+                      <a href={primaryUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: CALM.action, textDecoration: 'none' }}>
+                        {primaryLabel}
                       </a>
                       <a href={videoSearchUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: CALM.action, textDecoration: 'none' }}>
                         See how it works →

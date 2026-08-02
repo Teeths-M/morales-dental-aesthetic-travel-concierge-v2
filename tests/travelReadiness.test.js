@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { passportSentinel, travelReadiness, SENTINEL_DAYS } from '@/lib/travelReadiness';
+import { passportSentinel, travelReadiness, SENTINEL_DAYS, getPassportRenewalLink, getPassportHelpLinks } from '@/lib/travelReadiness';
 
 const DAY = 24 * 60 * 60 * 1000;
 const iso = (offsetDays) => new Date(Date.now() + offsetDays * DAY).toISOString().slice(0, 10);
@@ -81,5 +81,30 @@ describe('travelReadiness tells someone before they commit', () => {
 
   it('survives being called with nothing', () => {
     expect(travelReadiness()).toEqual({ status: 'unknown', issues: [] });
+  });
+});
+
+describe('passport renewal help links — the "how do I actually do this" answer', () => {
+  it('a curated nationality gets its real official renewal link', () => {
+    expect(getPassportRenewalLink('American')).toBe('https://travel.state.gov/content/travel/en/passports/have-passport/renew.html');
+    expect(getPassportRenewalLink('British')).toBe('https://www.gov.uk/renew-adult-passport');
+  });
+
+  it('an uncurated nationality falls back to a constructed search, never a fabricated URL', () => {
+    const url = getPassportRenewalLink('Trinidadian');
+    expect(url).toMatch(/^https:\/\/www\.google\.com\/search\?q=/);
+    expect(decodeURIComponent(url)).toContain('Trinidadian');
+  });
+
+  it('says nothing when there is no nationality to go on', () => {
+    expect(getPassportRenewalLink('')).toBeNull();
+    expect(getPassportRenewalLink(null)).toBeNull();
+  });
+
+  it('getPassportHelpLinks always returns both a renewal link and a video search, never empty', () => {
+    const { renewalUrl, videoSearchUrl } = getPassportHelpLinks('Jamaican');
+    expect(renewalUrl).toBeTruthy();
+    expect(videoSearchUrl).toMatch(/^https:\/\/www\.youtube\.com\/results\?search_query=/);
+    expect(decodeURIComponent(videoSearchUrl)).toContain('Jamaican');
   });
 });

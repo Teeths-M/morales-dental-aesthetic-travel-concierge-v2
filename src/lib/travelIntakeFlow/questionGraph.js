@@ -103,6 +103,30 @@ export const TRAVEL_QUESTION_GRAPH = [
     inputType: INPUT_TYPES.DATE,
   },
   {
+    // Asked right after departure_date on purpose: the 6-month sentinel
+    // measures validity at the travel date, not today, so the travel date
+    // must already be known. This flow had no passport question before —
+    // the visa check ran, but nobody was ever asked whether their passport
+    // itself would still be valid.
+    id: 'passport_expiry_date',
+    targetFields: ['passport_expiry_date'],
+    question: 'When does your passport expire?',
+    deterministicReason: 'so I can check your passport clears the 6-month rule most destinations require',
+    inputType: INPUT_TYPES.DATE,
+  },
+  {
+    // Passport expiry (just above) and departure_date (just above that) are
+    // both known now — the earliest honest point to flag a renewal, rather
+    // than never checking at all (this flow's prior state). Rendered
+    // directly by TravelIntake.jsx (PassportReadinessStep), never through
+    // QuestionCard's normal switch — same pattern as visa_readiness_check.
+    id: 'passport_readiness_check',
+    targetFields: ['passport_readiness_acknowledged'],
+    question: "Let's check your passport is ready to travel",
+    deterministicReason: 'so a passport renewal is never a surprise later',
+    inputType: INPUT_TYPES.PASSPORT_READINESS,
+  },
+  {
     id: 'return_date',
     targetFields: ['return_date'],
     question: 'And your return date?',

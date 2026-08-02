@@ -39,6 +39,7 @@ export function buildTravelRequestPayload(answers) {
     destination_country: resolved(answers.destination_country),
     departure_date: answers.departure_date || '',
     return_date: answers.return_date || '',
+    passport_expiry_date: answers.passport_expiry_date || '',
     travelers_count: Number.isFinite(travelersCount) ? travelersCount : 1,
     travel_class: answers.travel_class || 'economy',
     hotel_required: answers.hotel_required !== false,

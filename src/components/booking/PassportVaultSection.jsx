@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { AlertTriangle, CheckCircle2, Globe, XCircle, ExternalLink } from 'lucide-react';
 import { getEvisaLink } from '@/lib/visaMatrix';
 import { useVisaRequirement } from '@/hooks/useVisaRequirement';
-import { passportSentinel } from '@/lib/travelReadiness';
+import { passportSentinel, getPassportHelpLinks } from '@/lib/travelReadiness';
 
 /* THE PASSPORT SCAN WAS REMOVED HERE — DO NOT REINSTATE IT AS IT WAS.
  *
@@ -104,19 +104,31 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
           whenever an expiry date exists rather than only after a successful
           scan. A patient who typed their expiry manually was previously given
           no warning at all. */}
-      {passportWarning !== null && (
-        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
-          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-semibold text-amber-800">Passport Sentinel Alert</p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              {passportWarning < 0
-                ? <>Your passport expires <strong>before your travel date</strong>. You&rsquo;ll need to renew it before you can fly.</>
-                : <>Your passport has <strong>{passportWarning} days</strong> of validity left at your travel date — less than the 6-month minimum most destinations require. Please renew before travel.</>}
-            </p>
+      {passportWarning !== null && (() => {
+        const { renewalUrl, videoSearchUrl } = getPassportHelpLinks(form.nationality);
+        return (
+          <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-amber-800">Passport Sentinel Alert</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                {passportWarning < 0
+                  ? <>Your passport expires <strong>before your travel date</strong>. You&rsquo;ll need to renew it before you can fly.</>
+                  : <>Your passport has <strong>{passportWarning} days</strong> of validity left at your travel date — less than the 6-month minimum most destinations require. Please renew before travel.</>}
+              </p>
+              <a href={renewalUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-2.5 px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                style={{ background: 'linear-gradient(135deg, #92400e, #b45309)' }}>
+                Renew Your Passport <ExternalLink className="w-3 h-3" />
+              </a>
+              <a href={videoSearchUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-2.5 ml-2 text-xs font-semibold text-amber-800 hover:underline">
+                See how it works <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
 
       {/* ── Visa Matrix Status ── */}

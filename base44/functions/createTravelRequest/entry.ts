@@ -13,6 +13,7 @@ const CreateTravelRequestSchema = strictObject({
   destination_country: z.string().trim().max(100).optional(),
   departure_date: Fields.shortText(30),
   return_date: z.string().trim().max(30).optional(),
+  passport_expiry_date: z.string().trim().max(30).optional(),
   travelers_count: Fields.boundedInt(1, 20).optional().default(1),
   travel_class: z.enum(['economy', 'premium_economy', 'business', 'first']).optional().default('economy'),
   hotel_required: z.boolean().optional().default(true),
@@ -44,7 +45,7 @@ function isValidEmail(email: unknown): boolean {
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { 
       origin_city, origin_country, destination_city, destination_country,
-      departure_date, return_date, travelers_count = 1, travel_class = 'economy',
+      departure_date, return_date, passport_expiry_date, travelers_count = 1, travel_class = 'economy',
       hotel_required = true, hotel_star_rating = 4, hotel_room_type = 'deluxe',
       transfer_required = true, transfer_type = 'standard',
       companion_required = false, companion_type, companion_days = 0,
@@ -85,6 +86,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       destination_country,
       departure_date,
       return_date,
+      passport_expiry_date,
       travelers_count,
       travel_class,
       hotel_required,

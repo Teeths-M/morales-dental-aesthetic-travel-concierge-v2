@@ -12,6 +12,7 @@ import { TRAVEL_QUESTION_GRAPH } from '@/lib/travelIntakeFlow/questionGraph';
 function answerFor(step) {
   const t = step.inputType;
   if (t === INPUT_TYPES.VISA_READINESS) return { visa_readiness_acknowledged: true };
+  if (t === INPUT_TYPES.PASSPORT_READINESS) return { passport_readiness_acknowledged: true };
   if (t === INPUT_TYPES.BOOLEAN) {
     const out = {};
     step.targetFields.forEach((f) => { out[f] = true; });
@@ -72,5 +73,19 @@ describe('a traveler can actually get through the travel-only intake', () => {
   it('does not gate the visa check itself behind sign-in — it runs before the auth boundary', () => {
     const { visited } = walkTravelIntake({ isAuthenticated: false });
     expect(visited).toContain('visa_readiness_check');
+  });
+
+  it('now asks for passport expiry and checks it right after departure_date — this flow had no passport question before', () => {
+    const { visited } = walkTravelIntake();
+    expect(visited).toContain('passport_expiry_date');
+    expect(visited.indexOf('passport_expiry_date')).toBe(visited.indexOf('departure_date') + 1);
+    expect(visited).toContain('passport_readiness_check');
+    expect(visited.indexOf('passport_readiness_check')).toBe(visited.indexOf('passport_expiry_date') + 1);
+    expect(visited.indexOf('passport_readiness_check')).toBeLessThan(visited.indexOf('return_date'));
+  });
+
+  it('does not gate the passport check behind sign-in either — it also runs before the auth boundary', () => {
+    const { visited } = walkTravelIntake({ isAuthenticated: false });
+    expect(visited).toContain('passport_readiness_check');
   });
 });

@@ -27,6 +27,7 @@ export const INPUT_TYPES = {
   DATE: 'date',
   REVIEW: 'review',
   VISA_READINESS: 'visa_readiness',
+  PASSPORT_READINESS: 'passport_readiness',
   DOCTOR_PICK: 'doctor_pick',
   CONDITIONS_PICK: 'conditions_pick',
   ALLERGIES_PICK: 'allergies_pick',
@@ -362,6 +363,20 @@ export const QUESTION_GRAPH = [
     question: 'When does your passport expire?',
     deterministicReason: 'so I can check you can actually travel on your dates — passport rules and visa lead times catch people out after they have already committed',
     inputType: INPUT_TYPES.DATE,
+    requiresAuth: true,
+  },
+  {
+    // Passport expiry (just above) is now known, and preferred_date (the
+    // travel date the sentinel measures against) was already collected
+    // earlier — the earliest honest point to surface a 6-month problem,
+    // instead of only at the final review. Rendered directly by
+    // ConciergeIntake.jsx (PassportReadinessStep), never through
+    // QuestionCard's normal switch — same pattern as visa_readiness_check.
+    id: 'passport_readiness_check',
+    targetFields: ['passport_readiness_acknowledged'],
+    question: "Let's check your passport is ready to travel",
+    deterministicReason: 'so a passport renewal is never a surprise later',
+    inputType: INPUT_TYPES.PASSPORT_READINESS,
     requiresAuth: true,
   },
   {

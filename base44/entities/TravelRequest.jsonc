@@ -39,6 +39,10 @@
       "type": "string",
       "format": "date"
     },
+    "passport_expiry_date": {
+      "type": "string",
+      "format": "date"
+    },
     "travelers_count": {
       "type": "number",
       "default": 1

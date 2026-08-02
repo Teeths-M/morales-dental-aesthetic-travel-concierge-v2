@@ -16,6 +16,7 @@ import { friendlyError } from '@/lib/friendlyError';
 import QuestionCard from '@/components/intake/QuestionCard';
 import AuthGateStep from '@/components/intake/AuthGateStep';
 import VisaReadinessStep from '@/components/intake/VisaReadinessStep';
+import PassportReadinessStep from '@/components/intake/PassportReadinessStep';
 import TravelReviewStep from '@/components/intake/TravelReviewStep';
 import IntakeProgressChecklist from '@/components/intake/IntakeProgressChecklist';
 import NarrationTicker from '@/components/intake/NarrationTicker';
@@ -134,6 +135,7 @@ export default function TravelIntake() {
 
   const atReviewStep = nextStepResult.type === 'question' && nextStepResult.step.inputType === INPUT_TYPES.REVIEW;
   const atVisaReadinessStep = nextStepResult.type === 'question' && nextStepResult.step.inputType === INPUT_TYPES.VISA_READINESS;
+  const atPassportReadinessStep = nextStepResult.type === 'question' && nextStepResult.step.inputType === INPUT_TYPES.PASSPORT_READINESS;
 
   return (
     <div
@@ -177,6 +179,21 @@ export default function TravelIntake() {
                 })}
               />
             )}
+            {atPassportReadinessStep && (
+              <PassportReadinessStep
+                passportExpiry={answers.passport_expiry_date}
+                travelDate={answers.departure_date}
+                nationality={answers.origin_country}
+                onContinue={() => submitAnswer({
+                  stepId: nextStepResult.step.id,
+                  question: nextStepResult.step.question,
+                  rawText: 'Continue',
+                  extracted: { passport_readiness_acknowledged: true },
+                  confidence: 100,
+                  narration: '',
+                })}
+              />
+            )}
             {atReviewStep && (
               <TravelReviewStep
                 answers={answers}
@@ -187,7 +204,7 @@ export default function TravelIntake() {
                 submitResult={submitResult}
               />
             )}
-            {nextStepResult.type === 'question' && !atReviewStep && !atVisaReadinessStep && (
+            {nextStepResult.type === 'question' && !atReviewStep && !atVisaReadinessStep && !atPassportReadinessStep && (
               <QuestionCard
                 step={nextStepResult.step}
                 onAnswer={submitAnswer}

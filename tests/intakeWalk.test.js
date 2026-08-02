@@ -67,6 +67,10 @@ function answerFor(step) {
     // status shown, matching its advisory-only, never-blocking contract.
     return { visa_readiness_acknowledged: true };
   }
+  if (t === INPUT_TYPES.PASSPORT_READINESS) {
+    // PassportReadinessStep's "Continue" — same advisory-only contract.
+    return { passport_readiness_acknowledged: true };
+  }
 
   // TEXT / SELECT — QuestionCard's commitValue writes the same value to every
   // target field.
@@ -152,6 +156,15 @@ describe('a patient can actually get through the intake', () => {
     // And it runs well before the questions that used to be the only place
     // this showed up — medical history, allergies, the review step itself.
     expect(visited.indexOf('visa_readiness_check')).toBeLessThan(visited.indexOf('medical_conditions_other'));
+  });
+
+  it('checks passport readiness immediately after the expiry date is given — not deferred to review', () => {
+    const { visited } = walkIntake();
+    expect(visited).toContain('passport_readiness_check');
+    expect(visited.indexOf('passport_readiness_check')).toBe(visited.indexOf('passport_expiry_date') + 1);
+    // Runs well before the questions that used to be the only place this
+    // showed up — the review step itself.
+    expect(visited.indexOf('passport_readiness_check')).toBeLessThan(visited.indexOf('duration_of_stay'));
   });
 
   it('does not strand an unauthenticated guest before the auth gate', () => {
