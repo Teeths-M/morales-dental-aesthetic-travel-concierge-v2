@@ -11,7 +11,7 @@ import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess'
 import LiveDeviceNetworkPanel from '@/components/doctor-signup/LiveDeviceNetworkPanel';
 import { MapPin, Save } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
+import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge, trackSignupProgress } from '@/lib/signupDraft';
 
 export default function DoctorSignup() {
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
@@ -84,6 +84,7 @@ export default function DoctorSignup() {
     if (!draftLoaded) return; // Don't save until draft is loaded — prevents overwriting saved draft with empty initial state
     if (step < 3) { // Don't save after signup form is submitted
       saveSignupDraft('doctor', formData, { step });
+      trackSignupProgress('doctor', formData, `step_${step}`);
     }
   }, [formData, step, draftLoaded]);
 

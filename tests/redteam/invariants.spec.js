@@ -202,6 +202,35 @@ test('COMMS: migrated legacy senders are link-only — nothing private leaves M'
   expect(iq, 'no renderEmail body in iq200Pipeline').not.toContain('body: renderEmail');
 });
 
+test('M RESCUE: checkStalledSignups is link-only, cron/admin-gated, and never AI-driven', () => {
+  const src = read('base44/functions/checkStalledSignups/entry.ts');
+  expect(src, 'must gate on cronAuthorized').toContain('cronAuthorized(req, base44)');
+  expect(src, 'must use the link-only email helper').toContain('linkOnlyEmail(');
+  expect(src, 'must use the link-only SMS helper').toContain('linkOnlySms(');
+  // A brand-new sender has no excuse to add a fresh link-only violation —
+  // unlike sendOnboardingNudges (pre-dates the rule, not yet migrated),
+  // this one must never call SendEmail with a raw personalized body.
+  expect(src, 'must not build a raw personalized SendEmail body').not.toMatch(/body:\s*`Hi \$\{/);
+  // Deterministic-only: no AI call anywhere in this function.
+  expect(src, 'must not call InvokeLLM').not.toContain('InvokeLLM');
+  expect(src, 'must not call an external AI API directly').not.toContain('anthropic.com');
+  // One-shot: never re-nudges the same record.
+  expect(src, 'must check nudge_sent_at before acting').toContain('p.nudge_sent_at');
+  expect(src, 'must set nudge_sent_at after acting').toContain('nudge_sent_at: new Date().toISOString()');
+});
+
+test('M RESCUE: trackSignupAbandon is public-but-validated, and SignupProgress has no client access', () => {
+  const src = read('base44/functions/trackSignupAbandon/entry.ts');
+  expect(src, 'must validate the body — no session exists yet to trust').toContain('bodySchema:');
+  expect(src, 'must require at least a phone or email').toMatch(/!phone && !email/);
+  expect(src, 'must write via asServiceRole, never as the (nonexistent) caller').toContain('base44.asServiceRole.entities.SignupProgress');
+
+  const entity = read('base44/entities/SignupProgress.jsonc');
+  expect(entity, 'must not be readable/writable by an unauthenticated client').not.toMatch(/"read":\s*null/);
+  expect(entity, 'read must be admin-only').toMatch(/"role":\s*"admin"/);
+  expect(entity, 'create must be admin-only (service-role writes bypass this, the client never should)').toMatch(/"create"[\s\S]{0,120}"role":\s*"(admin|platform_admin)"/);
+});
+
 test('COMMS: the link-only helper enforces the on-platform promise', () => {
   expect(read('base44/functions/_shared/notify.ts')).toContain('nothing private is sent by email');
 });

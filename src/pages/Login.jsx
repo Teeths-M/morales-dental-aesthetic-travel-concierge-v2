@@ -5,6 +5,8 @@ import { Loader2, ArrowRight, Globe, ChevronLeft, UserPlus, RotateCw } from 'luc
 import PhoneField from '@/components/ui-system/PhoneField';
 import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 import { friendlyError } from '@/lib/friendlyError';
+import { useStruggleDetector } from '@/hooks/useStruggleDetector';
+import { emitStruggleHint } from '@/lib/struggleHint';
 
 // Login splits: LEFT form uses the CALM decision palette (light + teal), the
 // RIGHT brand panel keeps the dark dramatic showcase (Product Principle #5:
@@ -98,7 +100,37 @@ export default function Login() {
   const [loading,       setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [countdown,     setCountdown]     = useState(0);
+  const [phoneFailCount, setPhoneFailCount] = useState(0);
+  const [otpFailCount,   setOtpFailCount]   = useState(0);
   const { country: ipCountry } = useIpGeolocation();
+
+  // Struggle-aware Morales Guide: deterministic, no AI, no network — see
+  // src/hooks/useStruggleDetector.js. Each fires at most once per step.
+  useStruggleDetector({
+    active: step === 'phone',
+    value: phone,
+    isValid: phone.trim().length >= 8,
+    failureCount: phoneFailCount,
+    onStruggle: (reason) => emitStruggleHint(
+      '💡',
+      reason === 'idle'
+        ? "Stuck on your number? Tap the flag to pick your country, then just the digits after."
+        : "Having trouble? Leave out spaces and dashes — digits only, with your country code.",
+    ),
+  });
+  useStruggleDetector({
+    active: step === 'otp',
+    value: otp,
+    isValid: otp.length === 6,
+    failureCount: otpFailCount,
+    idleMs: 45000,
+    onStruggle: (reason) => emitStruggleHint(
+      '💡',
+      reason === 'idle'
+        ? "Didn't get a text? Check your SMS app, or tap Resend code below."
+        : "Code not matching? Old codes expire — tap Resend code for a fresh one.",
+    ),
+  });
 
   // Resend countdown timer
   useEffect(() => {
@@ -119,6 +151,7 @@ export default function Login() {
       setCountdown(30);
     } catch (err) {
       setError(friendlyError(err, 'We could not send your code. Check the number and try again.', 'Login/sendOtp'));
+      setPhoneFailCount(c => c + 1);
     } finally {
       setLoading(false);
     }
@@ -136,6 +169,7 @@ export default function Login() {
       }
     } catch (err) {
       setError(friendlyError(err, 'That code was not correct. Check it and try again.', 'Login/verifyOtp'));
+      setOtpFailCount(c => c + 1);
       setLoading(false);
     }
   };

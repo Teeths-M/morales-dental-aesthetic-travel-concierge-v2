@@ -8,7 +8,7 @@ import TravelAgencySuccess from '@/components/partner-signup/TravelAgencySuccess
 import { Plane, MapPin, Save } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
+import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge, trackSignupProgress } from '@/lib/signupDraft';
 
 export default function TravelAgencySignup() {
   const _location = useLocation();
@@ -60,6 +60,7 @@ export default function TravelAgencySignup() {
     if (!draftLoaded) return; // Don't save until draft is loaded
     if (step < 3) {
       saveSignupDraft('travel_agency', formData, { step });
+      trackSignupProgress('travel_agency', formData, `step_${step}`);
     }
   }, [formData, step, draftLoaded]);
 
