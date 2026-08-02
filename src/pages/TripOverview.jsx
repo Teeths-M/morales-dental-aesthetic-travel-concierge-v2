@@ -84,7 +84,7 @@ export default function TripOverview() {
     if (user) {
       loadTravelRequests();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user]);
 
   const loadTravelRequests = async () => {

@@ -1,6 +1,6 @@
 // @ts-nocheck — pre-existing type gaps; build passes
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAdminCasesShared, ADMIN_CASES_QUERY_KEY, selectByStatus } from '@/hooks/useAdminCasesCache';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ import {
  */
 const RECOVERY_STATUSES = ['Recovery', 'RECOVERY_PHASE_7_DAY'];
 
-function GuidanceCard({ caseRecord, currentUser, onDone }) {
+function GuidanceCard({ caseRecord, onDone }) {
   const [draft, setDraft] = useState(null); // { draft_id, draft_text, guidance_status, fail_closed_reason }
   const [editedText, setEditedText] = useState('');
   const [credential, setCredential] = useState('');
@@ -144,12 +144,6 @@ function GuidanceCard({ caseRecord, currentUser, onDone }) {
 export default function ClinicalReviewerDashboard() {
   const qc = useQueryClient();
 
-  const { data: currentUser } = useQuery({
-    queryKey: ['me'],
-    queryFn: () => base44.auth.me().catch(() => null),
-    staleTime: 5 * 60 * 1000,
-  });
-
   // Shared across every admin-area page — see useAdminCasesCache.js (Base44's
   // 100-ops/min-per-user rate limit was being tripped by ~9 separate pages
   // each independently fetching CaseRecord). Derives the same 2-status view
@@ -191,7 +185,6 @@ export default function ClinicalReviewerDashboard() {
             <GuidanceCard
               key={c.id}
               caseRecord={c}
-              currentUser={currentUser}
               onDone={() => qc.invalidateQueries({ queryKey: ADMIN_CASES_QUERY_KEY })}
             />
           ))}

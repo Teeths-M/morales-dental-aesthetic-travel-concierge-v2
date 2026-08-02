@@ -95,7 +95,7 @@ export default function TravelConcierge() {
   const [showRefinements, setShowRefinements] = useState(hasRefinements);
   useEffect(() => {
     if (hasRefinements()) setShowRefinements(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [formData.hotel_star_rating, formData.hotel_room_type, formData.transfer_type,
       formData.companion_required, formData.companion_days, selectedPassportId]);
 

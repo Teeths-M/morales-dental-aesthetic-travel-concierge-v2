@@ -9,7 +9,6 @@ import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
 
-const GOLD = '#D4AF37';
 const COUNTRIES = [...SERVED_COUNTRIES].sort((a, b) => a.localeCompare(b));
 function citiesFor(country) {
   if (!country) return [];

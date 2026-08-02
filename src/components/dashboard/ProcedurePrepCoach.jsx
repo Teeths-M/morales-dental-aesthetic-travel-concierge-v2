@@ -126,7 +126,7 @@ Rules: never invent a new preparation step; never state a specific fasting time 
         setLoadingMessage(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [active, caseId, daysLeft, incompleteItems.length, totalCount]);
 
   const toggleItem = async (index) => {

@@ -30,7 +30,7 @@ export default function LiveJourneyCard({ isMedical = true }) {
   useEffect(() => {
     const timer = setInterval(() => setIdx(i => (i + 1) % sceneMeta.length), 4800);
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const meta = sceneMeta[idx];

@@ -75,7 +75,7 @@ function HeroChatBubbles({ isMedical }) {
     if (prefersReducedMotion) { setStep(chatSteps.length); return; }
     const timer = setInterval(() => setStep(s => (s + 1) % (chatSteps.length + 1)), 1600);
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [prefersReducedMotion]);
 
   const visible = chatSteps.slice(0, step);

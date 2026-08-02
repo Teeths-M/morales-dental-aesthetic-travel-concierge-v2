@@ -43,7 +43,7 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
 
   useEffect(() => {
     if (hasOptional()) setShowOptional(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [form.gender, form.height, form.weight, form.nationality, form.client_city]);
   const { country: ipCountry } = useIpGeolocation();
 
