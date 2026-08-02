@@ -228,4 +228,15 @@ Deno.serve(createHandler(async ({ req }) => {
     console.error('[iq200HandshakeEngine]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-}, { name: 'iq200HandshakeEngine', requireAuth: false }));
+// SECURITY: had zero auth of any kind — anyone with the URL could read a
+// case's full handshake status (partner names/notes/timestamps) or, worse,
+// falsely confirm ANY touchpoint for ANY case_id with no ownership check,
+// including the final "home_arrival" one that marks the case Completed.
+// requireAuth:true closes the anonymous/scripted abuse vector, which is the
+// real-world threat here. It does NOT yet verify that the specific
+// authenticated user is actually the assigned taxi/doctor/agency/companion
+// for this case_id — CaseRecord only tracks client_email/doctor_email, not
+// per-role partner assignment, so a precise ownership check needs that
+// wired up first rather than guessing at it here. Flagged, not silently
+// dropped — see project memory for the hardening pass this came out of.
+}, { name: 'iq200HandshakeEngine', requireAuth: true }));

@@ -91,6 +91,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
       recipient_role: 'doctor', recipient_identifier: q.doctor_email || '',
       event_trigger: `remindPendingQuotes_stage${stage}`,
       payload: { quote_id: q.id },
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => ({ data: { suppressed: false } }));
     if (blackout?.data?.suppressed) { skipped++; continue; }
 

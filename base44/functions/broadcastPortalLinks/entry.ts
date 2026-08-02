@@ -59,7 +59,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'partner',
               recipient_identifier: doctor.email,
               event_trigger: 'portal_broadcast',
-              payload: { subject: '🔗 Your Doctor Portal Link - Morales D&A' }
+              payload: { subject: '🔗 Your Doctor Portal Link - Morales D&A' },
+              internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               console.log(`Portal broadcast to ${doctor.email} suppressed — blackout active`);
@@ -108,7 +109,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'partner',
               recipient_identifier: agency.email,
               event_trigger: 'portal_broadcast',
-              payload: { subject: '🔗 Your Travel Agency Portal Link - Morales D&A' }
+              payload: { subject: '🔗 Your Travel Agency Portal Link - Morales D&A' },
+              internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               console.log(`Portal broadcast to ${agency.email} suppressed — blackout active`);
@@ -159,7 +161,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'partner',
               recipient_identifier: driver.email,
               event_trigger: 'portal_broadcast',
-              payload: { subject: '🔗 Your Chauffeur Portal Link - Morales D&A' }
+              payload: { subject: '🔗 Your Chauffeur Portal Link - Morales D&A' },
+              internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               console.log(`Portal broadcast to ${driver.email} suppressed — blackout active`);
@@ -209,7 +212,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'patient',
               recipient_identifier: caseRecord.client_email,
               event_trigger: 'broadcastPortalLinks',
-              payload: { subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A' }
+              payload: { subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A' },
+              internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               results.skipped.push({ name: caseRecord.client_name, reason: 'Blackout active' });

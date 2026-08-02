@@ -105,10 +105,15 @@ Deno.serve(createHandler(async ({ req }) => {
       amount: travelTotal,
     }).catch(e => console.warn('[sendTravelQuoteEmail] submitPartnerQuote failed:', e.message));
 
+    // SECURITY: previously echoed chauffeur_portal_url back in this response —
+    // a live, valid signed portal token for a DIFFERENT partner's (the
+    // chauffeur's) portal, handed to whoever called this endpoint on the
+    // travel agency's behalf. The chauffeur already gets their own link by
+    // email above; the caller here doesn't use this field (confirmed against
+    // its only frontend caller, PortalTravelAgency.jsx).
     return Response.json({
       success: true,
       message: 'Travel quote saved. Automation gate notified. Pipeline will advance when all 4 quotes confirmed.',
-      chauffeur_portal_url: chauffeurPortalUrl,
     });
   } catch (error) {
     console.error('sendTravelQuoteEmail error:', error);

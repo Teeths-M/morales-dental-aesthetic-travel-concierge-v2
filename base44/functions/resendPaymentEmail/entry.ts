@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
       recipient_role: 'patient',
       recipient_identifier: caseRecord.client_email || '',
       event_trigger: 'resendPaymentEmail',
-      payload: body
+      payload: body,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => ({ data: { suppressed: false } }));
 
     if (blackoutRes.data?.suppressed) {

@@ -166,7 +166,8 @@ Deno.serve(async (req) => {
       recipient_role: 'patient',
       recipient_identifier: patientPhone,
       event_trigger: 'sendWhatsAppCaseUpdate',
-      payload: { status: newStatus }
+      payload: { status: newStatus },
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => ({ suppressed: false }));
 
     if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {

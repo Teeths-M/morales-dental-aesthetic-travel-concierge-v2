@@ -124,7 +124,8 @@ Deno.serve(async (req) => {
             case_id: caseRecord.id, notification_type: stage === 3 ? 'sms' : 'email',
             recipient_role: 'vendor', recipient_identifier: agency.email || agency.phone || '',
             event_trigger: `sendQuoteReminders_stage${stage}`,
-            payload: { case_id: caseRecord.id, consultation_id: consultationId }
+            payload: { case_id: caseRecord.id, consultation_id: consultationId },
+            internal_secret: Deno.env.get('CRON_SECRET'),
           }).catch(() => ({ data: { suppressed: false } }));
           if (blackout.data?.suppressed) { skipped++; continue; }
 
@@ -163,7 +164,8 @@ Deno.serve(async (req) => {
             case_id: caseRecord.id, notification_type: stage === 3 ? 'sms' : 'email',
             recipient_role: 'vendor', recipient_identifier: driver.email || driver.phone || '',
             event_trigger: `sendQuoteReminders_stage${stage}`,
-            payload: { case_id: caseRecord.id, consultation_id: consultationId }
+            payload: { case_id: caseRecord.id, consultation_id: consultationId },
+            internal_secret: Deno.env.get('CRON_SECRET'),
           }).catch(() => ({ data: { suppressed: false } }));
           if (blackout.data?.suppressed) { skipped++; continue; }
 

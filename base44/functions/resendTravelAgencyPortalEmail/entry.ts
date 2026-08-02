@@ -86,7 +86,8 @@ Deno.serve(async (req) => {
         recipient_role: 'vendor',
         recipient_identifier: agency.email,
         event_trigger: 'resendTravelAgencyPortalEmail',
-        payload: body
+        payload: body,
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => ({ data: { suppressed: false } }));
 
       if (blackoutRes.data?.suppressed) {

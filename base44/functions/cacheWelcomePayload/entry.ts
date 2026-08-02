@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 // ── cacheWelcomePayload ───────────────────────────────────────────────────────
 // Builds a fully-resolved welcome payload from:
@@ -79,17 +80,25 @@ function substituteTemplate(template, vars) {
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    // Allow scheduler or any authenticated user
-    if (user && !['admin', 'platform_admin', 'coordinator', 'travel_agency', 'patient'].includes(user.role)) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const { trip_id, trigger } = await req.json();
+    const { trip_id, trigger, internal_secret } = await req.json();
     if (!trip_id) return Response.json({ error: 'trip_id required' }, { status: 400 });
 
     const trip = await base44.asServiceRole.entities.TravelRequest.get(trip_id);
     if (!trip) return Response.json({ error: 'Trip not found' }, { status: 404 });
+
+    // SECURITY: was `if (user && !allowedRoles...)` — a caller with NO
+    // session at all fell straight through untouched, letting anyone pull
+    // another traveler's name, destination, driver identity, and live
+    // flight/arrival details by guessing a trip_id. Now: either a trusted
+    // internal caller (pollActiveTripFlights, via internal_secret) or an
+    // authenticated staff member, or the trip's own patient.
+    if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+      const user = await base44.auth.me().catch(() => null);
+      const isStaff = !!user && ['admin', 'platform_admin', 'coordinator', 'travel_agency'].includes(user.role);
+      if (!user || (!isStaff && user.email !== trip.user_email)) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
 
     const countryCode = (trip.destination_country || '').toUpperCase().slice(0, 2);
     const lang = (trip.preferred_language || 'en').toLowerCase().slice(0, 2);

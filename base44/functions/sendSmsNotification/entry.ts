@@ -81,7 +81,8 @@ Deno.serve(createHandler(async ({ req }) => {
         recipient_role: 'patient',
         recipient_identifier: body.to || '',
         event_trigger: 'sendSmsNotification',
-        payload: body
+        payload: body,
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => ({ data: { suppressed: false } }));
 
       if (blackoutRes.data?.suppressed) {

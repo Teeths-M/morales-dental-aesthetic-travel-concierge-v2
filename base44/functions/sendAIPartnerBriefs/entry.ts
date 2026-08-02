@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * sendAIPartnerBriefs
@@ -106,7 +107,17 @@ async function sendSms(to: string, msg: string): Promise<void> {
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, workflow_id } = await body<{ case_id: string; workflow_id?: string }>();
+  const { case_id, workflow_id, internal_secret } = await body<{ case_id: string; workflow_id?: string; internal_secret?: string }>();
+
+  // SECURITY: had zero auth — any case_id, from anyone, would trigger up to
+  // 5 real paid InvokeLLM calls and send real emails/SMS to real doctors,
+  // agencies, drivers, companions, and security agencies. Real callers are
+  // only onDoctorConfirmed (internal, now passes internal_secret) and the
+  // admin CaseDetailDrawer (forwards its own admin session automatically).
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -262,4 +273,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }).catch(() => {});
 
   return ok({ success: true, results, patient: patientName, roles_briefed: sentRoles });
-}, { name: 'sendAIPartnerBriefs', requireAuth: false }));
+}, { name: 'sendAIPartnerBriefs', requireAuth: false, allowedRoles: [] }));

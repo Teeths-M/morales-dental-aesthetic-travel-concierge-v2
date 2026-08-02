@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 // ── pollActiveTripFlights — cron/scheduled function ───────────────────────────
 // Runs every 5 minutes via Base44 scheduler.
@@ -48,13 +50,22 @@ function inferFlightStatus(scheduledArrivalIso) {
   // LIVE: replace with FlightStats API call — see checkFlightStatus/entry.ts for full stub
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    // Scheduler has no user session
-    let user = null;
-    try { user = await base44.auth.me(); } catch (_) { /* scheduler */ }
-    if (user && !['admin', 'platform_admin'].includes(user.role)) {
+
+    /* Same fail-open pattern found and fixed elsewhere in this codebase
+       (escalateMissedDriverHandshake, checkMissedRecoveryCheckins): with no
+       session `user` is null, the `user &&` short-circuits, and the request
+       is let through on the assumption that anonymous means "the
+       scheduler". This bypassed createHandler entirely (raw Deno.serve) on
+       top of that, so it wasn't even getting the framework's own auth gate
+       — and it sends real Twilio SMS to real patients, so anyone with the
+       URL could trigger unlimited SMS spend and fake status pushes.
+
+       cronAuthorized proves the caller: cron secret, or admin session. Fails
+       closed when CRON_SECRET is unset. */
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -144,6 +155,7 @@ Deno.serve(async (req) => {
         await base44.functions.invoke('cacheWelcomePayload', {
           trip_id: trip.id,
           trigger: 'in_progress_poller',
+          internal_secret: Deno.env.get('CRON_SECRET'),
         }).catch((e) => console.error('[pollActiveTripFlights] cacheWelcomePayload error:', e.message));
       }
 
@@ -156,6 +168,7 @@ Deno.serve(async (req) => {
           await base44.functions.invoke('cacheWelcomePayload', {
             trip_id: trip.id,
             trigger: 'landed_poller',
+            internal_secret: Deno.env.get('CRON_SECRET'),
           }).catch(() => {});
         }
 
@@ -205,4 +218,4 @@ Deno.serve(async (req) => {
     console.error('[pollActiveTripFlights]', err);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'pollActiveTripFlights', requireAuth: false }));

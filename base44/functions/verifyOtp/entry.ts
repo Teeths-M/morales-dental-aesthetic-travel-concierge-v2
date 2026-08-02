@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { checkRateLimit } from '../../shared/rateLimit.ts';
 
 // Verifies a 6-digit OTP for either channel:
 //   { phone, code } — phone-channel session (existing login flow)
@@ -18,6 +19,16 @@ export default createHandler(async ({ base44, body }) => {
   } else {
     identifier = String(email).trim().toLowerCase();
     filter = { email: identifier };
+  }
+
+  // SECURITY: a 6-digit code is only 1M combinations, and this endpoint had
+  // no lockout beyond createHandler's generic per-IP default (60/min) —
+  // trivially bypassable with a few IPs. Locks per-identifier (phone/email),
+  // not per-IP, so it can't be routed around: 5 wrong guesses within the
+  // code's own 10-minute validity window and this identifier is locked out.
+  const attemptsOk = await checkRateLimit(base44, `verifyOtp:${identifier}`, 600, 5);
+  if (!attemptsOk) {
+    return err('Too many incorrect attempts. Please request a new code.', 429);
   }
 
   const sessions = await base44.asServiceRole.entities.OtpSession.filter(filter).catch(() => []);

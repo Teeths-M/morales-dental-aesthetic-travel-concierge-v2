@@ -37,7 +37,8 @@ Deno.serve(async (req) => {
         recipient_role: 'vendor',
         recipient_identifier: phone,
         event_trigger: 'sendDriverAlert',
-        payload: body
+        payload: body,
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => ({ data: { suppressed: false } }));
 
       if (blackoutRes.data?.suppressed) {

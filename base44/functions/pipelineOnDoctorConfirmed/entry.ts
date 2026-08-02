@@ -89,7 +89,8 @@ Deno.serve(async (req) => {
         recipient_role,
         recipient_identifier,
         event_trigger: 'pipelineOnDoctorConfirmed',
-        payload: body
+        payload: body,
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => ({ data: { suppressed: false } }));
       return res.data?.suppressed === true;
     };

@@ -7,12 +7,20 @@
  * Usage from other backend functions:
  *   const res = await base44.functions.invoke('checkNotificationBlackout', {
  *     case_id, notification_type, recipient_role, recipient_identifier,
- *     event_trigger, payload
+ *     event_trigger, payload, internal_secret: Deno.env.get('CRON_SECRET')
  *   });
  *   if (res.data?.suppressed) return; // skip sending
+ *
+ * SECURITY: this reveals whether a case is mid-surgery
+ * (SURGICAL_EXECUTION_WINDOW) to whoever can supply a case_id — real-time
+ * "is this specific traveler unconscious right now" is exactly the kind of
+ * leak a safety app can't have. Gated the same way as its sibling internal
+ * helpers (generateItineraryCalendar, matchLocalDoctor) — every real caller
+ * already runs server-side and can pass the shared secret.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../../shared/createHandler.ts';
+import { createHandler, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -25,8 +33,13 @@ Deno.serve(createHandler(async ({ req }) => {
       recipient_role,
       recipient_identifier,
       event_trigger,
-      payload
+      payload,
+      internal_secret,
     } = body;
+
+    if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+      return err('Forbidden', 403);
+    }
 
     if (!case_id) {
       return Response.json({ suppressed: false, reason: 'no_case_id' });

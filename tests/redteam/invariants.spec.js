@@ -2446,13 +2446,16 @@ test('AUTH: batch-2 unauthenticated comms/LLM endpoints are a tracked worklist, 
   // leak. Not fixed in this pass; pinned here so it's a decision, not a miss.
   const BATCH_2_KNOWN_OPEN = [
     'calculatePackagePrice', 'notifyAdminQuoteRevised', 'sendGoldenMNotification', 'sendHandshakeAlert',
-    'sendPayNowEmail', 'sendBookingConfirmation', 'requestPartnerQuotas', 'sendAIPartnerBriefs',
+    'sendPayNowEmail', 'sendBookingConfirmation', 'requestPartnerQuotas',
     'sendCompanionMealBrief', 'sendPreOpInstructions', 'flagIntakeHandoff', 'flagProcedureStackingRisk',
-    'iq200HandshakeEngine', 'activateMotherTouch', 'notifySlackAssignment', 'autoTriggerDoctorVerification',
+    'activateMotherTouch', 'notifySlackAssignment', 'autoTriggerDoctorVerification',
     'autoPartnerPortalDelivery', 'extractClinicalNote', 'analyzeIntakeCombination',
     'analyzeDestinationSafety', 'interpretRecoveryCheckIn',
   ];
-  expect(BATCH_2_KNOWN_OPEN.length, 'batch is documented as ~20 functions').toBe(21);
+  // sendAIPartnerBriefs and iq200HandshakeEngine came off this list — both
+  // gated (internalOrAdminAuthorized and requireAuth:true respectively) in
+  // the 2026-08-02 hardening pass. See project memory for the full batch.
+  expect(BATCH_2_KNOWN_OPEN.length, 'batch is documented as ~19 functions').toBe(19);
   for (const fn of BATCH_2_KNOWN_OPEN) {
     const src = read(`base44/functions/${fn}/entry.ts`);
     expect(src, `${fn} is expected to still be requireAuth:false (batch-2 worklist) — update this list if it was fixed`)

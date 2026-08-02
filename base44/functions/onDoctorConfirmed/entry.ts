@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
     try {
       const cases = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id: workflow.consultation_id });
       if (cases[0]?.id) {
-        await base44.functions.invoke('sendAIPartnerBriefs', { case_id: cases[0].id, workflow_id });
+        await base44.functions.invoke('sendAIPartnerBriefs', { case_id: cases[0].id, workflow_id, internal_secret: Deno.env.get('CRON_SECRET') });
       }
     } catch (e) {
       console.error('[onDoctorConfirmed] AI briefs (non-fatal):', e?.message);
