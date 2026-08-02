@@ -12,15 +12,24 @@ import {
 
 /**
  * AdminDataFreshness — the human review queue for every flagged change to
- * safety-critical, time-sensitive data. Nothing here auto-publishes: a person
- * reviews each flag and decides. Backed by the DataFreshnessReview entity, which
- * the freshness functions write to via _shared/freshness.ts:flagForReview.
+ * safety-critical, time-sensitive data. Nothing here auto-publishes for most
+ * subjects: a person reviews each flag and decides. Backed by the
+ * DataFreshnessReview entity, which the freshness functions write to via
+ * _shared/freshness.ts:flagForReview.
+ *
+ * ONE deliberate, narrowly-scoped exception: curated-data-refresh.yml (a
+ * monthly GitHub Action) auto-applies verified web-sourced fixes to
+ * src/lib/visaMatrix.js / src/lib/travelReadiness.js directly to `main`, then
+ * logs an already-`actioned` row here via logCuratedDataRefresh — nothing is
+ * waiting for a decision, it's a transparency record of what already
+ * happened (reviewer_name identifies it as automated, never a real person).
  */
 const SUBJECT = {
-  doctor_license:  { label: 'Doctor licence',  icon: Stethoscope },
-  clinic_status:   { label: 'Clinic status',   icon: Building2 },
-  visa_rule:       { label: 'Visa rule',        icon: Plane },
-  regulatory_rule: { label: 'Regulatory',       icon: Scale },
+  doctor_license:         { label: 'Doctor licence',        icon: Stethoscope },
+  clinic_status:          { label: 'Clinic status',         icon: Building2 },
+  visa_rule:              { label: 'Visa rule',              icon: Plane },
+  regulatory_rule:        { label: 'Regulatory',             icon: Scale },
+  passport_renewal_link:  { label: 'Passport renewal link',  icon: Plane },
 };
 
 const CHANGE_LABEL = {
@@ -148,6 +157,15 @@ export default function AdminDataFreshness() {
 
   const criticalCount = open.filter((f) => f.severity === 'critical').length;
 
+  // Auto-applied changes from curated-data-refresh.yml land straight in
+  // "Resolved" (nothing is waiting on her) — this banner is the only reason
+  // she'd notice one happened without clicking into that tab herself.
+  const autoAppliedCount = resolved.filter((f) =>
+    f.status === 'actioned' &&
+    (f.reviewer_name || '').includes('automated') &&
+    f.reviewed_at && (Date.now() - new Date(f.reviewed_at).getTime()) < 35 * 24 * 60 * 60 * 1000
+  ).length;
+
   return (
     <AdminLayout>
       <div className="max-w-3xl mx-auto px-4 py-6">
@@ -171,6 +189,13 @@ export default function AdminDataFreshness() {
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <ShieldAlert className="w-4 h-4" />
             {criticalCount} critical {criticalCount === 1 ? 'item needs' : 'items need'} review
+          </div>
+        )}
+
+        {autoAppliedCount > 0 && (
+          <div className="mb-4 flex items-center justify-between gap-2 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+            <span>{autoAppliedCount} change{autoAppliedCount === 1 ? '' : 's'} auto-applied this month</span>
+            <button type="button" className="underline" onClick={() => setTab('resolved')}>View</button>
           </div>
         )}
 

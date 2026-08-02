@@ -9,7 +9,8 @@
         "doctor_license",
         "clinic_status",
         "visa_rule",
-        "regulatory_rule"
+        "regulatory_rule",
+        "passport_renewal_link"
       ]
     },
     "subject_id": {

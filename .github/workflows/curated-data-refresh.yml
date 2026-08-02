@@ -1,0 +1,239 @@
+name: Curated data monthly refresh
+
+# Keeps two hand-curated data files honest against the real web every month,
+# with no human needing to trigger it:
+#   - src/lib/visaMatrix.js        (EXPLICIT_ROUTES, EVISA_LINKS)
+#   - src/lib/travelReadiness.js   (PASSPORT_RENEWAL_LINKS)
+#
+# Separate from .github/workflows/freshness-cron.yml on purpose: that
+# workflow calls Base44 edge functions over HTTP; this one runs Claude Code
+# directly, with real web-search/fetch tool access, because that is the
+# only way this repo has ever gotten those two files right — Base44's own
+# InvokeLLM(add_context_from_internet) already produced a wrong visa answer
+# for a real patient once, which is why the curated matrix overrides it.
+#
+# Auto-applies changes it's confident about (same trust model this repo
+# already accepts for base44-builder[bot]'s direct commits — reviewed after
+# the fact via `git log` and /admin/data-freshness, not gated beforehand).
+# It can ONLY ever touch the two files above (enforced below, not just
+# requested of the agent) and only ever commits if the build/tests/redteam/
+# typecheck all still pass — a broken build or a scope violation is
+# reverted before it ever reaches `main`.
+#
+# ONE-TIME SETUP (manual, cannot be done from a coding session):
+#   1. console.anthropic.com → Settings → API Keys → create a key.
+#   2. GitHub → repo Settings → Secrets and variables → Actions → New secret:
+#        name: ANTHROPIC_API_KEY   value: <that key>
+#   3. Publish the logCuratedDataRefresh function in the Base44 dashboard.
+#   4. Publish the DataFreshnessReview entity schema change (adds the
+#      'passport_renewal_link' subject_type) in the Base44 dashboard.
+#   Also reuses the CRON_SECRET already set up for freshness-cron.yml — no
+#   second secret needed for that part.
+#
+# Until ANTHROPIC_API_KEY is set, scheduled runs SKIP harmlessly (green,
+# with a warning) instead of failing — same pattern freshness-cron.yml uses
+# for CRON_SECRET.
+
+on:
+  schedule:
+    - cron: '17 9 3 * *'   # monthly, 3rd @ 09:17 UTC — not day 1, not top of hour
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Research and report only — never commit or push'
+        type: boolean
+        default: false
+
+concurrency:
+  group: curated-data-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      BASE: ${{ vars.FUNCTIONS_BASE_URL || 'https://sentinel-dental-care.base44.app' }}
+      APP: ${{ vars.BASE44_APP_ID || '6a01c1305c540b75f24dd373' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      TYPECHECK_BASELINE: 78
+    steps:
+      - name: Guard — Anthropic key configured
+        id: guard
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning::ANTHROPIC_API_KEY is not set as a GitHub repository secret — skipping this run (no failure). See this workflow's header for one-time setup."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.configured == 'true'
+        with:
+          fetch-depth: 0
+
+      - name: Record starting commit + configure git identity
+        if: steps.guard.outputs.configured == 'true'
+        run: |
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          # Distinct from base44-builder[bot] on purpose, so `git log` cleanly
+          # shows which automation made which change.
+          git config user.name "curated-data-refresh-bot"
+          git config user.email "curated-data-refresh-bot@users.noreply.github.com"
+
+      - name: Research + edit via Claude Code (narrowly scoped)
+        if: steps.guard.outputs.configured == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are performing a monthly maintenance check on exactly two
+            files in this repo: src/lib/visaMatrix.js and
+            src/lib/travelReadiness.js. You may not create, edit, or delete
+            any other file — a step that runs after you checks this with
+            `git diff --name-only` and will discard your entire commit if
+            anything else changed. Treat that as a hard boundary.
+
+            WHAT TO CHECK (use real WebSearch/WebFetch tool calls — not
+            memory, not a guess):
+
+            1. EVISA_LINKS in visaMatrix.js (~17 entries: destination
+               country -> official e-visa portal URL). For each: fetch the
+               URL. Is it live (not 404, not parked, not redirected to an
+               unrelated domain)? Does it still belong to that country's own
+               immigration/e-visa government authority?
+
+            2. PASSPORT_RENEWAL_LINKS in travelReadiness.js (~19 entries:
+               nationality demonym -> official passport-renewal government
+               URL). Same check: still live, still the correct country's own
+               government passport authority.
+
+            3. EXPLICIT_ROUTES in visaMatrix.js (~18 destination countries,
+               each with {origins, destinations, status} rules grouped by
+               nationality). For each destination country, check whether its
+               visa policy has changed in roughly the last 60 days for any
+               origin/group listed. Cross-check the file's own cited source
+               comment (each country block names a "Visa policy of X"
+               Wikipedia page) plus at least one live official government
+               source before changing anything.
+
+            RULES (fail closed — non-negotiable):
+
+            - Never fabricate or guess a URL. If you cannot find a real,
+              verifiable official source, leave the existing entry exactly
+              as it is.
+            - If a link looks dead or wrong but you cannot confidently find
+              its replacement, leave the code untouched. Do not delete the
+              entry, do not guess a replacement. Say so plainly in your
+              final response, prefixed "UNCERTAIN_FINDING:" on its own line.
+            - Only change an entry when you have a real, checkable source
+              for the new value. Cite that source in your commit message.
+            - Do not run npm/build/test/lint commands — a separate step in
+              this workflow does that after you finish, and will discard
+              your commit if anything fails. Your job is research + edit +
+              git commit only.
+            - Do not push. Do not touch git history beyond one commit on
+              top of HEAD.
+
+            IF YOU MAKE CHANGES: stage and commit them yourself (git add,
+            git commit — you have that access). Use this commit message
+            format:
+
+              data: monthly refresh of visaMatrix.js / travelReadiness.js (auto-applied)
+
+              Verified via WebSearch/WebFetch on <today's date>. Changes:
+              - <file>.<key>: <what changed> — confirmed via <source URL>
+
+              Left unchanged (could not confirm with confidence):
+              - <file>.<key>: <why> — flagged, not fixed
+
+              Auto-committed by curated-data-refresh.yml, same trust model
+              this repo already accepts for base44-builder[bot] — reviewed
+              after the fact via git log and /admin/data-freshness, not
+              gated before landing.
+
+            If you find nothing that needs to change, make no commit and
+            say so plainly.
+          claude_args: >-
+            --model claude-sonnet-5
+            --max-turns 40
+            --allowedTools "Read,Glob,Grep,WebSearch,WebFetch,Edit,Bash(git add:*),Bash(git commit:*),Bash(git status:*),Bash(git diff:*)"
+            --disallowedTools "Bash(git push:*),Bash(git reset:*),Bash(git checkout:*),Bash(rm:*),Write,NotebookEdit"
+
+      # The REAL safety boundary — not the agent's own tool permissions
+      # above, which may not enforce path-scoping exactly as configured.
+      - name: Enforce scope — only the two target files may have changed
+        if: steps.guard.outputs.configured == 'true'
+        id: scope
+        run: |
+          NEW_SHA=$(git rev-parse HEAD)
+          if [ "$NEW_SHA" = "$BASE_SHA" ]; then
+            echo "No commit created this run — nothing needed to change. Done."
+            echo "has_commit=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
+          BAD=$(echo "$CHANGED" | grep -v -E '^src/lib/(visaMatrix|travelReadiness)\.js$' || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Agent touched out-of-scope files: $BAD — reverting, not pushing."
+            git reset --hard "$BASE_SHA"
+            echo "has_commit=false" >> "$GITHUB_OUTPUT"
+            echo "SCOPE_VIOLATION=true" >> "$GITHUB_ENV"
+            exit 1
+          fi
+          echo "has_commit=true" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_SHA=$NEW_SHA" >> "$GITHUB_ENV"
+
+      - name: Gate 1/4 — build
+        if: steps.scope.outputs.has_commit == 'true'
+        run: npm ci && npm run build
+
+      - name: Gate 2/4 — vitest
+        if: steps.scope.outputs.has_commit == 'true'
+        run: npx vitest run
+
+      - name: Gate 3/4 — redteam
+        if: steps.scope.outputs.has_commit == 'true'
+        run: npx playwright install --with-deps chromium && npx playwright test --project=redteam
+
+      - name: Gate 4/4 — typecheck (baseline must not regress)
+        if: steps.scope.outputs.has_commit == 'true'
+        run: |
+          set +e
+          npm run typecheck > /tmp/typecheck.log 2>&1
+          COUNT=$(grep -c "error TS" /tmp/typecheck.log || true)
+          echo "typecheck errors: $COUNT (baseline: $TYPECHECK_BASELINE)"
+          if [ "$COUNT" -gt "$TYPECHECK_BASELINE" ]; then
+            echo "::error::Typecheck regressed ($COUNT > $TYPECHECK_BASELINE)"
+            exit 1
+          fi
+
+      - name: Push (only if every gate passed, and not a dry run)
+        if: steps.scope.outputs.has_commit == 'true' && github.event.inputs.dry_run != 'true'
+        run: git push origin HEAD:main
+
+      - name: Log outcome to /admin/data-freshness
+        if: always() && steps.guard.outputs.configured == 'true'
+        run: |
+          set +e
+          call () {
+            curl -sS -o /tmp/log_out.json -w '%{http_code}' -X POST \
+              "$BASE/api/apps/$APP/functions/logCuratedDataRefresh" \
+              -H 'Content-Type: application/json' \
+              -H "X-Cron-Secret: $CRON_SECRET" \
+              -d "$1"
+          }
+          if [ "${{ steps.scope.outputs.has_commit }}" = "true" ] && [ "${{ job.status }}" = "success" ] && [ "${{ github.event.inputs.dry_run }}" != "true" ]; then
+            PAYLOAD='{"subject_type":"visa_rule","subject_label":"Monthly curated-data refresh","change_type":"source_changed","detail":"Auto-applied on scheduled monthly re-check — see commit for details.","status":"actioned","commit_sha":"'"$COMMIT_SHA"'"}'
+            call "$PAYLOAD"
+          elif [ "${{ steps.scope.outputs.has_commit }}" = "false" ] && [ -n "${{ env.SCOPE_VIOLATION }}" ]; then
+            call '{"subject_type":"visa_rule","subject_label":"Monthly curated-data refresh","change_type":"source_unavailable","detail":"Agent attempted to edit an out-of-scope file — commit discarded, nothing applied. Investigate the run log.","status":"pending","severity":"critical"}'
+          elif [ "${{ job.status }}" != "success" ]; then
+            call '{"subject_type":"visa_rule","subject_label":"Monthly curated-data refresh","change_type":"source_unavailable","detail":"A verification gate (build/tests/redteam/typecheck) failed after the agent'\''s proposed change — nothing was applied. Check this run'\''s log.","status":"pending","severity":"critical"}'
+          else
+            echo "Nothing to log — no commit this run."
+          fi
