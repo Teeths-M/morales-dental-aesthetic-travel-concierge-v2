@@ -1,5 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 /**
  * flagProcedureStackingRisk
@@ -9,7 +10,16 @@ import { computePrevHash } from '../../shared/auditHashChain.ts';
  * and creates a doctor review notification.
  *
  * Auth: requireAuth is false — patient may not be logged in at booking stage.
+ * The schema below caps payload size and rejects unexpected fields — it
+ * does not gate access, which must stay open for the pre-account flow.
  */
+const FlagProcedureStackingRiskSchema = strictObject({
+  patient_email: z.string().trim().max(254).nullable().optional(),
+  patient_name: z.string().trim().max(200).nullable().optional(),
+  consultation_id: z.string().trim().max(200).nullable().optional(),
+  violations: z.array(z.record(z.any())).min(1, 'violations array is required and must be non-empty').max(50),
+});
+
 Deno.serve(createHandler(async ({ base44, body }) => {
   const {
     patient_email,
@@ -73,4 +83,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     review_due:  new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     message:     'Case flagged for medical review. A doctor will contact the patient within 24 hours.',
   });
-}, { name: 'flagProcedureStackingRisk', requireAuth: false }));
+}, { name: 'flagProcedureStackingRisk', requireAuth: false, bodySchema: FlagProcedureStackingRiskSchema }));

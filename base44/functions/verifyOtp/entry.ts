@@ -1,10 +1,19 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { checkRateLimit } from '../../shared/rateLimit.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 // Verifies a 6-digit OTP for either channel:
 //   { phone, code } — phone-channel session (existing login flow)
 //   { email, code } — email-channel session (onboarding email verification)
 // Codes are single-use and expire 10 minutes after issue (see sendOtp).
+// The exactly-one-of-phone-or-email rule stays a manual check below —
+// zod's cross-field validation is more ceremony than this needs.
+const VerifyOtpSchema = strictObject({
+  phone: z.string().trim().max(32).optional(),
+  email: z.string().trim().max(254).optional(),
+  code: z.string().trim().min(1).max(10),
+});
+
 export default createHandler(async ({ base44, body }) => {
   const { phone, email, code } = await body();
   if ((!phone && !email) || !code) return err('Phone or email, plus code, are required');
@@ -54,4 +63,4 @@ export default createHandler(async ({ base44, body }) => {
   const userEmail = users?.[0]?.email ?? null;
 
   return ok({ verified: true, phone: identifier, user_email: userEmail });
-}, { name: 'verifyOtp', requireAuth: false });
+}, { name: 'verifyOtp', requireAuth: false, bodySchema: VerifyOtpSchema });

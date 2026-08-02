@@ -1,6 +1,7 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { renderEmail, escapeHtml } from '../../shared/emailTemplate.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 // ── flagIntakeHandoff ─────────────────────────────────────────────────────
 // Fires when the conversational intake (/intake) can't confidently continue
@@ -19,6 +20,23 @@ interface HandoffBody {
   turn_history?: Array<{ step_id: string; question_shown: string; user_raw_text: string; timestamp: string }>;
   answers?: Record<string, unknown>;
 }
+
+// This is reachable by a genuinely unauthenticated prospective patient
+// (see requireAuth:false below) — the schema is here to cap payload size
+// and reject unexpected fields, not to gate access.
+const FlagIntakeHandoffSchema = strictObject({
+  session_id: z.string().trim().max(200).optional(),
+  user_email: z.string().trim().max(254),
+  user_name: z.string().trim().max(200).optional(),
+  reason: z.string().trim().max(500).optional(),
+  turn_history: z.array(z.object({
+    step_id: z.string().max(200).optional().default(''),
+    question_shown: z.string().max(2000).optional().default(''),
+    user_raw_text: z.string().max(2000).optional().default(''),
+    timestamp: z.string().max(100).optional().default(''),
+  })).max(200).optional().default([]),
+  answers: z.record(z.any()).optional().default({}),
+});
 
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { session_id, user_email, user_name, reason, turn_history = [], answers = {} } = await body<HandoffBody>();
@@ -91,4 +109,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }).catch(() => {});
 
   return ok({ success: true, handed_off_at: now });
-}, { name: 'flagIntakeHandoff', requireAuth: false }));
+}, { name: 'flagIntakeHandoff', requireAuth: false, bodySchema: FlagIntakeHandoffSchema }));
