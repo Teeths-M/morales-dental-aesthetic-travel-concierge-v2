@@ -189,7 +189,7 @@ test('ITINERARY: the clinic event uses the doctor-confirmed procedure_date when 
 test('COMMS: migrated legacy senders are link-only — nothing private leaves M', () => {
   for (const fn of ['releaseEscrowPayment', 'generateItineraryCalendar', 'processPaymentCascade', 'sendQuoteReminders', 'iq200Pipeline']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
-    expect(src, `${fn} imports the link-only helper`).toContain("from '../_shared/notify.ts'");
+    expect(src, `${fn} imports the link-only helper`).toContain("from '../../shared/notify.ts'");
     expect(src, `${fn} uses linkOnlyEmail`).toContain('linkOnlyEmail(');
   }
   // The partner-cascade activation email is now link-only (renders no patient name).
@@ -510,7 +510,7 @@ test('VALIDATION: createHandler runs bodySchema BEFORE the handler, and short-ci
 
 test('LLM PROMPT: translateEmergencySOS and walkieTalkieTranslate sanitize free text before it reaches the model', () => {
   const sos = read('base44/functions/translateEmergencySOS/entry.ts');
-  expect(sos, 'must import the sanitizer').toContain("from '../_shared/sanitizePromptInput.ts'");
+  expect(sos, 'must import the sanitizer').toContain("from '../../shared/sanitizePromptInput.ts'");
   const sanitizeIdx = sos.indexOf('sanitizePromptInput(message');
   const promptIdx = sos.indexOf('Original message:');
   expect(sanitizeIdx, 'must sanitize message').toBeGreaterThan(-1);
@@ -519,7 +519,7 @@ test('LLM PROMPT: translateEmergencySOS and walkieTalkieTranslate sanitize free 
   expect(sos, 'a flagged input must not block the emergency translation').not.toMatch(/\.flagged\s*&&[^;]*return/);
 
   const walkie = read('base44/functions/walkieTalkieTranslate/entry.ts');
-  expect(walkie, 'must import the sanitizer').toContain("from '../_shared/sanitizePromptInput.ts'");
+  expect(walkie, 'must import the sanitizer').toContain("from '../../shared/sanitizePromptInput.ts'");
   expect(walkie, 'must sanitize transcribed text before translation').toContain('sanitizePromptInput(originalText');
 });
 
@@ -1925,13 +1925,13 @@ test('PERFORMANCE: checkClinicStatus stays live-only — never wired into the me
 });
 
 test('PERFORMANCE: the shared in-memory cache helper is used by the intended read-heavy functions', () => {
-  const helper = read('base44/functions/_shared/memoCache.ts');
+  const helper = read('base44/shared/memoCache.ts');
   expect(helper).toContain('export function createMemoCache');
   expect(helper).toContain('export function createKeyedMemoCache');
 
   for (const fn of ['calculatePriceQuote', 'matchDoctorsForProcedure', 'intakePartnerAvailabilityPreview']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
-    expect(src, `${fn} should import the shared memo cache`).toMatch(/from ['"]\.\.\/_shared\/memoCache\.ts['"]/);
+    expect(src, `${fn} should import the shared memo cache`).toMatch(/from ['"]\.\.\/\.\.\/shared\/memoCache\.ts['"]/);
   }
 
   // getGeolocationAndCurrency is a documented exception: it's still on Base44's
@@ -2380,7 +2380,7 @@ test('PORTAL WRITE: sendTravelQuoteEmail and sendChauffeurQuoteAlert derive cons
 test('INTERNAL CALLERS: sendLocalDoctorReferral and generateItineraryCalendar require internalOrAdminAuthorized', () => {
   for (const fn of ['sendLocalDoctorReferral', 'generateItineraryCalendar']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
-    expect(src, `${fn} must import internalOrAdminAuthorized`).toContain("from '../_shared/internalAuth.ts'");
+    expect(src, `${fn} must import internalOrAdminAuthorized`).toContain("from '../../shared/internalAuth.ts'");
     expect(src, `${fn} must call the gate before doing anything`).toContain('await internalOrAdminAuthorized(internal_secret, base44)');
   }
 
@@ -2526,13 +2526,13 @@ test('XSS HARDENING: the 6 fixed call sites still escape their user-submitted fi
 });
 
 test('STRIPE WEBHOOKS: both signature-verifying webhooks use the shared, single-source verifyStripeSignature helper', () => {
-  const shared = read('base44/functions/_shared/verifyStripeSignature.ts');
+  const shared = read('base44/shared/verifyStripeSignature.ts');
   expect(shared, 'must use the raw body, not JSON.parse, before verification').toContain('await req.text()');
   expect(shared, "must verify via the Stripe SDK's async constructor (Deno-compatible)").toContain('constructEventAsync');
 
   for (const fn of ['stripePaymentWebhook', 'stripeIdentityWebhook']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
-    expect(src, `${fn} must import the shared verifier, not hand-roll its own`).toContain("from '../_shared/verifyStripeSignature.ts'");
+    expect(src, `${fn} must import the shared verifier, not hand-roll its own`).toContain("from '../../shared/verifyStripeSignature.ts'");
     expect(src, `${fn} must not construct its own Stripe client to verify webhooks (that would duplicate the shared helper)`).not.toContain('stripe.webhooks.constructEventAsync');
   }
 });

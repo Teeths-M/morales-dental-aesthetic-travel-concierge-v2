@@ -166,7 +166,7 @@ test.describe('#3 age boundaries + hard guardian gate', () => {
 
   test('SOURCE: the guardian gate is re-derived SERVER-SIDE and called before Consultation.create', () => {
     const fn = read('base44/functions/validateGuardianRequirement/entry.ts');
-    expect(fn).toContain("from '../_shared/guardianGate.ts'");
+    expect(fn).toContain("from '../../shared/guardianGate.ts'");
     expect(fn).toContain('evaluateGuardianGate');
 
     // Both entry points must call the server validator before creating the record.
@@ -289,7 +289,7 @@ test.describe('#6 stale/absent freshness fails safe', () => {
 test.describe('#7 server-side enforcement', () => {
   test('SOURCE: the RED procedure block is re-derived server-side (cannot be skipped by direct API)', () => {
     const src = read('base44/functions/validateProcedureSafety/entry.ts');
-    expect(src).toContain("from '../_shared/procedureCompatibility.ts'");
+    expect(src).toContain("from '../../shared/procedureCompatibility.ts'");
     // recomputed from raw names, client list never trusted; conditions are
     // read from the body too so the condition-aware RED rule can't be
     // skipped by a direct API call that omits them (see procedureCompatibility.ts)
