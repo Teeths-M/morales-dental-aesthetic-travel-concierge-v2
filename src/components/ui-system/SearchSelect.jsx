@@ -17,7 +17,7 @@ import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
  */
 export default function SearchSelect({
   value, onChange, options = [], placeholder, disabled = false, boxed = false, strict = false, dark = false,
-  testId,
+  testId = undefined,
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState(value || '');

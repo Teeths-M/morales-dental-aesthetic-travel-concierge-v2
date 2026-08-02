@@ -17,6 +17,30 @@ function isPlausibleUrl(raw) {
 }
 
 const COUNTRIES = [...SERVED_COUNTRIES].sort((a, b) => a.localeCompare(b));
+
+// "No free typing where a list would do" — same rule Country/City already
+// follow here. Activity/Event and Venue/Organizer stay non-strict (a real
+// named event or business is legitimate free text, same as City), but lead
+// with tappable common answers — "Just visiting" covers the very common
+// case of someone with no specific event to name. Activity Type IS a real
+// closed category, so it's strict: pick from the list, no free text.
+const JUST_VISITING = 'Just visiting — no specific activity or event';
+const ACTIVITY_NAME_SUGGESTIONS = [
+  JUST_VISITING, 'Surf camp', 'Business summit', 'Conference', 'Wedding',
+  'Music festival / Concert', 'Sports event', 'Family reunion',
+  'Honeymoon / Vacation', 'Retreat',
+];
+const VENUE_NOT_APPLICABLE = 'Not applicable — just visiting';
+const VENUE_SUGGESTIONS = [
+  VENUE_NOT_APPLICABLE, 'Hotel / Resort', 'Tour operator',
+  'Conference center', 'Event venue', "Friend or family's home",
+];
+const ACTIVITY_TYPE_OPTIONS = [
+  'Tourism / Sightseeing', 'Adventure / Outdoor', 'Business / Corporate',
+  'Wellness / Spa', 'Sports / Fitness event', 'Family visit',
+  'Cultural / Religious', 'Education / Study', 'Volunteering',
+  'Wedding / Celebration', 'Other',
+];
 function citiesFor(country) {
   if (!country) return [];
   const key = COUNTRIES.find((k) => k.toLowerCase() === country.toLowerCase());
@@ -122,18 +146,41 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
         {isNonMedical ? (
           <>
             <Field icon={Sparkles} label="Activity / Event">
-              <input className={textInput} placeholder="e.g., Surf camp, Business summit" value={form.activity_name || ''}
-                onChange={(e) => update('activity_name', e.target.value)} />
+              <SearchSelect
+                value={form.activity_name || ''}
+                onChange={(v) => {
+                  update('activity_name', v);
+                  // "Just visiting" genuinely has no venue/organizer to name —
+                  // auto-fill a true value so the required-field check below
+                  // (and the server's own) is honestly satisfied, never an
+                  // empty string forced through. Never overwrites something
+                  // the patient already typed themselves.
+                  if (v === JUST_VISITING && !form.venue_name?.trim()) {
+                    update('venue_name', VENUE_NOT_APPLICABLE);
+                  }
+                }}
+                options={ACTIVITY_NAME_SUGGESTIONS}
+                placeholder="e.g., Surf camp, Business summit"
+              />
             </Field>
 
             <Field icon={Building2} label="Venue / Organizer">
-              <input className={textInput} placeholder="Venue or organizer name" value={form.venue_name || ''}
-                onChange={(e) => update('venue_name', e.target.value)} />
+              <SearchSelect
+                value={form.venue_name || ''}
+                onChange={(v) => update('venue_name', v)}
+                options={VENUE_SUGGESTIONS}
+                placeholder="Venue or organizer name"
+              />
             </Field>
 
             <Field icon={MapPin} label="Activity Type">
-              <input className={textInput} placeholder="Adventure, Business, Tourism…" value={form.activity_type || ''}
-                onChange={(e) => update('activity_type', e.target.value)} />
+              <SearchSelect
+                value={form.activity_type || ''}
+                onChange={(v) => update('activity_type', v)}
+                options={ACTIVITY_TYPE_OPTIONS}
+                placeholder="Adventure, Business, Tourism…"
+                strict
+              />
             </Field>
           </>
         ) : (
