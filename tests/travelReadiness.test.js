@@ -90,10 +90,23 @@ describe('passport renewal help links — the "how do I actually do this" answer
     expect(getPassportRenewalLink('British')).toBe('https://www.gov.uk/renew-adult-passport');
   });
 
+  it('every CARICOM nationality in visaMatrix.js\'s own CARICOM list resolves to a real curated link, not the search fallback', () => {
+    const caricomNationalities = [
+      'Trinidad and Tobago', 'Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian',
+      'Antiguans', 'Antiguan', 'Belizean', 'Dominican', 'Saint Vincentian', 'Vincentian',
+      'Saint Lucian', 'St. Lucian', 'Kittitian', 'Guyanese', 'Bahamian', 'Surinamese',
+    ];
+    for (const nationality of caricomNationalities) {
+      const url = getPassportRenewalLink(nationality);
+      expect(url, `${nationality} should resolve to a curated link`).not.toMatch(/google\.com\/search/);
+      expect(url).toMatch(/^https:\/\//);
+    }
+  });
+
   it('an uncurated nationality falls back to a constructed search, never a fabricated URL', () => {
-    const url = getPassportRenewalLink('Trinidadian');
+    const url = getPassportRenewalLink('Kenyan');
     expect(url).toMatch(/^https:\/\/www\.google\.com\/search\?q=/);
-    expect(decodeURIComponent(url)).toContain('Trinidadian');
+    expect(decodeURIComponent(url)).toContain('Kenyan');
   });
 
   it('says nothing when there is no nationality to go on', () => {

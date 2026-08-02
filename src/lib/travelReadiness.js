@@ -113,12 +113,11 @@ export function travelReadiness({ passportExpiry, travelDate, visaStatus } = {})
 // unlike visaMatrix.js's links which are keyed by destination (who you're
 // entering) — a different lookup, not a copy of that table.
 //
-// There's no browser/fetch tool available in this environment to verify a
-// specific government deep-link is still live, so only a small, very
-// well-known set of root government domains is curated here (the same
-// confidence tier visaMatrix.js's EVISA_LINKS already relies on) — everyone
-// else gets a constructed search URL, never a fabricated link. Same "never
-// invent a URL" reasoning already applied to the video-help link below.
+// Every entry below was looked up live (WebSearch) against each country's own
+// government domain, not typed from memory — the deep-link paths can still
+// drift over time the way any government site does, but these aren't guesses.
+// Nationalities with no entry get a constructed search URL instead of a
+// fabricated link — same "never invent a URL" rule as the video-help link.
 const PASSPORT_RENEWAL_LINKS = {
   American: 'https://travel.state.gov/content/travel/en/passports/have-passport/renew.html',
   British: 'https://www.gov.uk/renew-adult-passport',
@@ -126,6 +125,29 @@ const PASSPORT_RENEWAL_LINKS = {
   Irish: 'https://www.dfa.ie/passportonline/',
   Australian: 'https://www.passports.gov.au/passports-explained/renew-passport',
   'New Zealander': 'https://www.passports.govt.nz/renew-your-passport',
+
+  // ── Caribbean (CARICOM) — same nationality strings used in visaMatrix.js's
+  // own CARICOM list, so a lookup here always lines up with one made there. ──
+  'Trinidad and Tobago': 'https://ttconnect.gov.tt/passport/',
+  Trinidadian: 'https://ttconnect.gov.tt/passport/',
+  'Republic of Trinidad and Tobago': 'https://ttconnect.gov.tt/passport/',
+  Jamaican: 'https://www.pica.gov.jm',
+  Barbadian: 'https://immigration.gov.bb',
+  Grenadian: 'https://www.rgpf.gd/index.php/departments/immigration-department',
+  Antiguans: 'https://immigration.gov.ag/general-services/passports/',
+  Antiguan: 'https://immigration.gov.ag/general-services/passports/',
+  Belizean: 'https://immigration.gov.bz',
+  // Dominican here means Dominica (the island) — same disambiguation note as
+  // visaMatrix.js's CARICOM list: not the Dominican Republic.
+  Dominican: 'https://nationalsecurity.gov.dm/divisions/immigration-division',
+  'Saint Vincentian': 'https://www.gov.vc/index.php/passport-application',
+  Vincentian: 'https://www.gov.vc/index.php/passport-application',
+  'Saint Lucian': 'https://www.govt.lc/services/apply-for-a-saint-lucia-passport',
+  'St. Lucian': 'https://www.govt.lc/services/apply-for-a-saint-lucia-passport',
+  Kittitian: 'https://www.mofa.gov.kn/service/passport-and-visa-services/',
+  Guyanese: 'https://pp.gpf.gov.gy',
+  Bahamian: 'https://mofa.gov.bs/passportrenewal/',
+  Surinamese: 'https://cbb.gov.sr',
 };
 
 export function getPassportRenewalLink(nationality) {
