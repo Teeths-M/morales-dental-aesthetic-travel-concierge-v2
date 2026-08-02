@@ -119,4 +119,9 @@ ${truncated}`;
     model:           'claude-haiku-4-5-20251001',
   });
 
-}, { name: 'extractClinicalNote', requireAuth: false }));
+// SECURITY: this calls the real Anthropic API with zero cap beyond
+// createHandler's generic 60/min default — a script could run up real
+// AI-credit spend fast. Doctor-portal callers legitimately need no session
+// (token-gated page), so this stays public but with a much tighter budget:
+// nobody pastes 8 clinical notes in 5 minutes for real.
+}, { name: 'extractClinicalNote', requireAuth: false, rateLimit: { max: 8, windowSeconds: 300 } }));

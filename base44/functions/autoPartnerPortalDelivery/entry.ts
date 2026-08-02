@@ -14,6 +14,7 @@
  */
 
 import { createHandler, ok } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -60,7 +61,15 @@ function proposalEmailHtml(clientName, payUrl) {
 </div>`;
 }
 
-Deno.serve(createHandler(async ({ base44 }) => {
+Deno.serve(createHandler(async ({ base44, req }) => {
+  // SECURITY: had zero auth — anyone could trigger this on demand. Each
+  // record only ever gets one portal/proposal email (gated on its own
+  // *_sent_at timestamp), so the real risk was uncontrolled trigger
+  // frequency and DB-scan cost, not repeat spam.
+  if (!(await cronAuthorized(req, base44))) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const now = new Date().toISOString();
   const results = { doctors: 0, agencies: 0, chauffeurs: 0, proposals: 0, skipped: 0, errors: 0 };
 

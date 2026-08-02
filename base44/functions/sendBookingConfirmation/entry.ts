@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
@@ -83,7 +84,15 @@ function bookingEmail({ clientName, procedures, departureDate, destination, case
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, consultation_id } = await body();
+  const { case_id, consultation_id, internal_secret } = await body();
+
+  // SECURITY: had zero auth and no real caller could be found anywhere in
+  // the repo — anyone with a case_id/consultation_id could re-trigger a
+  // real "booking confirmed" email + push at a real patient repeatedly.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id && !consultation_id) return err('case_id or consultation_id is required');
 
   let caseRecord: any = null;
@@ -137,4 +146,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }).catch(() => {});
 
   return ok({ sent_to: clientEmail, case_ref: caseRef });
-}, { name: 'sendBookingConfirmation', requireAuth: false }));
+}, { name: 'sendBookingConfirmation', requireAuth: false, allowedRoles: [] }));

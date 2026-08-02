@@ -1,5 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { buildPreOpChecklist } from '../../shared/preOpChecklist.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * sendPreOpInstructions — the patient's personalised "how to get ready" checklist.
@@ -12,7 +13,8 @@ import { buildPreOpChecklist } from '../../shared/preOpChecklist.ts';
  * message is LINK-ONLY (a nudge + secure link, no clinical content in the email).
  *
  * Trigger: after the doctor confirms the procedure date, or on the pre-op countdown.
- * requireAuth:false so the pipeline / cron can invoke it (no sensitive data in output).
+ * requireAuth:false so the pipeline / cron can invoke it (no sensitive data in output) —
+ * but gated with internalOrAdminAuthorized so it isn't a public repeat-spam vector.
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
@@ -31,7 +33,12 @@ function nudgeEmail(portalUrl: string): string {
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, force } = await body<{ case_id?: string; force?: boolean }>();
+  const { case_id, force, internal_secret } = await body<{ case_id?: string; force?: boolean; internal_secret?: string }>();
+
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
@@ -69,4 +76,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }
 
   return ok({ case_id, items: checklist.length, sent_at: now });
-}, { name: 'sendPreOpInstructions', requireAuth: false }));
+}, { name: 'sendPreOpInstructions', requireAuth: false, allowedRoles: [] }));

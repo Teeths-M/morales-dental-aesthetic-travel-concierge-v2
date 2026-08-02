@@ -132,7 +132,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         body: activationEmail({ partnerName: companion.full_name || companion.email, role: 'Companion',           ctaUrl: `${APP_URL}/companion-dashboard`, ctaLabel: 'Open Companion Dashboard →' }),
       }));
       // Also send companion meal brief
-      dispatches.push(base44.asServiceRole.functions?.invoke?.('sendCompanionMealBrief', { case_id, companion_email: companion.email }).catch(() => {}));
+      dispatches.push(base44.asServiceRole.functions?.invoke?.('sendCompanionMealBrief', { case_id, companion_email: companion.email, internal_secret: Deno.env.get('CRON_SECRET') }).catch(() => {}));
       cascaded.push('companion');
     }
   }

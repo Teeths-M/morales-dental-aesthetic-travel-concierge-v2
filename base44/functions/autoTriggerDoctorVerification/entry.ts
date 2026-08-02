@@ -12,8 +12,16 @@
  */
 
 import { createHandler, ok } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
-Deno.serve(createHandler(async ({ base44 }) => {
+Deno.serve(createHandler(async ({ base44, req }) => {
+  // SECURITY: had zero auth — anyone could trigger real AI-verification-pipeline
+  // spend and real "we're verifying you" emails to every eligible doctor on
+  // demand, far more often than the intended 30-minute cadence.
+  if (!(await cronAuthorized(req, base44))) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const results = { triggered: 0, skipped: 0, errors: 0 };
   const now = new Date().toISOString();
 

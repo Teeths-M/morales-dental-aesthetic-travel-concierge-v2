@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
@@ -95,7 +96,16 @@ function payNowEmail({ clientName, procedures, destination, caseRef,
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id } = await body();
+  const { case_id, internal_secret } = await body();
+
+  // SECURITY: had zero auth — anyone with a case_id could re-trigger this
+  // real payment-request email at a real patient repeatedly. Reads its own
+  // display data from CaseRecord, so no injection — this closes the
+  // spam/annoyance vector.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
@@ -138,4 +148,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   ]);
 
   return ok({ sent_to: c.client_email, package_price_full: c.package_price_full, package_price_terms: c.package_price_terms });
-}, { name: 'sendPayNowEmail', requireAuth: false }));
+}, { name: 'sendPayNowEmail', requireAuth: false, allowedRoles: [] }));

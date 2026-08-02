@@ -348,6 +348,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // Auto-matches a vetted companion, creates meal schedule, notifies both parties.
   if (n === 5) {
     base44.asServiceRole.functions?.invoke?.('activateMotherTouch', {
+      internal_secret: Deno.env.get('CRON_SECRET'),
       case_id: trip.case_id || trip_id,
       handshake_number: n,
     }).catch(() => {}); // non-blocking — handshake confirms regardless
@@ -361,6 +362,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         handshake_number: n,
         trip_id,
         case_id: trip.case_id || '',
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => {}) ?? Promise.resolve()
     );
   }
@@ -370,6 +372,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     downstream.push(
       base44.asServiceRole.functions?.invoke?.('sendGoldenMNotification', {
         trip_id,
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => {}) ?? Promise.resolve()
     );
 

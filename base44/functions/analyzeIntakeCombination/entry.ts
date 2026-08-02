@@ -39,4 +39,7 @@ Identify any clinically significant combination that a surgeon must know about b
     const parsed = m ? JSON.parse(m[0]) : null;
     return ok({ warning: parsed?.warning || null, severity: parsed?.severity || null });
   } catch { return ok({ warning: null, severity: null }); }
-}, { name: 'analyzeIntakeCombination', requireAuth: false, bodySchema: AnalyzeIntakeCombinationSchema }));
+// SECURITY: real Anthropic API call, no cap beyond the generic 60/min
+// default. Fires pre-account during intake, so it must stay public — tighter
+// budget instead of auth-gating closes the cost-DoS vector.
+}, { name: 'analyzeIntakeCombination', requireAuth: false, bodySchema: AnalyzeIntakeCombinationSchema, rateLimit: { max: 8, windowSeconds: 300 } }));

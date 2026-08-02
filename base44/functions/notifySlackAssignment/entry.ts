@@ -1,10 +1,20 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { doctor_name, doctor_email, patient_name, procedure, country, case_id, pool_size, active_cases } = await req.json();
+    const { doctor_name, doctor_email, patient_name, procedure, country, case_id, pool_size, active_cases, internal_secret } = await req.json();
+
+    // SECURITY: had zero auth and no real caller could be found anywhere in
+    // the repo — every field (doctor name/email, patient name, procedure)
+    // was trusted straight from the caller with no check against a real
+    // case, so anyone could post fabricated "new case assigned" messages
+    // into the internal #new-cases Slack channel.
+    if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
 

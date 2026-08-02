@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * calculatePackagePrice
@@ -23,7 +24,17 @@ const TERMS_MARKUP = 0.30;
 const CONSULT_FEE  = 49;
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id } = await body();
+  const { case_id, internal_secret } = await body();
+
+  // SECURITY: had zero auth — anyone with a case_id could re-trigger pricing
+  // and repeatedly fire the Pay Now email at a real patient. Doesn't take
+  // attacker-controlled cost figures (everything is read from CaseRecord's
+  // own stored quote fields), so this closes spam/repeat-trigger abuse, not
+  // a pricing-manipulation vector — there wasn't one.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
@@ -80,7 +91,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   });
 
   // Auto-fire Pay Now email
-  await base44.asServiceRole.functions?.invoke?.('sendPayNowEmail', { case_id }).catch(() => {});
+  await base44.asServiceRole.functions?.invoke?.('sendPayNowEmail', { case_id, internal_secret: Deno.env.get('CRON_SECRET') }).catch(() => {});
 
   return ok({
     case_id,
@@ -92,4 +103,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     first_installment:     packagePriceFirstInstall,
     breakdown: { treatment, flights, hotel, driver, companion },
   });
-}, { name: 'calculatePackagePrice', requireAuth: false }));
+}, { name: 'calculatePackagePrice', requireAuth: false, allowedRoles: [] }));

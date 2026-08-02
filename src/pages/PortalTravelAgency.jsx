@@ -138,8 +138,7 @@ export default function PortalTravelAgency() {
         });
         // Notify admin of the revision
         await base44.functions.invoke('notifyAdminQuoteRevised', {
-          consultation_id: tokenData.consultation_id,
-          patient_name: consultation?.patient_name,
+          token: tokenData.token,
           revision_count: newRevisionCount,
           flight_cost_usd: parseFloat(flightCost) || 0,
           hotel_cost_usd: parseFloat(hotelCost) || 0,

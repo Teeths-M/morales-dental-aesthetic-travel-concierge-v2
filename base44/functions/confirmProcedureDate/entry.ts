@@ -68,7 +68,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }).catch(() => {});
 
   // Fire the patient's pre-op prep now that a real date exists (non-blocking).
-  base44.asServiceRole.functions?.invoke?.('sendPreOpInstructions', { case_id }).catch(() => {});
+  base44.asServiceRole.functions?.invoke?.('sendPreOpInstructions', { case_id, internal_secret: Deno.env.get('CRON_SECRET') }).catch(() => {});
 
   await base44.asServiceRole.entities.AuditLog.create({
     event_type: 'procedure_date_confirmed',

@@ -29,4 +29,7 @@ Write ONE warm, personalized 2-sentence care response (as Morales concierge, not
     const d = await r.json();
     return ok({ patient_message: d.content?.[0]?.text?.trim() || null });
   } catch { return ok({ patient_message: null }); }
-}, { name: 'interpretRecoveryCheckIn', requireAuth: false }));
+// SECURITY: real Anthropic API call, no cap beyond the generic 60/min
+// default. A real patient submits one check-in at a time — tighter budget
+// closes the cost-DoS vector without needing a session check.
+}, { name: 'interpretRecoveryCheckIn', requireAuth: false, rateLimit: { max: 8, windowSeconds: 300 } }));

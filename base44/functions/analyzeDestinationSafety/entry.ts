@@ -32,4 +32,7 @@ Be specific to ${proc} — not generic travel advice. Focus on real practical co
     const parsed = m ? JSON.parse(m[0]) : null;
     return ok({ note: parsed?.note || null, time_note: parsed?.time_note || null });
   } catch { return ok({ note: null, time_note: null }); }
-}, { name: 'analyzeDestinationSafety', requireAuth: false }));
+// SECURITY: real Anthropic API call, no cap beyond the generic 60/min
+// default. Fires pre-account during booking, so it must stay public —
+// tighter budget instead of auth-gating closes the cost-DoS vector.
+}, { name: 'analyzeDestinationSafety', requireAuth: false, rateLimit: { max: 8, windowSeconds: 300 } }));

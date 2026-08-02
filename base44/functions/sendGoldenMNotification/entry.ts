@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
@@ -80,7 +81,16 @@ function goldenMEmail({ clientName, procedures, duration, caseRef }: {
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { trip_id } = await body();
+  const { trip_id, internal_secret } = await body();
+
+  // SECURITY: had zero auth — anyone with a trip_id could re-fire the
+  // "journey complete" celebration email/SMS/push at a real patient
+  // repeatedly. Uses the trip's own stored contact info, so no injection —
+  // this closes the spam/annoyance vector.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!trip_id) return err('trip_id is required');
 
   const trip = await base44.asServiceRole.entities.TravelRequest.get(trip_id).catch(() => null);
@@ -150,4 +160,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   await Promise.allSettled(tasks);
 
   return ok({ sent_to: clientEmail || 'no email', sms: !!clientPhone, duration });
-}, { name: 'sendGoldenMNotification', requireAuth: false }));
+}, { name: 'sendGoldenMNotification', requireAuth: false, allowedRoles: [] }));

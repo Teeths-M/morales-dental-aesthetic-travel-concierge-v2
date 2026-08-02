@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * activateMotherTouch
@@ -29,7 +30,16 @@ async function sendSms(to: string, msg: string) {
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, handshake_number } = await body();
+  const { case_id, handshake_number, internal_secret } = await body();
+
+  // SECURITY: had zero auth — anyone with a case_id could repeatedly create
+  // real, paid MothersTouchAssignment records (companion daily rate +
+  // grocery budget) and spam the assigned companion/patient. Its one real
+  // caller is completeHandshake (internal).
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
@@ -204,4 +214,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     recovery_days:    recoveryDays,
     patient_notified: !!(caseRecord.client_email || caseRecord.client_phone),
   });
-}, { name: 'activateMotherTouch', requireAuth: false }));
+}, { name: 'activateMotherTouch', requireAuth: false, allowedRoles: [] }));

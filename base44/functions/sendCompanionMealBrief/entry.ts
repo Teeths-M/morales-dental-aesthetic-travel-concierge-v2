@@ -1,11 +1,22 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, companion_email } = await body();
+  const { case_id, companion_email, internal_secret } = await body();
+
+  // SECURITY: had zero auth, and companion_email was caller-overridable —
+  // anyone could redirect this branded "you have a new assignment" email to
+  // an arbitrary address, or spam a real assigned companion repeatedly.
+  // Its one real caller (processPaymentCascade) already passes a trusted,
+  // server-resolved companion_email — internalOrAdminAuthorized covers it.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
@@ -53,4 +64,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   await Promise.allSettled(tasks);
 
   return ok({ sent_to: targets, patient: patientName, case_ref: caseRef });
-}, { name: 'sendCompanionMealBrief', requireAuth: false }));
+}, { name: 'sendCompanionMealBrief', requireAuth: false, allowedRoles: [] }));

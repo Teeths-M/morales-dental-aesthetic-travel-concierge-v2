@@ -120,7 +120,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     });
 
     // Auto-fire: calculatePackagePrice → sendPayNowEmail (async, non-blocking)
-    base44.asServiceRole.functions?.invoke?.('calculatePackagePrice', { case_id: caseId }).catch(() => {});
+    base44.asServiceRole.functions?.invoke?.('calculatePackagePrice', { case_id: caseId, internal_secret: Deno.env.get('CRON_SECRET') }).catch(() => {});
 
     return ok({
       case_id: caseId,

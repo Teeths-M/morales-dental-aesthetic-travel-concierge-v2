@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -39,7 +40,17 @@ function handshakeEmail({ partnerLabel, hsNum, line }: { partnerLabel: string; h
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { handshake_number, trip_id, case_id } = await body();
+  const { handshake_number, trip_id, case_id, internal_secret } = await body();
+
+  // SECURITY: had zero auth — anyone who could guess trip_id/case_id could
+  // fire a false "patient has arrived" alert at a real doctor or a false
+  // "delivery confirmed" alert at a real companion, with no such event
+  // having happened. Uses stored doctor_email/companion assignments, so no
+  // PII injection — this closes false-alarm/operational-confusion abuse.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!handshake_number || !trip_id) return err('handshake_number and trip_id are required');
 
   const hsNum = Number(handshake_number);
@@ -130,4 +141,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   await Promise.allSettled(tasks);
 
   return ok({ handshake_number: hsNum, notifications_sent: sent.length, sent_to: sent });
-}, { name: 'sendHandshakeAlert', requireAuth: false }));
+}, { name: 'sendHandshakeAlert', requireAuth: false, allowedRoles: [] }));

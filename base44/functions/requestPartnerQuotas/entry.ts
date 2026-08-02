@@ -1,6 +1,7 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * requestPartnerQuotas — fan a case out to travel, transfer, companion and
@@ -44,7 +45,17 @@ async function makeToken(caseId: string, partnerId: string, portalType: string) 
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id } = await body();
+  const { case_id, internal_secret } = await body();
+
+  // SECURITY: had zero auth and no real caller could be found anywhere in
+  // the repo — anyone with a confirmed case_id could re-fire real quote
+  // requests (email + push) at 4 real partners on demand. Gated the same
+  // way as its confirmed-internal siblings, so it stays usable by an
+  // admin session or a future wired-up caller without reopening it.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
+
   if (!case_id) return err('case_id is required');
 
   const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
@@ -197,4 +208,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   await Promise.allSettled(dispatches);
 
   return ok({ quotas_requested_to: sent, case_ref: caseRef });
-}, { name: 'requestPartnerQuotas', requireAuth: false }));
+}, { name: 'requestPartnerQuotas', requireAuth: false, allowedRoles: [] }));

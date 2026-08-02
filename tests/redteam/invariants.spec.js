@@ -2425,7 +2425,7 @@ test('DEMO EMAIL: sendTestEmail can only send to the fixed demo inbox, not an ar
     .toContain(`const ALLOWED_DEMO_RECIPIENT = '${demoEmailMatch[1]}'`);
 });
 
-test('AUTH: known-open gaps left deliberately (SOS-class + unverifiable automation caller) stay documented, not silently patched wrong', () => {
+test('AUTH: known-open gaps left deliberately (SOS-class + unverifiable automation caller + pre-account patient flows) stay documented, not silently patched wrong', () => {
   // activateEmergencyBeacon: SOS-class, must never gate on auth — only the
   // default IP+user rate limit is the correct mitigation here.
   const beacon = read('base44/functions/activateEmergencyBeacon/entry.ts');
@@ -2438,29 +2438,57 @@ test('AUTH: known-open gaps left deliberately (SOS-class + unverifiable automati
   // safety property that limits the current gap to replay/spam, not forgery).
   const hub = read('base44/functions/portalHubWorkflow/entry.ts');
   expect(hub, 'must still re-fetch the trusted Consultation record').toContain('base44.asServiceRole.entities.Consultation.get(consultation_id)');
+
+  // flagIntakeHandoff + flagProcedureStackingRisk: both fire during booking
+  // BEFORE the patient necessarily has a session — auth-gating them would
+  // break the real flow. XSS-escaped (flagIntakeHandoff's transcript) and
+  // rate-limited by createHandler's default; the realistic residual harm is
+  // review-queue noise, not a data leak or a safety bypass.
+  const handoff = read('base44/functions/flagIntakeHandoff/entry.ts');
+  expect(handoff, 'must stay reachable pre-account').toMatch(/requireAuth:\s*false/);
+  expect(handoff, 'transcript must stay escaped').toContain('escapeHtml(t.question_shown)');
+
+  const stacking = read('base44/functions/flagProcedureStackingRisk/entry.ts');
+  expect(stacking, 'must stay reachable pre-account').toMatch(/requireAuth:\s*false/);
 });
 
-test('AUTH: batch-2 unauthenticated comms/LLM endpoints are a tracked worklist, not a silent gap', () => {
-  // Lower severity than the 4 fixed above — link-only comms policy keeps PHI
-  // out of the message bodies, so the realistic harm is spam/cost, not a data
-  // leak. Not fixed in this pass; pinned here so it's a decision, not a miss.
-  const BATCH_2_KNOWN_OPEN = [
-    'calculatePackagePrice', 'notifyAdminQuoteRevised', 'sendGoldenMNotification', 'sendHandshakeAlert',
+test('AUTH: batch-2 unauthenticated comms/LLM endpoints — fully closed 2026-08-02', () => {
+  // Every function that was on this worklist is now either gated
+  // (internalOrAdminAuthorized / requireAuth:true / cronAuthorized) or given
+  // an explicit tighter rate limit (the 4 real Anthropic-API callers, which
+  // must stay public for pre-account patient flows). See project memory for
+  // the full batch and per-function reasoning.
+  const NOW_GATED = [
+    'calculatePackagePrice', 'sendGoldenMNotification', 'sendHandshakeAlert',
     'sendPayNowEmail', 'sendBookingConfirmation', 'requestPartnerQuotas',
-    'sendCompanionMealBrief', 'sendPreOpInstructions', 'flagIntakeHandoff', 'flagProcedureStackingRisk',
-    'activateMotherTouch', 'notifySlackAssignment', 'autoTriggerDoctorVerification',
-    'autoPartnerPortalDelivery', 'extractClinicalNote', 'analyzeIntakeCombination',
-    'analyzeDestinationSafety', 'interpretRecoveryCheckIn',
+    'sendCompanionMealBrief', 'sendPreOpInstructions',
+    'activateMotherTouch', 'notifySlackAssignment', 'sendAIPartnerBriefs',
   ];
-  // sendAIPartnerBriefs and iq200HandshakeEngine came off this list — both
-  // gated (internalOrAdminAuthorized and requireAuth:true respectively) in
-  // the 2026-08-02 hardening pass. See project memory for the full batch.
-  expect(BATCH_2_KNOWN_OPEN.length, 'batch is documented as ~19 functions').toBe(19);
-  for (const fn of BATCH_2_KNOWN_OPEN) {
+  for (const fn of NOW_GATED) {
     const src = read(`base44/functions/${fn}/entry.ts`);
-    expect(src, `${fn} is expected to still be requireAuth:false (batch-2 worklist) — update this list if it was fixed`)
-      .toMatch(/requireAuth:\s*false/);
+    expect(src, `${fn} must import internalOrAdminAuthorized`).toContain("from '../../shared/internalAuth.ts'");
+    expect(src, `${fn} must call the gate before doing anything`).toContain('await internalOrAdminAuthorized(internal_secret, base44)');
   }
+
+  const notifyRevised = read('base44/functions/notifyAdminQuoteRevised/entry.ts');
+  expect(notifyRevised, 'must derive consultation_id from a verified portal token, not a caller-supplied field')
+    .toContain('verifyPortalToken(token)');
+
+  const cronGated = ['autoTriggerDoctorVerification', 'autoPartnerPortalDelivery'];
+  for (const fn of cronGated) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must import cronAuthorized`).toContain("from '../../shared/cronAuth.ts'");
+    expect(src, `${fn} must call the gate before doing anything`).toContain('await cronAuthorized(req, base44)');
+  }
+
+  const rateLimited = ['extractClinicalNote', 'analyzeIntakeCombination', 'analyzeDestinationSafety', 'interpretRecoveryCheckIn'];
+  for (const fn of rateLimited) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must have a tighter-than-default rate limit`).toMatch(/rateLimit:\s*\{\s*max:\s*8,\s*windowSeconds:\s*300\s*\}/);
+  }
+
+  const iq200 = read('base44/functions/iq200HandshakeEngine/entry.ts');
+  expect(iq200, 'must require auth').toMatch(/requireAuth:\s*true/);
 });
 
 test('M RECON: checkRedViolations is always sourced from the real getViolations engine, never fixture-substitutable', () => {
