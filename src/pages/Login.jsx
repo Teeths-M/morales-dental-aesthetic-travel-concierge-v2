@@ -210,6 +210,7 @@ export default function Login() {
             PHONE NUMBER
           </label>
           <PhoneField
+            id="login-phone"
             value={phone}
             onChange={setPhone}
             defaultCountryName={ipCountry}

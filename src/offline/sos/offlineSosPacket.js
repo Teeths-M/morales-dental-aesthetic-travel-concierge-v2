@@ -151,7 +151,7 @@ export function getTwilioNumber() {
 /**
  * Cache the safety number on the device. Called while ONLINE, because the only
  * moment this can be fetched is before it is needed.
- * @returns {string} the number now cached, or '' if unavailable
+ * @returns {Promise<string>} the number now cached, or '' if unavailable
  */
 export async function refreshSafetyNumber(base44) {
   try {

@@ -246,6 +246,7 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
         message="Patients will no longer see a price from you for this procedure. You can add it back at any time."
         confirmLabel="Remove price"
         variant="danger"
+        icon={Trash2}
       />
     </div>
   );

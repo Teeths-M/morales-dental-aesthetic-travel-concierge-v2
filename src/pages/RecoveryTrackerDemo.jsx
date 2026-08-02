@@ -68,7 +68,7 @@ function PulsingDot({ color }) {
   );
 }
 
-function TrackerCard({ caseData, _lastRefresh }) {
+function TrackerCard({ caseData, lastRefresh }) {
   const currentStep = caseData.current_step ?? 0;
   const isComplete  = caseData.trip_phase === 'completed';
   const phaseInfo   = PHASE_MESSAGES[caseData.trip_phase] || PHASE_MESSAGES.pre_departure;

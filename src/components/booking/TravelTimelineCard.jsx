@@ -191,7 +191,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
   );
 }
 
-function TimelineRow({ icon, label, value, sub, _accent = false, highlight = false }) {
+function TimelineRow({ icon, label, value, sub, accent = false, highlight = false }) {
   return (
     <div className="flex items-center gap-3">
       <div

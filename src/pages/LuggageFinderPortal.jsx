@@ -123,7 +123,7 @@ export default function LuggageFinderPortal() {
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1 block">Your Phone (optional)</label>
-                <PhoneField value={form.finder_phone} onChange={v => setForm({ ...form, finder_phone: v })} placeholder="Your phone" />
+                <PhoneField id="luggage-finder-phone" value={form.finder_phone} onChange={v => setForm({ ...form, finder_phone: v })} placeholder="Your phone" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1 block">Your Email (optional)</label>

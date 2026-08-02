@@ -18,7 +18,7 @@ function StatusDot({ online }) {
   );
 }
 
-export default function TaxiServiceDashboard({ taxi, _language }) {
+export default function TaxiServiceDashboard({ taxi, language }) {
   const [isOnline, setIsOnline] = useState(taxi?.is_available ?? false);
   const [toggling, setToggling] = useState(false);
   const [viewingCase, setViewingCase] = useState(null);

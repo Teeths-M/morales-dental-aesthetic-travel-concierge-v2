@@ -265,7 +265,7 @@ export default function SecurityAgencySignup() {
                     <input className={inputClass} type="email" placeholder="contact@agency.com" value={form.email} onChange={e => set('email', e.target.value)} />
                   </Field>
                   <Field label="Phone" required>
-                    <PhoneField value={form.phone} onChange={v => set('phone', v)} defaultCountryName={form.country} placeholder="Phone number" />
+                    <PhoneField id="security-agency-signup-phone" value={form.phone} onChange={v => set('phone', v)} defaultCountryName={form.country} placeholder="Phone number" />
                   </Field>
                   <Field label="Country" required>
                     <SearchSelect

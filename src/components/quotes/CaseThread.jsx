@@ -84,11 +84,11 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
   return (
     <div style={{ marginTop: 12, border: `1px solid ${c.border}`, borderRadius: 12, padding: 12, background: c.bg }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, color: c.sub, fontSize: 12, fontWeight: 700 }}>
-        <MessageCircle size={13} /> Messages
+        <MessageCircle size="13" /> Messages
       </div>
 
       {isLoading ? (
-        <Loader2 size={16} className="animate-spin" style={{ color: c.sub }} />
+        <Loader2 size="16" className="animate-spin" style={{ color: c.sub }} />
       ) : messages.length === 0 ? (
         <p style={{ color: c.sub, fontSize: 12, margin: '4px 0 10px' }}>No messages yet.</p>
       ) : (
@@ -101,11 +101,11 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
                 opacity: m._pending ? 0.6 : 1 }}>
                 {m._pending ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: c.sub, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
-                    <Loader2 size={11} className="animate-spin" /> Sending…
+                    <Loader2 size="11" className="animate-spin" /> Sending…
                   </div>
                 ) : m.message_type === 'info_request' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: c.sub, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
-                    <HelpCircle size={11} /> Question
+                    <HelpCircle size="11" /> Question
                   </div>
                 )}
                 <p style={{ color: c.text, fontSize: 13, margin: 0, lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{m.body}</p>
@@ -130,7 +130,7 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#D4AF37', color: '#060B16',
             border: 'none', borderRadius: 99, padding: '8px 16px', fontSize: 13, fontWeight: 800,
             cursor: 'pointer', opacity: !text.trim() || post.isPending ? 0.5 : 1 }}>
-          {post.isPending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+          {post.isPending ? <Loader2 size="13" className="animate-spin" /> : <Send size="13" />}
           {patientAnswering ? 'Send answer' : 'Send'}
         </button>
         {viewer === 'doctor' && (
@@ -138,7 +138,7 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', color: c.text,
               border: `1px solid ${c.border}`, borderRadius: 99, padding: '8px 16px', fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: !text.trim() || post.isPending ? 0.5 : 1 }}>
-            <HelpCircle size={13} /> Ask for more info
+            <HelpCircle size="13" /> Ask for more info
           </button>
         )}
       </div>

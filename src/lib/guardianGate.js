@@ -32,6 +32,7 @@ export function isValidGuardianContact(contact) {
  * The single decision. For a minor, returns blocked:true until BOTH a guardian
  * name and a valid guardian contact are captured. For an adult (or unparseable
  * age) it is never blocked.
+ * @param {{ age?: any, guardian_name?: string, guardian_contact?: string }} [args]
  */
 export function evaluateGuardianGate({ age, guardian_name, guardian_contact } = {}) {
   if (!isMinorAge(age)) {

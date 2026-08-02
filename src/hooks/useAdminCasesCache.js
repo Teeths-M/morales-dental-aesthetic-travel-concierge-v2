@@ -85,7 +85,7 @@ async function fetchAdminCases() {
   // called again too soon after the last real attempt from ANY consumer.
   const sinceLastAttempt = Date.now() - _lastCaseListAttemptAt;
   if (sinceLastAttempt < CASE_LIST_MIN_INTERVAL_MS) {
-    const throttleErr = new Error(`Checked too recently — please wait ${Math.ceil((CASE_LIST_MIN_INTERVAL_MS - sinceLastAttempt) / 1000)}s before retrying.`);
+    const throttleErr = /** @type {any} */ (new Error(`Checked too recently — please wait ${Math.ceil((CASE_LIST_MIN_INTERVAL_MS - sinceLastAttempt) / 1000)}s before retrying.`));
     throttleErr.isClientThrottled = true;
     throw throttleErr;
   }
@@ -115,7 +115,7 @@ export function useAdminCasesShared() {
     staleTime: 30000, // Keep data fresh for 30 seconds across every consumer
     // One retry for a genuine transient blip; never retry a client-side
     // throttle or a real 429 — see fetchAdminCases/CASE_LIST_MIN_INTERVAL_MS.
-    retry: (failureCount, err) => {
+    retry: (failureCount, /** @type {any} */ err) => {
       if (err?.isClientThrottled) return false;
       if (err?.response?.status === 429 || err?.status === 429) return false;
       return failureCount < 1;

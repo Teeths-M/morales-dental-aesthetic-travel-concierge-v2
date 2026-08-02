@@ -8,7 +8,7 @@ import PartnerCaseDetailModal from './PartnerCaseDetailModal';
 
 const GOLD = '#D4AF37';
 
-export default function TravelAgencyDashboard({ agency, _language }) {
+export default function TravelAgencyDashboard({ agency, language }) {
   const [viewingCase, setViewingCase] = useState(null);
 
   // Pending quote requests for this agency

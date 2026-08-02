@@ -54,7 +54,7 @@ const BY_STATUS = {
  * @param {string}  [context] a tag for the console line, e.g. 'PaymentCheckout'
  * @returns {string} safe to render
  */
-export function friendlyError(err, fallback, context) {
+export function friendlyError(/** @type {any} */ err, fallback, context) {
   if (context) console.error(`[${context}]`, err);
   else console.error('[friendlyError]', err);
 
@@ -96,7 +96,7 @@ export function friendlyError(err, fallback, context) {
  *   if (!res.data?.success) throw safeError(res.data?.error || 'Could not save.');
  */
 export function safeError(message) {
-  const e = new Error(message);
+  const e = /** @type {any} */ (new Error(message));
   e.isSafeMessage = true;
   return e;
 }

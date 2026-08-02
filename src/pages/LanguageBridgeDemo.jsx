@@ -96,7 +96,7 @@ function speak(text, lang, onEnd, muted) {
   window.speechSynthesis.speak(u);
 }
 
-function BubbleRow({ line, revealed, _muted, onReveal }) {
+function BubbleRow({ line, revealed, muted, onReveal }) {
   const isJames = line.from === 'James';
 
   return (

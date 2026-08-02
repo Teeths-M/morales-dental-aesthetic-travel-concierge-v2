@@ -53,7 +53,7 @@ export default function ProcedureSelectionGate({ children }) {
      dismiss it would drop the user onto a form that has no idea what they are
      booking. The focus trap still applies — a keyboard user must be able to
      reach the eight options and nothing behind them. */
-  const gateRef = useModalA11y({ isOpen: !hasSelectedProcedure, closeOnEscape: false });
+  const gateRef = useModalA11y({ isOpen: !hasSelectedProcedure, onClose: () => {}, closeOnEscape: false });
 
   const handleSelect = (proc) => {
     addItem({ name: proc.name, procedure_enum: proc.procedure_enum, quantity: 1 });
@@ -91,7 +91,7 @@ export default function ProcedureSelectionGate({ children }) {
               {/* Header */}
               <div style={{ textAlign: 'center', marginBottom: 28 }}>
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06))', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <Stethoscope size={24} strokeWidth={1.5} style={{ color: GOLD }} />
+                  <Stethoscope size="24" strokeWidth={1.5} style={{ color: GOLD }} />
                 </div>
                 <h2 id="procedure-gate-title" style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
                   Let&rsquo;s start with what you&rsquo;re considering.
@@ -126,7 +126,7 @@ export default function ProcedureSelectionGate({ children }) {
                       background: CARD, border: `1px solid ${BORDER}`,
                     }}
                   >
-                    <proc.Icon size={20} strokeWidth={1.75} style={{ color: GOLD, marginBottom: 8, display: 'block' }} />
+                    <proc.Icon size="20" strokeWidth={1.75} style={{ color: GOLD, marginBottom: 8, display: 'block' }} />
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{proc.name}</p>
                     {/* Only the "not sure" card carries a second line now. The
                         rest need no subtitle — a procedure name is the whole
@@ -150,7 +150,7 @@ export default function ProcedureSelectionGate({ children }) {
                   is told plainly that it comes back is in a better position
                   than one who meets an unexpected $49 three steps later. */}
               <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.28)', margin: 0, flexWrap: 'wrap' }}>
-                <ShieldCheck size={12} strokeWidth={2} />
+                <ShieldCheck size="12" strokeWidth={2} />
                 $49 to start, credited to your package · Change anytime
               </p>
             </motion.div>

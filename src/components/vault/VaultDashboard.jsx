@@ -331,7 +331,7 @@ export default function VaultDashboard({ user }) {
       URL.revokeObjectURL(url);
 
       setPwModal({ open: false, vault: null, isLoading: false });
-    } catch (err) {
+    } catch (/** @type {any} */ err) {
       /* WebCrypto reports a wrong password and a corrupted file as the same two
          error names, so we cannot honestly tell the patient which it was. Both
          messages therefore lead with the likely cause and name the other, rather
@@ -687,7 +687,7 @@ export default function VaultDashboard({ user }) {
       <VaultPasswordModal
         isOpen={pwModal.open}
         isLoading={pwModal.isLoading}
-        error={pwModal.error}
+        error={/** @type {any} */ (pwModal).error}
         onClose={closePwModal}
         onConfirm={handleDecryptAndDownload}
       />

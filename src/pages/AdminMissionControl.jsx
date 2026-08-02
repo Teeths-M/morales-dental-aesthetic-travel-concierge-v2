@@ -63,7 +63,7 @@ function SignalDot({ color, size = 10 }) {
 }
 
 // ── Patient card ───────────────────────────────────────────────────────────
-function PatientCard({ c, medguardScore, evnScore, _onContact }) {
+function PatientCard({ c, medguardScore, evnScore, onContact }) {
   const riskLevel = medguardScore >= 81 ? 'CRITICAL' : medguardScore >= 61 ? 'ALERT' : medguardScore >= 31 ? 'WATCH' : 'SAFE';
   const risk      = RISK_CONFIG[riskLevel];
   const RiskIcon  = risk.icon;

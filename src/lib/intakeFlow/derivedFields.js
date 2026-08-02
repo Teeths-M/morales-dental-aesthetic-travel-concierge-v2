@@ -101,8 +101,8 @@ function formatMoney(n) {
 }
 
 /**
- * @param {object} args
- * @param {object} args.answers        flat field_id -> value map
+ * @param {object} [args]
+ * @param {object} [args.answers]      flat field_id -> value map
  * @param {object} [args.safetyStatus] from useCart — deterministic, procedureCompatibility
  * @param {object} [args.costEstimate] { status, data } from useIntakeBackgroundSearch
  * @param {object} [args.doctorSearch] { status, data } from useIntakeBackgroundSearch

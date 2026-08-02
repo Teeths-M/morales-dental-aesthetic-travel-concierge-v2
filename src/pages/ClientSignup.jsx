@@ -177,7 +177,7 @@ export default function ClientSignup() {
             <div>
               <label className="text-sm font-semibold text-foreground">Phone number</label>
               <div className="mt-2">
-                <PhoneField value={form.phone} onChange={(v) => update('phone', v)} defaultCountryName={form.nationality} placeholder="Phone number" />
+                <PhoneField id="client-signup-phone" value={form.phone} onChange={(v) => update('phone', v)} defaultCountryName={form.nationality} placeholder="Phone number" />
               </div>
             </div>
             <div>
@@ -217,7 +217,7 @@ export default function ClientSignup() {
               <div>
                 <label className="text-sm font-semibold text-foreground">Contact number</label>
                 <div className="mt-2">
-                  <PhoneField value={form.emergency_contact_number} onChange={(v) => update('emergency_contact_number', v)} defaultCountryName={form.nationality} placeholder="Contact number" />
+                  <PhoneField id="client-signup-emergency-contact-number" value={form.emergency_contact_number} onChange={(v) => update('emergency_contact_number', v)} defaultCountryName={form.nationality} placeholder="Contact number" />
                 </div>
               </div>
             </div>

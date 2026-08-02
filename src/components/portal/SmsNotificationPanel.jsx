@@ -107,7 +107,7 @@ export default function SmsNotificationPanel() {
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 block">
                 Patient Phone (E.164 format)
               </label>
-              <PhoneField value={to} onChange={setTo} placeholder="Patient phone" />
+              <PhoneField id="sms-recipient-phone" value={to} onChange={setTo} placeholder="Patient phone" />
             </div>
 
             {/* Dynamic params */}

@@ -25,12 +25,12 @@ function ProtectionShield() {
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
       background: 'rgba(212,175,55,0.08)', border: `1px solid rgba(212,175,55,0.3)`,
       borderRadius: 14, padding: '12px 16px' }}>
-      <Shield size={18} color={GOLD} />
+      <Shield size="18" color={GOLD} />
       <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>You're protected</span>
       {items.map((t) => (
         <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
           color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
-          <Check size={13} color="#34d399" /> {t}
+          <Check size="13" color="#34d399" /> {t}
         </span>
       ))}
     </div>
@@ -41,7 +41,7 @@ function Stars({ rating = 0 }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <Star key={i} size={13} color={GOLD} fill={i <= Math.round(rating) ? GOLD : 'none'} />
+        <Star key={i} size="13" color={GOLD} fill={i <= Math.round(rating) ? GOLD : 'none'} />
       ))}
     </span>
   );
@@ -153,7 +153,7 @@ export default function MyQuotes() {
       <div style={wrap}><div style={inner}>
         <ProtectionShield />
         <Center>
-          <Stethoscope size={40} color={GOLD} />
+          <Stethoscope size="40" color={GOLD} />
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: '16px 0 8px' }}>No active quote requests</h1>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 20 }}>
             Start a consultation and we'll invite specialist doctors to quote for you.
@@ -182,7 +182,7 @@ export default function MyQuotes() {
             {questions.map((q) => (
               <div key={q.id} style={{ ...cardStyle, borderColor: GOLD, marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: GOLD, fontWeight: 700, fontSize: 14 }}>
-                  <HelpCircle size={16} /> {q.doctor?.full_name || 'A doctor'} has a question for you
+                  <HelpCircle size="16" /> {q.doctor?.full_name || 'A doctor'} has a question for you
                 </div>
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: '6px 0 0' }}>
                   Answer to receive your quote from {[q.doctor?.clinic_city, q.doctor?.clinic_country].filter(Boolean).join(', ') || 'this specialist'}.
@@ -214,7 +214,7 @@ export default function MyQuotes() {
                 copy below tells the patient to leave and we will message them.
                 A spinner says "stay here", which contradicts it, and a spinner
                 that never resolves reads as a stall. */}
-            <Clock color={GOLD} size={22} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.8 }} />
+            <Clock color={GOLD} size="22" style={{ margin: '0 auto 12px', display: 'block', opacity: 0.8 }} />
             <p style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>We're gathering quotes from specialists.</p>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 6 }}>
               You don't need to wait here — we'll message you the moment quotes arrive.
@@ -234,7 +234,7 @@ export default function MyQuotes() {
                 {isBest && (
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: GOLD,
                     color: PAGE, fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 99, marginBottom: 12 }}>
-                    <Award size={12} /> Best value
+                    <Award size="12" /> Best value
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: 14 }}>
@@ -242,12 +242,12 @@ export default function MyQuotes() {
                     background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {d.photo_url
                       ? <img loading="lazy" decoding="async" src={d.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <Stethoscope size={22} color={GOLD} />}
+                      : <Stethoscope size="22" color={GOLD} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>{d.full_name || 'Verified specialist'}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 3 }}>
-                      <MapPin size={12} /> {[d.clinic_city, d.clinic_country].filter(Boolean).join(', ') || q.doctor_country || '—'}
+                      <MapPin size="12" /> {[d.clinic_city, d.clinic_country].filter(Boolean).join(', ') || q.doctor_country || '—'}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
                       <Stars rating={d.rating} />
@@ -257,7 +257,7 @@ export default function MyQuotes() {
                     </div>
                     {q.soonest && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 8, color: '#34d399', fontSize: 12 }}>
-                        <Calendar size={12} /> Soonest: {format(new Date(q.soonest), 'MMM d')}
+                        <Calendar size="12" /> Soonest: {format(new Date(q.soonest), 'MMM d')}
                       </div>
                     )}
                   </div>

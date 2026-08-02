@@ -26,7 +26,7 @@ const DOCUMENT_TYPES = [
   { value: 'other', label: 'ðŸ“„ Other', icon: 'ðŸ“„' },
 ];
 
-export default function VaultUploader({ onTokenIssued, _consultationId }) {
+export default function VaultUploader({ onTokenIssued, consultationId }) {
   const [step, setStep] = useState('idle');
   const [vaultMeta, setVaultMeta] = useState({
     document_type: 'passport',

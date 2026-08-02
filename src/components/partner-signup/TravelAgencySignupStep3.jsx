@@ -10,7 +10,7 @@ import SignupAuthGate from '@/components/auth/SignupAuthGate';
 import { validateFile } from '@/lib/validateFile';
 import { UPLOAD_PRESETS } from '@/lib/constants';
 
-export default function TravelAgencySignupStep3({ formData, setFormData, language, _onNext, onBack, onComplete }) {
+export default function TravelAgencySignupStep3({ formData, setFormData, language, onNext, onBack, onComplete }) {
   const _t = translations[language];
   const [payoutMethod, setPayoutMethod] = useState(formData.payout_method || null);
   const [licenseFile, setLicenseFile] = useState(null);

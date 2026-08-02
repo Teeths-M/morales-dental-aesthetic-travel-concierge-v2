@@ -168,7 +168,7 @@ const SCENARIOS = [
 
 // ── Score Bar ────────────────────────────────────────────────────────────────
 
-function ScoreBar({ score, _color, _label, action }) {
+function ScoreBar({ score, color, label, action }) {
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {

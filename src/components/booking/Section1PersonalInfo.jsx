@@ -235,6 +235,7 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
           <Label>{translations[language].emergencyContactNumber} <span className="text-destructive">*</span></Label>
           <div className="mt-1.5">
             <PhoneField
+              id="emergency-contact-number"
               value={form.emergency_contact_number}
               onChange={v => { update('emergency_contact_number', v); resetValidation(); }}
               defaultCountryName={ipCountry}
@@ -254,6 +255,7 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
           <Label>{translations[language].phone} <span className="text-destructive">*</span></Label>
           <div className="mt-1.5">
             <PhoneField
+              id="patient-phone"
               value={form.phone}
               onChange={v => { update('phone', v); resetValidation(); }}
               defaultCountryName={ipCountry}

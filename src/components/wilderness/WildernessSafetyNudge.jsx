@@ -70,7 +70,7 @@ export default function WildernessSafetyNudge({
   hasOperator = false,
   isRemote = false,
   isSolo = true,
-  _dark = true,
+  dark = true,
 }) {
   const assessment = useMemo(
     () => computeRisk({ activityType, hasOperator, isRemote, isSolo }),

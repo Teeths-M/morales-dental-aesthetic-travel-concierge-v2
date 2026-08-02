@@ -37,12 +37,12 @@ export default function PartnerCommandCenter() {
   });
 
   const isLoading = ld || lt || lx || ls;
-  const allPending = [
+  const allPending = /** @type {any[]} */ ([
     ...doctors.map(d => ({ ...d, _partnerType: 'doctor' })),
     ...travelAgencies.map(t => ({ ...t, _partnerType: 'travel_agency' })),
     ...taxiServices.map(t => ({ ...t, _partnerType: 'taxi' })),
     ...securityAgencies.map(s => ({ ...s, _partnerType: 'security' })),
-  ].sort((a, b) => (b.internet_risk_score ?? 0) - (a.internet_risk_score ?? 0));
+  ]).sort((a, b) => (b.internet_risk_score ?? 0) - (a.internet_risk_score ?? 0));
 
   const highCount = allPending.filter(p => p.internet_risk_level === 'high').length;
   const medCount = allPending.filter(p => p.internet_risk_level === 'medium').length;

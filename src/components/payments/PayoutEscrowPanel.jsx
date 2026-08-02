@@ -22,7 +22,7 @@ const MILESTONE_LABELS = {
   procedure_complete: 'Procedure Complete (Stage 11)',
 };
 
-export default function PayoutEscrowPanel({ caseId, _caseRecord }) {
+export default function PayoutEscrowPanel({ caseId, caseRecord }) {
   const [partnerType, setPartnerType] = useState('doctor');
   const [partnerId, setPartnerId] = useState('');
   const [stripeAccountId, setStripeAccountId] = useState('');
