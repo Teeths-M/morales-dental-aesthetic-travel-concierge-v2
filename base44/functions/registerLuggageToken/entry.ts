@@ -1,4 +1,4 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { case_id, bag_label, bag_number, airline_pnr, airline_code, flight_number, origin_airport, destination_airport } = await body();

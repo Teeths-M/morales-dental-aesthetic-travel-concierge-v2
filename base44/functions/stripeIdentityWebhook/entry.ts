@@ -1,5 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { verifyStripeSignature } from '../_shared/verifyStripeSignature.ts';
+import { verifyStripeSignature } from '../../shared/verifyStripeSignature.ts';
 
 Deno.serve(async (req) => {
   try {

@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { renderEmail } from '../../shared/emailTemplate.ts';
 
 // Signed email-confirmation token (same HMAC pattern as portal tokens).
 // Clicking "Confirm your email" in this message is the passive verification —

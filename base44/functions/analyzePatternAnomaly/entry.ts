@@ -11,8 +11,8 @@
  * This function only fires when we actually need to dispatch a nudge.
  * Expected call frequency: once per anomaly event, not on every signal.
  */
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {

@@ -1,6 +1,6 @@
-import { createHandler } from '../_shared/createHandler.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { buildInformedConsentHtml } from '../_shared/informedConsentArchive.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { buildInformedConsentHtml } from '../../shared/informedConsentArchive.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

@@ -1,7 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
-import { createCaseFromConsultation } from '../_shared/createCaseFromConsultation.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
+import { createCaseFromConsultation } from '../../shared/createCaseFromConsultation.ts';
 
 // Inline token encoder (no local imports allowed)
 // FIX: the '.'-suffix was previously crypto.getRandomValues() random bytes — it

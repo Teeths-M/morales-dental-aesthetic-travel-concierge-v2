@@ -1,7 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { verifyPortalToken } from '../_shared/portalToken.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { verifyPortalToken } from '../../shared/portalToken.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {

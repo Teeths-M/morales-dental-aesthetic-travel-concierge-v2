@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const IntakeTurnSchema = strictObject({
   step_id: Fields.shortText(100),

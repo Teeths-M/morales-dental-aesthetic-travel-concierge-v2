@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Seeds one CaseRecord in a rich, mid-journey state (Travel-Coordination, 50%
 // deposit paid, doctor confirmed) so the patient dashboard and admin case views

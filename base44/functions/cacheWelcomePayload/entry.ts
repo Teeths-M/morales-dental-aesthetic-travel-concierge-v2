@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 // ── cacheWelcomePayload ───────────────────────────────────────────────────────
 // Builds a fully-resolved welcome payload from:

@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 import webPush from 'npm:web-push@3.6.7';
 
 Deno.serve(async (req) => {

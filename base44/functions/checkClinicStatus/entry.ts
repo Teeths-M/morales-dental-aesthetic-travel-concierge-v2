@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { TTL_MS, isFresh, flagForReview } from '../../shared/freshness.ts';
 
 /**
  * checkClinicStatus — LIVE, time-of-action clinic operating-status check.

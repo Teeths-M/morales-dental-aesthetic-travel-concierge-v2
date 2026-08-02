@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── checkWeatherAlerts ─────────────────────────────────────────────────────────
 // CR 25 — Weather-to-Health Alert

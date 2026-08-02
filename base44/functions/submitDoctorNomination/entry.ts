@@ -1,7 +1,7 @@
-import { createHandler, ok, err, type Base44Client } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { createHandler, ok, err, type Base44Client } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const CONSENT_VERSION = '1.0';
 const MAX_PER_DAY = 5;

@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { BYOJ_PLANS, BYOJ_DISCLOSURE_VERSION } from '../_shared/byoj.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { BYOJ_PLANS, BYOJ_DISCLOSURE_VERSION } from '../../shared/byoj.ts';
 
 // ── enrollExternalJourney (Bring Your Own Journey) ────────────────────────────
 // Turns a verified external itinerary into a protected journey.

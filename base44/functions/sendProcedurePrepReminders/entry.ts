@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
 
 /**
  * sendProcedurePrepReminders

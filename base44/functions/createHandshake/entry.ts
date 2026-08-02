@@ -1,5 +1,5 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 // Per-checkpoint default expiry (hours) — context-aware, not a single fixed timeout.
 // Driver pickup: 20 min (missed = reroute fast). Flight leg: 5h (you're airborne).

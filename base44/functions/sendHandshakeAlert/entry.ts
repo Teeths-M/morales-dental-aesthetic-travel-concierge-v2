@@ -1,5 +1,5 @@
-﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
+﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');

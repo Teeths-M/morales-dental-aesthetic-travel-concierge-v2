@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { scrubContact } from '../_shared/contactScrub.ts';
-import { guardText } from '../_shared/blocker.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { scrubContact } from '../../shared/contactScrub.ts';
+import { guardText } from '../../shared/blocker.ts';
 
 /**
  * postCaseMessage — the two-way clarification thread (doctor/partner ↔ patient).

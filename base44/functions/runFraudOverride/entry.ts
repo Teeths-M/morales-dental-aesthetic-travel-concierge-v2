@@ -1,6 +1,6 @@
 // @ts-nocheck — Deno types not in VS Code LSP (pre-existing config gap, not a real error)
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 // Valid override actions
 const VALID_ACTIONS = new Set(['fast_track_clear', 'whitelist', 'escalate']);

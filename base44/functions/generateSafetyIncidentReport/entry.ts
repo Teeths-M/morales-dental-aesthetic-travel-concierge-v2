@@ -3,8 +3,8 @@
  * Compiles a wilderness/SOS incident timeline report with AI narrative synthesis.
  * Does NOT include sensitive medical/vault data.
  */
-import { createHandler } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';

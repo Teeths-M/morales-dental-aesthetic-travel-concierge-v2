@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { escapeHtml } from '../_shared/emailTemplate.ts';
+import { escapeHtml } from '../../shared/emailTemplate.ts';
 
 async function generateGrantToken() {
   const rawBytes = new Uint8Array(24);

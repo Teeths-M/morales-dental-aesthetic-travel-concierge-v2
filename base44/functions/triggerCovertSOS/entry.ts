@@ -11,9 +11,9 @@
  * Escalation: Jump straight to Strike 3 (immediate security dispatch).
  * Reason: if someone used the covert trigger, the situation is already critical.
  */
-import { createHandler, ok } from '../_shared/createHandler.ts';
-import { emergencyDispatch } from '../_shared/notify.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
+import { emergencyDispatch } from '../../shared/notify.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 async function sendSms(to: string, message: string) {
   const sid   = Deno.env.get('TWILIO_ACCOUNT_SID');

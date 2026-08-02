@@ -1,5 +1,5 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 // selected_addon_ids intentionally accepts any string (not an enum of known
 // catalog keys) — the existing lookup already falls back gracefully for an

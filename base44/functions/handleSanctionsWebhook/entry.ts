@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ComplyAdvantage monitoring webhooks fire when a previously-screened entity
 // appears on a new list (e.g. a partner who cleared initial screening later

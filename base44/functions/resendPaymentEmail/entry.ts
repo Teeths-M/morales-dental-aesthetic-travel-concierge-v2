@@ -1,5 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+import { renderEmail } from '../../shared/emailTemplate.ts';
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');

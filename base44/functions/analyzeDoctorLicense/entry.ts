@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 /**
  * analyzeDoctorLicense — AI-assisted EXTRACTION of a license document, for the

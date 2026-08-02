@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
-import { scrubPHI } from '../_shared/scrubPHI.ts';
-import { escapeHtml } from '../_shared/emailTemplate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
+import { scrubPHI } from '../../shared/scrubPHI.ts';
+import { escapeHtml } from '../../shared/emailTemplate.ts';
 
 // ── moralesAssist ─────────────────────────────────────────────────────────────
 // AI concierge for Morales Assist. Resolves support requests through natural

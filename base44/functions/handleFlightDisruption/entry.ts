@@ -17,8 +17,8 @@
  * the patient is airborne or the disruption is resolved.
  */
 
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');

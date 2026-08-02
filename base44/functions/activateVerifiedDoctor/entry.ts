@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { createHandler } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 // ── activateVerifiedDoctor ────────────────────────────────────────────────────
 // THE SINGLE GATED FUNCTION that can set a Doctor to status='active'.

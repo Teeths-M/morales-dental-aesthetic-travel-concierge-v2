@@ -1,4 +1,4 @@
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 const VALID_SOURCES = ['gps', 'manual', 'ip_geo', 'checkin_handshake'];
 

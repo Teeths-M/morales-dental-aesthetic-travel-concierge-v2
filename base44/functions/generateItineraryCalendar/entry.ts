@@ -1,6 +1,6 @@
-﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
+﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * generateItineraryCalendar — Booking.com Calendar Sync Model

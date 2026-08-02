@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { createMemoCache } from '../_shared/memoCache.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { createMemoCache } from '../../shared/memoCache.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';

@@ -5,8 +5,8 @@
  * simultaneously activating the notification blackout (Stage 11).
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { resolveCaseIdentity } from '../_shared/resolveCaseIdentity.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { resolveCaseIdentity } from '../../shared/resolveCaseIdentity.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {

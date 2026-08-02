@@ -1,7 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { verifyPortalToken } from '../_shared/portalToken.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { verifyPortalToken } from '../../shared/portalToken.ts';
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — previously an
 // unsigned plain btoa(JSON) token with no signature suffix, which fails that
@@ -67,9 +67,9 @@ Deno.serve(createHandler(async ({ req }) => {
 
     // Generate tokenized portal link for chauffeur
     const payload = { consultation_id, partner_id: taxi_service_id || '', portal_type: 'transfer' };
-    const token = await encodePortalToken({ ...payload, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 });
+    const chauffeurToken = await encodePortalToken({ ...payload, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 });
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-    const chauffeurPortalUrl = `${appUrl}/portal/transfer?token=${token}`;
+    const chauffeurPortalUrl = `${appUrl}/portal/transfer?token=${chauffeurToken}`;
 
     // Fetch taxi service email if ID provided
     let driverEmail = null;

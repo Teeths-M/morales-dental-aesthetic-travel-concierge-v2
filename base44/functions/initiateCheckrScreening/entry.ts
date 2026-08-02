@@ -1,4 +1,4 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { provider_id, provider_type, provider_email, provider_name } = await body();

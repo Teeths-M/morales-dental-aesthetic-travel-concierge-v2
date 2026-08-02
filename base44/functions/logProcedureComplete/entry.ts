@@ -4,10 +4,10 @@
  * transitions the case to RECOVERY_PHASE_7_DAY.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { resolveCaseIdentity } from '../_shared/resolveCaseIdentity.ts';
-import { computeProcedureMatch } from '../_shared/procedureMatch.ts';
-import { sanitizeFields } from '../_shared/sanitizePromptInput.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { resolveCaseIdentity } from '../../shared/resolveCaseIdentity.ts';
+import { computeProcedureMatch } from '../../shared/procedureMatch.ts';
+import { sanitizeFields } from '../../shared/sanitizePromptInput.ts';
 
 const MATCH_NARRATION_MODEL = 'gpt_5_mini';
 

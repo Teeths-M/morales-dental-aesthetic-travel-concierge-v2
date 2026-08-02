@@ -1,6 +1,6 @@
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 import { createHmac } from 'node:crypto';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 // partner_type is a length-capped string, not an enum — the existing if/else
 // chain below already tolerates an unrecognized value (falls through to

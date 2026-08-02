@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 /**
  * receiveSatelliteWebhook

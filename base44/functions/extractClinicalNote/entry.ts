@@ -8,7 +8,7 @@
  * Auth: requireAuth: false — accessed from token-gated doctor portal.
  * Env vars required: ANTHROPIC_API_KEY
  */
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ body }) => {
   const { note_text } = await body();

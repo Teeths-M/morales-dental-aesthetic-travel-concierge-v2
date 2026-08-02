@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { flagForReview } from '../_shared/freshness.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { flagForReview } from '../../shared/freshness.ts';
 
 /**
  * detectRegulatoryChanges — lightweight change-detection over the RegulatorySource

@@ -13,7 +13,7 @@
  *   proposal_link_sent_at (patient never got their payment link)
  */
 
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');

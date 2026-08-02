@@ -1,5 +1,5 @@
-﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';

@@ -1,5 +1,5 @@
-import { createHandler, ok, err, Base44Client } from '../_shared/createHandler.ts';
-import { createMemoCache } from '../_shared/memoCache.ts';
+import { createHandler, ok, err, Base44Client } from '../../shared/createHandler.ts';
+import { createMemoCache } from '../../shared/memoCache.ts';
 
 // ── intakePartnerAvailabilityPreview ─────────────────────────────────────────
 // Read-only preview of travel/transfer partner coverage for a destination —

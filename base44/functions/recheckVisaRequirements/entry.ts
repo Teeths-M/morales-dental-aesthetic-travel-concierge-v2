@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { fetchVisaRequirement } from '../_shared/visaLookup.ts';
-import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { fetchVisaRequirement } from '../../shared/visaLookup.ts';
+import { TTL_MS, isFresh, flagForReview } from '../../shared/freshness.ts';
 
 /**
  * recheckVisaRequirements — scheduled WEEKLY refresh of cached visa snapshots so

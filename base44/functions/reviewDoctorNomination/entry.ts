@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { renderEmail } from '../_shared/emailTemplate.ts';
-import { signOptOutToken } from '../_shared/optOutToken.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { renderEmail } from '../../shared/emailTemplate.ts';
+import { signOptOutToken } from '../../shared/optOutToken.ts';
 
 /**
  * reviewDoctorNomination — the only function that can send doctor-nomination

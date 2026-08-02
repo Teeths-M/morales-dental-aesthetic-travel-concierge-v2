@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { buildPreOpChecklist } from '../_shared/preOpChecklist.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { buildPreOpChecklist } from '../../shared/preOpChecklist.ts';
 
 /**
  * sendPreOpInstructions — the patient's personalised "how to get ready" checklist.

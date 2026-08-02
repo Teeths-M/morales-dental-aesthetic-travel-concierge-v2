@@ -4,7 +4,7 @@
  * Creates a NightlifeSafetySession, logs starting location, creates guardian link,
  * and schedules a tighter check-in using the existing SoloCheckIn system.
  */
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 function generateToken(len = 32) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

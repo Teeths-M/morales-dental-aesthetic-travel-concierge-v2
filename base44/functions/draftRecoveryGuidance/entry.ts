@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computeRecoveryGuidance, RecoveryGuidanceProfileInput } from '../_shared/recoveryGuidanceRules.ts';
-import { sanitizeFields } from '../_shared/sanitizePromptInput.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computeRecoveryGuidance, RecoveryGuidanceProfileInput } from '../../shared/recoveryGuidanceRules.ts';
+import { sanitizeFields } from '../../shared/sanitizePromptInput.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 /**
  * draftRecoveryGuidance — Phase 1 (Recovery Wellness Guidance).

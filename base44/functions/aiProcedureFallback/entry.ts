@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {

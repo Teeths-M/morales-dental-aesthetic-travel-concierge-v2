@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 // Called when HS5 (clinic appointment) handshake is confirmed.
 // Schedules post-procedure recovery check-ins for the patient.

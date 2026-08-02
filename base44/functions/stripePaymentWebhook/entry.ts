@@ -14,8 +14,8 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { verifyStripeSignature } from '../_shared/verifyStripeSignature.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { verifyStripeSignature } from '../../shared/verifyStripeSignature.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 /**
  * attestClinicStatus — a HUMAN confirms a clinic's current operating status,

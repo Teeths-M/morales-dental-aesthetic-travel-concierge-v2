@@ -1,5 +1,5 @@
-﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
+﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 
 /**
  * sendAIPartnerBriefs

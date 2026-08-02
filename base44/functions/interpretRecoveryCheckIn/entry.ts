@@ -1,4 +1,4 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';

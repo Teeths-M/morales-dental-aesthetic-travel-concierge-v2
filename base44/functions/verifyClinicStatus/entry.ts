@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { verifyClinicOperating } from '../_shared/clinicVerify.ts';
-import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { verifyClinicOperating } from '../../shared/clinicVerify.ts';
+import { TTL_MS, isFresh, flagForReview } from '../../shared/freshness.ts';
 
 /**
  * verifyClinicStatus — the AGENTIC clinic verifier. Runs on a schedule and keeps

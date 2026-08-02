@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { verifyOptOutToken } from '../_shared/optOutToken.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { verifyOptOutToken } from '../../shared/optOutToken.ts';
 
 /**
  * optOutDoctorOutreach — public, token-gated. The doctor has no M account, so

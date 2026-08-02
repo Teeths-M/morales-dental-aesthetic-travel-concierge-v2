@@ -1,5 +1,5 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
-import { escapeHtml } from '../_shared/emailTemplate.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
+import { escapeHtml } from '../../shared/emailTemplate.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { message, category, submitted_at } = await body();

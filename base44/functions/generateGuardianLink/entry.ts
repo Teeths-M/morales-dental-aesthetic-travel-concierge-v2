@@ -1,4 +1,4 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
 
 function generateToken(length = 32) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

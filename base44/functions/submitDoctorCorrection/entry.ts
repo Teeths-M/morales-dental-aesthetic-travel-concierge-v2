@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { z, strictObject } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 // Generous caps — sanitize() below does the real truncation (200/200/200/
 // 4000/254); this schema's job is reject-unexpected-fields + basic typing.

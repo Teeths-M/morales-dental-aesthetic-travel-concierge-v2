@@ -1,4 +1,4 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user }) => {
   const isAdmin = user.role === 'admin' || user.role === 'platform_admin';

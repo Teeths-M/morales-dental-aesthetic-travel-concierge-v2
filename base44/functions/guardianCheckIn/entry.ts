@@ -11,9 +11,9 @@
  *   - useGuardianMode hook (client-side schedule trigger)
  *   - Future cron job (when native app ships)
  */
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const GuardianCheckInSchema = strictObject({
   consultation_id: Fields.shortText(100),

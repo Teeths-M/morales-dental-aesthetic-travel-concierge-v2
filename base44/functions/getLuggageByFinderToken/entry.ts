@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Public, anonymous — /luggage/:token is scanned off a QR code with no login.
 // Returns only what the finder needs to see; never the owner's email, case_id,

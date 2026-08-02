@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject, validate } from '../_shared/validate.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject, validate } from '../../shared/validate.ts';
 
 // user_email left optional here — the existing check below already returns
 // the exact "Valid email required" message for anything missing/invalid;

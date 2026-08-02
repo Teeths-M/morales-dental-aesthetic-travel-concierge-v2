@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Passive email verification: the patient clicks "Confirm your email" in the
 // consultation-received message. Token is HMAC-signed by

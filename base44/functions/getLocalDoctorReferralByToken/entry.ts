@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Public, anonymous — /portal/local-doctor/:token has no login. The token is
 // itself the lookup key stored on LocalDoctorReferral.portal_token (set by
