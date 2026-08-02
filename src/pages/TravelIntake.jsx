@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useTravelIntakeSession } from '@/hooks/useTravelIntakeSession';
 import { useTravelPartnerCountries } from '@/hooks/useTravelPartnerCountries';
+import { useIpGeolocation } from '@/hooks/useIpGeolocation';
+import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
 import { INPUT_TYPES } from '@/lib/intakeFlow/questionGraph';
 import { getAnsweredQuestionCount, getTotalQuestionCount, getProgressLabel } from '@/lib/intakeFlow/flowEngine';
 import { TRAVEL_QUESTION_GRAPH } from '@/lib/travelIntakeFlow/questionGraph';
@@ -68,6 +70,17 @@ export default function TravelIntake() {
   const countryOptions = (travelPartnerCountries && travelPartnerCountries.length > 0)
     ? travelPartnerCountries
     : SERVED_COUNTRY_LIST;
+
+  // "Where are you traveling FROM" can be answered by IP — the traveler is
+  // presumably asking from home. Floated to the top of that step's picker as
+  // a one-tap "Detected" suggestion (QuestionCard), never auto-committed:
+  // IP geolocation is a guess (VPN/roaming), this field drives real flight
+  // and pickup planning, and the travel review screen has no per-field edit
+  // — so a wrong silent fill would have no easy way back.
+  const { country: ipCountry } = useIpGeolocation();
+  const detectedOriginCountry = ipCountry
+    ? (fuzzyFilterOptions(ALL_COUNTRIES, ipCountry, 70)[0] || null)
+    : null;
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -167,6 +180,7 @@ export default function TravelIntake() {
                 dynamicOptionsLoading={{ travelPartnerCountries: false, allCountries: false }}
                 onBack={canGoBack ? goBack : null}
                 answers={answers}
+                detectedOption={nextStepResult.step.id === 'origin_country' ? detectedOriginCountry : null}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />

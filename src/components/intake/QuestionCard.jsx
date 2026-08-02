@@ -48,7 +48,7 @@ const RECOMMENDED_COUNT = 5;
  * recommendation cards, the rest behind "Show More," free-text search behind
  * that (typing is the last resort, never the first interaction).
  */
-export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null, searchFirstOptions = [], answers = {} }) {
+export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null, searchFirstOptions = [], answers = {}, detectedOption = null }) {
   const { t } = useTranslation();
   // Display-time localization; the graph's English stays canonical for the
   // LLM context and stored question_shown (backend consistency).
@@ -124,7 +124,18 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
         // nationality). Works for static or dynamic option sources.
         if (step.searchFirst) {
           const allOptions = isDynamic ? (dynamicOptions?.[step.optionsSource] || []) : (step.options || []);
-          const filtered = search.trim() ? fuzzyFilterOptions(allOptions, search) : allOptions;
+          let filtered = search.trim() ? fuzzyFilterOptions(allOptions, search) : allOptions;
+
+          // A detected value (e.g. origin country from IP) floats to the top,
+          // pre-highlighted, as a one-tap suggestion — never auto-committed.
+          // Only while the search box is untouched; typing means the user is
+          // already looking for something else.
+          const detectedIsVisible = !search.trim() && detectedOption
+            && allOptions.some((o) => o.value === detectedOption.value);
+          if (detectedIsVisible) {
+            filtered = [detectedOption, ...filtered.filter((o) => o.value !== detectedOption.value)];
+          }
+
           const visible = filtered.slice(0, 8);
 
           return (
@@ -138,26 +149,37 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                 autoFocus
               />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 260, overflowY: 'auto' }}>
-                {visible.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => commitValue(opt.label, opt.value)}
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      borderRadius: 14,
-                      background: '#EEF3F1',
-                      border: `1px solid ${BORDER}`,
-                      color: TEXT,
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                {visible.map((opt, i) => {
+                  const isDetected = detectedIsVisible && i === 0;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => commitValue(opt.label, opt.value)}
+                      style={{
+                        textAlign: 'left',
+                        padding: '12px 16px',
+                        borderRadius: 14,
+                        background: isDetected ? 'rgba(212,175,55,0.06)' : '#EEF3F1',
+                        border: `1px solid ${isDetected ? GOLD + '80' : BORDER}`,
+                        color: TEXT,
+                        fontSize: 14,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 3,
+                      }}
+                    >
+                      {isDetected && (
+                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: GOLD }}>
+                          Based on your location
+                        </span>
+                      )}
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
                 {visible.length === 0 && (
                   <p style={{ fontSize: 12.5, color: TEXT_FAINT, textAlign: 'center', padding: '8px 0' }}>
                     No matches — try a different spelling
