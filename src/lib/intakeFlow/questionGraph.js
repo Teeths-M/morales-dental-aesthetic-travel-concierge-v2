@@ -26,6 +26,7 @@ export const INPUT_TYPES = {
   BOOLEAN: 'boolean',
   DATE: 'date',
   REVIEW: 'review',
+  VISA_READINESS: 'visa_readiness',
   DOCTOR_PICK: 'doctor_pick',
   CONDITIONS_PICK: 'conditions_pick',
   ALLERGIES_PICK: 'allergies_pick',
@@ -234,6 +235,20 @@ export const QUESTION_GRAPH = [
     inputType: INPUT_TYPES.SELECT,
     options: NATIONALITIES.map((n) => ({ value: n, label: n })),
     searchFirst: true,
+    requiresAuth: true,
+  },
+  {
+    // Destination (asked earlier, above) and nationality (just above) are
+    // both known now — the earliest honest point to check entry
+    // requirements, instead of waiting until the final review after a dozen
+    // more questions. Rendered directly by ConciergeIntake.jsx
+    // (VisaReadinessStep), never through QuestionCard's normal switch — same
+    // pattern as the REVIEW step.
+    id: 'visa_readiness_check',
+    targetFields: ['visa_readiness_acknowledged'],
+    question: "Let's check your travel requirements",
+    deterministicReason: 'so a visa that takes weeks is never a surprise later',
+    inputType: INPUT_TYPES.VISA_READINESS,
     requiresAuth: true,
   },
   {

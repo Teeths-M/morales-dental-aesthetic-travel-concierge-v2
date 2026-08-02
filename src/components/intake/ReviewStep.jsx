@@ -5,6 +5,7 @@ import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import { deriveIntake } from '@/lib/intakeFlow/derivedFields';
 import { travelReadiness } from '@/lib/travelReadiness';
 import { useVisaRequirement } from '@/hooks/useVisaRequirement';
+import { getVisaHelpLinks } from '@/lib/visaMatrix';
 import { useNavigate } from 'react-router-dom';
 import JourneyBeginsStep from './JourneyBeginsStep';
 import { CALM } from '@/lib/brandTokens';
@@ -293,19 +294,38 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
               ? 'One thing to sort out — better to know now than at the airport.'
               : `${readiness.issues.length} things to sort out — better to know now than at the airport.`}
           </p>
-          {readiness.issues.map((issue) => (
-            <div key={issue.code} style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <AlertTriangle
-                className="w-3.5 h-3.5"
-                style={{ color: issue.severity === 'blocking' ? '#dc2626' : '#b45309', flexShrink: 0, marginTop: 2 }}
-                aria-hidden="true"
-              />
-              <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: CALM.text }}>{issue.title}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: CALM.textSoft, lineHeight: 1.55 }}>{issue.detail}</p>
+          {readiness.issues.map((issue) => {
+            // A label alone isn't enough for the two issues that actually
+            // need action taken somewhere else — hand over a real place to
+            // start: the official portal and a current video walkthrough.
+            const isVisaIssue = issue.code === 'visa_evisa' || issue.code === 'visa_embassy';
+            const { portalUrl, videoSearchUrl } = isVisaIssue
+              ? getVisaHelpLinks(answers.nationality, answers.destination_country)
+              : {};
+            return (
+              <div key={issue.code} style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <AlertTriangle
+                  className="w-3.5 h-3.5"
+                  style={{ color: issue.severity === 'blocking' ? '#dc2626' : '#b45309', flexShrink: 0, marginTop: 2 }}
+                  aria-hidden="true"
+                />
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: CALM.text }}>{issue.title}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: CALM.textSoft, lineHeight: 1.55 }}>{issue.detail}</p>
+                  {isVisaIssue && (
+                    <div style={{ display: 'flex', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
+                      <a href={portalUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: CALM.action, textDecoration: 'none' }}>
+                        Apply for your visa →
+                      </a>
+                      <a href={videoSearchUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: CALM.action, textDecoration: 'none' }}>
+                        See how it works →
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <p style={{ margin: '14px 0 0', fontSize: 11.5, color: CALM.textFaint, lineHeight: 1.55 }}>
             You can still send this to your care team — they&rsquo;ll help you sort it out before anything is booked.
           </p>

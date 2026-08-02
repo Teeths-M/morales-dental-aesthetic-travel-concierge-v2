@@ -84,6 +84,18 @@ export const TRAVEL_QUESTION_GRAPH = [
     searchFirst: true,
   },
   {
+    // Destination and origin (both just above) are the only two inputs this
+    // check needs — the earliest honest point to run it, rather than never
+    // running it at all (this travel-only flow had no visa check before).
+    // Rendered directly by TravelIntake.jsx (VisaReadinessStep), never
+    // through QuestionCard's normal switch — same pattern as final_review.
+    id: 'visa_readiness_check',
+    targetFields: ['visa_readiness_acknowledged'],
+    question: "Let's check your travel requirements",
+    deterministicReason: 'so a visa that takes weeks is never a surprise later',
+    inputType: INPUT_TYPES.VISA_READINESS,
+  },
+  {
     id: 'departure_date',
     targetFields: ['departure_date'],
     question: 'When would you like to depart?',

@@ -307,3 +307,32 @@ export function getEvisaLink(procedureCountry) {
   }
   return 'https://www.iatatravelcentre.com/';
 }
+
+// ── Display vocabulary ──────────────────────────────────────────────────────
+// Single copy of status → label, shared by every surface that shows a visa
+// status (VisaRequirementLive, VisaReadinessStep) so they can't drift from
+// each other the way two separate copies of this map already did once.
+export const VISA_STATUS_LABELS = {
+  visa_free: 'No visa required',
+  exempt: 'No visa required',
+  evisa: 'e-Visa required',
+  on_arrival: 'Visa on arrival',
+  embassy_required: 'Embassy visa required',
+  embassy: 'Embassy visa required',
+  unknown: 'Requirement not confirmed',
+};
+
+// ── "How do I actually do this" links ───────────────────────────────────────
+// Only meaningful once a visa/e-visa is actually needed. Both links are
+// constructed, not curated per-country content we'd have to keep current
+// ourselves: the portal link already exists (EVISA_LINKS, with an always-real
+// fallback), and the video link is a live YouTube SEARCH rather than one
+// hardcoded video — it always resolves to real, current results and can
+// never go stale or link to the wrong thing, unlike a per-country video we'd
+// have to curate and maintain (the same trap a hardcoded rule list is).
+export function getVisaHelpLinks(nationality, destination) {
+  return {
+    portalUrl: getEvisaLink(destination),
+    videoSearchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${destination} e-visa application ${nationality} passport`)}`,
+  };
+}

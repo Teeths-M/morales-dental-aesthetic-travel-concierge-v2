@@ -13,6 +13,7 @@ import { toSafetyEngineName } from '@/lib/intakeFlow/procedureSafetyNameMap';
 import { buildConsultationPayload } from '@/lib/intakeFlow/fieldMap';
 import QuestionCard from '@/components/intake/QuestionCard';
 import AuthGateStep from '@/components/intake/AuthGateStep';
+import VisaReadinessStep from '@/components/intake/VisaReadinessStep';
 import ReviewStep from '@/components/intake/ReviewStep';
 import IntakeProgressChecklist from '@/components/intake/IntakeProgressChecklist';
 import NarrationTicker from '@/components/intake/NarrationTicker';
@@ -343,6 +344,7 @@ export default function ConciergeIntake() {
   };
 
   const atReviewStep = nextStepResult.type === 'question' && nextStepResult.step.inputType === INPUT_TYPES.REVIEW;
+  const atVisaReadinessStep = nextStepResult.type === 'question' && nextStepResult.step.inputType === INPUT_TYPES.VISA_READINESS;
 
   return (
     <div
@@ -371,6 +373,20 @@ export default function ConciergeIntake() {
           <>
             <IntakeProgressChecklist items={checklistItems} progressLabel={progressLabel} progressRatio={progressRatio} />
             {nextStepResult.type === 'auth_gate' && <AuthGateStep answers={answers} />}
+            {atVisaReadinessStep && (
+              <VisaReadinessStep
+                nationality={answers.nationality}
+                destination={answers.destination_country}
+                onContinue={() => submitAnswer({
+                  stepId: nextStepResult.step.id,
+                  question: nextStepResult.step.question,
+                  rawText: 'Continue',
+                  extracted: { visa_readiness_acknowledged: true },
+                  confidence: 100,
+                  narration: '',
+                })}
+              />
+            )}
             {atReviewStep && !safetyReadoutAcknowledged && (
               <SafeTReadout safetyStatus={safetyStatus} onContinue={() => setSafetyReadoutAcknowledged(true)} />
             )}
@@ -399,7 +415,7 @@ export default function ConciergeIntake() {
                 onDerivedChange={setDerivedAnswers}
               />
             )}
-            {nextStepResult.type === 'question' && !atReviewStep && (
+            {nextStepResult.type === 'question' && !atReviewStep && !atVisaReadinessStep && (
               <QuestionCard
                 step={nextStepResult.step}
                 onAnswer={submitAnswer}

@@ -62,6 +62,11 @@ function answerFor(step) {
   }
   if (t === INPUT_TYPES.EMAIL) return { email: 'walker@example.com' };
   if (t === INPUT_TYPES.PHONE) return { phone: '+1 555 000 0000' };
+  if (t === INPUT_TYPES.VISA_READINESS) {
+    // VisaReadinessStep's "Continue" — always fires regardless of the
+    // status shown, matching its advisory-only, never-blocking contract.
+    return { visa_readiness_acknowledged: true };
+  }
 
   // TEXT / SELECT — QuestionCard's commitValue writes the same value to every
   // target field.
@@ -136,6 +141,17 @@ describe('a patient can actually get through the intake', () => {
     const { visited } = walkIntake();
     expect(visited.indexOf('email')).toBeGreaterThan(visited.indexOf('procedure_interest'));
     expect(visited.indexOf('email')).toBeGreaterThan(visited.indexOf('destination_country'));
+  });
+
+  it('checks visa/entry requirements immediately after nationality — not deferred to review', () => {
+    const { visited } = walkIntake();
+    expect(visited).toContain('visa_readiness_check');
+    expect(visited.indexOf('visa_readiness_check')).toBe(visited.indexOf('nationality') + 1);
+    // Both inputs the check needs are already known by then.
+    expect(visited.indexOf('visa_readiness_check')).toBeGreaterThan(visited.indexOf('destination_country'));
+    // And it runs well before the questions that used to be the only place
+    // this showed up — medical history, allergies, the review step itself.
+    expect(visited.indexOf('visa_readiness_check')).toBeLessThan(visited.indexOf('medical_conditions_other'));
   });
 
   it('does not strand an unauthenticated guest before the auth gate', () => {

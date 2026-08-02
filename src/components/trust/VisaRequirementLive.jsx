@@ -1,12 +1,14 @@
 import React from 'react';
 import { CALM } from '@/lib/brandTokens';
-import { getEvisaLink } from '@/lib/visaMatrix';
+import { VISA_STATUS_LABELS, getVisaHelpLinks } from '@/lib/visaMatrix';
 import { useVisaRequirement } from '@/hooks/useVisaRequirement';
 import LastVerified from './LastVerified';
 
 /**
  * VisaRequirementLive — shows the CURRENT entry requirement for a nationality →
- * destination pair at decision time.
+ * destination pair at decision time, plus — whenever a visa or e-visa is
+ * actually needed — a real way to act on it: the official application portal
+ * and a current video walkthrough. Never just a label with no next step.
  *
  * Reads through useVisaRequirement() — the same hook ReviewStep.jsx uses —
  * rather than its own separate query, so this panel and the review-step
@@ -20,17 +22,7 @@ import LastVerified from './LastVerified';
  * LABELLED clearly as an unconfirmed estimate rather than presented as
  * current truth.
  */
-const STATUS_COPY = {
-  visa_free: 'No visa required',
-  exempt: 'No visa required',
-  evisa: 'e-Visa required',
-  on_arrival: 'Visa on arrival',
-  embassy_required: 'Embassy visa required',
-  embassy: 'Embassy visa required',
-  unknown: 'Requirement not confirmed',
-};
-
-export default function VisaRequirementLive({ nationality, destination, style }) {
+export default function VisaRequirementLive({ nationality, destination, style = {} }) {
   const enabled = Boolean(nationality && destination);
   const {
     status, isLive, isExplicitMatrix, agreesWithLive,
@@ -45,7 +37,9 @@ export default function VisaRequirementLive({ nationality, destination, style })
   // confusing than showing nothing — the offline-style footer below covers
   // that case with the same honest "not confirmed live" framing.
   const showLiveDetail = isLive && (agreesWithLive || !isExplicitMatrix);
-  const label = STATUS_COPY[status] || STATUS_COPY.unknown;
+  const label = VISA_STATUS_LABELS[status] || VISA_STATUS_LABELS.unknown;
+  const needsVisa = status !== 'exempt' && status !== 'visa_free' && status !== 'unknown';
+  const { portalUrl, videoSearchUrl } = needsVisa ? getVisaHelpLinks(nationality, destination) : {};
 
   return (
     <div
@@ -80,12 +74,21 @@ export default function VisaRequirementLive({ nationality, destination, style })
       ) : (
         <span style={{ fontSize: 11.5, color: CALM.textFaint }}>
           Offline estimate — your coordinator will confirm the current requirement with you directly.
-          {status && status !== 'exempt' && getEvisaLink && (() => {
-            const link = getEvisaLink(destination);
-            return link ? <> · <a href={link} target="_blank" rel="noopener noreferrer" style={{ color: CALM.action, fontWeight: 600, textDecoration: 'none' }}>official portal</a></> : null;
-          })()}
         </span>
       ))}
+
+      {/* Not just a label — a real next step. Only when a visa/e-visa is
+          actually needed; never shown for exempt or unconfirmed. */}
+      {!isLoading && needsVisa && (
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <a href={portalUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5, fontWeight: 600, color: CALM.action, textDecoration: 'none' }}>
+            Apply for your visa →
+          </a>
+          <a href={videoSearchUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5, fontWeight: 600, color: CALM.action, textDecoration: 'none' }}>
+            See how it works →
+          </a>
+        </div>
+      )}
 
       <p style={{ margin: '2px 0 0', fontSize: 11, color: CALM.textFaint }}>
         Entry rules change — always confirm with the embassy before you travel. This never affects your booking.
