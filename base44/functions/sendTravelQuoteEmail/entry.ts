@@ -67,9 +67,9 @@ Deno.serve(createHandler(async ({ req }) => {
 
     // Generate tokenized portal link for chauffeur
     const payload = { consultation_id, partner_id: taxi_service_id || '', portal_type: 'transfer' };
-    const token = await encodePortalToken({ ...payload, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 });
+    const chauffeurToken = await encodePortalToken({ ...payload, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 });
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-    const chauffeurPortalUrl = `${appUrl}/portal/transfer?token=${token}`;
+    const chauffeurPortalUrl = `${appUrl}/portal/transfer?token=${chauffeurToken}`;
 
     // Fetch taxi service email if ID provided
     let driverEmail = null;
