@@ -55,7 +55,6 @@ export function useStruggleDetector({
     }, idleMs);
 
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, value, isValid, idleMs]);
 
   // Retry-fail: fires once, the first time the threshold is crossed.
@@ -64,6 +63,5 @@ export function useStruggleDetector({
       failFiredRef.current = true;
       onStruggle?.('retry_fail');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, failureCount, failureThreshold]);
 }
