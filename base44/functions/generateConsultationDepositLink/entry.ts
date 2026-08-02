@@ -1,7 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
-import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject, validate, Fields } from '../_shared/validate.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject, validate, Fields } from '../../shared/validate.ts';
 
 const DEPOSIT_AMOUNT = 60;
 

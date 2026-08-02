@@ -14,9 +14,9 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { linkOnlyEmail, emergencyDispatch } from '../_shared/notify.ts';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { linkOnlyEmail, emergencyDispatch } from '../../shared/notify.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 // ── Configurable thresholds (minutes after missed check-in) ─────────────────
 // context_type on SoloCheckIn overrides these defaults per-checkpoint.

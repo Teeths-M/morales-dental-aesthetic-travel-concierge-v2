@@ -8,8 +8,8 @@
  *
  * Also sends the Day 3 notification immediately since it's the most time-sensitive.
  */
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 function generateToken(): string {
   const bytes = new Uint8Array(18);

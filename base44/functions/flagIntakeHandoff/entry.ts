@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { renderEmail, escapeHtml } from '../_shared/emailTemplate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { renderEmail, escapeHtml } from '../../shared/emailTemplate.ts';
 
 // ── flagIntakeHandoff ─────────────────────────────────────────────────────
 // Fires when the conversational intake (/intake) can't confidently continue

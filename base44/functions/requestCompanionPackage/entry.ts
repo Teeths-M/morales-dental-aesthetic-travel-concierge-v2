@@ -13,8 +13,8 @@
  * OFF (action: 'cancel'):
  *   Clears companion_package_requested and status on the case.
  */
-import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject } from '../_shared/validate.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 const RequestCompanionPackageSchema = strictObject({
   action: z.enum(['request', 'cancel']).optional().default('request'),

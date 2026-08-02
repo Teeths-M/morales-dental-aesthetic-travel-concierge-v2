@@ -14,7 +14,7 @@
  * no login requirement needed, since the legitimate use case never needed an
  * arbitrary address in the first place.
  */
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Must match DEMO_EMAIL in src/pages/EmailShowcase.jsx — the only legitimate
 // destination for this demo endpoint.

@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 /**
  * backfillClinicsFromDoctors — auto-creates Clinic records from the clinic fields

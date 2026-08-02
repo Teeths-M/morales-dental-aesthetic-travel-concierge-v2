@@ -11,10 +11,10 @@
  * procedure category so the patient has everything in one place.
  */
 
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
-import { classifyProcedureCategory } from '../_shared/procedureCategory.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
+import { classifyProcedureCategory } from '../../shared/procedureCategory.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Allowlist of valid event types — matches AuditLog entity enum exactly
 const ALLOWED_EVENT_TYPES = new Set([

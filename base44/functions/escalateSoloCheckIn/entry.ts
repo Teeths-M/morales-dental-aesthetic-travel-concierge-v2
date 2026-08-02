@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));

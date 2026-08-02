@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { runLookup, resolveCountryISO } from '../_shared/registryLookup.ts';
-import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { runLookup, resolveCountryISO } from '../../shared/registryLookup.ts';
+import { TTL_MS, isFresh, flagForReview } from '../../shared/freshness.ts';
 
 /**
  * reVerifyDoctorCredentials — scheduled DAILY re-verification of doctor licences

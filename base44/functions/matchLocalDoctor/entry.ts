@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * matchLocalDoctor — finds the best available verified M Local doctor

@@ -1,7 +1,7 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
-import { computeSafeT, SafeTProfileInput } from '../_shared/safeTEngine.ts';
-import { sanitizeFields } from '../_shared/sanitizePromptInput.ts';
-import { z, strictObject } from '../_shared/validate.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
+import { computeSafeT, SafeTProfileInput } from '../../shared/safeTEngine.ts';
+import { sanitizeFields } from '../../shared/sanitizePromptInput.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 // Deliberately permissive on types — this is the SAFE-T intake path, and the
 // frontend (SafeTScan.jsx) already fails closed to risk_level:'review' on ANY

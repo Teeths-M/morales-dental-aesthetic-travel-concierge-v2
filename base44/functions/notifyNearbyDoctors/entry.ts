@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 const MAX_DOCTORS = 5;

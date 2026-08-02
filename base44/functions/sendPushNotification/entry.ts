@@ -1,7 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import webPush from 'npm:web-push@3.6.7';
-import { createHandler } from '../_shared/createHandler.ts';
-import { internalOrAdminAuthorized } from '../_shared/internalAuth.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {

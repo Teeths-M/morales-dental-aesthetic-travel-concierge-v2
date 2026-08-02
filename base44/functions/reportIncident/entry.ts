@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { reportIncident } from '../_shared/incidentReporting.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { reportIncident } from '../../shared/incidentReporting.ts';
 
 /**
  * reportIncident

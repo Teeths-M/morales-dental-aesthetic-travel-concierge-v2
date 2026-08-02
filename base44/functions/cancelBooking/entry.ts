@@ -1,7 +1,7 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { guardedStatusUpdate, BOOKING, isTerminal } from '../_shared/bookingState.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { guardedStatusUpdate, BOOKING, isTerminal } from '../../shared/bookingState.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const CancelBookingSchema = strictObject({
   case_id: Fields.shortText(100),

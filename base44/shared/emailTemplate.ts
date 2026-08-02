@@ -7,7 +7,7 @@
  * emailLayout() copies previously duplicated across individual functions.
  *
  * Usage:
- *   import { renderEmail } from '../../shared/emailTemplate.ts';
+ *   import { renderEmail } from '../_shared/emailTemplate.ts';
  *   const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
  *   const html = renderEmail({
  *     appUrl,

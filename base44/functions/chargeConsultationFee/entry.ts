@@ -6,9 +6,9 @@
  * Returns a checkout_url for the client to complete payment on Stripe's hosted page.
  */
 
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 import Stripe from 'npm:stripe@17.0.0';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const ChargeFeeSchema = strictObject({
   consultation_id: z.string().trim().max(100).optional(),

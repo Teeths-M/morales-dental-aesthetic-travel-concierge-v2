@@ -1,5 +1,5 @@
-import { createHandler } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 function calcAge(dob) {
   if (!dob) return null;

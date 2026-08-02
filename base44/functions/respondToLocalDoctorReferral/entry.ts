@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Public, anonymous write — the local doctor accepting/declining has no login
 // session, so this cannot go through base44.entities (RLS assumes an

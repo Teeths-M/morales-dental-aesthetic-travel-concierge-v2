@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { createHandler } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 // iQ200 Coordination Engine — 8 Touchpoint Handshake Orchestrator
 // Handles: create_touchpoints, confirm_handshake, get_status, check_contingency

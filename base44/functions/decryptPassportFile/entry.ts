@@ -1,4 +1,4 @@
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 // ZERO-KNOWLEDGE ARCHITECTURE:
 // The backend does NOT hold encryption keys. It returns the encrypted blob + IV only.

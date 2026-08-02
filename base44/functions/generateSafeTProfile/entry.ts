@@ -1,5 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { reviseAndUpdate } from '../_shared/reviseAndUpdate.ts';
+import { reviseAndUpdate } from '../../shared/reviseAndUpdate.ts';
 
 // ── generateSafeTProfile ──────────────────────────────────────────────────────
 // Triggered on Consultation create/update events.

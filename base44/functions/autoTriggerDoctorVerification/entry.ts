@@ -11,7 +11,7 @@
  * M does all the document analysis and pre-checks automatically.
  */
 
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44 }) => {
   const results = { triggered: 0, skipped: 0, errors: 0 };

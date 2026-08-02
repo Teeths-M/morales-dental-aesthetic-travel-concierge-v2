@@ -16,7 +16,7 @@
  * the same companion (Maria G) and driver (Mario) who served them before.
  */
 
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 const COMPLETED_STATUSES = [
   'HOME_SAFE',

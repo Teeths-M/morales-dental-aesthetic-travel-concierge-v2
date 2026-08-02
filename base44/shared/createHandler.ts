@@ -1,11 +1,11 @@
 /**
  * createHandler — Shared edge function middleware factory
  *
- * Eliminates the auth/error/logging boilerplate repeated across edge functions.
+ * Eliminates the auth/error/logging boilerplate repeated across 188 edge functions.
  * Each function only needs to contain its business logic.
  *
  * Usage:
- *   import { createHandler } from '../../shared/createHandler.ts';
+ *   import { createHandler } from '../_shared/createHandler.ts';
  *
  *   Deno.serve(createHandler(async ({ base44, user, body }) => {
  *     const { thing } = await body();
@@ -32,7 +32,7 @@ export interface AuthUser {
   email: string;
   role: string;
   full_name?: string;
-  /** Set by shared/anonymizePatientRecords.ts the moment a self-service or
+  /** Set by _shared/anonymizePatientRecords.ts the moment a self-service or
    *  admin GDPR erasure actually runs (despite the name, it's a completion
    *  marker, not a pending-request one). Any account carrying it is rejected
    *  below — otherwise "deletion" was only ever a client-side AuthContext
@@ -71,7 +71,7 @@ export interface HandlerOptions {
    */
   rateLimit?: { max: number; windowSeconds: number } | false;
   /**
-   * Zod schema (from shared/validate.ts) the request body must satisfy.
+   * Zod schema (from _shared/validate.ts) the request body must satisfy.
    * When set, createHandler parses the body once, validates it right after
    * auth/rate-limit and BEFORE the handler runs, and short-circuits with a
    * clean 400 on failure (message built only from the schema's own issue

@@ -1,6 +1,6 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
-import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
-import { z, strictObject, validate, Fields } from '../_shared/validate.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
+import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
+import { z, strictObject, validate, Fields } from '../../shared/validate.ts';
 
 // Action-multiplexed body — z.discriminatedUnion instead of createHandler's
 // bodySchema hook, since each action has a different required shape.

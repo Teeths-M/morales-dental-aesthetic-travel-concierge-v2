@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Public, anonymous — a finder scanning a QR code has no login and no case
 // access. Looks the bag up by its own finder_contact_token (never trust a

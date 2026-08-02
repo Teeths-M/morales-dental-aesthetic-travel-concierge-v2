@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
 
 // Immigration/medical-travel compliance checklist for a passport → destination
 // pair. ComplianceChecklistPanel (VisaAssist) has invoked this since it was

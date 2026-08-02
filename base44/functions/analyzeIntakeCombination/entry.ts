@@ -1,5 +1,5 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
-import { z, strictObject } from '../_shared/validate.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';

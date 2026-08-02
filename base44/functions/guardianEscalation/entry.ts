@@ -12,9 +12,9 @@
  *
  * Board constraint: Sleep hours (10 PM – 6 AM) — escalation holds unless critical.
  */
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const GuardianEscalationSchema = strictObject({
   consultation_id: Fields.shortText(100),

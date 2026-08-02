@@ -1,6 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
-import { linkOnlyEmail, linkOnlySms } from '../_shared/notify.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 
 // Inline token encoder — HMAC-signed to match getPortalData's verifyPortalToken.
 // (Previously produced an unsigned btoa(JSON) token with no '.'-suffix signature,

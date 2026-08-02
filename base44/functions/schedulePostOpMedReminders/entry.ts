@@ -15,10 +15,10 @@
  * milestones — no separate cron needed for this implementation).
  */
 
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { classifyProcedureCategory, ProcedureCategory } from '../_shared/procedureCategory.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { classifyProcedureCategory, ProcedureCategory } from '../../shared/procedureCategory.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

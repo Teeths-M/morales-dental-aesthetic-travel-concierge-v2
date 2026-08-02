@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 Deno.serve(async (req) => {
   try {

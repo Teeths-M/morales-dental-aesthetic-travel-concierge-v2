@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { reviseAndUpdate } from '../_shared/reviseAndUpdate.ts';
-import { z, strictObject, validate } from '../_shared/validate.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { reviseAndUpdate } from '../../shared/reviseAndUpdate.ts';
+import { z, strictObject, validate } from '../../shared/validate.ts';
 
 const DietaryProfileSchema = strictObject({
   case_id: z.string().trim().max(100).optional(),

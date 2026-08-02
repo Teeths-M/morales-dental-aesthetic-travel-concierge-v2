@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ComplyAdvantage REST API — global sanctions, PEP, adverse-media screening.
 // Env vars required for live mode:

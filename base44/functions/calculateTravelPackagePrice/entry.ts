@@ -1,4 +1,4 @@
-﻿import { createHandler, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, err } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {

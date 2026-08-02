@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject, Fields, validate } from '../_shared/validate.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject, Fields, validate } from '../../shared/validate.ts';
 
 // Single flexible schema rather than a per-action discriminated union — the
 // existing top-level check requires action+user_email for EVERY action

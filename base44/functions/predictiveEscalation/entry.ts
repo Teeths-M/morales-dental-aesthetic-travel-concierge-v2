@@ -18,7 +18,7 @@
  * the system marks them as missed. Catches health events 45 minutes earlier.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 Deno.serve(async (req) => {
   try {

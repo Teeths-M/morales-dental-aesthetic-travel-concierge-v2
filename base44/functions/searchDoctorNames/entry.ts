@@ -1,5 +1,5 @@
-import { createHandler, ok, type Base44Client } from '../_shared/createHandler.ts';
-import { createMemoCache } from '../_shared/memoCache.ts';
+import { createHandler, ok, type Base44Client } from '../../shared/createHandler.ts';
+import { createMemoCache } from '../../shared/memoCache.ts';
 
 // ── Roster cache ─────────────────────────────────────────────────────────────
 // Powers the "is this doctor already on M?" fuzzy-search-first step in the

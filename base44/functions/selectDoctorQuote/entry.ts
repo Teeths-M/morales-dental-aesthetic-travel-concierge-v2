@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { guardedStatusUpdate, BOOKING } from '../_shared/bookingState.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { guardedStatusUpdate, BOOKING } from '../../shared/bookingState.ts';
 
 /**
  * selectDoctorQuote — the patient's final say. They pick one submitted quote.

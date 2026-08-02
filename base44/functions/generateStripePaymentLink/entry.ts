@@ -12,9 +12,9 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
-import { getViolations } from '../_shared/procedureCompatibility.ts';
-import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject, validate, Fields } from '../_shared/validate.ts';
+import { getViolations } from '../../shared/procedureCompatibility.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject, validate, Fields } from '../../shared/validate.ts';
 
 const PaymentLinkSchema = strictObject({
   case_id: Fields.shortText(100),

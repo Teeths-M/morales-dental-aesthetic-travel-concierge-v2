@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { z, strictObject } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 const SubmitPartnerQuoteSchema = strictObject({
   case_id: z.string().trim().max(100).optional(),

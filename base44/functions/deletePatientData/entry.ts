@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { anonymizePatientRecords } from '../_shared/anonymizePatientRecords.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { anonymizePatientRecords } from '../../shared/anonymizePatientRecords.ts';
 
 /**
  * deletePatientData — admin-triggered GDPR/CCPA erasure for a patient's data.

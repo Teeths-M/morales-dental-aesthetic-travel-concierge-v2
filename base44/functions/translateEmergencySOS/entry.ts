@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
+import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
 
 Deno.serve(async (req) => {
   // FIX: was `const { message, ... } = await req.json();` declared INSIDE the

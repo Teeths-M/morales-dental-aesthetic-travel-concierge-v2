@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { z, strictObject } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { z, strictObject } from '../../shared/validate.ts';
 
 // Generous length caps here — the existing sanitize() below does the real
 // truncation (254/2000) and its own looser "@"-presence check; this schema's

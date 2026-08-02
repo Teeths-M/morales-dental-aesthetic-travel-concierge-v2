@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { guardedStatusUpdate, BOOKING } from '../_shared/bookingState.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { guardedStatusUpdate, BOOKING } from '../../shared/bookingState.ts';
 
 /**
  * requestDoctorQuotes — the marketplace fan-out. Replaces the old single-doctor

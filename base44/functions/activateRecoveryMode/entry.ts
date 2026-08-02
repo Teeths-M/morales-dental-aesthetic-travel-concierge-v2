@@ -1,4 +1,4 @@
-import { createHandler } from '../_shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 // Check-in intervals by surgery complexity (hours)
 const CHECKIN_INTERVALS = { minor: 12, moderate: 8, major: 4 };

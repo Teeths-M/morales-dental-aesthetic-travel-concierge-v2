@@ -1,6 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 

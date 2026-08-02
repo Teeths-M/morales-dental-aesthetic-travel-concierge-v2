@@ -1,6 +1,6 @@
-﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { linkOnlyEmail } from '../_shared/notify.ts';
+﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
 
 /**
  * requestPartnerQuotas — fan a case out to travel, transfer, companion and

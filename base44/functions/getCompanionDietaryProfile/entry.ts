@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Authenticated companion read, scoped to their own assignment — never trust
 // a client-supplied case_id alone (a companion could otherwise read any

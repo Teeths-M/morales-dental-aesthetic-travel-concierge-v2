@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject, validate } from '../_shared/validate.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject, validate } from '../../shared/validate.ts';
 
 // All fields optional here on purpose — a missing/malformed token or sig
 // must keep failing the same soft way it already does ({valid:false,

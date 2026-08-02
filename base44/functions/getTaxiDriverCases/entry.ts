@@ -1,4 +1,4 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 // Look up the driver's own TaxiService record by the authenticated user's
 // email — never trust a caller-supplied driver id — mirroring getDoctorCases.

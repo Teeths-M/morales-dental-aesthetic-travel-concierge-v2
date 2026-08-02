@@ -1,5 +1,5 @@
-import { createHandler } from '../_shared/createHandler.ts';
-import { callGiottoVerification } from '../_shared/giottoVerify.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { callGiottoVerification } from '../../shared/giottoVerify.ts';
 
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);

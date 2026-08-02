@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const RespondToDoctorCaseSchema = strictObject({
   workflow_id: Fields.shortText(100),

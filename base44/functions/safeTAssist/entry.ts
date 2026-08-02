@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
-import { scrubPHI } from '../_shared/scrubPHI.ts';
+import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
+import { scrubPHI } from '../../shared/scrubPHI.ts';
 
 const SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for Morales Medical Travel Safety — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
 

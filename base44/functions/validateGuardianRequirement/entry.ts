@@ -1,5 +1,5 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
-import { evaluateGuardianGate } from '../_shared/guardianGate.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
+import { evaluateGuardianGate } from '../../shared/guardianGate.ts';
 
 // M PRINCIPLE — under-18 hard gate, server-side.
 // A patient under 18 cannot proceed to booking without a captured guardian

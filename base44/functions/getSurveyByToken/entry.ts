@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Public, anonymous — /survey/:token has no login. Returns only what SurveyPage
 // needs to render the questionnaire; never patient_email or case_id.

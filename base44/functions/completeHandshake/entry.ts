@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 // ── High-risk checkpoints requiring dual-party confirmation ──────────────────
 // HS4 (hotel_checkin) and HS5 (clinic_arrival) are life-safety inflection points.

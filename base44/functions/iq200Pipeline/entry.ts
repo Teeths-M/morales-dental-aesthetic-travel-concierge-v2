@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { linkOnlyEmail } from '../_shared/notify.ts';
-import { createHandler } from '../_shared/createHandler.ts';
-import { createCaseFromConsultation } from '../_shared/createCaseFromConsultation.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { createCaseFromConsultation } from '../../shared/createCaseFromConsultation.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {

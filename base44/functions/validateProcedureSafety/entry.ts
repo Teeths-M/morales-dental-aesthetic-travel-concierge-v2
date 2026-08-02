@@ -1,5 +1,5 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { getViolations } from '../_shared/procedureCompatibility.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { getViolations } from '../../shared/procedureCompatibility.ts';
 
 // M PRINCIPLE — RED is a hard block, always, with no bypass.
 // src/lib/procedureCompatibility.js runs this same check client-side so the booking

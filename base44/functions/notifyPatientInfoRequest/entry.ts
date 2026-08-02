@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from '../_shared/createHandler.ts';
-import { escapeHtml } from '../_shared/emailTemplate.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { escapeHtml } from '../../shared/emailTemplate.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {

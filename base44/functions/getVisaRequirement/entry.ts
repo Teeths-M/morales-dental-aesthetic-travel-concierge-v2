@@ -1,6 +1,6 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { fetchVisaRequirement } from '../_shared/visaLookup.ts';
-import { TTL_MS, isFresh } from '../_shared/freshness.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { fetchVisaRequirement } from '../../shared/visaLookup.ts';
+import { TTL_MS, isFresh } from '../../shared/freshness.ts';
 
 /**
  * getVisaRequirement — called when a user selects a destination × nationality in

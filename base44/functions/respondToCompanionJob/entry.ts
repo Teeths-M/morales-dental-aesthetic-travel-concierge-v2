@@ -9,9 +9,9 @@
  *
  * action: 'reject' — marks CompanionAssignment as 'declined'.
  */
-import { createHandler } from '../_shared/createHandler.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
-import { escapeHtml } from '../_shared/emailTemplate.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
+import { escapeHtml } from '../../shared/emailTemplate.ts';
 
 const RespondToCompanionJobSchema = strictObject({
   assignment_id: Fields.shortText(100),

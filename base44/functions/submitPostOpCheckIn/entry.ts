@@ -10,9 +10,9 @@
  * 3. Notifies doctor by email if follow-up needed
  * 4. Creates AuditLog entry
  */
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { z, strictObject, Fields } from '../_shared/validate.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { z, strictObject, Fields } from '../../shared/validate.ts';
 
 const SubmitPostOpCheckInSchema = strictObject({
   token: Fields.shortText(200),

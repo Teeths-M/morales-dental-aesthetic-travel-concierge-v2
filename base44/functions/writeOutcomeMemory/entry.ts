@@ -13,12 +13,12 @@
  * exposes only aggregate counts/percentages to a doctor, never a single row.
  */
 
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-import { computePrevHash } from '../_shared/auditHashChain.ts';
-import { classifyProcedureCategory } from '../_shared/procedureCategory.ts';
-import { bucketConditions } from '../_shared/conditionBuckets.ts';
-import { bucketMedicationNames } from '../_shared/medicationCategories.ts';
-import { PROCEDURE_PROFILES } from '../_shared/procedureCompatibility.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { classifyProcedureCategory } from '../../shared/procedureCategory.ts';
+import { bucketConditions } from '../../shared/conditionBuckets.ts';
+import { bucketMedicationNames } from '../../shared/medicationCategories.ts';
+import { PROCEDURE_PROFILES } from '../../shared/procedureCompatibility.ts';
 
 function ageBracketFromDob(dob?: string): string | undefined {
   if (!dob) return undefined;

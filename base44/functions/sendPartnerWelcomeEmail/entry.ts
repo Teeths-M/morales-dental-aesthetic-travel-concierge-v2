@@ -1,5 +1,5 @@
-﻿import { createHandler } from '../_shared/createHandler.ts';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+﻿import { createHandler } from '../../shared/createHandler.ts';
+import { renderEmail } from '../../shared/emailTemplate.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 
