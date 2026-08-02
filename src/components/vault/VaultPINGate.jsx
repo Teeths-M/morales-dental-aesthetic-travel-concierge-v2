@@ -193,17 +193,46 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
         // The SDK wraps axios errors into a flat Base44Error (.status/.data),
         // not an axios-style nested `.response.data` — reading `.response`
         // here was always undefined, so only the generic fallback ever showed.
-        if (serverErr?.status) {
-          // Server was reached and rejected the request — real failure, surface it.
+        const appMessage = serverErr?.data?.message || serverErr?.data?.error;
+
+        if (serverErr?.status && !appMessage) {
+          // A real HTTP response came back, but with neither .message nor
+          // .error — this app's own functions always include one, so this
+          // shape means the response came from somewhere upstream (a
+          // gateway timeout, a rate-limit/WAF page), not a real rejection
+          // from verifyVaultPIN itself. Mobile networks hit this more than
+          // desktop (higher/variable latency, carrier-NAT'd IPs sharing
+          // infra-level limits), and it usually clears within a second or
+          // two — so retry once, silently, before bothering the user with
+          // it. The PIN is already safe in localStorage either way.
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          try {
+            await base44.functions.invoke('verifyVaultPIN', {
+              pin: pinString,
+              action: 'set'
+            });
+          } catch (retryErr) {
+            console.error('Server PIN sync failed (after retry):', retryErr);
+            setError(
+              retryErr?.data?.message || retryErr?.data?.error ||
+              "Your PIN is saved on this device, but we couldn't confirm it with the server. This usually clears up on its own — please try again in a moment."
+            );
+            setLoading(false);
+            return;
+          }
+        } else if (serverErr?.status) {
+          // Server was reached and rejected the request with a specific,
+          // real reason — surface it directly, retrying won't change it.
           console.error('Server PIN sync failed:', serverErr);
-          setError(serverErr?.data?.message || serverErr?.data?.error || 'Could not save PIN to server. Please try again.');
+          setError(appMessage || 'Could not save PIN to server. Please try again.');
           setLoading(false);
           return;
+        } else {
+          // No status = the request never reached the server (genuinely offline).
+          // The PIN is already saved locally above — let the user in for this
+          // session; it'll need to sync to the server before other devices work.
+          console.warn('Offline — PIN saved locally only, will need to sync when online:', serverErr);
         }
-        // No status = the request never reached the server (genuinely offline).
-        // The PIN is already saved locally above — let the user in for this
-        // session; it'll need to sync to the server before other devices work.
-        console.warn('Offline — PIN saved locally only, will need to sync when online:', serverErr);
       }
 
       onPINVerified();

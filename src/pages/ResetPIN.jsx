@@ -57,10 +57,32 @@ export default function ResetPIN() {
     if (pin !== pinConfirm) { setError("PINs don't match. Please try again."); return; }
     setError('');
     setSaveState('saving');
+    const confirmReset = () => base44.functions.invoke(
+      'confirmPINReset', { token, sig, action: 'confirm', new_pin: pin, pin_type: pinType }
+    );
     try {
-      // Confirm on server first (sets PIN for other devices too) — for the
-      // vault PIN, this also validates a VaultPIN record actually exists.
-      await base44.functions.invoke('confirmPINReset', { token, sig, action: 'confirm', new_pin: pin, pin_type: pinType });
+      try {
+        // Confirm on server first (sets PIN for other devices too) — for the
+        // vault PIN, this also validates a VaultPIN record actually exists.
+        await confirmReset();
+      } catch (err) {
+        // The SDK wraps axios errors into a flat Base44Error (.status/.data).
+        // This app's own functions always include .message/.error on a real
+        // rejection — a response with a status but neither means the
+        // failure came from somewhere upstream (a gateway timeout, a
+        // rate-limit/WAF page), not a real rejection from confirmPINReset
+        // itself. Mobile networks hit this more than desktop (higher/
+        // variable latency, carrier-NAT'd IPs sharing infra-level limits),
+        // and it usually clears within a second or two — retry once,
+        // silently, before giving up.
+        const appMessage = err?.data?.message || err?.data?.error;
+        if (err?.status && !appMessage) {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await confirmReset();
+        } else {
+          throw err;
+        }
+      }
       // Save locally (works offline after this) — same storage shape each
       // gate checks: offlineVaultPIN for the Emergency PIN gate,
       // vault_pin_hash_/vault_pin_salt_ keys for VaultPINGate.
@@ -72,9 +94,9 @@ export default function ResetPIN() {
         await saveVaultPIN(email, pin);
       }
       setSaveState('done');
-    } catch {
+    } catch (err) {
       setSaveState('error');
-      setError("Couldn't save your PIN. Please try again.");
+      setError(err?.data?.message || err?.data?.error || "Couldn't save your PIN. Please try again.");
     }
   };
 
