@@ -228,35 +228,53 @@ function normalizeOrigin(value) {
 }
 
 // ── Main export ─────────────────────────────────────────────────────────────
-export function checkVisaRequirement(originNationality, procedureCountry) {
-  if (!originNationality || !procedureCountry) return 'unknown';
+/**
+ * Matches a nationality → destination pair against this file's curated
+ * research and reports HOW it matched. `isExplicit` is true only for the
+ * same-country shortcut or a real EXPLICIT_ROUTES entry (cited, researched)
+ * — false for the broad regional-fallback guesses below (EU/CARICOM/LATAM
+ * catch-alls for unlisted destinations), which are no more authoritative
+ * than a live AI check and should defer to one. Callers use `isExplicit` to
+ * decide whether this answer may override a live lookup — see
+ * useVisaRequirement.js, the single place that decision is made.
+ */
+export function getVisaMatrixMatch(originNationality, procedureCountry) {
+  if (!originNationality || !procedureCountry) return { status: 'unknown', isExplicit: false };
   const origin = normalizeOrigin(originNationality);
   const dest = procedureCountry.trim();
 
-  // Same country → always exempt (e.g. Venezuelan going to Venezuela)
+  // Same country → always exempt (e.g. Venezuelan going to Venezuela) — a
+  // certainty, not a guess.
   const originLower = origin.toLowerCase();
   const destLower = dest.toLowerCase();
-  if (originLower === destLower || originLower.includes(destLower) || destLower.includes(originLower)) return 'exempt';
+  if (originLower === destLower || originLower.includes(destLower) || destLower.includes(originLower)) {
+    return { status: 'exempt', isExplicit: true };
+  }
 
   // Check explicit route overrides first (highest priority)
   for (const route of EXPLICIT_ROUTES) {
     const originMatch = route.origins.some(o => o.toLowerCase() === origin.toLowerCase());
     const destMatch = matchesList(dest, route.destinations);
-    if (originMatch && destMatch) return route.status;
+    if (originMatch && destMatch) return { status: route.status, isExplicit: true };
   }
 
-  // Broad regional fallback for unlisted combos
+  // Broad regional fallback for unlisted combos — a conservative guess, not
+  // researched, so it never outranks a live check.
   const includes = (list, val) => list.some(i => i.toLowerCase() === val.toLowerCase());
   const euWesternNat = includes(EU_WESTERN, origin);
   const caricomNat = includes(CARICOM, origin);
   const latamNat = includes(LATAM, origin);
 
   // EU/Western to any unlisted destination → evisa (safe conservative guess)
-  if (euWesternNat) return 'evisa';
+  if (euWesternNat) return { status: 'evisa', isExplicit: false };
   // CARICOM/LATAM → evisa
-  if (caricomNat || latamNat) return 'evisa';
+  if (caricomNat || latamNat) return { status: 'evisa', isExplicit: false };
 
-  return 'embassy';
+  return { status: 'embassy', isExplicit: false };
+}
+
+export function checkVisaRequirement(originNationality, procedureCountry) {
+  return getVisaMatrixMatch(originNationality, procedureCountry).status;
 }
 
 // Alias
