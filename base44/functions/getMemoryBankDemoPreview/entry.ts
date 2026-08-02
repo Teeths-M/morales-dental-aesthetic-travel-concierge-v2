@@ -11,7 +11,7 @@
  * only the fixed demo case's already-public-facing fields.
  */
 
-import { createHandler, ok, err } from './createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 const DEMO_TOKEN = 'demo-memorybank-token';
 

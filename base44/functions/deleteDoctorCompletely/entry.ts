@@ -1,4 +1,4 @@
-import { createHandler } from './createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     // `const body = await body()` shadowed the destructured `body` parameter —

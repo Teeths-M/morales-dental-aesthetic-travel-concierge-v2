@@ -1929,21 +1929,10 @@ test('PERFORMANCE: the shared in-memory cache helper is used by the intended rea
   expect(helper).toContain('export function createMemoCache');
   expect(helper).toContain('export function createKeyedMemoCache');
 
-  for (const fn of ['calculatePriceQuote', 'matchDoctorsForProcedure', 'intakePartnerAvailabilityPreview']) {
+  for (const fn of ['calculatePriceQuote', 'matchDoctorsForProcedure', 'intakePartnerAvailabilityPreview', 'getGeolocationAndCurrency']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
     expect(src, `${fn} should import the shared memo cache`).toMatch(/from ['"]\.\.\/\.\.\/shared\/memoCache\.ts['"]/);
   }
-
-  // getGeolocationAndCurrency is a documented exception: it's still on Base44's
-  // legacy per-function Deno runtime, which rejects a relative import reaching
-  // outside the function's own directory (Base44 support / Estee, 2026-07-26).
-  // Its memoCache.ts is a hand-synced local duplicate — same content, imported
-  // from './memoCache.ts' instead of '../_shared/memoCache.ts'.
-  const geoSrc = read('base44/functions/getGeolocationAndCurrency/entry.ts');
-  expect(geoSrc, 'getGeolocationAndCurrency should import its local duplicate memo cache')
-    .toMatch(/from ['"]\.\/memoCache\.ts['"]/);
-  const geoHelper = read('base44/functions/getGeolocationAndCurrency/memoCache.ts');
-  expect(geoHelper).toContain('export function createKeyedMemoCache');
 });
 
 test('PERFORMANCE: getVisaRequirement only ever caches a confirmed-fresh snapshot, never a stale/missing one', () => {
@@ -2478,22 +2467,30 @@ test('M RECON: the orchestration loop is fail-closed — a decision failure neve
   expect(catchBlock, 'the catch block must not fabricate a briefing').not.toContain('finalBriefing =');
 });
 
-test('XSS HARDENING: every duplicated emailTemplate.ts copy stays byte-identical to the canonical _shared version', () => {
-  // Base44's ~300-function shard bug forces several functions to keep a
-  // local copy of emailTemplate.ts instead of importing across the folder
-  // boundary (see the runMReconAgent self-containment fix). That means the
-  // escaping fix has to be applied in every copy — if one drifts out of
-  // sync, that function silently regresses back to unescaped HTML emails.
-  const canonical = read('base44/functions/_shared/emailTemplate.ts');
-  const dupeDirs = readdirSync(join(ROOT, 'base44/functions')).filter((name) => {
-    if (name === '_shared') return false;
-    return existsSync(join(ROOT, 'base44/functions', name, 'emailTemplate.ts'));
-  });
-  expect(dupeDirs.length, 'expected at least the known self-contained functions to have a local copy').toBeGreaterThan(0);
-  for (const dir of dupeDirs) {
-    const copy = read(`base44/functions/${dir}/emailTemplate.ts`);
-    expect(copy, `base44/functions/${dir}/emailTemplate.ts must match the canonical _shared/emailTemplate.ts exactly`).toBe(canonical);
+test('BUNDLER: no function directory keeps a local copy of a shared helper — entry.ts only', () => {
+  // 2026-07/08: 12 functions (incl. runMReconAgent, recallSimilarOutcomes) were
+  // given local per-directory copies of createHandler.ts and friends, believing
+  // that fixed a Base44 runtime restriction. Base44 support (Yehonatan) confirmed
+  // 2026-08-02 this was backwards — the extra files confuse the Cloudflare
+  // bundler; the function registers in the deploy record but the worker never
+  // loads, producing a silent 404. Fixed by deleting every local duplicate and
+  // importing from base44/shared/ like the other ~290 functions. This guards
+  // against that pattern coming back — a function directory must contain only
+  // entry.ts, full stop.
+  const fnRoot = join(ROOT, 'base44/functions');
+  const dirs = readdirSync(fnRoot).filter((name) => name !== '_shared' && existsSync(join(fnRoot, name, 'entry.ts')));
+  expect(dirs.length, 'expected to find function directories to check').toBeGreaterThan(200);
+  const offenders = [];
+  for (const dir of dirs) {
+    const files = readdirSync(join(fnRoot, dir)).filter((f) => f.endsWith('.ts'));
+    if (files.length !== 1 || files[0] !== 'entry.ts') offenders.push(`${dir}: ${files.join(', ')}`);
   }
+  expect(offenders, 'every function directory must contain only entry.ts').toEqual([]);
+});
+
+test('XSS HARDENING: the canonical shared emailTemplate.ts still escapes user text (single source of truth, no per-function copies to drift)', () => {
+  const canonical = read('base44/shared/emailTemplate.ts');
+  expect(canonical).toContain('export const escapeHtml');
 });
 
 test('XSS HARDENING: renderEmail escapes title/intro/note — the fields most callers pass user text through', () => {

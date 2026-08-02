@@ -1,4 +1,4 @@
-import { createHandler, ok } from './createHandler.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 /**
  * getSafetyContact — the number a patient texts when they have no data.

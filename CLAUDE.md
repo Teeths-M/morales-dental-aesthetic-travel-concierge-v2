@@ -116,10 +116,12 @@ The service layer is `src/lib/services/` (vaultService, auditService, vaultSyncS
 
 Location: `base44/functions/<functionName>/entry.ts`
 
+**A function's directory must contain only `entry.ts` — never a local copy of a shared helper, even "temporarily."** The canonical shared helpers live in `base44/shared/` (imported as `'../../shared/X.ts'`); `base44/functions/_shared/` is a dead byte-identical mirror nothing actually imports — ignore it, don't add to it. In 2026-07/08, 12 functions were given local per-directory copies of `createHandler.ts` and friends in a mistaken attempt to work around a runtime restriction — this was diagnosed by Base44 support as the actual cause of silent Cloudflare-worker 404s (function registers in the deploy record, but the extra files confuse the bundler and the worker never loads). Fixed 2026-08-02 by deleting every local duplicate and importing from `base44/shared/` like every other function. Don't reintroduce this pattern to "fix" a publish issue — the fix is always to import from `base44/shared/`, never to duplicate into the function's own folder.
+
 All new functions must use the shared middleware:
 
 ```ts
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const { field } = await body();  // lazy, single-parse, safe to call multiple times

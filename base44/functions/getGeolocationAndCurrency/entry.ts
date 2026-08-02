@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { createHandler } from './createHandler.ts';
-import { createKeyedMemoCache } from './memoCache.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { createKeyedMemoCache } from '../../shared/memoCache.ts';
 
 // ── SAFE-T GEO ENGINE ───────────────────────────────────────────────────────
 // Primary:   ipapi.co   (free, no key, HTTPS, 30k req/month, good Caribbean accuracy)

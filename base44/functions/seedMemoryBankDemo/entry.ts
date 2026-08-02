@@ -10,7 +10,7 @@
  * Re-running this resets the demo to a clean starting state.
  */
 
-import { createHandler, ok } from './createHandler.ts';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 const DEMO_TOKEN = 'demo-memorybank-token';
 const DEMO_PATIENT_EMAIL = 'demo.patient@moralesdemo.internal';
