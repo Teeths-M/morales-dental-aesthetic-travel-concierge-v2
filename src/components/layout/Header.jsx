@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { LayoutDashboard, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Stethoscope, ClipboardList, HelpCircle, Handshake, House } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import ModeToggle from '@/components/home/ModeToggle';
 import { useTranslation, changeLanguage } from '@/i18n';
@@ -61,12 +61,12 @@ export default function Header() {
   }, [isUserMenuOpen]);
 
   const navLinks = [
-    { name: t('nav.find_doctors'),  path: '/providers' },
-    { name: t('nav.procedures'),    path: '/procedures' },
-    { name: t('nav.how_it_works'),  path: '/how-it-works' },
+    { name: t('nav.find_doctors'),  path: '/providers', icon: Stethoscope },
+    { name: t('nav.procedures'),    path: '/procedures', icon: ClipboardList },
+    { name: t('nav.how_it_works'),  path: '/how-it-works', icon: HelpCircle },
     // Supply-side door — one quiet link, no dropdown; /signup forks
     // patient vs provider on a single clear landing.
-    { name: t('nav.for_partners'), path: '/signup' },
+    { name: t('nav.for_partners'), path: '/signup', icon: Handshake },
     // Demo entry is for judges/internal use — never shown to patients unless
     // explicitly enabled at build time (VITE_SHOW_DEMO_NAV=true).
     ...(import.meta.env.VITE_SHOW_DEMO_NAV === 'true'
@@ -160,21 +160,26 @@ export default function Header() {
 
         {/* ── DESKTOP NAV LINKS ── */}
         <div className="hidden lg:flex items-center gap-8 text-[14px]">
-          {navLinks.map(link => (
-            <Link
-              key={link.path}
-              to={link.path}
-              style={{
-                color:      link.gold ? '#D4AF37' : location.pathname === link.path ? (calm ? CALM.text : '#FFFFFF') : (calm ? CALM.textSoft : '#8A9099'),
-                fontWeight: link.gold || location.pathname === link.path ? 600 : 400,
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={e => { if (!link.gold && location.pathname !== link.path) e.target.style.color = calm ? CALM.text : '#FFFFFF'; }}
-              onMouseLeave={e => { if (!link.gold && location.pathname !== link.path) e.target.style.color = calm ? CALM.textSoft : '#8A9099'; }}
-            >
-              {link.gold ? `▶ ${link.name}` : link.name}
-            </Link>
-          ))}
+          {navLinks.map(link => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className="flex items-center gap-1.5"
+                style={{
+                  color:      link.gold ? '#D4AF37' : location.pathname === link.path ? (calm ? CALM.text : '#FFFFFF') : (calm ? CALM.textSoft : '#8A9099'),
+                  fontWeight: link.gold || location.pathname === link.path ? 600 : 400,
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => { if (!link.gold && location.pathname !== link.path) e.currentTarget.style.color = calm ? CALM.text : '#FFFFFF'; }}
+                onMouseLeave={e => { if (!link.gold && location.pathname !== link.path) e.currentTarget.style.color = calm ? CALM.textSoft : '#8A9099'; }}
+              >
+                {Icon && <Icon className="w-3.5 h-3.5" />}
+                {link.gold ? `▶ ${link.name}` : link.name}
+              </Link>
+            );
+          })}
 
         </div>
 
@@ -314,10 +319,17 @@ export default function Header() {
 
           {/* Primary nav — max 5 items, large tappable targets */}
           <div className="flex flex-col gap-2 border-b border-white/[0.06] pb-6">
-            <Link to="/" onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[52px] px-2 rounded-xl text-lg font-semibold" style={{ color: '#D4AF37' }}>Home</Link>
-            {navLinks.map(link => (
-              <Link key={link.path} to={link.path} onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[52px] px-2 rounded-xl text-lg font-medium text-white/80 hover:text-white hover:bg-white/5">{link.name}</Link>
-            ))}
+            <Link to="/" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 min-h-[52px] px-2 rounded-xl text-lg font-semibold" style={{ color: '#D4AF37' }}>
+              <House className="w-5 h-5" /> Home
+            </Link>
+            {navLinks.map(link => {
+              const Icon = link.icon;
+              return (
+                <Link key={link.path} to={link.path} onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 min-h-[52px] px-2 rounded-xl text-lg font-medium text-white/80 hover:text-white hover:bg-white/5">
+                  {Icon && <Icon className="w-5 h-5" />} {link.name}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Auth */}
@@ -326,15 +338,19 @@ export default function Header() {
               <>
                 {user.full_name && <p className="text-sm font-semibold text-white">{user.full_name}</p>}
                 <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{user.email}</p>
-                <Link to="/dashboard" onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[48px] px-2 rounded-xl text-base font-medium text-white/80 hover:bg-white/5">Dashboard</Link>
+                <Link to="/dashboard" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 min-h-[48px] px-2 rounded-xl text-base font-medium text-white/80 hover:bg-white/5">
+                  <LayoutDashboard className="w-4.5 h-4.5" /> Dashboard
+                </Link>
                 {isAdmin && (
-                  <Link to="/admin" onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[48px] px-2 rounded-xl text-base font-medium" style={{ color: '#D4AF37' }}>Admin Portal</Link>
+                  <Link to="/admin" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 min-h-[48px] px-2 rounded-xl text-base font-medium" style={{ color: '#D4AF37' }}>
+                    <Settings className="w-4.5 h-4.5" /> Admin Portal
+                  </Link>
                 )}
                 <button
                   onClick={async () => { await base44.auth.logout(); setIsMobileOpen(false); window.location.reload(); }}
-                  className="flex items-center min-h-[48px] px-2 rounded-xl text-base font-medium text-left text-red-400/80 hover:bg-red-500/5"
+                  className="flex items-center gap-3 min-h-[48px] px-2 rounded-xl text-base font-medium text-left text-red-400/80 hover:bg-red-500/5"
                 >
-                  Sign Out
+                  <LogOut className="w-4.5 h-4.5" /> Sign Out
                 </button>
               </>
             ) : (

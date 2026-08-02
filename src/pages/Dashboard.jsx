@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
   Upload, MessageCircle, HeartPulse, Users,
-  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Lock, FileText, ChevronDown, FileHeart
+  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Lock, FileText, ChevronDown, FileHeart, RefreshCw
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import FeatureHub from '@/components/dashboard/FeatureHub';
@@ -440,9 +440,9 @@ function DashboardHome({ user, consultations, language }) {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-2 text-xs font-semibold text-amber-300 underline underline-offset-2"
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5"
             >
-              Reload after enabling GPS
+              <RefreshCw className="w-3.5 h-3.5" /> Reload after enabling GPS
             </button>
           </div>
         </div>

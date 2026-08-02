@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, Lock, Heart } from 'lucide-react';
+import { Shield, ArrowRight, Lock, Heart, LayoutGrid } from 'lucide-react';
 
 /**
  * DashboardWelcome — the first-load experience for users with no consultations yet.
@@ -80,7 +80,8 @@ export default function DashboardWelcome({ user }) {
 
         {/* ── Secondary link ── */}
         <Link to="/dashboard/features">
-          <button className="w-full mt-3 min-h-[48px] rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <button className="w-full mt-3 min-h-[48px] rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2">
+            <LayoutGrid className="w-4 h-4" />
             Browse All Features
           </button>
         </Link>

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Loader2, ArrowRight, Globe, ChevronLeft } from 'lucide-react';
+import { Loader2, ArrowRight, Globe, ChevronLeft, UserPlus, RotateCw } from 'lucide-react';
 import PhoneField from '@/components/ui-system/PhoneField';
 import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 import { friendlyError } from '@/lib/friendlyError';
@@ -228,7 +228,9 @@ export default function Login() {
 
       <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: TEXT_FAINT }}>
         New to Morales?{' '}
-        <Link to="/signup" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Create account</Link>
+        <Link to="/signup" style={{ color: TEAL, textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          Create account <UserPlus style={{ width: 13, height: 13 }} />
+        </Link>
       </p>
 
       {/* Judges panel */}
@@ -318,9 +320,9 @@ export default function Login() {
         ) : (
           <button
             onClick={handleSendCode}
-            style={{ background: 'none', border: 'none', color: TEAL, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+            style={{ background: 'none', border: 'none', color: TEAL, fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}
           >
-            Resend code
+            <RotateCw style={{ width: 13, height: 13 }} /> Resend code
           </button>
         )}
       </div>

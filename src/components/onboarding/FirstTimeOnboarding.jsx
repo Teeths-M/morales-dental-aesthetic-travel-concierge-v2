@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, CheckCircle2, X, Star, Shield, Heart, Plane, Home, KeyRound } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, Circle, X, Star, Shield, Heart, Plane, Home, KeyRound, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { PROTECTION_TYPES, PROTECTION_OPTIONS, setProtectionTypeLocally } from '@/lib/protectionType';
 
@@ -215,14 +215,16 @@ function StepProcedure({ procedure, setProcedure, onNext, onBack }) {
                 <button
                   key={p.value}
                   onClick={() => setProcedure(p.value)}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  className={`w-full flex items-center gap-2.5 text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     procedure === p.value
                       ? 'bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37]'
                       : 'bg-white/5 border border-white/5 text-slate-300 hover:bg-white/10 hover:border-white/20'
                   }`}
                 >
+                  {procedure === p.value
+                    ? <CheckCircle2 className="w-4 h-4 shrink-0 text-[#D4AF37]" />
+                    : <Circle className="w-4 h-4 shrink-0 text-slate-600" />}
                   {p.label}
-                  {procedure === p.value && <CheckCircle2 className="w-4 h-4 inline-block ml-2 text-[#D4AF37]" />}
                 </button>
               ))}
             </div>
@@ -286,9 +288,9 @@ function StepPIN({ onFinish, onFinishAndSetPIN, onBack }) {
         </button>
         <button
           onClick={onFinish}
-          className="w-full py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-semibold transition-all"
+          className="w-full py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-semibold transition-all flex items-center justify-center gap-2"
         >
-          I'll do this later
+          <Clock className="w-4 h-4" /> I'll do this later
         </button>
         <button
           onClick={onBack}
