@@ -127,8 +127,22 @@ export default function LuxuryHero() {
   const isMedical   = mode === 'medical';
   const content     = isMedical ? CONTENT.medical : CONTENT.nonmedical;
   const prefersReducedMotion = useReducedMotion();
-  const _openModal   = useCallback(() => setShowModal(true), []);
+  const openModal   = useCallback(() => setShowModal(true), []);
   const closeModal  = useCallback(() => setShowModal(false), []);
+
+  // First-time visitor orientation — the cinematic walkthrough auto-opens once
+  // per browser so nobody has to discover it on their own. Never repeats after
+  // the first showing, regardless of which mode (medical/travel) they saw it in.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.localStorage.getItem('morales_seen_how_it_works')) return;
+    const timer = setTimeout(() => {
+      openModal();
+      window.localStorage.setItem('morales_seen_how_it_works', '1');
+    }, 1200);
+    return () => clearTimeout(timer);
+
+  }, []);
 
   const features = [
     { icon: FEATURE_ICONS[0], title: t('home.feature_family_title'),     desc: t('home.feature_family_desc') },
@@ -429,7 +443,7 @@ export default function LuxuryHero() {
         </div>
       </section>
 
-      <HowItWorksModal isOpen={showModal} onClose={closeModal} />
+      <HowItWorksModal isOpen={showModal} onClose={closeModal} isMedical={isMedical} />
     </>
   );
 }

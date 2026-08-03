@@ -9,7 +9,10 @@ import {
 
 const GOLD = '#D4AF37';
 
-const scenes = [
+// Two parallel scripts — medical and travel — same beat structure, mode-
+// appropriate language, matching the isMedical pattern already used by
+// LiveJourneyCard/HeroChatBubbles elsewhere on this page.
+const MEDICAL_SCENES = [
   {
     id: 1,
     tag: 'THE CHALLENGE',
@@ -106,7 +109,98 @@ const scenes = [
   },
 ];
 
-const SUBTITLES = [
+const TRAVEL_SCENES = [
+  {
+    id: 1,
+    tag: 'THE CHALLENGE',
+    headline: 'The world is incredible. It should feel safe too.',
+    sub: 'New cities, new routines, unfamiliar risks. We built Morales to remove every blind spot on your trip.',
+    emotion: '"Can I really trust this?"',
+    icon: Plane,
+    bg: 'from-[#060B16] to-[#0a1020]',
+    accent: '#60a5fa',
+    visual: 'problem',
+  },
+  {
+    id: 2,
+    tag: 'STEP 1 — TRIP INTAKE',
+    headline: "Tell us where you're headed.",
+    sub: 'Share your itinerary in minutes. Your concierge builds a safety plan around it — no jargon, no pressure.',
+    emotion: '"This feels easy."',
+    icon: BadgeCheck,
+    bg: 'from-[#060B16] to-[#0d1218]',
+    accent: GOLD,
+    visual: 'consultation',
+  },
+  {
+    id: 3,
+    tag: 'STEP 2 — DESTINATION INTELLIGENCE',
+    headline: 'We screen your destination, not just your itinerary.',
+    sub: 'Our EVN-iQ400 engine checks real-time country risk, local advisories and safety signals before you ever board.',
+    emotion: '"They protect me."',
+    icon: Shield,
+    bg: 'from-[#060B16] to-[#0c1115]',
+    accent: GOLD,
+    visual: 'safet',
+  },
+  {
+    id: 4,
+    tag: 'STEP 3 — VERIFIED PARTNERS',
+    headline: 'Matched with trusted local partners.',
+    sub: 'Every driver and hotel partner confirmed before you arrive. Verified credentials, real accountability.',
+    emotion: '"I can trust this."',
+    icon: BadgeCheck,
+    bg: 'from-[#060B16] to-[#0d1220]',
+    accent: GOLD,
+    visual: 'specialists',
+  },
+  {
+    id: 5,
+    tag: 'STEP 4 — TRAVEL COORDINATION',
+    headline: 'We coordinate every detail.',
+    sub: 'Flights, hotel, airport transfers — all arranged. You receive a complete itinerary. Zero logistics stress.',
+    emotion: '"Everything is handled."',
+    icon: Plane,
+    bg: 'from-[#060B16] to-[#0d1018]',
+    accent: GOLD,
+    visual: 'travel',
+  },
+  {
+    id: 6,
+    tag: 'STEP 5 — ARRIVAL & PROTECTION',
+    headline: 'Supported from touchdown to departure.',
+    sub: 'A personal companion greets you at the airport. Your concierge is available 24/7 throughout your stay.',
+    emotion: '"I am not alone."',
+    icon: MapPin,
+    bg: 'from-[#060B16] to-[#0a1018]',
+    accent: GOLD,
+    visual: 'arrival',
+  },
+  {
+    id: 7,
+    tag: 'STEP 6 — MONITORING & RETURN',
+    headline: 'Your journey never travels alone.',
+    sub: 'Real-time check-ins, MedGuard™ safety monitoring, and a safe return home. Morales stays with you until you land back safely.',
+    emotion: '"Peace of mind."',
+    icon: Home,
+    bg: 'from-[#060B16] to-[#0d1015]',
+    accent: GOLD,
+    visual: 'recovery',
+  },
+  {
+    id: 8,
+    tag: 'YOUR JOURNEY BEGINS',
+    headline: 'Trusted Care. Comfortable Travel. Peace of Mind.',
+    sub: 'Transform your travels through Morales — with confidence, safety, and world-class support.',
+    emotion: null,
+    icon: Shield,
+    bg: 'from-[#060B16] to-[#0a0d12]',
+    accent: GOLD,
+    visual: 'final',
+  },
+];
+
+const MEDICAL_SUBTITLES = [
   "You've been researching. You're ready for something better.",
   "Share your goals in minutes. Your coordinator does the rest.",
   "We screen every procedure combination for medical risk before anything is booked.",
@@ -124,6 +218,17 @@ const SUBTITLES = [
   //
   // A real completed-journey count would be a genuinely strong closer. Compute
   // it from CaseRecord when there is one worth showing.
+  "Every step confirmed, from your front door to home again.",
+];
+
+const TRAVEL_SUBTITLES = [
+  "You've been dreaming of this trip. Let's make it worry-free.",
+  "Share your itinerary in minutes. Your concierge does the rest.",
+  "We screen your destination's real-time risk signals before you ever board.",
+  "Verified drivers. Vetted hotel partners. Every handoff confirmed.",
+  "Flights, hotels, transfers — one seamless itinerary, zero stress.",
+  "Personal companion. 24/7 coordination. You are never alone.",
+  "Real-time check-ins. MedGuard™ monitoring. Safe return home.",
   "Every step confirmed, from your front door to home again.",
 ];
 
@@ -155,8 +260,10 @@ function ProblemVisual() {
   );
 }
 
-function ConsultationVisual() {
-  const steps = ['Personal Information', 'Procedure Goals', 'Medical History', 'Travel Preferences'];
+function ConsultationVisual({ isMedical }) {
+  const steps = isMedical
+    ? ['Personal Information', 'Procedure Goals', 'Medical History', 'Travel Preferences']
+    : ['Personal Information', 'Trip Details', 'Destination & Dates', 'Emergency Contacts'];
   return (
     <div className="flex flex-col gap-3 w-full max-w-xs mx-auto">
       {steps.map((s, i) => (
@@ -187,11 +294,15 @@ function ConsultationVisual() {
   );
 }
 
-function SafeTVisual() {
-  const checks = [
+function SafeTVisual({ isMedical }) {
+  const checks = isMedical ? [
     { label: 'Rhinoplasty + Liposuction', status: 'safe', color: '#22c55e' },
     { label: 'Facelift + Breast Surgery', status: 'review', color: '#f59e0b' },
     { label: 'Triple Procedure (High-Risk)', status: 'blocked', color: '#ef4444' },
+  ] : [
+    { label: 'Downtown District', status: 'safe', color: '#22c55e' },
+    { label: 'Border Crossing Route', status: 'review', color: '#f59e0b' },
+    { label: 'Active Advisory Zone', status: 'blocked', color: '#ef4444' },
   ];
   return (
     <div className="flex flex-col items-center gap-4 w-full">
@@ -223,15 +334,19 @@ function SafeTVisual() {
   );
 }
 
-function SpecialistsVisual() {
-  const docs = [
+function SpecialistsVisual({ isMedical }) {
+  const partners = isMedical ? [
     { name: 'Dr. Rodríguez', spec: 'Dental Surgery', country: '🇻🇪', rating: '4.9' },
     { name: 'Dr. Müller', spec: 'Aesthetics', country: '🇩🇪', rating: '5.0' },
     { name: 'Dr. Santos', spec: 'Orthopedics', country: '🇧🇷', rating: '4.8' },
+  ] : [
+    { name: 'Marco T.', spec: 'Private Driver', country: '🇮🇹', rating: '4.9' },
+    { name: 'Hotel Belmiro', spec: 'Partner Hotel', country: '🇵🇹', rating: '5.0' },
+    { name: 'Ana R.', spec: 'Local Concierge', country: '🇧🇷', rating: '4.8' },
   ];
   return (
     <div className="flex flex-col gap-3 w-full max-w-xs mx-auto">
-      {docs.map((d, i) => (
+      {partners.map((d, i) => (
         <motion.div
           key={d.name}
           initial={{ opacity: 0, scale: 0.95 }}
@@ -295,7 +410,8 @@ function TravelVisual() {
   );
 }
 
-function ArrivalVisual() {
+function ArrivalVisual({ isMedical }) {
+  const stops = isMedical ? ['🤝 Greeted', '🏥 Clinic', '🛏 Recovery'] : ['🤝 Greeted', '🏨 Hotel', '🗺️ Explore'];
   return (
     <div className="flex flex-col items-center gap-5 w-full">
       <motion.div
@@ -311,10 +427,10 @@ function ArrivalVisual() {
         className="flex flex-col items-center gap-1"
       >
         <p className="text-white/80 text-[13px]">Your personal companion awaits</p>
-        <p className="text-[11px] text-white/40">Airport → Clinic → Hotel → Recovery</p>
+        <p className="text-[11px] text-white/40">{isMedical ? 'Airport → Clinic → Hotel → Recovery' : 'Airport → Hotel → City → Return'}</p>
       </motion.div>
       <div className="flex gap-3 mt-2">
-        {['🤝 Greeted', '🏥 Clinic', '🛏 Recovery'].map((s, i) => (
+        {stops.map((s, i) => (
           <motion.div
             key={s}
             initial={{ opacity: 0, scale: 0.8 }}
@@ -340,15 +456,21 @@ function ArrivalVisual() {
   );
 }
 
-function RecoveryVisual() {
+function RecoveryVisual({ isMedical }) {
+  const timeline = isMedical ? [
+    { day: 'Day 1–3', label: 'Post-procedure monitoring', done: true },
+    { day: 'Day 4–7', label: 'Recovery support & meals', done: true },
+    { day: 'Day 8', label: 'Final check-up', done: true },
+    { day: 'Day 9', label: 'Safe return home ✈️', done: false },
+  ] : [
+    { day: 'Day 1–3', label: 'Daily safety check-ins', done: true },
+    { day: 'Day 4–7', label: 'MedGuard™ monitoring active', done: true },
+    { day: 'Day 8', label: 'Final itinerary confirmed', done: true },
+    { day: 'Day 9', label: 'Safe return home ✈️', done: false },
+  ];
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      {[
-        { day: 'Day 1–3', label: 'Post-procedure monitoring', done: true },
-        { day: 'Day 4–7', label: 'Recovery support & meals', done: true },
-        { day: 'Day 8', label: 'Final check-up', done: true },
-        { day: 'Day 9', label: 'Safe return home ✈️', done: false },
-      ].map(({ day, label, done }, i) => (
+      {timeline.map(({ day, label, done }, i) => (
         <motion.div
           key={day}
           initial={{ opacity: 0, x: 20 }}
@@ -370,10 +492,16 @@ function RecoveryVisual() {
   );
 }
 
-function FinalVisual() {
-  const partners = [
+function FinalVisual({ isMedical }) {
+  const partners = isMedical ? [
     { label: 'You', emoji: '🧑' },
     { label: 'Doctor', emoji: '👨‍⚕️' },
+    { label: 'Agency', emoji: '✈️' },
+    { label: 'Driver', emoji: '🚗' },
+    { label: 'Companion', emoji: '🤝' },
+  ] : [
+    { label: 'You', emoji: '🧑' },
+    { label: 'Concierge', emoji: '🧭' },
     { label: 'Agency', emoji: '✈️' },
     { label: 'Driver', emoji: '🚗' },
     { label: 'Companion', emoji: '🤝' },
@@ -417,21 +545,23 @@ function FinalVisual() {
   );
 }
 
-function SceneVisual({ visual }) {
+function SceneVisual({ visual, isMedical }) {
   switch (visual) {
     case 'problem': return <ProblemVisual />;
-    case 'consultation': return <ConsultationVisual />;
-    case 'safet': return <SafeTVisual />;
-    case 'specialists': return <SpecialistsVisual />;
+    case 'consultation': return <ConsultationVisual isMedical={isMedical} />;
+    case 'safet': return <SafeTVisual isMedical={isMedical} />;
+    case 'specialists': return <SpecialistsVisual isMedical={isMedical} />;
     case 'travel': return <TravelVisual />;
-    case 'arrival': return <ArrivalVisual />;
-    case 'recovery': return <RecoveryVisual />;
-    case 'final': return <FinalVisual />;
+    case 'arrival': return <ArrivalVisual isMedical={isMedical} />;
+    case 'recovery': return <RecoveryVisual isMedical={isMedical} />;
+    case 'final': return <FinalVisual isMedical={isMedical} />;
     default: return null;
   }
 }
 
-export default function HowItWorksModal({ isOpen, onClose }) {
+export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
+  const scenes = isMedical ? MEDICAL_SCENES : TRAVEL_SCENES;
+  const SUBTITLES = isMedical ? MEDICAL_SUBTITLES : TRAVEL_SUBTITLES;
   const [scene, setScene] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -752,7 +882,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                     transition={{ duration: 0.4 }}
                     className="w-full h-full flex items-center justify-center"
                   >
-                    <SceneVisual visual={current.visual} />
+                    <SceneVisual visual={current.visual} isMedical={isMedical} />
                   </motion.div>
                 </AnimatePresence>
               </div>
