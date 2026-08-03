@@ -113,22 +113,11 @@ const SCRIPT = [
   },
 ];
 
-function speak(text, onEnd) {
-  if (!window.speechSynthesis) { onEnd?.(); return; }
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate  = 0.92;
-  u.pitch = 1.05;
-  u.volume = 1;
-  // Prefer a natural English voice if available
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => v.lang === 'en-GB' && v.name.includes('Female'))
-    || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('male'))
-    || voices[0];
-  if (preferred) u.voice = preferred;
-  u.onend = onEnd;
-  window.speechSynthesis.speak(u);
-}
+// Real recorded narration (public/audio/james-voice-demo/{scriptIndex}.mp3)
+// instead of the browser's built-in speech synthesis, which sounded
+// different (often robotic/unfriendly) depending on the visitor's own
+// device — the same fix already applied to the homepage's How It Works
+// walkthrough. Only 'M' lines have a recording; James's lines are text-only.
 
 export default function JamesVoiceDemo() {
   const [lines,      setLines]      = useState([]);
@@ -140,6 +129,7 @@ export default function JamesVoiceDemo() {
   const bottomRef    = useRef(null);
   const timerRef     = useRef(null);
   const mutedRef     = useRef(false);
+  const audioRef     = useRef(null);
 
   mutedRef.current = muted;
 
@@ -154,8 +144,12 @@ export default function JamesVoiceDemo() {
       timerRef.current = setTimeout(() => runStep(idx + 1), line.pause);
     };
 
-    if (!mutedRef.current && window.speechSynthesis && line.speaker === 'M') {
-      speak(line.text, next);
+    if (!mutedRef.current && audioRef.current && line.speaker === 'M') {
+      audioRef.current.pause();
+      audioRef.current.src = `/audio/james-voice-demo/${idx}.mp3`;
+      audioRef.current.currentTime = 0;
+      audioRef.current.onended = next;
+      audioRef.current.play().catch(next);
     } else {
       timerRef.current = setTimeout(next, line.pause);
     }
@@ -167,13 +161,13 @@ export default function JamesVoiceDemo() {
     setDone(false);
     setGolden(false);
     setPlaying(true);
-    window.speechSynthesis?.cancel();
+    audioRef.current?.pause();
     runStep(0);
   };
 
   const reset = () => {
     clearTimeout(timerRef.current);
-    window.speechSynthesis?.cancel();
+    audioRef.current?.pause();
     setLines([]);
     setPlaying(false);
     setDone(false);
@@ -185,12 +179,13 @@ export default function JamesVoiceDemo() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [lines]);
 
-  useEffect(() => () => { clearTimeout(timerRef.current); window.speechSynthesis?.cancel(); }, []);
+  useEffect(() => () => { clearTimeout(timerRef.current); audioRef.current?.pause(); }, []);
 
   const progress = SCRIPT.length > 0 ? Math.round((step / (SCRIPT.length - 1)) * 100) : 0;
 
   return (
     <div style={{ minHeight: '100vh', background: DARK, fontFamily: '"SF Pro Display", system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
+      <audio ref={audioRef} style={{ display: 'none' }} />
 
       {/* Header */}
       <div style={{ padding: '16px 24px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -203,7 +198,7 @@ export default function JamesVoiceDemo() {
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: `${GOLD}20`, color: GOLD, fontWeight: 700, letterSpacing: '0.06em' }}>VOICE DEMO</span>
         </div>
         <button
-          onClick={() => { setMuted(m => !m); if (!muted) window.speechSynthesis?.cancel(); }}
+          onClick={() => { setMuted(m => !m); if (!muted) audioRef.current?.pause(); }}
           style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '6px 12px', color: muted ? 'rgba(255,255,255,0.35)' : GOLD, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
         >
           {muted ? <MicOff style={{ width: 14, height: 14 }} /> : <Volume2 style={{ width: 14, height: 14 }} />}
@@ -241,7 +236,7 @@ export default function JamesVoiceDemo() {
             Begin James's Journey
           </button>
           <p style={{ margin: '16px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>
-            Powered by Web Speech API · No internet required after load
+            Real recorded narration · The same voice for every listener
           </p>
         </div>
       )}
