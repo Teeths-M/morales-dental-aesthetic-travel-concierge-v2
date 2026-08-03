@@ -232,6 +232,17 @@ const TRAVEL_SUBTITLES = [
   "Every step confirmed, from your front door to home again.",
 ];
 
+// Pre-rendered narration (public/audio/how-it-works/{mode}-{index}.mp3) — a
+// real recorded voice instead of the browser's built-in speech synthesis,
+// which sounds different (often robotic) depending on the visitor's own
+// device/OS. Generated once with a neural TTS voice; durations measured from
+// the actual files so each scene's auto-advance timer matches the real
+// narration length instead of a flat guess.
+const NARRATION_DURATIONS_MS = {
+  medical: [4848, 5256, 5856, 7824, 6480, 7368, 6504, 4344],
+  travel:  [5064, 5688, 5160, 7272, 6480, 7368, 6768, 4344],
+};
+
 function ProblemVisual() {
   return (
     <div className="flex flex-col items-center justify-center gap-5 w-full h-full">
@@ -562,6 +573,8 @@ function SceneVisual({ visual, isMedical }) {
 export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
   const scenes = isMedical ? MEDICAL_SCENES : TRAVEL_SCENES;
   const SUBTITLES = isMedical ? MEDICAL_SUBTITLES : TRAVEL_SUBTITLES;
+  const narrationDurations = isMedical ? NARRATION_DURATIONS_MS.medical : NARRATION_DURATIONS_MS.travel;
+  const narrationMode = isMedical ? 'medical' : 'travel';
   const [scene, setScene] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -569,26 +582,21 @@ export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
   const [progress, setProgress] = useState(0);
   const timerRef = useRef(null);
   const progressRef = useRef(null);
+  const audioRef = useRef(null);
 
-  const speak = (text) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.rate = 0.92;
-    utt.pitch = 1.05;
-    // Prefer a female voice
-    const voices = window.speechSynthesis.getVoices();
-    const female = voices.find(v => /female|woman|zira|samantha|karen|victoria|moira|fiona|tessa|susan|emily|aria|jenny/i.test(v.name));
-    if (female) utt.voice = female;
-    window.speechSynthesis.speak(utt);
+  const playNarration = (idx) => {
+    if (!audioRef.current) return;
+    audioRef.current.pause();
+    audioRef.current.src = `/audio/how-it-works/${narrationMode}-${idx}.mp3`;
+    audioRef.current.currentTime = 0;
+    audioRef.current.muted = muted;
+    if (!muted) audioRef.current.play().catch(() => {});
   };
 
-  const stopSpeech = () => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
+  const stopNarration = () => {
+    if (audioRef.current) audioRef.current.pause();
   };
-  const SCENE_DURATION = 6000; // 6s per scene
+  const PAUSE_AFTER = 900; // breathing room after narration ends before auto-advancing
   const TICK = 50;
 
   const totalScenes = scenes.length;
@@ -602,16 +610,14 @@ export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
     clearTimers();
     setProgress(0);
     setScene(idx);
-    if (!muted) {
-      // Slight delay so voices are loaded
-      setTimeout(() => speak(SUBTITLES[idx]), 300);
-    }
+    playNarration(idx);
     if (!playing) return;
 
+    const sceneDuration = narrationDurations[idx] + PAUSE_AFTER;
     let elapsed = 0;
     progressRef.current = setInterval(() => {
       elapsed += TICK;
-      setProgress(Math.min((elapsed / SCENE_DURATION) * 100, 100));
+      setProgress(Math.min((elapsed / sceneDuration) * 100, 100));
     }, TICK);
 
     timerRef.current = setTimeout(() => {
@@ -619,7 +625,7 @@ export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
       if (idx < totalScenes - 1) {
         startScene(idx + 1);
       }
-    }, SCENE_DURATION);
+    }, sceneDuration);
   };
 
   useEffect(() => {
@@ -651,7 +657,7 @@ export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
 
   const handleClose = () => {
     clearTimers();
-    stopSpeech();
+    stopNarration();
     setScene(0);
     setProgress(0);
     setPlaying(true);
@@ -693,6 +699,8 @@ export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
               maxHeight: '92vh',
             }}
           >
+            <audio ref={audioRef} style={{ display: 'none' }} />
+
             {/* Top progress bar */}
             <div className="flex gap-1 px-5 pt-5 pb-0">
               {scenes.map((_, i) => (
@@ -731,10 +739,11 @@ export default function HowItWorksModal({ isOpen, onClose, isMedical = true }) {
                   onClick={() => {
                     const nowMuted = !muted;
                     setMuted(nowMuted);
-                    if (nowMuted) {
-                      stopSpeech();
-                    } else {
-                      setTimeout(() => speak(SUBTITLES[scene]), 100);
+                    if (audioRef.current) {
+                      audioRef.current.muted = nowMuted;
+                      if (!nowMuted && audioRef.current.paused) {
+                        audioRef.current.play().catch(() => {});
+                      }
                     }
                   }}
                   className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/[0.06]"
