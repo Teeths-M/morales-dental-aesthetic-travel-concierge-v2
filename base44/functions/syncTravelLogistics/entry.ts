@@ -44,17 +44,28 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Malformed portal token: missing required claims' }, { status: 403 });
     }
 
-    const workflows = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id });
-    const workflow = workflows[0];
-    const authorisedPartnerIds = workflow
-      ? [workflow.assigned_doctor_id, workflow.assigned_agency_id, workflow.assigned_taxi_id].filter(Boolean)
-      : [];
-    if (!workflow || !authorisedPartnerIds.includes(partner_id)) {
+    // BUG FIX (2026-08-03): assigned_agency_id/assigned_taxi_id are never written on
+    // WorkflowEvent anywhere in this codebase — real travel-agency/taxi assignment lives
+    // on CaseRecord (travel_vendor_id, origin_driver_id, destination_driver_id). Every
+    // real agency/taxi sync request was hitting 403 regardless of token validity.
+    // WorkflowEvent is no longer a hard requirement — it may not exist yet, and CaseRecord
+    // is the real source of truth for these two roles.
+    const [workflows, cases] = await Promise.all([
+      base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id }).catch(() => []),
+      base44.asServiceRole.entities.CaseRecord.filter({ consultation_id }, '-created_date', 1).catch(() => []),
+    ]);
+    const workflow = workflows?.[0] ?? null;
+    const caseRecord = cases?.[0] ?? null;
+
+    const authorisedPartnerIds = [
+      workflow?.assigned_doctor_id,
+      caseRecord?.travel_vendor_id,
+      caseRecord?.origin_driver_id,
+      caseRecord?.destination_driver_id,
+    ].filter(Boolean);
+    if (!authorisedPartnerIds.includes(partner_id)) {
       return Response.json({ error: 'Access denied' }, { status: 403 });
     }
-
-    const cases = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id }, '-created_date', 1);
-    const caseRecord = cases[0];
     if (!caseRecord) return Response.json({ success: true, synced: false });
 
     const hotelCoords = (hotel_lat && hotel_lng) ? { lat: Number(hotel_lat), lng: Number(hotel_lng) } : null;

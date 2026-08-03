@@ -39,16 +39,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       for (const doctor of doctors) {
         if (!doctor.phone && !doctor.email) { results.skipped.push({ name: doctor.full_name, reason: 'No phone or email' }); continue; }
 
-        // Generate portal link using existing function
-        let portalUrl = `${APP_URL}/portal/doctor/`;
-        try {
-          const linkRes = await base44.functions.invoke('generateDoctorPortalLink', { doctor_id: doctor.id });
-          // SDK may return data directly or wrapped in .data; portal_url may be relative
-          const raw = linkRes?.portal_url ?? linkRes?.data?.portal_url;
-          if (raw) portalUrl = raw.startsWith('http') ? raw : `${APP_URL}${raw}`;
-        } catch (_) { /* fallback to base url */ }
+        // BUG FIX (2026-08-03): this used to call generateDoctorPortalLink with only
+        // doctor_id — that function requires BOTH consultation_id and doctor_id (400s
+        // without it) and this broadcast has no specific case in mind, so every call
+        // silently failed (caught by the bare catch) and fell back to a bare, tokenless
+        // URL. A doctor-specific portal link only exists per-case (see assignDoctorToCase);
+        // there's no "general" case-less doctor portal to generate a token for, so this
+        // points to the real, working, login-gated dashboard instead of a broken promise.
+        const portalUrl = `${APP_URL}/doctor-dashboard`;
 
-        const smsMsg = `Hi Dr. ${doctor.full_name}! Access your Morales D&A doctor portal here: ${portalUrl} - Questions? Reply to this message.`;
+        const smsMsg = `Hi Dr. ${doctor.full_name}! Log in to your Morales D&A doctor dashboard here: ${portalUrl} - Questions? Reply to this message.`;
         const emailBody = `<p>Dear Dr. ${doctor.full_name},</p><p>Your secure doctor portal link is ready. Click below to access your cases, confirm appointments, and manage your schedule:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Doctor Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
 
         if (doctor.email) {
@@ -91,14 +91,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       for (const agency of agencies) {
         if (!agency.phone && !agency.email) { results.skipped.push({ name: agency.agency_name, reason: 'No phone or email' }); continue; }
 
-        let portalUrl = `${APP_URL}/portal/travel`;
-        try {
-          const linkRes = await base44.functions.invoke('generateTravelAgencyPortalLink', { agency_id: agency.id });
-          const raw = linkRes?.portal_url ?? linkRes?.data?.portal_url;
-          if (raw) portalUrl = raw.startsWith('http') ? raw : `${APP_URL}${raw}`;
-        } catch (_) { /* fallback */ }
+        // Same fix as the doctor section above — generateTravelAgencyPortalLink
+        // requires a specific consultation_id this broadcast doesn't have.
+        const portalUrl = `${APP_URL}/travel-agency-dashboard`;
 
-        const smsMsg = `Hi ${agency.agency_name}! Access your Morales D&A travel agency portal here: ${portalUrl} - Submit travel quotes and manage bookings directly.`;
+        const smsMsg = `Hi ${agency.agency_name}! Log in to your Morales D&A travel agency dashboard here: ${portalUrl} - Submit travel quotes and manage bookings directly.`;
         const emailBody = `<p>Dear ${agency.contact_person || agency.agency_name},</p><p>Your secure travel agency portal link is ready. Click below to view patient cases and submit travel arrangements:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Travel Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
 
         if (agency.email) {
@@ -142,15 +139,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       for (const driver of drivers) {
         if (!driver.phone && !driver.email) { results.skipped.push({ name: driver.driver_name, reason: 'No phone or email' }); continue; }
 
-        let portalUrl = `${APP_URL}/portal/transfer`;
-        try {
-          const linkRes = await base44.functions.invoke('generateChauffeurPortalLink', { driver_id: driver.id });
-          const raw = linkRes?.portal_url ?? linkRes?.data?.portal_url;
-          if (raw) portalUrl = raw.startsWith('http') ? raw : `${APP_URL}${raw}`;
-        } catch (_) { /* fallback */ }
+        // Same fix as the doctor section above — generateChauffeurPortalLink
+        // requires a specific consultation_id this broadcast doesn't have.
+        const portalUrl = `${APP_URL}/taxi-service-dashboard`;
 
         const name = driver.driver_name || driver.company_name;
-        const smsMsg = `Hi ${name}! Access your Morales D&A chauffeur portal here: ${portalUrl} - View transfer assignments and submit quotes.`;
+        const smsMsg = `Hi ${name}! Log in to your Morales D&A chauffeur dashboard here: ${portalUrl} - View transfer assignments and submit quotes.`;
         const emailBody = `<p>Dear ${name},</p><p>Your secure chauffeur portal link is ready. Click below to view patient transfers and submit pricing:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Transfer Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
 
         if (driver.email) {

@@ -136,6 +136,31 @@ export default function ClientSignup() {
       });
     } catch (_e) { /* non-fatal — see comment above */ }
 
+    // BUG FIX (2026-08-03): emergency_contact_name/number are REQUIRED to even
+    // submit this form (see canSubmit above), giving every patient the clear
+    // impression this is safety-critical data being saved. It was only ever
+    // written into profileData above, which nothing in the app reads back —
+    // it never reached the SOS/CaseRecord pipeline that actually acts on an
+    // emergency contact. PersonalEmergencyContactsPanel.jsx is the real,
+    // working mechanism (it later syncs a contact onto a CaseRecord) — write
+    // into the exact same localStorage shape it reads, so the contact shows
+    // up pre-filled there instead of being silently lost.
+    try {
+      const contactsKey = `morales_emergency_contacts_${form.email}`;
+      const existing = JSON.parse(localStorage.getItem(contactsKey) || '[]');
+      if (!existing.some((c) => c.phone === form.emergency_contact_number)) {
+        existing.push({
+          id: crypto.randomUUID(),
+          name: form.emergency_contact_name,
+          phone: form.emergency_contact_number,
+          email: '',
+          relationship: '',
+          isPrimary: existing.length === 0,
+        });
+        localStorage.setItem(contactsKey, JSON.stringify(existing));
+      }
+    } catch (_e) { /* best-effort bridge — never block signup on it */ }
+
     localStorage.setItem('signupRole', 'client');
     await checkUserAuth();
     setIsSaving(false);

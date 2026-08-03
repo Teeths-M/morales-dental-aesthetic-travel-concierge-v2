@@ -79,7 +79,7 @@ export default createHandler(async ({ base44, body }) => {
   // ── Phone channel (unchanged behavior) ────────────────────────────────────
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken  = Deno.env.get('TWILIO_AUTH_TOKEN');
-  const fromNumber = Deno.env.get('TWILIO_FROM_NUMBER');
+  const fromNumber = Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
   const twilioConfigured = !!(accountSid && authToken && fromNumber);
   // Mock delivery (returning the code to the caller) is a DEV/DEMO-only affordance
   // and must be EXPLICITLY enabled. In production OTP_ALLOW_MOCK is unset, so if

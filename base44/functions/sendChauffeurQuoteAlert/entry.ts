@@ -15,7 +15,13 @@ Deno.serve(createHandler(async ({ req }) => {
     // so anyone who knew/guessed one could inject fake leg costs straight into
     // Consultation.update() below (a pricing-fraud vector).
     const verified = await verifyPortalToken(token);
-    if (!verified || verified.portal_type !== 'chauffeur') {
+    // BUG FIX (2026-08-03): the real token-minting call sites are inconsistent about
+    // which portal_type they use for a chauffeur ('transfer': assignChauffeurServices,
+    // resendChauffeurPortalEmail, sendTravelQuoteEmail, checkPartnerSLABreaches vs.
+    // 'chauffeur': pipelineOnDoctorConfirmed, sendQuoteReminders, generateChauffeurPortalLink)
+    // — both represent the same real role, so accept either rather than requiring every
+    // minting site to agree on one label.
+    if (!verified || !['chauffeur', 'transfer'].includes(verified.portal_type)) {
       return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
     }
     const consultation_id = verified.consultation_id;

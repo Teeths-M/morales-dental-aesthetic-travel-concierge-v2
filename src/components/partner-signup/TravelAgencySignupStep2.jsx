@@ -38,6 +38,7 @@ export default function TravelAgencySignupStep2({ formData, setFormData, languag
   const _t = translations[language];
   const [selectedServices, setSelectedServices] = useState(new Set(formData.services_offered || []));
   const [selectedOptions, setSelectedOptions] = useState(formData.service_options || {});
+  const [emergencySupport, setEmergencySupport] = useState(!!formData.emergency_support_available);
 
   const getServiceName = (key) => {
     const service = SERVICES[key];
@@ -68,7 +69,8 @@ export default function TravelAgencySignupStep2({ formData, setFormData, languag
     setFormData(prev => ({
       ...prev,
       services_offered: Array.from(selectedServices),
-      service_options: selectedOptions
+      service_options: selectedOptions,
+      emergency_support_available: emergencySupport,
     }));
     onNext();
   };
@@ -130,6 +132,33 @@ export default function TravelAgencySignupStep2({ formData, setFormData, languag
             </div>
           </div>
         ))}
+        {/* Was collected on submit but had no control anywhere to actually set it true —
+            every agency signed up through this flow permanently showed no 24/7 support
+            badge to patients, regardless of what they actually offer. */}
+        <div className="border-t border-border pt-6">
+          <button
+            type="button"
+            data-testid="travel-agency-emergency-support-toggle"
+            onClick={() => setEmergencySupport(v => !v)}
+            className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center justify-between gap-3 ${
+              emergencySupport
+                ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                : 'border-border bg-card text-foreground hover:border-emerald-300'
+            }`}
+          >
+            <div>
+              <div className="font-medium text-sm">
+                {language === 'es' ? 'Soporte de emergencia 24/7' : language === 'fr' ? 'Assistance d’urgence 24/7' : '24/7 Emergency Support'}
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {language === 'es' ? 'Marca esto si tu agencia ofrece asistencia de emergencia en cualquier momento del viaje del paciente.' : language === 'fr' ? 'Cochez cette case si votre agence propose une assistance d’urgence à tout moment du voyage du patient.' : 'Check this if your agency offers emergency assistance at any point during a patient’s trip.'}
+              </div>
+            </div>
+            <div className={`w-11 h-6 rounded-full flex-shrink-0 relative transition-colors ${emergencySupport ? 'bg-emerald-500' : 'bg-muted'}`}>
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${emergencySupport ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </div>
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-3">

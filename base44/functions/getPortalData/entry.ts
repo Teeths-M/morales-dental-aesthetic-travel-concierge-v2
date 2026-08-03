@@ -52,18 +52,27 @@ Deno.serve(createHandler(async ({ req }) => {
     const consultation_id = tokenConsultationId;
     const partner_id = tokenPartnerId;
 
-    // Verify this partner is authorised for this consultation via WorkflowEvent
-    const workflows = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id });
+    // Verify this partner is authorised for this consultation.
+    // BUG FIX (2026-08-03): this used to check ONLY WorkflowEvent.assigned_agency_id/
+    // assigned_taxi_id — fields that are declared nowhere in WorkflowEvent's schema and
+    // are never written by any function in this codebase (assignTravelAgency writes
+    // CaseRecord.travel_vendor_id; assignChauffeurServices writes CaseRecord.origin_driver_id/
+    // destination_driver_id). Every real travel-agency/taxi request was hitting a 403
+    // "Access denied" regardless of how valid the token was. WorkflowEvent may not even
+    // exist yet for a given consultation (it's created later in the pipeline), so it's no
+    // longer a hard requirement — CaseRecord is the real source of truth for these two roles.
+    const [workflows, cases] = await Promise.all([
+      base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id }).catch(() => []),
+      base44.asServiceRole.entities.CaseRecord.filter({ consultation_id }, '-created_date', 1).catch(() => []),
+    ]);
+    const workflow = workflows?.[0] ?? null;
+    const caseRecord = cases?.[0] ?? null;
 
-    if (!workflows || workflows.length === 0) {
-      return Response.json({ error: 'No workflow found for this consultation' }, { status: 403 });
-    }
-
-    const workflow = workflows[0];
     const authorisedPartnerIds = [
-      workflow.assigned_doctor_id,
-      workflow.assigned_agency_id,
-      workflow.assigned_taxi_id,
+      workflow?.assigned_doctor_id,
+      caseRecord?.travel_vendor_id,
+      caseRecord?.origin_driver_id,
+      caseRecord?.destination_driver_id,
     ].filter(Boolean);
 
     if (!authorisedPartnerIds.includes(partner_id)) {
@@ -76,14 +85,8 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Consultation not found', consultation_id }, { status: 404 });
     }
 
-    // Look up the linked CaseRecord so portals can update logistics fields
-    let caseId: string | null = null;
-    try {
-      const cases = await base44.asServiceRole.entities.CaseRecord.filter(
-        { consultation_id }, '-created_date', 1
-      );
-      caseId = cases[0]?.id ?? null;
-    } catch (_) {}
+    // CaseRecord ID, for portals that update logistics fields
+    const caseId: string | null = caseRecord?.id ?? null;
 
     // Return only the fields the partner actually needs — never return the full record
     const safeConsultation = {

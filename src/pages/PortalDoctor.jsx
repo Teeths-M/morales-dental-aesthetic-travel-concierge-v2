@@ -80,10 +80,14 @@ export default function PortalDoctor() {
       }
       
       try {
-        // Filter by token directly — avoids loading entire table
-        const cases = await base44.entities.CaseRecord.filter({ doctor_portal_token: token });
-        const matchingCase = (cases ?? []).find(c => c.doctor_portal_token === token);
-        
+        // Goes through a backend function (asServiceRole) rather than a raw
+        // client-side entity read — CaseRecord's RLS only allows a read when
+        // the caller's own session matches client_email/doctor_email, which a
+        // real doctor with no session (the entire point of a token-based
+        // portal link) never does. This used to silently return zero rows.
+        const response = await base44.functions.invoke('getDoctorPortalCase', { doctor_portal_token: token });
+        const matchingCase = response?.data?.case ?? response?.case ?? null;
+
         if (!matchingCase) {
           setError('Invalid or expired portal link');
           setLoading(false);
@@ -92,14 +96,8 @@ export default function PortalDoctor() {
 
         setCaseData(matchingCase);
 
-        if (matchingCase.consultation_id) {
-          try {
-            const consultation = await base44.entities.Consultation.get(matchingCase.consultation_id);
-            setConsultationData(consultation);
-          } catch (consultationError) {
-            console.error("Failed to load consultation data:", consultationError);
-          }
-        }
+        const consultation = response?.data?.consultation ?? response?.consultation ?? null;
+        if (consultation) setConsultationData(consultation);
       } catch (err) {
         setError('Failed to load case data');
         console.error(err);
@@ -114,16 +112,13 @@ export default function PortalDoctor() {
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      const coordsUpdate = (clinicLat && clinicLng)
-        ? { clinic_coords: { lat: parseFloat(clinicLat), lng: parseFloat(clinicLng) } }
-        : {};
-      await base44.entities.CaseRecord.update(caseData?.id, {
-        doctor_confirmation_status: 'Confirmed',
-        doctor_confirmed_at: new Date().toISOString(),
+      // Same RLS-bypass reasoning as the initial load — see getDoctorPortalCase.
+      await base44.functions.invoke('respondToDoctorPortalCase', {
+        doctor_portal_token: token,
+        decision: 'confirmed',
         doctor_notes: formData.doctor_notes,
-        status: 'Vendor-Pending',
         ...(clinicAddress ? { clinic_address: clinicAddress } : {}),
-        ...coordsUpdate,
+        ...(clinicLat && clinicLng ? { clinic_lat: clinicLat, clinic_lng: clinicLng } : {}),
       });
       setSuccess(true);
     } catch (err) {
@@ -166,10 +161,10 @@ export default function PortalDoctor() {
   const handleNotAvailable = async () => {
     setSubmitting(true);
     try {
-      await base44.entities.CaseRecord.update(caseData?.id, {
-        doctor_confirmation_status: 'Declined',
+      await base44.functions.invoke('respondToDoctorPortalCase', {
+        doctor_portal_token: token,
+        decision: 'declined',
         doctor_notes: formData.doctor_notes,
-        status: 'Admin-Review'
       });
       setSuccess(true);
     } catch (err) {

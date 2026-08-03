@@ -50,10 +50,18 @@ Deno.serve(createHandler(async ({ req }) => {
     const workflow = workflows[0];
     if (!workflow) return Response.json({ error: 'No workflow found for this consultation' }, { status: 403 });
 
+    // BUG FIX (2026-08-03): assigned_agency_id/assigned_taxi_id are never written on
+    // WorkflowEvent anywhere in this codebase — real travel-agency/taxi assignment lives
+    // on CaseRecord (travel_vendor_id, origin_driver_id, destination_driver_id). Every
+    // real agency/taxi revision request was hitting 403 regardless of token validity.
+    const cases = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id }, '-created_date', 1).catch(() => []);
+    const caseRecord = cases?.[0] ?? null;
+
     const authorisedPartnerIds = [
       workflow.assigned_doctor_id,
-      workflow.assigned_agency_id,
-      workflow.assigned_taxi_id,
+      caseRecord?.travel_vendor_id,
+      caseRecord?.origin_driver_id,
+      caseRecord?.destination_driver_id,
     ].filter(Boolean);
     if (!authorisedPartnerIds.includes(partner_id)) {
       return Response.json({ error: 'Access denied' }, { status: 403 });

@@ -47,15 +47,17 @@ export default function PortalChauffeur() {
     // server-side rather than trusting a client-held consultation_id for a
     // write (same reasoning as PortalTravelAgency.jsx).
     setTokenData({ ...decoded, token });
-    loadData(decoded.consultation_id, decoded.partner_id);
+    loadData(token, decoded.consultation_id);
   }, []);
 
-  const loadData = async (consultationId, partnerId) => {
+  const loadData = async (token, consultationId) => {
     try {
-      const response = await base44.functions.invoke('getPortalData', {
-        consultation_id: consultationId,
-        partner_id: partnerId,
-      });
+      // getPortalData requires the raw signed token — it has no fallback to a
+      // client-decoded consultation_id/partner_id (by design, so a client can't
+      // forge access). This page used to send the decoded fields directly,
+      // which getPortalData always rejects with 401 — every chauffeur portal
+      // load was failing before this fix, independent of the token itself.
+      const response = await base44.functions.invoke('getPortalData', { token });
 
 
       const c = response.data.consultation;

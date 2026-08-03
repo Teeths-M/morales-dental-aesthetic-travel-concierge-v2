@@ -85,6 +85,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
         phone: formData.phone,
         contact_person: formData.contact_person,
         headquarters_country: formData.headquarters_country,
+        headquarters_city: formData.headquarters_city,
         website_url: formData.website_url,
         medical_travel_experience_years: Number(formData.medical_travel_experience_years) || 0,
         emergency_support_available: !!formData.emergency_support_available,

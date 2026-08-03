@@ -2378,10 +2378,18 @@ test('PREP COACH: CaseRecord carries the new milestone flags, default false', ()
 // tracked "batch 2", same ratchet pattern as EXEMPT_RATE_LIMIT/SCHEMA_HARDENED.
 
 test('PORTAL WRITE: sendTravelQuoteEmail and sendChauffeurQuoteAlert derive consultation_id only from a verified portal token', () => {
-  for (const [fn, portalType] of [['sendTravelQuoteEmail', 'travel'], ['sendChauffeurQuoteAlert', 'chauffeur']]) {
+  // sendChauffeurQuoteAlert accepts either 'chauffeur' or 'transfer' — the real
+  // token-minting call sites are inconsistent about which of the two they use
+  // for the same real-world role (2026-08-03 audit), so it checks membership
+  // in both rather than a single exact value like sendTravelQuoteEmail does.
+  const portalTypeCheck = {
+    sendTravelQuoteEmail: `verified.portal_type !== 'travel'`,
+    sendChauffeurQuoteAlert: `!['chauffeur', 'transfer'].includes(verified.portal_type)`,
+  };
+  for (const fn of Object.keys(portalTypeCheck)) {
     const src = read(`base44/functions/${fn}/entry.ts`);
     expect(src, `${fn} must verify the caller's portal token`).toContain('verifyPortalToken(token)');
-    expect(src, `${fn} must check the token's portal_type`).toContain(`verified.portal_type !== '${portalType}'`);
+    expect(src, `${fn} must check the token's portal_type`).toContain(portalTypeCheck[fn]);
     expect(src, `${fn} must derive consultation_id from the verified token, not the raw body`)
       .toContain('const consultation_id = verified.consultation_id;');
   }
