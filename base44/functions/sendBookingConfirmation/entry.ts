@@ -17,7 +17,7 @@ function bookingEmail({ clientName, procedures, departureDate, destination, case
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#060B16;padding:32px;text-align:center;">
-  <img src="https://moralesdentalandaesthetics.com/morales-m-mark.png" width="64" alt="M" style="display:block;margin:0 auto 16px;" />
+  <img src="${APP_URL}/morales-m-mark.png" width="64" alt="M" style="display:block;margin:0 auto 16px;" />
   <div style="font-family:Georgia,serif;font-size:24px;color:#fff;letter-spacing:0.04em;">${BRAND}</div>
   <div style="width:160px;height:1px;background:linear-gradient(to right,transparent,${GOLD},transparent);margin:14px auto 0;"></div>
   <div style="margin-top:10px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};">Booking Confirmed</div>

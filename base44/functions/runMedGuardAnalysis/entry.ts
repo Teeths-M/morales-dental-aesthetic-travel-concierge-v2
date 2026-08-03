@@ -25,6 +25,7 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
  */
 
 const BRAND = 'Morales Medical Travel Safety';
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendSms(to: string, msg: string) {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID'), auth = Deno.env.get('TWILIO_AUTH_TOKEN'), from = Deno.env.get('TWILIO_PHONE_NUMBER');
@@ -192,7 +193,7 @@ async function analyzeCase(base44: any, caseRecord: any) {
           <p><strong>Phase:</strong> ${caseRecord.trip_phase || caseRecord.status}</p>
           <h3>Risk Breakdown:</h3>
           <ul>${Object.entries(breakdown).map(([k, v]) => v > 0 ? `<li>${k.replace(/_/g,' ')}: +${v} pts</li>` : '').join('')}</ul>
-          <p><a href="https://moralesdentalandaesthetics.com/admin" style="background:#dc2626;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:12px;">View in Admin →</a></p>
+          <p><a href="${APP_URL}/admin" style="background:#dc2626;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:12px;">View in Admin →</a></p>
         </div>`,
       }));
       actions.push('admin_alerted');

@@ -31,7 +31,7 @@ function goldenMEmail({ clientName, procedures, duration, caseRef }: {
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
 
 <tr><td style="padding:48px 32px 32px;text-align:center;">
-  <img src="https://moralesdentalandaesthetics.com/morales-m-mark.png" width="90" alt="M"
+  <img src="${APP_URL}/morales-m-mark.png" width="90" alt="M"
     style="display:block;margin:0 auto 20px;filter:drop-shadow(0 0 24px rgba(212,175,55,0.8));" />
   <div style="width:200px;height:1px;background:linear-gradient(to right,transparent,${GOLD},#F0D060,${GOLD},transparent);margin:0 auto 20px;box-shadow:0 0 8px rgba(212,175,55,0.6);"></div>
   <div style="font-family:Georgia,serif;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:${GOLD};margin-bottom:16px;">Journey Complete</div>

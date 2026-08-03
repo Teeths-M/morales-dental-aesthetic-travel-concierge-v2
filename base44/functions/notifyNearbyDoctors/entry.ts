@@ -1,6 +1,7 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 const MAX_DOCTORS = 5;
 
 const CATEGORY_SPECIALTY_MAP = {
@@ -94,7 +95,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     </div>
     <p style="font-size:14px;color:rgba(255,255,255,0.6);margin:0 0 24px;">Can you accommodate this patient? Reply to this email or log into your Morales Doctor Portal.</p>
     <div style="text-align:center;margin:32px 0;">
-      <a href="https://moralesdentalandaesthetics.com/doctor-dashboard" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:14px 32px;border-radius:99px;text-decoration:none;">Respond in My Portal →</a>
+      <a href="${APP_URL}/doctor-dashboard" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:14px 32px;border-radius:99px;text-decoration:none;">Respond in My Portal →</a>
     </div>
     <p style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin:0;">Reply YES to accept, NO to decline, or MAYBE for more information.</p>
   </div>
