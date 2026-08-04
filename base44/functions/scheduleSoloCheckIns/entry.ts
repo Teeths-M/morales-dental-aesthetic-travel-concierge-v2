@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -23,28 +24,37 @@ const ACTIVE_TRAVEL_STATUSES = new Set([
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+
+    // cronAuthorized proves the caller: cron secret, or admin session. This
+    // used to require a live admin session outright — which is exactly why
+    // it was never actually scheduled anywhere (a GitHub Actions cron tick
+    // can't hold one). Same fail-closed helper every other scheduled safety
+    // job in this repo uses.
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const now = new Date();
 
-    // Find all cases where user is traveling solo (no companion)
+    // Find all actively-traveling cases eligible for a safety check-in.
     const allCases = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 200);
 
     // Only schedule check-ins for cases where the patient is actively traveling on the ground
     // AND a destination handshake has been recorded (intake_handshake_logged_at is set).
     // Without this guard, every newly submitted consultation gets a check-in email.
-    const soloCases = allCases.filter(c =>
+    //
+    // Previously restricted to solo travelers only (no companion). Portia
+    // confirmed: a companion being nearby doesn't guarantee M can actually
+    // reach the patient if their phone dies — every active traveler gets the
+    // same check-in ladder now, not just solo ones.
+    const activeTravelCases = allCases.filter(c =>
       ACTIVE_TRAVEL_STATUSES.has(c.status) &&
-      c.intake_handshake_logged_at &&
-      (!c.requires_companion || c.companion_requirement_status === 'companion_required_pending' || c.companion_requirement_status === 'not_required')
+      c.intake_handshake_logged_at
     );
 
     let created = 0;
 
-    for (const caseRecord of soloCases) {
+    for (const caseRecord of activeTravelCases) {
       // Check if there's already an active pending check-in
       const existingCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
         { case_id: caseRecord.id, status: 'pending' },
@@ -135,7 +145,7 @@ Deno.serve(async (req) => {
               <div style="text-align:center;margin-bottom:24px;">
                 <span style="font-size:48px;">🛡️</span>
                 <h1 style="color:#111827;font-size:24px;margin:12px 0 4px;">Safety Check-In Required</h1>
-                <p style="color:#6b7280;font-size:14px;margin:0;">Morales Travel Concierge · Solo Traveler Protection</p>
+                <p style="color:#6b7280;font-size:14px;margin:0;">Morales Travel Concierge · Traveler Safety Protection</p>
               </div>
               <p style="color:#374151;font-size:16px;line-height:1.6;">Hi <strong>${caseRecord.client_name}</strong>,</p>
               <p style="color:#374151;font-size:16px;line-height:1.6;">
@@ -159,7 +169,7 @@ Deno.serve(async (req) => {
 
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: caseRecord.client_email,
-          subject: `🛡️ [Action Required] Solo Traveler Safety Check-In — Confirm You're Safe`,
+          subject: `🛡️ [Action Required] Safety Check-In — Confirm You're Safe`,
           body: emailBody,
         });
 
@@ -194,7 +204,7 @@ Deno.serve(async (req) => {
       created++;
     }
 
-    return Response.json({ created, total_solo_cases: soloCases.length });
+    return Response.json({ created, total_active_travel_cases: activeTravelCases.length });
   } catch (error) {
     console.error('[scheduleSoloCheckIns]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });

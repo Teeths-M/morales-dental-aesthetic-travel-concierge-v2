@@ -157,6 +157,7 @@ jobs:
             # and does real work if they ARE live. runSafetyMonitor is excluded
             # on purpose — it is the only job that bills an LLM, and a daily
             # deployment check must not cost money to answer "is it deployed".
+            call scheduleSoloCheckIns
             call escalateSoloCheckIn
             call predictiveEscalation
             call checkStaleLiveLocations
@@ -171,6 +172,7 @@ jobs:
             call checkMissedRecoveryCheckins
           else
             # Every 15 min — the life-safety path.
+            call scheduleSoloCheckIns           # creates/advances check-ins for every active traveler, not just solo
             call escalateSoloCheckIn            # 2h → 3h → 5h → 9h cascade
             call predictiveEscalation           # fires BEFORE a check-in is missed
             call checkStaleLiveLocations        # GPS gone quiet

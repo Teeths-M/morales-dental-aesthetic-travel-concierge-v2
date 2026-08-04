@@ -1,20 +1,39 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { findDriverBackup } from '../../shared/findDriverBackup.ts';
 
 // ── escalateMissedDriverHandshake — cron/scheduled function ──────────────────
 // Runs every 15 minutes via GitHub Actions, not Base44's own scheduler — see
-// .github/workflows/safety-cron.yml, which is the actual, verified trigger
-// (this file previously claimed "every minute via Base44 scheduler," which
-// was never true; no Base44-native schedule for this function exists in
-// this repo).
-// Finds pending driver handshakes where timeout_at < now (15-min window),
-// marks them status=timeout, attempts to auto-assign a replacement driver
-// from the TaxiService agency pool, fires a reroute SMS notification.
+// .github/workflows/safety-cron.yml, which is the actual, verified trigger.
+//
+// REWRITTEN 2026-08-04: the previous version watched OfflineHandshake rows
+// with handshake_role:'driver' — but nothing in the live app ever created
+// those (their only producer, confirmHandshake, has zero callers anywhere).
+// The real, live journey system is the 9-step handshake in
+// completeHandshake/entry.ts, driven entirely by the PATIENT tapping
+// "confirm" in the app — there was never any independent driver-side signal
+// or timeout for it. This version checks TravelRequest directly: if the next
+// expected handshake step needs a driver (1, 3, 5, 7, or 9) and enough time
+// has passed with no confirmation, it dispatches a backup driver for real.
+//
+// Anchor for "how long is too long":
+//   Step 1 (origin pickup, home->airport): scheduled_departure minus a lead
+//     window — the earliest real time signal available. Skipped entirely if
+//     no flight is on file yet (degrades gracefully, doesn't guess).
+//   Steps 3/5/7/9: time since the PRECEDING step was confirmed — always
+//     available once that step is "next," same anchor pattern already used
+//     by completeHandshake's own HS4/HS5 dual-signal timeout.
 //
 // Schedule: */15 * * * *  (.github/workflows/safety-cron.yml)
 
-// Outbound SMS (Twilio) — inline to avoid shared module issues in Base44
+const DRIVER_STEPS = new Set([1, 3, 5, 7, 9]);
+const NOSHOW_MINUTES = 30;      // reasonable "your ride is late" window before paging a backup
+const PICKUP_LEAD_HOURS = 3;    // HS1 only: driver expected roughly this far ahead of wheels-up
+
+// Outbound SMS (Twilio) — inline, matching every other function in this
+// codebase (see the original version of this file / findDoctorBackup.ts)
+// rather than a shared module: shared SMS modules have caused issues in
+// Base44 per that established convention.
 async function sendSms(to: string, message: string) {
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken  = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -24,182 +43,107 @@ async function sendSms(to: string, message: string) {
   }
   const url  = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
   const form = new URLSearchParams({ To: to, From: fromNumber, Body: message });
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: form.toString(),
-  });
-  const result = await resp.json().catch(() => ({}));
-  return resp.ok ? { ok: true, sid: result.sid } : { ok: false, error: result.message || 'twilio_error' };
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: form.toString(),
+    });
+    const result = await resp.json().catch(() => ({}));
+    return resp.ok ? { ok: true, sid: result.sid } : { ok: false, error: result.message || 'twilio_error' };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
 }
 
-Deno.serve(createHandler(async ({ req }) => {
-  try {
-    const base44 = createClientFromRequest(req);
+function legForStep(n: number): 'origin' | 'destination' {
+  return (n === 1 || n === 9) ? 'origin' : 'destination';
+}
 
-    /* Same fail-open pattern that was in checkMissedRecoveryCheckins: with no
-       session `user` is null, the `user &&` short-circuits, and the request is
-       let through on the assumption that anonymous means "the scheduler".
-       Combined with requireAuth:false on the handler, this endpoint was open
-       to anyone with the URL — and it sends Twilio SMS, so driving it costs
-       real money and messages real drivers and patients.
-
-       cronAuthorized proves the caller: cron secret, or admin session. Fails
-       closed when CRON_SECRET is unset. */
-    if (!(await cronAuthorized(req, base44))) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const nowIso = new Date().toISOString();
-
-    // Find all pending driver handshakes whose timeout_at has passed
-    // Primary filter: handshake_role=driver, status=pending
-    const pendings = await base44.asServiceRole.entities.OfflineHandshake.filter({
-      handshake_role: 'driver',
-      status: 'pending',
-    });
-
-    // Secondary filter: timeout_at < now, not rerouted, and trip is NOT paused
-    // isTripPaused: check TravelRequest.paused flag — suppress reroutes while paused
-    async function isTripPaused(tripId) {
-      if (!tripId) return false;
-      try {
-        const t = await base44.asServiceRole.entities.TravelRequest.get(tripId);
-        return t?.paused === true;
-      } catch (err) {
-        console.error(`[escalateMissedDriverHandshake] Failed to check pause for trip ${tripId}:`, err?.message);
-        return false; // Assume not paused — better to escalate than miss
-      }
-    }
-
-    const timedOutRaw = (pendings || []).filter(
-      (h) => !h.rerouted && h.timeout_at && h.timeout_at < nowIso
-    );
-    const pausedChecks = await Promise.all(timedOutRaw.map(h => isTripPaused(h.trip_id)));
-    const timedOut = timedOutRaw.filter((_, i) => !pausedChecks[i]);
-
-    if (!timedOut.length) {
-      return Response.json({ success: true, timed_out_count: 0 });
-    }
-
-    // Load full TaxiService pool to find available replacement drivers
-    // Filter to active drivers in the same city as the case (best-effort)
-    const allDrivers = await base44.asServiceRole.entities.TaxiService.filter({
-      status: 'active',
-    }).catch(() => []);
-
-    const results = [];
-    for (const h of timedOut) {
-      // Mark timed out (idempotent: rerouted guard prevents double-processing)
-      await base44.asServiceRole.entities.OfflineHandshake.update(h.id, {
-        status: 'timeout',
-        escalated: true,
-        escalated_at: nowIso,
-        execution_result: 'primary_driver_timeout',
-      });
-
-      // Auto-assign: pick the first available driver that isn't the primary
-      const replacement = allDrivers.find(
-        (d) => d.id !== h.primary_driver_id && d.phone
-      );
-
-      let rerouteSmsSent  = false;
-      let rerouteSmsError = 'no_replacement_found';
-      let rerouteDriverId = null;
-
-      if (replacement) {
-        rerouteDriverId = replacement.id;
-
-        // Mark rerouted on the original handshake
-        await base44.asServiceRole.entities.OfflineHandshake.update(h.id, {
-          rerouted: true,
-          reroute_driver_id: replacement.id,
-          reroute_triggered_at: nowIso,
-        });
-
-        // Fire reroute SMS to replacement driver
-        const reroute = await sendSms(
-          replacement.phone,
-          `Morales dispatch: driver reassignment. Please confirm pickup for checkpoint ${h.checkpoint_id || h.id}.` +
-          ` Reply: HANDSHAKE ${h.checkpoint_id || h.id}`
-        );
-        rerouteSmsSent  = reroute.ok;
-        rerouteSmsError = reroute.ok ? null : reroute.error;
-
-        // Also SMS the backup_driver if set and different from replacement
-        if (h.backup_driver_phone && h.backup_driver_phone !== replacement.phone) {
-          await sendSms(
-            h.backup_driver_phone,
-            `Morales backup alert: primary driver missed checkpoint ${h.checkpoint_id || ''}. Replacement en route.`
-          ).catch(() => {});
-        }
-      } else if (h.backup_driver_phone) {
-        // No replacement found in pool — fall back to the pre-designated backup
-        const fallback = await sendSms(
-          h.backup_driver_phone,
-          `Morales dispatch: primary driver missed checkpoint ${h.checkpoint_id || ''}. Please confirm pickup.` +
-          ` Reply: HANDSHAKE ${h.checkpoint_id || h.id}`
-        );
-        rerouteSmsSent  = fallback.ok;
-        rerouteSmsError = fallback.ok ? null : fallback.error;
-        await base44.asServiceRole.entities.OfflineHandshake.update(h.id, {
-          rerouted: true,
-          reroute_driver_id: h.backup_driver_id || 'backup_phone',
-          reroute_triggered_at: nowIso,
-        });
-      }
-
-      // Audit: DispatchFailureLog for dashboard visibility
-      await base44.asServiceRole.entities.DispatchFailureLog.create({
-        case_id: h.case_id || 'unknown',
-        pipeline_stage: 'handshake_timeout_reroute',
-        provider_type: 'chauffeur',
-        provider_name: h.primary_driver_id || 'primary_driver',
-        dispatch_type: 'sms',
-        error_message: `Driver handshake ${h.checkpoint_id || h.id} timed out after 15 min. Reroute: ${rerouteDriverId || 'none'}.`,
-        status: rerouteSmsSent ? 'rerouted' : 'pending_intervention',
-        logged_at: nowIso,
-      });
-
-      await base44.asServiceRole.entities.NotificationLog.create({
-        case_id: h.case_id || 'unknown',
-        notification_type: 'sms',
-        recipient_role: 'vendor',
-        recipient_identifier: replacement?.phone || h.backup_driver_phone || 'none',
-        event_trigger: 'escalateMissedDriverHandshake',
-        suppressed_payload: {
-          checkpoint_id: h.checkpoint_id,
-          handshake_type: h.handshake_type,
-          reroute_driver_id: rerouteDriverId,
-          sms_sent: rerouteSmsSent,
-          sms_error: rerouteSmsError,
-        },
-        logged_at: nowIso,
-      });
-
-      results.push({
-        handshake_id: h.checkpoint_id || h.id,
-        case_id: h.case_id,
-        handshake_type: h.handshake_type,
-        reroute_driver_id: rerouteDriverId,
-        reroute_sms_sent: rerouteSmsSent,
-        reroute_sms_error: rerouteSmsError,
-      });
-    }
-
-    return Response.json({
-      success: true,
-      timed_out_count: timedOut.length,
-      results,
-    });
-
-  } catch (err) {
-    console.error('[escalateMissedDriverHandshake]', err);
-    return Response.json({ error: 'Internal error' }, { status: 500 });
+Deno.serve(createHandler(async ({ req, base44 }) => {
+  // cronAuthorized proves the caller: cron secret, or admin session. Fails
+  // closed when CRON_SECRET is unset. This endpoint sends real Twilio SMS
+  // and dispatches real backup drivers, so it must never be reachable by
+  // an anonymous caller with just the URL.
+  if (!(await cronAuthorized(req, base44))) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  const now = Date.now();
+
+  // Trips that are actually paid/confirmed and in flight — draft/quote-stage
+  // requests never have a driver assigned yet, so scanning them is wasted work.
+  const trips = await base44.asServiceRole.entities.TravelRequest.filter(
+    { package_status: 'confirmed' }, '-updated_at', 200
+  ).catch(() => []);
+
+  const results: Record<string, unknown>[] = [];
+
+  for (const trip of trips as any[]) {
+    if (trip.paused) continue;                       // patient/admin already handling this manually
+    const currentStep = trip.current_step ?? 0;
+    if (currentStep >= 9) continue;                   // journey already complete
+
+    const n = currentStep + 1;
+    if (!DRIVER_STEPS.has(n)) continue;                // next step doesn't need a driver to show up
+
+    const flagged: number[] = trip.noshow_flagged_steps || [];
+    if (flagged.includes(n)) continue;                 // already dispatched a backup for this step
+
+    let anchor: number | null = null;
+    if (n === 1) {
+      if (!trip.scheduled_departure) continue;          // no flight synced yet — degrade gracefully, don't guess
+      anchor = new Date(trip.scheduled_departure).getTime() - PICKUP_LEAD_HOURS * 3600_000;
+    } else {
+      const prevTs = trip.handshake_timestamps?.[String(n - 1)];
+      if (!prevTs) continue;                            // shouldn't happen if n === currentStep+1, but guard anyway
+      anchor = new Date(prevTs).getTime();
+    }
+
+    if (Number.isNaN(anchor) || now - anchor < NOSHOW_MINUTES * 60_000) continue; // not overdue yet
+
+    if (!trip.case_id) {
+      results.push({ trip_id: trip.id, step: n, action: 'skipped_no_case_id' });
+      continue;
+    }
+
+    const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: trip.case_id }).catch(() => []);
+    const caseRecord = (cases as any[])?.[0];
+    if (!caseRecord) {
+      results.push({ trip_id: trip.id, step: n, action: 'skipped_case_not_found' });
+      continue;
+    }
+
+    const leg = legForStep(n);
+    const excludeId = leg === 'origin' ? caseRecord.origin_driver_id : caseRecord.destination_driver_id;
+
+    const backupResult = await findDriverBackup(base44, caseRecord, leg, excludeId, 'no_show')
+      .catch(() => ({ success: false }));
+
+    if (trip.user_phone) {
+      const msg = backupResult.success
+        ? "Your ride is running behind — we've already dispatched a backup driver. Check your app for the update."
+        : "Your ride is running behind and we're finding you a replacement right now — hang tight, we'll update you shortly.";
+      await sendSms(trip.user_phone, msg).catch(() => {});
+    }
+
+    await base44.asServiceRole.entities.TravelRequest.update(trip.id, {
+      noshow_flagged_steps: [...flagged, n],
+    }).catch(() => {});
+
+    results.push({
+      trip_id: trip.id,
+      case_id: trip.case_id,
+      step: n,
+      leg,
+      backup_dispatched: backupResult.success,
+    });
+  }
+
+  return Response.json({ success: true, checked: trips.length, escalations: results });
 // Cron-only: cronAuthorized/CRON_SECRET is the real gate — rate-limiting the
 // scheduler itself would risk throttling legitimate runs.
 }, { name: 'escalateMissedDriverHandshake', requireAuth: false, rateLimit: false }));

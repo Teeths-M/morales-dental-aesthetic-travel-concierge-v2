@@ -305,6 +305,16 @@
       "type": "number",
       "default": 0,
       "description": "Last confirmed handshake number (0 = none started, 9 = journey complete)"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Linked CaseRecord.id — read/written by completeHandshake and escalateMissedDriverHandshake; was undeclared here despite being live-written since this entity's creation."
+    },
+    "noshow_flagged_steps": {
+      "type": "array",
+      "items": { "type": "number" },
+      "default": [],
+      "description": "Handshake step numbers (1-9) escalateMissedDriverHandshake has already dispatched a backup driver for — prevents redispatching every 15 min on the same missed step."
     }
   },
   "required": [
