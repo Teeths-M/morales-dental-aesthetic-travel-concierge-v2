@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Heart, MapPin, ExternalLink, Navigation, MessageCircle, MessageSquare } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 function openNav(url) { window.open(url, '_blank', 'noopener,noreferrer'); }
 
@@ -66,19 +67,13 @@ export default function PublicRecoveryTracker() {
 
     try {
       // Read only public-safe fields via a function that validates the token
-      const res = await fetch(`/api/public/case-tracker?token=${encodeURIComponent(token)}`);
-      if (!res.ok) throw new Error('not found');
-      const data = await res.json();
+      const res = await base44.functions.invoke('getCaseTrackerPublic', { token });
+      const data = res?.data ?? res;
+      if (!data || data.error) throw new Error(data?.error || 'not found');
       setCaseData(data);
       setLastRefresh(new Date());
     } catch (_) {
-      // Fallback: use localStorage if this is the patient's own device
-      const localData = localStorage.getItem(`morales_tracker_${decoded.case_id}`);
-      if (localData) {
-        try { setCaseData(JSON.parse(localData)); } catch (_) {}
-      } else {
-        setError('Unable to load journey status. Please try again shortly.');
-      }
+      setError('Unable to load journey status. Please try again shortly.');
     }
     setLoading(false);
   };

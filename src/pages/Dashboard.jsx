@@ -25,6 +25,7 @@ import SupportModule from '@/components/dashboard/modules/SupportModule';
 import SettingsModule from '@/components/dashboard/modules/SettingsModule';
 import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
+import ShareJourneyButton from '@/components/journey/ShareJourneyButton';
 import PostOpRecoveryTracker from '@/components/dashboard/PostOpRecoveryTracker';
 import RecoveryGuidancePanel from '@/components/patient/RecoveryGuidancePanel';
 import NominateDoctorCard from '@/components/patient/NominateDoctorCard';
@@ -545,6 +546,7 @@ function DashboardHome({ user, consultations, language }) {
             currentStep={activeTrip.current_step ?? 0}
             isComplete={activeTrip.trip_phase === 'completed'}
           />
+          <ShareJourneyButton caseId={activeTrip.case_id} />
           <HandshakeButton
             tripId={activeTrip.id}
             caseId={activeTrip.case_id}
