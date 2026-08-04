@@ -177,19 +177,25 @@ Deno.serve(async (req) => {
               const locStr = latestLoc?.latitude
                 ? `${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
                 : latestLoc?.place_label || 'not yet available';
+              // emergency_contact is a display label ("Jane Doe (Spouse)") —
+              // take just the first name for a warm greeting, fall back to
+              // no name at all rather than printing the raw label.
+              const guardianFirstName = (caseRecord.emergency_contact || '').split(' (')[0].trim().split(' ')[0] || '';
+              const greeting = guardianFirstName ? `Hi ${guardianFirstName},` : 'Hi,';
 
               if (guardianEmail && guardianEmail.includes('@')) {
                 await base44.asServiceRole.integrations.Core.SendEmail({
                   to: guardianEmail,
-                  subject: `${checkIn.user_name} hasn't confirmed their safety check-in yet`,
-                  body: `<p><strong>${checkIn.user_name}</strong> has not yet responded to a routine safety check-in during their trip. This is an early, precautionary notice — no emergency has been declared.</p>
+                  subject: `${checkIn.user_name} hasn't checked in yet — please take a look`,
+                  body: `<p>${greeting}</p>
+                    <p><strong>${checkIn.user_name}</strong> hasn't responded to their safety check-in yet. We're here to protect them — please check in and make sure they're okay.</p>
                     <p><strong>Last known location:</strong> ${locStr}</p>
-                    ${guardianUrl ? `<p><a href="${guardianUrl}">👁 See their live location and status</a></p>` : ''}
-                    <p>You can reach out to them directly. If they remain unreachable, Morales will continue escalating automatically.</p>`,
+                    ${guardianUrl ? `<p><a href="${guardianUrl}">👁 See their live location, and options to reach out or request help</a></p>` : ''}
+                    <p>This is an early, precautionary notice — no emergency has been declared. If they remain unreachable, Morales will continue escalating automatically.</p>`,
                 }).catch(() => {});
               }
               if (guardianPhone) {
-                const smsMsg = `Morales Safety: ${checkIn.user_name} hasn't confirmed their check-in yet. See their live location: ${guardianUrl || appUrl}`;
+                const smsMsg = `${greeting} ${checkIn.user_name} hasn't responded to their check-in yet. We're here to protect them — please check in and make sure they're okay: ${guardianUrl || appUrl}`;
                 await Promise.allSettled([
                   sendSms(guardianPhone, smsMsg),
                   sendWhatsApp(guardianPhone, smsMsg),

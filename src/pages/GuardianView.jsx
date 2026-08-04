@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, Shield, CheckCircle2, Clock, AlertTriangle,
   MapPin, Navigation, Copy, ExternalLink, Globe, Radio, Wifi, WifiOff, Compass,
+  Phone, MessageSquare, ShieldAlert, Stethoscope,
 } from 'lucide-react';
 
 // ── Bearing + distance helpers ───────────────────────────────────────────────
@@ -184,6 +185,8 @@ export default function GuardianView() {
   const [guardianPos, setGuardianPos] = useState(null);
   const [guardianGPSStatus, setGuardianGPSStatus] = useState('idle'); // idle|active|denied
   const watchIdRef = useRef(null);
+  const [securityState, setSecurityState] = useState('idle'); // idle|loading|done
+  const [securityMsg, setSecurityMsg] = useState('');
 
   // Bearing + distance from guardian → patient (must be before early returns per hooks rules)
   const directionToPatient = useMemo(() => {
@@ -255,6 +258,28 @@ export default function GuardianView() {
     });
   };
 
+  const handleRequestSecurity = async () => {
+    setSecurityState('loading');
+    setSecurityMsg('');
+    try {
+      const res = await base44.functions.invoke('requestGuardianSecurityCheck', { token });
+      const d = res?.data ?? res;
+      const messages = {
+        dispatched: `A local security agency${d?.agency ? ` (${d.agency})` : ''} has been contacted and asked to perform a welfare check.`,
+        already_pending: 'A security check is already underway — an agency has been contacted and is expected to confirm shortly.',
+        confirmed: 'A security agency has already confirmed they are responding.',
+        already_confirmed: 'A security agency has already confirmed they are responding.',
+        failed: 'No security agency was available or responded in this area. Morales admin has been alerted to escalate manually.',
+        already_failed: 'No security agency was available. Morales admin has already been alerted to escalate manually.',
+        no_active_concern: 'There is no missed check-in on file right now, so there is nothing to escalate at this moment.',
+      };
+      setSecurityMsg(messages[d?.outcome] || 'Request sent.');
+    } catch (_) {
+      setSecurityMsg('Could not send the request right now. Please try again, or contact Morales support directly.');
+    }
+    setSecurityState('done');
+  };
+
   const shareLocation = (lat, lng, patientName) => {
     const text = `🔴 ${patientName}'s live location\nClick for directions: ${mapsViewUrl(lat, lng)}`;
     const waMsg  = encodeURIComponent(text);
@@ -300,7 +325,7 @@ export default function GuardianView() {
     </div>
   );
 
-  const { session, case: caseData, latest_location: loc, location_trail: locationTrail, escalation, wilderness_sos: wildernessSOS, trip_progress: tripProgress } = data;
+  const { session, case: caseData, latest_location: loc, location_trail: locationTrail, escalation, wilderness_sos: wildernessSOS, trip_progress: tripProgress, contacts } = data;
 
   // Build polyline positions from breadcrumb trail (oldest → newest)
   const trailPositions = (locationTrail || []).map(p => [p.lat, p.lng]);
@@ -490,6 +515,58 @@ export default function GuardianView() {
             </div>
           </div>
         )}
+
+        {/* Reach Out — real, actionable contacts so the guardian can act herself.
+            The security-check button is always available (it only needs the
+            guardian token + an open check-in, not any contact field below) —
+            only the individual contact buttons are conditional on data being on file. */}
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 space-y-3">
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Reach Out — You Can Help Too</p>
+          {(contacts?.patient_phone || contacts?.doctor_phone || contacts?.local_emergency_number) && (
+            <div className="grid grid-cols-2 gap-2">
+              {contacts.patient_phone && (
+                <a href={`tel:${contacts.patient_phone}`}
+                  className="flex items-center gap-2 bg-blue-700/20 hover:bg-blue-700/40 border border-blue-700/40 rounded-xl px-3 py-2.5 text-blue-300 text-xs font-semibold transition-colors">
+                  <Phone className="w-3.5 h-3.5 flex-shrink-0" /> Call {session.patient_name}
+                </a>
+              )}
+              {contacts.patient_phone && (
+                <a href={`sms:${contacts.patient_phone}`}
+                  className="flex items-center gap-2 bg-indigo-700/20 hover:bg-indigo-700/40 border border-indigo-700/40 rounded-xl px-3 py-2.5 text-indigo-300 text-xs font-semibold transition-colors">
+                  <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" /> Message {session.patient_name}
+                </a>
+              )}
+              {contacts.doctor_phone && (
+                <a href={`tel:${contacts.doctor_phone}`}
+                  className="flex items-center gap-2 bg-emerald-700/20 hover:bg-emerald-700/40 border border-emerald-700/40 rounded-xl px-3 py-2.5 text-emerald-300 text-xs font-semibold transition-colors">
+                  <Stethoscope className="w-3.5 h-3.5 flex-shrink-0" /> Call Their Doctor
+                </a>
+              )}
+              {contacts.local_emergency_number && (
+                <a href={`tel:${contacts.local_emergency_number}`}
+                  className="flex items-center gap-2 bg-red-700/20 hover:bg-red-700/40 border border-red-700/40 rounded-xl px-3 py-2.5 text-red-300 text-xs font-semibold transition-colors">
+                  <Phone className="w-3.5 h-3.5 flex-shrink-0" /> Local Emergency: {contacts.local_emergency_number}
+                </a>
+              )}
+            </div>
+          )}
+          <div className="pt-1 border-t border-slate-700/50">
+            <button
+              onClick={handleRequestSecurity}
+              disabled={securityState === 'loading'}
+              className="w-full flex items-center justify-center gap-2 bg-amber-700/20 hover:bg-amber-700/40 border border-amber-700/40 disabled:opacity-60 rounded-xl px-3 py-3 text-amber-300 text-sm font-bold transition-colors mt-2"
+            >
+              <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+              {securityState === 'loading' ? 'Requesting…' : 'Request Immediate Security Check'}
+            </button>
+            <p className="text-[11px] text-slate-500 mt-1.5 text-center">
+              Asks Morales to contact a local security agency for an in-person welfare check right now, without waiting for automatic escalation.
+            </p>
+            {securityMsg && (
+              <p className="text-xs text-slate-300 bg-slate-900/60 rounded-xl px-3 py-2 mt-2 text-center">{securityMsg}</p>
+            )}
+          </div>
+        </div>
 
         {/* Safety status */}
         <div className={`rounded-2xl border p-5 text-center ${

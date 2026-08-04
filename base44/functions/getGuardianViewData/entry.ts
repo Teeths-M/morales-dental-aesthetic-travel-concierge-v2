@@ -69,13 +69,19 @@ Deno.serve(createHandler(async ({ req }) => {
       last_viewed_at: new Date().toISOString(),
     }).catch(() => {});
 
-    // Load case — only safe public fields (no medical notes, PII, admin notes)
+    // Load case — only safe public fields (no medical notes, PII, admin notes).
+    // Deliberate, requested exception: contacts (below) also surfaces the
+    // patient's own phone and their doctor's phone — the guardian is the
+    // person the patient specifically nominated to be reachable in an
+    // emergency, so this is the one place a phone number is a feature, not a leak.
     let casePublic = null;
     let tripProgress = null;
+    let caseForContacts = null;
     if (session.case_id) {
       const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: session.case_id });
       const c = cases[0];
       if (c) {
+        caseForContacts = c;
         casePublic = {
           status: c.status,
           journey_stage: c.journey_stage,
@@ -274,6 +280,37 @@ Deno.serve(createHandler(async ({ req }) => {
       } catch (_) {}
     }
 
+    // Real, actionable contacts — call/text the patient directly, call their
+    // doctor, or see the local emergency number, so the guardian can act
+    // herself rather than wait on the automatic escalation ladder. Any piece
+    // that isn't on file (most commonly the country has no EmergencyContacts
+    // row yet — that table needs seeding) is simply omitted, not shown broken.
+    let contacts = null;
+    if (caseForContacts) {
+      let doctorPhone = null;
+      if (caseForContacts.doctor_email) {
+        try {
+          const doctors = await base44.asServiceRole.entities.Doctor.filter({ email: caseForContacts.doctor_email }, '-created_date', 1);
+          doctorPhone = doctors?.[0]?.phone || null;
+        } catch (_) {}
+      }
+
+      let localEmergencyNumber = null;
+      const country = tripProgress?.current_country || caseForContacts.procedure_country || null;
+      if (country) {
+        try {
+          const rows = await base44.asServiceRole.entities.EmergencyContacts.filter({ country_name: country }, '-created_date', 1).catch(() => []);
+          localEmergencyNumber = rows?.[0]?.emergency_number || null;
+        } catch (_) {}
+      }
+
+      contacts = {
+        patient_phone: caseForContacts.client_phone || null,
+        doctor_phone: doctorPhone,
+        local_emergency_number: localEmergencyNumber,
+      };
+    }
+
     return Response.json({
       status: 'ok',
       session: {
@@ -288,6 +325,7 @@ Deno.serve(createHandler(async ({ req }) => {
       escalation: escalationInfo,
       wilderness_sos: wildernessSOS,
       trip_progress: tripProgress,
+      contacts,
     });
   } catch (_) {
     return Response.json({ status: 'error', error: 'Unable to load guardian data. Please try again.' });
