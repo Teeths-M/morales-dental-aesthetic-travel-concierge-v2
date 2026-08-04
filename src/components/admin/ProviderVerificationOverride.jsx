@@ -41,6 +41,7 @@ export default function ProviderVerificationOverride() {
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideAction, setOverrideAction] = useState('approve');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [fraudReason, setFraudReason] = useState('');
 
   const queryClient = useQueryClient();
 
@@ -129,6 +130,33 @@ export default function ProviderVerificationOverride() {
       toast.error(`Failed to apply override: ${error.message}`);
     }
   });
+
+  // Fraud Intelligence override — a separate signal from identity/background/
+  // license verification above. Only applies to doctors (runFraudOverride only
+  // writes to the Doctor entity).
+  const fraudOverrideMutation = useMutation({
+    mutationFn: ({ action, reason }) => base44.functions.invoke('runFraudOverride', {
+      doctor_id: selectedProvider.id,
+      action,
+      reason,
+    }),
+    onSuccess: () => {
+      toast.success('Fraud override applied');
+      queryClient.invalidateQueries({ queryKey: ['doctors'] });
+      setFraudReason('');
+    },
+    onError: (error) => {
+      toast.error(`Failed to apply fraud override: ${error.message}`);
+    }
+  });
+
+  const handleFraudOverride = (action) => {
+    if (!fraudReason.trim() || fraudReason.trim().length < 10) {
+      toast.error('Reason must be at least 10 characters');
+      return;
+    }
+    fraudOverrideMutation.mutate({ action, reason: fraudReason });
+  };
 
   const handleOverride = () => {
     if (!overrideReason.trim()) {
@@ -287,6 +315,48 @@ export default function ProviderVerificationOverride() {
                   </div>
                 ))}
               </div>
+
+              {selectedProvider.provider_type === 'doctor' && selectedProvider.fraud_risk_level && (
+                <div className="space-y-3 p-3 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Fraud Intelligence</h3>
+                    <Badge className={
+                      selectedProvider.fraud_risk_level === 'high' ? 'bg-red-100 text-red-700' :
+                      selectedProvider.fraud_risk_level === 'medium' ? 'bg-amber-100 text-amber-700' :
+                      'bg-green-100 text-green-700'
+                    }>
+                      {selectedProvider.fraud_risk_level} risk — {selectedProvider.fraud_risk_score}/100
+                    </Badge>
+                  </div>
+                  {selectedProvider.fraud_xai_summary && (
+                    <p className="text-sm text-muted-foreground">{selectedProvider.fraud_xai_summary}</p>
+                  )}
+                  {selectedProvider.fraud_xai_flags?.length > 0 && (
+                    <ul className="text-xs text-red-600 list-disc pl-4 space-y-0.5">
+                      {selectedProvider.fraud_xai_flags.map((f, i) => <li key={i}>{f}</li>)}
+                    </ul>
+                  )}
+                  {selectedProvider.fraud_override && (
+                    <p className="text-xs text-muted-foreground">
+                      Current override: <strong>{selectedProvider.fraud_override}</strong> by {selectedProvider.fraud_override_by}
+                    </p>
+                  )}
+                  <Textarea
+                    value={fraudReason}
+                    onChange={(e) => setFraudReason(e.target.value)}
+                    placeholder="Reason for fraud-risk decision (min 10 characters)..."
+                    className="min-h-[70px]"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" disabled={fraudOverrideMutation.isPending}
+                      onClick={() => handleFraudOverride('whitelist')}>Whitelist</Button>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700" disabled={fraudOverrideMutation.isPending}
+                      onClick={() => handleFraudOverride('fast_track_clear')}>Clear</Button>
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700" disabled={fraudOverrideMutation.isPending}
+                      onClick={() => handleFraudOverride('escalate')}>Escalate</Button>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <h3 className="font-semibold">Manual Override</h3>

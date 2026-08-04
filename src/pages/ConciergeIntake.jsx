@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useIntakeSession, INTAKE_DRAFT_KEY } from '@/hooks/useIntakeSession';
 import { useDestinationCountries } from '@/hooks/useDestinationCountries';
@@ -78,6 +79,17 @@ export default function ConciergeIntake() {
   });
   const { doctorSearch, costEstimate, partnerPreview } = useIntakeBackgroundSearch({ answers, isAuthenticated });
   const { items: cartItems, addItem, pivotViolations, safetyStatus, clearCart, setMedicalConditions } = useCart();
+
+  // Personalize the welcome screen for a patient with prior completed cases —
+  // read-only, no side effects, safe to skip silently if it fails.
+  const { data: returningPatientData } = useQuery({
+    queryKey: ['returning-patient-check'],
+    queryFn: () => base44.functions.invoke('checkReturningPatient', {}),
+    enabled: isAuthenticated,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  const returningPatientMessage = returningPatientData?.data?.welcome_message || null;
 
   const [safetyReadoutAcknowledged, setSafetyReadoutAcknowledged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -370,6 +382,7 @@ export default function ConciergeIntake() {
             requireConsent={!alreadyConsented}
             consented={consented}
             onConsentChange={setConsented}
+            returningPatientMessage={returningPatientMessage}
           />
         ) : (
           <>
@@ -559,7 +572,7 @@ function LoadingShell() {
   );
 }
 
-function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentChange }) {
+function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentChange, returningPatientMessage }) {
   const blocked = requireConsent && !consented;
   const [nudge, setNudge] = React.useState(false);
 
@@ -622,7 +635,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
           lineHeight: 1.3,
         }}
       >
-        {resuming ? 'Welcome back' : "Let's understand what you need"}
+        {resuming || returningPatientMessage ? 'Welcome back' : "Let's understand what you need"}
       </h1>
 
       <p
@@ -635,7 +648,9 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
       >
         {resuming
           ? "You're right where you left off. Nothing you've already told me needs repeating."
-          : "I'll ask a few questions, one at a time, and start finding your doctors, destinations, and costs as soon as I know enough to look. Nothing you share here is asked twice."}
+          : returningPatientMessage
+            ? returningPatientMessage
+            : "I'll ask a few questions, one at a time, and start finding your doctors, destinations, and costs as soon as I know enough to look. Nothing you share here is asked twice."}
       </p>
 
       {requireConsent && (

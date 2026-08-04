@@ -165,11 +165,13 @@ jobs:
             call checkPartnerSLABreaches
             call dispatchSoloSecurity
             call checkMissedRecoveryCheckins
+            call sendActivityNudge
           elif [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Anomaly analysis calls an LLM, so it runs on the slowest cadence.
             call runSafetyMonitor
           elif [ "$HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             call checkMissedRecoveryCheckins
+            call sendActivityNudge
           else
             # Every 15 min — the life-safety path.
             call scheduleSoloCheckIns           # creates/advances check-ins for every active traveler, not just solo

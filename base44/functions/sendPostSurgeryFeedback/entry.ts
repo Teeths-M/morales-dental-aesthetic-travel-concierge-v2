@@ -1,36 +1,31 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const APP_URL = Deno.env.get('APP_URL') || 'https://app.safe-t4life.com';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
+Deno.serve(createHandler(async ({ base44, body }) => {
+    const { entity_id, internal_secret } = await body();
 
-    // Cron secret OR admin session. This endpoint had NO guard at all: it is
-    // reachable over HTTP like every deployed function, so anyone with the URL
-    // could drive it — triggering real notifications, spend and state changes.
-    // NOTE: a Base44-dashboard schedule driving this must send X-Cron-Secret.
-    if (!(await cronAuthorized(req, base44))) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    // Called by submitRecoveryCheckin (function-to-function, no forwardable user
+    // session — custom headers aren't passable through .functions.invoke(), so
+    // this checks a body-field secret) OR manually by an admin.
+    if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+      return err('Forbidden', 403);
     }
-    const { entity_id } = await req.json();
 
-    if (!entity_id) {
-      return Response.json({ error: 'entity_id is required' }, { status: 400 });
-    }
+    if (!entity_id) return err('entity_id is required');
 
     // BUG-R12-03 FIX: filter({ id }) cannot query the built-in `id` field — always returns [].
     // Use .get() for primary-key lookup.
     const session = await base44.asServiceRole.entities.RecoverySession.get(entity_id);
-    if (!session) return Response.json({ error: 'RecoverySession not found' }, { status: 404 });
+    if (!session) return err('RecoverySession not found', 404);
 
     // Skip if already sent or session still active
     if (session.feedback_requested_at) {
-      return Response.json({ skipped: true, reason: 'Feedback already requested' });
+      return ok({ skipped: true, reason: 'Feedback already requested' });
     }
     if (session.is_active) {
-      return Response.json({ skipped: true, reason: 'Session still active' });
+      return ok({ skipped: true, reason: 'Session still active' });
     }
 
     // Generate a unique token
@@ -114,10 +109,5 @@ Deno.serve(async (req) => {
       feedback_requested_at: new Date().toISOString(),
     });
 
-    return Response.json({ success: true, sent_to: session.patient_email });
-  } catch (error) {
-    // BUG-R12-01 FIX: SEC-10
-    console.error('[sendPostSurgeryFeedback]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+    return ok({ success: true, sent_to: session.patient_email });
+}, { name: 'sendPostSurgeryFeedback', requireAuth: false }));

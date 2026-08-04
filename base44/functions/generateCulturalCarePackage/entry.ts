@@ -4,7 +4,7 @@
  * patient origin country and procedure type, then persists it to CaseRecord.
  * AI layer: generates individualized care for any nationality (not just Caribbean binary).
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -129,93 +129,75 @@ function buildDietOrder(originCountry, procedureCategory) {
   };
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+  const { case_id } = await body();
 
-    const body = await req.json();
-    const { case_id } = body;
+  if (!case_id) return err('case_id is required');
 
-    if (!case_id) {
-      return Response.json({ error: 'case_id is required' }, { status: 400 });
-    }
+  const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+  if (!caseRecord) return err('CaseRecord not found', 404);
 
-    const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
-    if (!caseRecord) {
-      return Response.json({ error: 'CaseRecord not found' }, { status: 404 });
-    }
+  const originCountry = caseRecord.client_country || '';
+  const procedureCategory = getProcedureCategory(caseRecord.procedures);
 
-    const originCountry = caseRecord.client_country || '';
-    const procedureCategory = getProcedureCategory(caseRecord.procedures);
+  // AI-first: generates individualized care for any nationality worldwide.
+  // Fallback to static Caribbean-focused logic if ANTHROPIC_API_KEY is not set.
+  const aiPkg = await aiCarePackage(caseRecord);
 
-    // AI-first: generates individualized care for any nationality worldwide.
-    // Fallback to static Caribbean-focused logic if ANTHROPIC_API_KEY is not set.
-    const aiPkg = await aiCarePackage(caseRecord);
-
-    let translationRouting, dietOrder, logisticsNotes;
-    if (aiPkg) {
-      translationRouting = {
-        language_primary: aiPkg.language_primary,
-        language_secondary: aiPkg.language_secondary,
-        companion_type: aiPkg.companion_type,
-        cultural_liaison_required: aiPkg.cultural_liaison_required,
-        routing_instructions: aiPkg.routing_instructions,
-      };
-      dietOrder = {
-        phase: 'Phase 1 — Liquid/Soft (Days 1–3 Post-Op)',
-        caloric_target_kcal: (aiPkg.diet_phase1 || []).reduce((s: number, m: Record<string, number>) => s + (m.kcal || 0), 0),
-        meals: aiPkg.diet_phase1,
-        avoid: aiPkg.avoid,
-        cultural_notes: aiPkg.cultural_notes,
-      };
-      logisticsNotes = aiPkg.logistics_notes;
-    } else {
-      translationRouting = buildTranslationRouting(originCountry, procedureCategory);
-      dietOrder = buildDietOrder(originCountry, procedureCategory);
-      logisticsNotes = translationRouting.cultural_liaison_required
-        ? `CULTURAL LIAISON REQUIRED. Assign Caribbean-familiar companion. Brief hotel kitchen on Caribbean diet substitutions at least 24h before discharge.`
-        : `Standard logistics companion. Provide written post-op instructions in patient's language.`;
-    }
-
-    const culturalCarePackage = {
-      generated_at: new Date().toISOString(),
-      origin_country: originCountry,
-      procedure_category: procedureCategory,
-      translation_routing: translationRouting,
-      diet_order: dietOrder,
-      logistics_notes: logisticsNotes,
-      ai_generated: !!aiPkg,
+  let translationRouting, dietOrder, logisticsNotes;
+  if (aiPkg) {
+    translationRouting = {
+      language_primary: aiPkg.language_primary,
+      language_secondary: aiPkg.language_secondary,
+      companion_type: aiPkg.companion_type,
+      cultural_liaison_required: aiPkg.cultural_liaison_required,
+      routing_instructions: aiPkg.routing_instructions,
     };
-
-    // Persist to CaseRecord
-    const updatedTimeline = [
-      ...(caseRecord.timeline_log || []),
-      {
-        timestamp: new Date().toISOString(),
-        action: 'stage_7_cultural_calibration',
-        details: `Cultural Care Package generated for ${originCountry} patient — ${procedureCategory} procedure. Diet order: ${dietOrder.caloric_target_kcal} kcal/day target.`,
-        performed_by: user.email
-      }
-    ];
-
-    await base44.asServiceRole.entities.CaseRecord.update(case_id, {
-      cultural_care_package: culturalCarePackage,
-      timeline_log: updatedTimeline
-    });
-
-    return Response.json({
-      success: true,
-      cultural_care_package: culturalCarePackage,
-      message: `Stage 7 complete. Cultural Care Package generated for ${originCountry || 'patient'}.`
-    });
-
-  } catch (error) {
-    // BUG-R11-02 FIX: SEC-10
-    console.error('[generateCulturalCarePackage]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
+    dietOrder = {
+      phase: 'Phase 1 — Liquid/Soft (Days 1–3 Post-Op)',
+      caloric_target_kcal: (aiPkg.diet_phase1 || []).reduce((s: number, m: Record<string, number>) => s + (m.kcal || 0), 0),
+      meals: aiPkg.diet_phase1,
+      avoid: aiPkg.avoid,
+      cultural_notes: aiPkg.cultural_notes,
+    };
+    logisticsNotes = aiPkg.logistics_notes;
+  } else {
+    translationRouting = buildTranslationRouting(originCountry, procedureCategory);
+    dietOrder = buildDietOrder(originCountry, procedureCategory);
+    logisticsNotes = translationRouting.cultural_liaison_required
+      ? `CULTURAL LIAISON REQUIRED. Assign Caribbean-familiar companion. Brief hotel kitchen on Caribbean diet substitutions at least 24h before discharge.`
+      : `Standard logistics companion. Provide written post-op instructions in patient's language.`;
   }
-});
+
+  const culturalCarePackage = {
+    generated_at: new Date().toISOString(),
+    origin_country: originCountry,
+    procedure_category: procedureCategory,
+    translation_routing: translationRouting,
+    diet_order: dietOrder,
+    logistics_notes: logisticsNotes,
+    ai_generated: !!aiPkg,
+  };
+
+  // Persist to CaseRecord
+  const updatedTimeline = [
+    ...(caseRecord.timeline_log || []),
+    {
+      timestamp: new Date().toISOString(),
+      action: 'stage_7_cultural_calibration',
+      details: `Cultural Care Package generated for ${originCountry} patient — ${procedureCategory} procedure. Diet order: ${dietOrder.caloric_target_kcal} kcal/day target.`,
+      performed_by: user.email
+    }
+  ];
+
+  await base44.asServiceRole.entities.CaseRecord.update(case_id, {
+    cultural_care_package: culturalCarePackage,
+    timeline_log: updatedTimeline
+  });
+
+  return ok({
+    success: true,
+    cultural_care_package: culturalCarePackage,
+    message: `Stage 7 complete. Cultural Care Package generated for ${originCountry || 'patient'}.`
+  });
+}, { name: 'generateCulturalCarePackage', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));

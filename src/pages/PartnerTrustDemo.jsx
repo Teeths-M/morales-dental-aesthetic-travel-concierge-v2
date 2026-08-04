@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Star, Clock, CheckCircle2, Volume2, VolumeX } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
+import { ADMIN_ROLES } from '@/lib/roles';
 
 const GOLD   = '#D4AF37';
 const DARK   = '#060B16';
@@ -73,6 +77,53 @@ const PARTNERS = [
     brief: `Dr. Martinez has treated 1,247 dental patients through Morales. His satisfaction rate is 98.2% and his average recovery time is 3.8 days — faster than the regional average. Zero serious complications have been reported. The clinic team is fully prepared for your arrival.`,
   },
 ];
+
+// Real Doctor/Companion rows don't carry patient-review quotes or a written
+// narrative — those are genuine gaps, not something to fabricate. These
+// mappers describe what the trust score actually measures instead.
+function mapDoctorToPartner(doc) {
+  const score = doc.trust_score ?? 0;
+  const caseCount = doc.trust_case_count ?? 0;
+  return {
+    role: 'Doctor',
+    emoji: '🏥',
+    name: doc.full_name,
+    photo: '👨🏽‍⚕️',
+    color: '#34d399',
+    trips: caseCount,
+    rating: Math.round((score / 20) * 100) / 100, // 0-100 trust score → 0-5 stars
+    complaints: null, // not tracked by this scoring system — show "—", never fabricate a count
+    badge: 'Morales Verified',
+    specialty: doc.specialty || 'Dental & aesthetic procedures',
+    eta: null,
+    plate: null,
+    car: null,
+    quotes: [`Trust score computed from ${caseCount} case${caseCount === 1 ? '' : 's'}: confirmation speed, safety record, clinic check-in completion, and patient feedback.`],
+    brief: `${doc.full_name} has a Morales trust score of ${score}/100, computed from ${caseCount} case${caseCount === 1 ? '' : 's'} — confirmation speed, safety record, on-time clinic handshake completion, and patient feedback. Recalculated daily.`,
+  };
+}
+
+function mapCompanionToPartner(comp) {
+  const score = comp.performance_score ?? 0;
+  const assignmentCount = comp.performance_components?.total_assignments ?? 0;
+  return {
+    role: 'Companion',
+    emoji: '🤝',
+    name: comp.full_name,
+    photo: '👩🏽‍⚕️',
+    color: '#f472b6',
+    trips: assignmentCount,
+    rating: Math.round((score / 20) * 100) / 100, // 0-100 performance score → 0-5 stars
+    complaints: null,
+    badge: 'Morales Verified',
+    specialty: 'Post-operative companion care',
+    eta: null,
+    plate: null,
+    car: null,
+    quotes: [`Performance score computed from ${assignmentCount} assignment${assignmentCount === 1 ? '' : 's'}: response speed, completion rate, patient feedback, and reliability.`],
+    brief: `${comp.full_name} has a Morales performance score of ${score}/100, computed from ${assignmentCount} assignment${assignmentCount === 1 ? '' : 's'} — response speed, completion rate, patient feedback, and reliability. Recalculated daily.`,
+  };
+}
 
 function Stars({ rating }) {
   return (
@@ -172,14 +223,18 @@ function PartnerCard({ partner, muted, expanded, onExpand }) {
           </p>
         </div>
         <div>
-          <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: GREEN }}>0</p>
+          <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: GREEN }}>
+            {partner.complaints === null ? '—' : partner.complaints}
+          </p>
           <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Complaints</p>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-            <Clock style={{ width: 11, height: 11, color: partner.color }} />
-            <p style={{ margin: 0, fontSize: 11, color: partner.color, fontWeight: 700 }}>{partner.eta}</p>
-          </div>
+          {partner.eta && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <Clock style={{ width: 11, height: 11, color: partner.color }} />
+              <p style={{ margin: 0, fontSize: 11, color: partner.color, fontWeight: 700 }}>{partner.eta}</p>
+            </div>
+          )}
           {partner.plate && (
             <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{partner.car} · {partner.plate}</p>
           )}
@@ -222,6 +277,33 @@ function PartnerCard({ partner, muted, expanded, onExpand }) {
 export default function PartnerTrustDemo() {
   const [expanded, setExpanded] = useState(0);
   const [muted, setMuted]       = useState(false);
+  const { user } = useAuth();
+  const isAdmin = ADMIN_ROLES.includes(user?.role);
+
+  // Real trust scores are admin-only by design (the scoring function's own
+  // doc-comment: "Doctors never see this score"), so a public visitor to this
+  // demo always sees the illustrative sample, clearly labeled as such. An
+  // admin viewing this page sees real doctor+companion data once it exists —
+  // never a silent mix of real and fake in the same view.
+  const { data: realDoctors = [] } = useQuery({
+    queryKey: ['partner-trust-doctors'],
+    queryFn: () => base44.entities.Doctor.filter({}, '-trust_score', 3),
+    enabled: isAdmin,
+    staleTime: 5 * 60_000,
+  });
+  const { data: realCompanions = [] } = useQuery({
+    queryKey: ['partner-trust-companions'],
+    queryFn: () => base44.entities.Companion.filter({}, '-performance_score', 3),
+    enabled: isAdmin,
+    staleTime: 5 * 60_000,
+  });
+
+  const scoredDoctors    = realDoctors.filter(d => typeof d.trust_score === 'number');
+  const scoredCompanions = realCompanions.filter(c => typeof c.performance_score === 'number');
+  const hasRealData      = isAdmin && (scoredDoctors.length > 0 || scoredCompanions.length > 0);
+  const displayPartners  = hasRealData
+    ? [...scoredDoctors.slice(0, 2).map(mapDoctorToPartner), ...scoredCompanions.slice(0, 2).map(mapCompanionToPartner)]
+    : PARTNERS;
 
   const toggle = (i) => setExpanded(e => e === i ? null : i);
 
@@ -249,14 +331,21 @@ export default function PartnerTrustDemo() {
 
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px' }}>
 
-        {/* Honesty badge — these partner profiles are illustrative, not real
-            data. Doctor/companion trust-scoring code exists but isn't yet
-            connected to any schedule or display surface; no driver-trust
-            system exists in the app today. */}
+        {/* Honesty badge. Doctor + companion trust scoring is now real and
+            recalculated daily — an admin viewing this page sees actual scored
+            partners once any exist. Everyone else (this is a public demo
+            route) sees the illustrative sample below, clearly labeled —
+            real scores are admin-only by design, matching the scoring
+            function's own intent ("doctors never see this score"). Driver
+            trust scoring still doesn't exist in the app at all. */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 24 }}>
           <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
           <span style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', lineHeight: 1.6 }}>
-            Illustrative concept — Mario, Maria, and Dr. Martinez are sample profiles, not real partner data. Doctor and companion trust-scoring logic exists in the codebase but isn't connected to a live schedule or display yet; a driver-trust system doesn't exist today.
+            {hasRealData
+              ? 'Live data — these are real, currently-scored partners, recalculated daily. Shown because you\'re viewing as an admin; a driver-trust system still doesn\'t exist today.'
+              : isAdmin
+                ? 'Illustrative concept — Mario, Maria, and Dr. Martinez are sample profiles. Doctor/companion trust scoring is real and scheduled, but no partner has a calculated score yet. A driver-trust system doesn\'t exist today.'
+                : 'Illustrative concept — Mario, Maria, and Dr. Martinez are sample profiles, not real partner data. Doctor and companion trust scoring is real and runs daily, but scores are admin-only by design; a driver-trust system doesn\'t exist today.'}
           </span>
         </div>
 
@@ -285,7 +374,7 @@ export default function PartnerTrustDemo() {
 
         {/* Partner cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {PARTNERS.map((p, i) => (
+          {displayPartners.map((p, i) => (
             <PartnerCard
               key={p.name}
               partner={p}

@@ -102,7 +102,7 @@ function buildXAI(score: number, flags: string[], positives: string[]): string {
   return `Low confidence (${confidence}/100). ${flags.length} high-risk signal(s) detected. Application held for mandatory admin review. DO NOT activate without full manual verification of each flag.`;
 }
 
-Deno.serve(createHandler(async ({ base44, body }) => {
+Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {
     doctor_id,
     phone             = '',
@@ -114,6 +114,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   } = await body();
 
   if (!doctor_id) return err('doctor_id is required');
+
+  // Admins can run this on any doctor. A just-signed-up doctor (not yet an
+  // admin) may trigger it only on their own record — the one moment it needs
+  // to fire without human involvement — never on anyone else's.
+  const isAdmin = user && ['admin', 'platform_admin'].includes(user.role);
+  if (!isAdmin) {
+    const [ownRecord] = await base44.asServiceRole.entities.Doctor.filter({ id: doctor_id }).catch(() => []);
+    if (!ownRecord || ownRecord.email !== user?.email) return err('Forbidden', 403);
+  }
 
   // Cross-database network detection — query all doctors and compare
   const allDoctors = await base44.asServiceRole.entities.Doctor.filter({});
@@ -207,4 +216,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     xai_positives:    positives,
     signals,
   });
-}, { name: 'runFraudIntelligence', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));
+}, { name: 'runFraudIntelligence', requireAuth: true }));

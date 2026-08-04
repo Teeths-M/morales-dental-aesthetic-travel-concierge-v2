@@ -81,6 +81,43 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
     onError: () => toast.error('Failed to send AI briefs'),
   });
 
+  const HOME_SAFE_ELIGIBLE = ['RECOVERY_PHASE_7_DAY', 'POST_PROCEDURE', 'IN_FLIGHT_HOME'];
+
+  const welcomeHomeSafeMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('welcomeHomeSafe', { case_id: caseRecord.id }),
+    onSuccess: () => {
+      toast.success('Home-safe greeting sent, case marked HOME_SAFE');
+      queryClient.invalidateQueries({ queryKey: ['admin_all_cases'] });
+      if (onStatusUpdated) onStatusUpdated();
+    },
+    onError: (error) => toast.error(error?.message || 'Failed to send home-safe greeting'),
+  });
+
+  const culturalCarePackageMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('generateCulturalCarePackage', { case_id: caseRecord.id }),
+    onSuccess: () => toast.success('Cultural care package generated'),
+    onError: () => toast.error('Failed to generate cultural care package'),
+  });
+
+  const assignedDoctor = doctors.find(d => d.id === caseRecord?.doctor_selected);
+
+  const partnerSurveyMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('sendReputationSurvey', {
+      case_id: caseRecord.id,
+      patient_email: assignedDoctor.email,
+      patient_name: assignedDoctor.full_name,
+      role: 'doctor',
+    }),
+    onSuccess: () => toast.success('Reputation survey sent to doctor'),
+    onError: () => toast.error('Failed to send reputation survey'),
+  });
+
+  const resendChauffeurMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('resendChauffeurPortalEmail', { consultation_id: caseRecord.consultation_id }),
+    onSuccess: (data) => toast.success(`Chauffeur portal link resent to ${data?.data?.sent?.length ?? 0} partner(s)`),
+    onError: () => toast.error('Failed to resend chauffeur portal link'),
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus) => {
       await base44.entities.CaseRecord.update(caseRecord.id, { status: newStatus });
@@ -339,6 +376,56 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
                   <p className="text-[11px] font-medium" style={{ color: '#10b981' }}>
                     ✓ Briefs dispatched: {sendBriefsMutation.data.data.roles_briefed.join(', ')}
                   </p>
+                )}
+              </div>
+
+              {/* Case actions — manual triggers for functions with no automated pipeline yet */}
+              <div className="rounded-xl p-4 space-y-2.5 bg-slate-50 border border-slate-200">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Case Actions</p>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  disabled={welcomeHomeSafeMutation.isPending || !HOME_SAFE_ELIGIBLE.includes(caseRecord.status)}
+                  onClick={() => welcomeHomeSafeMutation.mutate()}
+                  title={!HOME_SAFE_ELIGIBLE.includes(caseRecord.status) ? `Requires status: ${HOME_SAFE_ELIGIBLE.join(', ')}` : 'No automated return-flight tracking yet — confirm manually'}
+                >
+                  {welcomeHomeSafeMutation.isPending ? 'Sending…' : 'Confirm Home Safe (manual)'}
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  disabled={culturalCarePackageMutation.isPending}
+                  onClick={() => culturalCarePackageMutation.mutate()}
+                >
+                  {culturalCarePackageMutation.isPending ? 'Generating…' : 'Generate Cultural Care Package'}
+                </Button>
+
+                {caseRecord.consultation_id && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={resendChauffeurMutation.isPending}
+                    onClick={() => resendChauffeurMutation.mutate()}
+                  >
+                    {resendChauffeurMutation.isPending ? 'Sending…' : 'Resend Chauffeur Portal Link'}
+                  </Button>
+                )}
+
+                {assignedDoctor?.email && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={partnerSurveyMutation.isPending}
+                    onClick={() => partnerSurveyMutation.mutate()}
+                  >
+                    {partnerSurveyMutation.isPending ? 'Sending…' : 'Send Doctor Reputation Survey'}
+                  </Button>
                 )}
               </div>
 

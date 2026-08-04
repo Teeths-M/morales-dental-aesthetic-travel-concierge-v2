@@ -1,4 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const SURVEY_QUESTIONS = {
   patient: [
@@ -24,16 +25,17 @@ const SURVEY_QUESTIONS = {
   ]
 };
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+Deno.serve(createHandler(async ({ base44, body }) => {
+    const { case_id, patient_email, patient_name, role = 'patient', internal_secret } = await body();
+
+    // Admin session (manual partner-survey trigger) OR internal secret
+    // (submitRecoveryCheckin firing the patient variant on recovery completion —
+    // function-to-function, no forwardable user session).
+    if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+      return err('Forbidden', 403);
     }
 
-    const { case_id, patient_email, patient_name, role = 'patient' } = await req.json();
-    if (!patient_email) return Response.json({ error: 'patient_email required' }, { status: 400 });
+    if (!patient_email) return err('patient_email required');
 
     const token = crypto.randomUUID();
     const appUrl = Deno.env.get('APP_URL') || 'https://app.moralesmedical.com';
@@ -62,10 +64,5 @@ Deno.serve(async (req) => {
       body: `Dear ${patient_name || 'Valued Partner'},\n\nThank you for being part of the Morales Medical family. Your feedback helps us deliver world-class care.\n\nPlease take 2 minutes to complete your experience survey:\n${surveyUrl}\n\nYour honest feedback means everything to us.\n\nWarm regards,\nMorales Medical Team`
     });
 
-    return Response.json({ success: true, token, survey_url: surveyUrl });
-  } catch (error) {
-    // BUG-R12-01 FIX: SEC-10
-    console.error('[sendReputationSurvey]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+    return ok({ success: true, token, survey_url: surveyUrl });
+}, { name: 'sendReputationSurvey', requireAuth: false }));

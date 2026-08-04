@@ -107,6 +107,17 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
        };
 
        const doctor = await base44.entities.Doctor.create(doctorData);
+
+       // Fraud cross-check (phone/clinic-address dedup against existing doctors)
+       // — non-fatal, doesn't block or delay signup completion either way.
+       try {
+         await base44.functions.invoke('runFraudIntelligence', {
+           doctor_id: doctor.id,
+           phone: formData.phone,
+           clinic_address: [formData.clinic_name, formData.clinic_city, formData.clinic_country].filter(Boolean).join(', '),
+         });
+       } catch (_) { /* non-fatal — admin can re-run manually from the verification dashboard */ }
+
        try { await saveUserOnboardingProfile({
          role: 'doctor',
          status: 'completed',

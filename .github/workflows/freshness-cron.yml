@@ -2,6 +2,12 @@ name: Data freshness scheduler
 
 # Drives the data-freshness jobs on a schedule so the app self-maintains its
 # clinic / doctor / visa / regulatory data with no human in the routine loop.
+# Also carries pure hygiene/expiry jobs (passport grants, config changes,
+# guardian sessions, rate-limit buckets — hourly/6h) and the daily doctor +
+# companion trust-score refresh: none of these are life-safety escalation
+# (that's safety-cron.yml), so they use this file's lighter FAILED-list
+# reporting rather than that file's louder BROKEN/UNDEPLOYED/daily-audit
+# alarm — don't mix the two, it would dilute the safety file's alarm signal.
 #
 # ONE-TIME SETUP (the only manual step):
 #   1. Pick a long random string as the shared secret.
@@ -19,7 +25,9 @@ name: Data freshness scheduler
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # daily 06:00 UTC — clinic/doctor/regulatory
+    - cron: '0 * * * *'   # hourly — passport/config/guardian-session expiry (hygiene)
+    - cron: '0 */6 * * *' # every 6h — rate-limit bucket cleanup (hygiene)
+    - cron: '0 6 * * *'   # daily 06:00 UTC — clinic/doctor/regulatory/trust-score
     - cron: '0 7 * * 1'   # weekly Monday 07:00 UTC — visa
   workflow_dispatch:       # manual "Run workflow" button runs everything
 
@@ -62,22 +70,40 @@ jobs:
             if [ "$code" -ge 400 ]; then FAILED="$FAILED $fn"; fi
           }
 
+          IS_HOURLY="${{ github.event.schedule == '0 * * * *' }}"
+          IS_SIX_HOURLY="${{ github.event.schedule == '0 */6 * * *' }}"
           IS_WEEKLY="${{ github.event.schedule == '0 7 * * 1' }}"
           MANUAL="${{ github.event_name == 'workflow_dispatch' }}"
 
-          if [ "$IS_WEEKLY" = "true" ] && [ "$MANUAL" != "true" ]; then
+          if [ "$IS_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
+            # Hourly slot: pure hygiene/expiry jobs — complete code, just never scheduled before.
+            call expirePassportGrants
+            call expireConfigChanges
+            call cleanupExpiredGuardianSessions
+          elif [ "$IS_SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
+            # 6-hourly slot: rate-limit bucket cleanup (pure DB hygiene, per its own header comment).
+            call purgeRateLimitBuckets
+          elif [ "$IS_WEEKLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Weekly slot: visa only.
             call recheckVisaRequirements
           else
-            # Daily slot (and manual runs): clinic + doctor + regulatory.
+            # Daily slot (and manual runs): clinic + doctor + regulatory + partner trust scores.
             call backfillClinicsFromDoctors
             call verifyClinicStatus
             call reVerifyDoctorCredentials
             call detectRegulatoryChanges
+            call calculateDoctorTrustScore
+            call calculateCompanionScore
             # Marketplace: chase doctors who were invited to quote but haven't yet (link-only).
             call remindPendingQuotes
-            # On manual runs, also refresh visa so a full pass is one click.
-            if [ "$MANUAL" = "true" ]; then call recheckVisaRequirements; fi
+            # On manual runs, also refresh visa and hygiene jobs so a full pass is one click.
+            if [ "$MANUAL" = "true" ]; then
+              call recheckVisaRequirements
+              call expirePassportGrants
+              call expireConfigChanges
+              call cleanupExpiredGuardianSessions
+              call purgeRateLimitBuckets
+            fi
           fi
 
           if [ -n "$FAILED" ]; then

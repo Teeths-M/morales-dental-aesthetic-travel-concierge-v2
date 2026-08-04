@@ -146,5 +146,26 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     await base44.asServiceRole.entities.RecoverySession.update(session.id, updateData);
 
+    if (allDone) {
+      // All check-ins complete — request post-recovery feedback + the patient
+      // reputation survey. Awaited via allSettled (not truly fire-and-forget):
+      // an un-awaited invoke can be cut off once this handler returns its
+      // response. Both are non-fatal — a failure here doesn't undo the check-in.
+      const internal_secret = Deno.env.get('CRON_SECRET');
+      await Promise.allSettled([
+        base44.asServiceRole.functions.invoke('sendPostSurgeryFeedback', {
+          entity_id: session.id,
+          internal_secret,
+        }).catch(e => console.error('[submitRecoveryCheckin] feedback request failed:', e)),
+        base44.asServiceRole.functions.invoke('sendReputationSurvey', {
+          case_id: session.case_id,
+          patient_email: session.patient_email,
+          patient_name: session.patient_name,
+          role: 'patient',
+          internal_secret,
+        }).catch(e => console.error('[submitRecoveryCheckin] reputation survey failed:', e)),
+      ]);
+    }
+
     return Response.json({ success: true, escalated: !!escalate, all_done: allDone, medical_emergency: isMedicalEmergency });
 }, { name: 'submitRecoveryCheckin', bodySchema: SubmitRecoveryCheckinSchema }));

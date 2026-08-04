@@ -27,7 +27,7 @@ const CATEGORIES = [
     scenarios: [
       { event: 'Robbery in progress',    response: 'Silent Mode locks the phone — no visible alarm. Tap Protocol (double-tap anywhere) fires a covert SOS to the concierge without the attacker knowing.',               system: 'Silent Mode + Tap',        demo: '/demo/silent',      status: 'LIVE'  },
       { event: 'Kidnapping',             response: '5-tier escalation fires automatically on missed check-in. Private security dispatched at +5h. Police and US Embassy alerted at +9h. No human needed to trigger it.', system: 'Safe-T4life™',             demo: '/demo/emergency',   status: 'LIVE'  },
-      { event: 'Being followed / unsafe',response: 'EVN-iQ400 scans the area in real time. Arrival Intel flags unsafe drop zones before the client exits the vehicle. Partner Trust Score validates every driver.',        system: 'EVN-iQ400 + Arrival Intel', demo: '/demo/arrival',    status: 'LIVE'  },
+      { event: 'Being followed / unsafe',response: 'EVN-iQ400 scans the area in real time. Arrival Intel flags unsafe drop zones before the client exits the vehicle. Doctor and companion trust scores are real and recalculated daily; driver trust scoring doesn\'t exist yet.',        system: 'EVN-iQ400 + Arrival Intel', demo: '/demo/arrival',    status: 'LIVE'  },
       { event: 'Drugged at nightclub',   response: 'Nightlife Vault Lockdown — all financial access frozen silently, emergency contact alerted, concierge dispatched. Honey Trap: attacker self-reports.',               system: 'Nightlife Safety',         demo: '/demo/nightlife',   status: 'LIVE'  },
     ],
   },
@@ -52,7 +52,7 @@ const CATEGORIES = [
     scenarios: [
       { event: 'Lost / stolen passport', response: 'Passport Vault stores encrypted copies (PBKDF2-SHA256). Emergency PIN unlocks on any device — offline, no login, no internet required. Consulate protocols pre-loaded.', system: 'Passport Vault',          demo: '/offline-guide',    status: 'LIVE'  },
       { event: 'Language barrier',       response: 'Language Bridge translates SOS in real time. Dispatch messages sent to local emergency services in their language — not English.',                                    system: 'Language Bridge',          demo: '/demo/language',    status: 'LIVE'  },
-      { event: 'Unsafe driver / partner', response: 'Concept: a Partner Trust Score rating every driver, companion, and agency, blocking low-score partners before assignment. Arrival Intel flags unsafe drop zones today; the trust-scoring layer itself is not yet connected to live partner assignment.', system: 'Trust Score',              demo: '/demo/trust',       status: 'LIVE'  },
+      { event: 'Unsafe driver / partner', response: 'Doctor and companion Trust Scores are real, computed daily from case history and patient feedback. Driver trust scoring doesn\'t exist yet, and no partner is blocked from assignment by score today — the score currently informs case routing, not automatic blocking.', system: 'Trust Score',              demo: '/demo/trust',       status: 'LIVE'  },
     ],
   },
   {
