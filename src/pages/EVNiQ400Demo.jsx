@@ -280,7 +280,7 @@ export default function EVNiQ400Demo() {
           </div>
           <div>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>EVN-iQ400</p>
-            <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.1em', fontWeight: 700 }}>ENVIRONMENTAL INTELLIGENCE · LIVE DEMO</p>
+            <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.1em', fontWeight: 700 }}>ENVIRONMENTAL INTELLIGENCE · ILLUSTRATIVE CONCEPT</p>
           </div>
         </div>
 
@@ -305,6 +305,17 @@ export default function EVNiQ400Demo() {
           ) : (
             <OfflineBadge mode={mode} />
           )}
+        </div>
+      </div>
+
+      {/* Honesty badge — street-level danger-zone detection is an illustrative
+          concept, not a built feature. The real EVN system is country-level. */}
+      <div style={{ maxWidth: 1200, margin: '16px auto 0', padding: '0 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)' }}>
+          <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', lineHeight: 1.6 }}>
+            Illustrative concept — street-level danger-zone scanning isn't built today. M's real environmental intelligence runs at country level, live-fetching real travel-advisory data (see the EVN card on your Dashboard).
+          </span>
         </div>
       </div>
 
@@ -662,7 +673,7 @@ export default function EVNiQ400Demo() {
           <div style={{ padding: '14px 20px', background: `${GOLD}10`, border: `1px solid ${GOLD}30`, borderRadius: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
             <Shield style={{ width: 18, height: 18, color: GOLD, flexShrink: 0 }} />
             <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-              <strong style={{ color: GOLD }}>Demo complete.</strong> In production: alerts fire in the patient's native notification center (push + SMS fallback). Works in all three modes — online, offline, and airplane. Try switching modes above and replaying.
+              <strong style={{ color: GOLD }}>Demo complete.</strong> This street-level scan is an illustrative concept, not a built feature — today's real environmental intelligence layer works at country level (see the EVN card on your Dashboard), live-fetching real travel-advisory data. Street-level, offline-cached danger zones like this aren't built yet.
             </p>
             <button onClick={() => { reset(); setTimeout(runDemo, 400); }}
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 99, background: `${GOLD}20`, border: `1px solid ${GOLD}60`, color: GOLD, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>

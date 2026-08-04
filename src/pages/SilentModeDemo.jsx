@@ -162,6 +162,15 @@ export default function SilentModeDemo() {
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '40px 24px' }}>
 
+        {/* Honesty badge — this exact shake gesture isn't wired to any backend today;
+            the log lines below are illustrative, not real dispatch events. */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 24 }}>
+          <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', lineHeight: 1.6 }}>
+            Illustrative concept — this shake gesture isn't wired to a backend today. M's real panic-gesture system is live elsewhere: 5 taps or typing "MORALESHELP" anywhere in the app.
+          </span>
+        </div>
+
         {/* Scenario */}
         <div style={{ padding: '20px 24px', borderRadius: 16, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', marginBottom: 32 }}>
           <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 800, color: RED, letterSpacing: '0.1em' }}>SCENARIO</p>

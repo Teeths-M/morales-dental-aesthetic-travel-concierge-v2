@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Shield, AlertTriangle, Zap, Globe,
   Radio, ArrowRight, RefreshCw, Phone
 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import { useAdminCasesShared, ADMIN_CASES_QUERY_KEY, selectByStatus } from '@/hooks/useAdminCasesCache';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 import { COUNTRY_ISO, getRiskLevel } from '@/hooks/useEnvironmentalIntelligence';
@@ -64,7 +65,8 @@ function SignalDot({ color, size = 10 }) {
 
 // ── Patient card ───────────────────────────────────────────────────────────
 function PatientCard({ c, medguardScore, evnScore, onContact }) {
-  const riskLevel = medguardScore >= 81 ? 'CRITICAL' : medguardScore >= 61 ? 'ALERT' : medguardScore >= 31 ? 'WATCH' : 'SAFE';
+  const isAnalyzed = typeof medguardScore === 'number';
+  const riskLevel = !isAnalyzed ? 'SAFE' : medguardScore >= 81 ? 'CRITICAL' : medguardScore >= 61 ? 'ALERT' : medguardScore >= 31 ? 'WATCH' : 'SAFE';
   const risk      = RISK_CONFIG[riskLevel];
   const RiskIcon  = risk.icon;
   const phase     = c.trip_phase || 'pre_departure';
@@ -96,10 +98,14 @@ function PatientCard({ c, medguardScore, evnScore, onContact }) {
             </div>
           </div>
 
-          {/* MedGuard score */}
+          {/* MedGuard score — real, from the last analysis on file for this case */}
           <div className="text-right flex-shrink-0">
-            <div className="text-xl font-black leading-none" style={{ color: risk.color }}>{medguardScore}</div>
-            <div className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>MedGuard</div>
+            <div className="text-xl font-black leading-none" style={{ color: isAnalyzed ? risk.color : 'rgba(255,255,255,0.25)' }}>
+              {isAnalyzed ? medguardScore : '—'}
+            </div>
+            <div className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              {isAnalyzed ? 'MedGuard' : 'Not yet analyzed'}
+            </div>
           </div>
         </div>
 
@@ -128,9 +134,11 @@ function PatientCard({ c, medguardScore, evnScore, onContact }) {
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
-              style={{ background: risk.bg, border: `1px solid ${risk.color}30` }}>
-              <RiskIcon className="w-3 h-3" style={{ color: risk.color }} />
-              <span className="text-[9px] font-bold uppercase" style={{ color: risk.color }}>{risk.label}</span>
+              style={{ background: isAnalyzed ? risk.bg : 'rgba(255,255,255,0.04)', border: `1px solid ${isAnalyzed ? risk.color + '30' : 'rgba(255,255,255,0.1)'}` }}>
+              <RiskIcon className="w-3 h-3" style={{ color: isAnalyzed ? risk.color : 'rgba(255,255,255,0.3)' }} />
+              <span className="text-[9px] font-bold uppercase" style={{ color: isAnalyzed ? risk.color : 'rgba(255,255,255,0.3)' }}>
+                {isAnalyzed ? risk.label : 'Unknown'}
+              </span>
             </div>
             {evnScore != null && (() => {
               const evnLvl = getRiskLevel(evnScore);
@@ -189,16 +197,29 @@ export default function AdminMissionControl() {
   // the same 5-status view client-side instead of its own network calls.
   const { data: allCases = [], isLoading } = useAdminCasesShared();
   const activeCases = selectByStatus(allCases, MISSION_CONTROL_STATUSES);
+  const activeCaseIds = activeCases.map(c => c.id);
 
-  // Simulated MedGuard scores (in real use: read from AuditLog last analysis)
-  const medguardScores = {};
-  activeCases.forEach((c) => {
-    // Real score would come from last runMedGuardAnalysis AuditLog entry
-    // For display: derive from case properties
-    let score = 12;
-    if (c.trip_phase === 'arrived' || c.trip_phase === 'recovery') score += 15;
-    if (c.procedure_country && ['Venezuela', 'Mexico', 'Colombia', 'Honduras'].includes(c.procedure_country)) score += 15;
-    medguardScores[c.id] = Math.min(score, 100);
+  // Real MedGuard scores — the last runMedGuardAnalysis result per case,
+  // read from its own AuditLog trail (same shape storeSafetySignal reads
+  // from tonight). A case with no entry yet has genuinely never been
+  // analyzed — show that honestly instead of fabricating a number.
+  const { data: medguardScores = {} } = useQuery({
+    queryKey: ['admin-medguard-scores', activeCaseIds],
+    queryFn: async () => {
+      const logs = await base44.entities.AuditLog.filter(
+        { event_type: 'medguard_analysis', resource_id: { $in: activeCaseIds } },
+        '-timestamp'
+      );
+      const latestByCase = {};
+      for (const log of logs) {
+        if (!(log.resource_id in latestByCase)) {
+          latestByCase[log.resource_id] = { score: log.details?.score, risk_level: log.details?.risk_level };
+        }
+      }
+      return latestByCase;
+    },
+    enabled: activeCaseIds.length > 0,
+    staleTime: 60_000,
   });
 
   // Demo fallback is fine for a walkthrough, but it must SAY so — an admin (or
@@ -206,12 +227,17 @@ export default function AdminMissionControl() {
   // for live ones. Same honesty pattern as SituationRoom's isDemo badges.
   const isDemo        = !isLoading && activeCases.length === 0;
   const displayCases  = activeCases.length > 0 ? activeCases : DEMO_CASES;
-  const displayScores = activeCases.length > 0 ? medguardScores : DEMO_MEDGUARD;
+  const displayScores = activeCases.length > 0
+    ? Object.fromEntries(Object.entries(medguardScores).map(([id, v]) => [id, v.score]))
+    : DEMO_MEDGUARD;
 
-  const safeCount     = Object.values(displayScores).filter(s => s < 31).length;
-  const watchCount    = Object.values(displayScores).filter(s => s >= 31 && s < 61).length;
-  const alertCount    = Object.values(displayScores).filter(s => s >= 61 && s < 81).length;
-  const criticalCount = Object.values(displayScores).filter(s => s >= 81).length;
+  // Only counts cases with a real, already-run analysis — an unanalyzed
+  // case isn't "safe", it's unknown, and doesn't belong in any tier.
+  const knownScores   = Object.values(displayScores).filter(s => typeof s === 'number');
+  const safeCount     = knownScores.filter(s => s < 31).length;
+  const watchCount    = knownScores.filter(s => s >= 31 && s < 61).length;
+  const alertCount    = knownScores.filter(s => s >= 61 && s < 81).length;
+  const criticalCount = knownScores.filter(s => s >= 81).length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -390,7 +416,7 @@ export default function AdminMissionControl() {
                     const iso2    = COUNTRY_ISO[c.procedure_country];
                     const evnData = iso2 ? evnScores[iso2] : null;
                     return (
-                      <PatientCard key={c.id} c={c} medguardScore={displayScores[c.id] || 12}
+                      <PatientCard key={c.id} c={c} medguardScore={typeof displayScores[c.id] === 'number' ? displayScores[c.id] : null}
                         evnScore={evnData?.riskScore ?? null} onContact={() => {}} />
                     );
                   })}

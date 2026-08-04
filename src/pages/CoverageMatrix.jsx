@@ -52,7 +52,7 @@ const CATEGORIES = [
     scenarios: [
       { event: 'Lost / stolen passport', response: 'Passport Vault stores encrypted copies (PBKDF2-SHA256). Emergency PIN unlocks on any device — offline, no login, no internet required. Consulate protocols pre-loaded.', system: 'Passport Vault',          demo: '/offline-guide',    status: 'LIVE'  },
       { event: 'Language barrier',       response: 'Language Bridge translates SOS in real time. Dispatch messages sent to local emergency services in their language — not English.',                                    system: 'Language Bridge',          demo: '/demo/language',    status: 'LIVE'  },
-      { event: 'Unsafe driver / partner', response: 'Partner Trust Score rates every driver, companion, and agency. Low-score partners are blocked before assignment. Arrival Intel flags unsafe drop zones.',            system: 'Trust Score',              demo: '/demo/trust',       status: 'LIVE'  },
+      { event: 'Unsafe driver / partner', response: 'Concept: a Partner Trust Score rating every driver, companion, and agency, blocking low-score partners before assignment. Arrival Intel flags unsafe drop zones today; the trust-scoring layer itself is not yet connected to live partner assignment.', system: 'Trust Score',              demo: '/demo/trust',       status: 'LIVE'  },
     ],
   },
   {

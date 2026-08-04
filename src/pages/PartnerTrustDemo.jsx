@@ -249,6 +249,17 @@ export default function PartnerTrustDemo() {
 
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px' }}>
 
+        {/* Honesty badge — these partner profiles are illustrative, not real
+            data. Doctor/companion trust-scoring code exists but isn't yet
+            connected to any schedule or display surface; no driver-trust
+            system exists in the app today. */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 24 }}>
+          <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', lineHeight: 1.6 }}>
+            Illustrative concept — Mario, Maria, and Dr. Martinez are sample profiles, not real partner data. Doctor and companion trust-scoring logic exists in the codebase but isn't connected to a live schedule or display yet; a driver-trust system doesn't exist today.
+          </span>
+        </div>
+
         {/* Scenario */}
         <div style={{ padding: '18px 22px', borderRadius: 16, background: `${GOLD}08`, border: `1px solid ${GOLD}25`, marginBottom: 28, textAlign: 'center' }}>
           <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>THE JAMES STANDARD — CR 24</p>

@@ -21,7 +21,7 @@ const CONVERSATION = [
     translated: 'Hola. Soy James. Estoy buscando a Mario, mi conductor.',
     translatedFor: 'Mario',
     translatedLang: 'ES',
-    mSays: 'M translated James → Mario in real time. Mario heard Spanish.',
+    mSays: 'M translated James → Mario. Mario heard Spanish.',
   },
   {
     from: 'Mario',
@@ -32,7 +32,7 @@ const CONVERSATION = [
     translated: 'Hello James! I am Mario. Welcome to Tijuana. How was your flight?',
     translatedFor: 'James',
     translatedLang: 'EN',
-    mSays: 'M translated Mario → James in real time. James heard English.',
+    mSays: 'M translated Mario → James. James heard English.',
   },
   {
     from: 'James',
@@ -217,12 +217,21 @@ export default function LanguageBridgeDemo() {
 
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '28px 20px' }}>
 
+        {/* Honesty badge — this scripted conversation isn't translated live;
+            a real live-translation pipeline exists at /walkie-talkie. */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 24 }}>
+          <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', lineHeight: 1.6 }}>
+            Illustrative concept — this conversation is pre-written, not translated live. For M's real live-translation pipeline (speech-to-text, AI translate, spoken back), try <Link to="/walkie-talkie" style={{ color: '#f59e0b', textDecoration: 'underline' }}>Walkie-Talkie</Link>.
+          </span>
+        </div>
+
         {/* Scenario */}
         <div style={{ padding: '18px 22px', borderRadius: 16, background: `${GOLD}08`, border: `1px solid ${GOLD}25`, marginBottom: 24, textAlign: 'center' }}>
           <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>THE INVISIBLE INTERPRETER — CR 45</p>
           <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
             James speaks English. Mario speaks Spanish.<br />
-            <strong style={{ color: '#fff' }}>M translates in real time. Neither knows M is doing it.</strong><br />
+            <strong style={{ color: '#fff' }}>M translates so neither has to know the other's language.</strong><br />
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>They just have a conversation.</span>
           </p>
         </div>

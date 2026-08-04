@@ -205,6 +205,15 @@ export default function TapProtocolDemo() {
           </p>
         </div>
 
+        {/* Honesty badge — this exact tap gesture isn't wired to any backend today;
+            the cascade below is illustrative, not real dispatch events. */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 24 }}>
+          <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', lineHeight: 1.6 }}>
+            Illustrative concept — this tap gesture isn't wired to a backend today. M's real panic-gesture system is live elsewhere: 5 taps or typing "MORALESHELP" anywhere in the app.
+          </span>
+        </div>
+
         {/* Tap cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
 

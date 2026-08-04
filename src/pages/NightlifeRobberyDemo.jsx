@@ -66,11 +66,11 @@ const TIMELINE = [
     type: 'critical',
     time: '02:51 AM',
     title: '🔒 VAULT LOCKDOWN — Breach Attempt Blocked',
-    detail: 'Robbers attempted to access vault. 3 incorrect PINs entered. Vault entered full lockdown. Location of attempt logged and transmitted.',
+    detail: 'Robbers attempted to access vault. 5 incorrect PINs entered. Vault entered full lockdown. Attempt\'s IP address logged for admin review.',
     phone: 'lockdown',
     sms: {
-      to: 'All Emergency Contacts + Security Team',
-      body: 'MORALES LOCKDOWN: Unauthorized vault access attempted on Marco\'s account. 3 failed PINs. Device location: 6.2089°N, 75.5761°W — 120m from last beacon. Security alerted.',
+      to: 'Internal Audit Log',
+      body: 'MORALES INTERNAL LOG: 5 failed PIN attempts recorded on Marco\'s vault. IP address logged for review. Failed attempts do not transmit GPS or dispatch security — that only happens if the vault is opened successfully from an unfamiliar device, which alerts an admin.',
     },
   },
   {
@@ -222,13 +222,13 @@ function PhoneMockup({ screen }) {
                 <Lock className="w-7 h-7 text-red-400" />
               </motion.div>
               <p className="text-[12px] font-bold text-red-400 mb-1">VAULT LOCKED DOWN</p>
-              <p className="text-[8px] mb-4" style={{ color: '#64748b' }}>3 incorrect PINs detected</p>
+              <p className="text-[8px] mb-4" style={{ color: '#64748b' }}>5 incorrect PINs detected</p>
               <div className="w-full rounded-lg p-2 mb-2" style={{ background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.4)' }}>
                 <p className="text-[8px] text-red-300 font-semibold">⚠ Breach attempt logged</p>
-                <p className="text-[7px] mt-1" style={{ color: '#94a3b8' }}>Attempt location transmitted to security team</p>
+                <p className="text-[7px] mt-1" style={{ color: '#94a3b8' }}>IP address logged for admin review</p>
               </div>
               <div className="flex gap-1 flex-wrap justify-center">
-                {['Data protected', 'Attempt logged', 'Security alerted'].map(s => (
+                {['Data protected', 'Attempt logged', 'IP recorded'].map(s => (
                   <span key={s} className="text-[7px] px-1.5 py-0.5 rounded-full"
                     style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)' }}>
                     🔒 {s}
@@ -381,7 +381,7 @@ export default function NightlifeRobberyDemo({ minimal = false }) {
                   { label: 'Nightlife Mode', val: '🟢 Active' },
                   { label: 'Vault PIN', val: '6-digit · PBKDF2' },
                   { label: 'Emergency Access', val: 'Token · Any device' },
-                  { label: 'Lockdown Threshold', val: '3 failed attempts' },
+                  { label: 'Lockdown Threshold', val: '5 failed attempts' },
                 ].map(({ label, val }) => (
                   <div key={label} className="flex justify-between">
                     <span style={{ color: '#475569' }}>{label}</span>
@@ -495,8 +495,8 @@ export default function NightlifeRobberyDemo({ minimal = false }) {
                 {[
                   { label: 'Encryption', val: 'PBKDF2-SHA256 · 600k rounds' },
                   { label: 'Access', val: 'Token-based · Any browser' },
-                  { label: 'Lockdown', val: '3 failed PINs → full lock' },
-                  { label: 'Breach log', val: 'Device location transmitted' },
+                  { label: 'Lockdown', val: '5 failed PINs → full lock' },
+                  { label: 'Breach log', val: 'IP address logged, admin reviewed' },
                 ].map(({ label, val }) => (
                   <div key={label} className="rounded-xl p-3" style={{ background: '#0a1420', border: '1px solid #1e3040' }}>
                     <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: GOLD }}>{label}</p>
