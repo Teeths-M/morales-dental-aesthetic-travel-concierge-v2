@@ -389,6 +389,55 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         }).catch(() => {}) ?? Promise.resolve()
       );
     }
+
+    // ── Safety Intelligence Network — record this journey's anonymized signal ──
+    // storeSafetySignal existed but nothing ever called it — zero journeys had
+    // ever been recorded. This is the one point every journey reaches on a
+    // normal successful completion; the separate incident-recovery path
+    // (closeEmergencyThreatLoop) is untouched here, out of scope.
+    if (trip.case_id) {
+      downstream.push(
+        (async () => {
+          const caseRecords = await base44.asServiceRole.entities.CaseRecord.filter({ id: trip.case_id }).catch(() => []);
+          const cr = caseRecords?.[0];
+          if (!cr?.procedure_country) return;
+
+          const [sosEvents, missedCheckIns, medguardLogs] = await Promise.all([
+            base44.asServiceRole.entities.SOSEvent.filter({ case_id: trip.case_id }).catch(() => []),
+            base44.asServiceRole.entities.SoloCheckIn.filter({ case_id: trip.case_id, status: 'escalated' }).catch(() => []),
+            base44.asServiceRole.entities.AuditLog.filter({ event_type: 'medguard_analysis', resource_id: trip.case_id }).catch(() => []),
+          ]);
+
+          const RISK_RANK: Record<string, number> = { SAFE: 0, WATCH: 1, ALERT: 2, CRITICAL: 3 };
+          let nightAloneAlerts = 0;
+          let highestRiskLevel = 'SAFE';
+          for (const log of (medguardLogs as any[])) {
+            if (log.details?.factors?.isNightAlone) nightAloneAlerts += 1;
+            const level = log.details?.risk_level;
+            if (level && (RISK_RANK[level] ?? 0) > (RISK_RANK[highestRiskLevel] ?? 0)) highestRiskLevel = level;
+          }
+
+          const hs1Ts = trip.handshake_timestamps?.['1'];
+          const journeyDurationDays = hs1Ts
+            ? Math.max(0, (Date.now() - new Date(hs1Ts).getTime()) / 86_400_000)
+            : 0;
+
+          return base44.asServiceRole.functions?.invoke?.('storeSafetySignal', {
+            internal_secret:        Deno.env.get('CRON_SECRET'),
+            case_id:                trip.case_id,
+            destination_country:    cr.procedure_country,
+            procedure_category:     (cr.procedures || []).join(', ') || 'general',
+            sos_events_count:       (sosEvents as any[]).length,
+            missed_checkins_count:  (missedCheckIns as any[]).length,
+            escalation_count:       (missedCheckIns as any[]).length,
+            night_alone_alerts:     nightAloneAlerts,
+            highest_risk_level:     highestRiskLevel,
+            journey_duration_days:  Math.round(journeyDurationDays),
+            completed_successfully: true,
+          });
+        })().catch(() => {})
+      );
+    }
   }
 
   // Fire all downstream tasks concurrently — failures are non-fatal
