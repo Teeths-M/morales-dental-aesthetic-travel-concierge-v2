@@ -49,6 +49,7 @@
         "driver",
         "patient",
         "sos",
+        "security",
         "unknown"
       ],
       "description": "Which role this handshake checkpoint expects"

@@ -175,6 +175,29 @@ export default function PortalDoctor() {
     }
   };
 
+  // For a doctor who already confirmed and now needs to back out — distinct
+  // from "Not Available" (which is for before confirming). Both end in the
+  // same automatic backup-doctor reassignment on the backend; this just
+  // keeps the doctor's own action honest about what actually happened.
+  const handleWithdraw = async () => {
+    setSubmitting(true);
+    try {
+      await base44.functions.invoke('respondToDoctorPortalCase', {
+        doctor_portal_token: token,
+        decision: 'withdrawn',
+        doctor_notes: formData.doctor_notes,
+      });
+      setSuccess(true);
+    } catch (err) {
+      setError('Failed to withdraw from case');
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const alreadyConfirmed = ['Confirmed', 'CONFIRMED'].includes(caseData?.doctor_confirmation_status);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -568,33 +591,50 @@ export default function PortalDoctor() {
               />
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  onClick={handleConfirm} 
-                  className="flex-1 bg-primary hover:bg-primary/90" 
-                  disabled={submitting}
-                >
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {submitting ? 'Processing...' : 'Confirm Availability'}
-                </Button>
-                <Button 
-                  onClick={handleNotAvailable} 
-                  variant="outline" 
-                  className="flex-1" 
-                  disabled={submitting}
-                >
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {submitting ? 'Processing...' : 'Not Available'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowInfoRequest(true)}
-                  className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
-                  disabled={submitting || infoRequestSent}
-                >
-                  {infoRequestSent ? '✓ Request Sent' : 'Request More Info'}
-                </Button>
-              </div>
+              {alreadyConfirmed ? (
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    onClick={handleWithdraw}
+                    variant="outline"
+                    className="flex-1 border-red-300 text-red-700 hover:bg-red-50"
+                    disabled={submitting}
+                  >
+                    {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {submitting ? 'Processing...' : 'Withdraw From This Case'}
+                  </Button>
+                  <p className="flex-1 text-xs text-muted-foreground self-center">
+                    You already confirmed this case. If something's come up and you can no longer take it, withdrawing immediately reassigns it to another verified doctor — no need to call the office.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    onClick={handleConfirm}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                    disabled={submitting}
+                  >
+                    {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {submitting ? 'Processing...' : 'Confirm Availability'}
+                  </Button>
+                  <Button
+                    onClick={handleNotAvailable}
+                    variant="outline"
+                    className="flex-1"
+                    disabled={submitting}
+                  >
+                    {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {submitting ? 'Processing...' : 'Not Available'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowInfoRequest(true)}
+                    className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+                    disabled={submitting || infoRequestSent}
+                  >
+                    {infoRequestSent ? '✓ Request Sent' : 'Request More Info'}
+                  </Button>
+                </div>
+              )}
 
               {showInfoRequest && (
                 <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">

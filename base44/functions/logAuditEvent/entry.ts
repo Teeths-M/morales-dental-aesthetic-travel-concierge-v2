@@ -15,6 +15,8 @@ const ALLOWED_EVENT_TYPES = new Set([
   'companion_required_flagged',
   'companion_assigned',
   'companion_handshake_completed',
+  'companion_job_accepted',
+  'companion_job_cancelled',
   'partner_notified',
   'safet_risk_status_changed',
   'clinical_boundary_acknowledged',

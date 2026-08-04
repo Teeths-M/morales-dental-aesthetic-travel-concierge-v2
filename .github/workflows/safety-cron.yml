@@ -161,6 +161,8 @@ jobs:
             call predictiveEscalation
             call checkStaleLiveLocations
             call escalateMissedDriverHandshake
+            call checkPartnerSLABreaches
+            call dispatchSoloSecurity
             call checkMissedRecoveryCheckins
           elif [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Anomaly analysis calls an LLM, so it runs on the slowest cadence.
@@ -173,6 +175,8 @@ jobs:
             call predictiveEscalation           # fires BEFORE a check-in is missed
             call checkStaleLiveLocations        # GPS gone quiet
             call escalateMissedDriverHandshake  # driver no-show → reroute
+            call checkPartnerSLABreaches        # partner quiet 24h/48h → auto backup + admin escalate
+            call dispatchSoloSecurity           # solo traveler 5h+ unresponsive → security welfare check
             if [ "$MANUAL" = "true" ]; then
               call checkMissedRecoveryCheckins
               # runSafetyMonitor is the ONLY job here that calls an LLM, so it

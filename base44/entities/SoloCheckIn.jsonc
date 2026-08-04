@@ -111,6 +111,34 @@
       "type": "string",
       "format": "date-time"
     },
+
+    // ── Real security-agency dispatch tracking (dispatchSoloSecurity) ──────────
+    // Separate from `status`/`escalation_level` above, which belong to
+    // escalateSoloCheckIn's own 2h/3h/5h/9h ladder — this is a parallel,
+    // independent state machine for whether an actually-dispatched agency has
+    // confirmed, so the two functions never fight over the same fields.
+    "security_dispatch_status": {
+      "type": "string",
+      "enum": ["pending", "confirmed", "failed"],
+      "description": "pending = agency contacted, awaiting SMS handshake confirm. confirmed = an agency replied. failed = every available agency in the country was tried with no confirmation — a real, loud failure."
+    },
+    "security_dispatch_checkpoint_id": {
+      "type": "string",
+      "description": "OfflineHandshake checkpoint_id the currently-dispatched agency must reply to"
+    },
+    "security_dispatch_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "15 minutes after the current dispatch — if unconfirmed by then, the next available agency is tried automatically"
+    },
+    "security_dispatched_agency_id": {
+      "type": "string"
+    },
+    "security_agencies_tried": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "SecurityAgency ids already attempted for this incident, so a repeat sweep doesn't re-dispatch the same non-responsive agency"
+    },
     "police_escalation_required_at": {
       "type": "string",
       "format": "date-time"

@@ -257,12 +257,14 @@ import {
 } from 'lucide-react';
 import CompanionHandshakePanel from '@/components/companion/CompanionHandshakePanel';
 import DietaryInfoCard from '@/components/companion/DietaryInfoCard';
+import ConfirmDialog from '@/components/ui-system/ConfirmDialog';
 import { toast } from 'sonner';
 
 // ── Job Offers Panel — incoming companion job offers ─────────────────────────
 function JobOffersPanel({ userId, userEmail }) {
   const queryClient = useQueryClient();
   const [responding, setResponding] = useState(null); // assignment_id being acted on
+  const [cancelTarget, setCancelTarget] = useState(null); // assignment_id pending cancel confirmation
 
   const { data: offers = [], refetch } = useQuery({
     queryKey: ['companion-job-offers', userId, userEmail],
@@ -890,6 +892,18 @@ export default function CompanionDashboard() {
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Journey Checkpoints</p>
                       <CompanionHandshakePanel caseId={assignment.case_id} />
                     </div>
+
+                    {['confirmed', 'active'].includes(assignment.status) && (
+                      <div className="pt-2 border-t">
+                        <button
+                          onClick={() => setCancelTarget(assignment.id)}
+                          disabled={!!responding}
+                          className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                        >
+                          Something's come up — cancel this assignment
+                        </button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))
@@ -947,6 +961,20 @@ export default function CompanionDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ConfirmDialog
+        isOpen={!!cancelTarget}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={async () => {
+          await respond(cancelTarget, 'cancel');
+          toast.success('Assignment cancelled — a replacement is being found automatically.');
+        }}
+        title="Cancel this assignment?"
+        message="A replacement companion will be offered the case automatically — you don't need to call the office."
+        confirmLabel="Cancel Assignment"
+        cancelLabel="Never Mind"
+        variant="danger"
+      />
     </div>
   );
 }

@@ -30,8 +30,8 @@ function validateTwilioSignature(url, params, signature, authToken) {
   return expected === signature;
 }
 
-const COMMAND_RE = /^(CHECKIN|DRIVER|PATIENT|SOS)\s+(\S+)/i;
-const ROLE_MAP = { CHECKIN: 'checkin', DRIVER: 'driver', PATIENT: 'patient', SOS: 'sos' };
+const COMMAND_RE = /^(CHECKIN|DRIVER|PATIENT|SOS|SECURITY)\s+(\S+)/i;
+const ROLE_MAP = { CHECKIN: 'checkin', DRIVER: 'driver', PATIENT: 'patient', SOS: 'sos', SECURITY: 'security' };
 
 Deno.serve(async (req) => {
   try {

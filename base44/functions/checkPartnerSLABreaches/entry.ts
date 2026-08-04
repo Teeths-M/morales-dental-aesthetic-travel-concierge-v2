@@ -1,14 +1,25 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { findDoctorBackup } from '../../shared/findDoctorBackup.ts';
+import { findCompanionBackup } from '../../shared/findCompanionBackup.ts';
 
 /**
  * checkPartnerSLABreaches — Uber Auto-Rerouting Model
  *
- * Run hourly. If any partner hasn't confirmed their quota within 24 hours
- * of being contacted, the system automatically:
+ * Checked every 15 minutes via GitHub Actions (.github/workflows/safety-cron.yml),
+ * the same real cron every other life-safety job in this repo uses — this file
+ * previously said "Run hourly," but nothing scheduled it at all; it only ran
+ * if an admin opened /admin and manually triggered it. The 24h/48h numbers
+ * below are the actual escalation thresholds — checking every 15 minutes
+ * instead of hourly just means a threshold crossing is caught sooner, not
+ * that anything fires more often than intended (each branch is gated on its
+ * own one-time sla_breached_* flag).
+ *
+ * If any partner (travel agency, driver, companion, or doctor) hasn't
+ * confirmed within 24 hours of being contacted, the system automatically:
  *   1. Finds a backup partner in the network
- *   2. Dispatches a new quota request to the backup
+ *   2. Dispatches a new quota/assignment request to the backup
  *   3. Alerts the admin concierge
  *   4. Flags the breach on CaseRecord for audit
  *
@@ -135,24 +146,14 @@ Deno.serve(async (req) => {
       }
 
       // ── Companion SLA ────────────────────────────────────────────────────
+      // Delegates to findCompanionBackup — the same real implementation the
+      // explicit companion-cancel path in respondToCompanionJob calls, so a
+      // 24h silence and an after-confirming cancel produce one consistent
+      // outcome (a real `offered` CompanionAssignment, not just an email).
       if (age >= HR_24 && c.companion_quote_status === 'PENDING' && !c.sla_breached_companion && c.booking_type !== 'travel_only') {
-        const companions = await base44.asServiceRole.entities.Companion.filter({ verification_status: 'verified', is_available: true }).catch(() => []);
-        const backup     = (companions as any[]).find((cp: any) => cp.id !== c.companion_assignment_id) ?? (companions as any[])[0];
-        if (backup?.email) {
-          tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: BRAND, to: backup.email,
-            subject: `Urgent: a care assignment needs a response | ${BRAND}`,
-            body: linkOnlyEmail({
-              from: 'checkPartnerSLABreaches/companion-backup',
-              title: 'Urgent: a care assignment needs an answer.',
-              line: 'A recovery support assignment needs an answer urgently — the companion first contacted did not respond in time. Open your dashboard to review it.',
-              ctaLabel: 'Open Companion Dashboard',
-              ctaUrl: `${APP_URL}/companion-dashboard`,
-            }),
-          }));
-          tasks.push(base44.asServiceRole.entities.CaseRecord.update(c.id, { sla_breached_companion: true }));
-          escalations.push({ case_id: c.id, partner: 'companion', action: 'backup_dispatched' });
-        }
+        tasks.push(findCompanionBackup(base44, c, c.companion_assignment_id).then(result => {
+          escalations.push({ case_id: c.id, partner: 'companion', action: result.success ? 'backup_dispatched' : 'no_backup_available' });
+        }));
       }
 
       // ── 48hr Human Escalation ─────────────────────────────────────────────
@@ -180,7 +181,26 @@ Deno.serve(async (req) => {
       if (tasks.length > 0) await Promise.allSettled(tasks);
     }
 
-    console.log(`[checkPartnerSLABreaches] checked ${cases.length} cases, ${escalations.length} escalations`);
+    // ── Doctor SLA ───────────────────────────────────────────────────────────
+    // Separate query: a case waiting on doctor confirmation is in status
+    // 'Doctor-Pending', not 'Vendor-Pending' (vendor quotes only start once a
+    // doctor confirms — see respondToDoctorPortalCase), so it never appears in
+    // the `cases` fetch above. Aged off doctor_notified_at, not
+    // quotas_requested_at, for the same reason.
+    const doctorPendingCases = await base44.asServiceRole.entities.CaseRecord.filter(
+      { status: 'Doctor-Pending' }, '-doctor_notified_at', 100
+    ).catch(() => []);
+
+    for (const c of doctorPendingCases as any[]) {
+      if (!c.doctor_notified_at || c.sla_breached_doctor) continue;
+      const age = now - new Date(c.doctor_notified_at).getTime();
+      if (age >= HR_24) {
+        const result = await findDoctorBackup(base44, c).catch(() => ({ success: false }));
+        escalations.push({ case_id: c.id, partner: 'doctor', action: result.success ? 'backup_dispatched' : 'no_backup_available' });
+      }
+    }
+
+    console.log(`[checkPartnerSLABreaches] checked ${cases.length + doctorPendingCases.length} cases, ${escalations.length} escalations`);
     return Response.json({ success: true, escalations });
   } catch (error) {
     console.error('[checkPartnerSLABreaches]', error);

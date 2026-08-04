@@ -12,18 +12,20 @@
 import { createHandler } from '../../shared/createHandler.ts';
 import { z, strictObject, Fields } from '../../shared/validate.ts';
 import { escapeHtml } from '../../shared/emailTemplate.ts';
+import { findCompanionBackup } from '../../shared/findCompanionBackup.ts';
 
 const RespondToCompanionJobSchema = strictObject({
   assignment_id: Fields.shortText(100),
-  action: z.enum(['accept', 'reject']),
+  action: z.enum(['accept', 'reject', 'cancel']),
   reject_reason: z.string().max(1000).optional().default(''),
+  cancel_reason: z.string().max(1000).optional().default(''),
 });
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const { assignment_id, action, reject_reason } = await body().catch(() => ({}));
+    const { assignment_id, action, reject_reason, cancel_reason } = await body().catch(() => ({}));
 
-    if (!assignment_id || !['accept', 'reject'].includes(action)) {
-      return Response.json({ error: 'assignment_id and action (accept|reject) required' }, { status: 400 });
+    if (!assignment_id || !['accept', 'reject', 'cancel'].includes(action)) {
+      return Response.json({ error: 'assignment_id and action (accept|reject|cancel) required' }, { status: 400 });
     }
 
     const assignment = await base44.entities.CompanionAssignment.get(assignment_id);
@@ -34,8 +36,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    if (assignment.status !== 'offered') {
+    // accept/reject only make sense on a still-open offer. cancel is the
+    // opposite case — a companion backing out of something they already
+    // committed to — so it's gated separately, below.
+    if (action !== 'cancel' && assignment.status !== 'offered') {
       return Response.json({ error: 'This offer is no longer available' }, { status: 409 });
+    }
+    if (action === 'cancel' && !['confirmed', 'active'].includes(assignment.status)) {
+      return Response.json({ error: 'Only a confirmed assignment can be cancelled' }, { status: 409 });
     }
 
     const now      = new Date().toISOString();
@@ -180,6 +188,33 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       });
 
       return Response.json({ success: true, action: 'rejected', status: 'declined' });
+    }
+
+    if (action === 'cancel') {
+      await base44.entities.CompanionAssignment.update(assignment_id, {
+        status:        'cancelled',
+        cancelled_at:  now,
+        cancel_reason: cancel_reason || '',
+      });
+
+      // Find a replacement immediately — no admin has to notice this first.
+      // The patient is deliberately not told their companion cancelled; the
+      // trip just continues with someone new already lined up, same
+      // principle as driver reassignment today.
+      const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(assignment.case_id).catch(() => null);
+      const backupResult = caseRecord
+        ? await findCompanionBackup(base44, caseRecord, assignment.companion_id)
+        : { success: false };
+
+      await base44.functions.invoke('logAuditEvent', {
+        event_type:   'companion_job_cancelled',
+        performed_by: user.email,
+        target_email: assignment.companion_email || user.email,
+        metadata:     { case_id: assignment.case_id, assignment_id, backup_found: backupResult.success },
+        timestamp:    now,
+      }).catch(() => {});
+
+      return Response.json({ success: true, action: 'cancelled', status: 'cancelled', backup_found: backupResult.success });
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });

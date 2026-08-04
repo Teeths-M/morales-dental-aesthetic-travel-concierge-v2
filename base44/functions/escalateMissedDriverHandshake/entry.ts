@@ -3,12 +3,16 @@ import { createHandler } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 
 // ── escalateMissedDriverHandshake — cron/scheduled function ──────────────────
-// Runs every minute via Base44 scheduler.
+// Runs every 15 minutes via GitHub Actions, not Base44's own scheduler — see
+// .github/workflows/safety-cron.yml, which is the actual, verified trigger
+// (this file previously claimed "every minute via Base44 scheduler," which
+// was never true; no Base44-native schedule for this function exists in
+// this repo).
 // Finds pending driver handshakes where timeout_at < now (15-min window),
 // marks them status=timeout, attempts to auto-assign a replacement driver
 // from the TaxiService agency pool, fires a reroute SMS notification.
 //
-// Schedule (Base44 cron): */1 * * * *   (every minute)
+// Schedule: */15 * * * *  (.github/workflows/safety-cron.yml)
 
 // Outbound SMS (Twilio) — inline to avoid shared module issues in Base44
 async function sendSms(to: string, message: string) {

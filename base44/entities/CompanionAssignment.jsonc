@@ -43,9 +43,20 @@
         "confirmed",
         "active",
         "completed",
-        "cancelled"
+        "cancelled",
+        "offered",
+        "declined",
+        "declined_auto"
       ],
-      "default": "assigned"
+      "default": "assigned",
+      "description": "offered/declined/declined_auto are written by respondToCompanionJob (job-offer accept/reject flow) — added here to match, they were previously undeclared."
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancel_reason": {
+      "type": "string"
     },
     "can_translate": {
       "type": "boolean",

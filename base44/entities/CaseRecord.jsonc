@@ -205,9 +205,13 @@
       "enum": [
         "PENDING",
         "CONFIRMED",
-        "DECLINED"
+        "DECLINED",
+        "Confirmed",
+        "Declined",
+        "Withdrawn"
       ],
-      "default": "PENDING"
+      "default": "PENDING",
+      "description": "respondToDoctorPortalCase actually writes the mixed-case values (Confirmed/Declined/Withdrawn) — the original uppercase values are kept here too since nothing has confirmed they're unread elsewhere."
     },
     "doctor_notified_at": {
       "type": "string",
@@ -897,8 +901,11 @@
     "sla_breached_driver":    { "type": "boolean", "default": false },
     "sla_breached_companion": { "type": "boolean", "default": false },
     "sla_breached_clinic":    { "type": "boolean", "default": false },
+    "sla_breached_doctor":    { "type": "boolean", "default": false, "description": "Doctor never responded within 24h, declined, or withdrew after confirming — auto-reassigned to a backup" },
     "backup_travel_id":       { "type": "string", "description": "Backup travel agency dispatched after SLA breach" },
     "backup_driver_id":       { "type": "string", "description": "Backup driver dispatched after SLA breach" },
+    "backup_doctor_id":       { "type": "string", "description": "Backup doctor auto-assigned after the original dropped the case" },
+    "driver_cancel_reason":   { "type": "string", "description": "Free-text reason a confirmed driver gave when cancelling via cancelDriverAssignment" },
 
     // ── Stripe 1-Click Checkout (Stripe model) ────────────────────────────────
     "stripe_customer_id":     { "type": "string", "description": "Stripe Customer ID — enables 1-click balance payment" },
