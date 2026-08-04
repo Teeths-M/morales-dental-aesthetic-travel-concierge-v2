@@ -17,6 +17,98 @@ async function generatePortalToken(caseId: string) {
   return `doc_${caseId}_${hex}`;
 }
 
+// Outbound SMS (Twilio) — inline, matching every other function in this
+// codebase (see escalateMissedDriverHandshake) rather than a shared module,
+// per that file's own note: shared SMS modules have caused issues in Base44.
+async function sendSms(to: string, message: string) {
+  const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const authToken  = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!accountSid || !authToken || !fromNumber) {
+    return { ok: false, error: 'twilio_not_configured' };
+  }
+  const url  = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+  const form = new URLSearchParams({ To: to, From: fromNumber, Body: message });
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: form.toString(),
+    });
+    const result = await resp.json().catch(() => ({}));
+    return resp.ok ? { ok: true, sid: result.sid } : { ok: false, error: result.message || 'twilio_error' };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+// A patient already traveling (or about to be) makes a doctor dropping the
+// case a different order of urgency than the same event three weeks out —
+// the travel agency and companion already on the ground are the people best
+// placed to notice something's wrong, and admin needs more than a calm email.
+function isUrgent(caseRecord: Record<string, any>): boolean {
+  const now = Date.now();
+  const departure = caseRecord.departure_date ? new Date(caseRecord.departure_date).getTime() : null;
+  const procedure = caseRecord.procedure_date ? new Date(caseRecord.procedure_date).getTime() : null;
+  const HOURS_72 = 72 * 60 * 60 * 1000;
+  return !!(
+    (departure && !Number.isNaN(departure) && now >= departure) ||
+    (procedure && !Number.isNaN(procedure) && procedure - now > 0 && procedure - now <= HOURS_72)
+  );
+}
+
+async function notifyAdminSms(caseRecord: Record<string, any>, message: string) {
+  const adminPhone = Deno.env.get('ADMIN_PHONE');
+  if (!adminPhone) return;
+  await sendSms(adminPhone, message).catch(() => {});
+}
+
+async function notifyAssignedPartners(base44: any, caseRecord: Record<string, any>, line: string) {
+  const tasks: Promise<unknown>[] = [];
+
+  if (caseRecord.travel_vendor_id) {
+    tasks.push(
+      base44.asServiceRole.entities.TravelAgency.get(caseRecord.travel_vendor_id)
+        .then((agency: any) => {
+          if (!agency?.email) return;
+          return base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: BRAND, to: agency.email,
+            subject: `Please check your portal for a schedule update | ${BRAND}`,
+            body: linkOnlyEmail({
+              from: 'findDoctorBackup/travel-agency',
+              title: 'A schedule change affects a trip you are supporting.',
+              line,
+              ctaLabel: 'Open Your Portal',
+              ctaUrl: `${APP_URL}/portal/travel`,
+            }),
+          });
+        })
+        .catch(() => {})
+    );
+  }
+
+  if (caseRecord.companion_email) {
+    tasks.push(
+      base44.asServiceRole.integrations.Core.SendEmail({
+        from_name: BRAND, to: caseRecord.companion_email,
+        subject: `Please check your dashboard for a schedule update | ${BRAND}`,
+        body: linkOnlyEmail({
+          from: 'findDoctorBackup/companion',
+          title: 'A schedule change affects a trip you are supporting.',
+          line,
+          ctaLabel: 'Open Companion Dashboard',
+          ctaUrl: `${APP_URL}/companion-dashboard`,
+        }),
+      }).catch(() => {})
+    );
+  }
+
+  if (tasks.length) await Promise.allSettled(tasks);
+}
+
 /**
  * findDoctorBackup — the single real implementation behind every "this
  * doctor dropped the case" path on the CaseRecord/doctor-portal-token
@@ -51,6 +143,40 @@ export async function findDoctorBackup(
         details: 'No verified backup doctor available',
       }],
     });
+
+    const urgent = isUrgent(caseRecord);
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (adminEmail) {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        from_name: BRAND,
+        to: adminEmail,
+        subject: `🚨 CRITICAL: no backup doctor available — ${escapeHtml(caseRecord.client_name || 'patient')}`,
+        body: `<div style="background:#7f1d1d;color:white;padding:20px;border-radius:8px;">
+          <h2 style="margin:0;">No verified backup doctor available</h2></div>
+          <div style="padding:20px;border:1px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;">
+          <p>A doctor dropped this case and every currently active, verified doctor was tried — none available. This case needs manual assignment now.</p>
+          <p><strong>Patient:</strong> ${escapeHtml(caseRecord.client_name || 'Unknown')}<br/>
+          <strong>Case ID:</strong> ${escapeHtml(caseRecord.id)}<br/>
+          <strong>Procedure country:</strong> ${escapeHtml(caseRecord.procedure_country || 'Unknown')}</p>
+          ${urgent ? '<p style="color:#fca5a5;font-weight:bold;">Patient is already traveling or has a procedure within 72 hours.</p>' : ''}
+          </div>`,
+      }).catch(() => {});
+    }
+
+    try {
+      await base44.asServiceRole.entities.DispatchFailureLog.create({
+        case_id: caseRecord.id,
+        partner_type: 'doctor',
+        reason: 'No verified backup doctor available after original doctor dropped the case',
+        timestamp: new Date().toISOString(),
+        fallback_action: urgent ? 'admin_critical_alert_sent_urgent' : 'admin_critical_alert_sent',
+      });
+    } catch (_) {}
+
+    if (urgent) {
+      await notifyAdminSms(caseRecord, `URGENT: no backup doctor available for ${caseRecord.client_name || 'a patient'} (case ${caseRecord.id.slice(-8)}) — patient already traveling. Manual assignment needed now.`);
+    }
+
     return { success: false };
   }
 
@@ -102,6 +228,15 @@ export async function findDoctorBackup(
         ctaUrl: `${APP_URL}/admin/cases`,
       }),
     }).catch(() => {});
+  }
+
+  if (isUrgent(caseRecord)) {
+    await notifyAdminSms(caseRecord, `${caseRecord.client_name || 'A patient'}'s doctor dropped the case while already traveling. Auto-reassigned to Dr. ${nextDoctor.full_name || 'a backup'} (case ${caseRecord.id.slice(-8)}). Confirm they're actually available.`);
+    await notifyAssignedPartners(
+      base44,
+      caseRecord,
+      'The doctor assigned to this trip changed and a new one has been automatically lined up. The trip continues on schedule — open your portal for the current details.'
+    );
   }
 
   return { success: true, doctor: nextDoctor };
