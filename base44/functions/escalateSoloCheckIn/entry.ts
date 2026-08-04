@@ -19,6 +19,39 @@ function generateToken(len = 32) {
   return Array.from(buf).map(b => chars[b % chars.length]).join('');
 }
 
+// Outbound SMS/WhatsApp (Twilio) — inline, matching every other function in
+// this codebase (see escalateMissedDriverHandshake, sendWhatsAppCaseUpdate)
+// rather than a shared module, per this repo's established convention.
+async function sendSms(to, message) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !token || !from || !to) return { ok: false };
+  try {
+    const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: to, From: from, Body: message }).toString(),
+    });
+    return { ok: resp.ok };
+  } catch (_) { return { ok: false }; }
+}
+
+async function sendWhatsApp(to, message) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !token || !from || !to) return { ok: false };
+  try {
+    const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: `whatsapp:${to}`, From: `whatsapp:${from}`, Body: message }).toString(),
+    });
+    return { ok: resp.ok };
+  } catch (_) { return { ok: false }; }
+}
+
 // Ensure an active guardian session exists for the case; returns the guardian URL.
 async function ensureGuardianLink(base44, caseRecord, patientEmail, patientName) {
   const appUrl = Deno.env.get('APP_URL') || 'https://morales.app';
@@ -122,6 +155,56 @@ Deno.serve(async (req) => {
             // Non-blocking — continue escalation even if email fails
           }
         }
+
+        // ── First miss: give the guardian a live-location link right away ──
+        // Previously the guardian heard nothing until 3h. A missed FIRST
+        // check-in is the earliest honest signal something might be wrong —
+        // the guardian gets it now, via every channel we have a real contact
+        // for, with a link to the same live Google-Map guardian view used at
+        // 3h/5h/9h so they can see where the patient is and reach out
+        // themselves, not wait for the heavier escalation tiers.
+        try {
+          const recentCases = await base44.asServiceRole.entities.CaseRecord.filter(
+            { client_email: checkIn.user_email }, '-created_date', 5
+          );
+          const caseRecord = recentCases.find(c => c.id === checkIn.case_id) || recentCases[0];
+          if (caseRecord) {
+            const guardianEmail = caseRecord.emergency_contact_email;
+            const guardianPhone = caseRecord.emergency_contact_number;
+            if (guardianEmail || guardianPhone) {
+              const latestLoc = await getLatestLocation(base44, caseRecord.id);
+              const guardianUrl = await ensureGuardianLink(base44, caseRecord, checkIn.user_email, checkIn.user_name);
+              const locStr = latestLoc?.latitude
+                ? `${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
+                : latestLoc?.place_label || 'not yet available';
+
+              if (guardianEmail && guardianEmail.includes('@')) {
+                await base44.asServiceRole.integrations.Core.SendEmail({
+                  to: guardianEmail,
+                  subject: `${checkIn.user_name} hasn't confirmed their safety check-in yet`,
+                  body: `<p><strong>${checkIn.user_name}</strong> has not yet responded to a routine safety check-in during their trip. This is an early, precautionary notice — no emergency has been declared.</p>
+                    <p><strong>Last known location:</strong> ${locStr}</p>
+                    ${guardianUrl ? `<p><a href="${guardianUrl}">👁 See their live location and status</a></p>` : ''}
+                    <p>You can reach out to them directly. If they remain unreachable, Morales will continue escalating automatically.</p>`,
+                }).catch(() => {});
+              }
+              if (guardianPhone) {
+                const smsMsg = `Morales Safety: ${checkIn.user_name} hasn't confirmed their check-in yet. See their live location: ${guardianUrl || appUrl}`;
+                await Promise.allSettled([
+                  sendSms(guardianPhone, smsMsg),
+                  sendWhatsApp(guardianPhone, smsMsg),
+                ]);
+              }
+              await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
+                guardian_notified_at: now.toISOString(),
+                guardian_link_sent: !!guardianUrl,
+              });
+            }
+          }
+        } catch (_) {
+          // Non-blocking — a guardian-notify failure must never stop the escalation ladder
+        }
+
         escalated2h++;
       }
 
@@ -145,7 +228,11 @@ Deno.serve(async (req) => {
             latestLoc = await getLatestLocation(base44, caseRecord.id);
             guardianUrl = await ensureGuardianLink(base44, caseRecord, checkIn.user_email, checkIn.user_name);
 
-            const emergencyEmail = caseRecord.emergency_contact;
+            // emergency_contact is a display label ("Jane Doe (Spouse)"), not
+            // an email — was never going to pass the .includes('@') check
+            // below. emergency_contact_email is the real field, synced by
+            // PersonalEmergencyContactsPanel.
+            const emergencyEmail = caseRecord.emergency_contact_email;
             const locStr = latestLoc?.latitude
               ? `GPS: ${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
               : latestLoc?.place_label || 'Unknown';

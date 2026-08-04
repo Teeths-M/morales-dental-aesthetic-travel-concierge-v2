@@ -302,7 +302,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // Fetch case record to get emergency_contact phone
     const caseRecords = await base44.asServiceRole.entities.CaseRecord.filter({ id: trip.case_id || trip_id }).catch(() => []);
     const caseRecord = caseRecords?.[0];
-    const guardianPhone = caseRecord?.emergency_contact?.phone || caseRecord?.guardian_phone || null;
+    // emergency_contact is a display label ("Jane Doe (Spouse)"), not an
+    // object — .phone on it was always undefined, and guardian_phone was
+    // never a real written field. emergency_contact_number is the real one,
+    // synced by PersonalEmergencyContactsPanel.
+    const guardianPhone = caseRecord?.emergency_contact_number || null;
     if (guardianPhone) {
       sendSms(guardianPhone, GUARDIAN_MESSAGES[n]).catch(() => {}); // non-blocking
     }

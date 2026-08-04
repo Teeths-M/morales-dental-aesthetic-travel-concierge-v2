@@ -96,9 +96,16 @@ Deno.serve(async (req) => {
         nextScheduled = new Date(lastTime.getTime() + 12 * 60 * 60 * 1000);
       }
 
-      // Don't create if already in the past (will be caught by escalation logic)
-      if (nextScheduled < now) {
-        nextScheduled = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+      // Don't create (or send) a check-in until it's actually due. This function
+      // runs every 15 min and previously created + emailed the check-in the
+      // moment it first noticed the case had no pending record — meaning round 1
+      // fired within minutes of landing, not 6 hours later as designed, and every
+      // later round fired the instant the prior one left 'pending' rather than
+      // waiting its own 12h. The record (and its 2-hour countdown) only gets
+      // created once `nextScheduled` has actually arrived; a case not yet due
+      // simply gets picked up again on a later tick.
+      if (nextScheduled > now) {
+        continue;
       }
 
       // Create check-in record

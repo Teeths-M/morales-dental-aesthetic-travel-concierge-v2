@@ -58,6 +58,7 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
     await base44.entities.CaseRecord.update(caseRecord.id, {
       emergency_contact: `${primary.name}${primary.relationship ? ` (${primary.relationship})` : ''}`,
       emergency_contact_number: primary.phone,
+      emergency_contact_email: primary.email || '',
     });
     setSaving(false);
     setSavedMsg(true);

@@ -99,7 +99,16 @@
       "description": "Patient has opted in to receive WhatsApp notifications"
     },
     "emergency_contact": {
-      "type": "string"
+      "type": "string",
+      "description": "Display label only (e.g. 'Jane Doe (Spouse)'), written by PersonalEmergencyContactsPanel — NOT an email or phone number despite some older call sites treating it as one."
+    },
+    "emergency_contact_number": {
+      "type": "string",
+      "description": "Guardian/emergency contact's real phone number, synced from PersonalEmergencyContactsPanel. Was already written by that panel but never declared here."
+    },
+    "emergency_contact_email": {
+      "type": "string",
+      "description": "Guardian/emergency contact's real email address, synced from PersonalEmergencyContactsPanel."
     },
     "gdpr_deleted_at": {
       "type": "string",
