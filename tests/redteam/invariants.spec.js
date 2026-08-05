@@ -1508,6 +1508,43 @@ test('INTAKE: an unreachable safety validator BLOCKS submission — and says so 
   expect(code, 'the isBlocked hard stop must survive').toMatch(/if\s*\(safetyPayload\.isBlocked\)/);
 });
 
+test('PARTNER SIGNUP: doctor signup — chat and form both call the one gated submission function', () => {
+  // Two entry points now exist for becoming a doctor on this platform: the
+  // classic multi-step form (DoctorSignupStep3.jsx) and M-Care's
+  // conversational signup (DoctorSignupChatFlow.jsx). Both MUST call the
+  // same submitDoctorSignup() rather than each assembling their own
+  // Doctor.create() + role-grant + verification-kickoff sequence — otherwise
+  // the newer, less-tested chat path could silently diverge from the form's
+  // safety/data properties (e.g. skip the auth-gate-before-create ordering
+  // that fixed the 2026-07-24 "Partner Onboarding Lockout" bug).
+  const formSrc = read('src/components/doctor-signup/DoctorSignupStep3.jsx');
+  const chatSrc = read('src/components/mcare/DoctorSignupChatFlow.jsx');
+
+  expect(formSrc, 'the classic form must call the shared submission function').toContain('submitDoctorSignup(');
+  expect(formSrc, 'the classic form must not assemble its own Doctor.create call').not.toContain('base44.entities.Doctor.create');
+
+  expect(chatSrc, "M-Care's chat flow must call the shared submission function").toContain('submitDoctorSignup(');
+  expect(chatSrc, "M-Care's chat flow must not assemble its own Doctor.create call").not.toContain('base44.entities.Doctor.create');
+
+  // The shared function itself: a new doctor is created pending, never
+  // pre-activated — those fields belong only to activateVerifiedDoctor /
+  // activatePartner, never to a signup path.
+  const sharedSrc = read('src/lib/partnerSignup/submitDoctorSignup.js');
+  expect(sharedSrc, 'a new doctor must start pending_verification, not active').toContain("status: 'pending_verification'");
+  expect(sharedSrc, 'must never itself flip status to active').not.toMatch(/status:\s*['"]active['"]/);
+  expect(sharedSrc, 'must never itself set a verification_status').not.toMatch(/verification_status:\s*['"]/);
+  expect(sharedSrc, 'must never itself set license_verified true').not.toMatch(/license_verified:\s*true/);
+
+  // And it must check for a real session BEFORE creating anything — the same
+  // ordering the form's own auth gate already enforced.
+  const authIdx = sharedSrc.indexOf('base44.auth.me()');
+  const createIdx = sharedSrc.indexOf('Doctor.create');
+  expect(authIdx, 'the auth check must exist').toBeGreaterThan(-1);
+  expect(createIdx, 'the Doctor.create call must exist').toBeGreaterThan(-1);
+  expect(authIdx, 'auth must be checked before Doctor.create').toBeLessThan(createIdx);
+  expect(sharedSrc, 'a missing session must throw, not silently proceed').toContain("Error('AUTH_REQUIRED')");
+});
+
 test('CART: a RED-locked procedure combination cannot reach /intake', () => {
   // A red "Safety Review" banner next to a working "Continue to Consultation"
   // button is a decoration, not a block. The M Principle requires the
@@ -1711,7 +1748,6 @@ test('ONBOARDING: a guest completing partner signup is sent to sign in before th
   const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, '')).replace(/^[ \t]*\/\/.*$/gm, '');
 
   const files = [
-    { path: 'src/components/doctor-signup/DoctorSignupStep3.jsx', create: 'Doctor.create(' },
     { path: 'src/components/partner-signup/TaxiServiceSignupStep3.jsx', create: 'TaxiService.create(' },
     { path: 'src/components/partner-signup/TravelAgencySignupStep3.jsx', create: 'TravelAgency.create(' },
     { path: 'src/pages/SecurityAgencySignup.jsx', create: 'SecurityAgency.create(' },
@@ -1734,6 +1770,32 @@ test('ONBOARDING: a guest completing partner signup is sent to sign in before th
       .toMatch(/if\s*\(!currentUser\)[\s\S]{0,60}setShowAuthGate\(true\)/);
     expect(src, `${path} must mount <SignupAuthGate`).toContain('<SignupAuthGate');
   }
+
+  // Doctor signup now has TWO entry points (the classic form and M-Care's
+  // conversational signup, added for the "M-Care super-agent" work) that
+  // both delegate to submitDoctorSignup() rather than each creating the
+  // Doctor entity inline — so this invariant is checked on the shared
+  // function itself, not on DoctorSignupStep3.jsx directly (see the
+  // separate 'PARTNER SIGNUP: doctor signup — chat and form both call the
+  // one gated submission function' test for the "only one code path"
+  // guarantee that makes this split safe).
+  const doctorForm = strip(read('src/components/doctor-signup/DoctorSignupStep3.jsx'));
+  expect(doctorForm, 'DoctorSignupStep3.jsx must import the shared signup auth gate')
+    .toContain("from '@/components/auth/SignupAuthGate'");
+  expect(doctorForm, 'DoctorSignupStep3.jsx must delegate to the shared submission function')
+    .toContain('submitDoctorSignup(');
+  expect(doctorForm, 'DoctorSignupStep3.jsx must show the gate when submitDoctorSignup signals AUTH_REQUIRED')
+    .toMatch(/AUTH_REQUIRED[\s\S]{0,120}setShowAuthGate\(true\)/);
+  expect(doctorForm, 'DoctorSignupStep3.jsx must mount <SignupAuthGate').toContain('<SignupAuthGate');
+
+  const submitDoctorSignupSrc = strip(read('src/lib/partnerSignup/submitDoctorSignup.js'));
+  expect(submitDoctorSignupSrc, 'submitDoctorSignup.js must check auth.me() before creating the Doctor entity')
+    .toMatch(/base44\.auth\.me\(\)\.catch/);
+  const doctorAuthCheckIdx = submitDoctorSignupSrc.search(/base44\.auth\.me\(\)\.catch/);
+  const doctorCreateIdx = submitDoctorSignupSrc.indexOf('Doctor.create(');
+  expect(doctorAuthCheckIdx, 'submitDoctorSignup.js must have an auth check').toBeGreaterThan(-1);
+  expect(doctorCreateIdx, 'submitDoctorSignup.js must create the Doctor entity').toBeGreaterThan(-1);
+  expect(doctorAuthCheckIdx, 'submitDoctorSignup.js must check auth BEFORE creating the entity, not after').toBeLessThan(doctorCreateIdx);
 
   // Companion signup splits the check (CompanionSignup.jsx) from the entity
   // creation + role sync (companionService.js) across two files — same

@@ -21,9 +21,11 @@ import { Send, ChevronDown, WifiOff, RotateCcw } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { findAnswer } from './orbKnowledge';
 import SpecialistCard from './SpecialistCard';
+import DoctorSignupChatFlow from './DoctorSignupChatFlow';
 import { isSystemPaused } from '@/lib/systemPause';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
+import { loadSignupDraft } from '@/lib/signupDraft';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -143,7 +145,7 @@ function md(text) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function MCareOrb() {
-  const { t }           = useTranslation();
+  const { t, i18n }     = useTranslation();
   const { user }        = useAuth();
   const { pathname }    = useLocation();
   const role            = detectRole(user, pathname);
@@ -154,6 +156,22 @@ export default function MCareOrb() {
   // its human-handoff capability) on a KB miss, instead of the generic
   // platform-Q&A LLM call everyone else gets.
   const isConcierge = !!user && !['admin', 'platform_admin'].includes(user.role);
+
+  // "Become a partner doctor" only makes sense for someone who isn't already
+  // a partner of some kind — an existing doctor/agency/companion/chauffeur/
+  // admin has nothing to gain from it.
+  const canBecomeDoctorPartner = ['visitor', 'patient'].includes(role);
+
+  // Phase 1 of the conversational signup work (CLAUDE.md, "M-Care Super-
+  // Agent"): 'doctor_signup' hands the chat panel over to
+  // DoctorSignupChatFlow instead of the normal KB/LLM Q&A. Auto-resumes if a
+  // draft already exists (e.g. the user left mid-conversation, or is
+  // returning from the sign-in redirect) so nothing is lost by closing and
+  // reopening the orb.
+  const [mode, setMode] = useState(() => {
+    const draft = loadSignupDraft('doctor');
+    return draft?.data && Object.keys(draft.data).length > 0 ? 'doctor_signup' : 'chat';
+  });
 
   const [tipIdx,     setTipIdx]     = useState(0);
   const [showBubble, setShowBubble] = useState(false);
@@ -432,72 +450,91 @@ export default function MCareOrb() {
             </button>
           </div>
 
-          {/* Chat area */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {messages.length === 0 && (
-              <div style={{ textAlign: 'center', paddingTop: 4 }}>
-                <p style={{ margin: '0 0 10px', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{t('guide.quick_label')}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {quickQuestions.map((q, i) => (
-                    <button key={i} onClick={() => sendMessage(q.label, q.query)}
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.08)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    >{q.label}</button>
-                  ))}
-                  {isConcierge && (
-                    <button onClick={() => sendMessage('Speak with a specialist', 'Speak with a specialist')}
-                      style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
-                    >Speak with a specialist</button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {messages.map((m, i) => (
-              <React.Fragment key={i}>
-                {m.handoff && <SpecialistCard />}
-                <div style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                  {m.role === 'user' ? (
-                    <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 4px 14px', background: `linear-gradient(135deg, ${GOLD}cc, #b8960fcc)`, fontSize: 12, lineHeight: 1.65, color: DARK, fontWeight: 600, whiteSpace: 'pre-wrap' }}>
-                      {m.text}
+          {mode === 'doctor_signup' ? (
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <DoctorSignupChatFlow
+                isAuthenticated={!!user}
+                language={i18n.language}
+                onExit={() => setMode('chat')}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Chat area */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {messages.length === 0 && (
+                  <div style={{ textAlign: 'center', paddingTop: 4 }}>
+                    <p style={{ margin: '0 0 10px', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{t('guide.quick_label')}</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {quickQuestions.map((q, i) => (
+                        <button key={i} onClick={() => sendMessage(q.label, q.query)}
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        >{q.label}</button>
+                      ))}
+                      {isConcierge && (
+                        <button onClick={() => sendMessage('Speak with a specialist', 'Speak with a specialist')}
+                          style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
+                        >Speak with a specialist</button>
+                      )}
+                      {canBecomeDoctorPartner && (
+                        <button onClick={() => setMode('doctor_signup')}
+                          style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
+                        >🩺 Become a partner doctor</button>
+                      )}
                     </div>
-                  ) : (
-                    <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 14px 4px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', fontSize: 12, lineHeight: 1.65, color: '#fff' }}
-                      dangerouslySetInnerHTML={{ __html: md(m.text) }}
-                    />
-                  )}
-                </div>
-              </React.Fragment>
-            ))}
+                  </div>
+                )}
 
-            {thinking && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 4 }}>
-                {[0, 1, 2].map(i => (
-                  <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, animation: `guideThink 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                {messages.map((m, i) => (
+                  <React.Fragment key={i}>
+                    {m.handoff && <SpecialistCard />}
+                    <div style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                      {m.role === 'user' ? (
+                        <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 4px 14px', background: `linear-gradient(135deg, ${GOLD}cc, #b8960fcc)`, fontSize: 12, lineHeight: 1.65, color: DARK, fontWeight: 600, whiteSpace: 'pre-wrap' }}>
+                          {m.text}
+                        </div>
+                      ) : (
+                        <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 14px 4px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', fontSize: 12, lineHeight: 1.65, color: '#fff' }}
+                          dangerouslySetInnerHTML={{ __html: md(m.text) }}
+                        />
+                      )}
+                    </div>
+                  </React.Fragment>
                 ))}
-              </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
 
-          {/* Input */}
-          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: 8, flexShrink: 0 }}>
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              placeholder={isOnline ? t('guide.placeholder') : t('guide.placeholder_offline')}
-              style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '8px 12px', fontSize: 12, color: '#fff', outline: 'none' }}
-            />
-            <button onClick={() => sendMessage()} disabled={!input.trim() || thinking}
-              style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: input.trim() && !thinking ? GOLD : 'rgba(255,255,255,0.06)', border: 'none', cursor: input.trim() && !thinking ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
-            >
-              <Send style={{ width: 15, height: 15, color: input.trim() && !thinking ? DARK : 'rgba(255,255,255,0.3)' }} />
-            </button>
-          </div>
+                {thinking && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 4 }}>
+                    {[0, 1, 2].map(i => (
+                      <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, animation: `guideThink 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                    ))}
+                  </div>
+                )}
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Input */}
+              <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: 8, flexShrink: 0 }}>
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                  placeholder={isOnline ? t('guide.placeholder') : t('guide.placeholder_offline')}
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '8px 12px', fontSize: 12, color: '#fff', outline: 'none' }}
+                />
+                <button onClick={() => sendMessage()} disabled={!input.trim() || thinking}
+                  style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: input.trim() && !thinking ? GOLD : 'rgba(255,255,255,0.06)', border: 'none', cursor: input.trim() && !thinking ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+                >
+                  <Send style={{ width: 15, height: 15, color: input.trim() && !thinking ? DARK : 'rgba(255,255,255,0.3)' }} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

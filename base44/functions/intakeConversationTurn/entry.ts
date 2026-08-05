@@ -9,6 +9,11 @@ const IntakeTurnSchema = strictObject({
   target_fields: z.array(z.string().max(100)).max(20).optional().default([]),
   user_raw_text: Fields.shortText(2000),
   known_answers_snapshot: z.record(z.any()).optional().default({}),
+  // Which conversation this turn belongs to — swaps the system prompt's
+  // persona/tone without touching the parse-and-narrate contract itself.
+  // Defaults to the original patient-intake voice so every existing caller
+  // (useIntakeSession, useTravelIntakeSession) is unaffected.
+  persona: z.enum(['patient', 'doctor_signup']).optional().default('patient'),
 });
 
 // ── intakeConversationTurn ───────────────────────────────────────────────────
@@ -22,7 +27,7 @@ const IntakeTurnSchema = strictObject({
 // the deterministic side. The response schema below has no field capable of
 // expressing a safety verdict; that's deliberate, not an oversight.
 
-const SYSTEM_PROMPT = `You are the Morales Concierge, guiding a prospective patient through a calm, one-question-at-a-time intake for medical travel — never a chatbot, never a form.
+const PATIENT_SYSTEM_PROMPT = `You are the Morales Concierge, guiding a prospective patient through a calm, one-question-at-a-time intake for medical travel — never a chatbot, never a form.
 
 ## Identity & Tone
 - Calm, confident, empathetic, professional. Never robotic, never overly excited.
@@ -42,6 +47,26 @@ const SYSTEM_PROMPT = `You are the Morales Concierge, guiding a prospective pati
 Return ONLY valid JSON, no markdown fences, exactly these fields:
 {"extracted": {"<field>": "<value>", ...}, "confidence": 0-100, "clarification_needed": false, "narration": "...", "acknowledgement": "..."}`;
 
+const DOCTOR_SIGNUP_SYSTEM_PROMPT = `You are M-Care, walking a doctor through signing up as a partner on Morales — one question at a time, warm and efficient, never a form.
+
+## Identity & Tone
+- Confident, professional, a little brisk — this is a colleague joining a platform, not a patient being cared for.
+- No emojis in your own text. Keep narration to 1-2 sentences.
+- Explain the "why" behind what's being asked, using ONLY the reason provided to you — never invent a new justification.
+- Address the doctor by name once you know it.
+- Mirror the doctor's language: write narration, acknowledgement, and clarification text in the language they wrote their answer in. Extracted field VALUES stay in their canonical form (numbers, names, license numbers as given).
+
+## Critical Rules — Non-Negotiable
+- You NEVER approve, verify, or comment on whether this doctor is legitimate, licensed, or trustworthy. That is decided elsewhere (a real fraud/verification pipeline), entirely outside your reasoning.
+- You NEVER state a number, count, or fact that was not explicitly given to you in the input.
+- You extract ONLY the field(s) named in "Target fields" from the doctor's answer — never invent additional fields.
+- If the answer is ambiguous, unclear, or doesn't seem to answer the question at all, set clarification_needed to true and keep confidence low.
+- confidence is 0-100: how certain you are the extracted value(s) correctly capture what the doctor meant.
+
+## Output Format
+Return ONLY valid JSON, no markdown fences, exactly these fields:
+{"extracted": {"<field>": "<value>", ...}, "confidence": 0-100, "clarification_needed": false, "narration": "...", "acknowledgement": "..."}`;
+
 interface TurnBody {
   step_id?: string;
   question_shown?: string;
@@ -49,6 +74,7 @@ interface TurnBody {
   target_fields?: string[];
   user_raw_text?: string;
   known_answers_snapshot?: Record<string, unknown>;
+  persona?: 'patient' | 'doctor_signup';
 }
 
 // Duplicated deliberately from questionGraph.js's `requiresAuth`-tagged step
@@ -76,12 +102,19 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     target_fields,
     user_raw_text,
     known_answers_snapshot,
+    persona,
   } = await body<TurnBody>();
 
   if (!step_id || !question_shown || !deterministic_reason || !user_raw_text) {
     return err('step_id, question_shown, deterministic_reason, and user_raw_text are required');
   }
 
+  // AUTH_REQUIRED_STEPS is a patient-intake-specific allowlist (see comment
+  // above) — doctor-signup step ids never appear in it, so this only ever
+  // gates the patient persona, matching the auth boundary that already
+  // exists client-side for each flow (doctor signup's own auth gate is the
+  // separate, later license_document step, enforced by submitDoctorSignup()
+  // itself before any record is created — not by this narration function).
   if (AUTH_REQUIRED_STEPS.has(step_id)) {
     let authedUser = null;
     try {
@@ -92,18 +125,21 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (!authedUser) return err('Unauthorized', 401);
   }
 
-  const firstName = String(known_answers_snapshot?.patient_name ?? '').split(' ')[0] || '';
+  const isDoctorSignup = persona === 'doctor_signup';
+  const nameField = isDoctorSignup ? 'full_name' : 'patient_name';
+  const firstName = String(known_answers_snapshot?.[nameField] ?? '').split(' ')[0] || '';
+  const systemPrompt = isDoctorSignup ? DOCTOR_SIGNUP_SYSTEM_PROMPT : PATIENT_SYSTEM_PROMPT;
 
   // Sanitize the client's free text before it reaches the prompt (injection guard).
   const safeUserText = sanitizePromptInput(user_raw_text, 1000).text;
 
   const prompt = [
-    SYSTEM_PROMPT,
-    `\n\nClient name: ${firstName || 'unknown yet'}`,
+    systemPrompt,
+    `\n\n${isDoctorSignup ? 'Doctor' : 'Client'} name: ${firstName || 'unknown yet'}`,
     `\n\nQuestion asked: ${question_shown}`,
     `\n\nWhy we're asking (use this and only this as the reason): ${deterministic_reason}`,
     `\n\nTarget fields to extract: ${(target_fields || []).join(', ') || '(none — this is a review step)'}`,
-    `\n\nClient's answer: ${safeUserText}`,
+    `\n\n${isDoctorSignup ? "Doctor's" : "Client's"} answer: ${safeUserText}`,
     '\n\nRespond now (JSON only, no prose outside the JSON):',
   ].join('');
 

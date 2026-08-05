@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { translations } from '@/lib/translations';
 import { ChevronLeft, Upload, CloudUpload, CheckCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
+import { submitDoctorSignup } from '@/lib/partnerSignup/submitDoctorSignup';
 import VerificationInfo from './VerificationInfo';
 import { friendlyError } from '@/lib/friendlyError';
 import SignupAuthGate from '@/components/auth/SignupAuthGate';
@@ -68,105 +68,18 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
        return;
      }
 
-     // The Doctor record below can be created as a guest, but
-     // saveUserOnboardingProfile → syncTenantRole (which grants this account
-     // the 'doctor' role /doctor-dashboard requires) needs an authenticated
-     // session — it silently no-ops for a guest, permanently locking a
-     // newly-signed-up doctor out of their own dashboard with no recovery
-     // path. Require sign-in before creating anything. The form is already
-     // auto-saved (signupDraft.js), so nothing is lost on the round trip.
-     const currentUser = await base44.auth.me().catch(() => null);
-     if (!currentUser) {
-       setShowAuthGate(true);
-       return;
-     }
-
      setIsSubmitting(true);
      try {
-       const doctorData = {
-         full_name: formData.full_name,
-         email: formData.email,
-         phone: formData.phone,
-         clinic_country: formData.clinic_country,
-         clinic_city: formData.clinic_city,
-         clinic_name: formData.clinic_name,
-         professional_background: formData.professional_background,
-         years_experience: Number(formData.years_experience) || 0,
-         bio: formData.bio,
-         license_number: formData.license_number,
-         license_url: formData.license_url,
-         website_url: formData.website_url || undefined,
-         social_facebook: formData.social_facebook || undefined,
-         social_instagram: formData.social_instagram || undefined,
-         social_tiktok: formData.social_tiktok || undefined,
-         payout_method: formData.payout_method,
-         payout_account: formData.payout_account,
-         language_preference: language,
-         status: 'pending_verification',
-         sign_up_completed_at: new Date().toISOString()
-       };
-
-       const doctor = await base44.entities.Doctor.create(doctorData);
-
-       // Fraud cross-check (phone/clinic-address dedup against existing doctors)
-       // — non-fatal, doesn't block or delay signup completion either way.
-       try {
-         await base44.functions.invoke('runFraudIntelligence', {
-           doctor_id: doctor.id,
-           phone: formData.phone,
-           clinic_address: [formData.clinic_name, formData.clinic_city, formData.clinic_country].filter(Boolean).join(', '),
-         });
-       } catch (_) { /* non-fatal — admin can re-run manually from the verification dashboard */ }
-
-       try { await saveUserOnboardingProfile({
-         role: 'doctor',
-         status: 'completed',
-         linkedEntityName: 'Doctor',
-         linkedEntityId: doctor.id,
-         profileData: { ...formData, ...doctorData }
-       }); } catch (_) { /* non-fatal — Doctor entity is created */ }
-
-       // Auto-assign specialties (non-fatal)
-       try {
-       if (formData.specialties && formData.specialties.length > 0) {
-         const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
-
-         const specialtyData = formData.specialties.map(spec => {
-           const matched = masterProcs.find(mp => mp.en_name === spec);
-           return {
-             doctor_id: doctor.id,
-             procedure_id: matched?.procedure_id || spec,
-             procedure_name: spec,
-             category: matched?.category || 'General'
-           };
-         });
-
-         if (specialtyData.length > 0) {
-           await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
-         }
-
-         // Save pricing information
-         if (formData.procedurePrices && Object.keys(formData.procedurePrices).length > 0) {
-           const pricingData = Object.entries(formData.procedurePrices)
-             .filter(([, price]) => price !== '' && price !== null && price > 0)
-             .map(([procedure_name, doctor_price_usd]) => {
-               const matched = masterProcs.find(mp => mp.en_name === procedure_name);
-               return {
-                 doctor_id: doctor.id,
-                 procedure_id: matched?.procedure_id || procedure_name,
-                 procedure_name: procedure_name,
-                 doctor_price_usd: parseFloat(doctor_price_usd),
-               };
-             });
-           if (pricingData.length > 0) {
-             await base44.entities.DoctorPricing.bulkCreate(pricingData);
-           }
-         }
-         }
-         } catch (_) { /* non-fatal — pricing/specialty creation */ }
-
-         onComplete(doctor);
+       const doctor = await submitDoctorSignup(formData, language);
+       onComplete(doctor);
      } catch (error) {
+       // submitDoctorSignup itself checks for a session and throws this
+       // exact string before creating anything — the form is already
+       // auto-saved (signupDraft.js), so nothing is lost on the round trip.
+       if (error?.message === 'AUTH_REQUIRED') {
+         setShowAuthGate(true);
+         return;
+       }
        setSyncMessage({ type: 'error', text: friendlyError(error, 'We could not complete your registration. Your details are still on screen — please try again.', 'DoctorSignupStep3/submit') });
      } finally {
        setIsSubmitting(false);
