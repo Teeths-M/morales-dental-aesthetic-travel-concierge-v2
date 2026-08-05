@@ -622,7 +622,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
           color: TEAL,
         }}
       >
-        Your Concierge
+        M-Care
       </p>
 
       <h1

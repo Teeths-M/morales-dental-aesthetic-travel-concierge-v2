@@ -1,17 +1,26 @@
 // @ts-nocheck — Base44 InvokeLLM type definitions don't expose system_prompt yet; runtime works correctly
 /**
- * PlatformGuideOrb — floating AI guide for every user and partner.
+ * MCareOrb — M-Care, the one AI concierge for every user and partner.
+ *
+ * Consolidates what used to be three separate assistants (Morales Guide,
+ * Morales Assist, and — on visa pages — SAFE-T VISA ASSIST) into a single
+ * floating identity: one name, one avatar, one place to ask anything.
  *
  * Offline-first: answers every question from the local KB instantly.
- * Online: enhances KB answers with LLM for complex/open questions.
- * Works in airplane mode, zero-signal, and system-paused states.
+ * Online, logged-out/admin: KB miss falls through to a generic platform LLM call.
+ * Online, logged-in (non-admin): KB miss falls through to the real, case-aware
+ * `moralesAssist` backend instead — the same one that can hand off to a human
+ * specialist. M-Care only ever narrates; it has no write access to any
+ * SAFE-T/procedure-compatibility decision or intake data.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, Sparkles, ChevronDown, WifiOff } from 'lucide-react';
+import { Send, ChevronDown, WifiOff, RotateCcw } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { findAnswer } from './orbKnowledge';
+import SpecialistCard from './SpecialistCard';
 import { isSystemPaused } from '@/lib/systemPause';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -119,14 +128,32 @@ function setCached(q, answer) {
   } catch {}
 }
 
+// Assistant messages render through this (never user input) — same sanitizer
+// Morales Assist used, so KB/LLM/moralesAssist replies get identical, safe
+// markdown-lite formatting (bold/italic/line breaks only).
+function md(text) {
+  return DOMPurify.sanitize(
+    String(text ?? '')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br/>'),
+    { ALLOWED_TAGS: ['strong', 'em', 'br'], ALLOWED_ATTR: [] },
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
-export default function PlatformGuideOrb() {
+export default function MCareOrb() {
   const { t }           = useTranslation();
   const { user }        = useAuth();
   const { pathname }    = useLocation();
   const role            = detectRole(user, pathname);
   const tips            = (TIPS_KEYS[role] || TIPS_KEYS.visitor).map(({ e, key }) => ({ e, t: t(key) }));
   const quickQuestions  = (QUICK_KEYS[role] || QUICK_KEYS.visitor).map(({ key, query }) => ({ label: t(key), query }));
+
+  // Authenticated, non-admin users get the case-aware concierge backend (and
+  // its human-handoff capability) on a KB miss, instead of the generic
+  // platform-Q&A LLM call everyone else gets.
+  const isConcierge = !!user && !['admin', 'platform_admin'].includes(user.role);
 
   const [tipIdx,     setTipIdx]     = useState(0);
   const [showBubble, setShowBubble] = useState(false);
@@ -144,7 +171,7 @@ export default function PlatformGuideOrb() {
   // now, not a general tip, so it isn't subject to the timer/rotation below.
   useEffect(() => {
     const onHint = (e) => {
-      if (open) return; // already talking to the guide directly — don't interrupt
+      if (open) return; // already talking to M-Care directly — don't interrupt
       setStruggleHint({ e: e.detail?.emoji || '💡', t: e.detail?.text || '' });
       setDismissed(false);
       setShowBubble(true);
@@ -246,18 +273,21 @@ export default function PlatformGuideOrb() {
     const q     = (displayText ?? input).trim();
     const query = (kbQuery ?? q).trim();
     if (!q || thinking) return;
+    const userMsg = { role: 'user', text: q };
+    const history = [...messages, userMsg];
+    setMessages(history);
     setInput('');
-    setMessages(m => [...m, { role: 'user', text: q }]);
     setThinking(true);
 
     const paused  = isSystemPaused();
     const canLLM  = isOnline && !paused;
 
-    // 1. Try local knowledge base first (instant, always works) — always
-    // queried in English, since orbKnowledge.js matches English keywords.
+    // 1. Try local knowledge base first (instant, always works, cheapest) —
+    // always queried in English, since orbKnowledge.js matches English
+    // keywords. This runs regardless of who's asking.
     const kbAnswer = findAnswer(query);
 
-    // 2. Check session cache for LLM response
+    // 2. Check session cache for a prior LLM response to the same question.
     const cached = !paused ? getCached(query) : null;
 
     if (cached) {
@@ -271,7 +301,8 @@ export default function PlatformGuideOrb() {
       setMessages(m => [...m, { role: 'assistant', text: kbAnswer, source: 'kb', id: msgId }]);
       setThinking(false);
 
-      // Quietly enhance with LLM only if online AND not paused
+      // Quietly enhance with the generic platform LLM only if online AND not
+      // paused — same for everyone, KB already answered the actual question.
       if (canLLM) {
         try {
           const res = await base44.integrations.Core.InvokeLLM({
@@ -291,7 +322,7 @@ export default function PlatformGuideOrb() {
       return;
     }
 
-    // 3. No KB match — offline or paused fallback
+    // 3. No KB match, offline or paused — same fallback for everyone.
     if (!canLLM) {
       const reason = paused ? t('guide.reason_paused') : t('guide.reason_offline');
       setMessages(m => [...m, {
@@ -303,7 +334,36 @@ export default function PlatformGuideOrb() {
       return;
     }
 
-    // 4. Online + not paused, no KB match — call LLM
+    // 4. No KB match, online. Logged-in non-admin users get the real,
+    // case-aware concierge backend — it can hand off to a human specialist,
+    // which the generic platform LLM call cannot do.
+    if (isConcierge) {
+      try {
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 30000));
+        const res = await Promise.race([
+          base44.functions.invoke('moralesAssist', {
+            messages:   history.map(m => ({ role: m.role, content: m.content ?? m.text })),
+            trip_phase: null,
+          }),
+          timeout,
+        ]);
+        // Base44 SDK wraps body in .data
+        const payload = res?.data ?? res ?? {};
+        const reply   = payload.reply || t('guide.llm_fallback');
+        setMessages(m => [...m, { role: 'assistant', text: reply, source: 'assist', handoff: !!payload.needs_handoff }]);
+      } catch (e) {
+        setMessages(m => [...m, {
+          role: 'assistant',
+          text: e?.message === 'timeout' ? t('guide.error_fallback') : t('guide.error_fallback'),
+          source: 'error',
+        }]);
+      }
+      setThinking(false);
+      return;
+    }
+
+    // 5. Logged-out or admin, online, no KB match — the original generic
+    // platform-Q&A LLM call.
     try {
       const res = await base44.integrations.Core.InvokeLLM({
         prompt:        query,
@@ -317,7 +377,12 @@ export default function PlatformGuideOrb() {
       setMessages(m => [...m, { role: 'assistant', text: t('guide.error_fallback'), source: 'error' }]);
     }
     setThinking(false);
-  }, [input, thinking, isOnline, role, pathname, t]);
+  }, [input, messages, thinking, isOnline, isConcierge, role, pathname, t]);
+
+  const resetConversation = useCallback(() => {
+    setMessages([]);
+    setInput('');
+  }, []);
 
   const currentTip = struggleHint || tips[tipIdx];
 
@@ -326,12 +391,12 @@ export default function PlatformGuideOrb() {
       {/* ── Floating orb + bubble ── */}
       {!open && !heroBlocksOrb && (
         <div style={{ position: 'fixed', bottom: 'calc(max(24px, env(safe-area-inset-bottom, 24px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 20, zIndex: 9000, display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: 8 }}>
-          <button onClick={() => { setOpen(true); setDismissed(true); setStruggleHint(null); }} aria-label="Open platform guide"
+          <button onClick={() => { setOpen(true); setDismissed(true); setStruggleHint(null); }} aria-label="Open M-Care"
             style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0, background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(10,20,28,0.92))', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.12)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, box-shadow 0.2s', position: 'relative' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <Sparkles style={{ width: 22, height: 22, color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD})` }} />
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 900, color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD})`, lineHeight: 1 }}>M</span>
             {!isOnline && <span style={{ position: 'absolute', top: 4, right: 4, width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid rgba(10,20,28,0.9)' }} />}
           </button>
           {showBubble && !dismissed && (
@@ -344,21 +409,24 @@ export default function PlatformGuideOrb() {
         </div>
       )}
 
-      {/* ── Guide panel ── */}
+      {/* ── M-Care panel ── */}
       {open && (
         <div style={{ position: 'fixed', bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 16, zIndex: 9001, width: 'min(360px, calc(100vw - 32px))', background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: 'min(540px, calc(100vh - 32px))', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(10,20,28,0.9))', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles style={{ width: 15, height: 15, color: GOLD }} />
-            </div>
+            <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: GOLD, color: DARK, fontFamily: 'Georgia, serif', fontSize: 16, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>M</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{t('guide.ai_label')}</p>
               <p style={{ margin: 0, fontSize: 10, color: isOnline ? 'rgba(255,255,255,0.38)' : '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
                 {isOnline ? t('guide.ai_sub') : <><WifiOff style={{ width: 9, height: 9 }} /> {t('guide.ai_offline')}</>}
               </p>
             </div>
+            {messages.length > 0 && (
+              <button onClick={resetConversation} title="New conversation" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.4)', display: 'flex', borderRadius: 8 }}>
+                <RotateCcw style={{ width: 15, height: 15 }} />
+              </button>
+            )}
             <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.4)', display: 'flex', borderRadius: 8 }}>
               <ChevronDown style={{ width: 18, height: 18 }} />
             </button>
@@ -377,16 +445,32 @@ export default function PlatformGuideOrb() {
                       onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                     >{q.label}</button>
                   ))}
+                  {isConcierge && (
+                    <button onClick={() => sendMessage('Speak with a specialist', 'Speak with a specialist')}
+                      style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
+                    >Speak with a specialist</button>
+                  )}
                 </div>
               </div>
             )}
 
             {messages.map((m, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: m.role === 'user' ? `linear-gradient(135deg, ${GOLD}cc, #b8960fcc)` : 'rgba(255,255,255,0.07)', border: m.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.07)', fontSize: 12, lineHeight: 1.65, color: m.role === 'user' ? DARK : '#fff', fontWeight: m.role === 'user' ? 600 : 400, whiteSpace: 'pre-wrap' }}>
-                  {m.text}
+              <React.Fragment key={i}>
+                {m.handoff && <SpecialistCard />}
+                <div style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  {m.role === 'user' ? (
+                    <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 4px 14px', background: `linear-gradient(135deg, ${GOLD}cc, #b8960fcc)`, fontSize: 12, lineHeight: 1.65, color: DARK, fontWeight: 600, whiteSpace: 'pre-wrap' }}>
+                      {m.text}
+                    </div>
+                  ) : (
+                    <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 14px 4px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', fontSize: 12, lineHeight: 1.65, color: '#fff' }}
+                      dangerouslySetInnerHTML={{ __html: md(m.text) }}
+                    />
+                  )}
                 </div>
-              </div>
+              </React.Fragment>
             ))}
 
             {thinking && (

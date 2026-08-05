@@ -148,7 +148,7 @@ Separate from the Base44 publish flow above — these apply when a change touche
   hard blocker. Worth a real on-device/emulator look specifically: fixed-position
   bottom bars are exactly where `env(safe-area-inset-bottom)` most commonly gets
   it wrong (home-indicator devices, gesture-nav Android). Also re-check
-  `FloatingSOSButton` and `PlatformGuideOrb` don't visually collide with the new
+  `FloatingSOSButton` and `MCareOrb` don't visually collide with the new
   bar on a real small screen — both were adjusted to read a new
   `--bottom-tab-bar-height` CSS variable the bar sets, but that's untested
   outside a browser devtools viewport simulation.

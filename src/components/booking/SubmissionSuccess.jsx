@@ -65,7 +65,9 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
       // Without a response_json_schema, InvokeLLM can come back as an object
       // ({ result }/{ text }) rather than a plain string -- storing it raw
       // used to crash the render below (`preparation.split`). Same coercion
-      // as VisaAIChat.jsx/VisaWizard.jsx for this call shape.
+      // as VisaWizard.jsx needs for this call shape (VisaAIChat.jsx no longer
+      // calls InvokeLLM directly — it now goes through safeTAssist, which
+      // already returns a clean { reply } string).
       const text = typeof resp === 'string' ? resp : (resp?.result || resp?.text || '');
       if (!text) throw new Error('InvokeLLM returned no usable text');
       setPreparation(text);

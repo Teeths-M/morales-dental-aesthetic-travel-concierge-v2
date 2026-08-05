@@ -1,6 +1,6 @@
 /**
- * Cross-tree signal from a form field/step to PlatformGuideOrb ("Morales
- * Guide"): "someone's stuck here, show this specific hint now." Same
+ * Cross-tree signal from a form field/step to MCareOrb ("M-Care"):
+ * "someone's stuck here, show this specific hint now." Same
  * pattern as i18n.js's `languageChange` window event — a single emit
  * function so nothing dispatches the raw event by hand.
  *

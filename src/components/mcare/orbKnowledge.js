@@ -1,5 +1,5 @@
 /**
- * Morales Guide — Offline Knowledge Base
+ * M-Care — Offline Knowledge Base
  * Covers every platform feature. Works with zero network connectivity.
  *
  * Each entry: { k: string[] keywords, a: string answer }

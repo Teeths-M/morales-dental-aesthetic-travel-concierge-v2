@@ -4,7 +4,7 @@ import { decodePortalToken, getTokenFromUrl } from '@/lib/portalToken';
 import { BackButton } from '@/components/nav/BackButton';
 import PortalQRCode from '@/components/portal/PortalQRCode';
 import { parseISO, addDays, format as dateFnsFormat } from 'date-fns';
-import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
+import MCareOrb from '@/components/mcare/MCareOrb';
 
 const USD = (val) => `$${(Number(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -459,7 +459,7 @@ export default function PortalTravelAgency() {
         </p>
       </div>
     </div>
-    <PlatformGuideOrb />
+    <MCareOrb />
     </>
   );
 }

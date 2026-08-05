@@ -9,8 +9,8 @@
  *
  * This hook only detects and reports via `onStruggle(reason)` — it never
  * decides what to show or say. That's the caller's job (see
- * PlatformGuideOrb's `struggleHint` prop). Each reason fires at most once
- * per mount, so it never nags on every render.
+ * struggleHint.js's `emitStruggleHint`, listened to by MCareOrb). Each
+ * reason fires at most once per mount, so it never nags on every render.
  *
  * The actual decisions are pure functions (`shouldArmIdleTimer`,
  * `shouldFireRetryFail`) so they're unit-testable without rendering a

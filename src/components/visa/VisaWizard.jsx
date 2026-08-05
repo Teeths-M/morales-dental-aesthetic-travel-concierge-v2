@@ -126,7 +126,7 @@ export default function VisaWizard({ onResult }) {
       // Without a response_json_schema, InvokeLLM can come back as
       // { result }/{ text } instead of a plain string -- storing it raw used
       // to hand an object down through onResult() to whatever renders
-      // aiSummary. Same coercion as VisaAIChat.jsx for this call shape.
+      // aiSummary. Same coercion this shape needs anywhere InvokeLLM is called directly.
       const text = typeof resp === 'string' ? resp : (resp?.result || resp?.text || '');
       if (!text) throw new Error('InvokeLLM returned no usable text');
       aiSummary = text;

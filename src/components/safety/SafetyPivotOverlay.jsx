@@ -34,7 +34,7 @@ const STEP = { IDLE: 'idle', REQUESTING: 'requesting', DISPATCHED: 'dispatched' 
  *   3. Two resolution paths: Accept Recommendation or Mother's Touch review
  *
  * Renders as a full-screen portal at z-[10000] so it appears above all other
- * overlays (ProcedureStackingBlocker, MoralesAssistPanel, etc.).
+ * overlays (ProcedureStackingBlocker, MCareOrb, etc.).
  */
 export default function SafetyPivotOverlay() {
   const { pivotViolations, closePivot, acceptRecommendation } = useCart();

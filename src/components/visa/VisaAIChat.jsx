@@ -16,30 +16,11 @@ const SUGGESTED = [
   "What is a medical invitation letter?",
 ];
 
-const SYSTEM_PROMPT = `You are SAFE-T VISA ASSISTâ„¢, a friendly, warm, and reassuring AI travel visa advisor for Morales Medical Travel Safety.
-
-Your role is to:
-- Help international medical travelers understand visa requirements
-- Explain documents needed in simple, non-intimidating language
-- Guide patients planning medical travel to Venezuela, Colombia, Dominican Republic, Cuba, Thailand, Turkey, Mexico, Costa Rica, Brazil, and Panama
-- Reduce travel anxiety with calm, clear explanations
-- Always remind users to verify with official embassy sources
-
-Your tone is:
-- Warm, friendly, and reassuring â€” like a knowledgeable travel companion
-- Simple language â€” no government jargon
-- Empathetic to the anxiety of international travel
-- Professional but approachable
-
-Always end responses with a helpful next step or offer to answer follow-up questions.
-Keep responses concise (2â€“4 short paragraphs max) and easy to read.
-Use occasional emojis to keep the tone friendly and approachable.`;
-
 export default function VisaAIChat() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hello! ðŸ‘‹ I'm your SAFE-T VISA ASSISTâ„¢ AI advisor. I'm here to help you understand visa requirements, prepare your travel documents, and feel confident about your international medical journey.\n\nWhat would you like to know? You can ask me anything about visas, travel documents, or entry requirements â€” or choose one of the common questions below!",
+      content: "Hello! 👋 I'm your SAFE-T VISA ASSIST™ AI advisor. I'm here to help you understand visa requirements, prepare your travel documents, and feel confident about your international medical journey.\n\nWhat would you like to know? You can ask me anything about visas, travel documents, or entry requirements — or choose one of the common questions below!",
     }
   ]);
   const [input, setInput] = useState('');
@@ -71,30 +52,29 @@ export default function VisaAIChat() {
     setLastSentAt(now);
 
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    const history = [...messages, { role: 'user', content: userMsg }];
+    setMessages(history);
     setLoading(true);
 
-    const recentMessages = messages.slice(-6);
-    const history = recentMessages.map(m => `${m.role === 'user' ? 'Patient' : 'VISA ASSISTâ„¢'}: ${m.content}`).join('\n\n');
-
     try {
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `${SYSTEM_PROMPT}\n\nConversation history:\n${history}\n\nPatient: ${userMsg}\n\nSAFE-T VISA ASSISTâ„¢:`,
+      // Real backend: scrubs PHI, sanitizes against prompt injection, and is
+      // rate-limited server-side (this component's own MAX_MESSAGES/cooldown
+      // above are just client-side UX, not a security boundary — the request
+      // above already lets anyone bypass them). `topic: 'visa'` selects this
+      // assistant's own system prompt inside the shared, safety-net'd function.
+      const res = await base44.functions.invoke('safeTAssist', {
+        messages: history.slice(-6).map(m => ({ role: m.role, content: m.content })),
+        topic: 'visa',
       });
-      // Without a response_json_schema, InvokeLLM does not reliably return a
-      // plain string -- it can come back as { result } or { text }. Storing
-      // it raw as `content` crashed the render below (`msg.content.split`)
-      // whenever that happened. Same coercion already used in
-      // PlatformGuideOrb.jsx and GlobalEventBroadcaster.jsx for this exact call shape.
-      const text = typeof response === 'string' ? response : (response?.result || response?.text || '');
+      const payload = res?.data ?? res ?? {};
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: text || "I'm here to help — could you rephrase that?",
+        content: payload.reply || "I'm here to help — could you rephrase that?",
       }]);
     } catch (_e) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "I apologize â€” I'm having a brief technical moment. ðŸ˜Š For immediate assistance with visa requirements, please contact our concierge team or check your destination's official embassy website. Is there anything else I can help you with?"
+        content: "I apologize — I'm having a brief technical moment. 😊 For immediate assistance with visa requirements, please contact our concierge team or check your destination's official embassy website. Is there anything else I can help you with?"
       }]);
     }
     setLoading(false);
@@ -138,7 +118,7 @@ export default function VisaAIChat() {
             <span className="text-white font-semibold text-sm">AI</span>
           </div>
           <div>
-            <p className="text-white font-semibold text-sm">SAFE-T VISA ASSISTâ„¢</p>
+            <p className="text-white font-semibold text-sm">SAFE-T VISA ASSIST™</p>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
               <p className="text-white/70 text-xs">Online & Ready</p>
@@ -147,7 +127,7 @@ export default function VisaAIChat() {
           <button
             onClick={() => setMessages([{
               role: 'assistant',
-              content: "Hello again! ðŸ‘‹ I've cleared our conversation. What visa or travel question can I help you with?"
+              content: "Hello again! 👋 I've cleared our conversation. What visa or travel question can I help you with?"
             }])}
             className="ml-auto text-white/60 hover:text-white transition-colors"
           >

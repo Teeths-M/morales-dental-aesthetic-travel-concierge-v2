@@ -1149,7 +1149,11 @@ test('UX: the guide orb never nags — no unbounded tip carousel, quiet on data-
   // route, until the user found the dismiss control. On /booking that means
   // animated motion in the corner of the eye while someone types their surgical
   // history. Our own interface must not compete for attention with the form.
-  const src = read('src/components/guide/PlatformGuideOrb.jsx');
+  //
+  // 2026-08-05: Morales Guide and Morales Assist were consolidated into one
+  // M-Care assistant (MCareOrb.jsx) — this same tip-rotation/quiet-route logic
+  // moved verbatim into the new file, so this test now reads that path instead.
+  const src = read('src/components/mcare/MCareOrb.jsx');
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
   // No setInterval driving the tip bubble — rotation must be bounded.

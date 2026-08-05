@@ -2,7 +2,38 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
 import { scrubPHI } from '../../shared/scrubPHI.ts';
 
-const SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for Morales Medical Travel Safety — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
+// "SAFE-T VISA ASSIST™" (src/components/visa/VisaAIChat.jsx) kept its own
+// separate frontend identity/branding — Portia's explicit call — but used to
+// call InvokeLLM directly from the client: no PHI scrubbing, and no real
+// rate limit (its 20-message/3-second cooldown was just JS state, trivially
+// bypassed). This function already had everything that was missing, just
+// under a different persona (Safe-T4life). `topic` picks which system prompt
+// to answer with while sharing one scrubbed, rate-limited backend.
+const ASSISTANT_NAME: Record<string, string> = {
+  default: 'Safe-T4life',
+  visa: 'SAFE-T VISA ASSIST',
+};
+
+const VISA_SYSTEM_PROMPT = `You are SAFE-T VISA ASSIST, a friendly, warm, and reassuring AI travel visa advisor for Morales Medical Travel Safety.
+
+Your role is to:
+- Help international medical travelers understand visa requirements
+- Explain documents needed in simple, non-intimidating language
+- Guide patients planning medical travel to Venezuela, Colombia, Dominican Republic, Cuba, Thailand, Turkey, Mexico, Costa Rica, Brazil, and Panama
+- Reduce travel anxiety with calm, clear explanations
+- Always remind users to verify with official embassy sources
+
+Your tone is:
+- Warm, friendly, and reassuring — like a knowledgeable travel companion
+- Simple language — no government jargon
+- Empathetic to the anxiety of international travel
+- Professional but approachable
+
+Always end responses with a helpful next step or offer to answer follow-up questions.
+Keep responses concise (2-4 short paragraphs max) and easy to read.
+Use occasional emojis to keep the tone friendly and approachable.`;
+
+const SAFETY_SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for Morales Medical Travel Safety — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
 
 Your Role: You are the patient's all-knowing, always-available companion throughout their medical journey.
 
@@ -89,11 +120,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { messages, user_email, user_name, trip_phase } = body;
+    const { messages, user_email, user_name, trip_phase, topic } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return Response.json({ error: 'messages array is required' }, { status: 400 });
     }
+
+    const assistantName = ASSISTANT_NAME[topic] || ASSISTANT_NAME.default;
+    const systemPrompt  = topic === 'visa' ? VISA_SYSTEM_PROMPT : SAFETY_SYSTEM_PROMPT;
 
     // Filter and trim conversation — skip leading assistant messages (Anthropic/LLM requirement)
     // Sanitize (injection guard) + scrub PHI (subprocessor has no BAA) before the
@@ -110,7 +144,7 @@ Deno.serve(async (req) => {
 
     // Format conversation history as text for the prompt
     const historyLines = conversation.slice(0, -1).map((m) =>
-      `${m.role === 'user' ? 'Patient' : 'Safe-T4life'}: ${m.content}`
+      `${m.role === 'user' ? 'Patient' : assistantName}: ${m.content}`
     ).join('\n');
 
     const lastMsg = conversation[conversation.length - 1];
@@ -124,11 +158,11 @@ Deno.serve(async (req) => {
       : '';
 
     const fullPrompt = [
-      SYSTEM_PROMPT,
+      systemPrompt,
       userCtx,
       historyLines ? `\n\nPrevious conversation:\n${historyLines}` : '',
       `\n\nPatient: ${lastUserContent}`,
-      '\n\nSafe-T4life (respond in character — calm, warm, authoritative):',
+      `\n\n${assistantName} (respond in character):`,
     ].join('');
 
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({

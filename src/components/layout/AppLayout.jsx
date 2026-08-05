@@ -20,7 +20,7 @@ import { useCovertSOS } from '@/hooks/useCovertSOS';
 import { initGlobalSyncListener, registerSyncQueue } from '@/lib/offlineSyncController';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
-import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
+import MCareOrb from '@/components/mcare/MCareOrb';
 import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
 import ProximityWatcher from './ProximityWatcher';
 
@@ -154,8 +154,8 @@ export default function AppLayout() {
         </main>
         <Footer />
 
-        {/* Guide orb — hidden on demo pages so judges see a clean experience */}
-        {!isDemo && <PlatformGuideOrb />}
+        {/* M-Care — hidden on demo pages so judges see a clean experience */}
+        {!isDemo && <MCareOrb />}
 
         {/* Patient-facing floating elements — hidden on admin pages */}
         {!isAdmin && (

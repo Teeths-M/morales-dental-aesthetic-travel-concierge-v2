@@ -12,7 +12,7 @@ import { base44 } from '@/api/base44Client';
 import SurgicalExecutionControls from '@/components/portal/SurgicalExecutionControls';
 import ClinicalExtractionModal from '@/components/doctor/ClinicalExtractionModal';
 import SignedConsentPanel from '@/components/doctor-dashboard/SignedConsentPanel';
-import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
+import MCareOrb from '@/components/mcare/MCareOrb';
 import { toast } from 'sonner';
 
 export default function PortalDoctor() {
@@ -668,7 +668,7 @@ export default function PortalDoctor() {
         onClose={() => setShowExtractModal(false)}
       />
     )}
-    <PlatformGuideOrb />
+    <MCareOrb />
     </>
   );
 }
