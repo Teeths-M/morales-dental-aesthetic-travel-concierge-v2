@@ -427,7 +427,7 @@ export default function MCareOrb() {
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 900, color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD})`, lineHeight: 1 }}>M</span>
+            <img src="/mcare-logo.png" alt="M-Care" style={{ width: 44, height: 44, borderRadius: '50%', filter: `drop-shadow(0 0 6px ${GOLD}66)` }} />
             {!isOnline && <span style={{ position: 'absolute', top: 4, right: 4, width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid rgba(10,20,28,0.9)' }} />}
           </button>
           {showBubble && !dismissed && (
@@ -446,7 +446,7 @@ export default function MCareOrb() {
 
           {/* Header */}
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: GOLD, color: DARK, fontFamily: 'Georgia, serif', fontSize: 16, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>M</div>
+            <img src="/mcare-logo.png" alt="M-Care" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{t('guide.ai_label')}</p>
               <p style={{ margin: 0, fontSize: 10, color: isOnline ? 'rgba(255,255,255,0.38)' : '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
