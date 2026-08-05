@@ -1,9 +1,31 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { linkOnlyEmail } from '../../shared/notify.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 const CONFIRMATION_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const PROCEDURE_WARNING_HOURS = 24; // doctor still unconfirmed, procedure within a day — flag + email the doctor a reminder
+const PROCEDURE_CRITICAL_HOURS = 4; // doctor still unconfirmed, procedure within hours — flag + admin SMS
+
+// Outbound SMS (Twilio) — inline, matching this codebase's own established
+// convention (see escalateMissedDriverHandshake, escalateSoloCheckIn)
+// rather than a shared module.
+async function sendAdminSms(message: string) {
+  const adminPhone = Deno.env.get('ADMIN_PHONE');
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!adminPhone || !sid || !token || !from) return;
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: adminPhone, From: from, Body: message }).toString(),
+    });
+  } catch (_) { /* non-blocking — SMS failure must never stop the flagging pass */ }
+}
 
 async function aiAdditionalRisks(cases: Record<string, unknown>[]): Promise<{ case_id: string; reason: string }[]> {
   if (!ANTHROPIC_KEY || !cases.length) return [];
@@ -61,6 +83,7 @@ Deno.serve(async (req) => {
 
     // Collect all updates then fire them concurrently — avoid serial await-per-case
     const updatePromises = [];
+    const smsPromises = [];
 
     for (const c of activeCases) {
       // Skip if already explicitly resolved
@@ -74,6 +97,8 @@ Deno.serve(async (req) => {
       let primaryPartnerType = '';
       let primaryPartnerName = '';
       let missedAt = null;
+      let confirmationDeadline = null;
+      let hoursLeftForSms = null;
 
       // Check: doctor notified but confirmation window missed
       if (
@@ -87,15 +112,46 @@ Deno.serve(async (req) => {
         primaryPartnerType = 'doctor';
         primaryPartnerName = c.doctor_selected || 'Assigned Doctor';
         missedAt = new Date(c.doctor_notified_at);
+        confirmationDeadline = new Date(missedAt.getTime() + CONFIRMATION_WINDOW_MS);
       }
 
-      if (shouldFlag && !c.fallback_state?.in_flux) {
-        const confirmationDeadline = new Date(missedAt.getTime() + CONFIRMATION_WINDOW_MS);
+      // Check: doctor still unconfirmed as the procedure itself approaches —
+      // distinct from the rule above, which only measures speed since
+      // notification. A doctor notified early who simply never gets around
+      // to confirming, with the patient now on the ground, was invisible to
+      // that rule alone — nothing re-checked confirmation status against
+      // procedure_date as the date actually neared.
+      const procedureDate = c.procedure_date ? new Date(c.procedure_date) : null;
+      const hoursUntilProcedure = procedureDate && !Number.isNaN(procedureDate.getTime())
+        ? (procedureDate.getTime() - now.getTime()) / (60 * 60 * 1000)
+        : null;
+
+      if (
+        !shouldFlag &&
+        c.doctor_confirmation_status === 'PENDING' &&
+        hoursUntilProcedure !== null &&
+        hoursUntilProcedure > 0 &&
+        hoursUntilProcedure <= PROCEDURE_WARNING_HOURS &&
+        !['Completed', 'Submitted'].includes(c.status)
+      ) {
+        shouldFlag = true;
+        reason = hoursUntilProcedure <= PROCEDURE_CRITICAL_HOURS
+          ? 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL'
+          : 'DOCTOR_UNCONFIRMED_PROCEDURE_APPROACHING';
+        primaryPartnerType = 'doctor';
+        primaryPartnerName = c.doctor_selected || 'Assigned Doctor';
+        missedAt = now;
+        confirmationDeadline = procedureDate;
+        hoursLeftForSms = hoursUntilProcedure;
+      }
+
+      if (shouldFlag && confirmationDeadline && !c.fallback_state?.in_flux) {
         const auditEntry = {
           timestamp: now.toISOString(),
           action: 'IN_FLUX_AUTO_DETECTED',
           actor: 'system',
-          notes: `${reason} — primary partner: ${primaryPartnerName}. Notified at ${missedAt.toISOString()}, window expired.`,
+          notes: `${reason} — primary partner: ${primaryPartnerName}.` +
+            (missedAt ? ` Checked at ${missedAt.toISOString()}.` : ''),
         };
 
         updatePromises.push(
@@ -108,7 +164,7 @@ Deno.serve(async (req) => {
               primary_partner_name: primaryPartnerName,
               primary_partner_contact_phone: '',
               confirmation_deadline: confirmationDeadline.toISOString(),
-              current_escalation_level: 1,
+              current_escalation_level: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL' ? 2 : 1,
               escalation_reason: reason,
               human_intervention_required: false,
               fallback_sequence: [],
@@ -116,6 +172,46 @@ Deno.serve(async (req) => {
             },
           })
         );
+
+        // Give the doctor an actual window, not just an internal flag: the
+        // first time this case tips into flux over a proximity reason (not
+        // the pre-existing 15-minute-after-notification rule above, which
+        // covers a different, earlier signal), email the doctor directly —
+        // before admin ever gets involved at the 4h critical tier below.
+        if (
+          (reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_APPROACHING' || reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL') &&
+          c.doctor_email
+        ) {
+          updatePromises.push(
+            base44.asServiceRole.integrations.Core.SendEmail({
+              from_name: 'Morales Medical Travel Safety', to: c.doctor_email,
+              subject: 'Please confirm your procedure date',
+              body: linkOnlyEmail({
+                from: 'detectFallbackCrisis/doctor-reminder',
+                title: 'Please confirm your procedure date.',
+                line: 'A procedure date on your calendar needs your confirmation. Please open your portal to confirm it is still on.',
+                ctaLabel: 'Open My Portal',
+                ctaUrl: `${APP_URL}/portal/doctor/${c.doctor_portal_token}`,
+              }),
+            }).catch(() => {})
+          );
+        }
+
+        // Critical tier — procedure is hours away and the doctor still
+        // hasn't confirmed. This does NOT auto-reassign the doctor: "hasn't
+        // clicked confirm yet" is a softer signal than a driver physically
+        // failing to show, and unilaterally firing a doctor who may still
+        // come through risks doing real harm (duplicate assignment,
+        // confusion on arrival). It escalates as loudly as this system
+        // escalates real emergencies elsewhere — an admin text, not just an
+        // email — so a human decides fast, with findDoctorBackup one click
+        // away in the admin console if they choose to use it.
+        if (reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL') {
+          const hoursLeft = Math.max(0, Math.round(hoursLeftForSms ?? 0));
+          smsPromises.push(sendAdminSms(
+            `URGENT: Dr. ${primaryPartnerName} still hasn't confirmed for ${c.client_name || 'a patient'} — procedure in ${hoursLeft}h (case ${String(c.id).slice(-8)}). Confirm or dispatch a backup doctor now.`
+          ));
+        }
 
         results.flagged++;
         results.details.push({ id: c.id, name: c.client_name, reason });
@@ -127,6 +223,9 @@ Deno.serve(async (req) => {
     // Fire all updates concurrently instead of serially
     if (updatePromises.length > 0) {
       await Promise.allSettled(updatePromises);
+    }
+    if (smsPromises.length > 0) {
+      await Promise.allSettled(smsPromises);
     }
 
     // AI risk scan — identifies additional at-risk cases beyond the single hardcoded rule

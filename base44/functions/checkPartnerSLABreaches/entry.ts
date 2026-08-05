@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
     const now     = Date.now();
+    const HR_12   = 12 * 60 * 60 * 1000;
     const HR_24   = 24 * 60 * 60 * 1000;
     const HR_48   = 48 * 60 * 60 * 1000;
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
@@ -194,6 +195,26 @@ Deno.serve(async (req) => {
     for (const c of doctorPendingCases as any[]) {
       if (!c.doctor_notified_at || c.sla_breached_doctor) continue;
       const age = now - new Date(c.doctor_notified_at).getTime();
+
+      // Give the doctor an actual, communicated window before any reassignment:
+      // a reminder at the halfway point of the 24h SLA, not a silent swap at 24h.
+      if (age >= HR_12 && age < HR_24 && !c.doctor_reminder_sent_at && c.doctor_email) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: BRAND, to: c.doctor_email,
+          subject: `Action needed: a case is waiting on you | ${BRAND}`,
+          body: linkOnlyEmail({
+            from: 'checkPartnerSLABreaches/doctor-reminder',
+            title: 'A case is waiting on your response.',
+            line: "Please open your portal to accept or decline. If we don't hear back soon, we'll need to offer it to another doctor.",
+            ctaLabel: 'Open My Portal',
+            ctaUrl: `${APP_URL}/portal/doctor/${c.doctor_portal_token}`,
+          }),
+        }).catch(() => {});
+        await base44.asServiceRole.entities.CaseRecord.update(c.id, {
+          doctor_reminder_sent_at: new Date(now).toISOString(),
+        }).catch(() => {});
+      }
+
       if (age >= HR_24) {
         const result = await findDoctorBackup(base44, c).catch(() => ({ success: false }));
         escalations.push({ case_id: c.id, partner: 'doctor', action: result.success ? 'backup_dispatched' : 'no_backup_available' });

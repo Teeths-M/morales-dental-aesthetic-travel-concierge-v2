@@ -226,6 +226,11 @@
       "type": "string",
       "format": "date-time"
     },
+    "doctor_reminder_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the pre-SLA-breach reminder email was sent to the doctor, so it only sends once before the 24h auto-backup in checkPartnerSLABreaches."
+    },
     "doctor_confirmed_at": {
       "type": "string",
       "format": "date-time"

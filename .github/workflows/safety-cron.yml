@@ -162,6 +162,7 @@ jobs:
             call predictiveEscalation
             call checkStaleLiveLocations
             call escalateMissedDriverHandshake
+            call detectFallbackCrisis
             call checkPartnerSLABreaches
             call dispatchSoloSecurity
             call checkMissedRecoveryCheckins
@@ -179,6 +180,7 @@ jobs:
             call predictiveEscalation           # fires BEFORE a check-in is missed
             call checkStaleLiveLocations        # GPS gone quiet
             call escalateMissedDriverHandshake  # driver no-show → reroute
+            call detectFallbackCrisis           # doctor unconfirmed as procedure nears → auto-backup
             call checkPartnerSLABreaches        # partner quiet 24h/48h → auto backup + admin escalate
             call dispatchSoloSecurity           # solo traveler 5h+ unresponsive → security welfare check
             if [ "$MANUAL" = "true" ]; then
