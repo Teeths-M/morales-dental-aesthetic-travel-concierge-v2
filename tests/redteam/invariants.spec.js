@@ -1545,6 +1545,135 @@ test('PARTNER SIGNUP: doctor signup — chat and form both call the one gated su
   expect(sharedSrc, 'a missing session must throw, not silently proceed').toContain("Error('AUTH_REQUIRED')");
 });
 
+test('INTAKE: the one-shot booking-intent parser can never extract a clinical fact', () => {
+  // parseBookingIntent (M-Care super-agent Phase 2A, "type what you want in
+  // one sentence") is a NEW, more exposed entry point than
+  // intakeConversationTurn — unlike that function (whose callers are
+  // trusted, existing intake/signup graphs passing their own step's field
+  // list), this one must have its output shape HARDCODED in the function
+  // itself, not caller-suppliable, so it's structurally impossible for it to
+  // ever "extract" a clinical fact no matter what a caller asks for.
+  //
+  // Note on scope: `procedure`/`destination_country` ARE legitimate outputs
+  // here even though `procedure_interest`/`selected_procedures` technically
+  // appear in derivedFields.js's SAFETY_INPUT_FIELDS set (procedure feeds
+  // the RED block) — this mirrors an already-existing, already-accepted
+  // pattern in ConciergeIntake.jsx (seeding procedure_interest from cart
+  // items or a doctor-directory link), always as a seedAnswers() call that
+  // never overwrites a real answer and is always correctable on the review
+  // screen. What must NEVER happen is this function producing any of the
+  // truly clinical-history fields — those are asked one pill-tap at a time,
+  // never inferred from open conversation, full stop.
+  const src = read('base44/functions/parseBookingIntent/entry.ts');
+
+  // The request body schema must accept only a free-text query — no
+  // caller-suppliable target-fields list of any kind (checked on the
+  // BodySchema declaration specifically, not the whole file — the file's
+  // own header comment legitimately mentions intakeConversationTurn's
+  // target_fields by name when explaining why this function doesn't use
+  // that pattern, which would otherwise false-positive a whole-file check).
+  const bodySchemaIdx = src.indexOf('const BodySchema');
+  const bodySchemaBlock = src.slice(bodySchemaIdx, bodySchemaIdx + 200);
+  expect(bodySchemaIdx, 'BodySchema must exist').toBeGreaterThan(-1);
+  expect(bodySchemaBlock, 'request schema must not accept a caller-supplied field list').not.toContain('target_fields');
+
+  // The response schema — the actual data contract, not the prompt text
+  // guiding the LLM — must declare only procedure and destination_country,
+  // and must never declare any true clinical-history field. (The system
+  // prompt ABOVE this schema legitimately names those fields to tell the
+  // LLM to ignore them — that's correct, explicit guidance, not a leak; the
+  // schema is what actually constrains what the function can ever return.)
+  const schemaStart = src.indexOf('response_json_schema');
+  const schemaEnd = src.indexOf('});', schemaStart);
+  const schemaBlock = src.slice(schemaStart, schemaEnd);
+  expect(schemaBlock, 'response schema must declare procedure').toContain('procedure:');
+  expect(schemaBlock, 'response schema must declare destination_country').toContain('destination_country:');
+  for (const clinicalField of [
+    'age', 'gender', 'bmi', 'pregnancy_status', 'medical_conditions',
+    'allergy', 'medication', 'anesthesia', 'surgery_history', 'had_surgery',
+    'lifestyle', 'smoking_status', 'alcohol_use', 'emotional_concerns',
+  ]) {
+    expect(schemaBlock, `response schema must never declare the clinical field "${clinicalField}"`).not.toContain(clinicalField);
+  }
+
+  // And the extracted procedure must be allowlist-checked against the real
+  // enum before ever reaching the response — never passed through verbatim.
+  expect(src, 'must validate the extracted procedure against PROCEDURE_VALUES')
+    .toMatch(/PROCEDURE_VALUES\.includes\(/);
+});
+
+test('VOICE INPUT: transcribeVoiceInput is transcribe-only — no entity writes, still public', () => {
+  // M-Care super-agent Phase 2B. This function's whole job is speech-to-text
+  // for whatever the caller does with it next (M-Care chat, the booking-
+  // intent box, a future signup step) — it must never itself decide
+  // anything or persist a raw voice transcript anywhere. A "helpful" future
+  // edit that started logging transcripts to an entity for debugging would
+  // be a real, silent privacy regression for what could be sensitive
+  // patient speech, so it's guarded here structurally rather than left to
+  // code review to catch.
+  const src = read('base44/functions/transcribeVoiceInput/entry.ts');
+
+  for (const writeOp of ['.create(', '.update(', '.bulkCreate(', '.delete(']) {
+    expect(src, `transcribeVoiceInput must never call entities${writeOp}`).not.toContain(writeOp);
+  }
+
+  // Must stay reachable by a logged-out visitor — same audience as M-Care's
+  // own text chat and the booking-intent box that calls this.
+  expect(src, 'must stay unauthenticated, matching M-Care\'s own text-chat audience')
+    .toMatch(/requireAuth:\s*false/);
+  // And must not opt out of createHandler's default public rate limit — a
+  // public, TranscribeAudio-calling endpoint with no limit is a real
+  // cost/abuse vector, not just a nice-to-have.
+  expect(src, 'must not opt out of the default public rate limit').not.toMatch(/rateLimit:\s*false/);
+});
+
+test('AVAILABILITY: applyDoctorAvailability never overwrites an already-booked date, and never writes for another doctor', () => {
+  // M-Care super-agent Phase 2C. parseAvailabilityIntent (LLM, parse-only —
+  // checked below to have zero write calls, same as transcribeVoiceInput
+  // above) hands a doctor-confirmed {days, weeks} to this fully
+  // deterministic function, which expands it into real DoctorAvailability
+  // rows. Two properties must hold no matter how this function evolves:
+  //
+  //   1. A date a patient's case already has locked (locked_case_id, set by
+  //      confirmProcedureDate at booking time) must never be silently
+  //      overwritten by a bulk "I'm free Tuesdays" update — that would be a
+  //      real, patient-visible trust break, not just a data inconsistency.
+  //   2. doctor_id must come from the CALLER's own account
+  //      (Doctor.filter({email: user.email})), never a caller-supplied
+  //      field — otherwise one doctor could edit another doctor's calendar
+  //      through this function even though DoctorAvailability's own RLS is
+  //      currently wide open (a separate, pre-existing gap, not fixed here).
+  const parseSrc = read('base44/functions/parseAvailabilityIntent/entry.ts');
+  for (const writeOp of ['.create(', '.update(', '.bulkCreate(', '.delete(']) {
+    expect(parseSrc, `parseAvailabilityIntent must never call entities${writeOp}`).not.toContain(writeOp);
+  }
+
+  const applySrc = read('base44/functions/applyDoctorAvailability/entry.ts');
+
+  // doctor_id is looked up, never accepted from the request body.
+  expect(applySrc, 'doctor_id must be derived from the caller\'s own email')
+    .toContain('Doctor.filter({ email: user.email })');
+  expect(applySrc, 'the request schema must not accept a caller-supplied doctor_id')
+    .not.toMatch(/doctor_id:\s*Fields/);
+
+  // The locked-date check must exist, and the skip (continue) must come
+  // BEFORE either write branch, not after.
+  const lockedIdx = applySrc.indexOf('row?.locked_case_id');
+  const createIdx = applySrc.indexOf('DoctorAvailability.create(');
+  const updateIdx = applySrc.indexOf('DoctorAvailability.update(');
+  expect(lockedIdx, 'the locked_case_id check must exist').toBeGreaterThan(-1);
+  expect(createIdx, 'the create branch must exist').toBeGreaterThan(-1);
+  expect(updateIdx, 'the update branch must exist').toBeGreaterThan(-1);
+  expect(lockedIdx, 'the locked check must run before the create branch').toBeLessThan(createIdx);
+  expect(lockedIdx, 'the locked check must run before the update branch').toBeLessThan(updateIdx);
+  expect(applySrc, 'a skipped locked date must be counted, not silently dropped')
+    .toContain('skippedLocked++');
+
+  // Both functions stay doctor-only.
+  expect(parseSrc, 'parseAvailabilityIntent must gate on the doctor role').toMatch(/allowedRoles:\s*\[['"]doctor['"]\]/);
+  expect(applySrc, 'applyDoctorAvailability must gate on the doctor role').toMatch(/allowedRoles:\s*\[['"]doctor['"]\]/);
+});
+
 test('CART: a RED-locked procedure combination cannot reach /intake', () => {
   // A red "Safety Review" banner next to a working "Continue to Consultation"
   // button is a decoration, not a block. The M Principle requires the

@@ -22,6 +22,9 @@ import DOMPurify from 'dompurify';
 import { findAnswer } from './orbKnowledge';
 import SpecialistCard from './SpecialistCard';
 import DoctorSignupChatFlow from './DoctorSignupChatFlow';
+import BookingIntentEntry from './BookingIntentEntry';
+import AvailabilityIntentEntry from './AvailabilityIntentEntry';
+import VoiceInputButton from './VoiceInputButton';
 import { isSystemPaused } from '@/lib/systemPause';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -161,6 +164,16 @@ export default function MCareOrb() {
   // a partner of some kind — an existing doctor/agency/companion/chauffeur/
   // admin has nothing to gain from it.
   const canBecomeDoctorPartner = ['visitor', 'patient'].includes(role);
+
+  // "Book a procedure" (M-Care super-agent Phase 2A one-shot entry) —
+  // same audience as booking generally: visitors and existing patients,
+  // not partners/admins who have no reason to book a procedure for themselves.
+  const canBookProcedure = ['visitor', 'patient'].includes(role);
+
+  // "Update my availability" (M-Care super-agent Phase 2C) — logged-in
+  // doctors only; the other 4 partner types have no day/time availability
+  // concept in this app yet (see CLAUDE.md), so this stays doctor-only.
+  const canUpdateAvailability = role === 'doctor';
 
   // Phase 1 of the conversational signup work (CLAUDE.md, "M-Care Super-
   // Agent"): 'doctor_signup' hands the chat panel over to
@@ -458,6 +471,14 @@ export default function MCareOrb() {
                 onExit={() => setMode('chat')}
               />
             </div>
+          ) : mode === 'booking_intent' ? (
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <BookingIntentEntry onExit={() => setMode('chat')} />
+            </div>
+          ) : mode === 'availability_intent' ? (
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <AvailabilityIntentEntry onExit={() => setMode('chat')} />
+            </div>
           ) : (
             <>
               {/* Chat area */}
@@ -480,12 +501,26 @@ export default function MCareOrb() {
                           onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
                         >Speak with a specialist</button>
                       )}
+                      {canBookProcedure && (
+                        <button onClick={() => setMode('booking_intent')}
+                          style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
+                        >📋 Book a procedure</button>
+                      )}
                       {canBecomeDoctorPartner && (
                         <button onClick={() => setMode('doctor_signup')}
                           style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
                         >🩺 Become a partner doctor</button>
+                      )}
+                      {canUpdateAvailability && (
+                        <button onClick={() => setMode('availability_intent')}
+                          style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
+                        >🗓️ Update my availability</button>
                       )}
                     </div>
                   </div>
@@ -527,6 +562,13 @@ export default function MCareOrb() {
                   placeholder={isOnline ? t('guide.placeholder') : t('guide.placeholder_offline')}
                   style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '8px 12px', fontSize: 12, color: '#fff', outline: 'none' }}
                 />
+                {isOnline && (
+                  <VoiceInputButton
+                    disabled={thinking}
+                    onTranscript={(text) => setInput(text)}
+                    onError={(msg) => setMessages(m => [...m, { role: 'assistant', text: msg, source: 'error' }])}
+                  />
+                )}
                 <button onClick={() => sendMessage()} disabled={!input.trim() || thinking}
                   style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: input.trim() && !thinking ? GOLD : 'rgba(255,255,255,0.06)', border: 'none', cursor: input.trim() && !thinking ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
                 >

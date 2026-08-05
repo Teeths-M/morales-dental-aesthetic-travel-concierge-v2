@@ -56,4 +56,15 @@
          install: a non-traveler using Morales for the vault and emergency
          contacts never needs GPS hardware. -->
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <!-- Same silent-failure bug class as the location permissions above:
+         navigator.mediaDevices.getUserMedia({audio:true})/MediaRecorder inside
+         an Android WebView is gated on the app holding RECORD_AUDIO. Without
+         it, voice input (M-Care's mic button, VoiceInputButton.jsx; the
+         existing WalkieTalkie translator) would silently fail to get
+         microphone access in the packaged app while working fine in a mobile
+         browser. Not required to install — every voice feature already falls
+         back to typed text when the mic is unavailable or denied. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>

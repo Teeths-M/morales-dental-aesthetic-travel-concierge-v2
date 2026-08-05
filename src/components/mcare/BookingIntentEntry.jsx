@@ -1,0 +1,149 @@
+// @ts-nocheck — pre-existing arithmetic/symbol type gaps, matches sibling mcare components
+/**
+ * BookingIntentEntry — M-Care super-agent Phase 2A: "type what you want in
+ * one sentence" entry point. Calls parseBookingIntent (procedure +
+ * destination only — never a clinical fact, see that function's own header)
+ * and hands the result to /intake as a URL seed, reusing the exact same
+ * seedAnswers mechanism /intake already uses for cart/doctor-link hand-offs.
+ * Every remaining question — medical history included — is still asked one
+ * at a time by the unmodified question graph. This component never decides
+ * anything; it only pre-fills two non-safety fields before that graph runs.
+ */
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { PROCEDURE_OPTIONS } from '@/lib/intakeFlow/questionGraph';
+import VoiceInputButton from './VoiceInputButton';
+
+function procedureLabel(value) {
+  return PROCEDURE_OPTIONS.find((o) => o.value === value)?.label || value;
+}
+
+const GOLD = '#D4AF37';
+const DARK = '#060B16';
+
+function AssistantBubble({ children }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+      <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 14px 4px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', fontSize: 12, lineHeight: 1.65, color: '#fff' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const chipStyle = {
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.09)',
+  borderRadius: 10,
+  padding: '8px 12px',
+  fontSize: 12,
+  color: 'rgba(255,255,255,0.85)',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+
+export default function BookingIntentEntry({ onExit }) {
+  const [value, setValue] = useState('');
+  const [thinking, setThinking] = useState(false);
+  // Once parseBookingIntent returns something, show it back for an explicit
+  // yes/no before navigating — an LLM guess at "which procedure" should
+  // never silently redirect, even though the destination step (/intake's
+  // own review screen) still lets the patient correct it either way. Same
+  // "show the match, let them confirm" discipline as this app's existing
+  // aiProcedureFallback cards on /procedures — a guess is proposed, not applied.
+  const [pending, setPending] = useState(null); // { procedure, destination_country } | null
+  const [voiceError, setVoiceError] = useState(null);
+
+  const goToIntake = (procedure, country) => {
+    const params = new URLSearchParams();
+    if (procedure) params.set('procedure', procedure);
+    if (country) params.set('country', country);
+    const qs = params.toString();
+    window.location.href = qs ? `/intake?${qs}` : '/intake';
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const query = value.trim();
+    if (!query || thinking) return;
+    setThinking(true);
+    try {
+      const res = await base44.functions.invoke('parseBookingIntent', { query });
+      const payload = res?.data ?? res ?? {};
+      if (payload.procedure || payload.destination_country) {
+        setPending({ procedure: payload.procedure || null, destination_country: payload.destination_country || null });
+      } else {
+        // Nothing recognized — nothing to confirm, just start the normal flow.
+        goToIntake(null, null);
+      }
+    } catch (_) {
+      // parseBookingIntent unreachable — fall through to the normal,
+      // unmodified question-by-question flow rather than blocking.
+      goToIntake(null, null);
+    } finally {
+      setThinking(false);
+    }
+  };
+
+  if (pending) {
+    const parts = [];
+    if (pending.procedure) parts.push(procedureLabel(pending.procedure));
+    if (pending.destination_country) parts.push(`in ${pending.destination_country}`);
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <AssistantBubble>Got it — {parts.join(' ')}. Sound right?</AssistantBubble>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button onClick={() => goToIntake(pending.procedure, pending.destination_country)}
+              style={{ padding: '9px 14px', borderRadius: 10, border: 'none', background: GOLD, color: DARK, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >Yes, continue</button>
+            <button onClick={() => setPending(null)} style={{ ...chipStyle, textAlign: 'center' }}>Let me re-type it</button>
+          </div>
+        </div>
+        <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <button onClick={onExit} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', fontSize: 11, cursor: 'pointer', padding: 0 }}>← Back to M-Care</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <AssistantBubble>
+          Tell me what you're looking for, in one sentence — the procedure and where, if you know. I'll get you straight to matched doctors.
+        </AssistantBubble>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              autoFocus
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              disabled={thinking}
+              placeholder="e.g. dental veneers in Mexico"
+              style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '10px 12px', fontSize: 12, color: '#fff', outline: 'none' }}
+            />
+            <VoiceInputButton
+              disabled={thinking}
+              onTranscript={(text) => { setValue(text); setVoiceError(null); }}
+              onError={setVoiceError}
+            />
+          </div>
+          {voiceError && <p style={{ margin: 0, fontSize: 11, color: '#f87171' }}>{voiceError}</p>}
+          <button type="submit" disabled={!value.trim() || thinking}
+            style={{ padding: '9px 14px', borderRadius: 10, border: 'none', background: value.trim() && !thinking ? GOLD : 'rgba(255,255,255,0.06)', color: value.trim() && !thinking ? DARK : 'rgba(255,255,255,0.3)', fontSize: 12, fontWeight: 700, cursor: value.trim() && !thinking ? 'pointer' : 'default' }}
+          >{thinking ? 'One moment...' : 'Find my match'}</button>
+        </form>
+
+        <button onClick={() => goToIntake(null, null)} style={{ ...chipStyle, textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
+          Skip — just ask me questions instead
+        </button>
+      </div>
+
+      <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <button onClick={onExit} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', fontSize: 11, cursor: 'pointer', padding: 0 }}>← Back to M-Care</button>
+      </div>
+    </div>
+  );
+}

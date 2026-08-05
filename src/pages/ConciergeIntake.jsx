@@ -140,6 +140,11 @@ export default function ConciergeIntake() {
   // destination questions auto-skip AND the chosen doctor is actually persisted
   // on the Consultation — the old /consultation flow only showed a banner and
   // never saved the doctor. Seeds never overwrite a real answer the user gave.
+  //
+  // Also handles the M-Care "book a procedure" one-shot entry point
+  // (/intake?procedure=<enum>) — parseBookingIntent already validated the
+  // value against the real procedure enum server-side, so this is just a
+  // normal seed, same as the cart/doctor-link ones above and below.
   const urlSeededRef = useRef(false);
   useEffect(() => {
     if (isLoading || urlSeededRef.current) return;
@@ -147,7 +152,8 @@ export default function ConciergeIntake() {
     const docId = p.get('doctor_id');
     const docName = p.get('doctor');
     const country = p.get('country');
-    if (!docId && !docName && !country) return;
+    const procedure = p.get('procedure');
+    if (!docId && !docName && !country && !procedure) return;
     urlSeededRef.current = true;
     const seed = {};
     if (docName && !answers.preferred_doctor_name) {
@@ -160,8 +166,12 @@ export default function ConciergeIntake() {
       seed.destination_country = country;
       seed.procedure_country = country;
     }
+    if (procedure && !answers.procedure_interest) {
+      seed.procedure_interest = procedure;
+      seed.selected_procedures = [procedure];
+    }
     if (Object.keys(seed).length) seedAnswers(seed);
-  }, [isLoading, answers.preferred_doctor_name, answers.destination_country, seedAnswers]);
+  }, [isLoading, answers.preferred_doctor_name, answers.destination_country, answers.procedure_interest, seedAnswers]);
 
   // The moment procedures are answered, every one of them joins the same
   // shared cart every other part of the app uses — SafetyWatcher (mounted
