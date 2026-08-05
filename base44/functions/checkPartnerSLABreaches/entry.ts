@@ -1,8 +1,40 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
-import { linkOnlyEmail } from '../../shared/notify.ts';
+import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 import { findDoctorBackup } from '../../shared/findDoctorBackup.ts';
 import { findCompanionBackup } from '../../shared/findCompanionBackup.ts';
+import { getDoctorReminderCopy } from '../../shared/doctorReminderCopy.ts';
+
+// Outbound SMS/WhatsApp (Twilio) — inline, matching every other function in
+// this codebase (see escalateSoloCheckIn, findDoctorBackup) rather than a
+// shared module, per this repo's established convention.
+async function sendSms(to: string, message: string) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !token || !from || !to) return;
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: to, From: from, Body: message }).toString(),
+    });
+  } catch (_) { /* non-blocking */ }
+}
+
+async function sendWhatsApp(to: string, message: string) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !token || !from || !to) return;
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: `whatsapp:${to}`, From: `whatsapp:${from}`, Body: message }).toString(),
+    });
+  } catch (_) { /* non-blocking */ }
+}
 
 /**
  * checkPartnerSLABreaches — Uber Auto-Rerouting Model
@@ -198,18 +230,46 @@ Deno.serve(async (req) => {
 
       // Give the doctor an actual, communicated window before any reassignment:
       // a reminder at the halfway point of the 24h SLA, not a silent swap at 24h.
+      // Sent on every channel we have for them (email always; SMS/WhatsApp/push
+      // only if that contact method is on file), in their own language.
       if (age >= HR_12 && age < HR_24 && !c.doctor_reminder_sent_at && c.doctor_email) {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: BRAND, to: c.doctor_email,
-          subject: `Action needed: a case is waiting on you | ${BRAND}`,
-          body: linkOnlyEmail({
-            from: 'checkPartnerSLABreaches/doctor-reminder',
-            title: 'A case is waiting on your response.',
-            line: "Please open your portal to accept or decline. If we don't hear back soon, we'll need to offer it to another doctor.",
-            ctaLabel: 'Open My Portal',
-            ctaUrl: `${APP_URL}/portal/doctor/${c.doctor_portal_token}`,
-          }),
-        }).catch(() => {});
+        const portalUrl = `${APP_URL}/portal/doctor/${c.doctor_portal_token}`;
+        const doctorRecords = await base44.asServiceRole.entities.Doctor
+          .filter({ email: c.doctor_email }, '-created_date', 1).catch(() => []);
+        const doctor = (doctorRecords as any[])[0];
+        const copy = getDoctorReminderCopy('case_waiting', doctor?.language_preference);
+
+        await Promise.allSettled([
+          base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: BRAND, to: c.doctor_email,
+            subject: `Action needed: a case is waiting on you | ${BRAND}`,
+            body: linkOnlyEmail({
+              from: 'checkPartnerSLABreaches/doctor-reminder',
+              title: copy.emailTitle,
+              line: copy.emailLine,
+              ctaLabel: copy.emailCta,
+              ctaUrl: portalUrl,
+            }),
+          }).catch(() => {}),
+          doctor?.phone ? sendSms(doctor.phone, linkOnlySms({
+            from: 'checkPartnerSLABreaches/doctor-reminder-sms',
+            line: copy.smsLine,
+            url: portalUrl,
+          })) : Promise.resolve(),
+          doctor?.phone ? sendWhatsApp(doctor.phone, linkOnlySms({
+            from: 'checkPartnerSLABreaches/doctor-reminder-whatsapp',
+            line: copy.smsLine,
+            url: portalUrl,
+          })) : Promise.resolve(),
+          base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+            user_email: c.doctor_email,
+            title: copy.pushTitle,
+            body: copy.pushBody,
+            url: portalUrl,
+            internal_secret: Deno.env.get('CRON_SECRET'),
+          }).catch(() => {}),
+        ]);
+
         await base44.asServiceRole.entities.CaseRecord.update(c.id, {
           doctor_reminder_sent_at: new Date(now).toISOString(),
         }).catch(() => {});

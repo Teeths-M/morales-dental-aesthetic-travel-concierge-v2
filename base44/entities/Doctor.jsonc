@@ -159,9 +159,13 @@
         "fr",
         "pt",
         "de",
-        "it"
+        "it",
+        "tr",
+        "th",
+        "zh"
       ],
-      "default": "en"
+      "default": "en",
+      "description": "Matches src/i18n.js's SUPPORTED_LANGUAGES exactly, so a doctor's language can be represented for every language M actually offers (added tr/th/zh 2026-08-05 for doctor-reminder translation coverage)."
     },
     "status": {
       "type": "string",

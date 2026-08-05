@@ -3,6 +3,7 @@ import { readdirSync, existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertLinkOnly } from '../base44/functions/_shared/notify.ts';
+import { getDoctorReminderCopy, DOCTOR_REMINDER_FLAVORS, DOCTOR_REMINDER_LANGS } from '../base44/shared/doctorReminderCopy.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = join(ROOT, 'base44/functions');
@@ -59,5 +60,25 @@ describe('every shipped link-only body survives the guard', () => {
         .replace(/\$\{[^}]*\}/g, 'x');
       expect(() => assertLinkOnly(resolved, fn)).not.toThrow();
     });
+  }
+});
+
+/**
+ * doctorReminderCopy.ts's content isn't a literal in any entry.ts — it's
+ * assembled at runtime from a lookup table keyed by language, so the scan
+ * above can't see it. That table ships real link-only bodies (email, SMS,
+ * WhatsApp) in 9 languages, and a bad translation would only be discovered
+ * when assertLinkOnly throws on a real send. Same guarantee as above, aimed
+ * at the table directly instead of relying on a regex that can't reach it.
+ */
+describe('doctorReminderCopy: every language/flavor survives the guard', () => {
+  for (const flavor of DOCTOR_REMINDER_FLAVORS) {
+    for (const lang of DOCTOR_REMINDER_LANGS) {
+      it(`${flavor} · ${lang}`, () => {
+        const copy = getDoctorReminderCopy(flavor, lang);
+        expect(() => assertLinkOnly(`${copy.emailTitle} ${copy.emailLine}`, `doctorReminderCopy/${flavor}/${lang}/email`)).not.toThrow();
+        expect(() => assertLinkOnly(copy.smsLine, `doctorReminderCopy/${flavor}/${lang}/sms`)).not.toThrow();
+      });
+    }
   }
 });

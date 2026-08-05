@@ -1,17 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
-import { linkOnlyEmail } from '../../shared/notify.ts';
+import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
+import { getDoctorReminderCopy } from '../../shared/doctorReminderCopy.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 const CONFIRMATION_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const PROCEDURE_WARNING_HOURS = 24; // doctor still unconfirmed, procedure within a day — flag + email the doctor a reminder
+const PROCEDURE_WARNING_HOURS = 24; // doctor still unconfirmed, procedure within a day — flag + remind the doctor on every channel
 const PROCEDURE_CRITICAL_HOURS = 4; // doctor still unconfirmed, procedure within hours — flag + admin SMS
 
-// Outbound SMS (Twilio) — inline, matching this codebase's own established
-// convention (see escalateMissedDriverHandshake, escalateSoloCheckIn)
-// rather than a shared module.
+// Outbound SMS/WhatsApp (Twilio) — inline, matching this codebase's own
+// established convention (see escalateMissedDriverHandshake,
+// escalateSoloCheckIn) rather than a shared module.
 async function sendAdminSms(message: string) {
   const adminPhone = Deno.env.get('ADMIN_PHONE');
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -25,6 +26,76 @@ async function sendAdminSms(message: string) {
       body: new URLSearchParams({ To: adminPhone, From: from, Body: message }).toString(),
     });
   } catch (_) { /* non-blocking — SMS failure must never stop the flagging pass */ }
+}
+
+async function sendSms(to: string, message: string) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !token || !from || !to) return;
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: to, From: from, Body: message }).toString(),
+    });
+  } catch (_) { /* non-blocking */ }
+}
+
+async function sendWhatsApp(to: string, message: string) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !token || !from || !to) return;
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: `whatsapp:${to}`, From: `whatsapp:${from}`, Body: message }).toString(),
+    });
+  } catch (_) { /* non-blocking */ }
+}
+
+// Doctor reminder, every channel we have for them, in their own language.
+// Wrapped as a single promise so it slots into the existing
+// collect-then-Promise.allSettled pattern below instead of blocking the loop.
+async function sendDoctorReminder(base44: any, doctorEmail: string, portalToken: string) {
+  const portalUrl = `${APP_URL}/portal/doctor/${portalToken}`;
+  const doctorRecords = await base44.asServiceRole.entities.Doctor
+    .filter({ email: doctorEmail }, '-created_date', 1).catch(() => []);
+  const doctor = doctorRecords[0];
+  const copy = getDoctorReminderCopy('confirm_date', doctor?.language_preference);
+
+  await Promise.allSettled([
+    base44.asServiceRole.integrations.Core.SendEmail({
+      from_name: 'Morales Medical Travel Safety', to: doctorEmail,
+      subject: 'Please confirm your procedure date',
+      body: linkOnlyEmail({
+        from: 'detectFallbackCrisis/doctor-reminder',
+        title: copy.emailTitle,
+        line: copy.emailLine,
+        ctaLabel: copy.emailCta,
+        ctaUrl: portalUrl,
+      }),
+    }).catch(() => {}),
+    doctor?.phone ? sendSms(doctor.phone, linkOnlySms({
+      from: 'detectFallbackCrisis/doctor-reminder-sms',
+      line: copy.smsLine,
+      url: portalUrl,
+    })) : Promise.resolve(),
+    doctor?.phone ? sendWhatsApp(doctor.phone, linkOnlySms({
+      from: 'detectFallbackCrisis/doctor-reminder-whatsapp',
+      line: copy.smsLine,
+      url: portalUrl,
+    })) : Promise.resolve(),
+    base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: doctorEmail,
+      title: copy.pushTitle,
+      body: copy.pushBody,
+      url: portalUrl,
+      internal_secret: Deno.env.get('CRON_SECRET'),
+    }).catch(() => {}),
+  ]);
 }
 
 async function aiAdditionalRisks(cases: Record<string, unknown>[]): Promise<{ case_id: string; reason: string }[]> {
@@ -176,24 +247,15 @@ Deno.serve(async (req) => {
         // Give the doctor an actual window, not just an internal flag: the
         // first time this case tips into flux over a proximity reason (not
         // the pre-existing 15-minute-after-notification rule above, which
-        // covers a different, earlier signal), email the doctor directly —
-        // before admin ever gets involved at the 4h critical tier below.
+        // covers a different, earlier signal), remind the doctor directly on
+        // every channel we have for them, in their own language — before
+        // admin ever gets involved at the 4h critical tier below.
         if (
           (reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_APPROACHING' || reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL') &&
           c.doctor_email
         ) {
           updatePromises.push(
-            base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Medical Travel Safety', to: c.doctor_email,
-              subject: 'Please confirm your procedure date',
-              body: linkOnlyEmail({
-                from: 'detectFallbackCrisis/doctor-reminder',
-                title: 'Please confirm your procedure date.',
-                line: 'A procedure date on your calendar needs your confirmation. Please open your portal to confirm it is still on.',
-                ctaLabel: 'Open My Portal',
-                ctaUrl: `${APP_URL}/portal/doctor/${c.doctor_portal_token}`,
-              }),
-            }).catch(() => {})
+            sendDoctorReminder(base44, c.doctor_email, c.doctor_portal_token).catch(() => {})
           );
         }
 
