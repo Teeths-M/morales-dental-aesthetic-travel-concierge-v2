@@ -8,8 +8,13 @@
  * Every remaining question — medical history included — is still asked one
  * at a time by the unmodified question graph. This component never decides
  * anything; it only pre-fills two non-safety fields before that graph runs.
+ *
+ * `initialQuery` (M-Care super-agent Phase 3): when routeMCareMessage hands
+ * off here from the main chat, it carries the message the user already
+ * typed/said so this flow runs immediately instead of asking them to repeat
+ * themselves.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { PROCEDURE_OPTIONS } from '@/lib/intakeFlow/questionGraph';
 import VoiceInputButton from './VoiceInputButton';
@@ -42,8 +47,8 @@ const chipStyle = {
   textAlign: 'left',
 };
 
-export default function BookingIntentEntry({ onExit }) {
-  const [value, setValue] = useState('');
+export default function BookingIntentEntry({ onExit, initialQuery }) {
+  const [value, setValue] = useState(initialQuery || '');
   const [thinking, setThinking] = useState(false);
   // Once parseBookingIntent returns something, show it back for an explicit
   // yes/no before navigating — an LLM guess at "which procedure" should
@@ -62,9 +67,7 @@ export default function BookingIntentEntry({ onExit }) {
     window.location.href = qs ? `/intake?${qs}` : '/intake';
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const query = value.trim();
+  const runQuery = async (query) => {
     if (!query || thinking) return;
     setThinking(true);
     try {
@@ -83,6 +86,18 @@ export default function BookingIntentEntry({ onExit }) {
     } finally {
       setThinking(false);
     }
+  };
+
+  // Auto-run once if M-Care's router already seeded this flow with the
+  // message the user typed/said in the main chat — see the header comment.
+  useEffect(() => {
+    if (initialQuery && initialQuery.trim()) runQuery(initialQuery.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    runQuery(value.trim());
   };
 
   if (pending) {

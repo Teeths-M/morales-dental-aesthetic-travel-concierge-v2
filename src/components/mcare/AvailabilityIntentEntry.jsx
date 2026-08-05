@@ -12,8 +12,13 @@
  * that into real DoctorAvailability rows. Already-booked dates
  * (locked_case_id) are never touched; the confirmation after applying says
  * so honestly if any were skipped.
+ *
+ * `initialQuery` (M-Care super-agent Phase 3): when routeMCareMessage hands
+ * off here from the main chat, it carries the message the doctor already
+ * typed/said so parsing runs immediately instead of asking them to repeat
+ * themselves.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import VoiceInputButton from './VoiceInputButton';
 
@@ -52,16 +57,14 @@ function daysSentence(days) {
   return labels.slice(0, -1).join(', ') + ' and ' + labels[labels.length - 1] + 's';
 }
 
-export default function AvailabilityIntentEntry({ onExit }) {
-  const [value, setValue] = useState('');
+export default function AvailabilityIntentEntry({ onExit, initialQuery }) {
+  const [value, setValue] = useState(initialQuery || '');
   const [thinking, setThinking] = useState(false);
   const [parsed, setParsed] = useState(null); // { days, weeks } | null
   const [result, setResult] = useState(null); // { updated, skipped_locked } | null
   const [error, setError] = useState(null);
 
-  const handleParse = async (e) => {
-    e.preventDefault();
-    const query = value.trim();
+  const runParse = async (query) => {
     if (!query || thinking) return;
     setThinking(true);
     setError(null);
@@ -78,6 +81,18 @@ export default function AvailabilityIntentEntry({ onExit }) {
     } finally {
       setThinking(false);
     }
+  };
+
+  // Auto-run once if M-Care's router already seeded this flow with the
+  // message the doctor typed/said in the main chat — see the header comment.
+  useEffect(() => {
+    if (initialQuery && initialQuery.trim()) runParse(initialQuery.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleParse = (e) => {
+    e.preventDefault();
+    runParse(value.trim());
   };
 
   const handleApply = async () => {

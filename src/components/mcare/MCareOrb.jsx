@@ -17,7 +17,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, ChevronDown, WifiOff, RotateCcw } from 'lucide-react';
+import { Send, ChevronDown, WifiOff, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { findAnswer } from './orbKnowledge';
 import SpecialistCard from './SpecialistCard';
@@ -33,6 +33,15 @@ import { loadSignupDraft } from '@/lib/signupDraft';
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
 const CACHE_KEY = 'morales_guide_cache';
+
+// M-Care super-agent Phase 3: maps a routeMCareMessage tool_name decision to
+// the existing `mode` this file already renders for that quick-action button
+// — reused unmodified; routing is just a second way to reach the same modes.
+const ROUTABLE_MODES = {
+  startBookingIntent: 'booking_intent',
+  startAvailabilityIntent: 'availability_intent',
+  startDoctorSignup: 'doctor_signup',
+};
 
 // Public pages where all users should see visitor-facing tips (not internal admin nudges)
 const PUBLIC_PATHS = new Set(['/', '/discover', '/providers', '/about', '/procedures', '/how-it-works', '/partners']);
@@ -195,6 +204,14 @@ export default function MCareOrb() {
   const [dismissed,  setDismissed]  = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [struggleHint, setStruggleHint] = useState(null); // { e, t } | null — reactive help, overrides the tip rotation
+  // M-Care super-agent Phase 3: when routeMCareMessage hands off into an
+  // existing mode, the user's own message seeds that mode's input instead of
+  // making them retype what they already said.
+  const [modeSeed,   setModeSeed]   = useState('');
+  // Panel presence — a docked widget by default, one click to a roomier
+  // workspace. Never full-screen: M-Care staying non-blocking is load-bearing.
+  const [expanded,   setExpanded]   = useState(false);
+  const [showCommonQuestions, setShowCommonQuestions] = useState(false);
   const bottomRef = useRef(null);
 
   // A struggle signal (useStruggleDetector, via emitStruggleHint) takes over
@@ -365,6 +382,29 @@ export default function MCareOrb() {
       return;
     }
 
+    // 3.5. No KB match, online, unpaused — ask the router whether this needs
+    // one of M-Care's specialized flows (booking / doctor availability /
+    // doctor signup) instead of a direct answer. This is what lets typing
+    // "I want veneers in Cancun" reach the same place as clicking the
+    // "Book a procedure" quick action — M decides, instead of the user
+    // having to already know which button to press. Fails open to the
+    // normal answer path below (step 4/5) on any error or an "answer"
+    // decision — never blocks the conversation.
+    try {
+      const routeRes = await base44.functions.invoke('routeMCareMessage', { message: query });
+      const routeDecision = routeRes?.data ?? routeRes ?? {};
+      const nextMode = ROUTABLE_MODES[routeDecision.tool_name];
+      if (routeDecision.action === 'route' && nextMode) {
+        if (routeDecision.reasoning) {
+          setMessages(m => [...m, { role: 'assistant', text: routeDecision.reasoning, source: 'router' }]);
+        }
+        setModeSeed(q);
+        setMode(nextMode);
+        setThinking(false);
+        return;
+      }
+    } catch (_) { /* routing unavailable — fall through to the normal answer path below */ }
+
     // 4. No KB match, online. Logged-in non-admin users get the real,
     // case-aware concierge backend — it can hand off to a human specialist,
     // which the generic platform LLM call cannot do.
@@ -442,7 +482,7 @@ export default function MCareOrb() {
 
       {/* ── M-Care panel ── */}
       {open && (
-        <div style={{ position: 'fixed', bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 16, zIndex: 9001, width: 'min(360px, calc(100vw - 32px))', background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: 'min(540px, calc(100vh - 32px))', overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1), width 0.25s ease, max-height 0.25s ease', left: 16, zIndex: 9001, width: expanded ? 'min(560px, calc(100vw - 32px))' : 'min(380px, calc(100vw - 32px))', background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: expanded ? 'min(760px, calc(100vh - 48px))' : 'min(560px, calc(100vh - 32px))', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -458,6 +498,9 @@ export default function MCareOrb() {
                 <RotateCcw style={{ width: 15, height: 15 }} />
               </button>
             )}
+            <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.4)', display: 'flex', borderRadius: 8 }}>
+              {expanded ? <Minimize2 style={{ width: 14, height: 14 }} /> : <Maximize2 style={{ width: 14, height: 14 }} />}
+            </button>
             <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.4)', display: 'flex', borderRadius: 8 }}>
               <ChevronDown style={{ width: 18, height: 18 }} />
             </button>
@@ -473,36 +516,24 @@ export default function MCareOrb() {
             </div>
           ) : mode === 'booking_intent' ? (
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <BookingIntentEntry onExit={() => setMode('chat')} />
+              <BookingIntentEntry initialQuery={modeSeed} onExit={() => { setMode('chat'); setModeSeed(''); }} />
             </div>
           ) : mode === 'availability_intent' ? (
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <AvailabilityIntentEntry onExit={() => setMode('chat')} />
+              <AvailabilityIntentEntry initialQuery={modeSeed} onExit={() => { setMode('chat'); setModeSeed(''); }} />
             </div>
           ) : (
             <>
               {/* Chat area */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {messages.length === 0 && (
-                  <div style={{ textAlign: 'center', paddingTop: 4 }}>
-                    <p style={{ margin: '0 0 10px', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{t('guide.quick_label')}</p>
+                  <div style={{ paddingTop: 2 }}>
+                    <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.55 }}>
+                      <span style={{ marginRight: 6 }}>{tips[0]?.e}</span>{tips[0]?.t}
+                    </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {quickQuestions.map((q, i) => (
-                        <button key={i} onClick={() => sendMessage(q.label, q.query)}
-                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.08)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        >{q.label}</button>
-                      ))}
-                      {isConcierge && (
-                        <button onClick={() => sendMessage('Speak with a specialist', 'Speak with a specialist')}
-                          style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
-                        >Speak with a specialist</button>
-                      )}
                       {canBookProcedure && (
-                        <button onClick={() => setMode('booking_intent')}
+                        <button onClick={() => { setModeSeed(''); setMode('booking_intent'); }}
                           style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
@@ -516,13 +547,36 @@ export default function MCareOrb() {
                         >🩺 Become a partner doctor</button>
                       )}
                       {canUpdateAvailability && (
-                        <button onClick={() => setMode('availability_intent')}
+                        <button onClick={() => { setModeSeed(''); setMode('availability_intent'); }}
                           style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
                         >🗓️ Update my availability</button>
                       )}
+                      {isConcierge && (
+                        <button onClick={() => sendMessage('Speak with a specialist', 'Speak with a specialist')}
+                          style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
+                        >Speak with a specialist</button>
+                      )}
                     </div>
+
+                    <button onClick={() => setShowCommonQuestions(v => !v)}
+                      style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer', padding: '10px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}
+                    >{t('guide.quick_label')} {showCommonQuestions ? '▴' : '▾'}</button>
+
+                    {showCommonQuestions && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                        {quickQuestions.map((q, i) => (
+                          <button key={i} onClick={() => sendMessage(q.label, q.query)}
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.08)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                          >{q.label}</button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 

@@ -1674,6 +1674,47 @@ test('AVAILABILITY: applyDoctorAvailability never overwrites an already-booked d
   expect(applySrc, 'applyDoctorAvailability must gate on the doctor role').toMatch(/allowedRoles:\s*\[['"]doctor['"]\]/);
 });
 
+test('M-CARE ROUTER: routing never bypasses role-gating or writes anything itself', () => {
+  // M-Care super-agent Phase 3. A plain typed/spoken message can now reach
+  // the same specialized flows the quick-action buttons already reach
+  // (booking / doctor availability / doctor signup) — the user no longer has
+  // to already know which button to press. That means a message can reach a
+  // role-gated capability WITHOUT a button click first, so the role check
+  // must be enforced server-side in the router itself, not just by which
+  // buttons the frontend happens to render.
+  const routerSrc = read('base44/functions/_shared/mCareRouter.ts');
+  const entrySrc = read('base44/functions/routeMCareMessage/entry.ts');
+
+  // The router's toolset is a fixed, hardcoded allowlist — it must never
+  // itself perform a write; every tool wraps an already-shipped,
+  // independently gated entry point (parseBookingIntent, the
+  // applyDoctorAvailability flow, DoctorSignupChatFlow's own
+  // submitDoctorSignup), so this file's only job is choosing which one and
+  // narrating why.
+  for (const writeOp of ['.create(', '.update(', '.bulkCreate(', '.delete(']) {
+    expect(routerSrc, `mCareRouter must never call entities${writeOp}`).not.toContain(writeOp);
+    expect(entrySrc, `routeMCareMessage must never call entities${writeOp}`).not.toContain(writeOp);
+  }
+
+  // startAvailabilityIntent must only ever be offered to an actual doctor —
+  // derived from the caller's own real session server-side, never a
+  // caller-supplied role/field in the request body.
+  expect(entrySrc, 'availability routing must be gated on the real doctor role')
+    .toMatch(/role\s*===\s*['"]doctor['"]/);
+  expect(entrySrc, "role must come from the caller's own session, not the request body")
+    .toContain('base44.auth.me()');
+  expect(entrySrc, 'the body schema must not accept a caller-supplied role')
+    .not.toMatch(/role:\s*Fields/);
+
+  // Fail-closed: any decide() failure or malformed/out-of-allowlist response
+  // must fall back to "answer" (the existing, unmodified moralesAssist/
+  // InvokeLLM path) — never fabricate a route.
+  expect(routerSrc, 'a decide() failure must fail closed to answer')
+    .toMatch(/catch[\s\S]{0,40}return FAIL_CLOSED/);
+  expect(routerSrc, 'an out-of-allowlist tool_name must fail closed to answer')
+    .toContain('ROUTE_TOOLS.some((t) => t.name === toolName)');
+});
+
 test('CART: a RED-locked procedure combination cannot reach /intake', () => {
   // A red "Safety Review" banner next to a working "Continue to Consultation"
   // button is a decoration, not a block. The M Principle requires the
