@@ -1,0 +1,94 @@
+{
+  "name": "FraudIndicator",
+  "type": "object",
+  "description": "Shared threat-intelligence table M-Care writes to during document analysis, sanctions screening, website/clone detection, and fraud-graph checks. crossCheckFraudIndicators queries it to block or hold any new partner whose email/phone/domain/name/code/document-hash already appears here. Distinct from FraudBlacklist (confirmed bad actors) \u2014 FraudIndicator holds individual signals for cross-matching new applicants.",
+  "properties": {
+    "indicator_type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "phone",
+        "domain",
+        "ip_address",
+        "name",
+        "document_hash",
+        "iata_code",
+        "license_number",
+        "other"
+      ],
+      "description": "The kind of identifier this signal is attached to"
+    },
+    "indicator_value": {
+      "type": "string",
+      "description": "Normalized lowercased value to match against (e.g. an email, phone digits, bare domain, name, IATA code, or a file_url acting as a document fingerprint)"
+    },
+    "source": {
+      "type": "string",
+      "description": "Which check produced this indicator: document_intelligence, document_cross_check, sanctions, website_clone, fraud_intelligence, internet_intelligence"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "default": "MEDIUM"
+    },
+    "associated_partner_type": {
+      "type": "string",
+      "description": "doctor | travel_agency | taxi | security | companion | patient \u2014 the entity this signal originated from, if known"
+    },
+    "associated_partner_id": {
+      "type": "string"
+    },
+    "associated_partner_name": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Plain-English explanation of why this indicator was recorded"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin marked this indicator a false positive; cross-checks skip resolved indicators"
+    },
+    "resolved_by": {
+      "type": "string"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "indicator_type",
+    "indicator_value",
+    "source",
+    "severity"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
