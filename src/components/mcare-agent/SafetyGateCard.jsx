@@ -26,7 +26,7 @@ export default function SafetyGateCard({ toolCall, onRespond }) {
   const failed = ['failed', 'error'].includes(toolCall.status);
   const { tier, status, flags, reason } = parseResult(toolCall);
 
-  const blockRefusal = ['critical', 'high', 'extreme', 'unsafe', 'blocked', 'waiver_required'].includes(tier)
+  const blockRefusal = ['critical', 'high', 'extreme', 'unsafe', 'blocked', 'waiver_required', 'review'].includes(tier)
     || ['blocked', 'waiver_required'].includes(status)
     || tier === '' && status === 'blocked';
   const cleared = ['low', 'minimal', 'passed', 'safe', 'none', 'pass'].includes(tier)
