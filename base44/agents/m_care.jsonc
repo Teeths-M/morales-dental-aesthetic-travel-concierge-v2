@@ -118,7 +118,7 @@
     },
     {
       "function_name": "generateLiveLocationRequestLink",
-      "description": "Generate a secure, one-time link to request a patient's live location when they report feeling unsafe during medical travel. Returns { url, token, expires_at }. Send the patient the url in chat \u2014 they open it on their phone (no login), tap once to consent, and their device GPS streams into the LiveLocation record tied to their case. Only call when the patient has expressed they feel unsafe; never request location silently or without cause."
+      "description": "Generate a secure one-time link the patient opens to stream their live GPS to their case when they feel unsafe."
     },
     {
       "function_name": "matchDoctorsForProcedure",
@@ -225,5 +225,23 @@
       "description": "Generate the doctor's provider dashboard/portal link to deliver once their verification scan is approved."
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "allow_anonymous_access": false,
   "name": "m_care"
 }

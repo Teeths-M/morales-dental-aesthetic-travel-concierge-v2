@@ -5,6 +5,23 @@ import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
 
+// M-Care sometimes emits markdown emphasis (**bold**, _italic_, # headers,
+// `code`, ~~strike~~) that the chat renders as raw symbols. Strip the markers
+// so the conversation reads as clean plain text. Paired-emphasis only — leaves
+// underscores inside tokens like PASS_xxx intact.
+const stripMd = (s) => {
+  if (!s) return s;
+  return s
+    .replace(/```([\s\S]*?)```/g, (_, c) => c.replace(/^\n/, ''))
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    .replace(/(?<!\w)\*([^*\n]+)\*(?!\w)/g, '$1')
+    .replace(/(?<!\w)_([^_\n]+)_(?!\w)/g, '$1')
+    .replace(/~~([^~\n]+)~~/g, '$1');
+};
+
 function StatusIcon({ status }) {
   if (['completed', 'success'].includes(status)) return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
   if (['failed', 'error'].includes(status)) return <XCircle className="w-3.5 h-3.5 text-red-500" />;
@@ -72,7 +89,7 @@ export default function MessageBubble({ message, onRespond }) {
     <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
       <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${isUser ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-card-foreground'}`}>
         {message.content && (
-          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          <p className="text-sm whitespace-pre-wrap">{stripMd(message.content)}</p>
         )}
         {message.file_urls?.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
