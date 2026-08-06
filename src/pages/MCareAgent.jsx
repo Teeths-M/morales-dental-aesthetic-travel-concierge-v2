@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Heart } from 'lucide-react';
+import { Send, Heart, Paperclip } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import { BackButton } from '@/components/nav/BackButton';
@@ -17,8 +17,10 @@ export default function MCareAgent() {
   const [input, setInput] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [loadingConvos, setLoadingConvos] = useState(true);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Load existing conversations
   useEffect(() => {
@@ -74,8 +76,9 @@ export default function MCareAgent() {
     if (convo?.messages) setMessages(convo.messages);
   };
 
-  const sendText = async (content) => {
-    if (!content || !content.trim() || isSending) return;
+  const sendText = async (content, fileUrls) => {
+    if ((!content || !content.trim()) && !fileUrls?.length) return;
+    if (isSending) return;
     setIsSending(true);
 
     let conversation;
@@ -98,14 +101,36 @@ export default function MCareAgent() {
 
     if (!conversation) { setIsSending(false); return; }
 
-    // Optimistic user message
-    setMessages(prev => [...prev, { role: 'user', content }]);
+    // Optimistic user message (include file_urls so the bubble renders the attachment)
+    setMessages(prev => [...prev, { role: 'user', content, file_urls: fileUrls }]);
 
     try {
-      await base44.agents.addMessage(conversation, { role: 'user', content });
+      await base44.agents.addMessage(conversation, { role: 'user', content, file_urls: fileUrls });
     } catch (e) {
       setIsSending(false);
       console.error('Failed to send message:', e);
+    }
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      alert('That file is larger than 15MB. Please upload a smaller image or PDF.');
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const label = file.name || 'document';
+      await sendText(`I've uploaded my document: ${label}`, [file_url]);
+    } catch (err) {
+      console.error('Upload failed', err);
+      setIsSending(false);
+      alert('Upload failed — please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -214,15 +239,33 @@ export default function MCareAgent() {
       {hasConversation && (
         <div className="sticky bottom-0 z-10 bg-background/90 backdrop-blur border-t border-border">
           <div className="max-w-3xl mx-auto w-full px-4 py-3 flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSending || isUploading}
+              variant="outline"
+              size="icon"
+              title="Upload a document (passport, license, ID)"
+            >
+              {isUploading
+                ? <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                : <Paperclip className="w-4 h-4" />}
+            </Button>
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Tell M-Care what you're considering…"
-              disabled={isSending}
+              placeholder={isUploading ? "Uploading document…" : "Tell M-Care what you're considering…"}
+              disabled={isSending || isUploading}
               className="flex-1"
             />
-            <Button onClick={sendMessage} disabled={!input.trim() || isSending} size="icon" className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+            <Button onClick={sendMessage} disabled={(!input.trim() && !isUploading) || isSending || isUploading} size="icon" className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
               <Send className="w-4 h-4" />
             </Button>
           </div>

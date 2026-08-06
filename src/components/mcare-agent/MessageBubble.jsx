@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip } from 'lucide-react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
+
+const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
+const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
 
 function StatusIcon({ status }) {
   if (['completed', 'success'].includes(status)) return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
@@ -70,6 +73,23 @@ export default function MessageBubble({ message, onRespond }) {
       <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${isUser ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-card-foreground'}`}>
         {message.content && (
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        )}
+        {message.file_urls?.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {message.file_urls.map((url, i) => isImageUrl(url)
+              ? (
+                <a key={i} href={url} target="_blank" rel="noreferrer" className="block">
+                  <img src={url} alt="attachment" className="rounded-lg max-h-40 border border-border object-cover" />
+                </a>
+              )
+              : (
+                <a key={i} href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-secondary/70">
+                  <Paperclip className="w-3 h-3" />
+                  <span className="max-w-[180px] truncate">{fileNameFromUrl(url)}</span>
+                </a>
+              )
+            )}
+          </div>
         )}
         {message.tool_calls?.map((toolCall, idx) => toolCall.name === 'computeSafeTScreening'
           ? <SafetyGateCard key={idx} toolCall={toolCall} onRespond={onRespond} />

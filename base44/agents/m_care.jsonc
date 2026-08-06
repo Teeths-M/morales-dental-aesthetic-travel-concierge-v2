@@ -180,12 +180,30 @@
     },
     {
       "function_name": "runDoctorVerificationScan",
-      "description": "Run the full multi-layer doctor onboarding verification scan: internet/website presence, license registry, identity/passport, device+network intelligence, and background/sanctions \u2014 returns a confidence score (0-100), a decision (approved | flagged_for_admin_review), per-layer results, flags, and an audit step list. Call after creating the pending Doctor record with the doctor's website, license, and uploaded ID. Never claim a doctor is verified before this returns 'approved'."
+      "description": "Run the full multi-layer doctor onboarding verification scan (internet, license registry, identity, device/network, background) and return a confidence score + approve/flag decision."
     },
     {
       "function_name": "generateDoctorPortalLink",
-      "description": "Generate the doctor's provider dashboard/portal link to deliver once their verification scan is approved."
+      "description": "Generate the doctor's provider dashboard/portal link to deliver once verification is approved."
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "allow_anonymous_access": false,
   "name": "m_care"
 }
