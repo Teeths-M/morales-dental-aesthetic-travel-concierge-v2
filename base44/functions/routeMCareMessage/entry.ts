@@ -21,9 +21,10 @@ const PARTNER_OR_ADMIN_ROLES = ['admin', 'platform_admin', 'doctor', 'travel_age
 function allowedToolsForRole(role: string | undefined): RouteToolName[] {
   const tools: RouteToolName[] = [];
   if (!role || !PARTNER_OR_ADMIN_ROLES.includes(role)) {
-    // Logged-out visitor and 'patient' are the same population for these two —
-    // matches MCareOrb.jsx's canBookProcedure/canBecomeDoctorPartner gating.
-    tools.push('startBookingIntent', 'startDoctorSignup');
+    // Logged-out visitor and 'patient' are the same population for these —
+    // matches MCareOrb.jsx's canBookProcedure/canBecomeDoctorPartner/
+    // canBecomeTravelPartner gating.
+    tools.push('startBookingIntent', 'startDoctorSignup', 'startTravelAgencySignup');
   }
   if (role === 'doctor') {
     tools.push('startAvailabilityIntent');

@@ -40,6 +40,10 @@ export const ROUTE_TOOLS = [
     name: 'startDoctorSignup',
     description: 'The user wants to become a partner doctor or sign up as one (e.g. "how do I join as a doctor", "I want to sign up as a partner").',
   },
+  {
+    name: 'startTravelAgencySignup',
+    description: 'The user wants to become a partner travel agency or sign up as one (e.g. "how do I join as a travel agency", "I want to book flights and hotels for patients").',
+  },
 ] as const;
 
 export type RouteToolName = typeof ROUTE_TOOLS[number]['name'];

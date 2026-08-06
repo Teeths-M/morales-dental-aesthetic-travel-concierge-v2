@@ -22,6 +22,7 @@ import DOMPurify from 'dompurify';
 import { findAnswer } from './orbKnowledge';
 import SpecialistCard from './SpecialistCard';
 import DoctorSignupChatFlow from './DoctorSignupChatFlow';
+import TravelAgencySignupChatFlow from './TravelAgencySignupChatFlow';
 import BookingIntentEntry from './BookingIntentEntry';
 import AvailabilityIntentEntry from './AvailabilityIntentEntry';
 import VoiceInputButton from './VoiceInputButton';
@@ -41,6 +42,7 @@ const ROUTABLE_MODES = {
   startBookingIntent: 'booking_intent',
   startAvailabilityIntent: 'availability_intent',
   startDoctorSignup: 'doctor_signup',
+  startTravelAgencySignup: 'travel_agency_signup',
 };
 
 // Public pages where all users should see visitor-facing tips (not internal admin nudges)
@@ -173,6 +175,11 @@ export default function MCareOrb() {
   // a partner of some kind — an existing doctor/agency/companion/chauffeur/
   // admin has nothing to gain from it.
   const canBecomeDoctorPartner = ['visitor', 'patient'].includes(role);
+
+  // "Become a travel partner" — second partner-signup-by-chat persona,
+  // same audience rule as doctor signup: visitors and existing patients only,
+  // not someone already a partner of some kind.
+  const canBecomeTravelPartner = ['visitor', 'patient'].includes(role);
 
   // "Book a procedure" (M-Care super-agent Phase 2A one-shot entry) —
   // same audience as booking generally: visitors and existing patients,
@@ -511,7 +518,16 @@ export default function MCareOrb() {
 
       {/* ── M-Care panel ── */}
       {open && (
-        <div style={{ position: 'fixed', bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1), width 0.25s ease, max-height 0.25s ease', left: 16, zIndex: 9001, width: expanded ? 'min(560px, calc(100vw - 32px))' : 'min(380px, calc(100vw - 32px))', background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: expanded ? 'min(760px, calc(100vh - 48px))' : 'min(560px, calc(100vh - 32px))', overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1), width 0.25s ease, max-height 0.25s ease', left: 16, zIndex: 9001,
+          // Opening M-Care should read as a real live-chat window, not a
+          // small popup that needs a manual "expand" click to become
+          // useful — matches how real live-chat widgets (Intercom, Drift)
+          // default: modest width, but tall — close to full viewport
+          // height, not a short card. `expanded` is now an even roomier
+          // upgrade on top of that default, not the thing that makes it
+          // feel live in the first place.
+          width: expanded ? 'min(600px, calc(100vw - 32px))' : 'min(380px, calc(100vw - 32px))',
+          background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: expanded ? 'min(860px, calc(100vh - 48px))' : 'min(680px, calc(100vh - 32px))', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -538,6 +554,14 @@ export default function MCareOrb() {
           {mode === 'doctor_signup' ? (
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <DoctorSignupChatFlow
+                isAuthenticated={!!user}
+                language={i18n.language}
+                onExit={() => setMode('chat')}
+              />
+            </div>
+          ) : mode === 'travel_agency_signup' ? (
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <TravelAgencySignupChatFlow
                 isAuthenticated={!!user}
                 language={i18n.language}
                 onExit={() => setMode('chat')}
@@ -574,6 +598,13 @@ export default function MCareOrb() {
                           onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
                         >🩺 Become a partner doctor</button>
+                      )}
+                      {canBecomeTravelPartner && (
+                        <button onClick={() => setMode('travel_agency_signup')}
+                          style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
+                        >🧳 Become a travel partner</button>
                       )}
                       {canUpdateAvailability && (
                         <button onClick={() => { setModeSeed(''); setMode('availability_intent'); }}

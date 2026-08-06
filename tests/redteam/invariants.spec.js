@@ -1545,6 +1545,53 @@ test('PARTNER SIGNUP: doctor signup — chat and form both call the one gated su
   expect(sharedSrc, 'a missing session must throw, not silently proceed').toContain("Error('AUTH_REQUIRED')");
 });
 
+test('PARTNER SIGNUP: travel agency signup — chat and form both call the one gated submission function', () => {
+  // Same invariant as the doctor-signup one above, second partner type: the
+  // classic form (TravelAgencySignupStep3.jsx) and M-Care's conversational
+  // signup (TravelAgencySignupChatFlow.jsx) must both call the shared
+  // submitTravelAgencySignup() rather than each assembling their own
+  // TravelAgency.create() + role-grant sequence.
+  const formSrc = read('src/components/partner-signup/TravelAgencySignupStep3.jsx');
+  const chatSrc = read('src/components/mcare/TravelAgencySignupChatFlow.jsx');
+
+  expect(formSrc, 'the classic form must call the shared submission function').toContain('submitTravelAgencySignup(');
+  expect(formSrc, 'the classic form must not assemble its own TravelAgency.create call').not.toContain('base44.entities.TravelAgency.create');
+
+  expect(chatSrc, "M-Care's chat flow must call the shared submission function").toContain('submitTravelAgencySignup(');
+  expect(chatSrc, "M-Care's chat flow must not assemble its own TravelAgency.create call").not.toContain('base44.entities.TravelAgency.create');
+
+  const sharedSrc = read('src/lib/partnerSignup/submitTravelAgencySignup.js');
+  expect(sharedSrc, 'a new agency must start pending_verification, not active').toContain("status: 'pending_verification'");
+  expect(sharedSrc, 'must never itself flip status to active').not.toMatch(/status:\s*['"]active['"]/);
+  expect(sharedSrc, 'must never itself set license_verified true').not.toMatch(/license_verified:\s*true/);
+  expect(sharedSrc, 'must never itself set insurance_verified true').not.toMatch(/insurance_verified:\s*true/);
+
+  // Auth checked BEFORE creating anything — same "Partner Onboarding
+  // Lockout" fix as the doctor path.
+  const authIdx = sharedSrc.indexOf('base44.auth.me()');
+  const createIdx = sharedSrc.indexOf('TravelAgency.create');
+  expect(authIdx, 'the auth check must exist').toBeGreaterThan(-1);
+  expect(createIdx, 'the TravelAgency.create call must exist').toBeGreaterThan(-1);
+  expect(authIdx, 'auth must be checked before TravelAgency.create').toBeLessThan(createIdx);
+  expect(sharedSrc, 'a missing session must throw, not silently proceed').toContain("Error('AUTH_REQUIRED')");
+
+  // A "no" on the mustBeTrue legal-confirmation step must never silently
+  // count as answered (flowEngine treats any non-empty value, false
+  // included, as "known") — the chat flow must re-prompt instead.
+  const graphSrc = read('src/lib/mcareFlow/travelAgencySignupGraph.js');
+  const legalStepIdx = graphSrc.indexOf("id: 'legal_confirmed'");
+  const mustBeTrueIdx = graphSrc.indexOf('mustBeTrue: true');
+  expect(legalStepIdx, 'the legal_confirmed step must exist').toBeGreaterThan(-1);
+  expect(mustBeTrueIdx, 'a mustBeTrue: true flag must exist').toBeGreaterThan(-1);
+  const nextStepIdx = graphSrc.indexOf("id: 'business_license'");
+  expect(mustBeTrueIdx, 'mustBeTrue must belong to the legal_confirmed step, not a later one')
+    .toBeGreaterThan(legalStepIdx);
+  expect(mustBeTrueIdx, 'mustBeTrue must belong to the legal_confirmed step, not a later one')
+    .toBeLessThan(nextStepIdx > -1 ? nextStepIdx : Infinity);
+  expect(chatSrc, 'a false answer on a mustBeTrue step must not be committed')
+    .toMatch(/value === false && currentStep\.mustBeTrue/);
+});
+
 test('INTAKE: the one-shot booking-intent parser can never extract a clinical fact', () => {
   // parseBookingIntent (M-Care super-agent Phase 2A, "type what you want in
   // one sentence") is a NEW, more exposed entry point than
@@ -2072,7 +2119,6 @@ test('ONBOARDING: a guest completing partner signup is sent to sign in before th
 
   const files = [
     { path: 'src/components/partner-signup/TaxiServiceSignupStep3.jsx', create: 'TaxiService.create(' },
-    { path: 'src/components/partner-signup/TravelAgencySignupStep3.jsx', create: 'TravelAgency.create(' },
     { path: 'src/pages/SecurityAgencySignup.jsx', create: 'SecurityAgency.create(' },
   ];
 
@@ -2119,6 +2165,34 @@ test('ONBOARDING: a guest completing partner signup is sent to sign in before th
   expect(doctorAuthCheckIdx, 'submitDoctorSignup.js must have an auth check').toBeGreaterThan(-1);
   expect(doctorCreateIdx, 'submitDoctorSignup.js must create the Doctor entity').toBeGreaterThan(-1);
   expect(doctorAuthCheckIdx, 'submitDoctorSignup.js must check auth BEFORE creating the entity, not after').toBeLessThan(doctorCreateIdx);
+
+  // Same split for travel agency signup — M-Care's conversational signup
+  // added a second entry point, both delegating to
+  // submitTravelAgencySignup() (see the separate 'PARTNER SIGNUP: travel
+  // agency signup...' test for the "only one code path" guarantee).
+  const travelForm = strip(read('src/components/partner-signup/TravelAgencySignupStep3.jsx'));
+  expect(travelForm, 'TravelAgencySignupStep3.jsx must import the shared signup auth gate')
+    .toContain("from '@/components/auth/SignupAuthGate'");
+  expect(travelForm, 'TravelAgencySignupStep3.jsx must delegate to the shared submission function')
+    .toContain('submitTravelAgencySignup(');
+  // Unlike the doctor form (which relies on catching submitDoctorSignup's
+  // AUTH_REQUIRED throw), this file keeps its own pre-flight guest check
+  // before ever calling the shared function — a guest never reaches it at
+  // all, so submitTravelAgencySignup's own AUTH_REQUIRED throw is
+  // defense-in-depth here, not the primary gate. Same pattern the generic
+  // loop above already checks for TaxiService/SecurityAgency.
+  expect(travelForm, 'TravelAgencySignupStep3.jsx must show the gate for an unauthenticated guest before calling the shared function')
+    .toMatch(/if\s*\(!currentUser\)[\s\S]{0,60}setShowAuthGate\(true\)/);
+  expect(travelForm, 'TravelAgencySignupStep3.jsx must mount <SignupAuthGate').toContain('<SignupAuthGate');
+
+  const submitTravelAgencySignupSrc = strip(read('src/lib/partnerSignup/submitTravelAgencySignup.js'));
+  expect(submitTravelAgencySignupSrc, 'submitTravelAgencySignup.js must check auth.me() before creating the TravelAgency entity')
+    .toMatch(/base44\.auth\.me\(\)\.catch/);
+  const travelAuthCheckIdx = submitTravelAgencySignupSrc.search(/base44\.auth\.me\(\)\.catch/);
+  const travelCreateIdx = submitTravelAgencySignupSrc.indexOf('TravelAgency.create(');
+  expect(travelAuthCheckIdx, 'submitTravelAgencySignup.js must have an auth check').toBeGreaterThan(-1);
+  expect(travelCreateIdx, 'submitTravelAgencySignup.js must create the TravelAgency entity').toBeGreaterThan(-1);
+  expect(travelAuthCheckIdx, 'submitTravelAgencySignup.js must check auth BEFORE creating the entity, not after').toBeLessThan(travelCreateIdx);
 
   // Companion signup splits the check (CompanionSignup.jsx) from the entity
   // creation + role sync (companionService.js) across two files — same

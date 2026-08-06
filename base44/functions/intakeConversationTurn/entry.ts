@@ -13,7 +13,7 @@ const IntakeTurnSchema = strictObject({
   // persona/tone without touching the parse-and-narrate contract itself.
   // Defaults to the original patient-intake voice so every existing caller
   // (useIntakeSession, useTravelIntakeSession) is unaffected.
-  persona: z.enum(['patient', 'doctor_signup']).optional().default('patient'),
+  persona: z.enum(['patient', 'doctor_signup', 'travel_agency_signup']).optional().default('patient'),
 });
 
 // ── intakeConversationTurn ───────────────────────────────────────────────────
@@ -67,6 +67,26 @@ const DOCTOR_SIGNUP_SYSTEM_PROMPT = `You are M-Care, walking a doctor through si
 Return ONLY valid JSON, no markdown fences, exactly these fields:
 {"extracted": {"<field>": "<value>", ...}, "confidence": 0-100, "clarification_needed": false, "narration": "...", "acknowledgement": "..."}`;
 
+const TRAVEL_AGENCY_SIGNUP_SYSTEM_PROMPT = `You are M-Care, walking a travel agency through signing up as a partner on Morales — one question at a time, warm and efficient, never a form.
+
+## Identity & Tone
+- Confident, professional, a little brisk — this is a business partner joining a platform, not a patient being cared for.
+- No emojis in your own text. Keep narration to 1-2 sentences.
+- Explain the "why" behind what's being asked, using ONLY the reason provided to you — never invent a new justification.
+- Address the contact person by name once you know it.
+- Mirror their language: write narration, acknowledgement, and clarification text in the language they wrote their answer in. Extracted field VALUES stay in their canonical form (numbers, names as given).
+
+## Critical Rules — Non-Negotiable
+- You NEVER approve, verify, or comment on whether this agency is legitimate or trustworthy. That is decided elsewhere (a real fraud/verification pipeline), entirely outside your reasoning.
+- You NEVER state a number, count, or fact that was not explicitly given to you in the input.
+- You extract ONLY the field(s) named in "Target fields" from the answer — never invent additional fields.
+- If the answer is ambiguous, unclear, or doesn't seem to answer the question at all, set clarification_needed to true and keep confidence low.
+- confidence is 0-100: how certain you are the extracted value(s) correctly capture what they meant.
+
+## Output Format
+Return ONLY valid JSON, no markdown fences, exactly these fields:
+{"extracted": {"<field>": "<value>", ...}, "confidence": 0-100, "clarification_needed": false, "narration": "...", "acknowledgement": "..."}`;
+
 interface TurnBody {
   step_id?: string;
   question_shown?: string;
@@ -74,7 +94,7 @@ interface TurnBody {
   target_fields?: string[];
   user_raw_text?: string;
   known_answers_snapshot?: Record<string, unknown>;
-  persona?: 'patient' | 'doctor_signup';
+  persona?: 'patient' | 'doctor_signup' | 'travel_agency_signup';
 }
 
 // Duplicated deliberately from questionGraph.js's `requiresAuth`-tagged step
@@ -126,20 +146,26 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }
 
   const isDoctorSignup = persona === 'doctor_signup';
-  const nameField = isDoctorSignup ? 'full_name' : 'patient_name';
+  const isTravelAgencySignup = persona === 'travel_agency_signup';
+  const nameField = isDoctorSignup ? 'full_name' : isTravelAgencySignup ? 'contact_person' : 'patient_name';
   const firstName = String(known_answers_snapshot?.[nameField] ?? '').split(' ')[0] || '';
-  const systemPrompt = isDoctorSignup ? DOCTOR_SIGNUP_SYSTEM_PROMPT : PATIENT_SYSTEM_PROMPT;
+  const systemPrompt = isDoctorSignup
+    ? DOCTOR_SIGNUP_SYSTEM_PROMPT
+    : isTravelAgencySignup
+      ? TRAVEL_AGENCY_SIGNUP_SYSTEM_PROMPT
+      : PATIENT_SYSTEM_PROMPT;
+  const speakerLabel = isDoctorSignup ? 'Doctor' : isTravelAgencySignup ? 'Contact' : 'Client';
 
   // Sanitize the client's free text before it reaches the prompt (injection guard).
   const safeUserText = sanitizePromptInput(user_raw_text, 1000).text;
 
   const prompt = [
     systemPrompt,
-    `\n\n${isDoctorSignup ? 'Doctor' : 'Client'} name: ${firstName || 'unknown yet'}`,
+    `\n\n${speakerLabel} name: ${firstName || 'unknown yet'}`,
     `\n\nQuestion asked: ${question_shown}`,
     `\n\nWhy we're asking (use this and only this as the reason): ${deterministic_reason}`,
     `\n\nTarget fields to extract: ${(target_fields || []).join(', ') || '(none — this is a review step)'}`,
-    `\n\n${isDoctorSignup ? "Doctor's" : "Client's"} answer: ${safeUserText}`,
+    `\n\n${speakerLabel}'s answer: ${safeUserText}`,
     '\n\nRespond now (JSON only, no prose outside the JSON):',
   ].join('');
 

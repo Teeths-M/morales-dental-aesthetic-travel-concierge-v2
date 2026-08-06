@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowRight, ChevronLeft, Upload } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { base44 } from '@/api/base44Client';
-import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
+import { submitTravelAgencySignup } from '@/lib/partnerSignup/submitTravelAgencySignup';
 import SignupAuthGate from '@/components/auth/SignupAuthGate';
 import { validateFile } from '@/lib/validateFile';
 import { UPLOAD_PRESETS } from '@/lib/constants';
@@ -79,43 +79,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
 
     setIsSubmitting(true);
     try {
-      const agencyData = {
-        agency_name: formData.agency_name,
-        email: formData.email,
-        phone: formData.phone,
-        contact_person: formData.contact_person,
-        headquarters_country: formData.headquarters_country,
-        headquarters_city: formData.headquarters_city,
-        website_url: formData.website_url,
-        medical_travel_experience_years: Number(formData.medical_travel_experience_years) || 0,
-        emergency_support_available: !!formData.emergency_support_available,
-        service_regions: formData.service_regions,
-        services_offered: formData.services_offered,
-        service_options: formData.service_options,
-        payout_method: formData.payout_method,
-        payout_account: formData.payout_account,
-        business_license_url: formData.business_license_url || '',
-        language_preference: language,
-        is_agency: true,
-        status: 'pending_verification',
-        sign_up_completed_at: new Date().toISOString()
-      };
-
-      const agency = await base44.entities.TravelAgency.create(agencyData);
-      try { await saveUserOnboardingProfile({
-        role: 'travel_agency',
-        status: 'completed',
-        linkedEntityName: 'TravelAgency',
-        linkedEntityId: agency.id,
-        profileData: { ...formData, ...agencyData }
-      }); } catch (_) { /* non-fatal — entity is created */ }
-      try {
-        await base44.functions.invoke('initiatePartnerVerification', {
-          partner_id: agency.id,
-          partner_type: 'travel_agency',
-          documents: formData.business_license_url ? [formData.business_license_url] : [],
-        });
-      } catch (_) { /* non-fatal */ }
+      const agency = await submitTravelAgencySignup(formData, language);
       onComplete(agency);
     } catch (error) {
       console.error('Submit failed:', error);
