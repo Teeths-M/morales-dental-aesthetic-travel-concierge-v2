@@ -51,6 +51,9 @@ Deno.serve(createHandler(async ({ req }) => {
       mime_type,
       document_type = 'passport',
       redacted_for_display = {},
+      case_id = null,
+      linked_partner_type = null,
+      linked_partner_id = null,
       is_emergency_accessible = true
     } = body;
 
@@ -118,6 +121,9 @@ Deno.serve(createHandler(async ({ req }) => {
         file_name: safeName,
         mime_type,
         redacted_for_display,
+        case_id,
+        linked_partner_type,
+        linked_partner_id,
         status: 'active',
         // TODO: Wire real AV scanner (e.g. ClamAV/VirusTotal) before surfacing scan status to users.
         // Files are client-side AES-256-GCM encrypted before upload, limiting server-side exposure.

@@ -13,6 +13,18 @@
       "type": "string",
       "format": "email"
     },
+    "case_id": {
+      "type": "string",
+      "description": "The patient CaseRecord this document is linked to (resolved by MCareVaultUpload from the uploader's most recent case by client_email). Null for partners with no patient case."
+    },
+    "linked_partner_type": {
+      "type": "string",
+      "description": "When a PARTNER uploads this doc, the entity type of their application record (Doctor | TravelAgency | TaxiService | SecurityAgency). Lets M-Care pull a partner's submitted documents during onboarding/verification."
+    },
+    "linked_partner_id": {
+      "type": "string",
+      "description": "The id of the partner application record this document belongs to (paired with linked_partner_type)."
+    },
     "document_type": {
       "type": "string",
       "enum": [

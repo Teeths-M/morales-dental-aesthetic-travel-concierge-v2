@@ -1,4 +1,4 @@
-import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Shield, Lock, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,38 @@ const MCareVaultUpload = forwardRef(function MCareVaultUpload({ onVaulted, hideT
   const [token, setToken] = useState(null);
   const [error, setError] = useState(null);
   const fileRef = useRef(null);
+  const [linkContext, setLinkContext] = useState({ case_id: null, linked_partner_type: null, linked_partner_id: null });
+
+  // Resolve the uploader's active case (patient) and partner record (partner) so
+  // every vaulted document is linked to the right case/application. Best-effort:
+  // the vault itself works even if linking can't resolve (e.g. offline first open).
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await base44.auth.me();
+        if (!me) return;
+        let case_id = null;
+        const cases = await base44.entities.CaseRecord.filter({ client_email: me.email }, '-created_date', 1).catch(() => []);
+        if (cases && cases.length) case_id = cases[0].id;
+        let linked_partner_type = null;
+        let linked_partner_id = null;
+        const entityName =
+          me.role === 'doctor' ? 'Doctor'
+          : me.role === 'travel_agency' ? 'TravelAgency'
+          : me.role === 'taxi_service' ? 'TaxiService'
+          : me.role === 'security' ? 'SecurityAgency'
+          : null;
+        if (entityName) {
+          const recs = await base44.entities[entityName].filter({ email: me.email }, '-created_date', 1).catch(() => []);
+          if (recs && recs.length) { linked_partner_type = entityName; linked_partner_id = recs[0].id; }
+        }
+        if (!cancelled) setLinkContext({ case_id, linked_partner_type, linked_partner_id });
+      } catch (_) { /* linking is best-effort */ }
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
 
   const reset = () => {
     setDocType('other'); setReference(''); setNameOnDoc(''); setPassword(''); setConfirmPw('');
@@ -94,6 +126,9 @@ const MCareVaultUpload = forwardRef(function MCareVaultUpload({ onVaulted, hideT
           booking_reference: reference || undefined,
           full_name_redacted: nameOnDoc || undefined,
         },
+        case_id: linkContext.case_id,
+        linked_partner_type: linkContext.linked_partner_type,
+        linked_partner_id: linkContext.linked_partner_id,
         is_emergency_accessible: true,
       });
 
@@ -105,7 +140,7 @@ const MCareVaultUpload = forwardRef(function MCareVaultUpload({ onVaulted, hideT
       storeVaultKey(vault_token, saltB64);
       setToken(vault_token);
       setStep('done');
-      if (onVaulted) onVaulted({ token: vault_token, document_type: docType, file_name: file.name });
+      if (onVaulted) onVaulted({ token: vault_token, document_type: docType, file_name: file.name, case_id: linkContext.case_id, partner_type: linkContext.linked_partner_type });
     } catch (err) {
       setError(friendlyError(err, 'We could not vault that document. Nothing was stored — please try again.', 'MCareVaultUpload'));
       setStep('error');
