@@ -100,8 +100,16 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
         payout_method: formData.payout_method,
         payout_account: formData.payout_account,
         language_preference: language,
-        license_verified: licenseConfirmed,
-        insurance_verified: insuranceConfirmed,
+        // These two checkboxes are the APPLICANT'S OWN CLAIM, required to
+        // submit — not verification. license_verified/insurance_verified
+        // stay at their schema default (false) here; they are only ever set
+        // true by an admin review action (reviewTaxiServiceVerification),
+        // after the real sanctions/fraud-scan pipeline (initiatePartnerVerification)
+        // has actually run. Writing them true from a self-attestation
+        // checkbox was exactly the "represent an unverified check as
+        // verified" failure mode this platform's own principles rule out.
+        license_self_attested: licenseConfirmed,
+        insurance_self_attested: insuranceConfirmed,
         is_agency: true,
         status: 'pending_verification',
         sign_up_completed_at: new Date().toISOString()

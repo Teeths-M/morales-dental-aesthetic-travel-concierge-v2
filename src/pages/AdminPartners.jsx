@@ -70,6 +70,10 @@ export default function AdminPartners() {
     const configs = {
       'active': { color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle, label: 'Active' },
       'pending_verification': { color: 'bg-amber-100 text-amber-700', icon: Clock, label: 'Pending' },
+      'verifying': { color: 'bg-amber-100 text-amber-700', icon: Clock, label: 'Verifying' },
+      'pending_setup': { color: 'bg-blue-100 text-blue-700', icon: Clock, label: 'Pending Setup' },
+      'suspended': { color: 'bg-orange-100 text-orange-700', icon: Clock, label: 'Suspended' },
+      'rejected': { color: 'bg-red-100 text-red-700', icon: XCircle, label: 'Rejected' },
       'inactive': { color: 'bg-slate-100 text-slate-700', icon: XCircle, label: 'Inactive' },
     };
     const config = configs[status] || configs['inactive'];
@@ -134,11 +138,28 @@ export default function AdminPartners() {
   const handleApproveTaxiService = async (serviceId) => {
     setIsApproving(true);
     try {
-      await base44.entities.TaxiService.update(serviceId, { status: 'active', license_verified: true, insurance_verified: true });
+      // Real review, not a rubber stamp — reviewTaxiServiceVerification
+      // checks the actual sanctions/fraud-scan record before setting
+      // license_verified/insurance_verified true, and moves the guarded
+      // state machine through verifying -> active. See that function.
+      await base44.functions.invoke('reviewTaxiServiceVerification', { action: 'approve', taxi_service_id: serviceId });
       toast({ title: 'Taxi service approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-      toast({ title: 'Failed to approve taxi service', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to approve taxi service', description: error?.response?.data?.error || error.message, variant: 'destructive' });
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleRejectTaxiService = async (serviceId) => {
+    setIsApproving(true);
+    try {
+      await base44.functions.invoke('reviewTaxiServiceVerification', { action: 'reject', taxi_service_id: serviceId });
+      toast({ title: 'Taxi service rejected' });
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      toast({ title: 'Failed to reject taxi service', description: error?.response?.data?.error || error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
     }
@@ -438,13 +459,14 @@ export default function AdminPartners() {
 
       {/* Partner Details Dialog */}
       {selectedPartner && (
-        <PartnerDetailsDialog 
-          partner={selectedPartner} 
-          open={!!selectedPartner} 
+        <PartnerDetailsDialog
+          partner={selectedPartner}
+          open={!!selectedPartner}
           onOpenChange={() => setSelectedPartner(null)}
           onApproveDoctor={handleApproveDoctor}
           onRejectDoctor={handleRejectDoctor}
           onApproveTaxiService={handleApproveTaxiService}
+          onRejectTaxiService={handleRejectTaxiService}
           onApproveTravelAgency={handleApproveTravelAgency}
           onApproveCompanion={handleApproveCompanion}
           isApproving={isApproving}
@@ -649,7 +671,7 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick, i
   );
 }
 
-function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, onRejectDoctor, onApproveTaxiService, onApproveTravelAgency, onApproveCompanion, isApproving }) {
+function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, onRejectDoctor, onApproveTaxiService, onRejectTaxiService, onApproveTravelAgency, onApproveCompanion, isApproving }) {
   if (!partner) return null;
 
   const renderDetails = () => {
@@ -979,7 +1001,7 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
           {renderDetails()}
           
           <DialogFooter className="pt-4 border-t border-slate-200">
-            {partner.status === 'pending_verification' && (
+            {(partner.status === 'pending_verification' || partner.status === 'verifying') && (
               <div className="space-y-3 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700">Status:</span>
@@ -1006,13 +1028,23 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
                     </Button>
                   </div>
                 ) : (partner._type === 'taxi' || partner.operating_country || partner.company_name || partner.driver_name) ? (
-                  <Button
-                    onClick={() => onApproveTaxiService(partner.id)}
-                    disabled={isApproving}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    {isApproving ? 'Processing...' : 'Approve Taxi Service'}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="destructive"
+                      onClick={() => onRejectTaxiService(partner.id)}
+                      disabled={isApproving}
+                      className="flex-1"
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      onClick={() => onApproveTaxiService(partner.id)}
+                      disabled={isApproving}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {isApproving ? 'Processing...' : 'Approve Taxi Service'}
+                    </Button>
+                  </div>
                 ) : (partner._type === 'travel' || partner.agency_name) ? (
                   <Button
                     onClick={() => onApproveTravelAgency(partner.id)}

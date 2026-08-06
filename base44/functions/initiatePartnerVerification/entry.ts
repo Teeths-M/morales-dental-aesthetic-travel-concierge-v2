@@ -1,6 +1,7 @@
 import { createHandler } from '../../shared/createHandler.ts';
 import { createHmac } from 'node:crypto';
 import { z, strictObject, Fields } from '../../shared/validate.ts';
+import { guardedPartnerStatusUpdate, PARTNER_STATE } from '../../shared/partnerOnboardingState.ts';
 
 // partner_type is a length-capped string, not an enum — the existing if/else
 // chain below already tolerates an unrecognized value (falls through to
@@ -188,6 +189,13 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       await base44.asServiceRole.entities.TravelAgency.update(partner_id, partnerUpdate);
     } else if (partner_type === 'taxi_service') {
       await base44.asServiceRole.entities.TaxiService.update(partner_id, partnerUpdate);
+      // Transport Partner Platform — Foundation: verification is now actively
+      // in progress, so advance the guarded state machine out of
+      // pending_verification. Non-fatal and a no-op if the taxi service is
+      // already past this point (e.g. a re-run) — never let a status race
+      // break the rest of the verification pipeline.
+      await guardedPartnerStatusUpdate(base44, 'TaxiService', partner_id, PARTNER_STATE.VERIFYING)
+        .catch((e) => console.error('[initiatePartnerVerification] taxi status transition skipped:', e.message));
     } else if (partner_type === 'companion') {
       await base44.asServiceRole.entities.Companion.update(partner_id, partnerUpdate);
     } else if (partner_type === 'security_agency') {

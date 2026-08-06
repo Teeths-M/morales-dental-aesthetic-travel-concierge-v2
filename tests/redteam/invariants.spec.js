@@ -1974,6 +1974,86 @@ test('M-CARE PUSH: real trip-lifecycle notifications carry the M-Care icon end t
     .toContain("icon:       '/mcare-logo.png'");
 });
 
+test('TRANSPORT PARTNER: signup self-attestation never writes license_verified/insurance_verified', () => {
+  // Transport Partner Platform — Foundation. Found during implementation:
+  // TaxiServiceSignupStep3.jsx used to write license_verified/insurance_verified
+  // straight from the applicant's OWN "I have a valid license" / "I have valid
+  // insurance" checkboxes at signup — self-attestation treated as verification,
+  // before any real check ever ran. That's exactly the failure mode "never
+  // represent an unverified background check as verified" rules out.
+  const step3 = read('src/components/partner-signup/TaxiServiceSignupStep3.jsx');
+  expect(step3, 'signup must not write license_verified from local checkbox state')
+    .not.toMatch(/license_verified:\s*licenseConfirmed/);
+  expect(step3, 'signup must not write insurance_verified from local checkbox state')
+    .not.toMatch(/insurance_verified:\s*insuranceConfirmed/);
+  expect(step3, 'the checkboxes must still be captured, just as an attestation, not a verification')
+    .toContain('license_self_attested: licenseConfirmed');
+  expect(step3, 'the checkboxes must still be captured, just as an attestation, not a verification')
+    .toContain('insurance_self_attested: insuranceConfirmed');
+});
+
+test('TRANSPORT PARTNER: taxi service approval is real, not a rubber stamp', () => {
+  // AdminPartners.jsx used to approve a taxi service with a single
+  // unconditional client-side TaxiService.update({status:'active',
+  // license_verified:true, insurance_verified:true}) — no read of the real
+  // sanctions/fraud-scan record (PartnerVerification), no state-machine
+  // check. reviewTaxiServiceVerification replaces it: license_verified/
+  // insurance_verified may ONLY be set true from that function's approve
+  // branch, after checking the partner isn't sanctions_blocked/denied, and
+  // status only advances through the guarded state machine.
+  const reviewFn = read('base44/functions/reviewTaxiServiceVerification/entry.ts');
+  const sanctionsCheckIdx = reviewFn.indexOf('sanctions_blocked');
+  const licenseSetIdx = reviewFn.indexOf('license_verified: true');
+  expect(sanctionsCheckIdx, 'the sanctions/denied check must exist').toBeGreaterThan(-1);
+  expect(licenseSetIdx, 'license_verified must be settable somewhere in the approve path').toBeGreaterThan(-1);
+  expect(sanctionsCheckIdx, 'the sanctions/denied check must run before license_verified is ever set true')
+    .toBeLessThan(licenseSetIdx);
+  expect(reviewFn, 'status changes must go through the guarded state machine, never a raw update({status})')
+    .toContain('guardedPartnerStatusUpdate(');
+  expect(reviewFn, 'must be admin-gated').toMatch(/allowedRoles:\s*\[['"]admin['"],\s*['"]platform_admin['"]\]/);
+
+  // The admin page must call this function, not perform the write itself.
+  const adminPartners = read('src/pages/AdminPartners.jsx');
+  expect(adminPartners, 'AdminPartners must no longer rubber-stamp verification itself')
+    .not.toMatch(/TaxiService\.update\([^)]*license_verified:\s*true/);
+  expect(adminPartners, 'AdminPartners must call the real review function to approve')
+    .toContain("invoke('reviewTaxiServiceVerification', { action: 'approve'");
+});
+
+test('TRANSPORT PARTNER: Driver roster is scoped to its own taxi company, never open', () => {
+  const entity = read('base44/entities/Driver.jsonc');
+  for (const op of ['read', 'create', 'update', 'delete']) {
+    const opIdx = entity.indexOf(`"${op}"`);
+    expect(opIdx, `Driver.jsonc must declare an rls.${op} rule`).toBeGreaterThan(-1);
+  }
+  expect(entity, 'ownership must anchor on taxi_service_email, not an open rule')
+    .toContain('"data.taxi_service_email"');
+  // The dashboard must set the ownership field from the company's own
+  // record, never let a caller supply an arbitrary one.
+  const roster = read('src/components/partner-dashboard/DriverRosterSection.jsx');
+  expect(roster, 'new drivers must be tagged with the current company\'s own email')
+    .toContain('taxi_service_email: taxi.email');
+});
+
+test('TRANSPORT PARTNER: partnerOnboardingState transitions are a real allowlist, not a formality', () => {
+  const state = read('base44/shared/partnerOnboardingState.ts');
+  // REJECTED must be terminal — nothing may transition out of it.
+  expect(state, 'REJECTED must have no outgoing transitions').toMatch(/\[PARTNER_STATE\.REJECTED\]:\s*\[\],/);
+  // A partner can never reach ACTIVE directly from PENDING_VERIFICATION —
+  // it must pass through VERIFYING first.
+  const pendingVerificationLine = state.match(/\[PARTNER_STATE\.PENDING_VERIFICATION\]:\s*\[([^\]]*)\]/);
+  expect(pendingVerificationLine, 'PENDING_VERIFICATION transition list must exist').not.toBeNull();
+  expect(pendingVerificationLine[1], 'PENDING_VERIFICATION must not list ACTIVE as a direct transition')
+    .not.toMatch(/PARTNER_STATE\.ACTIVE\b/);
+
+  const entity = read('base44/entities/AuditLog.jsonc');
+  const allow = read('base44/functions/logAuditEvent/entry.ts');
+  for (const t of ['partner_verification_approved', 'partner_verification_rejected']) {
+    expect(entity, `${t} missing from AuditLog.jsonc's enum`).toContain(`"${t}"`);
+    expect(allow, `${t} missing from logAuditEvent's ALLOWED_EVENT_TYPES`).toContain(`'${t}'`);
+  }
+});
+
 test('ONBOARDING: a guest completing partner signup is sent to sign in before their role is silently lost forever', () => {
   // Every partner signup route (/doctor-signup, /partner-signup/taxi-service,
   // /partner-signup/travel-agency) is fully public — reachable and completable

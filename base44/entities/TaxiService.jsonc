@@ -72,11 +72,23 @@
     },
     "insurance_verified": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Only ever set true by an admin review action (reviewTaxiServiceVerification) — never by the applicant's own signup self-attestation"
     },
     "license_verified": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Only ever set true by an admin review action (reviewTaxiServiceVerification) — never by the applicant's own signup self-attestation"
+    },
+    "license_self_attested": {
+      "type": "boolean",
+      "default": false,
+      "description": "The applicant's own claim at signup ('I have a valid driver license') — a required attestation to submit, but not verification. See license_verified."
+    },
+    "insurance_self_attested": {
+      "type": "boolean",
+      "default": false,
+      "description": "The applicant's own claim at signup ('I have valid insurance') — a required attestation to submit, but not verification. See insurance_verified."
     },
     "payout_method": {
       "type": "string",
@@ -153,10 +165,15 @@
       "type": "string",
       "enum": [
         "pending_verification",
+        "verifying",
+        "pending_setup",
         "active",
+        "suspended",
+        "rejected",
         "inactive"
       ],
-      "default": "pending_verification"
+      "default": "pending_verification",
+      "description": "Guarded by base44/shared/partnerOnboardingState.ts — verifying/pending_setup/suspended/rejected added for the Transport Partner Platform foundation; every transition must go through guardedPartnerStatusUpdate()"
     },
     "is_online": {
       "type": "boolean",

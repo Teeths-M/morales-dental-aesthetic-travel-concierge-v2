@@ -1,0 +1,127 @@
+{
+  "name": "Driver",
+  "type": "object",
+  "description": "Individual driver + vehicle record under a TaxiService company. TaxiService previously had only ONE driver_name/driver_license_number string pair on the company row — no way to represent a real fleet/roster. Owned by the parent TaxiService, not directly by a user; RLS anchors on taxi_service_email (denormalized at create time) since Base44 RLS conditions compare data fields directly against the caller's own session, not through a join.",
+  "properties": {
+    "taxi_service_id": {
+      "type": "string",
+      "description": "The owning TaxiService record's id"
+    },
+    "taxi_service_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized from the owning TaxiService.email at creation — the RLS ownership anchor"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "driver_license_number": {
+      "type": "string"
+    },
+    "license_expiry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "license_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only ever set true by an admin review action — never by the driver's own self-attestation at signup"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "vehicle_type": {
+      "type": "string"
+    },
+    "vehicle_plate": {
+      "type": "string"
+    },
+    "vehicle_photo_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "taxi_service_id",
+    "taxi_service_email",
+    "driver_name",
+    "driver_license_number"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.taxi_service_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.taxi_service_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.taxi_service_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.taxi_service_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

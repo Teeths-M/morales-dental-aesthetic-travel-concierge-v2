@@ -6,6 +6,7 @@ import { Car, Star, DollarSign, MapPin, CheckCircle, AlertTriangle, LogOut, Phon
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import PartnerCaseDetailModal from './PartnerCaseDetailModal';
+import DriverRosterSection from './DriverRosterSection';
 
 const GOLD = '#D4AF37';
 
@@ -212,6 +213,8 @@ export default function TaxiServiceDashboard({ taxi, language }) {
           </div>
         )}
       </motion.div>
+
+      <DriverRosterSection taxi={taxi} />
 
       {/* Recent completed */}
       {pastCases.length > 0 && (
