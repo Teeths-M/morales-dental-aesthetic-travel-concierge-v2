@@ -152,32 +152,50 @@
     },
     {
       "function_name": "initiatePartnerVerification",
-      "description": "Start the verification pipeline for ANY partner type (taxi, companion, security, doctor). Call right after creating the pending partner record. Triggers document scan, background check, and registry lookup as appropriate to the partner type."
+      "description": "Start the verification pipeline for any partner type after creating the pending record."
     },
     {
       "function_name": "generateChauffeurPortalLink",
-      "description": "Generate the taxi-partner dashboard / portal link to deliver once their verification completes. Used in the NOTIFY_ON_COMPLETION step of taxi onboarding."
+      "description": "Generate the taxi-partner dashboard/portal link to deliver once verification completes."
     },
     {
       "function_name": "getTaxiDriverCases",
-      "description": "Fetch the active trips/cases for a taxi partner or driver. Used to check status during trip handoff and recovery."
+      "description": "Fetch a taxi partner/driver's active trips during handoff and recovery."
     },
     {
       "function_name": "sendDriverAlert",
-      "description": "Send the driver a structured trip detail message (pickup, destination, patient identifier, secure app link) via SMS. Used after a trip is assigned to the driver."
+      "description": "Send the driver a structured trip-detail SMS with a secure app link after assignment."
     },
     {
       "function_name": "cancelDriverAssignment",
-      "description": "Cancel the original driver's assignment when they're running late / missed a check-in, so a backup can take over. Used in agentic recovery."
+      "description": "Cancel the original driver assignment so a backup can take over when a driver is late."
     },
     {
       "function_name": "escalateMissedDriverHandshake",
-      "description": "Detect a missed GPS handshake check-in and scan for a backup driver automatically. Used in agentic recovery when a driver is late \u2014 triggers the auto-reassign flow."
+      "description": "Detect a missed GPS handshake check-in and auto-scan for a backup driver."
     },
     {
       "function_name": "reviewTaxiServiceVerification",
-      "description": "Admin/human review action that sets a taxi partner's license_verified/insurance_verified true after real document verification. M-Care references the resulting verification_status to decide when a taxi partner is truly verified \u2014 never claims verified before this has run."
+      "description": "Human/admin review action that marks a taxi partner's license/insurance verified after real checks."
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "allow_anonymous_access": false,
   "name": "m_care"
 }

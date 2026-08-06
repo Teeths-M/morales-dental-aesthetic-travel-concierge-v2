@@ -74,10 +74,8 @@ export default function MCareAgent() {
     if (convo?.messages) setMessages(convo.messages);
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || isSending) return;
-    const content = input.trim();
-    setInput('');
+  const sendText = async (content) => {
+    if (!content || !content.trim() || isSending) return;
     setIsSending(true);
 
     let conversation;
@@ -109,6 +107,19 @@ export default function MCareAgent() {
       setIsSending(false);
       console.error('Failed to send message:', e);
     }
+  };
+
+  const sendMessage = () => {
+    const content = input.trim();
+    if (!content || isSending) return;
+    setInput('');
+    sendText(content);
+  };
+
+  const handleSafetyRespond = (choice) => {
+    sendText(choice === 'proceed'
+      ? "Yes, please proceed with the safer path — find a surgeon who specializes in patients with my condition and request a clinical review before any bookings."
+      : "I need a little more time to think about this before we proceed.");
   };
 
   const handleKeyDown = (e) => {
@@ -182,7 +193,7 @@ export default function MCareAgent() {
             </div>
           )}
 
-          {messages.map((msg, idx) => <MessageBubble key={idx} message={msg} />)}
+          {messages.map((msg, idx) => <MessageBubble key={idx} message={msg} onRespond={handleSafetyRespond} />)}
 
           {isSending && (
             <div className="flex justify-start">

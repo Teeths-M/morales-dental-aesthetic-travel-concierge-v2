@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock } from 'lucide-react';
+import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 
 function StatusIcon({ status }) {
   if (['completed', 'success'].includes(status)) return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
@@ -62,7 +63,7 @@ function ToolCallDisplay({ toolCall }) {
   );
 }
 
-export default function MessageBubble({ message }) {
+export default function MessageBubble({ message, onRespond }) {
   const isUser = message.role === 'user';
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
@@ -70,7 +71,9 @@ export default function MessageBubble({ message }) {
         {message.content && (
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
         )}
-        {message.tool_calls?.map((toolCall, idx) => <ToolCallDisplay key={idx} toolCall={toolCall} />)}
+        {message.tool_calls?.map((toolCall, idx) => toolCall.name === 'computeSafeTScreening'
+          ? <SafetyGateCard key={idx} toolCall={toolCall} onRespond={onRespond} />
+          : <ToolCallDisplay key={idx} toolCall={toolCall} />)}
       </div>
     </div>
   );
