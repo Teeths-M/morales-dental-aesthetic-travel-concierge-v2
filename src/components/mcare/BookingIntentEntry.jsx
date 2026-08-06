@@ -27,6 +27,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { PROCEDURE_OPTIONS } from '@/lib/intakeFlow/questionGraph';
 import VoiceInputButton from './VoiceInputButton';
+import OrbMoment from './OrbMoment';
 
 function procedureLabel(value) {
   return PROCEDURE_OPTIONS.find((o) => o.value === value)?.label || value;
@@ -128,7 +129,7 @@ export default function BookingIntentEntry({ onExit, initialQuery }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <AssistantBubble>Got it — {parts.join(', ')}. Sound right?</AssistantBubble>
+          <OrbMoment headline={`Got it — ${parts.join(', ')}.`} caption="Sound right?" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <button onClick={() => goToIntake(pending.procedures, pending.destination_country)}
               style={{ padding: '9px 14px', borderRadius: 10, border: 'none', background: GOLD, color: DARK, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}

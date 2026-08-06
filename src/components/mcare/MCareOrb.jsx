@@ -26,6 +26,8 @@ import TravelAgencySignupChatFlow from './TravelAgencySignupChatFlow';
 import BookingIntentEntry from './BookingIntentEntry';
 import AvailabilityIntentEntry from './AvailabilityIntentEntry';
 import VoiceInputButton from './VoiceInputButton';
+import LivingOrb from './LivingOrb';
+import OrbMoment from './OrbMoment';
 import { isSystemPaused } from '@/lib/systemPause';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -215,6 +217,12 @@ export default function MCareOrb() {
   // answer/hand-off), never a fabricated delay. Cleared whenever `thinking`
   // goes false.
   const [thinkingStatus, setThinkingStatus] = useState('');
+  // LivingOrb's visible state — 'listening' is real (VoiceInputButton's own
+  // recording flag, wired below), 'speaking' is a short honest window right
+  // after a new assistant message lands (see the effect below), never a
+  // fabricated audio-reactive signal.
+  const [listening,  setListening]  = useState(false);
+  const [speaking,   setSpeaking]   = useState(false);
   const [dismissed,  setDismissed]  = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [struggleHint, setStruggleHint] = useState(null); // { e, t } | null — reactive help, overrides the tip rotation
@@ -330,6 +338,25 @@ export default function MCareOrb() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // A short, honest "speaking" pulse right after a new assistant message
+  // lands — not audio-reactive (there's no real TTS signal here), just a
+  // visible beat tied to a real state transition that already happened.
+  const prevMsgCountRef = useRef(0);
+  useEffect(() => {
+    if (messages.length > prevMsgCountRef.current) {
+      const last = messages[messages.length - 1];
+      if (last?.role === 'assistant') {
+        setSpeaking(true);
+        const id = setTimeout(() => setSpeaking(false), 1800);
+        prevMsgCountRef.current = messages.length;
+        return () => clearTimeout(id);
+      }
+    }
+    prevMsgCountRef.current = messages.length;
+  }, [messages]);
+
+  const orbState = listening ? 'listening' : thinking ? 'thinking' : speaking ? 'speaking' : 'idle';
 
   const sendMessage = useCallback(async (displayText, kbQuery) => {
     const q     = (displayText ?? input).trim();
@@ -503,7 +530,7 @@ export default function MCareOrb() {
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <img src="/mcare-logo.png" alt="M-Care" style={{ width: 44, height: 44, borderRadius: '50%', filter: `drop-shadow(0 0 6px ${GOLD}66)` }} />
+            <LivingOrb state={orbState} size={44} />
             {!isOnline && <span style={{ position: 'absolute', top: 4, right: 4, width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid rgba(10,20,28,0.9)' }} />}
           </button>
           {showBubble && !dismissed && (
@@ -531,7 +558,7 @@ export default function MCareOrb() {
 
           {/* Header */}
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <img src="/mcare-logo.png" alt="M-Care" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
+            <LivingOrb state={orbState} size={32} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{t('guide.ai_label')}</p>
               <p style={{ margin: 0, fontSize: 10, color: isOnline ? 'rgba(255,255,255,0.38)' : '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -643,17 +670,21 @@ export default function MCareOrb() {
                 {messages.map((m, i) => (
                   <React.Fragment key={i}>
                     {m.handoff && <SpecialistCard />}
-                    <div style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                      {m.role === 'user' ? (
-                        <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 4px 14px', background: `linear-gradient(135deg, ${GOLD}cc, #b8960fcc)`, fontSize: 12, lineHeight: 1.65, color: DARK, fontWeight: 600, whiteSpace: 'pre-wrap' }}>
-                          {m.text}
-                        </div>
-                      ) : (
-                        <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 14px 4px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', fontSize: 12, lineHeight: 1.65, color: '#fff' }}
-                          dangerouslySetInnerHTML={{ __html: md(m.text) }}
-                        />
-                      )}
-                    </div>
+                    {m.role === 'assistant' && m.source === 'router' ? (
+                      <OrbMoment headline={m.text} />
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                        {m.role === 'user' ? (
+                          <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 4px 14px', background: `linear-gradient(135deg, ${GOLD}cc, #b8960fcc)`, fontSize: 12, lineHeight: 1.65, color: DARK, fontWeight: 600, whiteSpace: 'pre-wrap' }}>
+                            {m.text}
+                          </div>
+                        ) : (
+                          <div style={{ maxWidth: '88%', padding: '9px 13px', borderRadius: '14px 14px 14px 4px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', fontSize: 12, lineHeight: 1.65, color: '#fff' }}
+                            dangerouslySetInnerHTML={{ __html: md(m.text) }}
+                          />
+                        )}
+                      </div>
+                    )}
                   </React.Fragment>
                 ))}
 
@@ -691,6 +722,7 @@ export default function MCareOrb() {
                     disabled={thinking}
                     onTranscript={(text) => setInput(text)}
                     onError={(msg) => setMessages(m => [...m, { role: 'assistant', text: msg, source: 'error' }])}
+                    onRecordingChange={setListening}
                   />
                 )}
                 <button onClick={() => sendMessage()} disabled={!input.trim() || thinking}

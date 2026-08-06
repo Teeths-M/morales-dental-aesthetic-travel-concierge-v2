@@ -24,6 +24,7 @@ import { submitTravelAgencySignup } from '@/lib/partnerSignup/submitTravelAgency
 import { validateFile } from '@/lib/validateFile';
 import { UPLOAD_PRESETS } from '@/lib/constants';
 import SignupAuthGate from '@/components/auth/SignupAuthGate';
+import OrbMoment from './OrbMoment';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -329,9 +330,11 @@ export default function TravelAgencySignupChatFlow({ isAuthenticated, language =
 
         {done && (
           <>
-            <AssistantBubble>
-              You're in — your travel agency profile is created and I've started your verification. That usually takes a bit, and I'll let you know the moment you're cleared to receive quote requests. You can check progress anytime from your dashboard.
-            </AssistantBubble>
+            <OrbMoment
+              headline="Application submitted."
+              caption="Your travel agency profile is created and I've started your verification — I'll let you know the moment you're cleared to receive quote requests. You can check progress anytime from your dashboard."
+              status={{ label: 'Verification in progress', note: 'Usually takes a bit' }}
+            />
             <button onClick={onExit} style={{ ...chipStyle, textAlign: 'center', color: GOLD, borderColor: 'rgba(212,175,55,0.3)' }}>Done</button>
           </>
         )}

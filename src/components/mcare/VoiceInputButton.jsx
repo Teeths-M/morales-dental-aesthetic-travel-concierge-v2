@@ -25,7 +25,7 @@ import { base44 } from '@/api/base44Client';
 
 const MAX_RECORDING_MS = 20000;
 
-export default function VoiceInputButton({ onTranscript, onError, disabled = false }) {
+export default function VoiceInputButton({ onTranscript, onError, disabled = false, onRecordingChange }) {
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const mediaRecorderRef = useRef(null);
@@ -77,6 +77,7 @@ export default function VoiceInputButton({ onTranscript, onError, disabled = fal
       mediaRecorderRef.current = recorder;
       recorder.start();
       setRecording(true);
+      onRecordingChange?.(true);
       // Auto-stop so a forgotten open mic doesn't record indefinitely.
       maxDurationTimerRef.current = setTimeout(() => stopRecording(), MAX_RECORDING_MS);
     } catch (_) {
@@ -91,6 +92,7 @@ export default function VoiceInputButton({ onTranscript, onError, disabled = fal
       mediaRecorderRef.current.stop();
     }
     setRecording(false);
+    onRecordingChange?.(false);
   };
 
   const handleClick = () => {
