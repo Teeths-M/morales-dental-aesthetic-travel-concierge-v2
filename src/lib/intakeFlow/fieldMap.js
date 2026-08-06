@@ -86,6 +86,14 @@ export function buildConsultationPayload(answers, verification = {}) {
     data_processing_consent_version: answers.data_processing_consent
       ? DATA_CONSENT_VERSION
       : undefined,
+    // Separate, later consent (M-Care super-agent Phase 4B) — scoped
+    // specifically to sharing the medical history just reviewed with
+    // whichever doctor's clinic gets assigned. assignDoctorToCase refuses to
+    // notify a doctor without this being true — see that function.
+    medical_history_share_consent: !!answers.medical_history_share_consent,
+    medical_history_share_consent_at: answers.medical_history_share_consent
+      ? (answers.medical_history_share_consent_at || new Date().toISOString())
+      : undefined,
     // Under-18: guardian is recorded as the emergency contact, the record is
     // flagged, and the case goes straight to admin review — no minor's journey
     // is ever auto-processed (M Principle). Derived from age here, not from a

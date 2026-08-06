@@ -138,6 +138,30 @@ Deno.serve(createHandler(async ({ req }) => {
       } catch (_) {}
     }
 
+    // M-Care super-agent Phase 4B — the single real gate where a doctor
+    // actually gets emailed + portal access to a patient's full case
+    // (medical history included). Refuse to proceed without the patient's
+    // explicit, separately-captured consent (ReviewStep.jsx's
+    // MedicalHistoryShareConsent, recorded on the Consultation) — never
+    // silently share medical history just because SAFE-T passed. Same
+    // fail-to-human-review discipline as the "no doctor available" branch
+    // above, not a silent block.
+    if (!consultation?.medical_history_share_consent) {
+      await base44.asServiceRole.entities.CaseRecord.update(caseId, {
+        status: 'Admin-Review',
+        admin_notes: 'Cannot notify a doctor — patient has not consented to sharing their medical history with a clinic. Manual follow-up required.',
+        timeline_log: [...(caseRecord.timeline_log || []), {
+          timestamp: new Date().toISOString(),
+          action: 'auto_assign_blocked_no_consent',
+          details: 'medical_history_share_consent missing/false on the linked Consultation',
+        }],
+      });
+      return Response.json({
+        error: 'Cannot assign doctor — patient has not consented to sharing their medical history. Case flagged for manual review.',
+        status: 'CONSENT_MISSING',
+      }, { status: 400 });
+    }
+
     const procedureDisplay = formatProcedure(consultation?.procedure_interest || caseRecord.procedures);
     const portalToken = await generateSecureToken('doc', caseId);
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');

@@ -1578,16 +1578,22 @@ test('INTAKE: the one-shot booking-intent parser can never extract a clinical fa
   expect(bodySchemaBlock, 'request schema must not accept a caller-supplied field list').not.toContain('target_fields');
 
   // The response schema — the actual data contract, not the prompt text
-  // guiding the LLM — must declare only procedure and destination_country,
-  // and must never declare any true clinical-history field. (The system
-  // prompt ABOVE this schema legitimately names those fields to tell the
-  // LLM to ignore them — that's correct, explicit guidance, not a leak; the
-  // schema is what actually constrains what the function can ever return.)
+  // guiding the LLM — must declare only procedures/destination/timing
+  // fields, and must never declare any true clinical-history field. (The
+  // system prompt ABOVE this schema legitimately names those fields to tell
+  // the LLM to ignore them — that's correct, explicit guidance, not a leak;
+  // the schema is what actually constrains what the function can ever
+  // return.) Phase 4A widened procedure -> procedures (array) and added
+  // destination_city/travel_month/travel_period — still never a fabricated
+  // exact date (see this function's own header for why).
   const schemaStart = src.indexOf('response_json_schema');
   const schemaEnd = src.indexOf('});', schemaStart);
   const schemaBlock = src.slice(schemaStart, schemaEnd);
-  expect(schemaBlock, 'response schema must declare procedure').toContain('procedure:');
+  expect(schemaBlock, 'response schema must declare procedures').toContain('procedures:');
   expect(schemaBlock, 'response schema must declare destination_country').toContain('destination_country:');
+  expect(schemaBlock, 'response schema must declare destination_city').toContain('destination_city:');
+  expect(schemaBlock, 'response schema must declare travel_month').toContain('travel_month:');
+  expect(schemaBlock, 'response schema must never declare an exact travel date field').not.toMatch(/travel_date|exact_date|preferred_date/);
   for (const clinicalField of [
     'age', 'gender', 'bmi', 'pregnancy_status', 'medical_conditions',
     'allergy', 'medication', 'anesthesia', 'surgery_history', 'had_surgery',
@@ -1596,10 +1602,12 @@ test('INTAKE: the one-shot booking-intent parser can never extract a clinical fa
     expect(schemaBlock, `response schema must never declare the clinical field "${clinicalField}"`).not.toContain(clinicalField);
   }
 
-  // And the extracted procedure must be allowlist-checked against the real
+  // And every extracted procedure must be allowlist-checked against the real
   // enum before ever reaching the response — never passed through verbatim.
-  expect(src, 'must validate the extracted procedure against PROCEDURE_VALUES')
+  expect(src, 'must validate extracted procedures against PROCEDURE_VALUES')
     .toMatch(/PROCEDURE_VALUES\.includes\(/);
+  expect(src, 'must validate extracted travel_month against a fixed allowlist')
+    .toMatch(/MONTH_VALUES\.includes\(/);
 });
 
 test('VOICE INPUT: transcribeVoiceInput is transcribe-only — no entity writes, still public', () => {
@@ -1899,6 +1907,71 @@ test('CONSENT: the signed liability/arbitration disclosure is archived onto the 
   const portalDoctor = strip(read('src/pages/PortalDoctor.jsx'));
   expect(portalDoctor, 'the token-gated doctor portal must also mount it')
     .toContain('<SignedConsentPanel');
+});
+
+test("MEDICAL CONSENT: assignDoctorToCase refuses to notify a doctor without the patient's separate share consent", () => {
+  // M-Care super-agent Phase 4B. Before this fix, assignDoctorToCase emailed
+  // and pushed a doctor full case access (medical history included, via the
+  // portal) the instant SAFE-T passed, with no patient sign-off scoped to
+  // that specific act — only a blanket data_processing_consent captured at
+  // the very start of intake. This closes that gap: a SEPARATE consent
+  // (MedicalHistoryShareConsent.jsx, shown at the review step right after
+  // the patient sees exactly what they disclosed) must be true on the
+  // linked Consultation before a doctor is ever notified.
+  const src = read('base44/functions/assignDoctorToCase/entry.ts');
+
+  const consentCheckIdx = src.indexOf('medical_history_share_consent');
+  const sendEmailIdx = src.indexOf('SendEmail(');
+  const pushIdx = src.indexOf("'sendPushNotification'");
+  expect(consentCheckIdx, 'the consent check must exist').toBeGreaterThan(-1);
+  expect(sendEmailIdx, 'the doctor notification email must exist').toBeGreaterThan(-1);
+  expect(pushIdx, 'the doctor push notification must exist').toBeGreaterThan(-1);
+  expect(consentCheckIdx, 'the consent check must run before the doctor is emailed').toBeLessThan(sendEmailIdx);
+  expect(consentCheckIdx, 'the consent check must run before the doctor is pushed').toBeLessThan(pushIdx);
+
+  // A missing/false consent must flag for human review, never silently
+  // proceed and never silently drop the case either.
+  const consentBlock = src.slice(consentCheckIdx, consentCheckIdx + 800);
+  expect(consentBlock, 'a missing consent must flag Admin-Review, not silently assign').toContain("status: 'Admin-Review'");
+  expect(consentBlock, 'a missing consent must return an explicit error, not a 200').toMatch(/status:\s*400/);
+
+  // The frontend gate: ReviewStep must actually disable submission without
+  // this consent, not just record it after the fact.
+  const reviewStep = read('src/components/intake/ReviewStep.jsx');
+  expect(reviewStep, 'ReviewStep must render the medical-history-share consent').toContain('<MedicalHistoryShareConsent');
+  expect(reviewStep, 'the submit button must be disabled without this consent').toMatch(/disabled=\{[^}]*!medicalShareConsented[^}]*\}/);
+
+  // And it must be captured durably on the Consultation, same shape as the
+  // existing data_processing_consent audit trail.
+  const fieldMap = read('src/lib/intakeFlow/fieldMap.js');
+  expect(fieldMap, 'fieldMap must persist medical_history_share_consent onto the Consultation')
+    .toContain('medical_history_share_consent: !!answers.medical_history_share_consent');
+});
+
+test('M-CARE PUSH: real trip-lifecycle notifications carry the M-Care icon end to end', () => {
+  // M-Care super-agent Phase 4C. sendPushNotification/sw.js previously
+  // hardcoded the site's main mark for every push — no way for a real
+  // trip-lifecycle event (handshake checkpoint, recovery check-in) to show
+  // up as recognizably "from M-Care," the same identity the patient already
+  // talks to in the chat panel. This checks the plumbing exists end to end:
+  // sender -> sendPushNotification -> sw.js.
+  const sendFn = read('base44/functions/sendPushNotification/entry.ts');
+  expect(sendFn, 'sendPushNotification must accept an icon field from the caller').toMatch(/\bicon\b/);
+  expect(sendFn, 'the push payload must forward icon through to the client').toMatch(/JSON\.stringify\(\{[^}]*icon[^}]*\}\)/);
+
+  const sw = read('public/sw.js');
+  expect(sw, 'sw.js must read a per-notification icon, falling back to the site mark')
+    .toMatch(/icon:\s*data\.icon \|\| '\/morales-m-mark\.png'/);
+
+  const handshake = read('base44/functions/completeHandshake/entry.ts');
+  expect(handshake, 'handshake checkpoint pushes must carry the M-Care icon')
+    .toContain("icon:       '/mcare-logo.png'");
+
+  const recovery = read('base44/functions/schedulePostOpCheckIns/entry.ts');
+  expect(recovery, 'schedulePostOpCheckIns must actually push, not just email, the Day 3 check-in')
+    .toContain("'sendPushNotification'");
+  expect(recovery, 'the recovery check-in push must carry the M-Care icon')
+    .toContain("icon:       '/mcare-logo.png'");
 });
 
 test('ONBOARDING: a guest completing partner signup is sent to sign in before their role is silently lost forever', () => {

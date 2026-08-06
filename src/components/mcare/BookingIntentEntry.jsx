@@ -1,13 +1,22 @@
 // @ts-nocheck — pre-existing arithmetic/symbol type gaps, matches sibling mcare components
 /**
  * BookingIntentEntry — M-Care super-agent Phase 2A: "type what you want in
- * one sentence" entry point. Calls parseBookingIntent (procedure +
- * destination only — never a clinical fact, see that function's own header)
- * and hands the result to /intake as a URL seed, reusing the exact same
+ * one sentence" entry point. Calls parseBookingIntent (never a clinical
+ * fact, see that function's own header) and hands the procedures +
+ * destination country to /intake as a URL seed, reusing the exact same
  * seedAnswers mechanism /intake already uses for cart/doctor-link hand-offs.
  * Every remaining question — medical history included — is still asked one
  * at a time by the unmodified question graph. This component never decides
- * anything; it only pre-fills two non-safety fields before that graph runs.
+ * anything; it only pre-fills non-safety fields before that graph runs.
+ *
+ * Phase 4A: parseBookingIntent now also extracts a destination CITY and a
+ * rough travel-timing phrase (month + early/mid/late). Neither is seeded
+ * into /intake — there's no city field in questionGraph.js today, and
+ * inventing an exact date from "early November" to seed the real
+ * `preferred_date` DATE step would both put words in the patient's mouth
+ * and wrongly skip that question via flowEngine's "already answered" logic.
+ * Both are shown back in the confirm bubble only, so the patient feels
+ * heard, then the real question graph still asks preferred_date normally.
  *
  * `initialQuery` (M-Care super-agent Phase 3): when routeMCareMessage hands
  * off here from the main chat, it carries the message the user already
@@ -56,12 +65,14 @@ export default function BookingIntentEntry({ onExit, initialQuery }) {
   // own review screen) still lets the patient correct it either way. Same
   // "show the match, let them confirm" discipline as this app's existing
   // aiProcedureFallback cards on /procedures — a guess is proposed, not applied.
-  const [pending, setPending] = useState(null); // { procedure, destination_country } | null
+  const [pending, setPending] = useState(null); // { procedures, destination_country, destination_city, travel_month, travel_period } | null
   const [voiceError, setVoiceError] = useState(null);
 
-  const goToIntake = (procedure, country) => {
+  // destination_city/travel_month/travel_period are display-only (see header
+  // comment) — only procedures + destination_country are ever seeded.
+  const goToIntake = (procedures, country) => {
     const params = new URLSearchParams();
-    if (procedure) params.set('procedure', procedure);
+    if (procedures?.length) params.set('procedures', procedures.join(','));
     if (country) params.set('country', country);
     const qs = params.toString();
     window.location.href = qs ? `/intake?${qs}` : '/intake';
@@ -73,16 +84,24 @@ export default function BookingIntentEntry({ onExit, initialQuery }) {
     try {
       const res = await base44.functions.invoke('parseBookingIntent', { query });
       const payload = res?.data ?? res ?? {};
-      if (payload.procedure || payload.destination_country) {
-        setPending({ procedure: payload.procedure || null, destination_country: payload.destination_country || null });
+      const procedures = Array.isArray(payload.procedures) ? payload.procedures : [];
+      const hasAnything = procedures.length > 0 || payload.destination_country || payload.destination_city || payload.travel_month;
+      if (hasAnything) {
+        setPending({
+          procedures,
+          destination_country: payload.destination_country || null,
+          destination_city: payload.destination_city || null,
+          travel_month: payload.travel_month || null,
+          travel_period: payload.travel_period || null,
+        });
       } else {
         // Nothing recognized — nothing to confirm, just start the normal flow.
-        goToIntake(null, null);
+        goToIntake([], null);
       }
     } catch (_) {
       // parseBookingIntent unreachable — fall through to the normal,
       // unmodified question-by-question flow rather than blocking.
-      goToIntake(null, null);
+      goToIntake([], null);
     } finally {
       setThinking(false);
     }
@@ -102,14 +121,16 @@ export default function BookingIntentEntry({ onExit, initialQuery }) {
 
   if (pending) {
     const parts = [];
-    if (pending.procedure) parts.push(procedureLabel(pending.procedure));
-    if (pending.destination_country) parts.push(`in ${pending.destination_country}`);
+    if (pending.procedures?.length) parts.push(pending.procedures.map(procedureLabel).join(' + '));
+    const place = [pending.destination_city, pending.destination_country].filter(Boolean).join(', ');
+    if (place) parts.push(place);
+    if (pending.travel_month) parts.push(`${pending.travel_period || ''} ${pending.travel_month}`.trim());
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <AssistantBubble>Got it — {parts.join(' ')}. Sound right?</AssistantBubble>
+          <AssistantBubble>Got it — {parts.join(', ')}. Sound right?</AssistantBubble>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <button onClick={() => goToIntake(pending.procedure, pending.destination_country)}
+            <button onClick={() => goToIntake(pending.procedures, pending.destination_country)}
               style={{ padding: '9px 14px', borderRadius: 10, border: 'none', background: GOLD, color: DARK, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
             >Yes, continue</button>
             <button onClick={() => setPending(null)} style={{ ...chipStyle, textAlign: 'center' }}>Let me re-type it</button>

@@ -232,8 +232,11 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body:    data.body,
-    icon:    '/morales-m-mark.png',
-    badge:   '/morales-m-mark.png',
+    // icon (M-Care super-agent Phase 4C): a sender can pass its own icon
+    // (e.g. '/mcare-logo.png' for a real M-Care moment) — falls back to the
+    // site mark for every notification that doesn't specify one, unchanged.
+    icon:    data.icon || '/morales-m-mark.png',
+    badge:   data.icon || '/morales-m-mark.png',
     tag:     data.tag || 'morales-alert',
     data:    { url: data.url || '/dashboard' },
     vibrate,

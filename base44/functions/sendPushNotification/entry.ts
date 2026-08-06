@@ -6,7 +6,7 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user_id, user_email, title, body, url, urgent, tag, internal_secret } = await req.json();
+    const { user_id, user_email, title, body, url, urgent, tag, icon, internal_secret } = await req.json();
 
     // SECURITY: pushes arbitrary title/body/url to any target user's device —
     // a fully anonymous caller must never pass this check. Absence of a user
@@ -38,7 +38,12 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ skipped: true, reason: 'No push subscriptions found for user' });
     }
 
-    const payload = JSON.stringify({ title, body, url: url || '/admin', urgent: urgent || false, tag: tag || 'morales' });
+    // icon (M-Care super-agent Phase 4C): optional, defaults to sw.js's own
+    // fallback when omitted — every existing caller is unaffected. Callers
+    // narrating a real M-Care moment (trip handshake, recovery check-ins)
+    // pass '/mcare-logo.png' so the OS notification visibly matches the same
+    // identity the patient already talks to in the chat panel.
+    const payload = JSON.stringify({ title, body, url: url || '/admin', urgent: urgent || false, tag: tag || 'morales', icon });
     const results = { sent: [], failed: [] };
 
     for (const sub of subs) {

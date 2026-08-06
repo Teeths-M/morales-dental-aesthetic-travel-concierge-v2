@@ -110,6 +110,21 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         body:      html,
       }).catch(() => {});
 
+      // M-Care super-agent Phase 4C: this check-in previously only ever
+      // emailed — a real gap, since a patient who doesn't check email
+      // promptly had no other signal M-Care was following up. A push
+      // alongside the email, M-Care-iconed, closes that without replacing
+      // the email (the tokenized link still needs somewhere durable to live).
+      base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+        user_email: patientEmail,
+        title:      '🌿 M-Care checking in',
+        body:       q.question,
+        url:        `/recovery-check-in/${token}`,
+        tag:        `recovery-3-${case_id}`,
+        icon:       '/mcare-logo.png',
+        internal_secret: Deno.env.get('CRON_SECRET'),
+      }).catch(() => {});
+
       await base44.asServiceRole.entities.PostOpCheckIn.filter({ case_id, day: 3 })
         .then(([rec]) => rec && base44.asServiceRole.entities.PostOpCheckIn.update(rec.id, {
           notification_sent_at: new Date().toISOString(),

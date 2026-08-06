@@ -95,6 +95,12 @@ export default function ConciergeIntake() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  // M-Care super-agent Phase 4B: explicit, separate consent (not the
+  // blanket data_processing_consent captured at "Begin") to share the
+  // medical history just reviewed with whichever doctor is assigned. Plain
+  // local state, not seedAnswers — seedAnswers's "existing answers always
+  // win" merge can never be un-checked once true, which a real toggle needs.
+  const [medicalShareConsented, setMedicalShareConsented] = useState(false);
   // Non-medical fields M worked out on the review screen, as the patient
   // last saw them (M's value, or their correction of it).
   const [derivedAnswers, setDerivedAnswers] = useState({});
@@ -142,9 +148,11 @@ export default function ConciergeIntake() {
   // never saved the doctor. Seeds never overwrite a real answer the user gave.
   //
   // Also handles the M-Care "book a procedure" one-shot entry point
-  // (/intake?procedure=<enum>) — parseBookingIntent already validated the
-  // value against the real procedure enum server-side, so this is just a
-  // normal seed, same as the cart/doctor-link ones above and below.
+  // (/intake?procedures=<enum>,<enum>) — parseBookingIntent already validated
+  // every value against the real procedure enum server-side, so this is just
+  // a normal seed, same as the cart/doctor-link ones above and below.
+  // `procedure` (singular) is kept as a fallback for any older single-value
+  // links (Phase 2A, before Phase 4A's multi-procedure extraction).
   const urlSeededRef = useRef(false);
   useEffect(() => {
     if (isLoading || urlSeededRef.current) return;
@@ -153,7 +161,8 @@ export default function ConciergeIntake() {
     const docName = p.get('doctor');
     const country = p.get('country');
     const procedure = p.get('procedure');
-    if (!docId && !docName && !country && !procedure) return;
+    const proceduresParam = p.get('procedures');
+    if (!docId && !docName && !country && !procedure && !proceduresParam) return;
     urlSeededRef.current = true;
     const seed = {};
     if (docName && !answers.preferred_doctor_name) {
@@ -166,9 +175,12 @@ export default function ConciergeIntake() {
       seed.destination_country = country;
       seed.procedure_country = country;
     }
-    if (procedure && !answers.procedure_interest) {
-      seed.procedure_interest = procedure;
-      seed.selected_procedures = [procedure];
+    const enums = proceduresParam
+      ? [...new Set(proceduresParam.split(',').map((s) => s.trim()).filter(Boolean))].slice(0, 3)
+      : (procedure ? [procedure] : []);
+    if (enums.length && !answers.procedure_interest) {
+      seed.procedure_interest = enums[0];
+      seed.selected_procedures = enums;
     }
     if (Object.keys(seed).length) seedAnswers(seed);
   }, [isLoading, answers.preferred_doctor_name, answers.destination_country, answers.procedure_interest, seedAnswers]);
@@ -304,6 +316,12 @@ export default function ConciergeIntake() {
       for (const [field, value] of Object.entries(derivedAnswers)) {
         if (!answers[field] || answers[field] === UNSPECIFIED) mergedAnswers[field] = value;
       }
+      // Phase 4B: recorded on the Consultation the same durable/auditable way
+      // as data_processing_consent — see buildConsultationPayload and
+      // MedicalHistoryShareConsent.jsx's header comment for why this is a
+      // separate consent from the blanket one captured at "Begin".
+      mergedAnswers.medical_history_share_consent = medicalShareConsented;
+      mergedAnswers.medical_history_share_consent_at = medicalShareConsented ? new Date().toISOString() : undefined;
 
       const consultation = await base44.entities.Consultation.create(buildConsultationPayload(mergedAnswers, verifiedChannels));
 
@@ -453,6 +471,8 @@ export default function ConciergeIntake() {
                 partnerPreview={partnerPreview}
                 costEstimate={costEstimate}
                 onDerivedChange={setDerivedAnswers}
+                medicalShareConsented={medicalShareConsented}
+                onMedicalShareConsentChange={setMedicalShareConsented}
               />
             )}
             {nextStepResult.type === 'question' && !atReviewStep && !atVisaReadinessStep && !atPassportReadinessStep && (

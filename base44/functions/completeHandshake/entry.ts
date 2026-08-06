@@ -282,6 +282,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       url:        '/dashboard',
       type:       pp.type,
       tag:        `hs-${n}-${trip_id}`,
+      // M-Care super-agent Phase 4C: same icon as the chat panel, so this
+      // reads as M-Care checking in on the real trip, not a generic alert.
+      icon:       '/mcare-logo.png',
       internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch(() => {}); // non-blocking
   }

@@ -491,6 +491,15 @@
     "data_processing_consent_version": {
       "type": "string"
     },
+    "medical_history_share_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Client explicitly agreed to share their disclosed medical history with the doctor's clinic assigned to their case (M-Care super-agent Phase 4B) — separate from the general data_processing_consent above"
+    },
+    "medical_history_share_consent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "preferred_language": {
       "type": "string",
       "enum": [

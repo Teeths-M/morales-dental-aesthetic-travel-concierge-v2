@@ -8,6 +8,7 @@ import { useVisaRequirement } from '@/hooks/useVisaRequirement';
 import { getVisaHelpLinks } from '@/lib/visaMatrix';
 import { useNavigate } from 'react-router-dom';
 import JourneyBeginsStep from './JourneyBeginsStep';
+import MedicalHistoryShareConsent from '@/components/consent/MedicalHistoryShareConsent';
 import { CALM } from '@/lib/brandTokens';
 
 const TEAL = CALM.action;
@@ -124,7 +125,7 @@ function DerivedRow({ item, override, onCorrect }) {
  * the patient's mouth — see lib/intakeFlow/derivedFields.js for why nothing
  * medical is ever in the second group.
  */
-export default function ReviewStep({ answers, onSubmit, submitting, submitted, submitError, safetyStatus, doctorSearch, partnerPreview, costEstimate, onDerivedChange }) {
+export default function ReviewStep({ answers, onSubmit, submitting, submitted, submitError, safetyStatus, doctorSearch, partnerPreview, costEstimate, onDerivedChange, medicalShareConsented, onMedicalShareConsentChange }) {
   const navigate = useNavigate();
   const [corrections, setCorrections] = useState({});
 
@@ -340,6 +341,8 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
         </div>
       )}
 
+      <MedicalHistoryShareConsent checked={medicalShareConsented} onChange={onMedicalShareConsentChange} />
+
       {submitError && (
         <p style={{ margin: '16px 0 0', fontSize: 13, color: '#dc2626', textAlign: 'center' }}>{submitError}</p>
       )}
@@ -347,14 +350,14 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
       <button
         type="button"
         onClick={onSubmit}
-        disabled={submitting}
+        disabled={submitting || !medicalShareConsented}
         style={{
           marginTop: 24,
           width: '100%',
           padding: '14px 20px',
           borderRadius: 999,
-          cursor: submitting ? 'default' : 'pointer',
-          background: submitting ? 'rgba(14,138,125,0.5)' : TEAL,
+          cursor: (submitting || !medicalShareConsented) ? 'default' : 'pointer',
+          background: (submitting || !medicalShareConsented) ? 'rgba(14,138,125,0.5)' : TEAL,
           border: 'none',
           color: '#fff',
           fontSize: 14,
