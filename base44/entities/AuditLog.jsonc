@@ -45,7 +45,8 @@
         "memory_bank_recall_viewed",
         "gdpr_deletion",
         "account_deletion_requested",
-        "account_deletion_completed"
+        "account_deletion_completed",
+        "mcare_stage_transition"
       ]
     },
     "actor_id": {

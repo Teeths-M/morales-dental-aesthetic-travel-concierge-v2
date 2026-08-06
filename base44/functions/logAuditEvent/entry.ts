@@ -42,6 +42,7 @@ const ALLOWED_EVENT_TYPES = new Set([
   'gdpr_deletion',
   'account_deletion_requested',
   'account_deletion_completed',
+  'mcare_stage_transition',
 ]);
 
 async function sha256(text: string): Promise<string> {
