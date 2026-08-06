@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Heart } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
-import BackButton from '@/components/nav/BackButton';
+import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
+import { BackButton } from '@/components/nav/BackButton';
 
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
@@ -136,6 +137,11 @@ export default function MCareAgent() {
           </div>
         </div>
       </div>
+
+      {/* Journey stage tracker — reflects real case state from tool calls */}
+      {hasConversation && messages.length > 0 && (
+        <JourneyStageTracker messages={messages} />
+      )}
 
       {/* Conversation list (if multiple) */}
       {conversations.length > 1 && (
