@@ -358,6 +358,16 @@ export default function MCareOrb() {
 
   const orbState = listening ? 'listening' : thinking ? 'thinking' : speaking ? 'speaking' : 'idle';
 
+  // The panel is now a large centered overlay, not a small docked corner
+  // card — Escape is the keyboard-equivalent of clicking its dimmed
+  // backdrop, matching standard dismissible-modal behavior.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const sendMessage = useCallback(async (displayText, kbQuery) => {
     const q     = (displayText ?? input).trim();
     const query = (kbQuery ?? q).trim();
@@ -543,18 +553,26 @@ export default function MCareOrb() {
         </div>
       )}
 
-      {/* ── M-Care panel ── */}
+      {/* ── M-Care panel ──
+          Phase 6 follow-up: opening M-Care used to dock a small ~380px card
+          to the bottom-left corner — after shipping the living orb + big-type
+          moments inside it, the outer shape still read as "a chat bot stuck
+          in the corner," not a window that had actually opened. Grows into a
+          large, centered, dimmed-backdrop overlay by default now — still
+          dismissible (click the backdrop or press Escape), so it stops short
+          of the full-screen takeover that was explicitly ruled out earlier
+          this same phase. `expanded` goes even larger on top of that big
+          default, rather than being what makes it feel open at all. */}
       {open && (
-        <div style={{ position: 'fixed', bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1), width 0.25s ease, max-height 0.25s ease', left: 16, zIndex: 9001,
-          // Opening M-Care should read as a real live-chat window, not a
-          // small popup that needs a manual "expand" click to become
-          // useful — matches how real live-chat widgets (Intercom, Drift)
-          // default: modest width, but tall — close to full viewport
-          // height, not a short card. `expanded` is now an even roomier
-          // upgrade on top of that default, not the thing that makes it
-          // feel live in the first place.
-          width: expanded ? 'min(600px, calc(100vw - 32px))' : 'min(380px, calc(100vw - 32px))',
-          background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: expanded ? 'min(860px, calc(100vh - 48px))' : 'min(680px, calc(100vh - 32px))', overflow: 'hidden' }}>
+        <div
+          onClick={() => setOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(4,8,16,0.72)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, animation: 'mcareBackdropIn 0.22s ease' }}
+        >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ transition: 'width 0.25s ease, max-height 0.25s ease',
+          width: expanded ? 'min(1160px, 96vw)' : 'min(880px, 92vw)',
+          background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: expanded ? '94vh' : 'min(82vh, 820px)', overflow: 'hidden', animation: 'mcarePanelIn 0.32s cubic-bezier(0.16,1,0.3,1)' }}>
 
           {/* Header */}
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -734,11 +752,14 @@ export default function MCareOrb() {
             </>
           )}
         </div>
+        </div>
       )}
 
       <style>{`
         @keyframes orbBubbleIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
         @keyframes guideThink  { 0%,80%,100% { transform:scale(0.7); opacity:0.4; } 40% { transform:scale(1.2); opacity:1; } }
+        @keyframes mcareBackdropIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
       `}</style>
     </>
   );
