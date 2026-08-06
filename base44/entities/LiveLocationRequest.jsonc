@@ -1,0 +1,97 @@
+{
+  "name": "LiveLocationRequest",
+  "type": "object",
+  "description": "A secure, one-time link M-Care sends to a patient who reported feeling unsafe during medical travel. Opening the link (on any device, no login) shows a consent screen and streams the device GPS into the LiveLocation record tied to the patient's case. The token \u2014 not a user session \u2014 authorizes the public store endpoint.",
+  "properties": {
+    "token": {
+      "type": "string",
+      "description": "LT_<random> \u2014 the opaque token in the /share-location/:token URL"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The patient's CaseRecord the streamed LiveLocation is attached to"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why M-Care requested live location (e.g. 'Patient reported feeling unsafe during medical travel')"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "requested",
+        "active",
+        "revoked",
+        "expired"
+      ],
+      "default": "requested",
+      "description": "requested = link generated, not yet opened; active = first GPS update received; revoked = patient stopped sharing or link invalidated; expired = past expires_at"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_shared_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent GPS update received via this link"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "token",
+    "user_email",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

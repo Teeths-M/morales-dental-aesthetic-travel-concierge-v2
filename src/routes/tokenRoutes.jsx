@@ -20,6 +20,7 @@ const EmergencyManifest  = lazy(() => import('@/pages/EmergencyManifest'));
 const OfflineVaultGuide  = lazy(() => import('@/components/vault/OfflineVaultGuide'));
 const ConfirmEmail       = lazy(() => import('@/pages/ConfirmEmail'));
 const DoctorOutreachOptOut = lazy(() => import('@/pages/DoctorOutreachOptOut'));
+const ShareLiveLocation  = lazy(() => import('@/pages/ShareLiveLocation'));
 
 export const tokenRoutes = (
   <>
@@ -37,5 +38,6 @@ export const tokenRoutes = (
     <Route key="offline-vault-guide" path="/offline-vault-guide" element={<ErrorBoundary><OfflineVaultGuide /></ErrorBoundary>} />
     <Route key="confirm-email"       path="/confirm-email"        element={<ErrorBoundary><ConfirmEmail /></ErrorBoundary>} />
     <Route key="doctor-outreach-opt-out" path="/doctor-outreach-opt-out/:token" element={<ErrorBoundary><DoctorOutreachOptOut /></ErrorBoundary>} />
+    <Route key="share-location" path="/share-location/:token" element={<ErrorBoundary><ShareLiveLocation /></ErrorBoundary>} />
   </>
 );

@@ -318,7 +318,7 @@ export const AUDIT_EVENTS = {
 export const PUBLIC_BYPASS_PATHS = [
   '/offline', '/offline-guide', '/emergency-manifest', '/emergency-access',
   '/emergency', '/guardian', '/survey', '/feedback', '/luggage',
-  '/check-in', '/vault/share', '/passport-vault',
+  '/check-in', '/vault/share', '/passport-vault', '/share-location',
   // Partner signup forms are public registration pages — render immediately
   // without waiting for auth, so unauthenticated visitors (and the Testing
   // Agent) can access them without hitting the PageLoader or auth gate.
