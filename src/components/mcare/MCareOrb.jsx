@@ -201,6 +201,13 @@ export default function MCareOrb() {
   const [messages,   setMessages]   = useState([]);
   const [input,      setInput]      = useState('');
   const [thinking,   setThinking]   = useState(false);
+  // Real, honest narration of what M-Care is actually doing between a
+  // message and a reply — replaces "type, wait for dots, get an answer"
+  // (indistinguishable from any generic chatbot) with visible steps that
+  // track the REAL async work already happening (routing decision, then
+  // answer/hand-off), never a fabricated delay. Cleared whenever `thinking`
+  // goes false.
+  const [thinkingStatus, setThinkingStatus] = useState('');
   const [dismissed,  setDismissed]  = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [struggleHint, setStruggleHint] = useState(null); // { e, t } | null — reactive help, overrides the tip rotation
@@ -326,6 +333,7 @@ export default function MCareOrb() {
     setMessages(history);
     setInput('');
     setThinking(true);
+    setThinkingStatus('');
 
     const paused  = isSystemPaused();
     const canLLM  = isOnline && !paused;
@@ -341,6 +349,7 @@ export default function MCareOrb() {
     if (cached) {
       setMessages(m => [...m, { role: 'assistant', text: cached, source: 'llm' }]);
       setThinking(false);
+      setThinkingStatus('');
       return;
     }
 
@@ -348,6 +357,7 @@ export default function MCareOrb() {
       const msgId = Date.now();
       setMessages(m => [...m, { role: 'assistant', text: kbAnswer, source: 'kb', id: msgId }]);
       setThinking(false);
+      setThinkingStatus('');
 
       // Quietly enhance with the generic platform LLM only if online AND not
       // paused — same for everyone, KB already answered the actual question.
@@ -379,6 +389,7 @@ export default function MCareOrb() {
         source: 'offline',
       }]);
       setThinking(false);
+      setThinkingStatus('');
       return;
     }
 
@@ -390,20 +401,36 @@ export default function MCareOrb() {
     // having to already know which button to press. Fails open to the
     // normal answer path below (step 4/5) on any error or an "answer"
     // decision — never blocks the conversation.
+    // Plain English, not t() — matches every other M-Care narration string
+    // added this session (BookingIntentEntry, AvailabilityIntentEntry,
+    // DoctorSignupChatFlow bubbles are all hardcoded English too); a missing
+    // i18n key would render as the literal key text, worse than English.
+    setThinkingStatus('Let me see what you need...');
     try {
       const routeRes = await base44.functions.invoke('routeMCareMessage', { message: query });
       const routeDecision = routeRes?.data ?? routeRes ?? {};
       const nextMode = ROUTABLE_MODES[routeDecision.tool_name];
       if (routeDecision.action === 'route' && nextMode) {
+        setThinkingStatus(routeDecision.reasoning || 'Got it — one moment...');
+        // A short, honest readability pause — the routing call already took a
+        // real network round trip; this just gives a human a beat to read
+        // what M decided before the panel hands off, instead of an instant
+        // teleport that reads as a glitch rather than a decision being made.
+        await new Promise((resolve) => setTimeout(resolve, 650));
         if (routeDecision.reasoning) {
           setMessages(m => [...m, { role: 'assistant', text: routeDecision.reasoning, source: 'router' }]);
         }
         setModeSeed(q);
         setMode(nextMode);
         setThinking(false);
+        setThinkingStatus('');
         return;
       }
-    } catch (_) { /* routing unavailable — fall through to the normal answer path below */ }
+      setThinkingStatus('Thinking that through...');
+    } catch (_) {
+      // routing unavailable — fall through to the normal answer path below
+      setThinkingStatus('Thinking that through...');
+    }
 
     // 4. No KB match, online. Logged-in non-admin users get the real,
     // case-aware concierge backend — it can hand off to a human specialist,
@@ -430,6 +457,7 @@ export default function MCareOrb() {
         }]);
       }
       setThinking(false);
+      setThinkingStatus('');
       return;
     }
 
@@ -448,6 +476,7 @@ export default function MCareOrb() {
       setMessages(m => [...m, { role: 'assistant', text: t('guide.error_fallback'), source: 'error' }]);
     }
     setThinking(false);
+    setThinkingStatus('');
   }, [input, messages, thinking, isOnline, isConcierge, role, pathname, t]);
 
   const resetConversation = useCallback(() => {
@@ -598,10 +627,20 @@ export default function MCareOrb() {
                 ))}
 
                 {thinking && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 4 }}>
-                    {[0, 1, 2].map(i => (
-                      <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, animation: `guideThink 1.2s ease-in-out ${i * 0.2}s infinite` }} />
-                    ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                      {[0, 1, 2].map(i => (
+                        <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, animation: `guideThink 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                      ))}
+                    </div>
+                    {/* Real narration of the actual async step in flight — not a
+                        generic spinner. See sendMessage's setThinkingStatus calls:
+                        this only ever shows text tied to a real network call
+                        already happening (the routing decision, then the
+                        answer/hand-off), never a fabricated delay. */}
+                    {thinkingStatus && (
+                      <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>{thinkingStatus}</span>
+                    )}
                   </div>
                 )}
                 <div ref={bottomRef} />
