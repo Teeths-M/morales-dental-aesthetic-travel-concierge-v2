@@ -26,7 +26,7 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
   const pickVault = () => { setOpen(false); onVaultClick?.(); };
 
   const triggerClass = glass
-    ? "flex items-center gap-1.5 h-9 px-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:border-[rgba(212,175,55,0.5)] hover:text-white transition-colors disabled:opacity-50"
+    ? "flex items-center justify-center w-9 h-9 rounded-[10px] border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
     : "flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-dashed border-border text-muted-foreground hover:bg-secondary/50 hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-50";
 
   const popoverClass = glass
@@ -60,11 +60,11 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
         aria-label="Add image"
       >
         {uploading ? (
-          <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <div className={`w-4 h-4 border-2 rounded-full animate-spin ${glass ? 'border-white/25 border-t-white' : 'border-primary/30 border-t-primary'}`} />
         ) : (
           <ImageIcon className="w-4 h-4" />
         )}
-        <span className="text-[11px] font-medium leading-none">Add image</span>
+        {!glass && <span className="text-[11px] font-medium leading-none">Add image</span>}
       </button>
 
       {open && (
