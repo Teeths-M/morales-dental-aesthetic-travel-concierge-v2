@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Shield, Lock, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -29,8 +29,9 @@ const MAX_MB = 8;
 
 export const DOC_LABEL = LABEL_BY_TYPE;
 
-export default function MCareVaultUpload({ onVaulted }) {
+const MCareVaultUpload = forwardRef(function MCareVaultUpload({ onVaulted, hideTrigger = false }, ref) {
   const [open, setOpen] = useState(false);
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
   const [docType, setDocType] = useState('other');
   const [reference, setReference] = useState('');
   const [nameOnDoc, setNameOnDoc] = useState('');
@@ -113,14 +114,16 @@ export default function MCareVaultUpload({ onVaulted }) {
 
   return (
     <>
-      <Button
-        onClick={() => setOpen(true)}
-        variant="outline"
-        size="icon"
-        title="Upload a license or insurance document to the secure vault"
-      >
-        <Shield className="w-4 h-4" />
-      </Button>
+      {!hideTrigger && (
+        <Button
+          onClick={() => setOpen(true)}
+          variant="outline"
+          size="icon"
+          title="Upload a license or insurance document to the secure vault"
+        >
+          <Shield className="w-4 h-4" />
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
         <DialogContent className="max-w-md">
@@ -228,4 +231,6 @@ export default function MCareVaultUpload({ onVaulted }) {
       </Dialog>
     </>
   );
-}
+});
+
+export default MCareVaultUpload;

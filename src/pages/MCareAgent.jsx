@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Heart, Paperclip } from 'lucide-react';
+import { Send, Heart } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
+import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import { BackButton } from '@/components/nav/BackButton';
 
@@ -21,7 +22,7 @@ export default function MCareAgent() {
   const [isUploading, setIsUploading] = useState(false);
   const [loadingConvos, setLoadingConvos] = useState(true);
   const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const vaultRef = useRef(null);
 
   // Load existing conversations
   useEffect(() => {
@@ -113,9 +114,7 @@ export default function MCareAgent() {
     }
   };
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  const handleFileSelect = async (file) => {
     if (!file) return;
     if (file.size > 15 * 1024 * 1024) {
       alert('That file is larger than 15MB. Please upload a smaller image or PDF.');
@@ -244,26 +243,14 @@ export default function MCareAgent() {
       {/* Input */}
       {hasConversation && (
         <div className="sticky bottom-0 z-10 bg-background/90 backdrop-blur border-t border-border">
-          <div className="max-w-3xl mx-auto w-full px-4 py-3 flex gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,application/pdf"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-            <Button
-              onClick={() => fileInputRef.current?.click()}
+          <div className="max-w-3xl mx-auto w-full px-4 py-3 flex items-end gap-2">
+            <AddImageMenu
+              onDeviceFile={handleFileSelect}
+              onVaultClick={() => vaultRef.current?.open()}
               disabled={isSending || isUploading}
-              variant="outline"
-              size="icon"
-              title="Upload a document (passport, license, ID)"
-            >
-              {isUploading
-                ? <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                : <Paperclip className="w-4 h-4" />}
-            </Button>
-            <MCareVaultUpload onVaulted={handleVaulted} />
+              uploading={isUploading}
+            />
+            <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
