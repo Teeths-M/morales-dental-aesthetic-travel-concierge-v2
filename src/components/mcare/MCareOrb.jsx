@@ -22,6 +22,8 @@ import VoiceInputButton from './VoiceInputButton';
 import LivingOrb from './LivingOrb';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
+import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
+import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import { isSystemPaused } from '@/lib/systemPause';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -89,7 +91,9 @@ export default function MCareOrb() {
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [struggleHint, setStruggleHint] = useState(null);
   const [expanded,   setExpanded]   = useState(false);
+  const [agentUploading, setAgentUploading] = useState(false);
   const bottomRef = useRef(null);
+  const vaultRef = useRef(null);
 
   // ── M-Care super-agent conversation (synced with base44/agents/m_care.jsonc) ──
   const [agentConversation, setAgentConversation] = useState(null);
@@ -228,9 +232,9 @@ export default function MCareOrb() {
 
   // Send a message to the real M-Care agent. Creates a conversation on first
   // send, then streams the agent's response + tool calls via the subscription.
-  const sendAgentMessage = useCallback(async (displayText) => {
+  const sendAgentMessage = useCallback(async (displayText, fileUrls) => {
     const q = (displayText ?? input).trim();
-    if (!q || agentSending || !isAuthenticated) return;
+    if ((!q && !fileUrls?.length) || agentSending || !isAuthenticated) return;
 
     let conversation = agentConversation;
     if (!conversation) {
@@ -250,9 +254,9 @@ export default function MCareOrb() {
     setAgentSending(true);
     // Optimistic user message so the UI feels instant; subscription replaces
     // it with the canonical server record.
-    setAgentMessages(prev => [...prev, { role: 'user', content: q }]);
+    setAgentMessages(prev => [...prev, { role: 'user', content: q, file_urls: fileUrls }]);
     try {
-      await base44.agents.addMessage(conversation, { role: 'user', content: q });
+      await base44.agents.addMessage(conversation, { role: 'user', content: q, file_urls: fileUrls });
     } catch (e) {
       setAgentSending(false);
     }
@@ -271,6 +275,25 @@ export default function MCareOrb() {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(); }
+  };
+
+  const handleFileSelect = async (file) => {
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) { alert('That file is larger than 15MB. Please upload a smaller image or PDF.'); return; }
+    setAgentUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await sendAgentMessage(`I've uploaded: ${file.name || 'document'}`, [file_url]);
+    } catch (e) {
+      alert('Upload failed — please try again.');
+    } finally {
+      setAgentUploading(false);
+    }
+  };
+
+  const handleVaulted = ({ token, document_type, file_name }) => {
+    const label = DOC_LABEL[document_type] || 'document';
+    sendAgentMessage(`I've uploaded my ${label} (${file_name}) to the secure vault. Reference token: ${token}. It's encrypted and stored for verification.`);
   };
 
   const currentTip = struggleHint || tips[tipIdx];
@@ -393,12 +416,19 @@ export default function MCareOrb() {
               </div>
 
               {/* Input */}
-              <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                <AddImageMenu
+                  onDeviceFile={handleFileSelect}
+                  onVaultClick={() => vaultRef.current?.open()}
+                  disabled={agentSending || agentUploading}
+                  uploading={agentUploading}
+                />
+                <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
                 <input
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isOnline ? "Tell M-Care what you're considering…" : t('guide.placeholder_offline')}
+                  placeholder={isOnline ? (agentUploading ? "Uploading…" : "Tell M-Care what you're considering…") : t('guide.placeholder_offline')}
                   style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '8px 12px', fontSize: 12, color: '#fff', outline: 'none' }}
                 />
                 {isOnline && (
