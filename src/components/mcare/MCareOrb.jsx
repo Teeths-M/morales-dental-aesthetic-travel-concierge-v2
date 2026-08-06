@@ -35,7 +35,12 @@ import { loadSignupDraft } from '@/lib/signupDraft';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
-const CACHE_KEY = 'morales_guide_cache';
+// Bump this suffix whenever buildSystemPrompt's persona/instructions change —
+// a stale cached answer from before a prompt fix (e.g. the model-identity
+// leak fixed this session) would otherwise keep being served verbatim to a
+// browser tab that already asked the same question once, silently
+// outliving the fix that was supposed to replace it.
+const CACHE_KEY = 'morales_guide_cache_v2';
 
 // M-Care super-agent Phase 3: maps a routeMCareMessage tool_name decision to
 // the existing `mode` this file already renders for that quick-action button
