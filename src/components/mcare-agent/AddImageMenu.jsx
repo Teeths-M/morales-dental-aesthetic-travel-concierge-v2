@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Image as ImageIcon, Upload, Shield } from 'lucide-react';
 
-// AddImageMenu — the dashed "Add image" button from the logbook screenshot.
-// Tapping it opens a small upload menu (two groups, divided like the reference):
-//   1. Upload from device  → attach an image/PDF straight into the M-Care chat
-//   2. Upload to secure vault → open the encrypted-vault modal (license/ID/insurance)
-// The menu closes on outside click or after a choice.
+// AddImageMenu — the "Add image" affordance in the M-Care input bar.
+// variant="default" → light/token styling (the M-Care agent page).
+// variant="glass"   → dark-glass styling (the floating MCareOrb panel).
+// Opens a small upload menu: device attachment or secure-vault upload.
+// Closes on outside click or after a choice.
 
-export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, uploading }) {
+export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, uploading, variant = 'default' }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const fileRef = useRef(null);
+  const glass = variant === 'glass';
 
   useEffect(() => {
     if (!open) return;
@@ -21,15 +22,20 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
     return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
 
-  const pickDevice = () => {
-    setOpen(false);
-    fileRef.current?.click();
-  };
+  const pickDevice = () => { setOpen(false); fileRef.current?.click(); };
+  const pickVault = () => { setOpen(false); onVaultClick?.(); };
 
-  const pickVault = () => {
-    setOpen(false);
-    onVaultClick?.();
-  };
+  const triggerClass = glass
+    ? "flex items-center gap-1.5 h-9 px-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:border-[rgba(212,175,55,0.5)] hover:text-white transition-colors disabled:opacity-50"
+    : "flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-dashed border-border text-muted-foreground hover:bg-secondary/50 hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-50";
+
+  const popoverClass = glass
+    ? "absolute bottom-full mb-2 left-0 z-20 w-60 rounded-xl border border-white/12 bg-[#0c1218] text-white shadow-2xl overflow-hidden"
+    : "absolute bottom-full mb-2 left-0 z-20 w-60 rounded-xl border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden";
+
+  const itemClass = glass
+    ? "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm hover:bg-white/10 text-left transition-colors"
+    : "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm hover:bg-secondary text-left transition-colors";
 
   return (
     <div className="relative" ref={wrapRef}>
@@ -45,31 +51,30 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
         }}
       />
 
-      {/* Dashed "Add image" affordance — matches the logbook reference */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         disabled={disabled}
-        className="flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border px-3 py-2 text-muted-foreground hover:bg-secondary/50 hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-50"
+        className={triggerClass}
         title="Add an image or document"
         aria-label="Add image"
       >
         {uploading ? (
-          <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         ) : (
-          <ImageIcon className="w-5 h-5" />
+          <ImageIcon className="w-4 h-4" />
         )}
         <span className="text-[11px] font-medium leading-none">Add image</span>
       </button>
 
       {open && (
-        <div className="absolute bottom-full mb-2 left-0 z-20 w-60 rounded-xl border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden">
+        <div className={popoverClass}>
           <div className="p-1">
-            <MenuItem icon={<Upload className="w-4 h-4" />} label="Upload from device" onClick={pickDevice} />
+            <MenuItem className={itemClass} icon={<Upload className="w-4 h-4" />} label="Upload from device" onClick={pickDevice} />
           </div>
-          <div className="h-px bg-border mx-2" />
+          <div className={`h-px mx-2 ${glass ? 'bg-white/10' : 'bg-border'}`} />
           <div className="p-1">
-            <MenuItem icon={<Shield className="w-4 h-4 text-emerald-600" />} label="Upload to secure vault" onClick={pickVault} />
+            <MenuItem className={itemClass} icon={<Shield className="w-4 h-4 text-emerald-500" />} label="Upload to secure vault" onClick={pickVault} />
           </div>
         </div>
       )}
@@ -77,13 +82,9 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
   );
 }
 
-function MenuItem({ icon, label, onClick }) {
+function MenuItem({ className, icon, label, onClick }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm hover:bg-secondary text-left transition-colors"
-    >
+    <button type="button" onClick={onClick} className={className}>
       <span className="flex-shrink-0">{icon}</span>
       <span className="font-medium">{label}</span>
     </button>

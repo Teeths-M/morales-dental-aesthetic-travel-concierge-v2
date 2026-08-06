@@ -14,7 +14,11 @@ const stripMd = (s) => {
   return s
     .replace(/```([\s\S]*?)```/g, (_, c) => c.replace(/^\n/, ''))
     .replace(/`([^`\n]+)`/g, '$1')
-    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s*([-*_])\1{2,}\s*$/gm, '')   // horizontal rules (---/***/___)
+    .replace(/^\s*>\s?/gm, '')                 // blockquote markers
+    .replace(/^\s*[-*+]\s+/gm, '')             // bullet list markers
+    .replace(/^\s*\d+\.\s+/gm, '')             // numbered list markers
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')        // headers
     .replace(/\*\*([^*\n]+)\*\*/g, '$1')
     .replace(/__([^_\n]+)__/g, '$1')
     .replace(/(?<!\w)\*([^*\n]+)\*(?!\w)/g, '$1')

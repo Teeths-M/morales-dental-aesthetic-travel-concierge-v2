@@ -418,6 +418,7 @@ export default function MCareOrb() {
               {/* Input */}
               <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                 <AddImageMenu
+                  variant="glass"
                   onDeviceFile={handleFileSelect}
                   onVaultClick={() => vaultRef.current?.open()}
                   disabled={agentSending || agentUploading}
