@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Heart, Paperclip } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
+import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import { BackButton } from '@/components/nav/BackButton';
 
@@ -134,6 +135,11 @@ export default function MCareAgent() {
     }
   };
 
+  const handleVaulted = ({ token, document_type, file_name }) => {
+    const label = DOC_LABEL[document_type] || 'document';
+    sendText(`I've uploaded my ${label} (${file_name}) to the secure vault. Reference token: ${token}. It's encrypted and stored for your verification team to review.`);
+  };
+
   const sendMessage = () => {
     const content = input.trim();
     if (!content || isSending) return;
@@ -257,6 +263,7 @@ export default function MCareAgent() {
                 ? <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                 : <Paperclip className="w-4 h-4" />}
             </Button>
+            <MCareVaultUpload onVaulted={handleVaulted} />
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}

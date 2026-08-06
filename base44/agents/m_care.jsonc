@@ -88,7 +88,7 @@
     },
     {
       "function_name": "safeT4LifeScan",
-      "description": "Run the full Safe-T4life risk engine on a confirmed CaseRecord. Takes caseId (and optional action). Returns tier CRITICAL/HIGH/MEDIUM/LOW, status BLOCKED/WAIVER_REQUIRED/PASSED, score, and flags. CRITICAL hard-locks the case; HIGH requires a waiver; MEDIUM/LOW proceed. Call once a CaseRecord exists for this patient, before booking. Treat BLOCKED as a hard stop and WAIVER_REQUIRED as a gate the patient must clear before you proceed."
+      "description": "Run the Safe-T4life risk engine on a confirmed CaseRecord \u2014 returns tier CRITICAL/HIGH/MEDIUM/LOW, status BLOCKED/WAIVER_REQUIRED/PASSED, score, and flags."
     },
     {
       "function_name": "matchDoctorsForProcedure",
@@ -191,5 +191,23 @@
       "description": "Generate the doctor's provider dashboard/portal link to deliver once their verification scan is approved."
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "allow_anonymous_access": false,
   "name": "m_care"
 }
