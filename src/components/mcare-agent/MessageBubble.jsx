@@ -91,7 +91,7 @@ export default function MessageBubble({ message, onRespond }) {
             )}
           </div>
         )}
-        {message.tool_calls?.map((toolCall, idx) => toolCall.name === 'computeSafeTScreening'
+        {message.tool_calls?.map((toolCall, idx) => (toolCall.name === 'computeSafeTScreening' || toolCall.name === 'safeT4LifeScan')
           ? <SafetyGateCard key={idx} toolCall={toolCall} onRespond={onRespond} />
           : <ToolCallDisplay key={idx} toolCall={toolCall} />)}
       </div>
