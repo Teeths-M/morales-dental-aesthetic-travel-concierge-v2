@@ -21,6 +21,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { Send, WifiOff, RotateCcw, Maximize2, Minimize2, Minus, X, LogIn, Stethoscope, Briefcase, Shield, BarChart3, Luggage, Siren, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import VoiceInputButton from './VoiceInputButton';
 import LivingOrb from './LivingOrb';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
@@ -343,19 +344,27 @@ export default function MCareOrb() {
       )}
 
       {/* ── M-Safe chat panel ── */}
+      <AnimatePresence>
       {open && (
-        <div
+        <motion.div
           onClick={() => setOpen(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, animation: 'mcareBackdropIn 0.22s ease' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
-        <div
+        <motion.div
           onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0, scale: 0.94, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: 10 }}
+          transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
           style={{ transition: 'width 0.25s ease, max-height 0.25s ease',
             width: expanded ? 'min(1160px, 96vw)' : 'min(440px, 94vw)',
             background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 16,
             boxShadow: '0 24px 64px rgba(15,23,42,0.28)', display: 'flex', flexDirection: 'column',
-            maxHeight: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden',
-            animation: 'mcarePanelIn 0.32s cubic-bezier(0.16,1,0.3,1)' }}>
+            maxHeight: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, background: '#fff' }}>
@@ -414,7 +423,16 @@ export default function MCareOrb() {
                   </div>
                 )}
 
-                {agentMessages.map((m, i) => <MessageBubble key={i} message={m} accent={PURPLE} showAvatar showMeta />)}
+                {agentMessages.map((m, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta />
+                  </motion.div>
+                ))}
 
                 {agentSending && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
@@ -504,9 +522,10 @@ export default function MCareOrb() {
               </div>
             </div>
           )}
-        </div>
-        </div>
+        </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes orbBubbleIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
