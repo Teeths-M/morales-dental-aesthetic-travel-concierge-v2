@@ -32,6 +32,7 @@ const EmergencyMedCard       = lazy(() => import('@/pages/EmergencyMedCard'));
 const DischargePaperReader   = lazy(() => import('@/pages/DischargePaperReader'));
 const MyQuotes               = lazy(() => import('@/pages/MyQuotes'));
 const NominateDoctor         = lazy(() => import('@/pages/NominateDoctor'));
+const MCareAgent             = lazy(() => import('@/pages/MCareAgent'));
 
 const CHECKOUT_ROLES = [
   ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
@@ -70,6 +71,7 @@ export const clientRoutes = (
       <Route path="/discharge-reader"            element={<ErrorBoundary><DischargePaperReader /></ErrorBoundary>} />
       <Route path="/my-quotes"                   element={<ErrorBoundary><MyQuotes /></ErrorBoundary>} />
       <Route path="/nominate-doctor"             element={<ErrorBoundary><NominateDoctor /></ErrorBoundary>} />
+      <Route path="/m-care"                      element={<ErrorBoundary><MCareAgent /></ErrorBoundary>} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>

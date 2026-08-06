@@ -406,7 +406,18 @@ export default function CompanionDashboard() {
   const [editedData,      setEditedData]       = useState(null);
   const [fetchError,      setFetchError]       = useState(null);
   const [uploadingPhoto,  setUploadingPhoto]   = useState(false);
+  const [responding,      setResponding]       = useState(null);
+  const [cancelTarget,   setCancelTarget]     = useState(null);
   const queryClient = useQueryClient();
+
+  async function respond(assignment_id, action) {
+    setResponding(assignment_id);
+    try {
+      await base44.functions.invoke('respondToCompanionJob', { assignment_id, action });
+      queryClient.invalidateQueries({ queryKey: ['companion_assignments'] });
+    } catch (_) {}
+    setResponding(null);
+  }
 
   const uploadIdentityPhoto = async (file) => {
     if (!companion?.id) return;
