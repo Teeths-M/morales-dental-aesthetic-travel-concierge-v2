@@ -12,12 +12,15 @@
  *   base44.agents.createConversation / addMessage / subscribeToConversation
  * JourneyStageTracker reflects real case state from the agent's tool calls,
  * and MessageBubble renders the agent's tool calls inline.
+ *
+ * The open chat panel is styled as "M-Safe" (white + purple #6C47FF) per the
+ * product design spec; the floating orb button keeps its dark-glass presence.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, ChevronDown, WifiOff, RotateCcw, Maximize2, Minimize2, LogIn, Stethoscope, Briefcase } from 'lucide-react';
+import { Send, WifiOff, RotateCcw, Maximize2, Minimize2, Minus, X, LogIn, Stethoscope, Briefcase, Shield, BarChart3, Luggage, Siren, FileText } from 'lucide-react';
 import VoiceInputButton from './VoiceInputButton';
 import LivingOrb from './LivingOrb';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
@@ -30,8 +33,9 @@ import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
+const PURPLE = '#6C47FF';
 const AGENT_NAME = 'm_care';
-const GREETING = "I'm M-Care, your personal journey coordinator. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
+const GREETING = "I'm M-Safe, your Morales Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 
 // Public pages where all users should see visitor-facing tips
 const PUBLIC_PATHS = new Set(['/', '/discover', '/providers', '/about', '/procedures', '/how-it-works', '/partners']);
@@ -296,7 +300,24 @@ export default function MCareOrb() {
     sendAgentMessage(`I've uploaded my ${label} (${file_name}) to the secure vault. Reference token: ${token}. It's encrypted and stored for verification.`);
   };
 
+  // M-Safe-style quick action chips (functional shortcuts). "Become a partner"
+  // is role-gated and navigates rather than messaging the agent.
+  const quickChips = [
+    { label: 'My Trips', icon: Luggage, run: () => sendAgentMessage('Show me my trips') },
+    { label: 'Emergency Help', icon: Siren, run: () => sendAgentMessage('I need emergency help') },
+    { label: 'Find Doctor', icon: Stethoscope, run: () => sendAgentMessage('Help me find a verified doctor') },
+    { label: 'Visa Help', icon: FileText, run: () => sendAgentMessage('I need help with a visa') },
+  ];
+  if (canBecomePartner) quickChips.push({ label: 'Become a partner', icon: Briefcase, run: () => { setOpen(false); navigate('/partner-signup'); } });
+
   const currentTip = struggleHint || tips[tipIdx];
+
+  // Header status pill reflects live / paused / offline (preserves prior state signaling)
+  const statusPill = paused
+    ? { text: 'PAUSED', bg: '#FEF3C7', fg: '#92400E', dot: '#F59E0B' }
+    : isOnline
+      ? { text: 'LIVE SESSION', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
+      : { text: 'OFFLINE', bg: '#F3F4F6', fg: '#4B5563', dot: '#9CA3AF' };
 
   return (
     <>
@@ -321,37 +342,46 @@ export default function MCareOrb() {
         </div>
       )}
 
-      {/* ── M-Care panel ── */}
+      {/* ── M-Safe chat panel ── */}
       {open && (
         <div
           onClick={() => setOpen(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(4,8,16,0.72)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, animation: 'mcareBackdropIn 0.22s ease' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, animation: 'mcareBackdropIn 0.22s ease' }}
         >
         <div
           onClick={(e) => e.stopPropagation()}
           style={{ transition: 'width 0.25s ease, max-height 0.25s ease',
-          width: expanded ? 'min(1160px, 96vw)' : 'min(880px, 92vw)',
-          background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: expanded ? '94vh' : 'min(82vh, 820px)', overflow: 'hidden', animation: 'mcarePanelIn 0.32s cubic-bezier(0.16,1,0.3,1)' }}>
+            width: expanded ? 'min(1160px, 96vw)' : 'min(440px, 94vw)',
+            background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 16,
+            boxShadow: '0 24px 64px rgba(15,23,42,0.28)', display: 'flex', flexDirection: 'column',
+            maxHeight: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden',
+            animation: 'mcarePanelIn 0.32s cubic-bezier(0.16,1,0.3,1)' }}>
 
           {/* Header */}
-          <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <LivingOrb state={orbState} size={32} />
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, background: '#fff' }}>
+            <span style={{ width: 36, height: 36, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden>
+              <Shield style={{ width: 18, height: 18, color: '#fff' }} fill="#fff" />
+            </span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{t('guide.ai_label')}</p>
-              <p style={{ margin: 0, fontSize: 10, color: isOnline ? 'rgba(255,255,255,0.38)' : '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
-                {isOnline ? (paused ? 'Paused' : t('guide.ai_sub')) : <><WifiOff style={{ width: 9, height: 9 }} /> {t('guide.ai_offline')}</>}
-              </p>
+              <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
+              <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Morales Super Agent</p>
             </div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
+            </span>
             {isAuthenticated && agentMessages.length > 0 && (
-              <button onClick={startNewJourney} title="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.4)', display: 'flex', borderRadius: 8 }}>
-                <RotateCcw style={{ width: 15, height: 15 }} />
+              <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+                <RotateCcw style={{ width: 16, height: 16 }} />
               </button>
             )}
-            <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.4)', display: 'flex', borderRadius: 8 }}>
-              {expanded ? <Minimize2 style={{ width: 14, height: 14 }} /> : <Maximize2 style={{ width: 14, height: 14 }} />}
+            <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+              {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
             </button>
-            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.4)', display: 'flex', borderRadius: 8 }}>
-              <ChevronDown style={{ width: 18, height: 18 }} />
+            <button onClick={() => setOpen(false)} title="Minimize" aria-label="Minimize" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+              <Minus style={{ width: 18, height: 18 }} />
+            </button>
+            <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+              <X style={{ width: 18, height: 18 }} />
             </button>
           </div>
 
@@ -363,62 +393,67 @@ export default function MCareOrb() {
               )}
 
               {/* Chat area */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: '#F6F7FB' }}>
                 {agentMessages.length === 0 && !agentLoading && (
-                  <div style={{ paddingTop: 2 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(10,20,28,0.92))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(212,175,55,0.3)' }}>
-                        <LivingOrb state="idle" size={34} />
-                      </div>
-                      <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.55 }}>{GREETING}</p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <button onClick={() => sendAgentMessage("I'd like to book a procedure")}
-                        style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: GOLD, cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', display: 'flex', alignItems: 'center', gap: 8 }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.12)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.06)'}
-                      ><Stethoscope style={{ width: 14, height: 14 }} /> Book a procedure</button>
-                      {canBecomePartner && (
-                        <button onClick={() => { setOpen(false); navigate('/partner-signup'); }}
-                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', display: 'flex', alignItems: 'center', gap: 8 }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.08)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        ><Briefcase style={{ width: 14, height: 14 }} /> Become a partner</button>
-                      )}
-                    </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
+                    <span style={{ width: 32, height: 32, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden>
+                      <Shield style={{ width: 16, height: 16, color: '#fff' }} fill="#fff" />
+                    </span>
+                    <p style={{ margin: 0, fontSize: 13, color: '#111827', lineHeight: 1.55, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>{GREETING}</p>
                   </div>
                 )}
 
                 {agentLoading && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       {[0, 1, 2].map(i => (
-                        <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, animation: `guideThink 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: PURPLE, display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
                       ))}
                     </div>
-                    <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>Opening your journey…</span>
+                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>Opening your journey…</span>
                   </div>
                 )}
 
-                {agentMessages.map((m, i) => <MessageBubble key={i} message={m} />)}
+                {agentMessages.map((m, i) => <MessageBubble key={i} message={m} accent={PURPLE} showAvatar showMeta />)}
 
                 {agentSending && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       {[0, 1, 2].map(i => (
-                        <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, animation: `guideThink 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: PURPLE, display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
                       ))}
                     </div>
-                    <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>M-Care is coordinating…</span>
+                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>M-Safe is coordinating…</span>
                   </div>
                 )}
                 <div ref={bottomRef} />
               </div>
 
+              {/* Quick actions */}
+              <div style={{ padding: '10px 14px', borderTop: '1px solid #E5E7EB', display: 'flex', gap: 8, overflowX: 'auto', background: '#fff' }}>
+                {quickChips.map(c => (
+                  <button key={c.label} onClick={c.run}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: '1px solid #E5E7EB', background: '#fff', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <c.icon style={{ width: 14, height: 14 }} /> {c.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Feedback panel */}
+              <div style={{ padding: '12px 14px', borderTop: '1px solid #E5E7EB', background: '#fff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <BarChart3 style={{ width: 14, height: 14, color: '#6B7280' }} />
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#111827' }}>Feedback</p>
+                </div>
+                <FeedbackRow label="Clarity" value={82} color="#22C55E" />
+                <div style={{ height: 8 }} />
+                <FeedbackRow label="Evidence" value={64} color={PURPLE} />
+              </div>
+
               {/* Input */}
-              <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+              <div style={{ padding: '10px 14px', borderTop: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: '#fff' }}>
                 <AddImageMenu
-                  variant="glass"
+                  variant="icon"
                   onDeviceFile={handleFileSelect}
                   onVaultClick={() => vaultRef.current?.open()}
                   disabled={agentSending || agentUploading}
@@ -429,46 +464,41 @@ export default function MCareOrb() {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isOnline ? (agentUploading ? "Uploading…" : "Tell M-Care what you're considering…") : t('guide.placeholder_offline')}
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '8px 12px', fontSize: 12, color: '#fff', outline: 'none' }}
+                  placeholder={isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
+                  style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
                 />
                 {isOnline && (
-                  <VoiceInputButton
-                    disabled={agentSending}
-                    onTranscript={(text) => setInput(text)}
-                    onRecordingChange={setListening}
-                  />
+                  <VoiceInputButton disabled={agentSending} onTranscript={(text) => setInput(text)} onRecordingChange={setListening} />
                 )}
                 <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
-                  style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: input.trim() && !agentSending ? GOLD : 'rgba(255,255,255,0.06)', border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+                  style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? PURPLE : '#E5E7EB', border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
                 >
-                  <Send style={{ width: 15, height: 15, color: input.trim() && !agentSending ? DARK : 'rgba(255,255,255,0.3)' }} />
+                  <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#fff' : '#9CA3AF' }} />
                 </button>
               </div>
             </>
           ) : (
-            /* ── Logged-out: M-Care coordinates real journeys, which need an account.
-                 No generic Q&A chatbot here — a clear path to sign in or start. ── */
-            <div style={{ flex: 1, overflowY: 'auto', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 16 }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(10,20,28,0.92))', border: '1px solid rgba(212,175,55,0.3)' }} className="m-breathe">
-                <LivingOrb state="idle" size={50} />
-              </div>
+            /* ── Logged-out: M-Care coordinates real journeys, which need an account. ── */
+            <div style={{ flex: 1, overflowY: 'auto', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 16, background: '#F6F7FB' }}>
+              <span style={{ width: 56, height: 56, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="m-breathe">
+                <Shield style={{ width: 26, height: 26, color: '#fff' }} fill="#fff" />
+              </span>
               <div>
-                <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#fff' }}>M-Care coordinates your journey</h3>
-                <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55, maxWidth: 360 }}>
-                  M-Care is a stateful journey coordinator — it runs safety checks, matches only verified providers, logs your consent, and coordinates every leg of your trip with 24/7 monitoring. Sign in to start your journey, or explore becoming a partner.
+                <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#111827' }}>M-Safe coordinates your journey</h3>
+                <p style={{ margin: 0, fontSize: 13, color: '#6B7280', lineHeight: 1.55, maxWidth: 360 }}>
+                  M-Safe is a stateful journey coordinator — it runs safety checks, matches only verified providers, logs your consent, and coordinates every leg of your trip with 24/7 monitoring. Sign in to start your journey, or explore becoming a partner.
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 280 }}>
                 <button onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: GOLD, color: DARK, border: 'none', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: PURPLE, color: '#fff', border: 'none', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                 ><LogIn style={{ width: 15, height: 15 }} /> Sign in to start your journey</button>
                 <button onClick={() => { setOpen(false); navigate('/intake'); }}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(212,175,55,0.08)', color: GOLD, border: '1px solid rgba(212,175,55,0.22)', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: PURPLE, border: '1px solid #E5E7EB', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                 ><Stethoscope style={{ width: 15, height: 15 }} /> Begin intake</button>
                 {canBecomePartner && (
                   <button onClick={() => { setOpen(false); navigate('/partner-signup'); }}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#374151', border: '1px solid #E5E7EB', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                   ><Briefcase style={{ width: 15, height: 15 }} /> Become a partner</button>
                 )}
               </div>
@@ -485,5 +515,19 @@ export default function MCareOrb() {
         @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
       `}</style>
     </>
+  );
+}
+
+function FeedbackRow({ label, value, color }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: 12, color: '#374151' }}>{label}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{value}%</span>
+      </div>
+      <div style={{ height: 8, borderRadius: 999, background: '#E5E7EB', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${value}%`, background: color, borderRadius: 999 }} />
+      </div>
+    </div>
   );
 }

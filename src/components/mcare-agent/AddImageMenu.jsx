@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Image as ImageIcon, Upload, Shield } from 'lucide-react';
 
-// AddImageMenu — the "Add image" affordance in the M-Care input bar.
-// variant="default" → light/token styling (the M-Care agent page).
-// variant="glass"   → dark-glass styling (the floating MCareOrb panel).
+// AddImageMenu — the attach affordance in the M-Care/M-Safe input bar.
+// variant="default" → compact dashed "Add image" label button (light agent page).
+// variant="glass"   → icon-only dark control (legacy dark panel).
+// variant="icon"    → icon-only light control (M-Safe white input bar, no dashed border).
 // Opens a small upload menu: device attachment or secure-vault upload.
-// Closes on outside click or after a choice.
 
 export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, uploading, variant = 'default' }) {
   const [open, setOpen] = useState(false);
@@ -27,7 +27,9 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
 
   const triggerClass = glass
     ? "flex items-center justify-center w-9 h-9 rounded-[10px] border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
-    : "flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-dashed border-border text-muted-foreground hover:bg-secondary/50 hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-50";
+    : variant === 'icon'
+      ? "flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors disabled:opacity-50"
+      : "flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-dashed border-border text-muted-foreground hover:bg-secondary/50 hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-50";
 
   const popoverClass = glass
     ? "absolute bottom-full mb-2 left-0 z-20 w-60 rounded-xl border border-white/12 bg-[#0c1218] text-white shadow-2xl overflow-hidden"
@@ -64,7 +66,7 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
         ) : (
           <ImageIcon className="w-4 h-4" />
         )}
-        {!glass && <span className="text-[11px] font-medium leading-none">Add image</span>}
+        {variant === 'default' && <span className="text-[11px] font-medium leading-none">Add image</span>}
       </button>
 
       {open && (

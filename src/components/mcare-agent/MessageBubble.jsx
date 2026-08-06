@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck } from 'lucide-react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 
 const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
 
-// M-Care sometimes emits markdown emphasis (**bold**, _italic_, # headers,
-// `code`, ~~strike~~) that the chat renders as raw symbols. Strip the markers
-// so the conversation reads as clean plain text. Paired-emphasis only — leaves
-// underscores inside tokens like PASS_xxx intact.
+// Strip markdown emphasis markers so chat reads as clean plain text.
 const stripMd = (s) => {
   if (!s) return s;
   return s
     .replace(/```([\s\S]*?)```/g, (_, c) => c.replace(/^\n/, ''))
     .replace(/`([^`\n]+)`/g, '$1')
-    .replace(/^\s*([-*_])\1{2,}\s*$/gm, '')   // horizontal rules (---/***/___)
+    .replace(/^\s*([-*_])\1{2,}\s*$/gm, '')   // horizontal rules
     .replace(/^\s*>\s?/gm, '')                 // blockquote markers
     .replace(/^\s*[-*+]\s+/gm, '')             // bullet list markers
     .replace(/^\s*\d+\.\s+/gm, '')             // numbered list markers
@@ -87,11 +84,23 @@ function ToolCallDisplay({ toolCall }) {
   );
 }
 
-export default function MessageBubble({ message, onRespond }) {
+// accent (hex) overrides the user bubble color (M-Safe purple). showAvatar adds
+// the purple "M" avatar to agent messages; showMeta adds a time + delivery check
+// under user messages. All optional → default rendering is unchanged.
+export default function MessageBubble({ message, onRespond, accent, showAvatar, showMeta }) {
   const isUser = message.role === 'user';
+  const ts = message.created_date || message.timestamp;
+  const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
+  const userBubbleClass = isUser
+    ? (accent ? 'text-white' : 'bg-primary text-primary-foreground')
+    : 'bg-card border border-border text-card-foreground';
+  const userBubbleStyle = isUser && accent ? { background: accent } : undefined;
   return (
-    <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
-      <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${isUser ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-card-foreground'}`}>
+    <div className={isUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'}>
+      {!isUser && showAvatar && (
+        <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-white text-[13px] font-bold" style={{ background: accent || '#6C47FF' }} aria-hidden>M</span>
+      )}
+      <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
         {message.content && (
           <p className="text-sm whitespace-pre-wrap">{stripMd(message.content)}</p>
         )}
@@ -115,6 +124,12 @@ export default function MessageBubble({ message, onRespond }) {
         {message.tool_calls?.map((toolCall, idx) => (toolCall.name === 'computeSafeTScreening' || toolCall.name === 'safeT4LifeScan')
           ? <SafetyGateCard key={idx} toolCall={toolCall} onRespond={onRespond} />
           : <ToolCallDisplay key={idx} toolCall={toolCall} />)}
+        {isUser && showMeta && time && (
+          <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-80">
+            <span>{time}</span>
+            <CheckCheck className="w-3 h-3" style={{ color: '#5EEAD4' }} />
+          </div>
+        )}
       </div>
     </div>
   );
