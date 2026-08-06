@@ -1,0 +1,158 @@
+{
+  "name": "AgencyIATAVerification",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string",
+      "description": "References the TravelAgency record this verification belongs to."
+    },
+    "agency_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "agency_name": {
+      "type": "string"
+    },
+    "iata_code": {
+      "type": "string"
+    },
+    "iata_is_valid": {
+      "type": "boolean",
+      "default": false
+    },
+    "iata_status": {
+      "type": "string",
+      "enum": [
+        "Valid",
+        "Code Not Listed",
+        "Format Invalid",
+        "Error"
+      ]
+    },
+    "iata_agency_name": {
+      "type": "string"
+    },
+    "iata_agency_class": {
+      "type": "string"
+    },
+    "iata_country": {
+      "type": "string"
+    },
+    "iata_city": {
+      "type": "string"
+    },
+    "iata_address": {
+      "type": "string"
+    },
+    "iata_approval_date": {
+      "type": "string"
+    },
+    "iata_raw_response": {
+      "type": "object",
+      "description": "Raw IATA CheckACode response for audit."
+    },
+    "website_url": {
+      "type": "string"
+    },
+    "website_is_live": {
+      "type": "boolean"
+    },
+    "website_status_code": {
+      "type": "number"
+    },
+    "website_page_title": {
+      "type": "string"
+    },
+    "website_ssl_valid": {
+      "type": "boolean"
+    },
+    "ai_decision": {
+      "type": "string",
+      "enum": [
+        "APPROVED",
+        "REJECTED",
+        "ESCALATED"
+      ]
+    },
+    "ai_reasoning": {
+      "type": "string",
+      "description": "M-Care's plain-English explanation for the decision."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING_AI_REVIEW",
+        "PENDING_HUMAN_REVIEW",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "default": "PENDING_AI_REVIEW"
+    },
+    "human_override": {
+      "type": "boolean",
+      "default": false
+    },
+    "human_notes": {
+      "type": "string"
+    },
+    "final_decision": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "agency_id",
+    "ai_decision"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.agency_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.agency_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

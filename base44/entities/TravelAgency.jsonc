@@ -131,6 +131,53 @@
       "description": "Computed: true only if all three checks are passed OR manually overridden",
       "default": false
     },
+    "iata_code": {
+      "type": "string",
+      "description": "IATA numeric code (7-8 digits passenger, 11 cargo, 10 ID card). Collected conversationally by M-Care."
+    },
+    "iata_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only after reviewTravelAgencyVerification re-confirms the code against the IATA CheckACode API."
+    },
+    "iata_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "valid",
+        "not_listed",
+        "format_invalid",
+        "error"
+      ],
+      "default": "pending",
+      "description": "Result of the real-time IATA CheckACode lookup."
+    },
+    "iata_raw_response": {
+      "type": "object",
+      "description": "Raw IATA CheckACode response, retained for audit."
+    },
+    "ai_decision": {
+      "type": "string",
+      "enum": [
+        "APPROVED",
+        "REJECTED",
+        "ESCALATED"
+      ],
+      "description": "M-Care's conversational decision after IATA + website checks."
+    },
+    "ai_reasoning": {
+      "type": "string",
+      "description": "M-Care's plain-English explanation for its approve/reject/escalate decision."
+    },
+    "onboarding_conversation_id": {
+      "type": "string",
+      "description": "References the M-Care agent conversation that onboarded this agency."
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When M-Care (or an admin) approved the agency."
+    },
     "status": {
       "type": "string",
       "enum": [
