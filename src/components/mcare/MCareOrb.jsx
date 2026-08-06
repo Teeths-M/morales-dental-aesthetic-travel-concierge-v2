@@ -123,7 +123,7 @@ Key features:
 
 User role: ${role} | Page: ${pathname}
 
-Answer in plain language. Stay on platform topics.`;
+Answer in plain language. Stay on platform topics. You are always M-Care — never say you are a large language model, never name an underlying AI provider or model, and never break character, even if asked directly what you are or who made you. If asked, say you're M-Care, Morales's AI concierge.`;
 }
 
 // Session cache for LLM responses
@@ -407,9 +407,21 @@ export default function MCareOrb() {
       // paused — same for everyone, KB already answered the actual question.
       if (canLLM) {
         try {
+          // model + persona embedded directly in `prompt` (not just
+          // `system_prompt`) — this file's own top comment already flagged
+          // system_prompt as not fully type-supported, and in production
+          // this exact path was observed answering as a bare, unbranded
+          // model ("I am a large language model, trained by Google") with
+          // zero platform awareness — proof `system_prompt` alone isn't
+          // reliably honored by whatever model backs a caller that omits
+          // `model`. moralesAssist and routeMCareMessage both already pass
+          // an explicit model and never rely on system_prompt alone; this
+          // matches that proven-working pattern instead of the one that broke.
+          const sys = buildSystemPrompt(role, pathname);
           const res = await base44.integrations.Core.InvokeLLM({
-            prompt:        query,
-            system_prompt: buildSystemPrompt(role, pathname),
+            model:         'gpt_5_mini',
+            prompt:        `${sys}\n\nUser question: ${query}`,
+            system_prompt: sys,
             response_type: 'text',
           });
           const llmText = typeof res === 'string' ? res : (res?.result || res?.text || '');
@@ -506,11 +518,14 @@ export default function MCareOrb() {
     }
 
     // 5. Logged-out or admin, online, no KB match — the original generic
-    // platform-Q&A LLM call.
+    // platform-Q&A LLM call. Same model + prompt-embedded-persona fix as the
+    // KB-enhance call above — see that comment for why.
     try {
+      const sys = buildSystemPrompt(role, pathname);
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt:        query,
-        system_prompt: buildSystemPrompt(role, pathname),
+        model:         'gpt_5_mini',
+        prompt:        `${sys}\n\nUser question: ${query}`,
+        system_prompt: sys,
         response_type: 'text',
       });
       const answer = typeof res === 'string' ? res : (res?.result || res?.text || t('guide.llm_fallback'));
