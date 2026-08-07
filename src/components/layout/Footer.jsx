@@ -44,7 +44,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-16">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-8">
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
+            <Link to="/" aria-label="Morales home" className="flex items-center gap-2 mb-4">
               <img
                 src="/morales-m-mark.png"
                 alt="Morales"
@@ -54,7 +54,7 @@ export default function Footer() {
                 <p className="font-display text-base text-background">MORALES</p>
                 <p className="text-[9px] tracking-[0.15em] text-background/50 uppercase">Medical Travel Safety</p>
               </div>
-            </div>
+            </Link>
             <p className="text-sm text-background/60 leading-relaxed">
               {t('footer.tagline')}
             </p>
