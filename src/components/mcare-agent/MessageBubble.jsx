@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck } from 'lucide-react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
+import { MAP_APPS, orderedMapApps, openInMapsApp } from '@/lib/mapLinks';
 
 const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
@@ -14,6 +15,35 @@ const extractChoices = (raw) => {
   const text = raw.replace(match[0], '').trim();
   const choices = match[1].split('|').map(s => s.trim()).filter(Boolean);
   return { text, choices };
+};
+
+// Extract a {{maps:LABEL|DESTINATION}} token M-Care emits to offer one-tap
+// directions. DESTINATION may be an address string or "lat,lng" coordinates.
+// The UI strips the token and renders three tappable app buttons instead.
+const extractMaps = (raw) => {
+  if (!raw) return { text: '', maps: null };
+  const match = raw.match(/\{\{maps:([^|]*)\|([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), maps: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, maps: { label: match[1].trim(), dest: match[2].trim() } };
+};
+
+// Backward-compat: if M-Care emits a bare waze / google-maps / apple-maps URL
+// (e.g. a markdown link), surface it as a tappable button too.
+const MAP_URL_PATTERNS = [
+  { id: 'waze',        re: /https?:\/\/(?:www\.|[a-z]+\.)?waze\.com\/[^\s)\]]+/gi },
+  { id: 'google_maps', re: /https?:\/\/(?:www\.|maps\.)?google\.[a-z.]+\/maps\/[^\s)\]]+/gi },
+  { id: 'apple_maps',  re: /https?:\/\/(?:www\.)?maps\.apple\.com\/[^\s)\]]+/gi },
+];
+const extractMapUrls = (text) => {
+  if (!text) return [];
+  const found = [];
+  for (const { id, re } of MAP_URL_PATTERNS) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(text)) !== null) found.push({ id, url: m[0] });
+  }
+  return found;
 };
 
 // Strip markdown emphasis markers so chat reads as clean plain text.
@@ -113,7 +143,10 @@ export default function MessageBubble({ message, onRespond, accent, showAvatar, 
       )}
       <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
         {(() => {
-          const { text, choices } = extractChoices(message.content);
+          const { text: t1, choices } = extractChoices(message.content);
+          const { text, maps } = extractMaps(t1);
+          const mapUrls = extractMapUrls(text);
+          const chipBase = 'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95';
           return (
             <>
               {text && <p className="text-sm whitespace-pre-wrap">{stripMd(text)}</p>}
@@ -124,7 +157,7 @@ export default function MessageBubble({ message, onRespond, accent, showAvatar, 
                       key={idx}
                       type="button"
                       onClick={() => onChoice(c)}
-                      className="inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95"
+                      className={chipBase}
                       style={isUser
                         ? { borderColor: 'rgba(255,255,255,0.45)', color: '#fff', background: 'rgba(255,255,255,0.14)' }
                         : { borderColor: accent || '#6C47FF', color: accent || '#6C47FF', background: 'transparent' }}
@@ -132,6 +165,41 @@ export default function MessageBubble({ message, onRespond, accent, showAvatar, 
                       {c}
                     </button>
                   ))}
+                </div>
+              )}
+              {maps && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {orderedMapApps().map(app => (
+                    <button
+                      key={app.id}
+                      type="button"
+                      onClick={() => openInMapsApp(app.id, maps.dest)}
+                      className={chipBase}
+                      style={{ borderColor: '#16a34a', color: '#16a34a', background: 'transparent' }}
+                      title={`Open ${maps.label} in ${app.label}`}
+                    >
+                      <span>{app.emoji}</span> Open in {app.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {mapUrls.length > 0 && !maps && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {mapUrls.map((u, i) => {
+                    const app = MAP_APPS.find(a => a.id === u.id);
+                    return (
+                      <a
+                        key={i}
+                        href={u.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={chipBase}
+                        style={{ borderColor: '#16a34a', color: '#16a34a', background: 'transparent' }}
+                      >
+                        <span>{app?.emoji}</span> Open in {app?.label}
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </>
