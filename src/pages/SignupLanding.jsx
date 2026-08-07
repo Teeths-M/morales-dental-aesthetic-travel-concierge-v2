@@ -18,6 +18,7 @@ const PATHS = [
     // Guest-first: patients begin the concierge conversation immediately; the
     // account is created at the sign-in gate inside the flow. (The old
     // /register target was never routed — this card 404'd.)
+    // (no-op touch to force a fresh chunk rebuild after a stale preview build)
     href: '/intake',
     accentColor: GOLD,
     glowColor: 'rgba(212,175,55,0.18)',
