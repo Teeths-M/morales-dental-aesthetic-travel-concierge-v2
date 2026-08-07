@@ -240,7 +240,7 @@ export default function MCareOrb() {
   // send, then streams the agent's response + tool calls via the subscription.
   const sendAgentMessage = useCallback(async (displayText, fileUrls) => {
     const q = (displayText ?? input).trim();
-    if ((!q && !fileUrls?.length) || agentSending || !isAuthenticated) return;
+    if ((!q && !fileUrls?.length) || agentSending) return;
 
     let conversation = agentConversation;
     if (!conversation) {
@@ -266,7 +266,7 @@ export default function MCareOrb() {
     } catch (e) {
       setAgentSending(false);
     }
-  }, [input, agentConversation, agentSending, isAuthenticated]);
+  }, [input, agentConversation, agentSending]);
 
   const startNewJourney = useCallback(async () => {
     try {
@@ -311,6 +311,7 @@ export default function MCareOrb() {
     { label: 'Visa Help', icon: FileText, run: () => sendAgentMessage('I need help with a visa') },
   ];
   if (canBecomePartner) quickChips.push({ label: 'Become a partner', icon: Briefcase, run: () => { setOpen(false); navigate('/partner-signup'); } });
+  if (!isAuthenticated) quickChips.push({ label: 'Sign in to book', icon: LogIn, run: () => base44.auth.redirectToLogin(window.location.pathname) });
 
   const currentTip = struggleHint || tips[tipIdx];
 
@@ -379,7 +380,7 @@ export default function MCareOrb() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
             </span>
-            {isAuthenticated && agentMessages.length > 0 && (
+            {agentMessages.length > 0 && (
               <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
                 <RotateCcw style={{ width: 16, height: 16 }} />
               </button>
@@ -395,12 +396,8 @@ export default function MCareOrb() {
             </button>
           </div>
 
-          {isAuthenticated ? (
-            user?.isPreviewAdmin ? (
-              <MCarePreviewNotice onClose={() => setOpen(false)} />
-            ) : (
-            <>
-              {/* Journey stage tracker — reflects real case state from tool calls */}
+          <>
+            {/* Journey stage tracker — reflects real case state from tool calls */}
               {agentMessages.length > 0 && (
                 <JourneyStageTracker messages={agentMessages} />
               )}
@@ -498,35 +495,7 @@ export default function MCareOrb() {
                   <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#fff' : '#9CA3AF' }} />
                 </button>
               </div>
-            </>
-            )
-          ) : (
-            /* ── Logged-out: M-Care coordinates real journeys, which need an account. ── */
-            <div style={{ flex: 1, overflowY: 'auto', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 16, background: '#F6F7FB' }}>
-              <span style={{ width: 56, height: 56, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="m-breathe">
-                <Shield style={{ width: 26, height: 26, color: '#fff' }} fill="#fff" />
-              </span>
-              <div>
-                <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#111827' }}>M-Safe coordinates your journey</h3>
-                <p style={{ margin: 0, fontSize: 13, color: '#6B7280', lineHeight: 1.55, maxWidth: 360 }}>
-                  M-Safe is a stateful journey coordinator — it runs safety checks, matches only verified providers, logs your consent, and coordinates every leg of your trip with 24/7 monitoring. Sign in to start your journey, or explore becoming a partner.
-                </p>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 280 }}>
-                <button onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: PURPLE, color: '#fff', border: 'none', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                ><LogIn style={{ width: 15, height: 15 }} /> Sign in to start your journey</button>
-                <button onClick={() => { setOpen(false); navigate('/intake'); }}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: PURPLE, border: '1px solid #E5E7EB', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                ><Stethoscope style={{ width: 15, height: 15 }} /> Begin intake</button>
-                {canBecomePartner && (
-                  <button onClick={() => { setOpen(false); navigate('/partner-signup'); }}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#374151', border: '1px solid #E5E7EB', borderRadius: 12, padding: '11px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                  ><Briefcase style={{ width: 15, height: 15 }} /> Become a partner</button>
-                )}
-              </div>
-            </div>
-          )}
+          </>
         </motion.div>
         </motion.div>
       )}
