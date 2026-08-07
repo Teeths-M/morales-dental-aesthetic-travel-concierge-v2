@@ -5,6 +5,17 @@ import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
 
+// Extract a {{choices:a|b|c}} token the agent emits for closed-set questions.
+// The UI strips it from the visible text and renders it as tappable chips.
+const extractChoices = (raw) => {
+  if (!raw) return { text: '', choices: [] };
+  const match = raw.match(/\{\{choices:([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), choices: [] };
+  const text = raw.replace(match[0], '').trim();
+  const choices = match[1].split('|').map(s => s.trim()).filter(Boolean);
+  return { text, choices };
+};
+
 // Strip markdown emphasis markers so chat reads as clean plain text.
 const stripMd = (s) => {
   if (!s) return s;
@@ -87,7 +98,7 @@ function ToolCallDisplay({ toolCall }) {
 // accent (hex) overrides the user bubble color (M-Safe purple). showAvatar adds
 // the purple "M" avatar to agent messages; showMeta adds a time + delivery check
 // under user messages. All optional → default rendering is unchanged.
-export default function MessageBubble({ message, onRespond, accent, showAvatar, showMeta }) {
+export default function MessageBubble({ message, onRespond, accent, showAvatar, showMeta, onChoice }) {
   const isUser = message.role === 'user';
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
@@ -101,9 +112,31 @@ export default function MessageBubble({ message, onRespond, accent, showAvatar, 
         <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-white text-[13px] font-bold" style={{ background: accent || '#6C47FF' }} aria-hidden>M</span>
       )}
       <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
-        {message.content && (
-          <p className="text-sm whitespace-pre-wrap">{stripMd(message.content)}</p>
-        )}
+        {(() => {
+          const { text, choices } = extractChoices(message.content);
+          return (
+            <>
+              {text && <p className="text-sm whitespace-pre-wrap">{stripMd(text)}</p>}
+              {choices.length > 0 && onChoice && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {choices.map((c, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => onChoice(c)}
+                      className="inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95"
+                      style={isUser
+                        ? { borderColor: 'rgba(255,255,255,0.45)', color: '#fff', background: 'rgba(255,255,255,0.14)' }
+                        : { borderColor: accent || '#6C47FF', color: accent || '#6C47FF', background: 'transparent' }}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
         {message.file_urls?.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {message.file_urls.map((url, i) => isImageUrl(url)

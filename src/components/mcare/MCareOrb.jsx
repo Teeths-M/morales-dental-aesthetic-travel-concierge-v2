@@ -430,7 +430,7 @@ export default function MCareOrb() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta />
+                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta onChoice={sendAgentMessage} />
                   </motion.div>
                 ))}
 
