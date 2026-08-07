@@ -1,7 +1,6 @@
 import { createHandler, ok } from '../../shared/createHandler.ts';
 import { strictObject, Fields } from '../../shared/validate.ts';
 import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
-import { decideRoute, DECISION_SCHEMA, type RouteToolName } from '../../shared/mCareRouter.ts';
 
 // ── routeMCareMessage ────────────────────────────────────────────────────────
 // M-Care super-agent Phase 3: one routing decision per message, replacing
@@ -9,8 +8,106 @@ import { decideRoute, DECISION_SCHEMA, type RouteToolName } from '../../shared/m
 // need from what you typed or said." Public (requireAuth: false) — a
 // logged-out visitor must be able to reach booking/doctor-signup routing —
 // but still derives role from a real session when one exists, entirely
-// server-side, never trusting a caller-supplied role. See
-// _shared/mCareRouter.ts for the decision logic and its fail-closed contract.
+// server-side, never trusting a caller-supplied role.
+//
+// The routing decision logic is inlined here (self-contained) because
+// cross-folder relative imports to ../../shared/mCareRouter.ts fail to bundle
+// in the function runtime — see the platform's CLI bundling limitations.
+
+// Every tool M-Care can hand the user off to from a free-text message.
+type RouteToolName =
+  | 'startBookingIntent'
+  | 'startDoctorSignup'
+  | 'startTravelAgencySignup'
+  | 'startAvailabilityIntent';
+
+// The structured shape we ask the LLM to return. InvokeLLM's
+// response_json_schema requires a root object, never an array.
+const DECISION_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    action: { type: 'string', enum: ['route', 'answer'] },
+    tool_name: {
+      type: ['string', 'null'],
+      enum: [
+        'startBookingIntent',
+        'startDoctorSignup',
+        'startTravelAgencySignup',
+        'startAvailabilityIntent',
+        '',
+      ],
+    },
+    reasoning: { type: 'string' },
+  },
+  required: ['action', 'tool_name', 'reasoning'],
+};
+
+interface RouteDecision {
+  action: 'route' | 'answer';
+  tool_name: RouteToolName | null;
+  reasoning: string;
+}
+
+/**
+ * Ask the LLM to pick exactly one allowed tool for the user's message, or
+ * fall back to 'answer' (M-Care just replies in chat). Fail-closed: any
+ * malformed/uncertain LLM output becomes 'answer' with no tool — never an
+ * invented tool name, never a tool the caller's role isn't allowed to use.
+ */
+async function decideRoute(
+  message: string,
+  allowedTools: RouteToolName[],
+  llmCall: (prompt: string) => Promise<{ action: string; tool_name: string | null; reasoning?: string }>,
+): Promise<RouteDecision> {
+  if (allowedTools.length === 0) {
+    return { action: 'answer', tool_name: null, reasoning: 'No routing tools available for this role.' };
+  }
+
+  const toolList = allowedTools.map((t) => `- ${t}`).join('\n');
+  const prompt = `You are a routing layer for the M-Care medical-travel concierge. Read the user's message and decide whether it maps to one of these handoff tools, or should just be answered in chat.
+
+Available tools:
+${toolList}
+
+Tool meanings:
+- startBookingIntent: the user wants to book or explore a medical/cosmetic procedure or trip (e.g. "I want a tummy tuck", "looking into dental implants", "help me plan my surgery trip").
+- startDoctorSignup: the user identifies as a doctor/clinic wanting to join Morales as a partner.
+- startTravelAgencySignup: the user identifies as a travel agency wanting to join as a partner.
+- startAvailabilityIntent: a partnered doctor is declaring or updating their availability/capacity.
+
+Respond with JSON only:
+{ "action": "route", "tool_name": "<one of the tools above>", "reasoning": "<short reason>" }
+or, if the message does not clearly match any allowed tool:
+{ "action": "answer", "tool_name": "", "reasoning": "<short reason>" }
+
+Never invent a tool_name that is not in the list. If unsure, choose "answer".
+
+User message: """${message}"""`;
+
+  let raw: { action: string; tool_name: string | null; reasoning?: string };
+  try {
+    raw = await llmCall(prompt);
+  } catch (_) {
+    // LLM failure is never a reason to route somewhere wrong — answer instead.
+    return { action: 'answer', tool_name: null, reasoning: 'Routing LLM unavailable.' };
+  }
+
+  const action = raw?.action === 'route' ? 'route' : 'answer';
+  const requested = (raw?.tool_name ?? '').toString().trim() as RouteToolName | '';
+  const tool_name =
+    action === 'route' && requested && allowedTools.includes(requested as RouteToolName)
+      ? (requested as RouteToolName)
+      : null;
+
+  // If the LLM said "route" but picked a tool the role isn't allowed (or an
+  // unknown name), fail closed to a plain answer — never honor an over-broad
+  // routing request.
+  if (action === 'route' && !tool_name) {
+    return { action: 'answer', tool_name: null, reasoning: 'Requested tool not permitted for this role.' };
+  }
+
+  return { action, tool_name, reasoning: (raw?.reasoning ?? '').toString().slice(0, 500) };
+}
 
 const BodySchema = strictObject({
   message: Fields.shortText(500),
