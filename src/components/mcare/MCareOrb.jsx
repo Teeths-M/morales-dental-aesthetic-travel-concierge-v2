@@ -28,6 +28,7 @@ import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
+import MCarePreviewNotice from '@/components/mcare/MCarePreviewNotice';
 import { isSystemPaused } from '@/lib/systemPause';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -395,6 +396,9 @@ export default function MCareOrb() {
           </div>
 
           {isAuthenticated ? (
+            user?.isPreviewAdmin ? (
+              <MCarePreviewNotice onClose={() => setOpen(false)} />
+            ) : (
             <>
               {/* Journey stage tracker — reflects real case state from tool calls */}
               {agentMessages.length > 0 && (
@@ -495,6 +499,7 @@ export default function MCareOrb() {
                 </button>
               </div>
             </>
+            )
           ) : (
             /* ── Logged-out: M-Care coordinates real journeys, which need an account. ── */
             <div style={{ flex: 1, overflowY: 'auto', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 16, background: '#F6F7FB' }}>
