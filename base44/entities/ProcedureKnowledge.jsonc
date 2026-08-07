@@ -1,0 +1,182 @@
+{
+  "name": "ProcedureKnowledge",
+  "type": "object",
+  "description": "M-Care's structured medical-procedure safety knowledge base. Each record describes a common procedure (cosmetic, dental, orthopedic, bariatric, ophthalmology, fertility, general surgery, cardiac) with its risk level, recovery time, risk factors, complications, recommended surgeon qualifications, pre-op requirements, dangerous red-flag combinations, and the questions a patient should ask. M-Care reads this BEFORE discussing any procedure, asks for the traveler's medical background first, flags risks against that background, includes a non-diagnostic disclaimer, and guides the traveler to a safe next step (verified specialist / questions to ask). Admins curate it.",
+  "properties": {
+    "procedure_name": {
+      "type": "string",
+      "description": "Canonical procedure name, e.g. 'Brazilian Butt Lift (BBL)'"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Alternate / casual names users might say, e.g. 'butt lift', 'gluteal augmentation' \u2014 powers fuzzy lookup"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Cosmetic",
+        "Dental",
+        "Orthopedic",
+        "Cardiac",
+        "General Surgery",
+        "Bariatric",
+        "Ophthalmology",
+        "Fertility",
+        "ENT",
+        "Other"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "description": "One-plain-English sentence on what the procedure is"
+    },
+    "typical_duration": {
+      "type": "string",
+      "description": "e.g. '2-4 hours'"
+    },
+    "recovery_time": {
+      "type": "string",
+      "description": "e.g. '7-14 days'"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Very High"
+      ]
+    },
+    "risk_factors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Patient factors that raise risk, e.g. 'Diabetes', 'Hypertension', 'Smoking', 'Obesity', 'Bleeding disorders'"
+    },
+    "complication_rate": {
+      "type": "string",
+      "description": "e.g. '1 in 500', 'About 2%'"
+    },
+    "common_complications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "e.g. 'Infection', 'Bleeding', 'Scarring', 'Fat embolism'"
+    },
+    "recommended_qualifications": {
+      "type": "string",
+      "description": "e.g. 'Board-certified plastic surgeon, accredited hospital with ICU'"
+    },
+    "pre_op_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "e.g. 'Blood work', 'Medical clearance', 'Fasting 8 hours', 'Stop smoking 6 weeks'"
+    },
+    "red_flag_combinations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "combination": {
+            "type": "string",
+            "description": "e.g. 'BBL + large-volume liposuction'"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "High",
+              "Very High",
+              "Critical"
+            ]
+          },
+          "requirement": {
+            "type": "string",
+            "description": "e.g. 'Requires board-certified plastic surgeon with BBL training and an accredited facility'"
+          }
+        }
+      },
+      "description": "Procedure or patient combinations that materially raise risk"
+    },
+    "smoker_warning": {
+      "type": "string",
+      "description": "Specific guidance for smokers (healing/infection risk + recommended quit window)"
+    },
+    "questions_to_ask": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The exact questions a patient should ask their surgeon before proceeding"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Inactive records are skipped by lookup so outdated entries don't surface"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "procedure_name",
+    "category",
+    "risk_level"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "authenticated": true
+      }
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}
