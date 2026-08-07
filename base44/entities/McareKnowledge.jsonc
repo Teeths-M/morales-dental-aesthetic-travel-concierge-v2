@@ -1,0 +1,111 @@
+{
+  "name": "McareKnowledge",
+  "type": "object",
+  "description": "M-Care's learn-and-recall brain. When M-Care is stuck or unsure of an answer, it researches the question (web + reasoning), and if the answer is rated at least 80% accurate it persists the Q&A here so future identical or similar questions can be answered instantly from memory instead of re-researching. Admins curate it; the agent reads and writes it via its tool set.",
+  "properties": {
+    "question": {
+      "type": "string",
+      "description": "The original traveler/partner question, as asked"
+    },
+    "normalized_question": {
+      "type": "string",
+      "description": "Lowercased, punctuation-stripped question used for keyword matching on recall"
+    },
+    "answer": {
+      "type": "string",
+      "description": "The researched, >=80%-accurate answer M-Care can reuse"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Model-reported confidence/accuracy estimate 0-100. Records are only created when this is >= 80"
+    },
+    "accuracy_estimation": {
+      "type": "string",
+      "description": "How the model assessed accuracy (e.g. cross-checked against multiple sources, registry-confirmed, well-established fact)"
+    },
+    "source_summary": {
+      "type": "string",
+      "description": "Brief note on the sources/reasoning behind the answer"
+    },
+    "search_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords extracted from the question to power fuzzy recall matching"
+    },
+    "journey_context": {
+      "type": "string",
+      "enum": [
+        "medical",
+        "travel",
+        "logistics",
+        "verification",
+        "safety",
+        "general"
+      ],
+      "default": "general"
+    },
+    "recalled_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many times this answer has been recalled for a future question"
+    },
+    "useful_feedback": {
+      "type": "number",
+      "default": 0,
+      "description": "Net upvotes confirming the answer helped (admin/agent can increment)"
+    },
+    "flagged_for_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin flagged this entry as inaccurate or outdated so recall skips it until fixed"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of the authenticated user whose session learned this, or 'mcare_agent' for an anonymous session"
+    }
+  },
+  "required": [
+    "question",
+    "answer",
+    "confidence_score"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "authenticated": true
+      }
+    },
+    "create": {
+      "user_condition": {
+        "authenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

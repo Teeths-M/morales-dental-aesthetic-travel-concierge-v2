@@ -47,6 +47,7 @@ const AdminMonitorAction        = lazy(() => import('@/pages/AdminMonitorAction'
 const PartnerCommandCenter     = lazy(() => import('@/pages/PartnerCommandCenter'));
 const AdminDoctorNominations   = lazy(() => import('@/pages/AdminDoctorNominations'));
 const AdminIntelligenceReport  = lazy(() => import('@/pages/AdminIntelligenceReport'));
+const AdminMcareKnowledge      = lazy(() => import('@/pages/AdminMcareKnowledge'));
 
 export const adminRoutes = (
   <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
@@ -87,6 +88,7 @@ export const adminRoutes = (
       <Route path="/admin/command-center"            element={<ErrorBoundary><PartnerCommandCenter /></ErrorBoundary>} />
       <Route path="/admin/doctor-nominations"        element={<ErrorBoundary><AdminDoctorNominations /></ErrorBoundary>} />
       <Route path="/admin/intelligence-report"      element={<ErrorBoundary><AdminIntelligenceReport /></ErrorBoundary>} />
+      <Route path="/admin/mcare-knowledge"         element={<ErrorBoundary><AdminMcareKnowledge /></ErrorBoundary>} />
       {/* Dev/test tools */}
       <Route path="/test-portal-link"                element={<ErrorBoundary><TestPortalLink /></ErrorBoundary>} />
       <Route path="/portal-test-hub"                 element={<ErrorBoundary><PortalTestHub /></ErrorBoundary>} />
