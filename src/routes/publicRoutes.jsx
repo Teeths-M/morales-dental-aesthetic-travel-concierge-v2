@@ -82,7 +82,8 @@ const MSafeChatDemo            = lazy(() => import('@/pages/MSafeChatDemo'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-    <Route path="/"               element={<ErrorBoundary><Home /></ErrorBoundary>} />
+    <Route path="/"               element={<ErrorBoundary><SignupLanding /></ErrorBoundary>} />
+    <Route path="/home"           element={<ErrorBoundary><Home /></ErrorBoundary>} />
     <Route path="/discover"       element={<ErrorBoundary><Discover /></ErrorBoundary>} />
     <Route path="/providers"      element={<ErrorBoundary><Providers /></ErrorBoundary>} />
     <Route path="/providers/:id"  element={<ErrorBoundary><ProviderDetail /></ErrorBoundary>} />
