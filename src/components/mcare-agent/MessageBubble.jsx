@@ -228,7 +228,7 @@ function ToolCallDisplay({ toolCall }) {
 // (deterministic, client-side only — see src/lib/mcareReactionHeuristic.js,
 // the agent itself never decides this). All optional → default rendering is
 // unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null }) {
+export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null, revealUpTo = undefined }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
   const ts = message.created_date || message.timestamp;
@@ -250,9 +250,16 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text, qr } = extractQr(t2);
           const mapUrls = extractMapUrls(text);
           const chipBase = 'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95';
+          // revealUpTo (word count) is undefined for every message except
+          // the one Talk Mode is currently speaking — see MCareOrb.jsx. When
+          // undefined, displayText === text exactly, so default rendering
+          // (Talk Mode off, or any other message) is byte-identical to before.
+          const displayText = typeof revealUpTo === 'number'
+            ? text.split(/\s+/).filter(Boolean).slice(0, Math.max(revealUpTo, 0)).join(' ')
+            : text;
           return (
             <>
-              {text && <p className="text-sm whitespace-pre-wrap">{stripMd(text)}</p>}
+              {displayText && <p className="text-sm whitespace-pre-wrap">{stripMd(displayText)}</p>}
               {choices.length > 0 && onChoice && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {choices.map((c, idx) => (
@@ -287,7 +294,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                 </div>
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
-              {!isUser && text && <SpeakButton text={text} language={i18n.language} />}
+              {!isUser && text && typeof revealUpTo !== 'number' && <SpeakButton text={text} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {mapUrls.map((u, i) => {

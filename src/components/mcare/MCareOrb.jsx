@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Shield, Luggage, Siren, FileText } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Shield, Luggage, Siren, FileText, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceInputButton from './VoiceInputButton';
 import LivingOrb from './LivingOrb';
@@ -33,6 +33,7 @@ import { friendlyError } from '@/lib/friendlyError';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
+import { detectTalkModeCommand, extractSpeakableText, isSpeechSupported, speakText, stopSpeaking } from '@/lib/talkMode';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -100,6 +101,12 @@ export default function MCareOrb() {
   const [struggleHint, setStruggleHint] = useState(null);
   const [expanded,   setExpanded]   = useState(false);
   const [agentUploading, setAgentUploading] = useState(false);
+  // Talk Mode — off by default, opt-in only. See the "Honest speaking pulse"
+  // effect below: when off, behavior is byte-identical to before this was
+  // added. { messageIndex, revealedWordCount, totalWordCount } while a
+  // specific message is actively being spoken, else null.
+  const [talkMode, setTalkMode] = useState(false);
+  const [revealState, setRevealState] = useState(null);
   const bottomRef = useRef(null);
   const vaultRef = useRef(null);
 
@@ -261,20 +268,66 @@ export default function MCareOrb() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [agentMessages]);
 
-  // Honest "speaking" pulse right after a new assistant message lands
+  // Speaking state right after a new assistant message lands. When Talk Mode
+  // is off (default), this is byte-identical to the original honest fake
+  // pulse — a fixed 1800ms timer, no audio, since there's no real TTS signal
+  // to react to. When Talk Mode is on, real speechSynthesis audio drives
+  // both the pulse AND a word-by-word reveal of that one message.
   const prevMsgCountRef = useRef(0);
   useEffect(() => {
     if (agentMessages.length > prevMsgCountRef.current) {
       const last = agentMessages[agentMessages.length - 1];
       if (last?.role === 'assistant') {
+        const msgIndex = agentMessages.length - 1;
+        prevMsgCountRef.current = agentMessages.length;
+
+        if (talkMode && isSpeechSupported()) {
+          const speakable = extractSpeakableText(last.content);
+          const totalWords = speakable ? speakable.split(/\s+/).filter(Boolean).length : 0;
+          if (!speakable) { setSpeaking(false); return; }
+          setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
+          setSpeaking(true);
+          speakText(speakable, {
+            rate: 0.9,
+            onWordBoundary: (count) => setRevealState(prev =>
+              (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
+            onEnd: () => {
+              setSpeaking(false);
+              setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
+            },
+            onError: () => {
+              // Fail open: never leave the demo stuck mid-reveal on a TTS
+              // failure — snap straight to full text, no error surfaced.
+              setSpeaking(false);
+              setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
+            },
+          });
+          return;
+        }
+
+        // Talk Mode off — unchanged original behavior.
         setSpeaking(true);
         const id = setTimeout(() => setSpeaking(false), 1800);
-        prevMsgCountRef.current = agentMessages.length;
         return () => clearTimeout(id);
       }
     }
     prevMsgCountRef.current = agentMessages.length;
-  }, [agentMessages]);
+  }, [agentMessages, talkMode]);
+
+  // Turning Talk Mode off mid-speech stops audio immediately and reveals the
+  // rest of the current message instantly — never leaves it half-spoken.
+  useEffect(() => {
+    if (!talkMode) {
+      stopSpeaking();
+      setRevealState(null);
+    }
+  }, [talkMode]);
+
+  // Prevent a feedback loop: if the microphone is actively listening, any
+  // in-progress Talk Mode speech would otherwise be picked up by the mic.
+  useEffect(() => {
+    if (listening) stopSpeaking();
+  }, [listening]);
 
   const orbState = listening ? 'listening' : agentSending ? 'thinking' : speaking ? 'speaking' : 'idle';
 
@@ -292,6 +345,27 @@ export default function MCareOrb() {
   const sendAgentMessage = useCallback(async (displayText, fileUrls) => {
     const q = (displayText ?? input).trim();
     if ((!q && !fileUrls?.length) || agentSending) return;
+
+    // Sending any new message interrupts in-progress Talk Mode speech —
+    // never let old audio keep playing over a new exchange.
+    stopSpeaking();
+    setRevealState(null);
+
+    // Deterministic, client-side Talk Mode toggle — exact-phrase match only
+    // (see talkMode.js), so a genuine question can never be mistaken for a
+    // mode command. Never reaches the real agent conversation.
+    if (!fileUrls?.length) {
+      const command = detectTalkModeCommand(q);
+      if (command) {
+        setInput('');
+        const turningOn = command === 'on';
+        setTalkMode(turningOn);
+        const confirmText = turningOn ? 'Talk mode enabled.' : 'Talk mode disabled.';
+        setAgentMessages(prev => [...prev, { role: 'user', content: q }, { role: 'assistant', content: confirmText }]);
+        if (turningOn && isSpeechSupported()) speakText(confirmText, { rate: 0.9 });
+        return;
+      }
+    }
 
     let conversation = agentConversation;
     if (!conversation) {
@@ -438,6 +512,12 @@ export default function MCareOrb() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
             </span>
+            {isSpeechSupported() && (
+              <button onClick={() => setTalkMode(v => !v)} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
+                style={{ background: talkMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
+                {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
+              </button>
+            )}
             {agentMessages.length > 0 && (
               <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
                 <RotateCcw style={{ width: 16, height: 16 }} />
@@ -496,7 +576,8 @@ export default function MCareOrb() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction onChoice={sendAgentMessage} />
+                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction onChoice={sendAgentMessage}
+                      revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined} />
                   </motion.div>
                 ))}
 
