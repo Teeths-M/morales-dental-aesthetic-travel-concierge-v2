@@ -225,7 +225,7 @@ export default function MCareAgent() {
             </div>
           )}
 
-          {messages.map((msg, idx) => <MessageBubble key={idx} message={msg} onRespond={handleSafetyRespond} />)}
+          {messages.map((msg, idx) => <MessageBubble key={idx} message={msg} onRespond={handleSafetyRespond} showReaction />)}
 
           {isSending && (
             <div className="flex justify-start">

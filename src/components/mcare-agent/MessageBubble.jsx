@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck } from 'lucide-react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 import { MAP_APPS, orderedMapApps, openInMapsApp } from '@/lib/mapLinks';
+import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 
 const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
@@ -127,11 +129,16 @@ function ToolCallDisplay({ toolCall }) {
 
 // accent (hex) overrides the user bubble color (M-Safe purple). showAvatar adds
 // the purple "M" avatar to agent messages; showMeta adds a time + delivery check
-// under user messages. All optional → default rendering is unchanged.
-export default function MessageBubble({ message, onRespond, accent, showAvatar, showMeta, onChoice }) {
+// under user messages. showReaction adds a small emoji tapback on the patient's
+// own message when pickMessageReaction() finds a signal worth reacting to
+// (deterministic, client-side only — see src/lib/mcareReactionHeuristic.js,
+// the agent itself never decides this). All optional → default rendering is
+// unchanged.
+export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null }) {
   const isUser = message.role === 'user';
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
+  const reaction = isUser && showReaction ? pickMessageReaction(message.content) : null;
   const userBubbleClass = isUser
     ? (accent ? 'text-white' : 'bg-primary text-primary-foreground')
     : 'bg-card border border-border text-card-foreground';
@@ -141,7 +148,7 @@ export default function MessageBubble({ message, onRespond, accent, showAvatar, 
       {!isUser && showAvatar && (
         <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-white text-[13px] font-bold" style={{ background: accent || '#6C47FF' }} aria-hidden>M</span>
       )}
-      <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
+      <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
         {(() => {
           const { text: t1, choices } = extractChoices(message.content);
           const { text, maps } = extractMaps(t1);
@@ -230,6 +237,18 @@ export default function MessageBubble({ message, onRespond, accent, showAvatar, 
             <span>{time}</span>
             <CheckCheck className="w-3 h-3" style={{ color: '#5EEAD4' }} />
           </div>
+        )}
+        {reaction && (
+          <motion.span
+            role="img"
+            aria-label={`M-Care reacted with ${reaction}`}
+            initial={{ opacity: 0, scale: 0.4 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 15 }}
+            className="absolute -bottom-3 -left-1 flex items-center justify-center w-6 h-6 rounded-full text-sm bg-[#0C1A1D] border border-white/10 shadow-lg"
+          >
+            {reaction}
+          </motion.span>
         )}
       </div>
     </div>
