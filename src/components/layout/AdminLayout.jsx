@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Users, Menu, X, LayoutDashboard, Activity,
   DollarSign, User, Shield, FileText, CreditCard, AlertTriangle,
-  LogOut, ChevronLeft, Globe, ShieldAlert,
+  LogOut, ChevronLeft, Globe, ShieldAlert, RefreshCw,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SystemPauseToggle, { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
@@ -42,6 +42,7 @@ const NAV_SECTIONS = [
     items: [
       { path: '/admin/solo-monitor',     label: 'Safety Monitor',  icon: Shield },
       { path: '/admin/dispatch-monitor', label: 'Dispatch Issues', icon: AlertTriangle },
+      { path: '/admin/crisis-reroutes',  label: 'Crisis Reroutes', icon: RefreshCw },
       { path: '/admin/audit-log',        label: 'Audit Log',       icon: FileText },
     ],
   },

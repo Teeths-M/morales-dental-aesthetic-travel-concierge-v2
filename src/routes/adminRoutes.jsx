@@ -24,6 +24,7 @@ const AdminAnalyticsDashboard   = lazy(() => import('@/pages/AdminAnalytics'));
 const AdminProcedureRequests    = lazy(() => import('@/pages/AdminProcedureRequests'));
 const AdminProviderVerification = lazy(() => import('@/pages/AdminProviderVerification'));
 const AdminAuditLog             = lazy(() => import('@/pages/AdminAuditLog'));
+const AdminCrisisReroutes       = lazy(() => import('@/pages/AdminCrisisReroutes'));
 const ProviderPerformanceDashboard = lazy(() => import('@/pages/ProviderPerformanceDashboard'));
 const AdminConfigApprovals      = lazy(() => import('@/pages/AdminConfigApprovals'));
 const AdminCompanions           = lazy(() => import('@/pages/AdminCompanions'));
@@ -73,6 +74,7 @@ export const adminRoutes = (
       <Route path="/admin/partner-verification"      element={<ErrorBoundary><PartnerVerificationHub /></ErrorBoundary>} />
       <Route path="/admin/partner-verification/:id"  element={<ErrorBoundary><PartnerVerificationHub /></ErrorBoundary>} />
       <Route path="/admin/audit-log"                 element={<ErrorBoundary><AdminAuditLog /></ErrorBoundary>} />
+      <Route path="/admin/crisis-reroutes"           element={<ErrorBoundary><AdminCrisisReroutes /></ErrorBoundary>} />
       <Route path="/admin/data-freshness"            element={<ErrorBoundary><AdminDataFreshness /></ErrorBoundary>} />
       <Route path="/admin/flags"                     element={<ErrorBoundary><AdminFlags /></ErrorBoundary>} />
       <Route path="/admin/clinics"                   element={<ErrorBoundary><AdminClinics /></ErrorBoundary>} />
