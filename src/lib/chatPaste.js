@@ -15,7 +15,7 @@
  * event, so this handler works for keyboard and touch paste alike.
  *
  * @param {ClipboardEvent} e
- * @param {{ onFile:(f:File)=>void, disabled?:boolean, onError?:(msg:string)=>void }} opts
+ * @param {{ onFile?:(f:File)=>void, disabled?:boolean, onError?:(msg:string)=>void }} [opts]
  */
 export function handleChatPaste(e, { onFile, disabled = false, onError } = {}) {
   if (disabled || typeof onFile !== 'function') return; // let the browser handle it
@@ -23,7 +23,7 @@ export function handleChatPaste(e, { onFile, disabled = false, onError } = {}) {
   if (!items || items.length === 0) return;
 
   let fileItem = null;
-  for (const item of items) {
+  for (const item of Array.from(items)) {
     if (item.kind === 'file') { fileItem = item; break; }
   }
 

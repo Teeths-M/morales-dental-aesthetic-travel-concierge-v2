@@ -3,23 +3,25 @@
 //   mode 'predict' → returns 3 tappable completion suggestions for partial text
 //   mode 'correct' → returns spelling/vocabulary-corrected text + a flag if changed
 // Uses gpt_5_mini (fast, low-cost) since this fires on debounced keystrokes.
-// requireAuth stays false so anonymous visitors (who can chat with M-Care)
-// get the same spelling help — the input itself contains no PII until sent.
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+// requireAuth: false so anonymous visitors (who can chat with M-Care) get the
+// same spelling help — the input itself contains no PII until sent. Uses
+// createHandler (mandatory for every function in this repo) rather than a
+// raw handler — a raw, ungated endpoint here would let anyone drive
+// unlimited InvokeLLM calls at no cost to them; createHandler's default rate
+// limit closes that.
+import { createHandler } from '../../shared/createHandler.ts';
 
-export default async function(req: Request): Promise<Response> {
+Deno.serve(createHandler(async ({ base44, body }) => {
+  const raw = await body<{ text?: string; mode?: string }>();
+  const text = (raw?.text || '').trim();
+  const mode = raw?.mode === 'correct' ? 'correct' : 'predict';
+
+  // Don't waste a call on empty or single-char input
+  if (!text || text.length < 2) {
+    return Response.json({ mode, predictions: [], corrected: text, changed: false });
+  }
+
   try {
-    const base44 = createClientFromRequest(req);
-    let body: any = {};
-    try { body = await req.json(); } catch (_) {}
-    const text = (body?.text || '').trim();
-    const mode = body?.mode === 'correct' ? 'correct' : 'predict';
-
-    // Don't waste a call on empty or single-char input
-    if (!text || text.length < 2) {
-      return Response.json({ mode, predictions: [], corrected: text, changed: false });
-    }
-
     if (mode === 'predict') {
       // Only predict if the text looks incomplete (no terminal punctuation, < 120 chars)
       const looksComplete = /[.!?]$/.test(text) || text.length > 140;
@@ -67,4 +69,4 @@ User's text: "${text}"`,
   } catch (error) {
     return Response.json({ mode: 'predict', predictions: [], corrected: '', changed: false, error: (error as any)?.message || 'unknown' });
   }
-}
+}, { name: 'smartMcareInput', requireAuth: false }));

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Heart } from 'lucide-react';
+import { Send } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
