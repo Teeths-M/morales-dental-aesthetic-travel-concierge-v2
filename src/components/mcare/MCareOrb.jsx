@@ -27,6 +27,7 @@ import LivingOrb from './LivingOrb';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
+import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import { isSystemPaused } from '@/lib/systemPause';
 import { friendlyError } from '@/lib/friendlyError';
@@ -513,6 +514,12 @@ export default function MCareOrb() {
                 <div ref={bottomRef} />
               </div>
 
+              <SmartInputSuggestions
+                text={input}
+                disabled={agentSending || agentUploading || !isOnline}
+                onPick={(p) => setInput(input + ' ' + p)}
+                onApplyCorrection={(fixed) => setInput(fixed)}
+              />
               {/* Input */}
               <div style={{ padding: '10px 14px', borderTop: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: '#fff' }}>
                 <AddImageMenu

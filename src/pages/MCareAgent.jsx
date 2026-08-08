@@ -6,6 +6,7 @@ import { Send, Heart } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
+import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import { BackButton } from '@/components/nav/BackButton';
 import { useToast } from '@/components/ui/use-toast';
@@ -247,6 +248,12 @@ export default function MCareAgent() {
       {/* Input */}
       {hasConversation && (
         <div className="sticky bottom-0 z-10 bg-background/90 backdrop-blur border-t border-border">
+          <SmartInputSuggestions
+            text={input}
+            disabled={isSending || isUploading}
+            onPick={(p) => setInput(input + ' ' + p)}
+            onApplyCorrection={(fixed) => setInput(fixed)}
+          />
           <div className="max-w-3xl mx-auto w-full px-4 py-3 flex items-end gap-2">
             <AddImageMenu
               onDeviceFile={handleFileSelect}
