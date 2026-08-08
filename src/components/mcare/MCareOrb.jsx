@@ -421,7 +421,7 @@ export default function MCareOrb() {
                   </>
                 )}
 
-                {agentLoading && (
+                {agentLoading && agentMessages.length === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       {[0, 1, 2].map(i => (
