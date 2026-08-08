@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── getProcedureKnowledge ─────────────────────────────────────────────────────
 // Fuzzy lookup into M-Care's ProcedureKnowledge safety knowledge base. Given a
@@ -22,25 +22,22 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 2 && !STOPWORDS.has(t));
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-
-    let body: any = null;
-    try { body = await req.json(); } catch (_) {
+Deno.serve(createHandler(async ({ req, base44, body }) => {
+    let payload = await body();
+    if (!payload?.query) {
       const url = new URL(req.url);
-      body = { query: url.searchParams.get('query'), limit: url.searchParams.get('limit') };
+      payload = { query: url.searchParams.get('query'), limit: url.searchParams.get('limit') };
     }
-    const query = (body?.query || '').toString().trim();
-    const limit = Math.min(Number(body?.limit || 3), 10);
+    const query = (payload?.query || '').toString().trim();
+    const limit = Math.min(Number(payload?.limit || 3), 10);
     if (!query) {
-      return Response.json({ error: 'query (procedure name) is required' }, { status: 400 });
+      return err('query (procedure name) is required');
     }
 
     const all: any[] = await base44.asServiceRole.entities.ProcedureKnowledge.list('-updated_at', 200);
     const active = all.filter((r) => r.is_active !== false);
     if (active.length === 0) {
-      return Response.json({
+      return ok({
         success: true,
         found: false,
         matches: [],
@@ -92,7 +89,7 @@ Deno.serve(async (req) => {
 
     const matches = scored.filter((m) => m.score > 0.2).slice(0, limit);
 
-    return Response.json({
+    return ok({
       success: true,
       found: matches.length > 0,
       best_score: matches[0]?.score || 0,
@@ -102,11 +99,7 @@ Deno.serve(async (req) => {
         ? 'Use this procedure-safety knowledge to guide the traveler.'
         : "I don't have detailed information about that specific procedure yet, but I can help you find a verified specialist who can guide you. Would you like me to do that?",
     });
-  } catch (error) {
-    console.error('[getProcedureKnowledge]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'getProcedureKnowledge', requireAuth: false }));
 
 // The behavioral protocol M-Care MUST follow whenever it discusses a procedure.
 // Returned alongside the data so the agent applies it consistently even when its

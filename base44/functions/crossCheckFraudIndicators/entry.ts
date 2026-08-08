@@ -1,16 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
+Deno.serve(createHandler(async ({ base44, body }) => {
     const {
       emails = [], phones = [], domains = [], names = [],
       partner_type = null, partner_id = null,
-    } = body as Record<string, any>;
+    } = await body() as Record<string, any>;
 
     const norm = (v: unknown) => (typeof v === 'string' ? v.toLowerCase().trim() : '');
     const values: string[] = [
@@ -21,7 +15,7 @@ Deno.serve(async (req) => {
     ].filter(Boolean);
 
     if (!values.length) {
-      return Response.json({
+      return ok({
         risk_level: 'low',
         matched_indicators: [],
         match_count: 0,
@@ -98,17 +92,13 @@ Deno.serve(async (req) => {
       : risk_level === 'medium' ? 'Proceed with onboarding but flag for human review — matched a lower-severity indicator.'
       : 'No fraud indicators matched. Safe to proceed with normal verification.';
 
-    return Response.json({
+    return ok({
       risk_level,
       matched_indicators: matched,
       match_count: matched.length,
       recommendation,
       checked_at: new Date().toISOString(),
     });
-  } catch (error) {
-    console.error('[crossCheckFraudIndicators] error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'crossCheckFraudIndicators' }));
 
 function digits(v: string): string { return (v || '').replace(/\D/g, ''); }

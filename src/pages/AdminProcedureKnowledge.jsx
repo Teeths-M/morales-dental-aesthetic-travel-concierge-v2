@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-import { Activity, Plus, Search, Pencil, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
+import ConfirmDialog from '@/components/ui-system/ConfirmDialog';
+import { Activity, Plus, Search, Pencil, Trash2, Loader2, AlertCircle } from 'lucide-react';
 
 const DARK = '#060B16';
 const GOLD = '#D4AF37';
@@ -45,6 +46,7 @@ export default function AdminProcedureKnowledge() {
   const [editing, setEditing] = useState(null); // record being edited or EMPTY for new
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(null); // working copy
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -97,7 +99,6 @@ export default function AdminProcedureKnowledge() {
   };
 
   const remove = async (id) => {
-    if (!confirm('Delete this procedure from the knowledge base?')) return;
     try {
       await base44.entities.ProcedureKnowledge.delete(id);
       setRecords((p) => p.filter((r) => r.id !== id));
@@ -181,7 +182,7 @@ export default function AdminProcedureKnowledge() {
                     </div>
                     <div className="flex flex-shrink-0 flex-col gap-2">
                       <Button variant="outline" size="sm" onClick={() => openEdit(r)} className="gap-1.5"><Pencil className="h-3.5 w-3.5" /> Edit</Button>
-                      <Button variant="outline" size="sm" onClick={() => remove(r.id)} className="gap-1.5 text-destructive"><Trash2 className="h-3.5 w-3.5" /> Delete</Button>
+                      <Button variant="outline" size="sm" onClick={() => setConfirmDeleteId(r.id)} className="gap-1.5 text-destructive"><Trash2 className="h-3.5 w-3.5" /> Delete</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -244,6 +245,16 @@ export default function AdminProcedureKnowledge() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => remove(confirmDeleteId)}
+        title="Delete procedure?"
+        message="Delete this procedure from the knowledge base?"
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

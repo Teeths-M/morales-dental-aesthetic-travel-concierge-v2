@@ -1,33 +1,33 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Tools 5/6/7: approve_agency / reject_agency / escalate_to_human, unified.
 // The M-Care agent calls this with a decision after gathering info and running
 // the IATA + website checks. For "approve" it RE-RUNS the IATA check itself —
 // the agent is never trusted to approve on a stale or unverified code; if the
 // live IATA lookup fails, the function refuses to approve and escalates instead.
-export default async function(req) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
-    const agency_id = body?.agency_id;
-    const decision = String(body?.decision || '').toLowerCase();
-    const reason = String(body?.reason || '');
+//
+// Admin-only, same discipline as reviewTaxiServiceVerification — without this
+// gate, TravelAgency's own RLS lets an agency update its own record, so an
+// agency could otherwise call this on its own agency_id and self-approve,
+// skipping human review entirely.
+Deno.serve(createHandler(async ({ base44, body }) => {
+    const payload = await body();
+    const agency_id = payload?.agency_id;
+    const decision = String(payload?.decision || '').toLowerCase();
+    const reason = String(payload?.reason || '');
 
     if (!agency_id || !['approve', 'reject', 'escalate'].includes(decision)) {
-      return Response.json({ error: 'agency_id and decision (approve|reject|escalate) required' }, { status: 400 });
+      return err('agency_id and decision (approve|reject|escalate) required');
     }
 
     const agency = await base44.entities.TravelAgency.get(agency_id).catch(() => null);
-    if (!agency) return Response.json({ error: 'Agency not found' }, { status: 404 });
+    if (!agency) return err('Agency not found', 404);
 
     // Approve gate: re-verify IATA live before trusting the decision.
     let iata = null;
     if (decision === 'approve') {
       if (!agency.iata_code) {
-        return Response.json({ ok: false, decision: 'reject', note: 'Cannot approve: the agency has no IATA code on file.' });
+        return ok({ ok: false, decision: 'reject', note: 'Cannot approve: the agency has no IATA code on file.' });
       }
       const r = await base44.functions.invoke('verifyIATACode', { iata_code: agency.iata_code });
       iata = r?.data || r;
@@ -54,7 +54,7 @@ export default async function(req) {
           status: 'PENDING_HUMAN_REVIEW',
           decided_at: new Date().toISOString()
         });
-        return Response.json({ ok: false, decision: 'escalate', note: `I could not confirm IATA code ${agency.iata_code} (${iata?.status}). I'm escalating to a human reviewer rather than approving.`, iata });
+        return ok({ ok: false, decision: 'escalate', note: `I could not confirm IATA code ${agency.iata_code} (${iata?.status}). I'm escalating to a human reviewer rather than approving.`, iata });
       }
     }
 
@@ -113,8 +113,5 @@ export default async function(req) {
       await base44.integrations.Core.SendEmail({ to: agency.email, subject, body: msg });
     } catch (e) { /* email is best-effort */ }
 
-    return Response.json({ ok: true, agency_id, decision, status: verRecordStatus, ai_decision: aiDecision });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-}
+    return ok({ ok: true, agency_id, decision, status: verRecordStatus, ai_decision: aiDecision });
+}, { name: 'reviewTravelAgencyVerification', allowedRoles: ['admin', 'platform_admin'] }));

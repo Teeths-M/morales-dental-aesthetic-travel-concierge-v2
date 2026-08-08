@@ -1,5 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { secrets } from 'base44:runtime';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // runDoctorVerificationScan — the "Red Team" doctor onboarding scan.
 // One self-contained orchestrator that runs every verification layer and
@@ -9,25 +9,33 @@ import { secrets } from 'base44:runtime';
 // flagged_for_admin_review). It reuses the platform's web-search LLM,
 // IPinfo, and fetch — it never fabricates a pass. If anything is uncertain
 // or fails, it refuses to approve and routes to a human admin.
-export default async function(req) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+//
+// Only the doctor being scanned (their own record) or an admin may trigger
+// this — it writes verification_status/status straight to the Doctor record
+// via asServiceRole (bypasses RLS), so an unscoped caller could otherwise
+// pass an arbitrary doctor_id and auto-activate someone else's record. The
+// established initiatePartnerVerification/activateVerifiedDoctor pair
+// deliberately splits doctor auto-activation behind a short-lived HMAC proof
+// for exactly this reason — this function reopened that hole by doing the
+// write itself, unguarded, until this gate was added.
+Deno.serve(createHandler(async ({ req, base44, user, body }) => {
+    const payload = await body();
+    const doctor_id = payload?.doctor_id;
+    const website_url = payload?.website_url || null;
+    const license_number = payload?.license_number || null;
+    const license_country = payload?.license_country || payload?.country || null;
+    const specialty = payload?.specialty || null;
+    const doctor_name = payload?.doctor_name || user.full_name;
+    const passport_file_url = payload?.passport_file_url || null;
 
-    const body = await req.json().catch(() => ({}));
-    const doctor_id = body?.doctor_id;
-    const website_url = body?.website_url || null;
-    const license_number = body?.license_number || null;
-    const license_country = body?.license_country || body?.country || null;
-    const specialty = body?.specialty || null;
-    const doctor_name = body?.doctor_name || user.full_name;
-    const passport_file_url = body?.passport_file_url || null;
-
-    if (!doctor_id) return Response.json({ error: 'doctor_id required' }, { status: 400 });
+    if (!doctor_id) return err('doctor_id required');
 
     const doctor = await base44.asServiceRole.entities.Doctor.get(doctor_id).catch(() => null);
-    if (!doctor) return Response.json({ error: 'Doctor record not found' }, { status: 404 });
+    if (!doctor) return err('Doctor record not found', 404);
+
+    const isSelf = doctor.email && user.email && doctor.email.toLowerCase() === user.email.toLowerCase();
+    const isAdmin = user.role === 'admin' || user.role === 'platform_admin';
+    if (!isSelf && !isAdmin) return err('Forbidden', 403);
 
     const now = new Date().toISOString();
     const flags = [];
@@ -239,7 +247,7 @@ export default async function(req) {
       } catch (e) { /* best-effort */ }
     }
 
-    return Response.json({
+    return ok({
       decision,
       confidence_score: confidence,
       flags,
@@ -247,7 +255,4 @@ export default async function(req) {
       steps,
       doctor_id
     });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-}
+}, { name: 'runDoctorVerificationScan' }));

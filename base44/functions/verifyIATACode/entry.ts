@@ -1,5 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { secrets } from 'base44:runtime';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Tool 2: verify_iata_code
 // Validates the format of an IATA code (7-8 digits = passenger, 11 = cargo,
@@ -7,15 +7,10 @@ import { secrets } from 'base44:runtime';
 // structured result the M-Care agent narrates conversationally. If the IATA
 // credentials are not configured yet, returns status "Error" so the agent
 // escalates to a human reviewer instead of guessing.
-export default async function(req) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
-    const code = String(body?.iata_code || '').trim();
-    if (!code) return Response.json({ error: 'iata_code is required' }, { status: 400 });
+Deno.serve(createHandler(async ({ body }) => {
+    const payload = await body();
+    const code = String(payload?.iata_code || '').trim();
+    if (!code) return err('iata_code is required');
 
     const digits = code.replace(/\D/g, '');
     let codeType = null;
@@ -37,12 +32,12 @@ export default async function(req) {
       raw_response: null,
       note: 'IATA passenger agency codes are 7 or 8 digits, cargo codes are 11 digits, and ID card codes are 10 digits.'
     };
-    if (!codeType) return Response.json(emptyResult);
+    if (!codeType) return ok(emptyResult);
 
     const apiKey = secrets.get('IATA_API_KEY');
     const serviceToken = secrets.get('IATA_SERVICE_TOKEN');
     if (!apiKey || !serviceToken) {
-      return Response.json({
+      return ok({
         ...emptyResult,
         status: 'Error',
         code_type: codeType,
@@ -60,7 +55,7 @@ export default async function(req) {
     });
 
     if (res.status === 429) {
-      return Response.json({
+      return ok({
         ...emptyResult,
         status: 'Error',
         code_type: codeType,
@@ -73,7 +68,7 @@ export default async function(req) {
       : data?.result?.[0] || data?.data?.[0] || data?.CheckACodeResult || data;
     const listed = !!(item && (item.name || item.agencyName || item.agency_name || item.Name));
 
-    return Response.json({
+    return ok({
       is_valid: listed,
       status: listed ? 'Valid' : 'Code Not Listed',
       code_type: codeType,
@@ -86,13 +81,4 @@ export default async function(req) {
       phone: item?.phone || item?.Phone || null,
       raw_response: item || data
     });
-  } catch (error) {
-    return Response.json({
-      is_valid: false,
-      status: 'Error',
-      agency_name: null,
-      raw_response: null,
-      note: error.message
-    }, { status: 500 });
-  }
-}
+}, { name: 'verifyIATACode' }));

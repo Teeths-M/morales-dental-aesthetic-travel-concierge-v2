@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── Inline input normalizer (light sanitization of partner-supplied claims) ──
 function norm(v: unknown, max = 120): string {
@@ -7,13 +7,7 @@ function norm(v: unknown, max = 120): string {
 }
 function digits(v: string): string { return (v || '').replace(/\D/g, ''); }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
+Deno.serve(createHandler(async ({ base44, body }) => {
     const {
       file_url,
       partner_type = null,
@@ -23,9 +17,9 @@ Deno.serve(async (req) => {
       claimed_license_number = '',
       claimed_country = '',
       document_type_hint = '',
-    } = body as Record<string, string>;
+    } = await body() as Record<string, string>;
 
-    if (!file_url) return Response.json({ error: 'file_url is required' }, { status: 400 });
+    if (!file_url) return err('file_url is required');
 
     // ── 1. Vision LLM: OCR + classify + extract + authenticity ─────────────────
     const claimedBlock = [
@@ -83,7 +77,7 @@ Return JSON only matching the schema.`;
         },
       });
     } catch (e) {
-      return Response.json({ error: 'Document analysis failed — the vision model could not process the file.', file_url }, { status: 502 });
+      return err('Document analysis failed — the vision model could not process the file.', 502);
     }
 
     const codes = ((analysis?.extracted_codes as any[]) || []).map((c: any) => c?.code || '').filter(Boolean);
@@ -152,7 +146,7 @@ Return JSON only matching the schema.`;
       await base44.asServiceRole.entities.FraudIndicator.create(ind).catch(() => {});
     }
 
-    return Response.json({
+    return ok({
       document_type: analysis?.document_type ?? null,
       detected_issuer: analysis?.detected_issuer ?? null,
       extracted_codes: codes,
@@ -170,8 +164,4 @@ Return JSON only matching the schema.`;
       analyzed_at: new Date().toISOString(),
       indicators_written: indicators.length,
     });
-  } catch (error) {
-    console.error('[analyzeDocumentIntelligence] error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'analyzeDocumentIntelligence' }));

@@ -8,11 +8,13 @@ import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVault
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import { BackButton } from '@/components/nav/BackButton';
+import { useToast } from '@/components/ui/use-toast';
 
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 
 export default function MCareAgent() {
+  const { toast } = useToast();
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -117,7 +119,7 @@ export default function MCareAgent() {
   const handleFileSelect = async (file) => {
     if (!file) return;
     if (file.size > 15 * 1024 * 1024) {
-      alert('That file is larger than 15MB. Please upload a smaller image or PDF.');
+      toast({ title: 'File too large', description: 'That file is larger than 15MB. Please upload a smaller image or PDF.', variant: 'destructive' });
       return;
     }
     setIsUploading(true);
@@ -128,7 +130,7 @@ export default function MCareAgent() {
     } catch (err) {
       console.error('Upload failed', err);
       setIsSending(false);
-      alert('Upload failed — please try again.');
+      toast({ title: 'Upload failed', description: 'Upload failed — please try again.', variant: 'destructive' });
     } finally {
       setIsUploading(false);
     }

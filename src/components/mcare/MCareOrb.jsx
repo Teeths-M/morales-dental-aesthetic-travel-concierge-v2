@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, WifiOff, RotateCcw, Maximize2, Minimize2, Minus, X, LogIn, Stethoscope, Briefcase, Shield, BarChart3, Luggage, Siren, FileText } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, Minus, X, LogIn, Stethoscope, Briefcase, Shield, BarChart3, Luggage, Siren, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceInputButton from './VoiceInputButton';
 import LivingOrb from './LivingOrb';
@@ -29,6 +29,7 @@ import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import { isSystemPaused } from '@/lib/systemPause';
+import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
 
@@ -75,6 +76,7 @@ const TIPS_KEYS = {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function MCareOrb() {
   const { t }             = useTranslation();
+  const { toast }         = useToast();
   const { user }          = useAuth();
   const { pathname }      = useLocation();
   const navigate          = useNavigate();
@@ -284,13 +286,13 @@ export default function MCareOrb() {
 
   const handleFileSelect = async (file) => {
     if (!file) return;
-    if (file.size > 15 * 1024 * 1024) { alert('That file is larger than 15MB. Please upload a smaller image or PDF.'); return; }
+    if (file.size > 15 * 1024 * 1024) { toast({ title: 'File too large', description: 'That file is larger than 15MB. Please upload a smaller image or PDF.', variant: 'destructive' }); return; }
     setAgentUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       await sendAgentMessage(`I've uploaded: ${file.name || 'document'}`, [file_url]);
     } catch (e) {
-      alert('Upload failed — please try again.');
+      toast({ title: 'Upload failed', description: 'Upload failed — please try again.', variant: 'destructive' });
     } finally {
       setAgentUploading(false);
     }

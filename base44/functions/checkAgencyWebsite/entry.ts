@@ -1,18 +1,13 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // Tool 3: check_website
 // Fetches the agency's website to confirm it's live, captures the HTTP status,
 // the <title>, and whether the connection is HTTPS. The M-Care agent narrates
 // this conversationally ("✅ Website globalmed.com — Live and responding").
-export default async function(req) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
-    let url = String(body?.url || '').trim();
-    if (!url) return Response.json({ error: 'url is required' }, { status: 400 });
+Deno.serve(createHandler(async ({ body }) => {
+    const payload = await body();
+    let url = String(payload?.url || '').trim();
+    if (!url) return err('url is required');
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
 
     const ssl_valid = url.startsWith('https://');
@@ -22,7 +17,7 @@ export default async function(req) {
     let status_code = 0;
     let page_title = null;
     let is_live = false;
-    let err = null;
+    let fetchError = null;
 
     try {
       const res = await fetch(url, {
@@ -36,19 +31,16 @@ export default async function(req) {
       const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       page_title = m ? m[1].replace(/\s+/g, ' ').trim().slice(0, 200) : null;
     } catch (e) {
-      err = e?.name === 'AbortError' ? 'Request timed out' : (e?.message || 'Fetch failed');
+      fetchError = e?.name === 'AbortError' ? 'Request timed out' : (e?.message || 'Fetch failed');
     }
     clearTimeout(timeout);
 
-    return Response.json({
+    return ok({
       is_live,
       status_code,
       page_title,
       ssl_valid,
       has_contact_info: null,
-      error: err
+      error: fetchError
     });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-}
+}, { name: 'checkAgencyWebsite' }));

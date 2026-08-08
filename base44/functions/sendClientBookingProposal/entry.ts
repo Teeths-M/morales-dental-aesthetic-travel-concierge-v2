@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── sendClientBookingProposal ─────────────────────────────────────────────────
 // The "click-and-pay" orchestrator. Once M-Care has confirmed the partner quotas
@@ -49,33 +49,22 @@ async function twilioSms(to: string, body: string, whatsapp: boolean): Promise<{
   }
 }
 
-Deno.serve(async (req) => {
-  let body: any = null;
-  try { body = await req.json(); } catch (_) {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-  const { case_id } = body || {};
-  if (!case_id) return Response.json({ error: 'case_id is required' }, { status: 400 });
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { case_id } = await body();
+    if (!case_id) return err('case_id is required');
 
-  try {
-    const base44 = createClientFromRequest(req);
-
-    // Verify the caller owns this case (or is admin). Booking requires auth, so a
-    // session must exist. This stops one user from dispatching proposals for another.
-    let caller: { email?: string; role?: string } | null = null;
-    try { caller = await base44.auth.me(); } catch (_) { caller = null; }
-    if (!caller) return Response.json({ error: 'Authentication required to send a booking proposal.' }, { status: 401 });
-
+    // Verify the caller owns this case (or is admin). This stops one user from
+    // dispatching proposals for another.
     let caseRecord: any = null;
     try {
       caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
     } catch (_) { caseRecord = null; }
-    if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
+    if (!caseRecord) return err('Case not found', 404);
 
-    const isOwner = caseRecord.client_email && caller.email && caseRecord.client_email.toLowerCase() === caller.email.toLowerCase();
-    const isAdmin = caller.role === 'admin' || caller.role === 'platform_admin';
+    const isOwner = caseRecord.client_email && user.email && caseRecord.client_email.toLowerCase() === user.email.toLowerCase();
+    const isAdmin = user.role === 'admin' || user.role === 'platform_admin';
     if (!isOwner && !isAdmin) {
-      return Response.json({ error: 'You can only send a proposal for your own case.' }, { status: 403 });
+      return err('You can only send a proposal for your own case.', 403);
     }
 
     // M-Care must have priced the package first.
@@ -103,7 +92,7 @@ Deno.serve(async (req) => {
     }
 
     const appUrl = (Deno.env.get('APP_URL') || '').replace(/\/$/, '');
-    if (!appUrl) return Response.json({ error: 'APP_URL is not configured.' }, { status: 500 });
+    if (!appUrl) return err('APP_URL is not configured.', 500);
     const paymentUrl = `${appUrl}/portal/proposal/${token}`;
 
     const clientName = caseRecord.client_name || 'there';
@@ -188,7 +177,7 @@ Deno.serve(async (req) => {
     await Promise.allSettled(logWrites);
 
     const succeeded = Object.values(channels).filter((c) => c.success).length;
-    return Response.json({
+    return ok({
       success: true,
       ready: true,
       case_id,
@@ -198,8 +187,4 @@ Deno.serve(async (req) => {
       channels_failed: Object.keys(channels).filter((k) => !channels[k].success),
       summary: `Proposal sent on ${clientName}'s behalf via ${succeeded} channel(s). Present the payment link in chat so they can tap and pay.`,
     });
-  } catch (error) {
-    console.error('[sendClientBookingProposal]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'sendClientBookingProposal' }));

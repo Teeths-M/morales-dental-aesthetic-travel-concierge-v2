@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // logMcarePerformance — fire-and-forget analytics hook M-Care calls on every
 // journey stage advance / key outcome. It reuses the tamper-evident audit chain
@@ -6,13 +6,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 // break the agent's conversation flow: any audit failure is swallowed and
 // reported as logged:false rather than surfaced as an error to the agent.
 
-export default async function(req) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
+Deno.serve(createHandler(async ({ base44, body }) => {
     const {
       conversation_id,
       case_id,
@@ -21,10 +15,10 @@ export default async function(req) {
       partner_type,
       outcome,
       notes,
-    } = body || {};
+    } = await body() || {};
 
     if (!stage_to) {
-      return Response.json({ error: 'stage_to is required' }, { status: 400 });
+      return err('stage_to is required');
     }
 
     try {
@@ -42,12 +36,9 @@ export default async function(req) {
         },
       });
       const auditId = result?.data?.audit_id || null;
-      return Response.json({ ok: true, logged: true, audit_id: auditId });
+      return ok({ ok: true, logged: true, audit_id: auditId });
     } catch (logErr) {
       // Best-effort analytics: never break the patient's journey.
-      return Response.json({ ok: true, logged: false, reason: 'audit_log_unavailable' });
+      return ok({ ok: true, logged: false, reason: 'audit_log_unavailable' });
     }
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-}
+}, { name: 'logMcarePerformance' }));

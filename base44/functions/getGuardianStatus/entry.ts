@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── getGuardianStatus ─────────────────────────────────────────────────────────
 // Returns the six Traveler Guardian milestone check-ins for a case and their
@@ -16,25 +16,15 @@ const MILESTONES = [
   { type: 'home_safe', label: 'Home safe', order: 6 },
 ] as const;
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-
-    let case_id: string | null = null;
-    try {
-      const body = await req.json();
-      case_id = body?.case_id || null;
-    } catch (_) {
+Deno.serve(createHandler(async ({ req, base44, user, body }) => {
+    const payload = await body();
+    let case_id: string | null = payload?.case_id || null;
+    if (!case_id) {
       const url = new URL(req.url);
       case_id = url.searchParams.get('case_id');
     }
     if (!case_id) {
-      return Response.json({ error: 'case_id is required' }, { status: 400 });
-    }
-
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Authentication required' }, { status: 401 });
+      return err('case_id is required');
     }
 
     let caseRecord: any = null;
@@ -42,13 +32,13 @@ Deno.serve(async (req) => {
       caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
     } catch (_) { caseRecord = null; }
     if (!caseRecord) {
-      return Response.json({ error: 'Case not found' }, { status: 404 });
+      return err('Case not found', 404);
     }
 
     const isOwner = caseRecord.client_email && caseRecord.client_email === user.email;
     const isAdmin = ADMIN_ROLES.has(user.role || '');
     if (!isOwner && !isAdmin) {
-      return Response.json({ error: 'Forbidden: not the case owner' }, { status: 403 });
+      return err('Forbidden: not the case owner', 403);
     }
 
     const checkIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
@@ -83,7 +73,7 @@ Deno.serve(async (req) => {
     });
 
     const confirmed = milestones.filter((m) => m.state === 'confirmed').length;
-    return Response.json({
+    return ok({
       success: true,
       case_id: caseRecord.id,
       active: milestones.some((m) => m.state !== 'not_scheduled'),
@@ -91,8 +81,4 @@ Deno.serve(async (req) => {
       total: MILESTONES.length,
       milestones,
     });
-  } catch (error) {
-    console.error('[getGuardianStatus]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'getGuardianStatus' }));

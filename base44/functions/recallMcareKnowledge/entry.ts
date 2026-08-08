@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── recallMcareKnowledge ──────────────────────────────────────────────────────
 // Read-only lookup into M-Care's brain. Given a question, returns the best
@@ -19,28 +19,22 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 2 && !STOPWORDS.has(t));
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-
-    let user: any = null;
-    try { user = await base44.auth.me(); } catch (_) { user = null; }
-
-    let body: any = null;
-    try { body = await req.json(); } catch (_) {
+Deno.serve(createHandler(async ({ req, base44, body }) => {
+    let payload = await body();
+    if (!payload?.question) {
       const url = new URL(req.url);
-      body = { question: url.searchParams.get('question'), limit: url.searchParams.get('limit') };
+      payload = { question: url.searchParams.get('question'), limit: url.searchParams.get('limit') };
     }
-    const question = (body?.question || '').toString().trim();
-    const limit = Math.min(Number(body?.limit || 3), 10);
+    const question = (payload?.question || '').toString().trim();
+    const limit = Math.min(Number(payload?.limit || 3), 10);
     if (!question) {
-      return Response.json({ error: 'question is required' }, { status: 400 });
+      return err('question is required');
     }
 
     const records: any[] = await base44.asServiceRole.entities.McareKnowledge.list('-created_date', 500);
     const active = records.filter((r) => !r.flagged_for_review);
     if (active.length === 0) {
-      return Response.json({ success: true, found: false, matches: [], message: 'M-Care brain is empty for this question.' });
+      return ok({ success: true, found: false, matches: [], message: 'M-Care brain is empty for this question.' });
     }
 
     const qTokens = new Set(tokenize(question));
@@ -66,15 +60,11 @@ Deno.serve(async (req) => {
       } catch (_) { /* best-effort */ }
     }
 
-    return Response.json({
+    return ok({
       success: true,
       found: matches.length > 0,
       best_score: matches[0]?.score || 0,
       matches,
       message: matches.length > 0 ? 'Found a memorized answer.' : 'No strong match in the brain — research the question.',
     });
-  } catch (error) {
-    console.error('[recallMcareKnowledge]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'recallMcareKnowledge', requireAuth: false }));

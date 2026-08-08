@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import ConfirmDialog from '@/components/ui-system/ConfirmDialog';
 import { Brain, Search, Trash2, Loader2, AlertCircle, CheckCircle2, Flag } from 'lucide-react';
 
 const DARK = '#060B16';
@@ -13,6 +14,7 @@ export default function AdminMcareKnowledge() {
   const [error, setError] = useState(null);
   const [records, setRecords] = useState([]);
   const [query, setQuery] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -40,7 +42,6 @@ export default function AdminMcareKnowledge() {
   }, [records, query]);
 
   const remove = async (id) => {
-    if (!confirm('Delete this learned answer from M-Care\'s brain?')) return;
     try {
       await base44.entities.McareKnowledge.delete(id);
       setRecords((prev) => prev.filter((r) => r.id !== id));
@@ -135,7 +136,7 @@ export default function AdminMcareKnowledge() {
                       <Button variant="outline" size="sm" onClick={() => toggleFlag(r)} className="gap-1.5">
                         <Flag className="h-3.5 w-3.5" /> {r.flagged_for_review ? 'Unflag' : 'Flag'}
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => remove(r.id)} className="gap-1.5 text-destructive">
+                      <Button variant="outline" size="sm" onClick={() => setConfirmDeleteId(r.id)} className="gap-1.5 text-destructive">
                         <Trash2 className="h-3.5 w-3.5" /> Delete
                       </Button>
                     </div>
@@ -146,6 +147,16 @@ export default function AdminMcareKnowledge() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => remove(confirmDeleteId)}
+        title="Delete learned answer?"
+        message="Delete this learned answer from M-Care's brain?"
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

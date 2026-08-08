@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── activateTravelerGuardian ──────────────────────────────────────────────────
 // Turns on "Traveler Guardian" mode for a case: schedules the six milestone
@@ -46,18 +46,10 @@ function addMs(d: Date, ms: number): Date { return new Date(d.getTime() + ms); }
 function addDays(d: Date, days: number): Date { return addMs(d, days * 86400000); }
 const H = (n: number) => n * 3600000;
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    const { case_id } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { case_id } = await body();
     if (!case_id) {
-      return Response.json({ error: 'case_id is required' }, { status: 400 });
+      return err('case_id is required');
     }
 
     let caseRecord: any = null;
@@ -65,14 +57,14 @@ Deno.serve(async (req) => {
       caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
     } catch (_) { caseRecord = null; }
     if (!caseRecord) {
-      return Response.json({ error: 'Case not found' }, { status: 404 });
+      return err('Case not found', 404);
     }
 
     // Authorization: case owner or admin.
     const isOwner = caseRecord.client_email && caseRecord.client_email === user.email;
     const isAdmin = ADMIN_ROLES.has(user.role || '');
     if (!isOwner && !isAdmin) {
-      return Response.json({ error: 'Forbidden: not the case owner' }, { status: 403 });
+      return err('Forbidden: not the case owner', 403);
     }
 
     // Existing milestone check-ins for this case (idempotency).
@@ -176,15 +168,11 @@ Deno.serve(async (req) => {
       });
     } catch (_) { /* best-effort */ }
 
-    return Response.json({
+    return ok({
       success: true,
       case_id: caseRecord.id,
       activated_by: user.email,
       scheduled: created,
       already_scheduled: [...existingTypes],
     });
-  } catch (error) {
-    console.error('[activateTravelerGuardian]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'activateTravelerGuardian' }));

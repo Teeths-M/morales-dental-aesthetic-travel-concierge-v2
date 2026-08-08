@@ -1,5 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { jsPDF } from 'npm:jspdf@4.0.0';
+import { createHandler, ok } from '../../shared/createHandler.ts';
 
 // ── generateIntelligenceReport ──────────────────────────────────────────────
 // Admin-only. Produces a PDF summarizing every partner's verification status,
@@ -9,7 +9,6 @@ import { jsPDF } from 'npm:jspdf@4.0.0';
 const PAGE_WIDTH = 210;
 const MARGIN = 14;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-const ADMIN_ROLES = new Set(['admin', 'platform_admin']);
 
 function safe(v: unknown, fallback = '—'): string {
   if (v === null || v === undefined || v === '') return fallback;
@@ -27,15 +26,7 @@ function fmtDate(v: unknown): string {
   return d.toISOString().slice(0, 10);
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-
-    const user = await base44.auth.me();
-    if (!user || !ADMIN_ROLES.has(user.role || '')) {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
+Deno.serve(createHandler(async ({ base44, user }) => {
     // ── Gather all partner records (service-role; admin reads everything) ──
     const [doctors, agencies, taxis, security, companions, checkIns] = await Promise.all([
       base44.asServiceRole.entities.Doctor.list('-created_date', 500),
@@ -266,7 +257,7 @@ Deno.serve(async (req) => {
     const pdfBase64 = doc.output('base64');
     const pdfUrl = `data:application/pdf;base64,${pdfBase64}`;
 
-    return Response.json({
+    return ok({
       success: true,
       pdf_url: pdfUrl,
       generated_at: new Date().toISOString(),
@@ -283,8 +274,4 @@ Deno.serve(async (req) => {
         recent_audit_count: recentAudits.length,
       },
     });
-  } catch (error) {
-    console.error('[generateIntelligenceReport]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'generateIntelligenceReport', allowedRoles: ['admin', 'platform_admin'] }));

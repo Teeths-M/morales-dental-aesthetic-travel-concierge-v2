@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // ── mcareResearchAndLearn ─────────────────────────────────────────────────────
 // M-Care's "when stuck, research and learn" brain. Given a question it can't
@@ -51,18 +51,15 @@ function bestMatch(question: string, records: any[]) {
   return best ? { ...best, score: bestScore } : null;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-
+Deno.serve(createHandler(async ({ base44, body }) => {
     let user: any = null;
     try { user = await base44.auth.me(); } catch (_) { user = null; }
 
-    const body = await req.json();
-    const question = (body?.question || '').toString().trim();
-    const context = (body?.context || '').toString().trim();
+    const payload = await body();
+    const question = (payload?.question || '').toString().trim();
+    const context = (payload?.context || '').toString().trim();
     if (!question) {
-      return Response.json({ error: 'question is required' }, { status: 400 });
+      return err('question is required');
     }
 
     // 1. Recall from brain first.
@@ -77,7 +74,7 @@ Deno.serve(async (req) => {
           recalled_count: (hit.recalled_count || 0) + 1,
         });
       } catch (_) { /* best-effort */ }
-      return Response.json({
+      return ok({
         success: true,
         source: 'brain',
         recalled: true,
@@ -122,14 +119,14 @@ ${context ? `Context: ${context}` : ''}`;
         prompt,
         response_json_schema: schema,
       });
-    } catch (err) {
-      return Response.json({ error: 'Research service unavailable right now.', detail: String(err) }, { status: 503 });
+    } catch (llmErr) {
+      return Response.json({ error: 'Research service unavailable right now.', detail: String(llmErr) }, { status: 503 });
     }
 
     const answer = (research?.answer || '').toString().trim();
     const confidence = Math.round(Number(research?.confidence_score || 0));
     if (!answer) {
-      return Response.json({ error: 'Research returned no answer.' }, { status: 502 });
+      return err('Research returned no answer.', 502);
     }
 
     // 3. Persist only when accuracy meets the threshold.
@@ -160,7 +157,7 @@ ${context ? `Context: ${context}` : ''}`;
       }
     }
 
-    return Response.json({
+    return ok({
       success: true,
       source: 'research',
       recalled: false,
@@ -177,8 +174,4 @@ ${context ? `Context: ${context}` : ''}`;
           ? `Answered but confidence (${confidence}%) is below the ${ACCURACY_THRESHOLD}% memorization threshold — not saved to the brain.`
           : 'Answered; could not persist to the brain just now.',
     });
-  } catch (error) {
-    console.error('[mcareResearchAndLearn]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'mcareResearchAndLearn', requireAuth: false }));
