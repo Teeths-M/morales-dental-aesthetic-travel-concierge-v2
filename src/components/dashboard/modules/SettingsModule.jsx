@@ -166,8 +166,10 @@ function DeleteMyAccountCard({ email }) {
 
       <p className="text-xs text-slate-500 mb-4 leading-relaxed">
         This immediately removes your name, contact details, and documents from our systems.
-        Case and payment records required for financial/medical record-keeping are retained but
-        anonymized. This happens right away and cannot be undone.
+        Case and payment records required for financial/medical record-keeping are retained
+        with your identity anonymized around them. A signed legal agreement (a waiver, or an
+        informed-consent record) is kept as-is, including the name on it, for legal and audit
+        compliance — that's what it exists to prove. This happens right away and cannot be undone.
       </p>
 
       {step === 'idle' && (
