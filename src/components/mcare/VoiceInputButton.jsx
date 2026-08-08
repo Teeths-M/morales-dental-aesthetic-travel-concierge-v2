@@ -109,19 +109,19 @@ export default function VoiceInputButton({ onTranscript, onError, disabled = fal
       title={recording ? 'Stop recording' : 'Speak instead'}
       aria-label={recording ? 'Stop recording' : 'Speak instead'}
       style={{
-        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-        background: recording ? '#dc2626' : 'rgba(255,255,255,0.06)',
-        border: 'none',
+        width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+        background: recording ? '#dc2626' : '#F6F7FB',
+        border: '1px solid #E5E7EB',
         cursor: disabled || busy ? 'default' : 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'background 0.2s',
       }}
     >
       {busy
-        ? <Loader2 style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.5)' }} className="animate-spin" />
+        ? <Loader2 style={{ width: 15, height: 15, color: '#6C47FF' }} className="animate-spin" />
         : recording
           ? <Square style={{ width: 13, height: 13, color: '#fff' }} />
-          : <Mic style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.7)' }} />}
+          : <Mic style={{ width: 16, height: 16, color: '#6C47FF' }} />}
     </button>
   );
 }
