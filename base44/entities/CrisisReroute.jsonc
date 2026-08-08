@@ -1,0 +1,252 @@
+{
+  "name": "CrisisReroute",
+  "type": "object",
+  "description": "First-class record of every crisis reroute M-Care executes \u2014 when a provider cancels, a flight drops, a driver no-shows, credentials expire, or a companion flags distress. Each row is one incident: what broke, how it was detected, the backup options searched, the selected replacement, whether the patient was notified and consented, whether all stakeholders were notified, whether the overall trip timeline was preserved, the resolution time, whether a human had to be pulled in, and a full audit trail. The orchestrator (handleCrisisReroute) writes it; admins and the owning patient read it. Distinct from CaseRecord.fallback_state (the live in-flux flag) \u2014 this is the permanent, per-incident ledger.",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this crisis affects."
+    },
+    "client_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the patient owns their own crisis records."
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "original_booking_id": {
+      "type": "string",
+      "description": "Same as case_id \u2014 the booking that broke. Kept under this name to match the coordination-loop spec."
+    },
+    "original_provider_id": {
+      "type": "string",
+      "description": "The provider/partner that failed (doctor id, driver id, etc.)."
+    },
+    "original_provider_name": {
+      "type": "string"
+    },
+    "original_provider_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "driver",
+        "travel_agency",
+        "companion",
+        "security",
+        "clinic",
+        "flight",
+        "other"
+      ]
+    },
+    "crisis_type": {
+      "type": "string",
+      "enum": [
+        "PROVIDER_CANCELLED",
+        "FLIGHT_CANCELLED",
+        "DRIVER_NO_SHOW",
+        "COMPANION_DISTRESS",
+        "PROVIDER_CREDENTIAL_EXPIRED",
+        "EMERGENCY",
+        "OTHER"
+      ]
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "detected_by": {
+      "type": "string",
+      "enum": [
+        "AI",
+        "PATIENT_REPORT",
+        "PROVIDER_MESSAGE",
+        "EXTERNAL_API",
+        "CRON",
+        "ADMIN",
+        "PARTNER"
+      ]
+    },
+    "source_message": {
+      "type": "string",
+      "description": "The incoming message or signal that triggered detection (e.g. the clinic's cancellation text)."
+    },
+    "rule_applied_id": {
+      "type": "string",
+      "description": "The BookingFallbackRule row that governed this reroute."
+    },
+    "rule_applied_number": {
+      "type": "number"
+    },
+    "backup_options_searched": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "partner_id": {
+            "type": "string"
+          },
+          "partner_name": {
+            "type": "string"
+          },
+          "partner_type": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "cost_estimate_usd": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why considered / why chosen or rejected"
+          }
+        }
+      },
+      "description": "The alternatives M-Care scanned before picking \u2014 credentials, availability, cost."
+    },
+    "selected_backup_id": {
+      "type": "string"
+    },
+    "selected_backup_name": {
+      "type": "string"
+    },
+    "selected_backup_type": {
+      "type": "string"
+    },
+    "selected_backup_cost_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_difference_usd": {
+      "type": "number",
+      "default": 0,
+      "description": "selected_backup_cost_usd minus the original provider's cost. Negative = the reroute saved the patient money."
+    },
+    "patient_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "patient_message": {
+      "type": "string",
+      "description": "The exact 'I've already handled it' message M-Care sent the patient."
+    },
+    "patient_consent_received": {
+      "type": "boolean",
+      "default": false
+    },
+    "all_stakeholders_notified": {
+      "type": "boolean",
+      "default": false
+    },
+    "stakeholders_notified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "e.g. ['driver','travel_agency','companion','admin','insurance']"
+    },
+    "timeline_preserved": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the overall trip (flights, hotel, return) was saved without rescheduling the trip itself."
+    },
+    "resolution_time_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "Time from detected_at to the moment the reroute was resolved (confirmed backup + patient notified)."
+    },
+    "human_escalated": {
+      "type": "boolean",
+      "default": false
+    },
+    "human_escalated_reason": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "detected",
+        "rerouting",
+        "resolved",
+        "human_escalated",
+        "failed"
+      ],
+      "default": "detected"
+    },
+    "audit_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "case_id",
+    "crisis_type",
+    "detected_at",
+    "detected_by"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "authenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
