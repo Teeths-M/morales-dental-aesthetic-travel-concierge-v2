@@ -102,6 +102,22 @@
       ],
       "default": "pending_review"
     },
+    // Added alongside the 3 sub-checks above: activatePartner unconditionally
+    // wrote status: 'active' here even though this field didn't exist —
+    // SecurityAgency was the only partner type activatePartner covers with no
+    // status field of its own to write to. Simple 3-value enum matching
+    // Companion's, not TaxiService's fuller state machine — SecurityAgency
+    // doesn't participate in partnerOnboardingState.ts and doesn't need to
+    // for this fix.
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
     "kyp_verification_id": {
       "type": "string"
     },

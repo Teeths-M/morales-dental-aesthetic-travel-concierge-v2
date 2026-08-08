@@ -127,10 +127,15 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       updated_at: now,
     });
 
-    // Trigger AI analysis.
+    // Trigger AI analysis. partner_type/country give the analysis fair
+    // context — without them every document from every country was judged
+    // against the same generic notion of "normal," which risked flagging a
+    // legitimate document as suspicious purely for looking unfamiliar.
     const analysisResult = await base44.functions.invoke('analyzePartnerDocuments', {
       verification_id: verification.id,
       documents: documents || [],
+      partner_type,
+      country: partnerCountry,
     });
 
     const { fraud_score, fraud_indicators } = analysisResult.data;
@@ -141,18 +146,27 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     let verifiedAt: string | null = null;
 
     // Auto-decision based on fraud score.
-    // Doctors: <= CLEAR_THRESHOLD auto-activates with no human touch; between that
-    // and 70 goes to human review ("neutral"); above 70 is denied. All other
-    // partner types still always require manual admin review — none are auto-activated.
+    // Doctors: <= CLEAR_THRESHOLD auto-activates with no human touch. Above
+    // that always goes to manual review — a fraud score above 70 used to
+    // auto-DENY here, with no human ever looking at the application (just an
+    // email telling the applicant to contact support if it was wrong). That
+    // was removed: a generic vision-based fraud score — especially without
+    // the country/document context analyzePartnerDocuments now receives
+    // above — is not reliable enough to be the sole reason someone's
+    // livelihood application is rejected, and false positives skew heavily
+    // toward applicants whose documents simply look unfamiliar to the model
+    // rather than actually fraudulent. It can still escalate urgency; it can
+    // never resolve the outcome by itself. All other partner types still
+    // always require manual admin review — none are auto-activated.
+    let urgentReview = false;
     if (partner_type === 'doctor') {
-      if (fraud_score > 70) {
-        newStatus = 'denied';
-      } else if (fraud_score <= CLEAR_THRESHOLD) {
+      if (fraud_score <= CLEAR_THRESHOLD) {
         newStatus = 'auto_verified';
         autoVerified = true;
         verifiedAt = now;
       } else {
         newStatus = 'manual_review';
+        urgentReview = fraud_score > 70;
       }
     } else {
       newStatus = 'pending_manual_review';
@@ -177,7 +191,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       verification_notes: partner_type === 'doctor'
         ? (newStatus === 'auto_verified'
             ? `AI pre-screen clear (score ${fraud_score}/100, threshold ${CLEAR_THRESHOLD}). Auto-activating with no manual review.`
-            : `AI pre-screen: ${fraud_indicators.length} indicators detected (score ${fraud_score}/100). Routed to manual review — doctor activation requires admin approval.`)
+            : urgentReview
+              ? `AI pre-screen flagged ${fraud_indicators.length} indicator(s), HIGH score (${fraud_score}/100). Routed to URGENT manual review — a human must review before any decision; never auto-denied.`
+              : `AI pre-screen: ${fraud_indicators.length} indicators detected (score ${fraud_score}/100). Routed to manual review — doctor activation requires admin approval.`)
         : `AI Analysis: ${fraud_indicators.length} indicators detected. Score: ${fraud_score}/100`,
       updated_at: now,
     };
@@ -305,14 +321,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
                <p>This typically takes 24–48 hours. We'll notify you once complete.</p>
                <p>Verification ID: ${verification.id}</p>`,
       });
-    } else if (newStatus === 'denied') {
-      await base44.integrations.Core.SendEmail({
-        to: partnerEmail,
-        subject: 'Verification Decision',
-        body: `<p>Unfortunately, your verification could not be completed at this time.</p>
-               <p>Please contact support for more information.</p>`,
-      });
     }
+    // No 'denied' branch here anymore — this function can no longer produce
+    // an autonomous denial (see the fraud-score branching above). A real
+    // denial now only ever comes from a human decision elsewhere in the
+    // pipeline (e.g. verifyDoctorBackground's 'reject' action,
+    // manualReviewVerification), never from this automated first pass.
 
     return Response.json({
       success: true,

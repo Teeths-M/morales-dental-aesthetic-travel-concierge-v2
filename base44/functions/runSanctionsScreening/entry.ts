@@ -176,8 +176,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     sanctions_search_id:    searchId,
   };
   if (status === 'flagged') {
-    entityUpdate.verification_status = 'sanctions_flagged';
-    entityUpdate.status = 'blocked';
+    // A fuzzy name-match against a sanctions/PEP/adverse-media list is a
+    // potential match, not a confirmed one — this kind of screening is
+    // well-documented to produce more false positives for names using
+    // non-Western naming conventions and transliteration. This used to
+    // immediately set status:'blocked' (an invalid value outside every
+    // partner entity's own status enum, on top of being premature) before
+    // any human confirmed the match was real. Now: the applicant stays
+    // exactly where they already were (not bookable — that gate doesn't
+    // move either way) and the concern is surfaced for a human via
+    // sanctions_review_needed + verification_notes + the admin alert email
+    // below. A real match still ultimately blocks them — only after a
+    // human confirms it, never from this automated step alone.
+    entityUpdate.sanctions_review_needed = true;
+    entityUpdate.verification_notes = `Sanctions screening flagged a potential match (score ${(highestScore * 100).toFixed(0)}%, provider: ${provider}) — needs human confirmation before any decision. Not auto-blocked.`;
   }
   await updatePartnerEntity(base44, partner_type, partner_id, entityUpdate);
 
@@ -189,7 +201,11 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       partner_id, partner_type, partner_name, partner_email,
       sanctions_check_status: status,
       sanctions_check_at: now,
-      overall_status: status === 'flagged' ? 'rejected' : 'in_progress',
+      // 'rejected' used to be written here on a mere fuzzy flag, before any
+      // human confirmed the match — the KYP record finalized a decision
+      // nobody had actually made. 'in_progress' is accurate either way:
+      // review is still ongoing until a human resolves the flag.
+      overall_status: 'in_progress',
       audit_trail: [{ timestamp: now, action: 'sanctions_screening', actor: provider, notes: `${hitCount} hits. Score: ${(highestScore * 100).toFixed(0)}%. ${errorNote}` }],
     };
     if (existing.length) {
@@ -206,12 +222,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       const b44 = base44 as { asServiceRole: { integrations: { Core: { SendEmail: Function } } } };
       await b44.asServiceRole.integrations.Core.SendEmail({
         to: adminEmail,
-        subject: `🚨 SANCTIONS HIT — ${partner_name} (${partner_type})`,
-        body: `A partner application has been automatically blocked by sanctions screening.\n\n`
+        subject: `🚨 SANCTIONS SCREENING NEEDS REVIEW — ${partner_name} (${partner_type})`,
+        body: `A partner application has a potential sanctions/PEP/adverse-media match that needs human confirmation before any decision is made.\n\n`
             + `Partner: ${partner_name}\nType: ${partner_type}\nCountry: ${country || 'unknown'}\n`
             + `Provider: ${provider}\nHits: ${hitCount}\nHighest score: ${(highestScore * 100).toFixed(0)}%\n`
             + `${errorNote ? `Note: ${errorNote}\n` : ''}\n`
-            + `Partner status set to BLOCKED.\n\nReview: /admin/partner-verification`,
+            + `The applicant has NOT been rejected or blocked — fuzzy name-matching produces real false positives, especially for non-Western naming conventions. Please review and confirm before any final decision.\n\nReview: /admin/partner-verification`,
       });
     } catch (_) { /* email is non-fatal */ }
   }
