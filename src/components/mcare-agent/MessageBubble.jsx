@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download } from 'lucide-react';
+import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
-import { MAP_APPS, orderedMapApps, openInMapsApp } from '@/lib/mapLinks';
+import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
+import { downloadQrSvgAsPng } from '@/lib/qrDownload';
+
+const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 
 const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
@@ -28,6 +32,19 @@ const extractMaps = (raw) => {
   if (!match) return { text: raw.trim(), maps: null };
   const text = raw.replace(match[0], '').trim();
   return { text, maps: { label: match[1].trim(), dest: match[2].trim() } };
+};
+
+// Extract a {{qr:LABEL|DESTINATION}} token M-Care emits when the traveler
+// needs to hand navigation to someone ELSE (a driver, family, hotel staff) to
+// scan on their own phone, or to save/print — distinct from {{maps:...}},
+// which opens navigation on the traveler's own device right now. Same
+// DESTINATION rules as the maps token (address or "lat,lng").
+const extractQr = (raw) => {
+  if (!raw) return { text: '', qr: null };
+  const match = raw.match(/\{\{qr:([^|]*)\|([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), qr: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, qr: { label: match[1].trim(), dest: match[2].trim() } };
 };
 
 // Backward-compat: if M-Care emits a bare waze / google-maps / apple-maps URL
@@ -65,6 +82,36 @@ const stripMd = (s) => {
     .replace(/(?<!\w)_([^_\n]+)_(?!\w)/g, '$1')
     .replace(/~~([^~\n]+)~~/g, '$1');
 };
+
+// Renders a real, scannable QR code inline in the chat bubble — the driver
+// or anyone else can scan it straight off the traveler's screen, or the
+// traveler can download it. Value is a Google Maps universal link (resolves
+// natively on iOS and Android) built the same way the {{maps:...}} buttons
+// already do, via generateMapLink.
+function InlineQrBlock({ label, dest }) {
+  const containerRef = useRef(null);
+  const url = generateMapLink(dest, 'google_maps');
+  if (!url) return null;
+  const filename = `${(label || 'morales').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'morales'}-qr.png`;
+  const handleDownload = () => {
+    downloadQrSvgAsPng(containerRef.current?.querySelector('svg'), filename);
+  };
+  return (
+    <div className="mt-2 inline-flex flex-col items-center gap-1.5 rounded-xl border border-border bg-white p-3">
+      <div ref={containerRef}>
+        <QRCodeSVG value={url} size={120} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+      </div>
+      {label && <p className="text-[11px] font-medium text-gray-600">{label}</p>}
+      <button
+        type="button"
+        onClick={handleDownload}
+        className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2.5 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50"
+      >
+        <Download className="w-3 h-3" /> Save
+      </button>
+    </div>
+  );
+}
 
 function StatusIcon({ status }) {
   if (['completed', 'success'].includes(status)) return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
@@ -151,7 +198,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
       <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
         {(() => {
           const { text: t1, choices } = extractChoices(message.content);
-          const { text, maps } = extractMaps(t1);
+          const { text: t2, maps } = extractMaps(t1);
+          const { text, qr } = extractQr(t2);
           const mapUrls = extractMapUrls(text);
           const chipBase = 'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95';
           return (
@@ -190,6 +238,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                   ))}
                 </div>
               )}
+              {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {mapUrls.map((u, i) => {
