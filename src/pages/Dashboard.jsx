@@ -35,6 +35,7 @@ import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline'
 import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
 import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
 import JourneyMap from '@/components/dashboard/JourneyMap';
+import TravelPassCard from '@/components/dashboard/TravelPassCard';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
 import PreDepartureBriefing from '@/components/dashboard/PreDepartureBriefing';
@@ -533,6 +534,12 @@ function DashboardHome({ user, consultations, language }) {
           clinicAddress={latestConsultation.clinic_address ?? ''}
         />
       )}
+
+      {/* M-Safe Travel Pass — printable QR codes for navigation + emergency
+          contact, sourced from the real CaseRecord (not Consultation, unlike
+          JourneyMap above) via useActiveCaseRecord — renders nothing until
+          real hotel/clinic address data exists. */}
+      <TravelPassCard userEmail={user?.email} />
 
       {/* Journey Status Timeline — Stripe/Apple order-status model */}
       {latestConsultation && (
