@@ -134,6 +134,11 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     sms_sent: !!patientPhone,
     procedure_category: category,
     standard_rules_count: standardCare.length,
+    // standard_care/doctor_notes returned in full (not just a count) so the
+    // caller — M-Care in particular — can actually present the care
+    // instructions in conversation instead of only pointing at an email.
+    standard_care: standardCare,
+    doctor_notes: notes || null,
   });
 
 }, { name: 'sendPostOpInstructions', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));

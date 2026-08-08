@@ -44,9 +44,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
   if (!c) return err('Case not found', 404);
 
-  // Idempotency: don't re-send unless explicitly forced.
+  // Idempotency: don't re-send unless explicitly forced. Still return the
+  // stored checklist content — a repeat call (e.g. M-Care asked again later
+  // in the same conversation) previously got back only a boolean, with
+  // nothing for M-Care to actually say to the patient.
   if (c.pre_op_sent_at && !force) {
-    return ok({ already_sent: true, sent_at: c.pre_op_sent_at });
+    return ok({ already_sent: true, sent_at: c.pre_op_sent_at, checklist: c.pre_op_checklist || [] });
   }
 
   const checklist = buildPreOpChecklist({
@@ -75,5 +78,8 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }).catch(() => {});
   }
 
-  return ok({ case_id, items: checklist.length, sent_at: now });
+  // checklist is returned in full (not just a count) so the caller — M-Care
+  // in particular — can actually present these steps in conversation instead
+  // of only being able to say "check your email."
+  return ok({ case_id, items: checklist.length, checklist, sent_at: now });
 }, { name: 'sendPreOpInstructions', requireAuth: false, allowedRoles: [] }));
