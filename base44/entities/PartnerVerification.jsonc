@@ -106,6 +106,10 @@
       "type": "string",
       "format": "date-time"
     },
+    "regulatory_context": {
+      "type": "string",
+      "description": "Advisory note on the applicant's country's real regulatory/licensing body, researched via M-Care's mcareResearchAndLearn brain (live web research, self-caching). Shown to the human reviewer and folded into the document fraud-scan prompt — never used to auto-decide a verification outcome."
+    },
     "manual_review_notes": {
       "type": "string",
       "description": "Notes from human reviewer"

@@ -114,6 +114,36 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       }, { status: 200 }); // 200 so the signup UI shows a clear message, not a generic error
     }
 
+    // ── Country-aware verification context ──────────────────────────────────
+    // Research the real regulatory/licensing body for this partner type and
+    // country via M-Care's existing research-and-learn brain
+    // (mcareResearchAndLearn — recall-first from McareKnowledge, live
+    // internet-grounded research on a miss, self-caches future lookups for
+    // the same country). General to any country by construction — no
+    // hardcoded list to maintain. Advisory only: it strengthens the document
+    // fraud-scan prompt below and is shown to a human reviewer; it never
+    // changes the auto-clear/manual-review thresholds itself. Best-effort —
+    // if research fails or isn't confident, verification proceeds with the
+    // existing generic fairness prompt exactly as before this change.
+    let regulatoryContext: string | null = null;
+    if (partnerCountry) {
+      try {
+        const researchResult = await base44.functions.invoke('mcareResearchAndLearn', {
+          question: `What is the official regulatory or licensing body for a ${partner_type.replace(/_/g, ' ')} in ${partnerCountry}? What does a legitimate license or credential document from them typically look like?`,
+          context: 'Partner verification for a medical travel platform — factual, non-diagnostic research only.',
+        });
+        const research = researchResult?.data;
+        // Same >=80 bar mcareResearchAndLearn itself treats as "reliable
+        // enough to memorize" — a recalled answer already cleared this bar
+        // when it was first researched, so this stays consistent either way.
+        if (research?.success && research.answer && Number(research.confidence_score) >= 80) {
+          regulatoryContext = research.answer;
+        }
+      } catch (researchErr) {
+        console.error('[initiatePartnerVerification] regulatory context research failed:', researchErr);
+      }
+    }
+
     // ── GATE 2: Create verification record & run AI document analysis ───────
     // BUG-R16-05 FIX: use asServiceRole — PartnerVerification is system-owned.
     const verification = await base44.asServiceRole.entities.PartnerVerification.create({
@@ -123,6 +153,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       partner_email: partnerEmail,
       verification_status: 'documents_received',
       documents_uploaded: documents || [],
+      regulatory_context: regulatoryContext,
       created_at: now,
       updated_at: now,
     });
@@ -131,11 +162,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // context — without them every document from every country was judged
     // against the same generic notion of "normal," which risked flagging a
     // legitimate document as suspicious purely for looking unfamiliar.
+    // regulatory_context (when research found one) upgrades that from a
+    // generic "be fair" nudge into a concrete fact about the real body.
     const analysisResult = await base44.functions.invoke('analyzePartnerDocuments', {
       verification_id: verification.id,
       documents: documents || [],
       partner_type,
       country: partnerCountry,
+      regulatory_context: regulatoryContext,
     });
 
     const { fraud_score, fraud_indicators } = analysisResult.data;

@@ -11,7 +11,7 @@ Deno.serve(createHandler(async ({ req }) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { verification_id, documents, partner_type, country } = await req.json();
+    const { verification_id, documents, partner_type, country, regulatory_context } = await req.json();
 
     if (!verification_id || !documents || documents.length === 0) {
       return Response.json({ error: 'verification_id and documents required' }, { status: 400 });
@@ -27,8 +27,12 @@ Deno.serve(createHandler(async ({ req }) => {
     // This doesn't solve that — no vision model can know every country's
     // exact document-issuance conventions — but it materially reduces the
     // risk of penalizing an applicant for something that isn't fraud.
+    // regulatory_context, when initiatePartnerVerification's live research
+    // found one, upgrades the generic nudge below into a concrete fact
+    // about the real issuing body and what its documents actually look
+    // like — still advisory, not a guarantee.
     const contextLine = (partner_type || country)
-      ? `\n\nContext: this document was submitted by a ${partner_type ? partner_type.replace(/_/g, ' ') : 'partner'} applicant${country ? ` based in ${country}` : ''}. Evaluate authenticity signals appropriate to what an official document from that country and role would realistically look like. Do NOT flag or penalize the applicant merely because the script, formatting, paper quality, or production style is simply typical of official documents from that country rather than an actual sign of tampering or forgery.`
+      ? `\n\nContext: this document was submitted by a ${partner_type ? partner_type.replace(/_/g, ' ') : 'partner'} applicant${country ? ` based in ${country}` : ''}. Evaluate authenticity signals appropriate to what an official document from that country and role would realistically look like. Do NOT flag or penalize the applicant merely because the script, formatting, paper quality, or production style is simply typical of official documents from that country rather than an actual sign of tampering or forgery.${regulatory_context ? ` Specifically, researched context on the real regulatory body: ${regulatory_context}` : ''}`
       : '';
 
     let totalFraudScore = 0;
