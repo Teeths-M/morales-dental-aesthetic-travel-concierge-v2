@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, Minus, X, LogIn, Stethoscope, Briefcase, Shield, BarChart3, Luggage, Siren, FileText } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Shield, Luggage, Siren, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceInputButton from './VoiceInputButton';
 import LivingOrb from './LivingOrb';
@@ -389,9 +389,6 @@ export default function MCareOrb() {
             <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
               {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
             </button>
-            <button onClick={() => setOpen(false)} title="Minimize" aria-label="Minimize" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
-              <Minus style={{ width: 18, height: 18 }} />
-            </button>
             <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
               <X style={{ width: 18, height: 18 }} />
             </button>
@@ -406,12 +403,22 @@ export default function MCareOrb() {
               {/* Chat area */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: '#F6F7FB' }}>
                 {agentMessages.length === 0 && !agentLoading && (
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
-                    <span style={{ width: 32, height: 32, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden>
-                      <Shield style={{ width: 16, height: 16, color: '#fff' }} fill="#fff" />
-                    </span>
-                    <p style={{ margin: 0, fontSize: 13, color: '#111827', lineHeight: 1.55, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>{GREETING}</p>
-                  </div>
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
+                      <span style={{ width: 32, height: 32, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden>
+                        <Shield style={{ width: 16, height: 16, color: '#fff' }} fill="#fff" />
+                      </span>
+                      <p style={{ margin: 0, fontSize: 13, color: '#111827', lineHeight: 1.55, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>{GREETING}</p>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
+                      {quickChips.map(c => (
+                        <button key={c.label} onClick={c.run}
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: '1px solid #E5E7EB', background: '#fff', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          <c.icon style={{ width: 14, height: 14 }} /> {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
 
                 {agentLoading && (
@@ -447,27 +454,6 @@ export default function MCareOrb() {
                   </div>
                 )}
                 <div ref={bottomRef} />
-              </div>
-
-              {/* Quick actions */}
-              <div style={{ padding: '10px 14px', borderTop: '1px solid #E5E7EB', display: 'flex', gap: 8, overflowX: 'auto', background: '#fff' }}>
-                {quickChips.map(c => (
-                  <button key={c.label} onClick={c.run}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: '1px solid #E5E7EB', background: '#fff', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    <c.icon style={{ width: 14, height: 14 }} /> {c.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Feedback panel */}
-              <div style={{ padding: '12px 14px', borderTop: '1px solid #E5E7EB', background: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <BarChart3 style={{ width: 14, height: 14, color: '#6B7280' }} />
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#111827' }}>Feedback</p>
-                </div>
-                <FeedbackRow label="Clarity" value={82} color="#22C55E" />
-                <div style={{ height: 8 }} />
-                <FeedbackRow label="Evidence" value={64} color={PURPLE} />
               </div>
 
               {/* Input */}
@@ -509,19 +495,5 @@ export default function MCareOrb() {
         @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
       `}</style>
     </>
-  );
-}
-
-function FeedbackRow({ label, value, color }) {
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: 12, color: '#374151' }}>{label}</span>
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{value}%</span>
-      </div>
-      <div style={{ height: 8, borderRadius: 999, background: '#E5E7EB', overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${value}%`, background: color, borderRadius: 999 }} />
-      </div>
-    </div>
   );
 }
