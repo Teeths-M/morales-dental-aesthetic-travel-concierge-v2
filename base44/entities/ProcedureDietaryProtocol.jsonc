@@ -1,0 +1,169 @@
+{
+  "name": "ProcedureDietaryProtocol",
+  "type": "object",
+  "description": "M-Care's procedure-specific recovery nutrition database. Each record maps a procedure category + recovery phase to an evidence-based recovery diet: dietary texture, recommended foods (with the reason each aids recovery, key nutrients, frequency, and preparation notes), foods to avoid (with severity), a hydration protocol, supplement recommendations, and cultural adaptations. getRecoveryNutritionPlan looks up the matching protocol for a patient's current recovery phase and filters the recommended foods against the patient's allergies and dietary restrictions (nut allergy removes nuts; halal removes non-halal; vegetarian removes meat; etc.), returning an adapted plan plus a shopping list. Admins curate it; M-Care reads it.",
+  "properties": {
+    "procedure_category": {
+      "type": "string",
+      "description": "Canonical procedure category key, e.g. DENTAL_IMPLANT, BARIATRIC_SURGERY, RHINOPLASTY, LIPOSUCTION, BREAST_SURGERY, JOINT_REPLACEMENT, CARDIAC_SURGERY, FERTILITY."
+    },
+    "procedure_sub_type": {
+      "type": "string",
+      "description": "Optional more specific sub-type, e.g. full_mouth_restoration, gastric_sleeve."
+    },
+    "recovery_phase": {
+      "type": "string",
+      "enum": [
+        "IMMEDIATE_24H",
+        "DAYS_1_3",
+        "DAYS_4_7",
+        "WEEKS_2_4",
+        "MONTHS_2_3"
+      ]
+    },
+    "dietary_texture": {
+      "type": "string",
+      "enum": [
+        "CLEAR_LIQUID",
+        "FULL_LIQUID",
+        "SOFT_FOODS",
+        "PUREED",
+        "REGULAR_SOFT",
+        "REGULAR"
+      ]
+    },
+    "recommended_foods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "food_name": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "nutrients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "preparation_notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "foods_to_avoid": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "food_name": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "ABSOLUTE_AVOID",
+              "LIMIT",
+              "CAUTION"
+            ]
+          }
+        }
+      }
+    },
+    "hydration_protocol": {
+      "type": "string"
+    },
+    "supplement_recommendations": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Free-form key/value supplement guidance, e.g. { vitamin_c: '1000mg daily - collagen synthesis', zinc: '15mg daily - wound healing' }."
+    },
+    "cultural_adaptations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "culture": {
+            "type": "string"
+          },
+          "swaps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "original": {
+                  "type": "string"
+                },
+                "alternative": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "procedure_category",
+    "recovery_phase",
+    "dietary_texture"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "authenticated": true
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}
