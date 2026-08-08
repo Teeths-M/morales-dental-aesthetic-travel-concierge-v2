@@ -6,10 +6,13 @@ import { Send, Heart } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
+import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
+import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import { BackButton } from '@/components/nav/BackButton';
 import { useToast } from '@/components/ui/use-toast';
 import { friendlyError } from '@/lib/friendlyError';
+import { handleChatPaste } from '@/lib/chatPaste';
 
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
@@ -172,9 +175,7 @@ export default function MCareAgent() {
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <BackButton fallback="/dashboard" />
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#D4AF37', color: '#060B16' }}>
-              <Heart className="w-4 h-4" fill="currentColor" />
-            </div>
+            <McareAvatar size={36} />
             <div>
               <h1 className="text-base font-display font-semibold text-foreground leading-tight">M-Care</h1>
               <p className="text-xs text-muted-foreground leading-tight">Patient Journey Coordinator</p>
@@ -208,8 +209,8 @@ export default function MCareAgent() {
         <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-4">
           {!hasConversation && !loadingConvos && (
             <div className="flex flex-col items-center justify-center text-center py-16">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 m-breathe" style={{ background: '#D4AF37', color: '#060B16' }}>
-                <Heart className="w-7 h-7" fill="currentColor" />
+              <div className="mb-4 m-breathe">
+                <McareAvatar size={64} glow />
               </div>
               <h2 className="text-xl font-display font-semibold text-foreground mb-2">Welcome to M-Care</h2>
               <p className="text-sm text-muted-foreground max-w-sm mb-6">{GREETING}</p>
@@ -230,12 +231,13 @@ export default function MCareAgent() {
           {messages.map((msg, idx) => <MessageBubble key={idx} message={msg} onRespond={handleSafetyRespond} showReaction />)}
 
           {isSending && (
-            <div className="flex justify-start">
+            <div className="flex justify-start items-end gap-2">
+              <McareAvatar size={28} glow />
               <div className="rounded-2xl px-4 py-3 bg-card border border-border">
                 <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#D4AF37', animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#D4AF37', animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#D4AF37', animationDelay: '300ms' }} />
                 </div>
               </div>
             </div>
@@ -247,10 +249,17 @@ export default function MCareAgent() {
       {/* Input */}
       {hasConversation && (
         <div className="sticky bottom-0 z-10 bg-background/90 backdrop-blur border-t border-border">
+          <SmartInputSuggestions
+            text={input}
+            disabled={isSending || isUploading}
+            onPick={(p) => setInput(input + ' ' + p)}
+            onApplyCorrection={(fixed) => setInput(fixed)}
+          />
           <div className="max-w-3xl mx-auto w-full px-4 py-3 flex items-end gap-2">
             <AddImageMenu
               onDeviceFile={handleFileSelect}
               onVaultClick={() => vaultRef.current?.open()}
+              onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
               disabled={isSending || isUploading}
               uploading={isUploading}
             />
@@ -259,6 +268,7 @@ export default function MCareAgent() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: isSending || isUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
               placeholder={isUploading ? "Uploading document…" : "Tell M-Care what you're considering…"}
               disabled={isSending || isUploading}
               className="flex-1"

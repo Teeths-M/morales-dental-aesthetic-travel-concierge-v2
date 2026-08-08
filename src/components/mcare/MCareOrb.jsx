@@ -27,9 +27,12 @@ import LivingOrb from './LivingOrb';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
+import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
+import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import { isSystemPaused } from '@/lib/systemPause';
 import { friendlyError } from '@/lib/friendlyError';
+import { handleChatPaste } from '@/lib/chatPaste';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -502,9 +505,7 @@ export default function MCareOrb() {
 
           {/* Header */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, background: '#fff' }}>
-            <span style={{ width: 36, height: 36, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden>
-              <Shield style={{ width: 18, height: 18, color: '#fff' }} fill="#fff" />
-            </span>
+            <McareAvatar size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
               <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Morales Super Agent</p>
@@ -542,9 +543,7 @@ export default function MCareOrb() {
                 {agentMessages.length === 0 && !agentLoading && (
                   <>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
-                      <span style={{ width: 32, height: 32, borderRadius: '50%', background: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} aria-hidden>
-                        <Shield style={{ width: 16, height: 16, color: '#fff' }} fill="#fff" />
-                      </span>
+                      <McareAvatar size={32} />
                       <p style={{ margin: 0, fontSize: 13, color: '#111827', lineHeight: 1.55, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>{GREETING}</p>
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
@@ -559,10 +558,11 @@ export default function MCareOrb() {
                 )}
 
                 {agentLoading && agentMessages.length === 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
+                    <McareAvatar size={28} glow />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       {[0, 1, 2].map(i => (
-                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: PURPLE, display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
+                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4AF37', display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
                       ))}
                     </div>
                     <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>Opening your journey…</span>
@@ -582,10 +582,11 @@ export default function MCareOrb() {
                 ))}
 
                 {agentSending && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
+                    <McareAvatar size={28} glow />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       {[0, 1, 2].map(i => (
-                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: PURPLE, display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
+                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4AF37', display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
                       ))}
                     </div>
                     <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>M-Safe is coordinating…</span>
@@ -594,12 +595,19 @@ export default function MCareOrb() {
                 <div ref={bottomRef} />
               </div>
 
+              <SmartInputSuggestions
+                text={input}
+                disabled={agentSending || agentUploading || !isOnline}
+                onPick={(p) => setInput(input + ' ' + p)}
+                onApplyCorrection={(fixed) => setInput(fixed)}
+              />
               {/* Input */}
               <div style={{ padding: '10px 14px', borderTop: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: '#fff' }}>
                 <AddImageMenu
                   variant="icon"
                   onDeviceFile={handleFileSelect}
                   onVaultClick={() => vaultRef.current?.open()}
+                  onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
                   disabled={agentSending || agentUploading}
                   uploading={agentUploading}
                 />
@@ -608,6 +616,7 @@ export default function MCareOrb() {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
                   placeholder={isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
                   style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
                 />

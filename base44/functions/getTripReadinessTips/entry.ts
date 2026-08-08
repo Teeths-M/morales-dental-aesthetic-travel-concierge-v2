@@ -1,3 +1,4 @@
+// Redeploy trigger — re-register as agent tool after GitHub sync.
 /**
  * getTripReadinessTips — "how do I get ready for my trip" for ANY journey
  * type (medical AND leisure), unlike sendPreOpInstructions/
