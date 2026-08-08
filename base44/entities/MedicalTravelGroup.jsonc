@@ -1,0 +1,146 @@
+{
+  "name": "MedicalTravelGroup",
+  "type": "object",
+  "description": "A coordinated medical-tourism group \u2014 multiple patients traveling together for the same procedure at the same destination (e.g. a dental group, a bariatric cohort). One leader creates the group; members join. M-Care coordinates shared logistics (same travel agency, same driver pool, same clinic window) while each member keeps their own CaseRecord and Safe-T screening. Distinct from Consultation.companions_details (family/friends accompanying ONE patient) \u2014 this is multiple patients, each their own case, traveling as a unit.",
+  "properties": {
+    "group_name": {
+      "type": "string",
+      "description": "Human label for the group, e.g. 'Cancun Dental Cohort Aug 2026'."
+    },
+    "group_leader_email": {
+      "type": "string",
+      "format": "email",
+      "description": "The patient who created the group; coordinates with M-Care on behalf of the cohort."
+    },
+    "group_leader_name": {
+      "type": "string"
+    },
+    "procedure": {
+      "type": "string",
+      "description": "The shared procedure/procedure category every member is traveling for."
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "destination_city": {
+      "type": "string"
+    },
+    "travel_start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "travel_end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "member_emails": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "email"
+      },
+      "description": "Every member patient's email (includes the leader)."
+    },
+    "member_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "member_case_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Each member's CaseRecord id, parallel to member_emails where known."
+    },
+    "member_count": {
+      "type": "number",
+      "default": 1
+    },
+    "shared_travel_agency_id": {
+      "type": "string",
+      "description": "Optional shared travel vendor once flights/hotel are coordinated for the cohort."
+    },
+    "shared_clinic_name": {
+      "type": "string"
+    },
+    "shared_driver_pool_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Taxi partners assigned to move the group together."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "forming",
+        "confirmed",
+        "traveling",
+        "completed",
+        "cancelled"
+      ],
+      "default": "forming"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "group_name",
+    "group_leader_email",
+    "procedure",
+    "destination_country",
+    "destination_city"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.group_leader_email": "{{user.email}}"
+        },
+        {
+          "data.member_emails": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "authenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.group_leader_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

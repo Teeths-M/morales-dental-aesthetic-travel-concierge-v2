@@ -1,0 +1,88 @@
+{
+  "name": "BookingFallbackRule",
+  "type": "object",
+  "description": "The pre-loaded rulebook M-Care follows when something breaks on a booked journey \u2014 provider cancels < 24h, flight cancelled, driver no-show, companion distress, credentials expire mid-trip. Each rule declares the trigger event, the automatic fallback action, whether patient consent is required, the max auto-reroute cost difference tolerated, the notification template intro, whether a human must override, and a priority. handleCrisisReroute looks up the active rule matching the crisis_type and executes it. Admins curate it; M-Care reads it.",
+  "properties": {
+    "rule_number": {
+      "type": "number",
+      "description": "Human-readable rule number (1-5 in the initial seed)."
+    },
+    "trigger_event": {
+      "type": "string",
+      "description": "Plain description of what causes this fallback, e.g. 'Provider Cancels < 24h Before Procedure'."
+    },
+    "crisis_type": {
+      "type": "string",
+      "enum": [
+        "PROVIDER_CANCELLED",
+        "FLIGHT_CANCELLED",
+        "DRIVER_NO_SHOW",
+        "COMPANION_DISTRESS",
+        "PROVIDER_CREDENTIAL_EXPIRED",
+        "EMERGENCY",
+        "OTHER"
+      ]
+    },
+    "fallback_action": {
+      "type": "string",
+      "description": "What M-Care does automatically \u2014 e.g. 'Search backup providers within 15km, same specialty, verified credentials'."
+    },
+    "requires_patient_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if M-Care must wait for explicit patient consent before auto-booking the backup (opt-in). False = opt-out (M-Care acts and tells, patient can decline)."
+    },
+    "max_auto_reroute_cost_difference": {
+      "type": "number",
+      "default": 0,
+      "description": "Max cost increase (USD) M-Care will auto-absorb without escalating. If the only backup costs more than this above the original, escalate to human."
+    },
+    "notification_template": {
+      "type": "string",
+      "description": "The opening line of the patient message for this scenario. handleCrisisReroute appends the structured backup details."
+    },
+    "human_override_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this crisis must always be escalated to a human (never auto-resolved), e.g. credentials expiring, companion distress."
+    },
+    "priority": {
+      "type": "number",
+      "default": 1,
+      "description": "Lower = higher priority. When multiple rules could match, the lowest priority number wins."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "rule_number",
+    "trigger_event",
+    "crisis_type",
+    "fallback_action",
+    "priority"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "authenticated": true
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
