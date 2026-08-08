@@ -363,11 +363,11 @@ export default function MCareOrb() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
-          style={{ transition: 'width 0.25s ease, max-height 0.25s ease',
+          style={{ transition: 'width 0.25s ease, height 0.25s ease',
             width: expanded ? 'min(1160px, 96vw)' : 'min(440px, 94vw)',
             background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 16,
             boxShadow: '0 24px 64px rgba(15,23,42,0.28)', display: 'flex', flexDirection: 'column',
-            maxHeight: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden' }}>
+            height: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, background: '#fff' }}>
