@@ -167,6 +167,7 @@ jobs:
             call dispatchSoloSecurity
             call checkMissedRecoveryCheckins
             call sendActivityNudge
+            call sendMilestoneWhatsAppCheckIns
           elif [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Anomaly analysis calls an LLM, so it runs on the slowest cadence.
             call runSafetyMonitor
@@ -176,6 +177,7 @@ jobs:
           else
             # Every 15 min — the life-safety path.
             call scheduleSoloCheckIns           # creates/advances check-ins for every active traveler, not just solo
+            call sendMilestoneWhatsAppCheckIns  # sends the WhatsApp/email check-in for any milestone scheduleSoloCheckIns just created that's now due
             call escalateSoloCheckIn            # 2h → 3h → 5h → 9h cascade
             call predictiveEscalation           # fires BEFORE a check-in is missed
             call checkStaleLiveLocations        # GPS gone quiet
