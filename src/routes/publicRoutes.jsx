@@ -78,7 +78,6 @@ const MemoryBankDemo           = lazy(() => import('@/pages/MemoryBankDemo'));
 const MReconDemo               = lazy(() => import('@/pages/MReconDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
-const MSafeChatDemo            = lazy(() => import('@/pages/MSafeChatDemo'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -135,7 +134,6 @@ export const publicRoutes = (
     <Route path="/demo/m-recon"         element={<ErrorBoundary><MReconDemo /></ErrorBoundary>} />
     <Route path="/signup"                element={<ErrorBoundary><SignupLanding /></ErrorBoundary>} />
     <Route path="/nearby"              element={<ErrorBoundary><NearbyHelp /></ErrorBoundary>} />
-    <Route path="/msafe"               element={<ErrorBoundary><MSafeChatDemo /></ErrorBoundary>} />
     <Route path="/recovery-check-in/:token"  element={<ErrorBoundary><RecoveryCheckIn /></ErrorBoundary>} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<ErrorBoundary><PublicRecoveryTracker /></ErrorBoundary>} />
