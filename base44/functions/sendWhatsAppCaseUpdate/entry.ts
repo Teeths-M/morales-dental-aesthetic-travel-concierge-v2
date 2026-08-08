@@ -1,5 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { isSpanish, toE164, sendWhatsApp } from '../../shared/twilioWhatsApp.ts';
 
 const STATUS_MESSAGES = {
   en: {
@@ -36,62 +37,7 @@ const STATUS_MESSAGES = {
   }
 };
 
-const SPANISH_NATIONALITIES = [
-  'venezuela', 'colombia', 'mexico', 'argentina', 'chile', 'peru', 'ecuador',
-  'bolivia', 'paraguay', 'uruguay', 'cuba', 'dominican republic', 'puerto rico',
-  'panama', 'costa rica', 'honduras', 'guatemala', 'el salvador', 'nicaragua',
-  'spain', 'españa', 'venezolano', 'colombiano', 'mexicano'
-];
-
-function isSpanish(caseData) {
-  const nat = (caseData.client_country || caseData.nationality || '').toLowerCase();
-  return SPANISH_NATIONALITIES.some(n => nat.includes(n));
-}
-
-function toE164(phone) {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length < 7) return null;
-  if (phone.trim().startsWith('+')) return '+' + digits;
-  if (digits.startsWith('1') && digits.length === 11) return '+' + digits;
-  if (digits.length === 10) return '+1' + digits;
-  return '+' + digits;
-}
-
-async function sendWhatsApp(to, message) {
-  const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-  const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-  const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
-
-  if (!accountSid || !authToken || !fromNumber) {
-    console.error('[sendWhatsAppCaseUpdate] Twilio credentials not configured');
-    return { skipped: true, sid: null };
-  }
-
-  const form = new URLSearchParams();
-  form.append('To', `whatsapp:${to}`);
-  form.append('From', `whatsapp:${fromNumber}`);
-  form.append('Body', message);
-
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: form.toString(),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => '');
-    console.error(`[sendWhatsAppCaseUpdate] Twilio error ${res.status}: ${err}`);
-    return { skipped: true, sid: null };
-  }
-  return await res.json();
-}
+// WhatsApp helpers (isSpanish, toE164, sendWhatsApp) imported from ../../shared/twilioWhatsApp.ts
 
 Deno.serve(async (req) => {
   try {

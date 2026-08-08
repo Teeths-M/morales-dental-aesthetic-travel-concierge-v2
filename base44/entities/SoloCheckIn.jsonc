@@ -28,7 +28,8 @@
     },
     "sent_time": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "When the check-in message (email, SMS, or WhatsApp) was first sent to the traveler."
     },
     "responded_time": {
       "type": "string",
@@ -39,11 +40,13 @@
       "enum": [
         "app",
         "sms",
+        "whatsapp",
         "voice",
         "emergency_pin",
         "satellite"
       ],
-      "default": "app"
+      "default": "app",
+      "description": "How the traveler responded (or, for milestone check-ins, the channel M-Care used to send the check-in). 'whatsapp' covers Traveler Guardian milestone check-ins delivered via WhatsApp."
     },
     "location_lat": {
       "type": "number"
@@ -178,7 +181,7 @@
         "departure",
         "home_safe"
       ],
-      "description": "Traveler Guardian milestone this check-in watches. Null for the standard time-based solo check-in ladder. When set, the check-in fires at a specific journey event rather than a fixed interval."
+      "description": "Traveler Guardian milestone this check-in watches. Null for the standard time-based solo check-in ladder. When set, the check-in fires at a specific journey event (landed, arrived at hotel, pre-procedure, post-procedure, departure, home safe) rather than a fixed interval. sendMilestoneWhatsAppCheckIns sends the WhatsApp check-in when this milestone's scheduled_time arrives."
     },
     "missed_round_count": {
       "type": "number",
