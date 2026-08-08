@@ -9,6 +9,7 @@ import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import { BackButton } from '@/components/nav/BackButton';
 import { useToast } from '@/components/ui/use-toast';
+import { friendlyError } from '@/lib/friendlyError';
 
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
@@ -68,7 +69,7 @@ export default function MCareAgent() {
       setActiveConversationId(conversation.id);
       setMessages(conversation.messages || []);
     } catch (e) {
-      console.error('Failed to start conversation:', e);
+      toast({ title: 'Could not start conversation', description: friendlyError(e, 'Please try again.', 'MCareAgent'), variant: 'destructive' });
     } finally {
       setIsStarting(false);
     }
@@ -97,6 +98,7 @@ export default function MCareAgent() {
         setMessages(conversation.messages || []);
       } catch (e) {
         setIsSending(false);
+        toast({ title: 'Message not sent', description: friendlyError(e, 'Could not start your M-Care conversation. Please try again.', 'MCareAgent'), variant: 'destructive' });
         return;
       }
     } else {
@@ -112,7 +114,7 @@ export default function MCareAgent() {
       await base44.agents.addMessage(conversation, { role: 'user', content, file_urls: fileUrls });
     } catch (e) {
       setIsSending(false);
-      console.error('Failed to send message:', e);
+      toast({ title: 'Message not sent', description: friendlyError(e, 'Your message could not be sent. Please try again.', 'MCareAgent'), variant: 'destructive' });
     }
   };
 

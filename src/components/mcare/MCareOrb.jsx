@@ -29,6 +29,7 @@ import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import { isSystemPaused } from '@/lib/systemPause';
+import { friendlyError } from '@/lib/friendlyError';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -253,6 +254,7 @@ export default function MCareOrb() {
         setAgentConversation(conversation);
         setAgentMessages(conversation.messages || []);
       } catch (e) {
+        toast({ title: 'Message not sent', description: friendlyError(e, 'Could not start your M-Care conversation. Please try again.', 'MCareOrb'), variant: 'destructive' });
         return;
       }
     }
@@ -266,8 +268,9 @@ export default function MCareOrb() {
       await base44.agents.addMessage(conversation, { role: 'user', content: q, file_urls: fileUrls });
     } catch (e) {
       setAgentSending(false);
+      toast({ title: 'Message not sent', description: friendlyError(e, 'Your message could not be sent. Please try again.', 'MCareOrb'), variant: 'destructive' });
     }
-  }, [input, agentConversation, agentSending]);
+  }, [input, agentConversation, agentSending, toast]);
 
   const startNewJourney = useCallback(async () => {
     try {
@@ -277,8 +280,10 @@ export default function MCareOrb() {
       });
       setAgentConversation(conversation);
       setAgentMessages(conversation.messages || []);
-    } catch (e) { /* leave as-is */ }
-  }, []);
+    } catch (e) {
+      toast({ title: 'Could not start a new journey', description: friendlyError(e, 'Please try again.', 'MCareOrb'), variant: 'destructive' });
+    }
+  }, [toast]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(); }
