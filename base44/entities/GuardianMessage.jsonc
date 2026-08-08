@@ -1,0 +1,80 @@
+{
+  "name": "GuardianMessage",
+  "type": "object",
+  "description": "A message in the M-Care Family Portal thread between a guardian (family at home), M-Care, and the traveler. Guardians send messages via a zero-login GuardianSession view_token; M-Care relays each one to the patient on the family's behalf and posts a brief acknowledgment back into the thread. The patient can also reply through M-Care (from_role 'patient'). Access is token-gated inside the backend functions (getGuardianFeed / sendGuardianMessage), NOT via SDK RLS \u2014 direct SDK access is admin-only so the public client can never read or write these records without a valid token.",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this message thread belongs to."
+    },
+    "session_id": {
+      "type": "string",
+      "description": "The GuardianSession id this message belongs to."
+    },
+    "view_token": {
+      "type": "string",
+      "description": "Denormalized GuardianSession view_token so the token-gated functions can filter a family's thread without a join."
+    },
+    "from_role": {
+      "type": "string",
+      "enum": [
+        "guardian",
+        "mcare",
+        "patient"
+      ],
+      "description": "Who authored the message: the family member (guardian), M-Care relaying/acknowledging, or the traveler replying back."
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the author (guardian name, 'M-Care', or traveler name)."
+    },
+    "body": {
+      "type": "string",
+      "description": "The message text (max 2000 chars)."
+    },
+    "delivered_to_patient": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once M-Care successfully forwarded a guardian message to the patient on at least one channel."
+    },
+    "delivery_channels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Channels the message was forwarded to, e.g. ['email','sms']."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "from_role",
+    "body",
+    "created_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

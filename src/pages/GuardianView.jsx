@@ -12,6 +12,8 @@ import {
   MapPin, Navigation, Copy, ExternalLink, Globe, Radio, Wifi, WifiOff, Compass,
   Phone, MessageSquare, ShieldAlert, Stethoscope,
 } from 'lucide-react';
+import GuardianNotifications from '@/components/guardian/GuardianNotifications';
+import GuardianMessenger from '@/components/guardian/GuardianMessenger';
 
 // ── Bearing + distance helpers ───────────────────────────────────────────────
 function computeBearing(φ1deg, λ1deg, φ2deg, λ2deg) {
@@ -567,6 +569,10 @@ export default function GuardianView() {
             )}
           </div>
         </div>
+
+        {/* Family Portal — notifications + message through M-Care */}
+        <GuardianNotifications token={token} />
+        <GuardianMessenger token={token} patientName={session.patient_name} guardianName={session.guardian_name} />
 
         {/* Safety status */}
         <div className={`rounded-2xl border p-5 text-center ${
