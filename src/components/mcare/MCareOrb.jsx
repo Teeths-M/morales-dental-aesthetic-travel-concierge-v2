@@ -527,6 +527,7 @@ export default function MCareOrb() {
                   variant="icon"
                   onDeviceFile={handleFileSelect}
                   onVaultClick={() => vaultRef.current?.open()}
+                  onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
                   disabled={agentSending || agentUploading}
                   uploading={agentUploading}
                 />

@@ -259,6 +259,7 @@ export default function MCareAgent() {
             <AddImageMenu
               onDeviceFile={handleFileSelect}
               onVaultClick={() => vaultRef.current?.open()}
+              onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
               disabled={isSending || isUploading}
               uploading={isUploading}
             />

@@ -1,16 +1,37 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Image as ImageIcon, Upload, Shield } from 'lucide-react';
+import {
+  FileText, Image as ImageIcon, Camera, Mic, Contact as ContactIcon,
+  BarChart3, CalendarDays, Upload, Shield,
+} from 'lucide-react';
 
 // AddImageMenu — the attach affordance in the M-Care/M-Safe input bar.
 // variant="default" → compact dashed "Add image" label button (light agent page).
 // variant="glass"   → icon-only dark control (legacy dark panel).
 // variant="icon"    → icon-only light control (M-Safe white input bar, no dashed border).
-// Opens a small upload menu: device attachment or secure-vault upload.
+//
+// The popup is a dark charcoal vertical menu (matching the Telegram-style
+// attachment sheet the builder supplied) with colored per-item icons.
+// Each item routes to a real upload path:
+//   Document / Photos & videos / Camera / Audio → device file input (accept varies)
+//   Contact → secure vault upload (ID / insurance / passport)
+//   Poll / Event → friendly "not supported in M-Care yet" toast (kept to honor the design)
 
-export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, uploading, variant = 'default' }) {
+const ITEMS = [
+  { key: 'document', label: 'Document', icon: FileText, color: '#7b61ff', accept: '.pdf,.doc,.docx,.txt,.rtf' },
+  { key: 'photos',   label: 'Photos & videos', icon: ImageIcon, color: '#2196f3', accept: 'image/*,video/*' },
+  { key: 'camera',   label: 'Camera', icon: Camera, color: '#e91e63', accept: 'image/*', capture: 'environment' },
+  { key: 'audio',    label: 'Audio', icon: Mic, color: '#ff9800', accept: 'audio/*' },
+  { key: 'contact',  label: 'Contact', icon: ContactIcon, color: '#03a9f4', vault: true },
+  { key: 'poll',     label: 'Poll', icon: BarChart3, color: '#ffc107', unsupported: 'M-Care doesn’t support polls.' },
+  { key: 'event',    label: 'Event', icon: CalendarDays, color: '#f44336', unsupported: 'M-Care doesn’t support events.' },
+];
+
+export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, uploading, variant = 'default', onUnsupported }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const fileRef = useRef(null);
+  const acceptRef = useRef('image/*,application/pdf');
+  const captureRef = useRef(undefined);
   const glass = variant === 'glass';
 
   useEffect(() => {
@@ -22,8 +43,23 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
     return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
 
-  const pickDevice = () => { setOpen(false); fileRef.current?.click(); };
-  const pickVault = () => { setOpen(false); onVaultClick?.(); };
+  const chooseItem = (item) => {
+    if (item.unsupported) {
+      setOpen(false);
+      onUnsupported?.(item.unsupported);
+      return;
+    }
+    if (item.vault) {
+      setOpen(false);
+      onVaultClick?.();
+      return;
+    }
+    acceptRef.current = item.accept;
+    captureRef.current = item.capture;
+    setOpen(false);
+    // Let the accept/capture attributes apply before opening the picker
+    requestAnimationFrame(() => fileRef.current?.click());
+  };
 
   const triggerClass = glass
     ? "flex items-center justify-center w-9 h-9 rounded-[10px] border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
@@ -31,20 +67,13 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
       ? "flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors disabled:opacity-50"
       : "flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-dashed border-border text-muted-foreground hover:bg-secondary/50 hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-50";
 
-  const popoverClass = glass
-    ? "absolute bottom-full mb-2 left-0 z-20 w-60 rounded-xl border border-white/12 bg-[#0c1218] text-white shadow-2xl overflow-hidden"
-    : "absolute bottom-full mb-2 left-0 z-20 w-60 rounded-xl border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden";
-
-  const itemClass = glass
-    ? "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm hover:bg-white/10 text-left transition-colors"
-    : "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm hover:bg-secondary text-left transition-colors";
-
   return (
     <div className="relative" ref={wrapRef}>
       <input
         ref={fileRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept={acceptRef.current}
+        capture={captureRef.current}
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -58,37 +87,43 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
         onClick={() => setOpen((o) => !o)}
         disabled={disabled}
         className={triggerClass}
-        title="Add an image or document"
-        aria-label="Add image"
+        title="Attach a file"
+        aria-label="Attach a file"
       >
         {uploading ? (
           <div className={`w-4 h-4 border-2 rounded-full animate-spin ${glass ? 'border-white/25 border-t-white' : 'border-primary/30 border-t-primary'}`} />
         ) : (
-          <ImageIcon className="w-4 h-4" />
+          <Upload className="w-4 h-4" />
         )}
-        {variant === 'default' && <span className="text-[11px] font-medium leading-none">Add image</span>}
+        {variant === 'default' && <span className="text-[11px] font-medium leading-none">Attach</span>}
       </button>
 
       {open && (
-        <div className={popoverClass}>
-          <div className="p-1">
-            <MenuItem className={itemClass} icon={<Upload className="w-4 h-4" />} label="Upload from device" onClick={pickDevice} />
-          </div>
-          <div className={`h-px mx-2 ${glass ? 'bg-white/10' : 'bg-border'}`} />
-          <div className="p-1">
-            <MenuItem className={itemClass} icon={<Shield className="w-4 h-4 text-emerald-500" />} label="Upload to secure vault" onClick={pickVault} />
-          </div>
+        <div
+          className="absolute bottom-full mb-2 left-0 z-20 w-64 rounded-2xl shadow-2xl overflow-hidden"
+          style={{ background: '#1c1c1c', border: '1px solid #2a2a2a' }}
+          role="menu"
+        >
+          {ITEMS.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                role="menuitem"
+                onClick={() => chooseItem(item)}
+                className="flex items-center gap-3 w-full px-4 py-3 text-left transition-colors hover:bg-[#2d2d2d]"
+              >
+                <span className="flex-shrink-0 flex items-center justify-center" style={{ color: item.color }}>
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="text-sm font-medium text-white">{item.label}</span>
+                {idx === 0 && <Shield className="w-3.5 h-3.5 ml-auto text-emerald-400/70" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
-  );
-}
-
-function MenuItem({ className, icon, label, onClick }) {
-  return (
-    <button type="button" onClick={onClick} className={className}>
-      <span className="flex-shrink-0">{icon}</span>
-      <span className="font-medium">{label}</span>
-    </button>
   );
 }
