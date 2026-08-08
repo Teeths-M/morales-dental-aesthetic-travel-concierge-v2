@@ -35,7 +35,7 @@ export default function ConfirmDialog({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   variant = 'danger',
-  icon: CustomIcon,
+  icon: CustomIcon = null,
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
   const cancelRef = useRef(null);
