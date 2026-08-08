@@ -11,6 +11,7 @@ import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import { BackButton } from '@/components/nav/BackButton';
 import { useToast } from '@/components/ui/use-toast';
 import { friendlyError } from '@/lib/friendlyError';
+import { handleChatPaste } from '@/lib/chatPaste';
 
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
@@ -266,6 +267,7 @@ export default function MCareAgent() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: isSending || isUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
               placeholder={isUploading ? "Uploading document…" : "Tell M-Care what you're considering…"}
               disabled={isSending || isUploading}
               className="flex-1"

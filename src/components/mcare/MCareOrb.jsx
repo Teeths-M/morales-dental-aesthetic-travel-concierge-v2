@@ -31,6 +31,7 @@ import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestion
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import { isSystemPaused } from '@/lib/systemPause';
 import { friendlyError } from '@/lib/friendlyError';
+import { handleChatPaste } from '@/lib/chatPaste';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
@@ -534,6 +535,7 @@ export default function MCareOrb() {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
                   placeholder={isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
                   style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
                 />
