@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, ArrowRight, ShieldAlert } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { RISK_TEXT_COLOR } from '@/components/procedures/riskDisplay';
 
-export default function ProcedureModal({ procedure, onClose, onBook }) {
+export default function ProcedureModal({ procedure, riskSummary, onClose, onBook }) {
   const [doctorPrices, setDoctorPrices] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -143,7 +144,22 @@ export default function ProcedureModal({ procedure, onClose, onBook }) {
                    <span>{procedure.material_options.length} available</span>
                  </div>
                )}
+               {/* Only shown once an admin has curated real risk data for
+                   this procedure — no fabricated default risk level. */}
+               {riskSummary?.risk_level && (
+                 <div className="flex justify-between">
+                   <span className="font-medium">Risk Level:</span>
+                   <span className={`font-semibold flex items-center gap-1 ${RISK_TEXT_COLOR[riskSummary.risk_level] || RISK_TEXT_COLOR.Medium}`}>
+                     <ShieldAlert className="w-3.5 h-3.5" />{riskSummary.risk_level}
+                   </span>
+                 </div>
+               )}
              </div>
+             {riskSummary?.risk_factors?.length > 0 && (
+               <p className="text-[11px] text-teal-700 pt-1 border-t border-teal-200">
+                 May carry added risk for: {riskSummary.risk_factors.slice(0, 2).join(', ')}. Your doctor will review your health background before confirming.
+               </p>
+             )}
            </div>
 
            {/* CTA */}

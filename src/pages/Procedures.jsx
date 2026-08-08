@@ -1,8 +1,9 @@
 // @ts-nocheck — pre-existing prop type gaps in ProcedureSearch and PageHeroBand
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mic, ArrowRight, ChevronRight, Check, Clock, Calendar, AlertCircle } from 'lucide-react';
+import { Mic, ArrowRight, ChevronRight, Check, Clock, Calendar, AlertCircle, ShieldAlert } from 'lucide-react';
 import ProcedureModal from '@/components/procedures/ProcedureModal';
 import SelectDoctorModal from '@/components/procedures/SelectDoctorModal';
 import { Button } from '@/components/ui/button';
@@ -12,10 +13,17 @@ import MyProceduresList from '@/components/procedures/MyProceduresList';
 import VoiceMode from '@/components/procedures/VoiceMode';
 import SmartFallback from '@/components/procedures/SmartFallback';
 import PageHeroBand from '@/components/layout/PageHeroBand';
+import { RISK_PILL_STYLES } from '@/components/procedures/riskDisplay';
 
 import { useCart } from '@/context/CartContext';
+import { base44 } from '@/api/base44Client';
+import { CACHE } from '@/lib/constants';
 import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
 import { getProcedureEnumValue } from '@/components/booking/SectionProcedure';
+
+// Static — computed once at module load, not per render, and stable as a
+// React Query cache key.
+const ALL_PROCEDURE_TITLES = procedureCategories.flatMap((cat) => cat.procedures.map((p) => p.title));
 
 // One human sentence per category — what does this mean for the patient?
 const CATEGORY_SUBTITLES = {
@@ -46,7 +54,7 @@ const getParentFilters = (language) => [
   { id: 'wellness', label: language === 'es' ? 'Bienestar' : language === 'fr' ? 'Bien-être' : 'Wellness', emoji: '🌿' },
 ];
 
-function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore, language }) {
+function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore, language, riskSummary }) {
   const c = proc.categoryColor;
   return (
     <motion.div
@@ -102,6 +110,14 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore, languag
               <Calendar className="w-3 h-3" />{proc.recovery}
             </span>
           )}
+          {/* Only rendered once an admin has curated real risk data for this
+              procedure in the M-Care knowledge base — no risk data ever
+              means no pill, never a fabricated default. */}
+          {riskSummary?.risk_level && (
+            <span className={`flex items-center gap-1.5 text-xs border rounded-full px-3 py-1 ${RISK_PILL_STYLES[riskSummary.risk_level] || RISK_PILL_STYLES.Medium}`}>
+              <ShieldAlert className="w-3 h-3" />{riskSummary.risk_level} risk
+            </span>
+          )}
         </div>
 
         {/* Actions — 44px touch targets */}
@@ -145,6 +161,19 @@ export default function Procedures() {
   const [language, setLanguage] = useState('en');
   const [searchQuery, setSearchQuery] = useState('');
   const { items, addItem, removeItem, clearCart, setProcedureCountry, setProcedureCity, locked, safetyStatus, openPivot } = useCart();
+
+  // Best-effort risk-level enrichment from the M-Care safety knowledge base —
+  // a failure or empty result here must never block or alter the page, it
+  // only adds a pill/detail row where an admin has already curated data.
+  const { data: riskSummaries = {} } = useQuery({
+    queryKey: ['procedure-risk-summaries'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getProcedureRiskSummaries', { titles: ALL_PROCEDURE_TITLES });
+      return res?.data?.summaries || {};
+    },
+    staleTime: CACHE.LONG,
+    retry: false,
+  });
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -359,6 +388,7 @@ export default function Procedures() {
                           onAdd={addProc}
                           onRemove={removeProc}
                           onLearnMore={setSelectedModal}
+                          riskSummary={riskSummaries[proc.title]}
                         />
                       );
                     })}
@@ -489,7 +519,12 @@ export default function Procedures() {
       </AnimatePresence>
 
       {/* Learn More Modal */}
-      <ProcedureModal procedure={selectedModal} onClose={() => setSelectedModal(null)} onBook={bookFromModal} />
+      <ProcedureModal
+        procedure={selectedModal}
+        riskSummary={selectedModal ? riskSummaries[selectedModal.title] : null}
+        onClose={() => setSelectedModal(null)}
+        onBook={bookFromModal}
+      />
 
       {/* Select Doctor Modal */}
       <SelectDoctorModal

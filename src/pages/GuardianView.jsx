@@ -1,7 +1,7 @@
 // @ts-nocheck — pre-existing type gaps; build passes
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { MapContainer, TileLayer, Marker, Circle, Polyline, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -312,7 +312,8 @@ export default function GuardianView() {
       <div className="text-center max-w-sm">
         <Clock className="w-16 h-16 text-amber-400 mx-auto mb-4" />
         <h2 className="text-xl font-semibold text-white mb-2">Guardian Link Expired</h2>
-        <p className="text-slate-400 text-sm">This tracking link has expired. Ask the traveler to generate a new one.</p>
+        <p className="text-slate-400 text-sm">This tracking link has expired. Ask the traveler to generate a new one, or if they've shared other active links with you, get one resent.</p>
+        <Link to="/guardian-access" className="inline-block mt-4 text-blue-400 text-sm hover:underline">Get a link resent to my email</Link>
       </div>
     </div>
   );

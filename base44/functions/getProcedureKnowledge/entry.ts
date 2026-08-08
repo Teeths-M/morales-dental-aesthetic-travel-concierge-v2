@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { findBestMatches } from '../../shared/procedureKnowledgeMatch.ts';
 
 // ── getProcedureKnowledge ─────────────────────────────────────────────────────
 // Fuzzy lookup into M-Care's ProcedureKnowledge safety knowledge base. Given a
@@ -9,18 +10,10 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 // disclaimer, and guide to a safe next step. If no match, returns found:false
 // with an honest message + a safe next-step so M-Care never leaves the traveler
 // stuck.
-
-const STOPWORDS = new Set([
-  'the','a','an','and','or','but','if','then','of','to','in','on','for','with','is','are','am','i','you','he','she','it','we','they','my','your','his','her','its','our','their','me','him','us','them','this','that','these','those','do','does','did','can','could','would','should','will','what','when','where','why','who','how','which','be','been','being','have','has','had','not','no','so','at','by','from','as','about','into','than','was','were','me','getting','get','think','thinking','want','need','surgery','procedure','operation','op','surgical','getting'
-]);
-
-function tokenize(text: string): string[] {
-  return (text || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length > 2 && !STOPWORDS.has(t));
-}
+//
+// The fuzzy scorer itself lives in ../../shared/procedureKnowledgeMatch.ts,
+// shared with getProcedureRiskSummaries (the bulk lookup behind the public
+// procedures catalog page) so the matching logic exists in exactly one place.
 
 Deno.serve(createHandler(async ({ req, base44, body }) => {
     let payload = await body();
@@ -46,48 +39,25 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
       });
     }
 
-    const qTokens = new Set(tokenize(query));
-    const qLow = query.toLowerCase();
-    const scored = active.map((r) => {
-      const nameLow = (r.procedure_name || '').toLowerCase();
-      const aliases = (r.aliases || []).map((a: string) => a.toLowerCase());
-      // Exact / substring name or alias match = strong boost
-      let exact = 0;
-      if (nameLow === qLow) exact = 1;
-      else if (nameLow.includes(qLow) || qLow.includes(nameLow)) exact = 0.85;
-      else if (aliases.some((a: string) => a === qLow)) exact = 0.9;
-      else if (aliases.some((a: string) => a.includes(qLow) || qLow.includes(a))) exact = 0.7;
-      // Token overlap
-      const storedTokens = new Set([
-        ...tokenize(r.procedure_name || ''),
-        ...aliases.flatMap((a: string) => tokenize(a)),
-        ...tokenize(r.category || ''),
-      ]);
-      let overlap = 0;
-      for (const t of qTokens) if (storedTokens.has(t)) overlap++;
-      const tokenScore = qTokens.size === 0 ? 0 : overlap / storedTokens.size;
-      const score = Math.max(exact, tokenScore);
-      return {
-        id: r.id,
-        procedure_name: r.procedure_name,
-        category: r.category,
-        description: r.description,
-        typical_duration: r.typical_duration,
-        recovery_time: r.recovery_time,
-        risk_level: r.risk_level,
-        risk_factors: r.risk_factors || [],
-        complication_rate: r.complication_rate,
-        common_complications: r.common_complications || [],
-        recommended_qualifications: r.recommended_qualifications,
-        pre_op_requirements: r.pre_op_requirements || [],
-        red_flag_combinations: r.red_flag_combinations || [],
-        smoker_warning: r.smoker_warning,
-        questions_to_ask: r.questions_to_ask || [],
-        score,
-      };
-    }).sort((a, b) => b.score - a.score);
-
-    const matches = scored.filter((m) => m.score > 0.2).slice(0, limit);
+    const scored = findBestMatches(query, active, { threshold: 0.2, limit });
+    const matches = scored.map((r) => ({
+      id: r.id,
+      procedure_name: r.procedure_name,
+      category: r.category,
+      description: r.description,
+      typical_duration: r.typical_duration,
+      recovery_time: r.recovery_time,
+      risk_level: r.risk_level,
+      risk_factors: r.risk_factors || [],
+      complication_rate: r.complication_rate,
+      common_complications: r.common_complications || [],
+      recommended_qualifications: r.recommended_qualifications,
+      pre_op_requirements: r.pre_op_requirements || [],
+      red_flag_combinations: r.red_flag_combinations || [],
+      smoker_warning: r.smoker_warning,
+      questions_to_ask: r.questions_to_ask || [],
+      score: r.score,
+    }));
 
     return ok({
       success: true,

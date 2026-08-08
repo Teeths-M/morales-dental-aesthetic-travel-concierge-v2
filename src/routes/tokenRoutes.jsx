@@ -11,6 +11,7 @@ const SurveyPage         = lazy(() => import('@/pages/SurveyPage'));
 const PostSurgeryFeedback = lazy(() => import('@/pages/PostSurgeryFeedback'));
 const LuggageFinderPortal = lazy(() => import('@/pages/LuggageFinderPortal'));
 const GuardianView       = lazy(() => import('@/pages/GuardianView'));
+const GuardianAccess     = lazy(() => import('@/pages/GuardianAccess'));
 const EmergencyPINAccess = lazy(() => import('@/pages/EmergencyPINAccess'));
 const ResetPIN           = lazy(() => import('@/pages/ResetPIN'));
 const CheckInConfirm     = lazy(() => import('@/pages/CheckInConfirm'));
@@ -28,6 +29,7 @@ export const tokenRoutes = (
     <Route key="feedback"       path="/feedback/:token"         element={<ErrorBoundary><PostSurgeryFeedback /></ErrorBoundary>} />
     <Route key="luggage"        path="/luggage/:token"          element={<ErrorBoundary><LuggageFinderPortal /></ErrorBoundary>} />
     <Route key="guardian"       path="/guardian/:token"         element={<ErrorBoundary><GuardianView /></ErrorBoundary>} />
+    <Route key="guardian-access" path="/guardian-access"        element={<ErrorBoundary><GuardianAccess /></ErrorBoundary>} />
     <Route key="emergency-access" path="/emergency-access"      element={<ErrorBoundary><EmergencyPINAccess /></ErrorBoundary>} />
     <Route key="reset-pin"        path="/reset-pin"             element={<ErrorBoundary><ResetPIN /></ErrorBoundary>} />
     <Route key="checkin"        path="/check-in/:check_in_id"  element={<ErrorBoundary><CheckInConfirm /></ErrorBoundary>} />
