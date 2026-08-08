@@ -223,6 +223,15 @@ button:active, a:active {
 .m-cta-breathe {
   animation: m-cta-breathe 3.5s ease-in-out infinite;
 }
+
+/* ── M-Care golden logo avatar glow (typing/loading pulse) ── */
+@keyframes mcare-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(212,175,55,0.18), 0 0 8px rgba(212,175,55,0.30); }
+  50%      { box-shadow: 0 0 0 3px rgba(212,175,55,0.35), 0 0 18px rgba(212,175,55,0.55); }
+}
+.mcare-glow {
+  animation: mcare-glow 1.8s ease-in-out infinite;
+}
 /* ── Keyboard focus visibility ────────────────────────────────────────────────
  *
  * 190 places in this app suppress the browser's focus outline — 160 via

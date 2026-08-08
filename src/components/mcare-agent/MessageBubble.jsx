@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2 } from 'lucide-react';
 import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
+import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
@@ -241,7 +242,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'}>
       {!isUser && showAvatar && (
-        <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-white text-[13px] font-bold" style={{ background: accent || '#6C47FF' }} aria-hidden>M</span>
+        <McareAvatar size={28} />
       )}
       <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
         {(() => {
