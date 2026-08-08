@@ -128,17 +128,66 @@ export default function MCareOrb() {
 
   // Subscribe to the active conversation — streamed agent turns + tool calls
   // arrive in real time; JourneyStageTracker derives stage from these.
+  // Only clear the "sending" spinner once the agent has actually produced a
+  // reply (an assistant message after the user's last one). The subscription
+  // can fire with just the user message before the agent processes — clearing
+  // the spinner at that point leaves the user staring at a blank chat with no
+  // loading indicator, which looks exactly like a broken agent.
   useEffect(() => {
     if (!agentConversation) return;
     const unsubscribe = base44.agents.subscribeToConversation(
       agentConversation.id,
       (data) => {
-        setAgentMessages(data.messages || []);
-        setAgentSending(false);
+        const msgs = data.messages || [];
+        setAgentMessages(msgs);
+        // Clear sending only when the latest message is from the assistant
+        // (the agent has replied) — not when it's still just the user's turn.
+        const last = msgs[msgs.length - 1];
+        if (last && last.role === 'assistant') {
+          setAgentSending(false);
+        }
       }
     );
     return () => unsubscribe();
   }, [agentConversation]);
+
+  // Safety-net re-fetch: if the agent hasn't replied within 12 seconds of
+  // sending, pull the conversation messages directly. The subscription can
+  // occasionally miss the agent's turn (race on conversation creation, dropped
+  // event); this catches a missed reply instead of leaving the chat blank.
+  useEffect(() => {
+    if (!agentSending || !agentConversation) return;
+    const timer = setTimeout(async () => {
+      try {
+        const convo = await base44.agents.getConversation(agentConversation.id);
+        if (convo?.messages) {
+          setAgentMessages(convo.messages);
+          const last = convo.messages[convo.messages.length - 1];
+          if (last && last.role === 'assistant') setAgentSending(false);
+        }
+      } catch (_) { /* subscription will still fire if it recovers */ }
+    }, 12000);
+    return () => clearTimeout(timer);
+  }, [agentSending, agentConversation]);
+
+  // Last-resort timeout: if 40 seconds pass with no assistant reply, stop
+  // spinning and surface an honest fallback so the user isn't left waiting
+  // forever on a silent failure.
+  useEffect(() => {
+    if (!agentSending) return;
+    const timer = setTimeout(() => {
+      setAgentSending(false);
+      setAgentMessages(prev => {
+        const alreadyFellBack = prev.some(m => m.role === 'assistant' && m.content?.includes("I'm having trouble connecting right now"));
+        if (alreadyFellBack) return prev;
+        return [...prev, {
+          role: 'assistant',
+          content: "I'm having trouble connecting right now — I haven't gone anywhere. Give me a moment and send your message again, or tap the refresh button above to start a fresh session.",
+        }];
+      });
+    }, 40000);
+    return () => clearTimeout(timer);
+  }, [agentSending]);
 
   // Struggle hint listener (unchanged presence-layer behavior)
   useEffect(() => {
@@ -266,6 +315,10 @@ export default function MCareOrb() {
       await base44.agents.addMessage(conversation, { role: 'user', content: q, file_urls: fileUrls });
     } catch (e) {
       setAgentSending(false);
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I couldn't send your message just now — the connection dropped. Please try again in a moment.",
+      }]);
     }
   }, [input, agentConversation, agentSending]);
 
