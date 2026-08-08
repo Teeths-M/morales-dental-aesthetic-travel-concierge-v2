@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2 } from 'lucide-react';
 import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
+import { base44 } from '@/api/base44Client';
+import { useTranslation } from '@/i18n';
 
 const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 
@@ -113,6 +115,51 @@ function InlineQrBlock({ label, dest }) {
   );
 }
 
+// Opt-in "Listen" button for an assistant message — generates and plays TTS
+// audio on tap via speakMcareText (Core.GenerateSpeech, the same primitive
+// walkieTalkieTranslate already proved out in production). Never auto-plays
+// — unsolicited audio in a quiet or public setting would be the opposite of
+// frictionless; the user asks for it, same as tapping to open a link.
+function SpeakButton({ text, language }) {
+  const [state, setState] = useState('idle'); // idle | loading | playing | error
+  const audioRef = useRef(null);
+
+  const handleClick = async () => {
+    if (state === 'playing') {
+      audioRef.current?.pause();
+      setState('idle');
+      return;
+    }
+    if (state === 'loading' || !text?.trim()) return;
+    setState('loading');
+    try {
+      const res = await base44.functions.invoke('speakMcareText', { text, language });
+      const audioUrl = res?.data?.audio_url;
+      if (!audioUrl) { setState('error'); return; }
+      if (!audioRef.current) audioRef.current = new Audio();
+      audioRef.current.src = audioUrl;
+      audioRef.current.onended = () => setState('idle');
+      audioRef.current.onerror = () => setState('error');
+      await audioRef.current.play();
+      setState('playing');
+    } catch {
+      setState('error');
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-secondary/60 active:scale-95 transition-colors"
+      title={state === 'playing' ? 'Stop' : 'Listen'}
+    >
+      {state === 'loading' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Volume2 className="w-3 h-3" />}
+      {state === 'error' ? 'Try again' : state === 'playing' ? 'Stop' : 'Listen'}
+    </button>
+  );
+}
+
 function StatusIcon({ status }) {
   if (['completed', 'success'].includes(status)) return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
   if (['failed', 'error'].includes(status)) return <XCircle className="w-3.5 h-3.5 text-red-500" />;
@@ -182,6 +229,7 @@ function ToolCallDisplay({ toolCall }) {
 // the agent itself never decides this). All optional → default rendering is
 // unchanged.
 export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null }) {
+  const { i18n } = useTranslation();
   const isUser = message.role === 'user';
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
@@ -239,6 +287,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                 </div>
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
+              {!isUser && text && <SpeakButton text={text} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {mapUrls.map((u, i) => {
