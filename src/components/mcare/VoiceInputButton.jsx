@@ -22,16 +22,40 @@
 import React, { useRef, useState } from 'react';
 import { Mic, Square, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import MicPermissionGate from '@/components/mcare/MicPermissionGate';
 
 const MAX_RECORDING_MS = 20000;
+
+// Plain-English explanation for why getUserMedia failed — mirrors the
+// "allow microphone" prompts Zoom / Google Meet surface, so the user is
+// never left with a silent button when the browser or preview frame blocks
+// the mic.
+function explainMicError(e) {
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    return 'This browser does not support microphone recording.';
+  }
+  const name = e?.name || '';
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    if (window.self !== window.top) {
+      return 'Microphone is blocked inside this preview frame. Open the app in its own browser tab, then allow microphone access when prompted.';
+    }
+    return 'Microphone access was blocked. Tap the camera icon in your browser address bar, allow microphone, then try again.';
+  }
+  if (name === 'NotFoundError' || name === 'DevicesNotFoundError') return 'No microphone found on this device.';
+  if (name === 'NotReadableError') return 'Another app is using the microphone. Close it and try again.';
+  return 'Could not access the microphone. ' + (e?.message || 'Please check your device settings.');
+}
 
 export default function VoiceInputButton({ onTranscript, onError, disabled = false, onRecordingChange }) {
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showGate, setShowGate] = useState(false);
+  const [permissionBlocked, setPermissionBlocked] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const streamRef = useRef(null);
   const maxDurationTimerRef = useRef(null);
+  const permissionGrantedRef = useRef(false);
 
   const stopStream = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -69,6 +93,8 @@ export default function VoiceInputButton({ onTranscript, onError, disabled = fal
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      permissionGrantedRef.current = true;
+      setPermissionBlocked(null);
       streamRef.current = stream;
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
@@ -80,9 +106,14 @@ export default function VoiceInputButton({ onTranscript, onError, disabled = fal
       onRecordingChange?.(true);
       // Auto-stop so a forgotten open mic doesn't record indefinitely.
       maxDurationTimerRef.current = setTimeout(() => stopRecording(), MAX_RECORDING_MS);
-    } catch (_) {
-      onError?.('Mic access blocked — check your browser/device permissions.');
+    } catch (e) {
+      const reason = explainMicError(e);
       stopStream();
+      // Surface a toast AND re-open the permission gate with clear enable
+      // steps, so the user is never left with a silently-failing mic.
+      onError?.(reason);
+      setPermissionBlocked(reason);
+      setShowGate(true);
     }
   };
 
@@ -97,31 +128,46 @@ export default function VoiceInputButton({ onTranscript, onError, disabled = fal
 
   const handleClick = () => {
     if (disabled || busy) return;
-    if (recording) stopRecording();
-    else startRecording();
+    if (recording) { stopRecording(); return; }
+    // First time → show the "Allow microphone" gate (like Zoom / Meet).
+    // After a successful grant we skip it on later taps.
+    if (!permissionGrantedRef.current) {
+      setPermissionBlocked(null);
+      setShowGate(true);
+      return;
+    }
+    startRecording();
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={disabled || busy}
-      title={recording ? 'Stop recording' : 'Speak instead'}
-      aria-label={recording ? 'Stop recording' : 'Speak instead'}
-      style={{
-        width: 36, height: 36, borderRadius: 12, flexShrink: 0,
-        background: recording ? '#dc2626' : '#F6F7FB',
-        border: '1px solid #E5E7EB',
-        cursor: disabled || busy ? 'default' : 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'background 0.2s',
-      }}
-    >
-      {busy
-        ? <Loader2 style={{ width: 15, height: 15, color: '#6C47FF' }} className="animate-spin" />
-        : recording
-          ? <Square style={{ width: 13, height: 13, color: '#fff' }} />
-          : <Mic style={{ width: 16, height: 16, color: '#6C47FF' }} />}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={disabled || busy}
+        title={recording ? 'Stop recording' : 'Speak instead'}
+        aria-label={recording ? 'Stop recording' : 'Speak instead'}
+        style={{
+          width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+          background: recording ? '#dc2626' : '#F6F7FB',
+          border: '1px solid #E5E7EB',
+          cursor: disabled || busy ? 'default' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background 0.2s',
+        }}
+      >
+        {busy
+          ? <Loader2 style={{ width: 15, height: 15, color: '#6C47FF' }} className="animate-spin" />
+          : recording
+            ? <Square style={{ width: 13, height: 13, color: '#fff' }} />
+            : <Mic style={{ width: 16, height: 16, color: '#6C47FF' }} />}
+      </button>
+      <MicPermissionGate
+        open={showGate}
+        blocked={permissionBlocked}
+        onAllow={() => { setShowGate(false); startRecording(); }}
+        onCancel={() => { setShowGate(false); setPermissionBlocked(null); }}
+      />
+    </>
   );
 }
