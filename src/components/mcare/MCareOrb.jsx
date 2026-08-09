@@ -37,7 +37,8 @@ import { handleChatPaste } from '@/lib/chatPaste';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
-import { detectTalkModeCommand, extractSpeakableText, isSpeechSupported, speakText, stopSpeaking } from '@/lib/talkMode';
+import { detectTalkModeCommand, extractSpeakableText, isSpeechSupported } from '@/lib/talkMode';
+import { speakTextNeural, stopAllSpeech } from '@/lib/neuralSpeech';
 import {
   isConversationalModeSupported,
   classifyInterruptionUtterance,
@@ -186,7 +187,7 @@ export default function MCareOrb() {
   // confirmed (see the recognition effect below), before the interrupting
   // utterance has even finished being recognized.
   const handleBargeIn = () => {
-    stopSpeaking();
+    stopAllSpeech();
     setSpeaking(false);
     const rs = revealStateRef.current;
     const msgs = agentMessagesRef.current;
@@ -419,7 +420,7 @@ export default function MCareOrb() {
           if (last.id) spokenAssistantIdsRef.current.add(last.id);
           setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
           setSpeaking(true);
-          speakText(speakable, {
+          speakTextNeural(speakable, {
             rate: 0.9,
             onWordBoundary: (count) => setRevealState(prev =>
               (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
@@ -451,7 +452,7 @@ export default function MCareOrb() {
   // rest of the current message instantly — never leaves it half-spoken.
   useEffect(() => {
     if (!talkMode) {
-      stopSpeaking();
+      stopAllSpeech();
       setRevealState(null);
     }
   }, [talkMode]);
@@ -459,7 +460,7 @@ export default function MCareOrb() {
   // Prevent a feedback loop: if the microphone is actively listening, any
   // in-progress Talk Mode speech would otherwise be picked up by the mic.
   useEffect(() => {
-    if (listening) stopSpeaking();
+    if (listening) stopAllSpeech();
   }, [listening]);
 
   // Conversational Mode only: a real, observed tool call still running with
@@ -487,7 +488,7 @@ export default function MCareOrb() {
     if (runningTool && !content.trim() && !ackedMessageIdsRef.current.has(id)) {
       ackedMessageIdsRef.current.add(id);
       const ackText = runningTool.display_projection?.active_label || 'Let me look that up.';
-      speakText(ackText, { rate: 0.9 });
+      speakTextNeural(ackText, { rate: 0.9 });
       return;
     }
 
@@ -499,7 +500,7 @@ export default function MCareOrb() {
       const totalWords = speakable.split(/\s+/).filter(Boolean).length;
       setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
       setSpeaking(true);
-      speakText(speakable, {
+      speakTextNeural(speakable, {
         rate: 0.9,
         onWordBoundary: (count) => setRevealState(prev =>
           (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
@@ -615,7 +616,7 @@ export default function MCareOrb() {
 
     // Sending any new message interrupts in-progress Talk Mode speech —
     // never let old audio keep playing over a new exchange.
-    stopSpeaking();
+    stopAllSpeech();
     setRevealState(null);
 
     // Deterministic, client-side Talk Mode toggle — exact-phrase match only
@@ -629,7 +630,7 @@ export default function MCareOrb() {
         setTalkMode(turningOn);
         const confirmText = turningOn ? 'Talk mode enabled.' : 'Talk mode disabled.';
         setAgentMessages(prev => [...prev, { role: 'user', content: q }, { role: 'assistant', content: confirmText }]);
-        if (turningOn && isSpeechSupported()) speakText(confirmText, { rate: 0.9 });
+        if (turningOn && isSpeechSupported()) speakTextNeural(confirmText, { rate: 0.9 });
         return;
       }
     }

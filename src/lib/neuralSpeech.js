@@ -1,0 +1,145 @@
+/**
+ * neuralSpeech — human-sounding voice output for M-Care's Talk Mode /
+ * Conversational Mode, via speakMcareText (Core.GenerateSpeech) — the same
+ * proven primitive already powering the per-message "Listen" button
+ * (MessageBubble.jsx's SpeakButton) and the live walkieTalkieTranslate
+ * feature. talkMode.js's speakText (window.speechSynthesis) stays exactly
+ * as it was — the zero-network, always-available fallback — and is what
+ * this file falls back to on any network error, timeout, empty response, or
+ * playback failure, so a flaky connection degrades to the familiar robotic
+ * voice instead of going silent mid-demo.
+ *
+ * Deliberately NOT added to talkMode.js itself — that file is intentionally
+ * pure/testable with no network or API-client dependency; this file owns
+ * the network call and Audio() playback, so it's impure and isolated the
+ * same way conversationalMode.js's startContinuousRecognition is.
+ *
+ * No native word-boundary event exists for an <audio> element (unlike
+ * SpeechSynthesisUtterance's onboundary), so the word-reveal here is an
+ * approximation: once the audio's real duration is known, words are paced
+ * evenly across it. Close enough to feel synced, not a claim of exact timing.
+ */
+import { base44 } from '@/api/base44Client';
+import { speakText, stopSpeaking } from './talkMode';
+
+const REQUEST_TIMEOUT_MS = 4000;
+
+// Module-level, like talkMode.js's own speechSynthesis singleton — only one
+// neural utterance can meaningfully be "active" at a time, and callers
+// (MCareOrb.jsx) don't need to hold onto individual cancel functions to stop
+// whatever's currently playing.
+let activeCancel = null;
+
+export function stopNeuralSpeech() {
+  if (activeCancel) {
+    const cancel = activeCancel;
+    activeCancel = null;
+    cancel();
+  }
+}
+
+/** Stops both the neural and browser-TTS paths — the one call MCareOrb needs at every interruption point. */
+export function stopAllSpeech() {
+  stopNeuralSpeech();
+  stopSpeaking();
+}
+
+/**
+ * Speaks `text` via M-Care's neural voice; falls back to talkMode.js's
+ * speakText (browser TTS) on any network error, timeout, empty audio, or
+ * playback failure. Same return contract as speakText — a cancel function.
+ *
+ * @param {string} text
+ * @param {{ rate?: number, language?: string, onWordBoundary?: (revealedWordCount: number) => void, onEnd?: () => void, onError?: () => void }} [options]
+ */
+export function speakTextNeural(text, options) {
+  stopNeuralSpeech();
+  const { rate = 0.9, language = 'en', onWordBoundary, onEnd, onError } = options || {};
+  if (!text?.trim()) { onError?.(); return () => {}; }
+
+  let cancelled = false;
+  let fallbackTriggered = false;
+  let audio = null;
+  let revealInterval = null;
+  let fallbackCancelFn = null;
+  let timeoutId = null;
+
+  const clearReveal = () => {
+    if (revealInterval) { clearInterval(revealInterval); revealInterval = null; }
+  };
+
+  const cancelFn = () => {
+    if (activeCancel === cancelFn) activeCancel = null;
+    cancelled = true;
+    clearTimeout(timeoutId);
+    clearReveal();
+    if (audio) { try { audio.pause(); } catch { /* no-op */ } }
+    if (fallbackCancelFn) fallbackCancelFn();
+  };
+  activeCancel = cancelFn;
+
+  const runFallback = () => {
+    if (cancelled || fallbackTriggered) return;
+    fallbackTriggered = true;
+    clearTimeout(timeoutId);
+    // talkMode.js's speakText now owns cancellation via stopSpeaking().
+    if (activeCancel === cancelFn) activeCancel = null;
+    fallbackCancelFn = speakText(text, { rate, onWordBoundary, onEnd, onError });
+  };
+
+  timeoutId = setTimeout(runFallback, REQUEST_TIMEOUT_MS);
+
+  (async () => {
+    let res;
+    try {
+      res = await base44.functions.invoke('speakMcareText', { text: text.trim(), language });
+    } catch {
+      runFallback();
+      return;
+    }
+    if (cancelled || fallbackTriggered) return;
+    clearTimeout(timeoutId);
+
+    const audioUrl = res?.data?.audio_url;
+    if (!audioUrl) { runFallback(); return; }
+
+    try {
+      audio = new Audio(audioUrl);
+    } catch {
+      runFallback();
+      return;
+    }
+    audio.playbackRate = rate;
+
+    const words = text.split(/\s+/).filter(Boolean);
+    const totalWords = words.length;
+
+    audio.onloadedmetadata = () => {
+      if (cancelled) return;
+      const durationMs = (audio.duration || 0) * 1000;
+      if (Number.isFinite(durationMs) && durationMs > 0 && totalWords > 0) {
+        const msPerWord = durationMs / totalWords;
+        let revealed = 0;
+        revealInterval = setInterval(() => {
+          revealed += 1;
+          onWordBoundary?.(Math.min(revealed, totalWords));
+          if (revealed >= totalWords) clearReveal();
+        }, msPerWord);
+      }
+    };
+    audio.onended = () => {
+      clearReveal();
+      if (activeCancel === cancelFn) activeCancel = null;
+      if (!cancelled) onEnd?.();
+    };
+    audio.onerror = () => { clearReveal(); runFallback(); };
+
+    try {
+      await audio.play();
+    } catch {
+      runFallback();
+    }
+  })();
+
+  return cancelFn;
+}
