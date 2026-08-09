@@ -154,6 +154,10 @@ export default function MCareOrb() {
   const ackedMessageIdsRef = useRef(new Set());
   const spokenAssistantIdsRef = useRef(new Set());
   const lastSeenAssistantRef = useRef({ id: null });
+  // Guards the "Conversation mode stopped" toast so a blocked mic (common in
+  // the preview iframe) can't stack a wall of identical red banners — one
+  // honest notification per activation, then it stops repeating.
+  const conversationalErrorShownRef = useRef(false);
 
   const clearSilenceNudge = () => {
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
@@ -527,6 +531,9 @@ export default function MCareOrb() {
   useEffect(() => {
     if (!conversationalMode) return;
 
+    // Fresh activation — allow one error toast again.
+    conversationalErrorShownRef.current = false;
+
     const stopRecognition = startContinuousRecognition({
       lang: 'en-US',
       onInterim: (text) => {
@@ -550,14 +557,22 @@ export default function MCareOrb() {
       },
       onListeningChange: setConversationalListening,
       onUnrecoverableError: (reason) => {
+        const blocked = String(reason || '').match(/not-allowed|service-not-allowed|security|mic/);
         setConversationalMode(false);
+        // Talk Mode (spoken replies) stays on — only the always-on mic fails,
+        // so the user keeps voice output and can still talk via the mic button.
+        // Show the notification exactly once per activation to avoid stacking.
+        if (conversationalErrorShownRef.current) return;
+        conversationalErrorShownRef.current = true;
         toast({
-          title: 'Conversation mode stopped',
-          description: friendlyError(
-            { message: reason },
-            "Voice conversation stopped unexpectedly — you can turn it back on, or keep using text and the mic button.",
-            'MCareOrb'
-          ),
+          title: 'Voice input unavailable',
+          description: blocked
+            ? "Your microphone is blocked here (common in the preview). I'll keep speaking my replies aloud — tap the mic button to talk, or open the app on your phone."
+            : friendlyError(
+                { message: reason },
+                "Voice conversation stopped unexpectedly — you can turn it back on, or keep using text and the mic button.",
+                'MCareOrb'
+              ),
           variant: 'destructive',
         });
       },
