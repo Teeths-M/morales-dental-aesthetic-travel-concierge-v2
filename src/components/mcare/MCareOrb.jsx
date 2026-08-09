@@ -698,6 +698,68 @@ export default function MCareOrb() {
     });
   };
 
+  // Talk Mode toggle — turning it ON immediately speaks a short confirmation.
+  // Two reasons this matters:
+  //   1. The toggle button previously flipped state with zero feedback, so a
+  //      user couldn't tell whether voice output was actually active.
+  //   2. Mobile browsers block audio.play() that isn't initiated inside a
+  //      user gesture. Toggling is a gesture, but the agent's reply arrives
+  //      seconds later (async) — by then the gesture has expired and the
+  //      neural Audio() play is blocked. Speaking during the toggle gesture
+  //      unlocks audio for the session, so later replies play normally.
+  // If M already has a last assistant reply when the user toggles ON, speak
+  // that too — otherwise (the common case) M is silent until the NEXT reply.
+  const toggleTalkMode = () => {
+    setTalkMode(prev => {
+      const next = !prev;
+      if (!next) {
+        stopAllSpeech();
+        setRevealState(null);
+        return next;
+      }
+      const confirmText = "Talk mode on. I'll speak my replies aloud.";
+      setSpeaking(true);
+      speakTextNeural(confirmText, {
+        rate: 0.9,
+        onEnd: () => {
+          setSpeaking(false);
+          // After the confirmation, if there's an existing last assistant
+          // reply the user hasn't heard, speak it now so toggling ON after a
+          // conversation isn't a dead end.
+          const last = agentMessagesRef.current[agentMessagesRef.current.length - 1];
+          if (last && last.role === 'assistant' && last.content) {
+            const id = last.id || `idx-${agentMessagesRef.current.length - 1}`;
+            if (!spokenAssistantIdsRef.current.has(id)) {
+              spokenAssistantIdsRef.current.add(id);
+              const speakable = extractSpeakableText(last.content);
+              if (speakable) {
+                const msgIndex = agentMessagesRef.current.length - 1;
+                const totalWords = speakable.split(/\s+/).filter(Boolean).length;
+                setSpeaking(true);
+                setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
+                speakTextNeural(speakable, {
+                  rate: 0.9,
+                  onWordBoundary: (count) => setRevealState(p =>
+                    (p && p.messageIndex === msgIndex) ? { ...p, revealedWordCount: count } : p),
+                  onEnd: () => {
+                    setSpeaking(false);
+                    setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p);
+                  },
+                  onError: () => {
+                    setSpeaking(false);
+                    setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p);
+                  },
+                });
+              }
+            }
+          }
+        },
+        onError: () => setSpeaking(false),
+      });
+      return next;
+    });
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(); }
   };
@@ -808,7 +870,7 @@ export default function MCareOrb() {
               </button>
             )}
             {isSpeechSupported() && (
-              <button onClick={() => setTalkMode(v => !v)} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
+              <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
                 style={{ background: talkMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
                 {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
               </button>
