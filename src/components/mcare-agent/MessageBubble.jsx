@@ -1,18 +1,20 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2, Play, Pause } from 'lucide-react';
 import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
+import { generateWaveformBars } from '@/lib/voiceMessageAudio';
 import { base44 } from '@/api/base44Client';
 import { useTranslation } from '@/i18n';
 
 const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 
 const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
+const isAudioUrl = (url) => /\.(webm|ogg|mp3|wav|m4a|opus)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
 
 // Extract a {{choices:a|b|c}} token the agent emits for closed-set questions.
@@ -161,6 +163,114 @@ function SpeakButton({ text, language }) {
   );
 }
 
+const VOICE_NOTE_BAR_COUNT = 26;
+
+const formatVoiceDuration = (secs) => {
+  if (secs == null || !isFinite(secs)) return '--:--';
+  const total = Math.max(0, Math.round(secs));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
+
+// WhatsApp-style playback UI for a sent/received voice note. Distinct from
+// SpeakButton above (that's assistant-reply TTS output) — this plays back the
+// user's OWN recorded audio attachment. Mirrors SpeakButton's local play-state
+// pattern (a plain useState + a lazily-created Audio() in a ref) but adds a
+// waveform + scrub-synced fill, since a voice note needs to show playback
+// position, not just idle/loading/playing.
+function VoiceNotePlayer({ url }) {
+  const [playing, setPlaying] = useState(false);
+  const [bars, setBars] = useState(null); // null while the waveform is still loading
+  const [progress, setProgress] = useState(0); // 0-1 playback position
+  const [duration, setDuration] = useState(null); // seconds, null until metadata loads
+  const audioRef = useRef(null);
+
+  // Fetch + analyze once per message (per url), cached in state — never
+  // recomputed on re-render. A fetch/decode failure falls back to a flat,
+  // neutral waveform rather than crashing or rendering nothing.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const blob = await fetch(url).then(r => r.blob());
+        const waveform = await generateWaveformBars(blob, VOICE_NOTE_BAR_COUNT);
+        if (!cancelled) setBars(waveform);
+      } catch {
+        if (!cancelled) setBars(new Array(VOICE_NOTE_BAR_COUNT).fill(0.28));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [url]);
+
+  // Stop playback if the bubble unmounts mid-play (e.g. conversation switch).
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  const handleToggle = () => {
+    if (!audioRef.current) {
+      const audio = new Audio(url);
+      audio.addEventListener('loadedmetadata', () => {
+        if (isFinite(audio.duration)) setDuration(audio.duration);
+      });
+      audio.addEventListener('timeupdate', () => {
+        if (audio.duration) setProgress(audio.currentTime / audio.duration);
+      });
+      audio.addEventListener('ended', () => {
+        setPlaying(false);
+        setProgress(0);
+      });
+      audio.addEventListener('error', () => setPlaying(false));
+      audioRef.current = audio;
+    }
+    if (playing) {
+      audioRef.current.pause();
+      setPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => setPlaying(false));
+      setPlaying(true);
+    }
+  };
+
+  const displayBars = bars || new Array(VOICE_NOTE_BAR_COUNT).fill(0.22);
+
+  return (
+    <div
+      className="mt-1 flex items-center gap-2 rounded-full px-2.5 py-2 min-w-[190px]"
+      style={{ background: 'rgba(6,11,22,0.35)', border: '1px solid #2A3F4A' }}
+    >
+      <button
+        type="button"
+        onClick={handleToggle}
+        className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full active:scale-95 transition-transform"
+        style={{ background: '#D4AF37', color: '#060B16' }}
+        title={playing ? 'Pause' : 'Play'}
+      >
+        {playing
+          ? <Pause className="w-3.5 h-3.5" fill="currentColor" />
+          : <Play className="w-3.5 h-3.5 ml-0.5" fill="currentColor" />}
+      </button>
+      <div className="flex items-end gap-[2px] h-6 flex-1 min-w-0">
+        {displayBars.map((v, idx) => {
+          const played = idx / displayBars.length < progress;
+          return (
+            <span
+              key={idx}
+              className="w-[3px] rounded-full flex-shrink-0"
+              style={{
+                height: `${Math.max(3, Math.round(v * 22))}px`,
+                background: played ? '#D4AF37' : 'rgba(255,255,255,0.28)',
+              }}
+            />
+          );
+        })}
+      </div>
+      <span className="flex-shrink-0 text-[11px] font-semibold tabular-nums text-muted-foreground">
+        {formatVoiceDuration(duration)}
+      </span>
+    </div>
+  );
+}
+
 function StatusIcon({ status }) {
   if (['completed', 'success'].includes(status)) return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
   if (['failed', 'error'].includes(status)) return <XCircle className="w-3.5 h-3.5 text-red-500" />;
@@ -232,6 +342,13 @@ function ToolCallDisplay({ toolCall }) {
 export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null, revealUpTo = undefined }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
+  // A "pure voice note" is a message whose only attachment is a single audio
+  // file — real WhatsApp voice notes show just the waveform/player, never a
+  // visible transcript, even though the real transcript still exists behind
+  // the scenes as message.content (it was sent to the agent, just not shown
+  // to the human reader here). Any message with text-only, an image, or an
+  // audio file alongside other attachments/text still renders normally.
+  const isPureVoiceNote = message.file_urls?.length === 1 && isAudioUrl(message.file_urls[0]);
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
   const reaction = isUser && showReaction ? pickMessageReaction(message.content) : null;
@@ -260,7 +377,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
             : text;
           return (
             <>
-              {displayText && <p className="text-sm whitespace-pre-wrap">{stripMd(displayText)}</p>}
+              {displayText && !isPureVoiceNote && <p className="text-sm whitespace-pre-wrap">{stripMd(displayText)}</p>}
               {choices.length > 0 && onChoice && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {choices.map((c, idx) => (
@@ -326,6 +443,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                   <img src={url} alt="attachment" className="rounded-lg max-h-40 border border-border object-cover" />
                 </a>
               )
+              : isAudioUrl(url)
+              ? <VoiceNotePlayer key={i} url={url} />
               : (
                 <a key={i} href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-secondary/70">
                   <Paperclip className="w-3 h-3" />

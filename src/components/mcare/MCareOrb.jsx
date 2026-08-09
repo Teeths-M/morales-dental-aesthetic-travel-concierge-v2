@@ -22,7 +22,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import VoiceInputButton from './VoiceInputButton';
+import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LivingOrb from './LivingOrb';
 import InterruptedIntentChip from './InterruptedIntentChip';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
@@ -110,7 +110,12 @@ export default function MCareOrb() {
   const [showBubble, setShowBubble] = useState(false);
   const [open,       setOpen]       = useState(false);
   const [input,      setInput]      = useState('');
-  const [listening,  setListening]  = useState(false);
+  // VoiceMessageRecorder (WhatsApp-style voice notes) has no onRecordingChange
+  // equivalent to VoiceInputButton's, so nothing sets this true anymore — it
+  // stays false and orbState/the mic-feedback-loop guard below fall through
+  // harmlessly. Left in place rather than removed to avoid rippling into
+  // orbState/effect logic that's out of scope for this swap.
+  const [listening] = useState(false);
   const [speaking,   setSpeaking]   = useState(false);
   const [dismissed,  setDismissed]   = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
@@ -782,6 +787,40 @@ export default function MCareOrb() {
     }
   };
 
+  // Voice message send handler — passed to VoiceMessageRecorder as onSend.
+  // Follows the exact same upload-then-addMessage pattern as handleFileSelect
+  // above (Core.UploadFile → sendAgentMessage(content, [file_url])), just with
+  // an extra transcription step in between so the agent still gets real text
+  // content. Transcription failure never blocks the send — the recorded audio
+  // itself is unaffected either way, only the displayed/sent text falls back
+  // to a generic placeholder (MessageBubble renders a pure single-audio-file
+  // message as a WhatsApp-style voice note, without showing that text).
+  const handleVoiceMessage = async (audioBlob, _durationMs) => {
+    if (!audioBlob) return;
+    setAgentUploading(true);
+    try {
+      const file = new File([audioBlob], 'voice-message.webm', { type: audioBlob.type || 'audio/webm' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      let transcript = '';
+      try {
+        const res = await base44.functions.invoke('transcribeVoiceInput', { audio_url: file_url });
+        const payload = res?.data ?? res ?? {};
+        transcript = (payload.text || '').trim();
+      } catch (_) {
+        transcript = ''; // transcription failed — fall through to the placeholder below
+      }
+      await sendAgentMessage(transcript || '[voice message]', [file_url]);
+    } catch (e) {
+      toast({ title: 'Voice message failed', description: friendlyError(e, "Couldn't send that voice message — please try again.", 'MCareOrb'), variant: 'destructive' });
+    } finally {
+      setAgentUploading(false);
+    }
+  };
+
+  const handleVoiceMessageError = (msg) => {
+    toast({ title: 'Voice message', description: msg, variant: 'destructive' });
+  };
+
   const handleVaulted = ({ token, document_type, file_name }) => {
     const label = DOC_LABEL[document_type] || 'document';
     sendAgentMessage(`I've uploaded my ${label} (${file_name}) to the secure vault. Reference token: ${token}. It's encrypted and stored for verification.`);
@@ -983,12 +1022,11 @@ export default function MCareOrb() {
                   style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
                 />
                 {isOnline && !conversationalMode && (
-                  <VoiceInputButton
-                  disabled={agentSending}
-                  onTranscript={(text) => setInput(text)}
-                  onRecordingChange={setListening}
-                  onError={(msg) => toast({ title: 'Voice input', description: msg, variant: 'destructive' })}
-                />
+                  <VoiceMessageRecorder
+                    disabled={agentSending || agentUploading}
+                    onSend={handleVoiceMessage}
+                    onError={handleVoiceMessageError}
+                  />
                 )}
                 <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
                   style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? PURPLE : '#E5E7EB', border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
