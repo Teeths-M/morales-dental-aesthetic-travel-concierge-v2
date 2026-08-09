@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 export default function MicPermissionGate({ open, blocked, onAllow, onCancel }) {
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? null : onCancel())}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm z-[9999]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {blocked ? <AlertTriangle className="w-4 h-4 text-amber-600" /> : <Mic className="w-4 h-4 text-primary" />}
