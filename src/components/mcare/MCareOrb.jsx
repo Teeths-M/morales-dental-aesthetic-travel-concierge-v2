@@ -154,6 +154,10 @@ export default function MCareOrb() {
   const ackedMessageIdsRef = useRef(new Set());
   const spokenAssistantIdsRef = useRef(new Set());
   const lastSeenAssistantRef = useRef({ id: null });
+  // Guards the "Conversation mode stopped" toast so a blocked mic (common in
+  // the preview iframe) can't stack a wall of identical red banners — one
+  // honest notification per activation, then it stops repeating.
+  const conversationalErrorShownRef = useRef(false);
 
   const clearSilenceNudge = () => {
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
@@ -448,12 +452,13 @@ export default function MCareOrb() {
     prevMsgCountRef.current = agentMessages.length;
   }, [agentMessages, talkMode]);
 
-  // Turning Talk Mode off mid-speech stops audio immediately and reveals the
-  // rest of the current message instantly — never leaves it half-spoken.
+  // Turning Talk Mode off stops audio, ends the mic/speech loop, and reveals
+  // the rest of the current message instantly — never leaves it half-spoken.
   useEffect(() => {
     if (!talkMode) {
       stopAllSpeech();
       setRevealState(null);
+      setConversationalMode(false);
     }
   }, [talkMode]);
 
@@ -526,49 +531,48 @@ export default function MCareOrb() {
   useEffect(() => {
     if (!conversationalMode) return;
 
-    const detector = createBargeInDetector();
-    let bargeInHandledForUtterance = false;
+    // Fresh activation — allow one error toast again.
+    conversationalErrorShownRef.current = false;
 
     const stopRecognition = startContinuousRecognition({
       lang: 'en-US',
       onInterim: (text) => {
+        // Half-duplex: while M-Care is speaking, ignore the mic entirely.
+        // Without this, M's own voice is picked up by the always-on mic,
+        // transcribed, and sent back as a user message — M ends up replying
+        // to itself in a loop (and snapshotting its own messages as
+        // "interrupted intents"). The user simply waits for M to finish,
+        // then speaks. Headphones would let us keep barge-in, but on a
+        // phone speaker this is the only reliable choice.
+        if (speakingRef.current) return;
         clearSilenceNudge();
-        if (!speakingRef.current) {
-          // Normal turn-taking: live-fill the input box, same as
-          // VoiceInputButton's transcript callback does for push-to-talk.
-          setInput(text);
-          return;
-        }
-        // M-Care is speaking — evaluate for a genuine barge-in (debounced;
-        // see createBargeInDetector for why a single stray syllable isn't
-        // enough on its own).
-        if (!bargeInHandledForUtterance && detector.observe(text)) {
-          bargeInHandledForUtterance = true;
-          handleBargeIn();
-        }
+        setInput(text);
       },
       onFinal: (text) => {
+        if (speakingRef.current) return;
         clearSilenceNudge();
-        if (bargeInHandledForUtterance) {
-          detector.reset();
-          bargeInHandledForUtterance = false;
-          handleInterruptionSend(text);
-        } else {
-          setInput('');
-          liveRef.current.sendAgentMessage?.(text);
-        }
+        setInput('');
+        liveRef.current.sendAgentMessage?.(text);
         resetSilenceNudge();
       },
       onListeningChange: setConversationalListening,
       onUnrecoverableError: (reason) => {
+        const blocked = String(reason || '').match(/not-allowed|service-not-allowed|security|mic/);
         setConversationalMode(false);
+        // Talk Mode (spoken replies) stays on — only the always-on mic fails,
+        // so the user keeps voice output and can still talk via the mic button.
+        // Show the notification exactly once per activation to avoid stacking.
+        if (conversationalErrorShownRef.current) return;
+        conversationalErrorShownRef.current = true;
         toast({
-          title: 'Conversation mode stopped',
-          description: friendlyError(
-            { message: reason },
-            "Voice conversation stopped unexpectedly — you can turn it back on, or keep using text and the mic button.",
-            'MCareOrb'
-          ),
+          title: 'Voice input unavailable',
+          description: blocked
+            ? "Your microphone is blocked here (common in the preview). I'll keep speaking my replies aloud — tap the mic button to talk, or open the app on your phone."
+            : friendlyError(
+                { message: reason },
+                "Voice conversation stopped unexpectedly — you can turn it back on, or keep using text and the mic button.",
+                'MCareOrb'
+              ),
           variant: 'destructive',
         });
       },
@@ -698,6 +702,69 @@ export default function MCareOrb() {
     });
   };
 
+  // Talk Mode toggle — turning it ON activates BOTH halves of the voice loop:
+  //   • voice OUTPUT: M speaks a short confirmation (also unlocks mobile audio
+  //     playback, which later async replies depend on).
+  //   • voice INPUT:  the microphone + speech processing start (continuous
+  //     recognition, the same engine Conversational Mode uses), so the user
+  //     can talk back without tapping the mic button each turn.
+  // The mic starts AFTER the spoken confirmation finishes, so it never
+  // captures M's own voice. If the browser lacks SpeechRecognition, Talk Mode
+  // falls back to output-only (speak replies) and the push-to-talk mic button
+  // remains the input path.
+  const toggleTalkMode = () => {
+    setTalkMode(prev => {
+      const next = !prev;
+      if (!next) {
+        stopAllSpeech();
+        setRevealState(null);
+        return next;
+      }
+      const canListen = isConversationalModeSupported();
+      const confirmText = canListen
+        ? "Talk mode on. I'm listening — go ahead."
+        : "Talk mode on. I'll speak my replies aloud.";
+      setSpeaking(true);
+      speakTextNeural(confirmText, {
+        rate: 0.9,
+        onEnd: () => {
+          setSpeaking(false);
+          if (canListen) {
+            // Activate the microphone + speech processing now that M has
+            // finished speaking, so the mic never captures its own voice.
+            setConversationalMode(true);
+            return;
+          }
+          // No speech recognition → output-only: speak the last existing
+          // reply so toggling ON mid-conversation isn't a dead end.
+          const last = agentMessagesRef.current[agentMessagesRef.current.length - 1];
+          if (last && last.role === 'assistant' && last.content) {
+            const id = last.id || `idx-${agentMessagesRef.current.length - 1}`;
+            if (!spokenAssistantIdsRef.current.has(id)) {
+              spokenAssistantIdsRef.current.add(id);
+              const speakable = extractSpeakableText(last.content);
+              if (speakable) {
+                const msgIndex = agentMessagesRef.current.length - 1;
+                const totalWords = speakable.split(/\s+/).filter(Boolean).length;
+                setSpeaking(true);
+                setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
+                speakTextNeural(speakable, {
+                  rate: 0.9,
+                  onWordBoundary: (count) => setRevealState(p =>
+                    (p && p.messageIndex === msgIndex) ? { ...p, revealedWordCount: count } : p),
+                  onEnd: () => { setSpeaking(false); setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p); },
+                  onError: () => { setSpeaking(false); setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p); },
+                });
+              }
+            }
+          }
+        },
+        onError: () => setSpeaking(false),
+      });
+      return next;
+    });
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(); }
   };
@@ -808,7 +875,7 @@ export default function MCareOrb() {
               </button>
             )}
             {isSpeechSupported() && (
-              <button onClick={() => setTalkMode(v => !v)} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
+              <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
                 style={{ background: talkMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
                 {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
               </button>
@@ -917,7 +984,12 @@ export default function MCareOrb() {
                   style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
                 />
                 {isOnline && !conversationalMode && (
-                  <VoiceInputButton disabled={agentSending} onTranscript={(text) => setInput(text)} onRecordingChange={setListening} />
+                  <VoiceInputButton
+                  disabled={agentSending}
+                  onTranscript={(text) => setInput(text)}
+                  onRecordingChange={setListening}
+                  onError={(msg) => toast({ title: 'Voice input', description: msg, variant: 'destructive' })}
+                />
                 )}
                 <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
                   style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? PURPLE : '#E5E7EB', border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
