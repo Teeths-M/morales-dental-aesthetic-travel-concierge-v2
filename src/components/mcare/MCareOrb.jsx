@@ -45,7 +45,6 @@ import {
   pushInterruptedIntent,
   clearInterruptedIntents,
   shortTopicLabel,
-  createBargeInDetector,
   startContinuousRecognition,
   SILENCE_NUDGE_MS,
   MAX_SILENCE_NUDGES,
