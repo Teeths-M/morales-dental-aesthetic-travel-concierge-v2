@@ -527,37 +527,25 @@ export default function MCareOrb() {
   useEffect(() => {
     if (!conversationalMode) return;
 
-    const detector = createBargeInDetector();
-    let bargeInHandledForUtterance = false;
-
     const stopRecognition = startContinuousRecognition({
       lang: 'en-US',
       onInterim: (text) => {
+        // Half-duplex: while M-Care is speaking, ignore the mic entirely.
+        // Without this, M's own voice is picked up by the always-on mic,
+        // transcribed, and sent back as a user message — M ends up replying
+        // to itself in a loop (and snapshotting its own messages as
+        // "interrupted intents"). The user simply waits for M to finish,
+        // then speaks. Headphones would let us keep barge-in, but on a
+        // phone speaker this is the only reliable choice.
+        if (speakingRef.current) return;
         clearSilenceNudge();
-        if (!speakingRef.current) {
-          // Normal turn-taking: live-fill the input box, same as
-          // VoiceInputButton's transcript callback does for push-to-talk.
-          setInput(text);
-          return;
-        }
-        // M-Care is speaking — evaluate for a genuine barge-in (debounced;
-        // see createBargeInDetector for why a single stray syllable isn't
-        // enough on its own).
-        if (!bargeInHandledForUtterance && detector.observe(text)) {
-          bargeInHandledForUtterance = true;
-          handleBargeIn();
-        }
+        setInput(text);
       },
       onFinal: (text) => {
+        if (speakingRef.current) return;
         clearSilenceNudge();
-        if (bargeInHandledForUtterance) {
-          detector.reset();
-          bargeInHandledForUtterance = false;
-          handleInterruptionSend(text);
-        } else {
-          setInput('');
-          liveRef.current.sendAgentMessage?.(text);
-        }
+        setInput('');
+        liveRef.current.sendAgentMessage?.(text);
         resetSilenceNudge();
       },
       onListeningChange: setConversationalListening,
