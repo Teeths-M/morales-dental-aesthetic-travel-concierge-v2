@@ -74,7 +74,7 @@ export default function TravelerGuardian() {
       if (!data || data.error) throw new Error(data?.error || 'Failed to activate');
       await load();
     } catch (e) {
-      setError(e?.message || 'Failed to activate Guardian mode');
+      setError(e?.message || 'Failed to activate M-Safe Check-Ins');
     } finally {
       setActivating(false);
     }
@@ -96,7 +96,7 @@ export default function TravelerGuardian() {
             <ShieldCheck className="h-6 w-6" style={{ color: GOLD }} />
           </span>
           <div>
-            <h1 className="text-2xl font-bold">Traveler Guardian</h1>
+            <h1 className="text-2xl font-bold">M-Safe Check-Ins</h1>
             <p className="text-sm text-muted-foreground">
               M-Care watches your journey end-to-end and checks in at every key milestone.
             </p>
@@ -108,7 +108,7 @@ export default function TravelerGuardian() {
             <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
               <AlertCircle className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground max-w-sm">
-                You don't have an active journey yet. Start your intake with M-Care and come back here to turn on Guardian mode.
+                You don't have an active journey yet. Start your intake with M-Care and come back here to turn on M-Safe Check-Ins.
               </p>
               <Button variant="outline" onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
             </CardContent>
@@ -142,7 +142,7 @@ export default function TravelerGuardian() {
               <CardContent>
                 {guardian?.active && (
                   <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" /> Guardian mode is active. M-Care will check in at each milestone below.
+                    <CheckCircle2 className="h-4 w-4" /> M-Safe Check-Ins are active. M-Care will check in at each milestone below.
                   </div>
                 )}
                 <ol className="space-y-3">
@@ -169,7 +169,7 @@ export default function TravelerGuardian() {
                 <div className="mt-5">
                   <Button onClick={activate} disabled={activating} className="w-full gap-2">
                     {activating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                    {activating ? 'Activating…' : guardian?.active ? 'Refresh Milestones' : 'Activate Guardian Mode'}
+                    {activating ? 'Activating…' : guardian?.active ? 'Refresh Milestones' : 'Activate M-Safe Check-Ins'}
                   </Button>
                   <p className="mt-2 text-center text-xs text-muted-foreground">
                     Activating schedules the six milestone check-ins for your trip dates and fills any missing ones.

@@ -775,6 +775,7 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
     'onDoctorConfirmed',
     'runSilentSafetyEscalation',
     'stripePaymentWebhook',
+    'sendMilestoneWhatsAppCheckIns',
   ];
 
   // The identifier may sit anywhere inside the interpolation, not just at its

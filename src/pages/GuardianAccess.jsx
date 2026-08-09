@@ -27,7 +27,7 @@ export default function GuardianAccess() {
           <div className="w-14 h-14 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
             <Eye className="w-7 h-7 text-blue-400" />
           </div>
-          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">Guardian View</p>
+          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">M-Care Family Portal</p>
           <h1 className="text-2xl font-semibold text-white mt-1">Get Your Link Back</h1>
         </div>
 

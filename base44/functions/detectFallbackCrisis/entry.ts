@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 import { getDoctorReminderCopy } from '../../shared/doctorReminderCopy.ts';
+import { logCrisisReroute } from '../../shared/logCrisisReroute.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -242,6 +243,26 @@ Deno.serve(async (req) => {
               audit_trail: [...(c.fallback_state?.audit_trail || []), auditEntry],
             },
           })
+        );
+
+        // Log the intervention for /admin/crisis-reroutes. The 4h critical
+        // tier is the one that actually escalates to a human (admin SMS,
+        // below); the 15-min and 24h-approaching tiers are the softer,
+        // earlier signal — flagged but not yet a human escalation.
+        updatePromises.push(
+          logCrisisReroute(base44, {
+            case_id: c.id,
+            crisis_type: 'PARTNER_UNRESPONSIVE',
+            detected_by: 'CRON',
+            original_provider_type: 'doctor',
+            original_provider_name: primaryPartnerName,
+            status: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL' ? 'human_escalated' : 'detected',
+            human_escalated: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL',
+            human_escalated_reason: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL'
+              ? `Doctor still unconfirmed with the procedure within ${PROCEDURE_CRITICAL_HOURS}h of starting — escalated to admin.`
+              : '',
+            source_message: auditEntry.notes,
+          }).catch(() => {})
         );
 
         // Give the doctor an actual window, not just an internal flag: the

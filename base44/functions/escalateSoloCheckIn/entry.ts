@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { logCrisisReroute } from '../../shared/logCrisisReroute.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -483,6 +484,17 @@ Deno.serve(async (req) => {
           timestamp: now.toISOString(),
           prev_hash: prevHash9,
         });
+
+        await logCrisisReroute(base44, {
+          case_id: checkIn.case_id,
+          crisis_type: 'EMERGENCY',
+          detected_by: 'CRON',
+          original_provider_type: 'other',
+          status: 'human_escalated',
+          human_escalated: true,
+          human_escalated_reason: `${checkIn.user_name || 'A solo traveler'} has been unresponsive for ${hoursOverdue.toFixed(1)}h — police/embassy escalation required.`,
+          source_message: `9-hour unresponsive escalation, last known location: ${locStr}.`,
+        }).catch(() => {});
 
         escalated9h++;
       }

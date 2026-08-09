@@ -1,3 +1,5 @@
+import { logCrisisReroute } from './logCrisisReroute.ts';
+
 const TIMEOUT_MINUTES = 15;
 
 async function sha256(text: string) {
@@ -28,7 +30,11 @@ function shortId() {
  * tracking fields, so it never interferes with the hours-based escalation ladder
  * escalateSoloCheckIn owns.
  */
-export async function dispatchSecurityForCheckIn(base44: any, checkIn: Record<string, any>) {
+export async function dispatchSecurityForCheckIn(
+  base44: any,
+  checkIn: Record<string, any>,
+  triggeredBy: 'CRON' | 'PATIENT_REPORT' = 'CRON',
+) {
   const now = new Date();
   const adminEmail = Deno.env.get('ADMIN_EMAIL');
 
@@ -88,6 +94,18 @@ export async function dispatchSecurityForCheckIn(base44: any, checkIn: Record<st
         fallback_action: 'admin_critical_alert_sent',
       });
     } catch (_) {}
+
+    await logCrisisReroute(base44, {
+      case_id: checkIn.case_id,
+      crisis_type: 'EMERGENCY',
+      detected_by: triggeredBy,
+      original_provider_type: 'security',
+      status: 'human_escalated',
+      human_escalated: true,
+      human_escalated_reason: `All ${tried.length + 1} available security agencies in ${destinationCountry} were tried — none confirmed. Needs immediate human intervention.`,
+      source_message: `Solo traveler ${checkIn.user_name || 'unknown'} unresponsive — security welfare check requested.`,
+    }).catch(() => {});
+
     return { outcome: 'failed' };
   }
 
@@ -149,6 +167,17 @@ export async function dispatchSecurityForCheckIn(base44: any, checkIn: Record<st
     timestamp: now.toISOString(),
     prev_hash: prevHash,
   });
+
+  await logCrisisReroute(base44, {
+    case_id: checkIn.case_id,
+    crisis_type: 'EMERGENCY',
+    detected_by: triggeredBy,
+    original_provider_type: 'security',
+    status: 'rerouting',
+    selected_backup_name: next.agency_name || '',
+    selected_backup_type: 'security',
+    source_message: `Solo traveler ${checkIn.user_name || 'unknown'} unresponsive — security welfare check requested.`,
+  }).catch(() => {});
 
   return { outcome: 'dispatched', agency: next.agency_name };
 }

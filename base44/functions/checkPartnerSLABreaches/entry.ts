@@ -4,6 +4,7 @@ import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 import { findDoctorBackup } from '../../shared/findDoctorBackup.ts';
 import { findCompanionBackup } from '../../shared/findCompanionBackup.ts';
 import { getDoctorReminderCopy } from '../../shared/doctorReminderCopy.ts';
+import { logCrisisReroute } from '../../shared/logCrisisReroute.ts';
 
 // Outbound SMS/WhatsApp (Twilio) — inline, matching every other function in
 // this codebase (see escalateSoloCheckIn, findDoctorBackup) rather than a
@@ -151,6 +152,16 @@ Deno.serve(async (req) => {
             sla_breached_travel: true, backup_travel_id: backup.id,
             fallback_state: { ...(c.fallback_state || {}), in_flux: true, primary_partner_type: 'travel_agency', escalation_reason: 'MANUAL_ESCALATION', current_escalation_level: 1 },
           }));
+          tasks.push(logCrisisReroute(base44, {
+            case_id: c.id,
+            crisis_type: 'PARTNER_UNRESPONSIVE',
+            detected_by: 'CRON',
+            original_provider_type: 'travel_agency',
+            status: 'rerouting',
+            selected_backup_name: backup.agency_name || '',
+            selected_backup_type: 'travel_agency',
+            source_message: 'Travel agency did not respond to a quote request within the 24h SLA.',
+          }).catch(() => {}));
           escalations.push({ case_id: c.id, partner: 'travel', action: 'backup_dispatched' });
         }
       }
@@ -174,6 +185,16 @@ Deno.serve(async (req) => {
             }),
           }));
           tasks.push(base44.asServiceRole.entities.CaseRecord.update(c.id, { sla_breached_driver: true, backup_driver_id: backup.id }));
+          tasks.push(logCrisisReroute(base44, {
+            case_id: c.id,
+            crisis_type: 'PARTNER_UNRESPONSIVE',
+            detected_by: 'CRON',
+            original_provider_type: 'driver',
+            status: 'rerouting',
+            selected_backup_name: backup.agency_name || '',
+            selected_backup_type: 'driver',
+            source_message: 'Driver did not respond to a transfer quote request within the 24h SLA.',
+          }).catch(() => {}));
           escalations.push({ case_id: c.id, partner: 'driver', action: 'backup_dispatched' });
         }
       }
@@ -186,6 +207,18 @@ Deno.serve(async (req) => {
       if (age >= HR_24 && c.companion_quote_status === 'PENDING' && !c.sla_breached_companion && c.booking_type !== 'travel_only') {
         tasks.push(findCompanionBackup(base44, c, c.companion_assignment_id).then(result => {
           escalations.push({ case_id: c.id, partner: 'companion', action: result.success ? 'backup_dispatched' : 'no_backup_available' });
+          return logCrisisReroute(base44, {
+            case_id: c.id,
+            crisis_type: 'PARTNER_UNRESPONSIVE',
+            detected_by: 'CRON',
+            original_provider_type: 'companion',
+            status: result.success ? 'resolved' : 'human_escalated',
+            selected_backup_name: result.success ? (result.companion?.full_name || '') : '',
+            selected_backup_type: 'companion',
+            human_escalated: !result.success,
+            human_escalated_reason: result.success ? '' : 'No backup companion available within the 24h SLA.',
+            source_message: 'Companion did not respond to an assignment within the 24h SLA.',
+          }).catch(() => {});
         }));
       }
 
@@ -207,6 +240,28 @@ Deno.serve(async (req) => {
           tasks.push(base44.asServiceRole.entities.CaseRecord.update(c.id, {
             fallback_state: { ...(c.fallback_state || {}), human_intervention_required: true, human_intervention_triggered_at: new Date().toISOString() },
           }));
+          // This branch has no one-time gate and re-fires every 15-minute cron
+          // tick for as long as the 48h condition holds — dedupe against an
+          // existing unresolved row for this case before writing another.
+          tasks.push((async () => {
+            let existing: any[] = [];
+            try {
+              existing = await base44.asServiceRole.entities.CrisisReroute.filter(
+                { case_id: c.id, crisis_type: 'PARTNER_UNRESPONSIVE', status: 'human_escalated' }, '-detected_at', 1
+              );
+            } catch (_) { existing = []; }
+            if (existing.length > 0) return;
+            await logCrisisReroute(base44, {
+              case_id: c.id,
+              crisis_type: 'PARTNER_UNRESPONSIVE',
+              detected_by: 'CRON',
+              original_provider_type: 'other',
+              status: 'human_escalated',
+              human_escalated: true,
+              human_escalated_reason: 'A case has gone 48 hours without full partner confirmation — backup dispatch did not resolve it.',
+              source_message: 'Partner(s) remained unresponsive 48 hours after quotes were requested.',
+            });
+          })().catch(() => {}));
           escalations.push({ case_id: c.id, partner: 'all', action: 'human_intervention_required' });
         }
       }
@@ -278,6 +333,18 @@ Deno.serve(async (req) => {
       if (age >= HR_24) {
         const result = await findDoctorBackup(base44, c).catch(() => ({ success: false }));
         escalations.push({ case_id: c.id, partner: 'doctor', action: result.success ? 'backup_dispatched' : 'no_backup_available' });
+        await logCrisisReroute(base44, {
+          case_id: c.id,
+          crisis_type: 'PARTNER_UNRESPONSIVE',
+          detected_by: 'CRON',
+          original_provider_type: 'doctor',
+          status: result.success ? 'resolved' : 'human_escalated',
+          selected_backup_name: result.success ? (result.doctor?.full_name || '') : '',
+          selected_backup_type: 'doctor',
+          human_escalated: !result.success,
+          human_escalated_reason: result.success ? '' : 'No verified backup doctor available within the 24h SLA.',
+          source_message: 'Doctor did not respond within the 24h SLA.',
+        }).catch(() => {});
       }
     }
 

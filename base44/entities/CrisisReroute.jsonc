@@ -47,6 +47,7 @@
         "DRIVER_NO_SHOW",
         "COMPANION_DISTRESS",
         "PROVIDER_CREDENTIAL_EXPIRED",
+        "PARTNER_UNRESPONSIVE",
         "EMERGENCY",
         "OTHER"
       ]

@@ -1,6 +1,7 @@
 import { createHandler } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { findDriverBackup } from '../../shared/findDriverBackup.ts';
+import { logCrisisReroute } from '../../shared/logCrisisReroute.ts';
 
 // ── escalateMissedDriverHandshake — cron/scheduled function ──────────────────
 // Runs every 15 minutes via GitHub Actions, not Base44's own scheduler — see
@@ -132,6 +133,19 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
 
     await base44.asServiceRole.entities.TravelRequest.update(trip.id, {
       noshow_flagged_steps: [...flagged, n],
+    }).catch(() => {});
+
+    await logCrisisReroute(base44, {
+      case_id: trip.case_id,
+      crisis_type: 'DRIVER_NO_SHOW',
+      detected_by: 'CRON',
+      original_provider_type: 'driver',
+      status: backupResult.success ? 'resolved' : 'human_escalated',
+      selected_backup_name: backupResult.success ? ((backupResult as any).driver?.agency_name || '') : '',
+      selected_backup_type: 'driver',
+      human_escalated: !backupResult.success,
+      human_escalated_reason: backupResult.success ? '' : `No backup driver available for the ${leg} leg after a ${NOSHOW_MINUTES}-minute no-show.`,
+      source_message: `Driver did not confirm handshake step ${n} (${leg} leg) within ${NOSHOW_MINUTES} minutes.`,
     }).catch(() => {});
 
     results.push({

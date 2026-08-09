@@ -37,7 +37,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     return ok({ outcome: 'no_active_concern', message: 'There is no missed check-in on file right now — nothing to escalate.' });
   }
 
-  const result = await dispatchSecurityForCheckIn(base44, active);
+  const result = await dispatchSecurityForCheckIn(base44, active, 'PATIENT_REPORT');
 
   const prevHash = await (async () => {
     try {

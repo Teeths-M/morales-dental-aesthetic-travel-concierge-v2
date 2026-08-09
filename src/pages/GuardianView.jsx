@@ -302,7 +302,7 @@ export default function GuardianView() {
     <div className="min-h-screen bg-slate-900 flex items-center justify-center">
       <div className="text-center">
         <div className="w-12 h-12 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-emerald-400 text-sm">Verifying guardian access...</p>
+        <p className="text-emerald-400 text-sm">Verifying Family Portal access...</p>
       </div>
     </div>
   );
@@ -311,7 +311,7 @@ export default function GuardianView() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
         <Clock className="w-16 h-16 text-amber-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-white mb-2">Guardian Link Expired</h2>
+        <h2 className="text-xl font-semibold text-white mb-2">Family Portal Link Expired</h2>
         <p className="text-slate-400 text-sm">This tracking link has expired. Ask the traveler to generate a new one, or if they've shared other active links with you, get one resent.</p>
         <Link to="/guardian-access" className="inline-block mt-4 text-blue-400 text-sm hover:underline">Get a link resent to my email</Link>
       </div>
@@ -357,7 +357,7 @@ export default function GuardianView() {
           <div className="w-14 h-14 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
             <Eye className="w-7 h-7 text-blue-400" />
           </div>
-          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-1">Guardian View — Read Only</p>
+          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-1">M-Care Family Portal — Read Only</p>
           <h1 className="text-2xl font-semibold text-white">{session.patient_name}'s Journey</h1>
           <p className="text-slate-400 text-sm mt-1">Shared with {session.guardian_name}</p>
           <div className="flex items-center justify-center gap-2 mt-2 text-xs text-slate-500">
@@ -571,7 +571,8 @@ export default function GuardianView() {
           </div>
         </div>
 
-        {/* Family Portal — notifications + message through M-Care */}
+        {/* M-Care Family Portal — notifications + message through M-Care */}
+        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide px-1">M-Care Family Portal</p>
         <GuardianNotifications token={token} />
         <GuardianMessenger token={token} patientName={session.patient_name} guardianName={session.guardian_name} />
 
@@ -915,7 +916,7 @@ export default function GuardianView() {
         {/* Watermark */}
         <div className="flex items-center gap-2 justify-center text-xs text-slate-600 pb-4">
           <Shield className="w-3.5 h-3.5" />
-          <span>Morales Safe-T Guardian View · Read-only · No medical or personal data exposed</span>
+          <span>M-Care Family Portal · Read-only · No medical or personal data exposed</span>
         </div>
       </div>
     </div>
