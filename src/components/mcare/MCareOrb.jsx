@@ -979,7 +979,12 @@ export default function MCareOrb() {
                   style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
                 />
                 {isOnline && !conversationalMode && (
-                  <VoiceInputButton disabled={agentSending} onTranscript={(text) => setInput(text)} onRecordingChange={setListening} />
+                  <VoiceInputButton
+                  disabled={agentSending}
+                  onTranscript={(text) => setInput(text)}
+                  onRecordingChange={setListening}
+                  onError={(msg) => toast({ title: 'Voice input', description: msg, variant: 'destructive' })}
+                />
                 )}
                 <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
                   style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? PURPLE : '#E5E7EB', border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
