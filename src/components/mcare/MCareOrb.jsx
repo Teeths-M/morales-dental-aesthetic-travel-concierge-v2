@@ -448,12 +448,13 @@ export default function MCareOrb() {
     prevMsgCountRef.current = agentMessages.length;
   }, [agentMessages, talkMode]);
 
-  // Turning Talk Mode off mid-speech stops audio immediately and reveals the
-  // rest of the current message instantly — never leaves it half-spoken.
+  // Turning Talk Mode off stops audio, ends the mic/speech loop, and reveals
+  // the rest of the current message instantly — never leaves it half-spoken.
   useEffect(() => {
     if (!talkMode) {
       stopAllSpeech();
       setRevealState(null);
+      setConversationalMode(false);
     }
   }, [talkMode]);
 
@@ -698,17 +699,16 @@ export default function MCareOrb() {
     });
   };
 
-  // Talk Mode toggle — turning it ON immediately speaks a short confirmation.
-  // Two reasons this matters:
-  //   1. The toggle button previously flipped state with zero feedback, so a
-  //      user couldn't tell whether voice output was actually active.
-  //   2. Mobile browsers block audio.play() that isn't initiated inside a
-  //      user gesture. Toggling is a gesture, but the agent's reply arrives
-  //      seconds later (async) — by then the gesture has expired and the
-  //      neural Audio() play is blocked. Speaking during the toggle gesture
-  //      unlocks audio for the session, so later replies play normally.
-  // If M already has a last assistant reply when the user toggles ON, speak
-  // that too — otherwise (the common case) M is silent until the NEXT reply.
+  // Talk Mode toggle — turning it ON activates BOTH halves of the voice loop:
+  //   • voice OUTPUT: M speaks a short confirmation (also unlocks mobile audio
+  //     playback, which later async replies depend on).
+  //   • voice INPUT:  the microphone + speech processing start (continuous
+  //     recognition, the same engine Conversational Mode uses), so the user
+  //     can talk back without tapping the mic button each turn.
+  // The mic starts AFTER the spoken confirmation finishes, so it never
+  // captures M's own voice. If the browser lacks SpeechRecognition, Talk Mode
+  // falls back to output-only (speak replies) and the push-to-talk mic button
+  // remains the input path.
   const toggleTalkMode = () => {
     setTalkMode(prev => {
       const next = !prev;
@@ -717,15 +717,23 @@ export default function MCareOrb() {
         setRevealState(null);
         return next;
       }
-      const confirmText = "Talk mode on. I'll speak my replies aloud.";
+      const canListen = isConversationalModeSupported();
+      const confirmText = canListen
+        ? "Talk mode on. I'm listening — go ahead."
+        : "Talk mode on. I'll speak my replies aloud.";
       setSpeaking(true);
       speakTextNeural(confirmText, {
         rate: 0.9,
         onEnd: () => {
           setSpeaking(false);
-          // After the confirmation, if there's an existing last assistant
-          // reply the user hasn't heard, speak it now so toggling ON after a
-          // conversation isn't a dead end.
+          if (canListen) {
+            // Activate the microphone + speech processing now that M has
+            // finished speaking, so the mic never captures its own voice.
+            setConversationalMode(true);
+            return;
+          }
+          // No speech recognition → output-only: speak the last existing
+          // reply so toggling ON mid-conversation isn't a dead end.
           const last = agentMessagesRef.current[agentMessagesRef.current.length - 1];
           if (last && last.role === 'assistant' && last.content) {
             const id = last.id || `idx-${agentMessagesRef.current.length - 1}`;
@@ -741,14 +749,8 @@ export default function MCareOrb() {
                   rate: 0.9,
                   onWordBoundary: (count) => setRevealState(p =>
                     (p && p.messageIndex === msgIndex) ? { ...p, revealedWordCount: count } : p),
-                  onEnd: () => {
-                    setSpeaking(false);
-                    setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p);
-                  },
-                  onError: () => {
-                    setSpeaking(false);
-                    setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p);
-                  },
+                  onEnd: () => { setSpeaking(false); setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p); },
+                  onError: () => { setSpeaking(false); setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p); },
                 });
               }
             }
