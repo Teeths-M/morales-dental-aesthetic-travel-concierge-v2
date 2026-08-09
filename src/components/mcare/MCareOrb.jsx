@@ -20,10 +20,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceInputButton from './VoiceInputButton';
 import LivingOrb from './LivingOrb';
+import InterruptedIntentChip from './InterruptedIntentChip';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
@@ -37,6 +38,18 @@ import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
 import { detectTalkModeCommand, extractSpeakableText, isSpeechSupported, speakText, stopSpeaking } from '@/lib/talkMode';
+import {
+  isConversationalModeSupported,
+  classifyInterruptionUtterance,
+  pushInterruptedIntent,
+  clearInterruptedIntents,
+  shortTopicLabel,
+  createBargeInDetector,
+  startContinuousRecognition,
+  SILENCE_NUDGE_MS,
+  MAX_SILENCE_NUDGES,
+  SILENCE_NUDGE_TEXT,
+} from '@/lib/conversationalMode';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -110,14 +123,123 @@ export default function MCareOrb() {
   // specific message is actively being spoken, else null.
   const [talkMode, setTalkMode] = useState(false);
   const [revealState, setRevealState] = useState(null);
+  // Conversational Mode — always-listening voice with barge-in, layered on
+  // top of Talk Mode. Off by default; opt-in only. See conversationalMode.js
+  // for why this is a client-side interaction layer, not a change to what
+  // the agent generates. interruptedIntents is capped (see that file) — what
+  // M-Care was cut off saying, surfaced as a dismissible chip, never
+  // silently spliced back into the conversation.
+  const [conversationalMode, setConversationalMode] = useState(false);
+  const [conversationalListening, setConversationalListening] = useState(false);
+  const [interruptedIntents, setInterruptedIntents] = useState([]);
+  const [bargeInFlashToken, setBargeInFlashToken] = useState(0);
   const bottomRef = useRef(null);
   const vaultRef = useRef(null);
+
+  // Refs mirroring frequently-changing state for use inside the continuous
+  // recognition effect's callbacks, which must NOT restart the whole
+  // SpeechRecognition session on every render — see the effect below.
+  const speakingRef = useRef(false);
+  const revealStateRef = useRef(null);
+  const agentMessagesRef = useRef([]);
+  const conversationalModeRef = useRef(false);
+  const liveRef = useRef({});
+  useEffect(() => { speakingRef.current = speaking; }, [speaking]);
+  useEffect(() => { revealStateRef.current = revealState; }, [revealState]);
+  useEffect(() => { conversationalModeRef.current = conversationalMode; }, [conversationalMode]);
+
+  const silenceTimerRef = useRef(null);
+  const silenceNudgeCountRef = useRef(0);
+  const ackedMessageIdsRef = useRef(new Set());
+  const spokenAssistantIdsRef = useRef(new Set());
+  const lastSeenAssistantRef = useRef({ id: null });
+
+  const clearSilenceNudge = () => {
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+  };
+  const resetSilenceNudge = () => {
+    clearSilenceNudge();
+    silenceNudgeCountRef.current = 0;
+  };
+  // Re-armed after every assistant utterance finishes speaking (see the
+  // speaking effects below) — fires a short spoken nudge if the mic then
+  // hears nothing for SILENCE_NUDGE_MS, capped at MAX_SILENCE_NUDGES per gap
+  // so it never nags indefinitely. Only ever reset by real recognized
+  // speech, never by the recognition engine's own routine restarts.
+  const armSilenceNudge = () => {
+    clearSilenceNudge();
+    if (!conversationalModeRef.current) return;
+    if (silenceNudgeCountRef.current >= MAX_SILENCE_NUDGES) return;
+    silenceTimerRef.current = setTimeout(() => {
+      if (!conversationalModeRef.current || speakingRef.current) return;
+      silenceNudgeCountRef.current += 1;
+      // Appended like any other assistant turn — the existing speaking
+      // effect below picks it up and speaks it (same pattern the Talk Mode
+      // toggle confirmation already uses), so there's only one place that
+      // ever calls speakText for a "grown" message.
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: SILENCE_NUDGE_TEXT }]);
+    }, SILENCE_NUDGE_MS);
+  };
+
+  // Snapshot what M-Care was cut off saying into interruptedIntents, stop
+  // its audio, and flash the orb — called the moment a real barge-in is
+  // confirmed (see the recognition effect below), before the interrupting
+  // utterance has even finished being recognized.
+  const handleBargeIn = () => {
+    stopSpeaking();
+    setSpeaking(false);
+    const rs = revealStateRef.current;
+    const msgs = agentMessagesRef.current;
+    const interruptedMsg = rs ? msgs[rs.messageIndex] : null;
+    if (interruptedMsg) {
+      const fullText = extractSpeakableText(interruptedMsg.content);
+      if (fullText) {
+        setInterruptedIntents(prev => pushInterruptedIntent(prev, {
+          id: `intent-${Date.now()}-${rs.messageIndex}`,
+          messageIndex: rs.messageIndex,
+          fullText,
+          spokenWordCount: rs.revealedWordCount,
+          totalWordCount: rs.totalWordCount,
+        }));
+      }
+    }
+    setRevealState(null);
+    setBargeInFlashToken(t => t + 1);
+  };
+
+  // Sends the utterance that actually interrupted M-Care. "never_mind"
+  // drops every pending topic; "correction" ("no wait, I meant...") drops
+  // only the topic this exact barge-in just pushed — the user is
+  // correcting themselves, not asking to revisit what M-Care was saying, so
+  // there's nothing meaningful to hold onto (an older, unrelated pending
+  // topic from an earlier interruption is untouched). "new_topic" (the
+  // default) leaves the stack exactly as handleBargeIn() already left it.
+  const handleInterruptionSend = (text) => {
+    const classification = classifyInterruptionUtterance(text);
+    if (classification === 'never_mind') {
+      setInterruptedIntents(clearInterruptedIntents());
+    } else if (classification === 'correction') {
+      setInterruptedIntents(prev => prev.slice(0, -1));
+    }
+    setInput('');
+    liveRef.current.sendAgentMessage?.(text);
+  };
+
+  const handleResumeIntent = (intent) => {
+    setInterruptedIntents(prev => prev.filter(i => i.id !== intent.id));
+    liveRef.current.sendAgentMessage?.(`Can you briefly finish explaining ${shortTopicLabel(intent.fullText)}?`);
+  };
+  const handleDismissIntent = (intent) => {
+    setInterruptedIntents(prev => prev.filter(i => i.id !== intent.id));
+  };
 
   // ── M-Care super-agent conversation (synced with base44/agents/m_care.jsonc) ──
   const [agentConversation, setAgentConversation] = useState(null);
   const [agentMessages, setAgentMessages] = useState([]);
   const [agentSending, setAgentSending] = useState(false);
   const [agentLoading, setAgentLoading] = useState(false);
+
+  useEffect(() => { agentMessagesRef.current = agentMessages; }, [agentMessages]);
 
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
@@ -284,10 +406,17 @@ export default function MCareOrb() {
         const msgIndex = agentMessages.length - 1;
         prevMsgCountRef.current = agentMessages.length;
 
+        // Guard against double-speaking the same message id — Conversational
+        // Mode's own effect (below) can also speak a message that first
+        // arrived via an in-place socket update rather than array growth;
+        // whichever path sees it first "claims" it via this shared ref.
+        if (last.id && spokenAssistantIdsRef.current.has(last.id)) return;
+
         if (talkMode && isSpeechSupported()) {
           const speakable = extractSpeakableText(last.content);
           const totalWords = speakable ? speakable.split(/\s+/).filter(Boolean).length : 0;
           if (!speakable) { setSpeaking(false); return; }
+          if (last.id) spokenAssistantIdsRef.current.add(last.id);
           setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
           setSpeaking(true);
           speakText(speakable, {
@@ -297,6 +426,7 @@ export default function MCareOrb() {
             onEnd: () => {
               setSpeaking(false);
               setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
+              armSilenceNudge();
             },
             onError: () => {
               // Fail open: never leave the demo stuck mid-reveal on a TTS
@@ -332,7 +462,141 @@ export default function MCareOrb() {
     if (listening) stopSpeaking();
   }, [listening]);
 
-  const orbState = listening ? 'listening' : agentSending ? 'thinking' : speaking ? 'speaking' : 'idle';
+  // Conversational Mode only: a real, observed tool call still running with
+  // no answer text yet gets a spoken acknowledgment (reusing the same
+  // display_projection.active_label already driving the visual spinner in
+  // MessageBubble.jsx — never a fabricated filler unconnected to real
+  // backend activity). This also covers a gap the length-based effect above
+  // can't: if that message's final content later arrives via an in-place
+  // socket update (same id, array length unchanged) rather than a new
+  // array entry, the length-based effect never re-fires for it — so this
+  // effect speaks it here instead, guarded by the same spokenAssistantIdsRef
+  // so it's never spoken twice.
+  useEffect(() => {
+    if (!conversationalMode || agentMessages.length === 0) return;
+    const last = agentMessages[agentMessages.length - 1];
+    if (!last || last.role !== 'assistant') return;
+    const id = last.id || `idx-${agentMessages.length - 1}`;
+    const content = last.content || '';
+    const runningTool = (last.tool_calls || []).find(tc =>
+      ['pending', 'running', 'in_progress'].includes(String(tc.status || '').toLowerCase()));
+
+    const isSameMessageAsLastSeen = lastSeenAssistantRef.current.id === id;
+    lastSeenAssistantRef.current = { id };
+
+    if (runningTool && !content.trim() && !ackedMessageIdsRef.current.has(id)) {
+      ackedMessageIdsRef.current.add(id);
+      const ackText = runningTool.display_projection?.active_label || 'Let me look that up.';
+      speakText(ackText, { rate: 0.9 });
+      return;
+    }
+
+    if (isSameMessageAsLastSeen && content.trim() && !spokenAssistantIdsRef.current.has(id)) {
+      spokenAssistantIdsRef.current.add(id);
+      const speakable = extractSpeakableText(content);
+      if (!speakable) return;
+      const msgIndex = agentMessages.length - 1;
+      const totalWords = speakable.split(/\s+/).filter(Boolean).length;
+      setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
+      setSpeaking(true);
+      speakText(speakable, {
+        rate: 0.9,
+        onWordBoundary: (count) => setRevealState(prev =>
+          (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
+        onEnd: () => {
+          setSpeaking(false);
+          setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
+          armSilenceNudge();
+        },
+        onError: () => {
+          setSpeaking(false);
+          setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
+        },
+      });
+    }
+  }, [agentMessages, conversationalMode]);
+
+  // Continuous listening + barge-in. Only runs while Conversational Mode is
+  // on; the effect's own cleanup stops recognition cleanly when it's turned
+  // off or the component unmounts. Deliberately depends on nothing but
+  // conversationalMode — everything it needs from render state comes through
+  // refs (see above), so toggling any OTHER piece of state never restarts
+  // the SpeechRecognition session.
+  useEffect(() => {
+    if (!conversationalMode) return;
+
+    const detector = createBargeInDetector();
+    let bargeInHandledForUtterance = false;
+
+    const stopRecognition = startContinuousRecognition({
+      lang: 'en-US',
+      onInterim: (text) => {
+        clearSilenceNudge();
+        if (!speakingRef.current) {
+          // Normal turn-taking: live-fill the input box, same as
+          // VoiceInputButton's transcript callback does for push-to-talk.
+          setInput(text);
+          return;
+        }
+        // M-Care is speaking — evaluate for a genuine barge-in (debounced;
+        // see createBargeInDetector for why a single stray syllable isn't
+        // enough on its own).
+        if (!bargeInHandledForUtterance && detector.observe(text)) {
+          bargeInHandledForUtterance = true;
+          handleBargeIn();
+        }
+      },
+      onFinal: (text) => {
+        clearSilenceNudge();
+        if (bargeInHandledForUtterance) {
+          detector.reset();
+          bargeInHandledForUtterance = false;
+          handleInterruptionSend(text);
+        } else {
+          setInput('');
+          liveRef.current.sendAgentMessage?.(text);
+        }
+        resetSilenceNudge();
+      },
+      onListeningChange: setConversationalListening,
+      onUnrecoverableError: (reason) => {
+        setConversationalMode(false);
+        toast({
+          title: 'Conversation mode stopped',
+          description: friendlyError(
+            { message: reason },
+            "Voice conversation stopped unexpectedly — you can turn it back on, or keep using text and the mic button.",
+            'MCareOrb'
+          ),
+          variant: 'destructive',
+        });
+      },
+    });
+
+    return () => {
+      stopRecognition();
+      clearSilenceNudge();
+      silenceNudgeCountRef.current = 0;
+      setConversationalListening(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationalMode]);
+
+  // Closing the panel drops Conversational Mode too — the mic shouldn't
+  // keep listening in the background once the chat isn't visible.
+  useEffect(() => {
+    if (!open) setConversationalMode(false);
+  }, [open]);
+
+  const orbState = listening
+    ? 'listening'
+    : agentSending
+      ? 'thinking'
+      : speaking
+        ? 'speaking'
+        : (conversationalMode && conversationalListening)
+          ? 'listening'
+          : 'idle';
 
   useEffect(() => {
     if (!open) return;
@@ -401,7 +665,18 @@ export default function MCareOrb() {
     }
   }, [input, agentConversation, agentSending, toast]);
 
+  // Keeps the continuous-recognition effect's callbacks able to reach the
+  // latest sendAgentMessage without listing it as a dependency (which would
+  // restart the whole SpeechRecognition session every time it's recreated).
+  useEffect(() => { liveRef.current.sendAgentMessage = sendAgentMessage; });
+
   const startNewJourney = useCallback(async () => {
+    // A fresh journey drops any live voice conversation and pending
+    // interrupted topics rather than carrying them into a new context.
+    setConversationalMode(false);
+    setInterruptedIntents([]);
+    ackedMessageIdsRef.current = new Set();
+    spokenAssistantIdsRef.current = new Set();
     try {
       const conversation = await base44.agents.createConversation({
         agent_name: AGENT_NAME,
@@ -413,6 +688,14 @@ export default function MCareOrb() {
       toast({ title: 'Could not start a new journey', description: friendlyError(e, 'Please try again.', 'MCareOrb'), variant: 'destructive' });
     }
   }, [toast]);
+
+  const toggleConversationalMode = () => {
+    setConversationalMode(v => {
+      const next = !v;
+      if (next) setTalkMode(true); // a silent phone call makes no sense
+      return next;
+    });
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(); }
@@ -467,7 +750,7 @@ export default function MCareOrb() {
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <LivingOrb state={orbState} size={44} />
+            <LivingOrb state={orbState} size={44} flashToken={bargeInFlashToken} />
             {!isOnline && <span style={{ position: 'absolute', top: 4, right: 4, width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid rgba(10,20,28,0.9)' }} />}
           </button>
           {showBubble && !dismissed && (
@@ -505,7 +788,9 @@ export default function MCareOrb() {
 
           {/* Header */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, background: '#fff' }}>
-            <McareAvatar size={36} />
+            {conversationalMode
+              ? <LivingOrb state={orbState} size={36} flashToken={bargeInFlashToken} />
+              : <McareAvatar size={36} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
               <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Morales Super Agent</p>
@@ -513,6 +798,14 @@ export default function MCareOrb() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
             </span>
+            {isConversationalModeSupported() && (
+              <button onClick={toggleConversationalMode}
+                title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
+                aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
+                style={{ background: conversationalMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
+                {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
+              </button>
+            )}
             {isSpeechSupported() && (
               <button onClick={() => setTalkMode(v => !v)} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
                 style={{ background: talkMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
@@ -595,6 +888,8 @@ export default function MCareOrb() {
                 <div ref={bottomRef} />
               </div>
 
+              <InterruptedIntentChip intents={interruptedIntents} onResume={handleResumeIntent} onDismiss={handleDismissIntent} />
+
               <SmartInputSuggestions
                 text={input}
                 disabled={agentSending || agentUploading || !isOnline}
@@ -617,10 +912,10 @@ export default function MCareOrb() {
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
-                  placeholder={isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
+                  placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
                   style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
                 />
-                {isOnline && (
+                {isOnline && !conversationalMode && (
                   <VoiceInputButton disabled={agentSending} onTranscript={(text) => setInput(text)} onRecordingChange={setListening} />
                 )}
                 <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}

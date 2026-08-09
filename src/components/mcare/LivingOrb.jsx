@@ -22,6 +22,14 @@
  *              audio-reactive claim (there's no real TTS signal to react to).
  *
  * Respects prefers-reduced-motion — falls back to today's static glow.
+ *
+ * flashToken (Conversational Mode) is a one-shot addition on top of the four
+ * looping states above, not a fifth STATE_CONFIG entry — it's a brief ring
+ * pulse confirming a real barge-in just happened (the user's own voice
+ * stopped M-Care mid-reply), never a looping/ambient effect. Any change to
+ * flashToken (an incrementing counter, not a boolean) replays it via a React
+ * key remount, so two barge-ins in a row each get their own flash even if
+ * the previous one hasn't finished fading.
  */
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -35,7 +43,7 @@ const STATE_CONFIG = {
   speaking:  { ringCount: 3, duration: 0.9, ringScale: 1.5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1], sweep: false },
 };
 
-export default function LivingOrb({ state = 'idle', size = 44 }) {
+export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 }) {
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -56,6 +64,16 @@ export default function LivingOrb({ state = 'idle', size = 44 }) {
 
   return (
     <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {flashToken > 0 && (
+        <motion.div
+          key={flashToken}
+          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${GOLD}`, pointerEvents: 'none' }}
+          initial={{ opacity: 0.9, scale: 1 }}
+          animate={{ opacity: 0, scale: 1.9 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
+      )}
       {Array.from({ length: cfg.ringCount }).map((_, i) => (
         <motion.div
           key={i}
