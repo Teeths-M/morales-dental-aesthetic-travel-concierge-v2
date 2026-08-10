@@ -37,6 +37,24 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       ...(clinic_address ? { clinic_address } : {}),
       ...coordsUpdate,
     });
+
+    // Real trigger for travel-agency quote requests, now that
+    // assignTravelAgency's own precondition actually matches what this
+    // function writes ('Confirmed', mixed-case) and its portal token is
+    // signed correctly. Awaited (not fire-and-forget) — this Deno isolate
+    // may tear down immediately after the response is sent, per this repo's
+    // established createHandler.ts reasoning about background work — but
+    // wrapped so a failure here can never fail the doctor's own confirm
+    // action, which must always succeed regardless.
+    try {
+      await base44.functions.invoke('assignTravelAgency', {
+        caseId: caseRecord.id,
+        internal_secret: Deno.env.get('CRON_SECRET'),
+      });
+    } catch (assignError) {
+      console.error('[respondToDoctorPortalCase] assignTravelAgency dispatch failed (non-fatal):', assignError);
+    }
+
     return ok({ success: true });
   }
 

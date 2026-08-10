@@ -58,6 +58,15 @@ Deno.serve(async (req) => {
     const { data: caseData, changed_fields } = body;
 
     // Only fire when doctor_confirmation_status flips to CONFIRMED
+    // NOTE (dormant, not fixed here): this all-caps 'CONFIRMED' check has the
+    // same case-mismatch bug assignTravelAgency used to have — the real
+    // confirm path (respondToDoctorPortalCase) writes mixed-case 'Confirmed',
+    // so this entity-trigger function effectively never fires today. Left
+    // untouched deliberately. assignTravelAgency is now wired as the real
+    // travel-agency-notification trigger, called directly from
+    // respondToDoctorPortalCase — if this function's case bug is ever fixed
+    // independently in the future, it needs reconciling against that path
+    // first, or a confirmed case would double-notify the travel agency.
     if (!changed_fields?.includes('doctor_confirmation_status') || caseData?.doctor_confirmation_status !== 'CONFIRMED') {
       return Response.json({ skipped: true, reason: 'Not a doctor confirmation event' });
     }
