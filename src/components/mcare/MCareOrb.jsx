@@ -626,6 +626,15 @@ export default function MCareOrb() {
     // Fresh activation — allow one error toast again.
     conversationalErrorShownRef.current = false;
 
+    // Tracks whether the mic picked up M-Care's own voice during the current
+    // recognition segment. SpeechRecognition finalizes a transcript AFTER
+    // the speaker goes silent — so by the time onFinal fires, speakingRef is
+    // already false and the half-duplex guard below would let M-Care's own
+    // reply through as a "user" message (M ends up talking to itself, the
+    // exact loop in the screenshot). Marking the segment contaminated the
+    // moment the mic hears M-Care, then dropping that final, closes the gap.
+    let heardMcareDuringSegment = false;
+
     const stopRecognition = startContinuousRecognition({
       lang: recognitionLocaleFor(responseLanguageRef.current),
       onInterim: (text) => {
@@ -636,12 +645,17 @@ export default function MCareOrb() {
         // "interrupted intents"). The user simply waits for M to finish,
         // then speaks. Headphones would let us keep barge-in, but on a
         // phone speaker this is the only reliable choice.
-        if (speakingRef.current) return;
+        if (speakingRef.current) { heardMcareDuringSegment = true; return; }
         clearSilenceNudge();
         setInput(text);
       },
       onFinal: (text) => {
-        if (speakingRef.current) return;
+        // Drop any transcript the recognizer built up while M-Care was
+        // speaking — onFinal lands AFTER M-Care goes silent, so the
+        // speakingRef guard alone can't catch it.
+        const contaminated = heardMcareDuringSegment || speakingRef.current;
+        heardMcareDuringSegment = false;
+        if (contaminated) return;
         clearSilenceNudge();
         setInput('');
         // Multilingual: if the user hasn't chosen a language, sense it from the
