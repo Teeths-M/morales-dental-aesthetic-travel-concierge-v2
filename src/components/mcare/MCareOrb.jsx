@@ -38,7 +38,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
 import { extractSpeakableText, isSpeechSupported } from '@/lib/talkMode';
-import { speakTextNeural, stopAllSpeech } from '@/lib/neuralSpeech';
+import { speakTextNeural, stopAllSpeech, isNeuralSpeaking } from '@/lib/neuralSpeech';
 import {
   isConversationalModeSupported,
   classifyInterruptionUtterance,
@@ -641,19 +641,24 @@ export default function MCareOrb() {
         // Half-duplex: while M-Care is speaking, ignore the mic entirely.
         // Without this, M's own voice is picked up by the always-on mic,
         // transcribed, and sent back as a user message — M ends up replying
-        // to itself in a loop (and snapshotting its own messages as
-        // "interrupted intents"). The user simply waits for M to finish,
-        // then speaks. Headphones would let us keep barge-in, but on a
-        // phone speaker this is the only reliable choice.
-        if (speakingRef.current) { heardMcareDuringSegment = true; return; }
+        // to itself in a loop. isNeuralSpeaking() is a synchronous module
+        // flag set the instant ANY of M-Care's audio paths start (auto-speak
+        // reply, the running-tool ack, the voice-message cue, the distress
+        // check) — the React `speaking` state alone is one render behind and
+        // several paths never set it, which is how M-Care's own reply was
+        // still leaking into the input field. The user simply waits for M
+        // to finish, then speaks. Headphones would let us keep barge-in,
+        // but on a phone speaker this is the only reliable choice.
+        if (speakingRef.current || isNeuralSpeaking()) { heardMcareDuringSegment = true; return; }
         clearSilenceNudge();
         setInput(text);
       },
       onFinal: (text) => {
         // Drop any transcript the recognizer built up while M-Care was
         // speaking — onFinal lands AFTER M-Care goes silent, so the
-        // speakingRef guard alone can't catch it.
-        const contaminated = heardMcareDuringSegment || speakingRef.current;
+        // speakingRef guard alone can't catch it. isNeuralSpeaking() closes
+        // the gap for every audio path, not just the React-state-tracked one.
+        const contaminated = heardMcareDuringSegment || speakingRef.current || isNeuralSpeaking();
         heardMcareDuringSegment = false;
         if (contaminated) return;
         clearSilenceNudge();
