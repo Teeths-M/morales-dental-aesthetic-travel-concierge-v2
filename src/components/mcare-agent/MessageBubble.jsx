@@ -345,11 +345,14 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
   // extraAudioUrl is a real, playable TTS audio URL attached client-side to
   // an assistant reply (see MCareOrb.jsx's voiceReplyAudioUrls) — not part
   // of message.file_urls itself (that array is server-authoritative and can
-  // get replaced from under us), but rendered through the exact same
-  // attachment path so it reuses VoiceNotePlayer with no new component.
-  const allFileUrls = extraAudioUrl
-    ? [...(message.file_urls || []), extraAudioUrl]
-    : (message.file_urls || []);
+  // get replaced from under us). Rendered directly as a VoiceNotePlayer
+  // below rather than merged into message.file_urls and re-detected via
+  // isAudioUrl()'s extension regex: its type is already known for certain by
+  // construction (it came straight out of the TTS pipeline), and Base44's
+  // Core.GenerateSpeech URL shape isn't a guarantee this repo has verified —
+  // if it doesn't happen to end in .mp3/.webm/etc., extension-sniffing it
+  // would wrongly fall through to a plain file-link instead of a real player.
+  const fileUrls = message.file_urls || [];
   // A "pure voice note" is a USER message whose only attachment is a single
   // audio file — real WhatsApp voice notes show just the waveform/player,
   // never a visible transcript, even though the real transcript still exists
@@ -359,8 +362,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
   // sighted/admin users, screen readers) — its audio bubble is an addition,
   // never a replacement. Any message with text-only, an image, or an audio
   // file alongside other attachments/text still renders normally.
-  const isPureVoiceNote = isUser && allFileUrls.length === 1 && isAudioUrl(allFileUrls[0]);
-  const hasAudioAttachment = allFileUrls.some(isAudioUrl);
+  const isPureVoiceNote = isUser && fileUrls.length === 1 && isAudioUrl(fileUrls[0]);
+  const hasAudioAttachment = !!extraAudioUrl || fileUrls.some(isAudioUrl);
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
   const reaction = isUser && showReaction ? pickMessageReaction(message.content) : null;
@@ -447,9 +450,9 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
             </>
           );
         })()}
-        {allFileUrls.length > 0 && (
+        {(fileUrls.length > 0 || extraAudioUrl) && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {allFileUrls.map((url, i) => isImageUrl(url)
+            {fileUrls.map((url, i) => isImageUrl(url)
               ? (
                 <a key={i} href={url} target="_blank" rel="noreferrer" className="block">
                   <img src={url} alt="attachment" className="rounded-lg max-h-40 border border-border object-cover" />
@@ -464,6 +467,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                 </a>
               )
             )}
+            {extraAudioUrl && <VoiceNotePlayer key="voice-reply" url={extraAudioUrl} />}
           </div>
         )}
         {message.tool_calls?.map((toolCall, idx) => (toolCall.name === 'computeSafeTScreening' || toolCall.name === 'safeT4LifeScan')
