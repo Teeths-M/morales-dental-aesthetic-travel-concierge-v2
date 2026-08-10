@@ -923,6 +923,20 @@ export default function MCareOrb() {
   // message as a WhatsApp-style voice note, without showing that text).
   const handleVoiceMessage = async (audioBlob, _durationMs) => {
     if (!audioBlob) return;
+    // A voice message means the user wants to converse by voice. Auto-enable
+    // Talk Mode so the agent's reply speaks aloud automatically — no "Listen"
+    // button to tap, no speaker icon to find. This is essential for a blind
+    // user: they send a voice note and hear M reply, with zero visual step.
+    // Output only — we do NOT enable always-listening, so there's no mic
+    // feedback-loop risk. Persisted by the existing talkMode effect.
+    const justEnabledVoice = !talkMode && isSpeechSupported();
+    if (justEnabledVoice) {
+      setTalkMode(true);
+      // Spoken immediately so a blind user knows voice replies are now on —
+      // the record-tap unlocked audio playback. When the agent's reply
+      // arrives, neuralSpeech interrupts this cue and speaks the answer.
+      speakTextNeural("Got it — I'll reply out loud.", { rate: 0.9 });
+    }
     setAgentUploading(true);
     try {
       const file = new File([audioBlob], 'voice-message.webm', { type: audioBlob.type || 'audio/webm' });
