@@ -74,11 +74,11 @@ export function stopAllSpeech() {
  * playback failure. Same return contract as speakText — a cancel function.
  *
  * @param {string} text
- * @param {{ rate?: number, language?: string, onWordBoundary?: (revealedWordCount: number) => void, onEnd?: () => void, onError?: () => void }} [options]
+ * @param {{ rate?: number, language?: string, onWordBoundary?: (revealedWordCount: number) => void, onEnd?: () => void, onError?: () => void, onAudioUrl?: (url: string) => void }} [options]
  */
 export function speakTextNeural(text, options) {
   stopNeuralSpeech();
-  const { rate = 0.9, language = 'en', onWordBoundary, onEnd, onError } = options || {};
+  const { rate = 0.9, language = 'en', onWordBoundary, onEnd, onError, onAudioUrl } = options || {};
   if (!text?.trim()) { onError?.(); return () => {}; }
 
   let cancelled = false;
@@ -161,6 +161,10 @@ export function speakTextNeural(text, options) {
 
     const audioUrl = res?.data?.audio_url;
     if (!audioUrl) { runFallback(); return; }
+    // A real, persistent file — unlike the browser-TTS fallback, which has
+    // nothing to hand back. Lets the caller attach it to the message as a
+    // replayable voice-note bubble, not just this one ephemeral playback.
+    onAudioUrl?.(audioUrl);
 
     try {
       audio = new Audio(audioUrl);

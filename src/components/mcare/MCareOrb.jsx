@@ -133,6 +133,13 @@ export default function MCareOrb() {
   // specific message is actively being spoken, else null.
   const [talkMode, setTalkMode] = useState(false);
   const [revealState, setRevealState] = useState(null);
+  // A real, replayable audio URL for a spoken assistant reply, keyed by that
+  // message's array index — set once speakTextNeural's onAudioUrl fires.
+  // Deliberately NOT merged into the agentMessages array itself: that array
+  // gets wholesale-replaced by subscribeToConversation on every server tick,
+  // which would silently wipe out any field written directly onto a message
+  // object there. This sibling map survives that. Reset per fresh journey.
+  const [voiceReplyAudioUrls, setVoiceReplyAudioUrls] = useState({});
   // Conversational Mode — always-listening voice with barge-in, layered on
   // top of Talk Mode. Off by default; opt-in only. See conversationalMode.js
   // for why this is a client-side interaction layer, not a change to what
@@ -181,6 +188,12 @@ export default function MCareOrb() {
   // off, so a later reconnect only ever resumes a state the user actually
   // wanted, never overrides their own choice.
   const autoResumeConversationalRef = useRef(false);
+  // Set true the moment a voice message is sent (see handleVoiceMessage
+  // below) and consumed by the very next assistant reply's speak effect,
+  // regardless of Talk Mode's current toggle state — a deterministic
+  // "voice in -> voice out" guarantee for a hands-free/driving conversation,
+  // rather than relying solely on Talk Mode having stuck on.
+  const forceSpeakNextReplyRef = useRef(false);
 
   // A message can be claimed (spoken / acked) at most once, keyed by BOTH
   // its stable array position and its server id once assigned — id alone
@@ -555,7 +568,10 @@ export default function MCareOrb() {
         // whichever path sees it first "claims" it via this shared ref.
         if (isClaimed(spokenAssistantIdsRef, msgIndex, last)) return;
 
-        if (talkMode && isSpeechSupported()) {
+        if ((talkMode || forceSpeakNextReplyRef.current) && isSpeechSupported()) {
+          // Consumed immediately — this only ever overrides the ONE reply
+          // that follows a voice message, never lingers onto a later one.
+          forceSpeakNextReplyRef.current = false;
           const speakable = extractSpeakableText(last.content);
           const totalWords = speakable ? speakable.split(/\s+/).filter(Boolean).length : 0;
           if (!speakable) { setSpeaking(false); return; }
@@ -566,6 +582,7 @@ export default function MCareOrb() {
             rate: 0.9,
             onWordBoundary: (count) => setRevealState(prev =>
               (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
+            onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
             onEnd: () => {
               setSpeaking(false);
               setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
@@ -877,8 +894,10 @@ export default function MCareOrb() {
     // A fresh journey drops any live voice conversation and pending
     // interrupted topics rather than carrying them into a new context.
     autoResumeConversationalRef.current = false;
+    forceSpeakNextReplyRef.current = false;
     setConversationalMode(false);
     setInterruptedIntents([]);
+    setVoiceReplyAudioUrls({});
     ackedMessageIdsRef.current = new Set();
     spokenAssistantIdsRef.current = new Set();
     try {
@@ -992,6 +1011,12 @@ export default function MCareOrb() {
   // message as a WhatsApp-style voice note, without showing that text).
   const handleVoiceMessage = async (audioBlob, _durationMs) => {
     if (!audioBlob) return;
+    // Voice in -> voice out, guaranteed: whatever Talk Mode's toggle state
+    // happens to be, THIS reply is spoken and rendered as a real, replayable
+    // voice-note bubble — matching input modality to output modality is the
+    // whole point of a hands-free/driving conversation. See the speak effect
+    // above for where this gets consumed.
+    forceSpeakNextReplyRef.current = true;
     // A voice message means the user wants to converse by voice. Auto-enable
     // Talk Mode so the agent's reply speaks aloud automatically — no "Listen"
     // button to tap, no speaker icon to find. This is essential for a blind
@@ -1195,7 +1220,8 @@ export default function MCareOrb() {
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction onChoice={sendAgentMessage}
-                      revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined} />
+                      revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
+                      extraAudioUrl={voiceReplyAudioUrls[i]} />
                   </motion.div>
                 ))}
 

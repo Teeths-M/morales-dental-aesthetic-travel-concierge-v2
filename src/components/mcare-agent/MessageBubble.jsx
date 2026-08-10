@@ -339,16 +339,28 @@ function ToolCallDisplay({ toolCall }) {
 // (deterministic, client-side only — see src/lib/mcareReactionHeuristic.js,
 // the agent itself never decides this). All optional → default rendering is
 // unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null, revealUpTo = undefined }) {
+export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
-  // A "pure voice note" is a message whose only attachment is a single audio
-  // file — real WhatsApp voice notes show just the waveform/player, never a
-  // visible transcript, even though the real transcript still exists behind
-  // the scenes as message.content (it was sent to the agent, just not shown
-  // to the human reader here). Any message with text-only, an image, or an
-  // audio file alongside other attachments/text still renders normally.
-  const isPureVoiceNote = message.file_urls?.length === 1 && isAudioUrl(message.file_urls[0]);
+  // extraAudioUrl is a real, playable TTS audio URL attached client-side to
+  // an assistant reply (see MCareOrb.jsx's voiceReplyAudioUrls) — not part
+  // of message.file_urls itself (that array is server-authoritative and can
+  // get replaced from under us), but rendered through the exact same
+  // attachment path so it reuses VoiceNotePlayer with no new component.
+  const allFileUrls = extraAudioUrl
+    ? [...(message.file_urls || []), extraAudioUrl]
+    : (message.file_urls || []);
+  // A "pure voice note" is a USER message whose only attachment is a single
+  // audio file — real WhatsApp voice notes show just the waveform/player,
+  // never a visible transcript, even though the real transcript still exists
+  // behind the scenes as message.content (it was sent to the agent, just not
+  // shown to the human reader here). Restricted to isUser: an assistant
+  // reply must always keep its text visible (safety-relevant information,
+  // sighted/admin users, screen readers) — its audio bubble is an addition,
+  // never a replacement. Any message with text-only, an image, or an audio
+  // file alongside other attachments/text still renders normally.
+  const isPureVoiceNote = isUser && allFileUrls.length === 1 && isAudioUrl(allFileUrls[0]);
+  const hasAudioAttachment = allFileUrls.some(isAudioUrl);
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
   const reaction = isUser && showReaction ? pickMessageReaction(message.content) : null;
@@ -412,7 +424,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                 </div>
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
-              {!isUser && text && typeof revealUpTo !== 'number' && <SpeakButton text={text} language={i18n.language} />}
+              {!isUser && text && typeof revealUpTo !== 'number' && !hasAudioAttachment && <SpeakButton text={text} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {mapUrls.map((u, i) => {
@@ -435,9 +447,9 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
             </>
           );
         })()}
-        {message.file_urls?.length > 0 && (
+        {allFileUrls.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {message.file_urls.map((url, i) => isImageUrl(url)
+            {allFileUrls.map((url, i) => isImageUrl(url)
               ? (
                 <a key={i} href={url} target="_blank" rel="noreferrer" className="block">
                   <img src={url} alt="attachment" className="rounded-lg max-h-40 border border-border object-cover" />
