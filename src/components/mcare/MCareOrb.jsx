@@ -222,7 +222,7 @@ export default function MCareOrb() {
   // supersession already gets, right when the interruption happens.
   const speakAncillary = (text, opts) => {
     setRevealState(null);
-    return speakTextNeural(text, opts);
+    return speakTextNeural(text, { language: i18n.language, ...opts });
   };
 
   const clearSilenceNudge = () => {
@@ -592,6 +592,7 @@ export default function MCareOrb() {
           setSpeaking(true);
           speakTextNeural(speakable, {
             rate: 0.9,
+            language: i18n.language,
             onWordBoundary: (count) => setRevealState(prev =>
               (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
             onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
@@ -687,6 +688,7 @@ export default function MCareOrb() {
       setSpeaking(true);
       speakTextNeural(speakable, {
         rate: 0.9,
+        language: i18n.language,
         onWordBoundary: (count) => setRevealState(prev =>
           (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
         onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
@@ -876,7 +878,7 @@ export default function MCareOrb() {
           if (i18n?.changeLanguage) i18n.changeLanguage(command.value).catch(() => {});
         }
         logVoiceCommand(command);
-        if (willSpeak) speakTextNeural(confirm, { rate: 0.9 });
+        if (willSpeak) speakTextNeural(confirm, { rate: 0.9, language: i18n.language });
         return;
       }
     }
@@ -973,6 +975,7 @@ export default function MCareOrb() {
       setSpeaking(true);
       speakTextNeural(confirmText, {
         rate: 0.9,
+        language: i18n.language,
         onEnd: () => {
           setSpeaking(false);
           if (canListen) {
@@ -995,6 +998,7 @@ export default function MCareOrb() {
                 setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
                 speakTextNeural(speakable, {
                   rate: 0.9,
+                  language: i18n.language,
                   onWordBoundary: (count) => setRevealState(p =>
                     (p && p.messageIndex === msgIndex) ? { ...p, revealedWordCount: count } : p),
                   onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),

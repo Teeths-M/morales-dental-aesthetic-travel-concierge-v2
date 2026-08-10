@@ -362,7 +362,11 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
   // sighted/admin users, screen readers) — its audio bubble is an addition,
   // never a replacement. Any message with text-only, an image, or an audio
   // file alongside other attachments/text still renders normally.
-  const isPureVoiceNote = isUser && fileUrls.length === 1 && isAudioUrl(fileUrls[0]);
+  // Also true for an assistant reply that was actually spoken aloud
+  // (extraAudioUrl set): the full reply already went out as real audio,
+  // so the written duplicate would defeat the point of it looking like a
+  // real voice message.
+  const isPureVoiceNote = (isUser && fileUrls.length === 1 && isAudioUrl(fileUrls[0])) || (!isUser && !!extraAudioUrl);
   const hasAudioAttachment = !!extraAudioUrl || fileUrls.some(isAudioUrl);
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
