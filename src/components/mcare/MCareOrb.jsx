@@ -569,12 +569,24 @@ export default function MCareOrb() {
         if (isClaimed(spokenAssistantIdsRef, msgIndex, last)) return;
 
         if (talkMode || forceSpeakNextReplyRef.current) {
-          // Consumed immediately — this only ever overrides the ONE reply
-          // that follows a voice message, never lingers onto a later one.
-          forceSpeakNextReplyRef.current = false;
           const speakable = extractSpeakableText(last.content);
-          const totalWords = speakable ? speakable.split(/\s+/).filter(Boolean).length : 0;
-          if (!speakable) { setSpeaking(false); return; }
+          if (!speakable) {
+            // A tool-call placeholder (no content yet) — leave the flag
+            // armed and this message unclaimed so the id-replace effect
+            // below can still catch it once real content actually fills
+            // in. Consuming the flag here would silently strand any
+            // voice-note reply that involves a tool call, since Base44
+            // delivers that fill-in via an in-place update to this same
+            // message id, not array growth, and this effect never re-fires
+            // for an unchanged array length.
+            setSpeaking(false);
+            return;
+          }
+          // Consumed only now — once we know this occurrence actually has
+          // content to speak. Still only ever overrides the ONE reply that
+          // follows a voice message, never lingers onto a later one.
+          forceSpeakNextReplyRef.current = false;
+          const totalWords = speakable.split(/\s+/).filter(Boolean).length;
           claim(spokenAssistantIdsRef, msgIndex, last);
           setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
           setSpeaking(true);
@@ -634,7 +646,15 @@ export default function MCareOrb() {
   // effect speaks it here instead, guarded by the same spokenAssistantIdsRef
   // so it's never spoken twice.
   useEffect(() => {
-    if (!conversationalMode || agentMessages.length === 0) return;
+    // Also runs for a plain Talk Mode / forced voice-note reply, not just
+    // Conversational Mode — handleVoiceMessage deliberately never turns
+    // Conversational Mode on (output-only, to avoid a mic feedback loop),
+    // so this was the one path a tool-call-involving voice-note reply could
+    // never reach: forceSpeakNextReplyRef stays armed through the empty
+    // placeholder (see the effect above) specifically so this effect can
+    // pick up the real content once it fills in.
+    const shouldTrack = conversationalMode || talkMode || forceSpeakNextReplyRef.current;
+    if (!shouldTrack || agentMessages.length === 0) return;
     const msgIndex = agentMessages.length - 1;
     const last = agentMessages[msgIndex];
     if (!last || last.role !== 'assistant') return;
@@ -645,7 +665,9 @@ export default function MCareOrb() {
     const isSameMessageAsLastSeen = lastSeenAssistantRef.current.index === msgIndex;
     lastSeenAssistantRef.current = { index: msgIndex };
 
-    if (runningTool && !content.trim() && !isClaimed(ackedMessageIdsRef, msgIndex, last)) {
+    // Spoken "let me look that up" stays a Conversational-Mode (live call)
+    // behavior only — deliberately not widened to Talk Mode.
+    if (conversationalMode && runningTool && !content.trim() && !isClaimed(ackedMessageIdsRef, msgIndex, last)) {
       claim(ackedMessageIdsRef, msgIndex, last);
       const ackText = runningTool.display_projection?.active_label || 'Let me look that up.';
       speakAncillary(ackText, { rate: 0.9 });
@@ -654,6 +676,10 @@ export default function MCareOrb() {
 
     if (isSameMessageAsLastSeen && content.trim() && !isClaimed(spokenAssistantIdsRef, msgIndex, last)) {
       claim(spokenAssistantIdsRef, msgIndex, last);
+      // This occurrence is what actually speaks it — consume here too, in
+      // case it was still armed (the growth effect deliberately leaves it
+      // armed on a content-less placeholder).
+      forceSpeakNextReplyRef.current = false;
       const speakable = extractSpeakableText(content);
       if (!speakable) return;
       const totalWords = speakable.split(/\s+/).filter(Boolean).length;
@@ -663,6 +689,7 @@ export default function MCareOrb() {
         rate: 0.9,
         onWordBoundary: (count) => setRevealState(prev =>
           (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
+        onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
         onEnd: () => {
           setSpeaking(false);
           setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
@@ -674,7 +701,7 @@ export default function MCareOrb() {
         },
       });
     }
-  }, [agentMessages, conversationalMode]);
+  }, [agentMessages, conversationalMode, talkMode]);
 
   // Continuous listening + barge-in. Only runs while Conversational Mode is
   // on; the effect's own cleanup stops recognition cleanly when it's turned
@@ -970,6 +997,7 @@ export default function MCareOrb() {
                   rate: 0.9,
                   onWordBoundary: (count) => setRevealState(p =>
                     (p && p.messageIndex === msgIndex) ? { ...p, revealedWordCount: count } : p),
+                  onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
                   onEnd: () => { setSpeaking(false); setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p); },
                   onError: () => { setSpeaking(false); setRevealState(p => (p && p.messageIndex === msgIndex) ? null : p); },
                 });
