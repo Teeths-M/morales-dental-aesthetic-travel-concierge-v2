@@ -175,6 +175,12 @@ export default function MCareOrb() {
   // the preview iframe) can't stack a wall of identical red banners — one
   // honest notification per activation, then it stops repeating.
   const conversationalErrorShownRef = useRef(false);
+  // Set true only when onUnrecoverableError below shuts Conversational Mode
+  // off because of a network error (never a blocked/revoked mic) — cleared
+  // by every path where the USER intentionally turns Conversational Mode
+  // off, so a later reconnect only ever resumes a state the user actually
+  // wanted, never overrides their own choice.
+  const autoResumeConversationalRef = useRef(false);
 
   // A message can be claimed (spoken / acked) at most once, keyed by BOTH
   // its stable array position and its server id once assigned — id alone
@@ -498,7 +504,17 @@ export default function MCareOrb() {
   }, [pastHero, isQuietRoute]);
 
   useEffect(() => {
-    const up   = () => setIsOnline(true);
+    const up = () => {
+      setIsOnline(true);
+      // A network-caused Conversational Mode shutoff resumes on its own
+      // once the connection actually returns — see onUnrecoverableError
+      // below. Never fires for a shutoff the user chose themselves (every
+      // manual "turn it off" path clears this flag).
+      if (autoResumeConversationalRef.current) {
+        autoResumeConversationalRef.current = false;
+        setConversationalMode(true);
+      }
+    };
     const down = () => setIsOnline(false);
     window.addEventListener('online',  up);
     window.addEventListener('offline', down);
@@ -716,6 +732,10 @@ export default function MCareOrb() {
       onListeningChange: setConversationalListening,
       onUnrecoverableError: (reason) => {
         const blocked = String(reason || '').match(/not-allowed|service-not-allowed|security|mic/);
+        // A network-caused shutoff should resume on its own once the
+        // connection returns (see the 'online' listener effect above) —
+        // anything else (mic blocked/revoked) needs the user to act.
+        autoResumeConversationalRef.current = reason === 'network';
         setConversationalMode(false);
         // Talk Mode (spoken replies) stays on — only the always-on mic fails,
         // so the user keeps voice output and can still talk via the mic button.
@@ -748,7 +768,7 @@ export default function MCareOrb() {
   // Closing the panel drops Conversational Mode too — the mic shouldn't
   // keep listening in the background once the chat isn't visible.
   useEffect(() => {
-    if (!open) setConversationalMode(false);
+    if (!open) { autoResumeConversationalRef.current = false; setConversationalMode(false); }
   }, [open]);
 
   const orbState = listening
@@ -801,7 +821,7 @@ export default function MCareOrb() {
           setTalkMode(command.value === 'voice');
         } else if (command.type === 'always_listen') {
           if (command.value === 'on') { setTalkMode(true); setConversationalMode(true); }
-          else { setConversationalMode(false); }
+          else { autoResumeConversationalRef.current = false; setConversationalMode(false); }
         } else if (command.type === 'private_mode') {
           setPrivateMode(command.value === 'on');
           updatePrefs({ privateMode: command.value === 'on' });
@@ -856,6 +876,7 @@ export default function MCareOrb() {
   const startNewJourney = useCallback(async () => {
     // A fresh journey drops any live voice conversation and pending
     // interrupted topics rather than carrying them into a new context.
+    autoResumeConversationalRef.current = false;
     setConversationalMode(false);
     setInterruptedIntents([]);
     ackedMessageIdsRef.current = new Set();
@@ -876,6 +897,7 @@ export default function MCareOrb() {
     setConversationalMode(v => {
       const next = !v;
       if (next) setTalkMode(true); // a silent phone call makes no sense
+      else autoResumeConversationalRef.current = false; // user chose this — don't auto-resume later
       return next;
     });
   };

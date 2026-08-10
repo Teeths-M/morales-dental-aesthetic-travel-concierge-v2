@@ -164,6 +164,43 @@ export const SILENCE_NUDGE_TEXT = "I'm still here — what would you like to kno
 
 // ── Continuous recognition lifecycle (impure, not unit-tested) ─────────
 
+// A 'network' SpeechRecognition error (the cloud-backed engine losing its
+// connection to the recognition service) fires on any brief connectivity
+// blip — a WiFi hiccup, a cellular handoff — not just a genuine, sustained
+// outage. Treating it as instantly unrecoverable killed Conversational Mode
+// on the very first blip. These give it the same silent-retry treatment
+// 'no-speech'/'aborted' already get, with a longer backoff (a real WiFi drop
+// commonly takes a few seconds to resolve) and a bounded retry count so a
+// genuinely sustained outage still gives up and surfaces the honest
+// "you're offline" message. Starting guesses, same as this file's other
+// tuning constants (SILENCE_NUDGE_MS, BARGE_IN_MIN_EVENTS) — need live-device
+// tuning.
+export const NETWORK_ERROR_MAX_RETRIES = 6;
+export const NETWORK_RETRY_BACKOFF_MS = 1500;
+
+/**
+ * Tracks consecutive 'network' recognition errors so a brief blip can retry
+ * silently while a sustained outage still gives up after maxRetries. Any
+ * non-'network' error code resets the streak (a routine no-speech/aborted
+ * shouldn't count against the network retry budget). onSuccess() — called on
+ * an actual recognized result — proves the connection is genuinely healthy
+ * again and resets the streak, the same "only a real signal clears it" shape
+ * as createBargeInDetector above.
+ */
+export function createNetworkErrorTracker(maxRetries = NETWORK_ERROR_MAX_RETRIES) {
+  let streak = 0;
+  return {
+    // Returns true while this error should be treated as transient (retry),
+    // false once the retry budget for consecutive network errors is spent.
+    onError(code) {
+      if (code !== 'network') { streak = 0; return true; }
+      streak += 1;
+      return streak <= maxRetries;
+    },
+    onSuccess() { streak = 0; },
+  };
+}
+
 const MAX_AUTO_RESTARTS = 20;
 const RESTART_BACKOFF_MS = 400;
 
@@ -189,6 +226,8 @@ export function startContinuousRecognition(opts) {
   let stopped = false;
   let restartCount = 0;
   let restartTimer = null;
+  const networkErrorTracker = createNetworkErrorTracker();
+  let lastErrorWasNetwork = false;
 
   const clearRestartTimer = () => {
     if (restartTimer) { clearTimeout(restartTimer); restartTimer = null; }
@@ -206,6 +245,9 @@ export function startContinuousRecognition(opts) {
     };
 
     recognition.onresult = (event) => {
+      // Any recognized result — even interim — proves the connection to the
+      // recognition service is genuinely alive right now.
+      networkErrorTracker.onSuccess();
       let interim = '';
       let final = '';
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -219,13 +261,23 @@ export function startContinuousRecognition(opts) {
     };
 
     recognition.onerror = (event) => {
+      const code = event?.error;
       // 'no-speech' and 'aborted' are routine — the browser stops on
-      // silence; the same onend auto-restart handles them. Anything else
-      // (permission revoked, mic unavailable) is unrecoverable.
-      if (event?.error === 'no-speech' || event?.error === 'aborted') return;
+      // silence; the same onend auto-restart handles them.
+      if (code === 'no-speech' || code === 'aborted') { lastErrorWasNetwork = false; return; }
+      if (code === 'network') {
+        lastErrorWasNetwork = true;
+        // Transient blip — let onend's restart loop retry it (with a longer
+        // backoff, below) instead of tearing the session down immediately.
+        if (networkErrorTracker.onError('network')) return;
+      } else {
+        lastErrorWasNetwork = false;
+      }
+      // Permission revoked / mic unavailable / any other real error — or a
+      // network error whose retry budget is now spent — is unrecoverable.
       stopped = true;
       onListeningChange?.(false);
-      onUnrecoverableError?.(event?.error || 'unknown-error');
+      onUnrecoverableError?.(code || 'unknown-error');
     };
 
     recognition.onend = () => {
@@ -237,9 +289,10 @@ export function startContinuousRecognition(opts) {
       }
       restartCount += 1;
       clearRestartTimer();
+      const delay = lastErrorWasNetwork ? NETWORK_RETRY_BACKOFF_MS : RESTART_BACKOFF_MS;
       restartTimer = setTimeout(() => {
         if (!stopped) attach();
-      }, RESTART_BACKOFF_MS);
+      }, delay);
     };
 
     try {

@@ -8,6 +8,7 @@ import {
   clearInterruptedIntents,
   shortTopicLabel,
   createBargeInDetector,
+  createNetworkErrorTracker,
   MAX_INTERRUPTED_INTENTS,
 } from '../src/lib/conversationalMode.js';
 
@@ -122,5 +123,46 @@ describe('conversationalMode.createBargeInDetector', () => {
     expect(detector.observe('x')).toBe(true); // still confirmed regardless of new input
     detector.reset();
     expect(detector.observe('x')).toBe(false); // fresh single event, not yet at minEvents
+  });
+});
+
+describe('conversationalMode.createNetworkErrorTracker', () => {
+  it('retries while consecutive network errors stay under the cap', () => {
+    const tracker = createNetworkErrorTracker(3);
+    expect(tracker.onError('network')).toBe(true);
+    expect(tracker.onError('network')).toBe(true);
+    expect(tracker.onError('network')).toBe(true);
+  });
+
+  it('stops retrying once the cap is exceeded', () => {
+    const tracker = createNetworkErrorTracker(3);
+    tracker.onError('network');
+    tracker.onError('network');
+    tracker.onError('network');
+    expect(tracker.onError('network')).toBe(false); // 4th consecutive — budget spent
+  });
+
+  it('a real recognized result resets the streak, restoring the full retry budget', () => {
+    const tracker = createNetworkErrorTracker(2);
+    expect(tracker.onError('network')).toBe(true);
+    expect(tracker.onError('network')).toBe(true);
+    tracker.onSuccess(); // proves the connection actually recovered
+    expect(tracker.onError('network')).toBe(true);
+    expect(tracker.onError('network')).toBe(true);
+    expect(tracker.onError('network')).toBe(false);
+  });
+
+  it('a non-network error code always returns true (retryable) and resets the streak', () => {
+    const tracker = createNetworkErrorTracker(1);
+    expect(tracker.onError('network')).toBe(true);
+    expect(tracker.onError('no-speech')).toBe(true);
+    // Streak reset by the non-network error above — back to a fresh budget.
+    expect(tracker.onError('network')).toBe(true);
+    expect(tracker.onError('network')).toBe(false);
+  });
+
+  it('defaults to NETWORK_ERROR_MAX_RETRIES when called with no argument', () => {
+    const tracker = createNetworkErrorTracker();
+    expect(tracker.onError('network')).toBe(true);
   });
 });

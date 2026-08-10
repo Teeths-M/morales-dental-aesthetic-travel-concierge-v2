@@ -19,6 +19,13 @@ export function useMcarePreferences() {
   // Hydrate exactly once per user identity so a late-arriving auth update
   // doesn't clobber an in-flight local toggle.
   const hydratedFor = useRef(null);
+  // update() below is memoized on [user] only (see its own comment) so its
+  // closure would otherwise go stale between user changes — reading prefs
+  // through a ref that's always current, instead of the closed-over prefs
+  // variable, means a patch always merges onto the real latest prefs rather
+  // than whatever prefs looked like the last time update() was re-created.
+  const prefsRef = useRef(prefs);
+  useEffect(() => { prefsRef.current = prefs; }, [prefs]);
 
   useEffect(() => {
     const id = user?.id || 'guest';
@@ -36,7 +43,7 @@ export function useMcarePreferences() {
     }
     setSaving(true);
     try {
-      const merged = await saveMcarePrefs(prefs, patch);
+      const merged = await saveMcarePrefs(prefsRef.current, patch);
       setPrefs(merged);
     } catch {
       // Persist failed (offline / session expired) — still reflect the
@@ -45,10 +52,6 @@ export function useMcarePreferences() {
     } finally {
       setSaving(false);
     }
-    // prefs is intentionally omitted from deps: we read the freshest value via
-    // the functional set above and the saveMcarePrefs call closure, avoiding
-    // a stale-prefs capture without re-creating the callback every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return { prefs, update, saving };
