@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LivingOrb from './LivingOrb';
@@ -37,8 +37,8 @@ import { handleChatPaste } from '@/lib/chatPaste';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
-import { detectTalkModeCommand, extractSpeakableText, isSpeechSupported } from '@/lib/talkMode';
-import { speakTextNeural, stopAllSpeech } from '@/lib/neuralSpeech';
+import { extractSpeakableText, isSpeechSupported } from '@/lib/talkMode';
+import { speakTextNeural, stopAllSpeech, isNeuralSpeaking } from '@/lib/neuralSpeech';
 import {
   isConversationalModeSupported,
   classifyInterruptionUtterance,
@@ -50,6 +50,10 @@ import {
   MAX_SILENCE_NUDGES,
   SILENCE_NUDGE_TEXT,
 } from '@/lib/conversationalMode';
+import { parseMcareCommand } from '@/lib/voiceCommands';
+import { useMcarePreferences } from '@/hooks/useMcarePreferences';
+import { detectDistressSignal, distressWelfarePrompt } from '@/lib/distressDetection';
+import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguageDetect';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -93,9 +97,10 @@ const TIPS_KEYS = {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function MCareOrb() {
-  const { t }             = useTranslation();
+  const { t, i18n }       = useTranslation();
   const { toast }         = useToast();
   const { user }          = useAuth();
+  const { prefs, update: updatePrefs } = useMcarePreferences();
   const { pathname }      = useLocation();
   const navigate          = useNavigate();
   const role              = detectRole(user, pathname);
@@ -138,8 +143,16 @@ export default function MCareOrb() {
   const [conversationalListening, setConversationalListening] = useState(false);
   const [interruptedIntents, setInterruptedIntents] = useState([]);
   const [bargeInFlashToken, setBargeInFlashToken] = useState(0);
+  // M-Care Voice & Privacy Ecosystem — user-controllable, persisted preferences
+  // layered on top of the existing Talk/Conversational modes. Private Mode
+  // pauses the user's solo check-in monitoring; responseLanguage drives the
+  // recognition locale (and future TTS voice) so M-Care replies in the user's
+  // language without a menu.
+  const [privateMode, setPrivateMode] = useState(false);
+  const [responseLanguage, setResponseLanguage] = useState(null);
   const bottomRef = useRef(null);
   const vaultRef = useRef(null);
+  const responseLanguageRef = useRef(null);
 
   // Refs mirroring frequently-changing state for use inside the continuous
   // recognition effect's callbacks, which must NOT restart the whole
@@ -249,6 +262,81 @@ export default function MCareOrb() {
   const [agentLoading, setAgentLoading] = useState(false);
 
   useEffect(() => { agentMessagesRef.current = agentMessages; }, [agentMessages]);
+  useEffect(() => { responseLanguageRef.current = responseLanguage; }, [responseLanguage]);
+
+  // Hydrate persisted preferences once per session so a returning user keeps
+  // their Talk Mode, Private Mode, and language choices.
+  const hydratedPrefsRef = useRef(false);
+  useEffect(() => {
+    if (hydratedPrefsRef.current) return;
+    hydratedPrefsRef.current = true;
+    if (prefs.talkMode) setTalkMode(true);
+    setPrivateMode(!!prefs.privateMode);
+    setResponseLanguage(prefs.responseLanguage || null);
+    if (prefs.responseLanguage && i18n?.changeLanguage) {
+      i18n.changeLanguage(prefs.responseLanguage).catch(() => {});
+    }
+  }, [prefs, i18n]);
+
+  // Persist toggle changes back to the user profile (best-effort). The guard
+  // stops the initial hydration from triggering a redundant write.
+  useEffect(() => { if (hydratedPrefsRef.current) updatePrefs({ talkMode }); }, [talkMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (hydratedPrefsRef.current) updatePrefs({ privateMode }); }, [privateMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Private Mode pauses/resumes the user's active solo check-ins so the
+  // existing runSilentSafetyEscalation engine genuinely stops watching them
+  // (it already skips check-ins whose pause_until is in the future).
+  const handlePrivateModeToggle = useCallback(async (paused) => {
+    if (!user?.email) return;
+    try {
+      if (paused) {
+        const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await base44.entities.SoloCheckIn.updateMany(
+          { user_email: user.email, status: 'pending' },
+          { $set: { pause_until: future } }
+        );
+      } else {
+        await base44.entities.SoloCheckIn.updateMany(
+          { user_email: user.email, status: 'pending' },
+          { $unset: { pause_until: '' } }
+        );
+      }
+    } catch { /* best-effort; the preference flag still reflects the user's intent */ }
+  }, [user]);
+
+  // Writes a voice-command action to the tamper-evident audit chain via the
+  // existing logAuditEvent function. Best-effort and silent — a failed log
+  // never blocks the command itself.
+  const logVoiceCommand = useCallback((command) => {
+    base44.functions.invoke('logAuditEvent', {
+      event_type: 'mcare_stage_transition',
+      resource_type: 'mcare_voice_command',
+      details: { command_type: command.type, value: command.value },
+    }).catch(() => {});
+  }, []);
+
+  // Silent Guardian: a heard distress signal is logged to the audit trail and
+  // answered with a calm welfare check — never an automatic emergency dispatch,
+  // because ambient recognition produces false positives. Debounced 30s so a
+  // repeated re-recognition of the same utterance doesn't re-fire.
+  const distressHandledAtRef = useRef(0);
+  const handleDistressSignal = useCallback((signal, text) => {
+    const now = Date.now();
+    if (now - distressHandledAtRef.current < 30000) { resetSilenceNudge(); return; }
+    distressHandledAtRef.current = now;
+    const prompt = distressWelfarePrompt(signal);
+    setAgentMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: prompt }]);
+    if (talkMode && isSpeechSupported()) speakTextNeural(prompt, { rate: 0.9 });
+    base44.functions.invoke('logAuditEvent', {
+      event_type: 'mcare_stage_transition',
+      resource_type: 'mcare_distress_signal',
+      details: { category: signal.category, phrase: signal.phrase },
+    }).catch(() => {});
+    resetSilenceNudge();
+  }, [talkMode]);
+  // Keep the continuous-recognition effect able to reach the latest handler
+  // without listing it as a dependency (same pattern as sendAgentMessage).
+  useEffect(() => { liveRef.current.handleDistressSignal = handleDistressSignal; });
 
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
@@ -538,24 +626,61 @@ export default function MCareOrb() {
     // Fresh activation — allow one error toast again.
     conversationalErrorShownRef.current = false;
 
+    // Tracks whether the mic picked up M-Care's own voice during the current
+    // recognition segment. SpeechRecognition finalizes a transcript AFTER
+    // the speaker goes silent — so by the time onFinal fires, speakingRef is
+    // already false and the half-duplex guard below would let M-Care's own
+    // reply through as a "user" message (M ends up talking to itself, the
+    // exact loop in the screenshot). Marking the segment contaminated the
+    // moment the mic hears M-Care, then dropping that final, closes the gap.
+    let heardMcareDuringSegment = false;
+
     const stopRecognition = startContinuousRecognition({
-      lang: 'en-US',
+      lang: recognitionLocaleFor(responseLanguageRef.current),
       onInterim: (text) => {
         // Half-duplex: while M-Care is speaking, ignore the mic entirely.
         // Without this, M's own voice is picked up by the always-on mic,
         // transcribed, and sent back as a user message — M ends up replying
-        // to itself in a loop (and snapshotting its own messages as
-        // "interrupted intents"). The user simply waits for M to finish,
-        // then speaks. Headphones would let us keep barge-in, but on a
-        // phone speaker this is the only reliable choice.
-        if (speakingRef.current) return;
+        // to itself in a loop. isNeuralSpeaking() is a synchronous module
+        // flag set the instant ANY of M-Care's audio paths start (auto-speak
+        // reply, the running-tool ack, the voice-message cue, the distress
+        // check) — the React `speaking` state alone is one render behind and
+        // several paths never set it, which is how M-Care's own reply was
+        // still leaking into the input field. The user simply waits for M
+        // to finish, then speaks. Headphones would let us keep barge-in,
+        // but on a phone speaker this is the only reliable choice.
+        if (speakingRef.current || isNeuralSpeaking()) { heardMcareDuringSegment = true; return; }
         clearSilenceNudge();
         setInput(text);
       },
       onFinal: (text) => {
-        if (speakingRef.current) return;
+        // Drop any transcript the recognizer built up while M-Care was
+        // speaking — onFinal lands AFTER M-Care goes silent, so the
+        // speakingRef guard alone can't catch it. isNeuralSpeaking() closes
+        // the gap for every audio path, not just the React-state-tracked one.
+        const contaminated = heardMcareDuringSegment || speakingRef.current || isNeuralSpeaking();
+        heardMcareDuringSegment = false;
+        if (contaminated) return;
         clearSilenceNudge();
         setInput('');
+        // Multilingual: if the user hasn't chosen a language, sense it from the
+        // spoken words so future recognition + replies match. Two cue-hits are
+        // required (see spokenLanguageDetect.js) to avoid a wrong lock-on.
+        if (!responseLanguageRef.current) {
+          const sensed = detectSpokenLanguage(text);
+          if (sensed) {
+            setResponseLanguage(sensed);
+            updatePrefs({ responseLanguage: sensed });
+          }
+        }
+        // Silent Guardian: scan the heard utterance for a distress signal
+        // BEFORE treating it as a normal message. A hit logs to the audit
+        // trail and offers a calm welfare check — never an auto-dispatch.
+        const signal = detectDistressSignal(text);
+        if (signal) {
+          liveRef.current.handleDistressSignal?.(signal, text);
+          return;
+        }
         liveRef.current.sendAgentMessage?.(text);
         resetSilenceNudge();
       },
@@ -627,18 +752,38 @@ export default function MCareOrb() {
     stopAllSpeech();
     setRevealState(null);
 
-    // Deterministic, client-side Talk Mode toggle — exact-phrase match only
-    // (see talkMode.js), so a genuine question can never be mistaken for a
-    // mode command. Never reaches the real agent conversation.
+    // Deterministic, client-side Voice & Privacy command layer — exact-phrase
+    // match only (see voiceCommands.js), so a genuine question is never
+    // mistaken for a mode command. Covers Talk Mode, Private Mode, modality,
+    // always-listen, and language. Never reaches the real agent conversation.
     if (!fileUrls?.length) {
-      const command = detectTalkModeCommand(q);
+      const command = parseMcareCommand(q);
       if (command) {
         setInput('');
-        const turningOn = command === 'on';
-        setTalkMode(turningOn);
-        const confirmText = turningOn ? 'Talk mode enabled.' : 'Talk mode disabled.';
-        setAgentMessages(prev => [...prev, { role: 'user', content: q }, { role: 'assistant', content: confirmText }]);
-        if (turningOn && isSpeechSupported()) speakTextNeural(confirmText, { rate: 0.9 });
+        const confirm = command.confirmText;
+        setAgentMessages(prev => [...prev, { role: 'user', content: q }, { role: 'assistant', content: confirm }]);
+        // Speak the confirmation when voice output is (or will be) on.
+        const willSpeak = (command.type === 'talk_mode' || command.type === 'modality')
+          ? (command.value === 'on' || command.value === 'voice')
+          : (talkMode || (command.type === 'always_listen' && command.value === 'on'));
+        if (command.type === 'talk_mode') {
+          setTalkMode(command.value === 'on');
+        } else if (command.type === 'modality') {
+          setTalkMode(command.value === 'voice');
+        } else if (command.type === 'always_listen') {
+          if (command.value === 'on') { setTalkMode(true); setConversationalMode(true); }
+          else { setConversationalMode(false); }
+        } else if (command.type === 'private_mode') {
+          setPrivateMode(command.value === 'on');
+          updatePrefs({ privateMode: command.value === 'on' });
+          handlePrivateModeToggle(command.value === 'on');
+        } else if (command.type === 'language' && command.value) {
+          setResponseLanguage(command.value);
+          updatePrefs({ responseLanguage: command.value });
+          if (i18n?.changeLanguage) i18n.changeLanguage(command.value).catch(() => {});
+        }
+        logVoiceCommand(command);
+        if (willSpeak && isSpeechSupported()) speakTextNeural(confirm, { rate: 0.9 });
         return;
       }
     }
@@ -797,6 +942,20 @@ export default function MCareOrb() {
   // message as a WhatsApp-style voice note, without showing that text).
   const handleVoiceMessage = async (audioBlob, _durationMs) => {
     if (!audioBlob) return;
+    // A voice message means the user wants to converse by voice. Auto-enable
+    // Talk Mode so the agent's reply speaks aloud automatically — no "Listen"
+    // button to tap, no speaker icon to find. This is essential for a blind
+    // user: they send a voice note and hear M reply, with zero visual step.
+    // Output only — we do NOT enable always-listening, so there's no mic
+    // feedback-loop risk. Persisted by the existing talkMode effect.
+    const justEnabledVoice = !talkMode && isSpeechSupported();
+    if (justEnabledVoice) {
+      setTalkMode(true);
+      // Spoken immediately so a blind user knows voice replies are now on —
+      // the record-tap unlocked audio playback. When the agent's reply
+      // arrives, neuralSpeech interrupts this cue and speaks the answer.
+      speakTextNeural("Got it — I'll reply out loud.", { rate: 0.9 });
+    }
     setAgentUploading(true);
     try {
       const file = new File([audioBlob], 'voice-message.webm', { type: audioBlob.type || 'audio/webm' });
@@ -904,6 +1063,16 @@ export default function MCareOrb() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
             </span>
+            {privateMode && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EEF2FF', color: '#3730A3', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                <Shield style={{ width: 12, height: 12 }} /> PRIVATE
+              </span>
+            )}
+            {responseLanguage && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', background: '#F3F4F6', color: '#4B5563', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                {responseLanguage}
+              </span>
+            )}
             {isConversationalModeSupported() && (
               <button onClick={toggleConversationalMode}
                 title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}

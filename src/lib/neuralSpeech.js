@@ -22,13 +22,37 @@
 import { base44 } from '@/api/base44Client';
 import { speakText, stopSpeaking } from './talkMode';
 
-const REQUEST_TIMEOUT_MS = 4000;
+// 15s — neural TTS (Core.GenerateSpeech) generation for a full reply commonly
+// takes 5–10s. The old 4s timer fired too early and dropped M-Care onto the
+// Web Speech API fallback, which has Chrome's ~15s speechSynthesis
+// truncation bug: the utterance cuts off mid-message AND onend never fires,
+// wedging speechSynthesis so every subsequent reply plays with NO voice —
+// the exact "voice cuts off, then M-care goes back to typing with no voice"
+// failure a blind user hits. The neural path returns a real <audio> file
+// that plays in full with no truncation bug, so giving it the time to finish
+// is what keeps Talk Mode speaking aloud on every reply, not just the first.
+const REQUEST_TIMEOUT_MS = 15000;
 
 // Module-level, like talkMode.js's own speechSynthesis singleton — only one
 // neural utterance can meaningfully be "active" at a time, and callers
 // (MCareOrb.jsx) don't need to hold onto individual cancel functions to stop
 // whatever's currently playing.
 let activeCancel = null;
+
+// Synchronous, module-level "M-Care is speaking right now" signal — independent
+// of React state, so the always-on mic in Conversational Mode can read it the
+// instant any neural utterance starts/stops, with no render-cycle gap. Set
+// true the moment speakTextNeural begins (covers the auto-speak reply, the
+// running-tool ack, the voice-message cue, the distress welfare check — every
+// path that plays M-Care's voice), and false the moment it ends, errors, is
+// cancelled, or falls back to the browser voice (which keeps it true until
+// that utterance ends). This is what stops the mic from transcribing M-Care's
+// own spoken reply back into the input field — the React `speaking` state the
+// guard used to rely on is async (one render behind) and several speak paths
+// never set it at all.
+let neuralSpeaking = false;
+
+export function isNeuralSpeaking() { return neuralSpeaking; }
 
 export function stopNeuralSpeech() {
   if (activeCancel) {
@@ -68,15 +92,24 @@ export function speakTextNeural(text, options) {
     if (revealInterval) { clearInterval(revealInterval); revealInterval = null; }
   };
 
+  // Wraps the caller's onEnd/onError so the speaking flag clears the moment
+  // any utterance (neural or browser-fallback) actually finishes — not a
+  // render later. Both the neural audio's onended and the fallback's onEnd
+  // route through here.
+  const wrapEnd = (cb) => () => { neuralSpeaking = false; cb?.(); };
+  const wrapError = (cb) => () => { neuralSpeaking = false; cb?.(); };
+
   const cancelFn = () => {
     if (activeCancel === cancelFn) activeCancel = null;
     cancelled = true;
+    neuralSpeaking = false;
     clearTimeout(timeoutId);
     clearReveal();
     if (audio) { try { audio.pause(); } catch { /* no-op */ } }
     if (fallbackCancelFn) fallbackCancelFn();
   };
   activeCancel = cancelFn;
+  neuralSpeaking = true;
 
   const runFallback = () => {
     if (cancelled || fallbackTriggered) return;
@@ -84,7 +117,9 @@ export function speakTextNeural(text, options) {
     clearTimeout(timeoutId);
     // talkMode.js's speakText now owns cancellation via stopSpeaking().
     if (activeCancel === cancelFn) activeCancel = null;
-    fallbackCancelFn = speakText(text, { rate, onWordBoundary, onEnd, onError });
+    // Keep neuralSpeaking true through the fallback — the browser voice is
+    // still M-Care talking, so the mic must keep ignoring it.
+    fallbackCancelFn = speakText(text, { rate, onWordBoundary, onEnd: wrapEnd(onEnd), onError: wrapError(onError) });
   };
 
   timeoutId = setTimeout(runFallback, REQUEST_TIMEOUT_MS);
@@ -130,7 +165,7 @@ export function speakTextNeural(text, options) {
     audio.onended = () => {
       clearReveal();
       if (activeCancel === cancelFn) activeCancel = null;
-      if (!cancelled) onEnd?.();
+      if (!cancelled) { neuralSpeaking = false; onEnd?.(); }
     };
     audio.onerror = () => { clearReveal(); runFallback(); };
 
