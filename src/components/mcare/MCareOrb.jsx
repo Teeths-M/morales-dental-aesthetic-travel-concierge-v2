@@ -375,7 +375,7 @@ export default function MCareOrb() {
     distressHandledAtRef.current = now;
     const prompt = distressWelfarePrompt(signal);
     setAgentMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: prompt }]);
-    if (talkMode && isSpeechSupported()) speakAncillary(prompt, { rate: 0.9 });
+    if (talkMode) speakAncillary(prompt, { rate: 0.9 });
     base44.functions.invoke('logAuditEvent', {
       event_type: 'mcare_stage_transition',
       resource_type: 'mcare_distress_signal',
@@ -568,7 +568,7 @@ export default function MCareOrb() {
         // whichever path sees it first "claims" it via this shared ref.
         if (isClaimed(spokenAssistantIdsRef, msgIndex, last)) return;
 
-        if ((talkMode || forceSpeakNextReplyRef.current) && isSpeechSupported()) {
+        if (talkMode || forceSpeakNextReplyRef.current) {
           // Consumed immediately — this only ever overrides the ONE reply
           // that follows a voice message, never lingers onto a later one.
           forceSpeakNextReplyRef.current = false;
@@ -849,7 +849,7 @@ export default function MCareOrb() {
           if (i18n?.changeLanguage) i18n.changeLanguage(command.value).catch(() => {});
         }
         logVoiceCommand(command);
-        if (willSpeak && isSpeechSupported()) speakTextNeural(confirm, { rate: 0.9 });
+        if (willSpeak) speakTextNeural(confirm, { rate: 0.9 });
         return;
       }
     }
@@ -1023,7 +1023,13 @@ export default function MCareOrb() {
     // user: they send a voice note and hear M reply, with zero visual step.
     // Output only — we do NOT enable always-listening, so there's no mic
     // feedback-loop risk. Persisted by the existing talkMode effect.
-    const justEnabledVoice = !talkMode && isSpeechSupported();
+    // Not gated on isSpeechSupported() (browser-native TTS availability) —
+    // the real voice path (speakTextNeural) is server-first and doesn't need
+    // it at all; that check only matters for the fallback, which already
+    // self-guards internally. Gating the outer attempt on it was needless
+    // and could silently skip the whole voice-note-reply feature in any
+    // environment lacking window.speechSynthesis.
+    const justEnabledVoice = !talkMode;
     if (justEnabledVoice) {
       setTalkMode(true);
       // Spoken immediately so a blind user knows voice replies are now on —
