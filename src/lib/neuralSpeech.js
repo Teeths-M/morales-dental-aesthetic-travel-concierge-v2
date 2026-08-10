@@ -22,7 +22,16 @@
 import { base44 } from '@/api/base44Client';
 import { speakText, stopSpeaking } from './talkMode';
 
-const REQUEST_TIMEOUT_MS = 4000;
+// 15s — neural TTS (Core.GenerateSpeech) generation for a full reply commonly
+// takes 5–10s. The old 4s timer fired too early and dropped M-Care onto the
+// Web Speech API fallback, which has Chrome's ~15s speechSynthesis
+// truncation bug: the utterance cuts off mid-message AND onend never fires,
+// wedging speechSynthesis so every subsequent reply plays with NO voice —
+// the exact "voice cuts off, then M-care goes back to typing with no voice"
+// failure a blind user hits. The neural path returns a real <audio> file
+// that plays in full with no truncation bug, so giving it the time to finish
+// is what keeps Talk Mode speaking aloud on every reply, not just the first.
+const REQUEST_TIMEOUT_MS = 15000;
 
 // Module-level, like talkMode.js's own speechSynthesis singleton — only one
 // neural utterance can meaningfully be "active" at a time, and callers
