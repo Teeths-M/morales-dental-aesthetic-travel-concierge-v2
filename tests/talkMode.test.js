@@ -52,8 +52,34 @@ describe('talkMode.extractSpeakableText', () => {
     expect(extractSpeakableText(undefined)).toBe('');
   });
 
-  it('strips a {{choices:...}} token entirely', () => {
-    expect(extractSpeakableText('Pick one {{choices:Yes|No|Maybe}}')).toBe('Pick one');
+  it('strips a {{choices:...}} token but speaks the option labels as a deterministic enumeration', () => {
+    expect(extractSpeakableText('Pick one {{choices:Yes|No|Maybe}}'))
+      .toBe('Pick one. Your options are: Yes, No, or Maybe.');
+  });
+
+  it('phrases a single choice naturally', () => {
+    expect(extractSpeakableText('One way forward. {{choices:Continue}}'))
+      .toBe('One way forward. Your one option is: Continue.');
+  });
+
+  it('phrases exactly two choices with "or", no comma, and does not double up an existing terminal punctuation mark', () => {
+    expect(extractSpeakableText('How would you like to proceed? {{choices:Pay in Full|25% Deposit}}'))
+      .toBe('How would you like to proceed? Your options are: Pay in Full or 25% Deposit.');
+  });
+
+  it('phrases three or more choices with a serial comma before the final "or"', () => {
+    expect(extractSpeakableText('{{choices:Pay in Full|25% Deposit|50% Deposit}}'))
+      .toBe('Your options are: Pay in Full, 25% Deposit, or 50% Deposit.');
+  });
+
+  it('cleans markdown emphasis out of individual choice labels', () => {
+    expect(extractSpeakableText('{{choices:**Pay in Full**|_25% Deposit_}}'))
+      .toBe('Your options are: Pay in Full or 25% Deposit.');
+  });
+
+  it('does not append anything when there is no {{choices:...}} token', () => {
+    expect(extractSpeakableText('Just a plain reply with no options.'))
+      .toBe('Just a plain reply with no options.');
   });
 
   it('strips a {{maps:LABEL|DEST}} token entirely', () => {

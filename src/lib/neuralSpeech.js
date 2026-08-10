@@ -20,7 +20,7 @@
  * evenly across it. Close enough to feel synced, not a claim of exact timing.
  */
 import { base44 } from '@/api/base44Client';
-import { speakText, stopSpeaking } from './talkMode';
+import { speakText, stopSpeaking, resumeFromInterruption } from './talkMode';
 
 // 15s — neural TTS (Core.GenerateSpeech) generation for a full reply commonly
 // takes 5–10s. The old 4s timer fired too early and dropped M-Care onto the
@@ -87,6 +87,12 @@ export function speakTextNeural(text, options) {
   let revealInterval = null;
   let fallbackCancelFn = null;
   let timeoutId = null;
+  // Lifted out of the onloadedmetadata closure so runFallback can see how
+  // much was actually heard before a mid-playback failure, instead of
+  // re-speaking the whole reply from the top on every fallback.
+  const words = text.split(/\s+/).filter(Boolean);
+  const totalWords = words.length;
+  let revealedCount = 0;
 
   const clearReveal = () => {
     if (revealInterval) { clearInterval(revealInterval); revealInterval = null; }
@@ -115,11 +121,29 @@ export function speakTextNeural(text, options) {
     if (cancelled || fallbackTriggered) return;
     fallbackTriggered = true;
     clearTimeout(timeoutId);
+    clearReveal();
     // talkMode.js's speakText now owns cancellation via stopSpeaking().
     if (activeCancel === cancelFn) activeCancel = null;
+    // Resume from what was likely already heard rather than re-speaking the
+    // whole reply from the top — see resumeFromInterruption's own doc.
+    const { skip, remainder } = resumeFromInterruption(
+      words, revealedCount, audio?.currentTime ?? 0, audio?.duration ?? NaN
+    );
+    if (skip > 0) onWordBoundary?.(skip);
+    if (remainder.length === 0) {
+      // Already essentially fully heard before the failure — don't replay
+      // the entire reply again for the sake of the last few words.
+      wrapEnd(onEnd)();
+      return;
+    }
     // Keep neuralSpeaking true through the fallback — the browser voice is
     // still M-Care talking, so the mic must keep ignoring it.
-    fallbackCancelFn = speakText(text, { rate, onWordBoundary, onEnd: wrapEnd(onEnd), onError: wrapError(onError) });
+    fallbackCancelFn = speakText(remainder.join(' '), {
+      rate,
+      onWordBoundary: (count) => onWordBoundary?.(Math.min(skip + count, totalWords)),
+      onEnd: wrapEnd(onEnd),
+      onError: wrapError(onError),
+    });
   };
 
   timeoutId = setTimeout(runFallback, REQUEST_TIMEOUT_MS);
@@ -146,26 +170,36 @@ export function speakTextNeural(text, options) {
     }
     audio.playbackRate = rate;
 
-    const words = text.split(/\s+/).filter(Boolean);
-    const totalWords = words.length;
-
     audio.onloadedmetadata = () => {
       if (cancelled) return;
       const durationMs = (audio.duration || 0) * 1000;
       if (Number.isFinite(durationMs) && durationMs > 0 && totalWords > 0) {
         const msPerWord = durationMs / totalWords;
-        let revealed = 0;
         revealInterval = setInterval(() => {
-          revealed += 1;
-          onWordBoundary?.(Math.min(revealed, totalWords));
-          if (revealed >= totalWords) clearReveal();
+          revealedCount += 1;
+          onWordBoundary?.(Math.min(revealedCount, totalWords));
+          if (revealedCount >= totalWords) clearReveal();
         }, msPerWord);
       }
     };
     audio.onended = () => {
       clearReveal();
       if (activeCancel === cancelFn) activeCancel = null;
-      if (!cancelled) { neuralSpeaking = false; onEnd?.(); }
+      if (cancelled) return;
+      // audio.currentTime/duration (not the word-reveal count) is the
+      // rate-independent truth signal for "did this really play through" —
+      // playback runs at `rate` (0.9x) relative to the reveal timer's own
+      // duration-based pacing, so the reveal count alone would false-negative
+      // on almost every ordinary finish. A stream that dropped/truncated
+      // fires `ended` early rather than `error`, so without this check it
+      // looked identical to a clean finish and never engaged the fallback —
+      // the real cause of "voice cuts off, rest just appears as text."
+      const durationKnown = Number.isFinite(audio.duration) && audio.duration > 0;
+      const reachedEnd = !durationKnown || audio.currentTime >= audio.duration * 0.98;
+      if (!reachedEnd) { runFallback(); return; }
+      onWordBoundary?.(totalWords);
+      neuralSpeaking = false;
+      onEnd?.();
     };
     audio.onerror = () => { clearReveal(); runFallback(); };
 

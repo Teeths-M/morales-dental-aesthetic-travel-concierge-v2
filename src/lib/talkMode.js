@@ -24,16 +24,48 @@ export function stopSpeaking() {
   }
 }
 
+function cleanChoiceLabel(s) {
+  return s
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/(?<!\w)\*([^*\n]+)\*(?!\w)/g, '$1')
+    .replace(/(?<!\w)_([^_\n]+)_(?!\w)/g, '$1')
+    .trim();
+}
+
+// "Pay in Full", "25% Deposit", "50% Deposit" -> "Your options are: Pay in
+// Full, 25% Deposit, or 50% Deposit." Deterministic and code-driven so a
+// blind user relying on Talk Mode always hears what the tappable choice
+// chips actually say, rather than depending on the AI choosing to restate
+// them in its own free-form reply.
+function speakableChoicesSentence(choices) {
+  if (choices.length === 1) return `Your one option is: ${choices[0]}.`;
+  if (choices.length === 2) return `Your options are: ${choices[0]} or ${choices[1]}.`;
+  const last = choices[choices.length - 1];
+  const rest = choices.slice(0, -1);
+  return `Your options are: ${rest.join(', ')}, or ${last}.`;
+}
+
 /**
  * Strips M-Care's chat tokens ({{choices:...}}, {{maps:...}}, {{qr:...}})
  * and markdown emphasis before speaking — otherwise the browser would read
  * the raw token syntax aloud. A deliberately separate, simplified copy of
  * MessageBubble.jsx's own token-stripping regexes (not imported from there)
  * so this file never touches that already-shipped, hot rendering path.
+ *
+ * A {{choices:...}} token's option labels are captured before the token is
+ * stripped and appended as a plain spoken sentence — the visual chips render
+ * unchanged in MessageBubble.jsx, this only affects what gets spoken.
  */
 export function extractSpeakableText(raw) {
   if (!raw) return '';
-  return raw
+  const choicesMatch = raw.match(/\{\{choices:([\s\S]*?)\}\}/);
+  const choices = choicesMatch
+    ? choicesMatch[1].split('|').map((s) => cleanChoiceLabel(s)).filter(Boolean)
+    : [];
+
+  let out = raw
     .replace(/\{\{choices:[\s\S]*?\}\}/g, '')
     .replace(/\{\{maps:[^|]*\|[\s\S]*?\}\}/g, '')
     .replace(/\{\{qr:[^|]*\|[\s\S]*?\}\}/g, '')
@@ -45,6 +77,12 @@ export function extractSpeakableText(raw) {
     .replace(/(?<!\w)_([^_\n]+)_(?!\w)/g, '$1')
     .replace(/~~([^~\n]+)~~/g, '$1')
     .trim();
+
+  if (choices.length > 0) {
+    const needsPeriod = out && !/[.!?]$/.test(out);
+    out = `${out}${needsPeriod ? '.' : ''}${out ? ' ' : ''}${speakableChoicesSentence(choices)}`;
+  }
+  return out;
 }
 
 const TALK_MODE_ON_PHRASES = new Set([
@@ -159,4 +197,30 @@ export function speakText(text, options) {
   }
 
   return () => { clearFallback(); stopSpeaking(); };
+}
+
+/**
+ * Pure. Given the full word list of a reply and how far playback actually
+ * got before a mid-utterance failure, decides how many words to skip when
+ * a TTS fallback takes over — so it resumes from roughly where the prior
+ * voice died instead of re-speaking the entire reply from the start. Lives
+ * here (not neuralSpeech.js) so it can be unit-tested with no network/API
+ * dependency, per this file's own pure/testable contract. Uses the larger
+ * of the elapsed-time estimate and the word-reveal count actually reached,
+ * so a fast reveal timer never gets rolled backward by a slightly-lagging
+ * elapsed-time estimate.
+ *
+ * @param {string[]} words
+ * @param {number} revealedCount
+ * @param {number} elapsedSeconds
+ * @param {number} durationSeconds
+ * @returns {{ skip: number, remainder: string[] }}
+ */
+export function resumeFromInterruption(words, revealedCount, elapsedSeconds, durationSeconds) {
+  const total = words.length;
+  const byElapsed = (Number.isFinite(durationSeconds) && durationSeconds > 0)
+    ? Math.floor(Math.min(Math.max(elapsedSeconds / durationSeconds, 0), 1) * total)
+    : 0;
+  const skip = Math.min(Math.max(revealedCount, byElapsed, 0), total);
+  return { skip, remainder: words.slice(skip) };
 }

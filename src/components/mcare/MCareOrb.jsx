@@ -170,11 +170,41 @@ export default function MCareOrb() {
   const silenceNudgeCountRef = useRef(0);
   const ackedMessageIdsRef = useRef(new Set());
   const spokenAssistantIdsRef = useRef(new Set());
-  const lastSeenAssistantRef = useRef({ id: null });
+  const lastSeenAssistantRef = useRef({ index: -1 });
   // Guards the "Conversation mode stopped" toast so a blocked mic (common in
   // the preview iframe) can't stack a wall of identical red banners — one
   // honest notification per activation, then it stops repeating.
   const conversationalErrorShownRef = useRef(false);
+
+  // A message can be claimed (spoken / acked) at most once, keyed by BOTH
+  // its stable array position and its server id once assigned — id alone
+  // isn't safe: an assistant message can first render with no id (a running
+  // tool call) and gain a real id on a later subscription tick for that SAME
+  // logical message, which would otherwise let it be processed twice under
+  // what looks like a fresh key.
+  const isClaimed = (ref, msgIndex, msg) =>
+    ref.current.has(`idx:${msgIndex}`) || !!(msg.id && ref.current.has(msg.id));
+  const claim = (ref, msgIndex, msg) => {
+    ref.current.add(`idx:${msgIndex}`);
+    if (msg.id) ref.current.add(msg.id);
+  };
+
+  // Any one-off spoken utterance that isn't driving a specific chat bubble's
+  // word-reveal (a tool-call ack, the distress welfare prompt, a voice-mode
+  // cue) must resolve whatever bubble reveal IS currently in flight the
+  // instant it takes over the audio channel — speakTextNeural always calls
+  // stopNeuralSpeech() first, killing that bubble's audio, but nothing else
+  // ever told its MessageBubble the interruption happened. Left alone, that
+  // bubble's revealUpTo stayed frozen at a partial word count (audio dead,
+  // text stuck mid-sentence) until some unrelated, later revealState change
+  // happened to clear it — the real mechanism behind "cuts off mid-speech,
+  // rest just appears as text." This gives the interrupted bubble the same
+  // graceful "reply's over, show the rest" treatment a genuine new-message
+  // supersession already gets, right when the interruption happens.
+  const speakAncillary = (text, opts) => {
+    setRevealState(null);
+    return speakTextNeural(text, opts);
+  };
 
   const clearSilenceNudge = () => {
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
@@ -326,7 +356,7 @@ export default function MCareOrb() {
     distressHandledAtRef.current = now;
     const prompt = distressWelfarePrompt(signal);
     setAgentMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: prompt }]);
-    if (talkMode && isSpeechSupported()) speakTextNeural(prompt, { rate: 0.9 });
+    if (talkMode && isSpeechSupported()) speakAncillary(prompt, { rate: 0.9 });
     base44.functions.invoke('logAuditEvent', {
       event_type: 'mcare_stage_transition',
       resource_type: 'mcare_distress_signal',
@@ -503,17 +533,17 @@ export default function MCareOrb() {
         const msgIndex = agentMessages.length - 1;
         prevMsgCountRef.current = agentMessages.length;
 
-        // Guard against double-speaking the same message id — Conversational
+        // Guard against double-speaking the same message — Conversational
         // Mode's own effect (below) can also speak a message that first
         // arrived via an in-place socket update rather than array growth;
         // whichever path sees it first "claims" it via this shared ref.
-        if (last.id && spokenAssistantIdsRef.current.has(last.id)) return;
+        if (isClaimed(spokenAssistantIdsRef, msgIndex, last)) return;
 
         if (talkMode && isSpeechSupported()) {
           const speakable = extractSpeakableText(last.content);
           const totalWords = speakable ? speakable.split(/\s+/).filter(Boolean).length : 0;
           if (!speakable) { setSpeaking(false); return; }
-          if (last.id) spokenAssistantIdsRef.current.add(last.id);
+          claim(spokenAssistantIdsRef, msgIndex, last);
           setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
           setSpeaking(true);
           speakTextNeural(speakable, {
@@ -572,28 +602,27 @@ export default function MCareOrb() {
   // so it's never spoken twice.
   useEffect(() => {
     if (!conversationalMode || agentMessages.length === 0) return;
-    const last = agentMessages[agentMessages.length - 1];
+    const msgIndex = agentMessages.length - 1;
+    const last = agentMessages[msgIndex];
     if (!last || last.role !== 'assistant') return;
-    const id = last.id || `idx-${agentMessages.length - 1}`;
     const content = last.content || '';
     const runningTool = (last.tool_calls || []).find(tc =>
       ['pending', 'running', 'in_progress'].includes(String(tc.status || '').toLowerCase()));
 
-    const isSameMessageAsLastSeen = lastSeenAssistantRef.current.id === id;
-    lastSeenAssistantRef.current = { id };
+    const isSameMessageAsLastSeen = lastSeenAssistantRef.current.index === msgIndex;
+    lastSeenAssistantRef.current = { index: msgIndex };
 
-    if (runningTool && !content.trim() && !ackedMessageIdsRef.current.has(id)) {
-      ackedMessageIdsRef.current.add(id);
+    if (runningTool && !content.trim() && !isClaimed(ackedMessageIdsRef, msgIndex, last)) {
+      claim(ackedMessageIdsRef, msgIndex, last);
       const ackText = runningTool.display_projection?.active_label || 'Let me look that up.';
-      speakTextNeural(ackText, { rate: 0.9 });
+      speakAncillary(ackText, { rate: 0.9 });
       return;
     }
 
-    if (isSameMessageAsLastSeen && content.trim() && !spokenAssistantIdsRef.current.has(id)) {
-      spokenAssistantIdsRef.current.add(id);
+    if (isSameMessageAsLastSeen && content.trim() && !isClaimed(spokenAssistantIdsRef, msgIndex, last)) {
+      claim(spokenAssistantIdsRef, msgIndex, last);
       const speakable = extractSpeakableText(content);
       if (!speakable) return;
-      const msgIndex = agentMessages.length - 1;
       const totalWords = speakable.split(/\s+/).filter(Boolean).length;
       setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
       setSpeaking(true);
@@ -888,12 +917,11 @@ export default function MCareOrb() {
           // reply so toggling ON mid-conversation isn't a dead end.
           const last = agentMessagesRef.current[agentMessagesRef.current.length - 1];
           if (last && last.role === 'assistant' && last.content) {
-            const id = last.id || `idx-${agentMessagesRef.current.length - 1}`;
-            if (!spokenAssistantIdsRef.current.has(id)) {
-              spokenAssistantIdsRef.current.add(id);
+            const msgIndex = agentMessagesRef.current.length - 1;
+            if (!isClaimed(spokenAssistantIdsRef, msgIndex, last)) {
+              claim(spokenAssistantIdsRef, msgIndex, last);
               const speakable = extractSpeakableText(last.content);
               if (speakable) {
-                const msgIndex = agentMessagesRef.current.length - 1;
                 const totalWords = speakable.split(/\s+/).filter(Boolean).length;
                 setSpeaking(true);
                 setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
@@ -954,7 +982,7 @@ export default function MCareOrb() {
       // Spoken immediately so a blind user knows voice replies are now on —
       // the record-tap unlocked audio playback. When the agent's reply
       // arrives, neuralSpeech interrupts this cue and speaks the answer.
-      speakTextNeural("Got it — I'll reply out loud.", { rate: 0.9 });
+      speakAncillary("Got it — I'll reply out loud.", { rate: 0.9 });
     }
     setAgentUploading(true);
     try {
