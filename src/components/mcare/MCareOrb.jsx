@@ -101,7 +101,7 @@ export default function MCareOrb() {
   const { toast }         = useToast();
   const { user }          = useAuth();
   const { prefs, update: updatePrefs } = useMcarePreferences();
-  const { pathname }      = useLocation();
+  const { pathname, search } = useLocation();
   const navigate          = useNavigate();
   const role              = detectRole(user, pathname);
   const tips              = (TIPS_KEYS[role] || TIPS_KEYS.visitor).map(({ e, key }) => ({ e, t: t(key) }));
@@ -509,6 +509,23 @@ export default function MCareOrb() {
     '/emergency', '/sos', '/safe-t',
   ];
   const isQuietRoute = QUIET_ROUTES.some(p => pathname.startsWith(p));
+
+  // Deep-link auto-open — ?mcare=open on any public page opens the panel on
+  // load with no click needed, for sharing a direct "land straight in the
+  // chat" link (e.g. to buildathon judges) without requiring a login-gated
+  // route. Fires at most once per page load (autoOpenedRef), so navigating
+  // within the app afterward never re-forces the panel open. Skipped on a
+  // quiet route — those pages deliberately suppress the orb regardless.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || isQuietRoute) return;
+    if (new URLSearchParams(search).get('mcare') === 'open') {
+      autoOpenedRef.current = true;
+      setOpen(true);
+      setDismissed(true);
+      setStruggleHint(null);
+    }
+  }, [search, isQuietRoute]);
 
   useEffect(() => {
     if (!pastHero || isQuietRoute) return;
