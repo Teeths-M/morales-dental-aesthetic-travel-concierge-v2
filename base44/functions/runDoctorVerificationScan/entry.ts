@@ -1,23 +1,29 @@
 import { secrets } from 'base44:runtime';
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { runLookup, resolveCountryISO } from '../../shared/registryLookup.ts';
 
 // runDoctorVerificationScan — the "Red Team" doctor onboarding scan.
 // One self-contained orchestrator that runs every verification layer and
 // returns a single, chat-narratable verdict: internet presence, license
-// registry, identity/passport, device+network intelligence, background/
-// sanctions, a synthesized confidence score, and a decision (approved |
-// flagged_for_admin_review). It reuses the platform's web-search LLM,
-// IPinfo, and fetch — it never fabricates a pass. If anything is uncertain
-// or fails, it refuses to approve and routes to a human admin.
+// registry (a real API/scrape hit via ../../shared/registryLookup.ts for
+// US/CO/MX, an honestly-labeled LLM web-search estimate elsewhere),
+// identity/passport, device+network intelligence, background/sanctions, a
+// synthesized confidence score, and a decision (approved |
+// flagged_for_admin_review). It never fabricates a pass. If anything is
+// uncertain or fails, it refuses to approve and routes to a human admin.
 //
 // Only the doctor being scanned (their own record) or an admin may trigger
-// this — it writes verification_status/status straight to the Doctor record
-// via asServiceRole (bypasses RLS), so an unscoped caller could otherwise
-// pass an arbitrary doctor_id and auto-activate someone else's record. The
-// established initiatePartnerVerification/activateVerifiedDoctor pair
-// deliberately splits doctor auto-activation behind a short-lived HMAC proof
-// for exactly this reason — this function reopened that hole by doing the
-// write itself, unguarded, until this gate was added.
+// this — it still writes license_verification_status/identity_verification_status
+// straight to the Doctor record via asServiceRole (bypasses RLS), so an unscoped
+// caller could otherwise pass an arbitrary doctor_id and tamper with someone
+// else's sub-checks. It does NOT write status/verification_status to
+// 'active'/'verified' — that would bypass activateVerifiedDoctor, "THE SINGLE
+// GATED FUNCTION that can set a Doctor to active," which the established
+// initiatePartnerVerification/activateVerifiedDoctor pair deliberately gates
+// behind a required human background check (or a short-lived HMAC auto-clear
+// proof this function does not hold). This function previously reopened that
+// hole by writing status='active' directly on a clean scan — fixed; see the
+// persist-verdict block below.
 Deno.serve(createHandler(async ({ req, base44, user, body }) => {
     const payload = await body();
     const doctor_id = payload?.doctor_id;
@@ -89,33 +95,60 @@ Deno.serve(createHandler(async ({ req, base44, user, body }) => {
     }
 
     // ── Layer 2: License / credentials registry ──
-    let credentials = { status: 'not_performed' };
+    // Real government/professional registry data beats an LLM's web-search
+    // guess every time one exists. base44/shared/registryLookup.ts has real
+    // API/scrape adapters for US/CO/MX that nothing in this scan previously
+    // called — try that first; fall back to the LLM-grounded estimate only
+    // for the countries with no automated registry, and tag which kind of
+    // evidence actually produced the result so an LLM guess can never be
+    // mistaken for a real registry hit downstream.
+    let credentials: Record<string, any> = { status: 'not_performed' };
     if (license_number && license_country) {
-      let res = null;
-      try {
-        res = await llm({
-          prompt: `You are a medical-license verification assistant. Verify registration number "${license_number}" for a ${specialty || 'medical'} practitioner named ${doctor_name} in ${license_country} against the official medical registry. Return JSON: found, name_match, status (verified | not_found | name_mismatch | suspended | unverifiable), expiry, registry_source, details. If you cannot definitively confirm from registry data, return status "unverifiable" — never guess "verified".`,
-          add_context_from_internet: true,
-          model: 'gemini_3_1_pro',
-          response_json_schema: { type: 'object', properties: {
-            found: { type: 'boolean' }, name_match: { type: 'boolean' },
-            status: { type: 'string' }, expiry: { type: 'string' },
-            registry_source: { type: 'string' }, details: { type: 'string' }
-          } }
-        });
-      } catch (e) { res = null; }
-      const c = res || {};
-      const st = String(c.status || 'unverifiable').toLowerCase();
-      if (st === 'verified' && c.found && c.name_match) {
-        credentials = { status: 'pass', ...c };
-      } else if (st === 'not_found' || st === 'name_mismatch' || st === 'suspended') {
-        flags.push(`License not confirmed: ${c.status}.`); confidence -= 25;
-        credentials = { status: 'fail', ...c };
+      const countryISO = /^[A-Za-z]{2}$/.test(license_country.trim())
+        ? license_country.trim().toUpperCase()
+        : resolveCountryISO(license_country);
+      const registryResult: any = await runLookup(countryISO, license_number, doctor_name).catch(() => null);
+
+      if (registryResult?.supported) {
+        if (registryResult.found && (registryResult.confidence || 0) >= 70) {
+          credentials = { ...registryResult, status: 'pass', source_type: 'registry_' + registryResult.reliability };
+        } else if (registryResult.found) {
+          flags.push(`License found in ${registryResult.registry_name} but with low match confidence — routing to a human registry check.`);
+          confidence -= 12;
+          credentials = { ...registryResult, status: 'unverifiable', source_type: 'registry_' + registryResult.reliability };
+        } else {
+          flags.push(`License not confirmed in ${registryResult.registry_name}: ${registryResult.reason || 'not found'}.`);
+          confidence -= 25;
+          credentials = { ...registryResult, status: 'fail', source_type: 'registry_' + registryResult.reliability };
+        }
+        steps.push({ step: 'License registry verification', result: credentials.status, license: license_number, country: countryISO, source: registryResult.registry_name });
       } else {
-        flags.push('License could not be auto-verified — routing to a human registry check.'); confidence -= 12;
-        credentials = { status: 'unverifiable', ...c };
+        let res = null;
+        try {
+          res = await llm({
+            prompt: `You are a medical-license verification assistant. Verify registration number "${license_number}" for a ${specialty || 'medical'} practitioner named ${doctor_name} in ${license_country} against the official medical registry. Return JSON: found, name_match, status (verified | not_found | name_mismatch | suspended | unverifiable), expiry, registry_source, details. If you cannot definitively confirm from registry data, return status "unverifiable" — never guess "verified".`,
+            add_context_from_internet: true,
+            model: 'gemini_3_1_pro',
+            response_json_schema: { type: 'object', properties: {
+              found: { type: 'boolean' }, name_match: { type: 'boolean' },
+              status: { type: 'string' }, expiry: { type: 'string' },
+              registry_source: { type: 'string' }, details: { type: 'string' }
+            } }
+          });
+        } catch (e) { res = null; }
+        const c: any = res || {};
+        const st = String(c.status || 'unverifiable').toLowerCase();
+        if (st === 'verified' && c.found && c.name_match) {
+          credentials = { ...c, status: 'pass', source_type: 'llm_web_search_estimate' };
+        } else if (st === 'not_found' || st === 'name_mismatch' || st === 'suspended') {
+          flags.push(`License not confirmed: ${c.status}.`); confidence -= 25;
+          credentials = { ...c, status: 'fail', source_type: 'llm_web_search_estimate' };
+        } else {
+          flags.push('License could not be auto-verified — routing to a human registry check.'); confidence -= 12;
+          credentials = { ...c, status: 'unverifiable', source_type: 'llm_web_search_estimate' };
+        }
+        steps.push({ step: 'License registry verification', result: credentials.status, license: license_number, country: license_country, source: 'llm_web_search_estimate' });
       }
-      steps.push({ step: 'License registry verification', result: credentials.status, license: license_number, country: license_country });
     } else {
       flags.push('Missing license number or country.'); confidence -= 20;
       steps.push({ step: 'License registry verification', result: 'skipped' });
@@ -198,18 +231,33 @@ Deno.serve(createHandler(async ({ req, base44, user, body }) => {
     const decision = (confidence >= 80 && flags.length === 0) ? 'approved' : 'flagged_for_admin_review';
 
     // ── Persist verdict on the Doctor record ──
-    const update = {
-      verification_status: decision === 'approved' ? 'verified' : 'pending_manual',
-      status: decision === 'approved' ? 'active' : 'pending_verification',
+    // This function no longer writes status/verification_status to 'active'/
+    // 'verified' directly — that bypassed activateVerifiedDoctor, which its own
+    // header comment calls "THE SINGLE GATED FUNCTION that can set a Doctor to
+    // active," and which requires license + identity + background to each
+    // independently reach a passed state first. background_check_status is only
+    // ever set by a human (see activateVerifiedDoctor.ts and SecurityAgency's own
+    // identical invariant) — a clean automated scan can legitimately attest to
+    // license and identity, never to background. Activation now only ever happens
+    // through an admin's own click (activateVerifiedDoctor's normal admin path) or
+    // through initiatePartnerVerification's separate, HMAC-proof-gated auto-clear
+    // path — neither of which this function touches.
+    const update: Record<string, unknown> = {
       verification_confidence: confidence,
-      verification_notes: flags.length ? flags.join(' ') : 'All verification layers passed.',
+      verification_notes: flags.length
+        ? flags.join(' ')
+        : 'Automated scan passed — license and identity checks clear. A human background check and admin activation are still required.',
       internet_risk_level: internet.signals?.risk_level || undefined,
       internet_summary: internet.signals?.summary || undefined,
       internet_signals: internet.signals || undefined,
       internet_last_checked: now,
       license_last_checked_at: now,
-      verified_at: decision === 'approved' ? now : undefined
+      registry_lookup_result: (credentials.source_type as string | undefined)?.startsWith('registry_') ? JSON.stringify(credentials) : undefined,
     };
+    if (credentials.status === 'pass') update.license_verification_status = 'passed';
+    else if (credentials.status === 'fail') update.license_verification_status = 'failed';
+    if (identity.status === 'pass') update.identity_verification_status = 'passed';
+    else if (identity.status === 'flag') update.identity_verification_status = 'failed';
     Object.keys(update).forEach(k => update[k] === undefined && delete update[k]);
     await base44.asServiceRole.entities.Doctor.update(doctor_id, update).catch(() => {});
 
@@ -233,19 +281,22 @@ Deno.serve(createHandler(async ({ req, base44, user, body }) => {
       });
     } catch (e) { /* best-effort audit record */ }
 
-    // ── Notify a human admin if flagged ──
-    if (decision === 'flagged_for_admin_review') {
-      try {
-        const adminEmail = secrets.get('ADMIN_EMAIL');
-        if (adminEmail) {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: adminEmail,
-            subject: `🔍 Doctor verification flagged for review — ${doctor.full_name || doctor_name}`,
-            body: `Doctor ${doctor.full_name || doctor_name} (${doctor.email}) was flagged by M-Care's verification scan.\n\nConfidence: ${confidence}/100\n\nFlags:\n${flags.map(f => '- ' + f).join('\n') || '- (none)'}\n\nReview at ${(secrets.get('APP_URL') || '')}/admin/doctor-verification`
-          });
-        }
-      } catch (e) { /* best-effort */ }
-    }
+    // ── Notify a human admin — always, not just when flagged ──
+    // The scan can no longer auto-activate (see above), so a clean pass now
+    // needs an admin to know to do the final background check + activation
+    // click, or it would otherwise sit silently in pending_verification forever.
+    try {
+      const adminEmail = secrets.get('ADMIN_EMAIL');
+      if (adminEmail) {
+        const subject = decision === 'approved'
+          ? `✅ Doctor scan passed — ready for background check + activation — ${doctor.full_name || doctor_name}`
+          : `🔍 Doctor verification flagged for review — ${doctor.full_name || doctor_name}`;
+        const body = decision === 'approved'
+          ? `Doctor ${doctor.full_name || doctor_name} (${doctor.email}) passed M-Care's automated scan (confidence ${confidence}/100, no flags). License and identity checks are recorded as passed. A human background check and admin activation are still required before this doctor goes live.\n\nReview at ${(secrets.get('APP_URL') || '')}/admin/doctor-verification`
+          : `Doctor ${doctor.full_name || doctor_name} (${doctor.email}) was flagged by M-Care's verification scan.\n\nConfidence: ${confidence}/100\n\nFlags:\n${flags.map(f => '- ' + f).join('\n') || '- (none)'}\n\nReview at ${(secrets.get('APP_URL') || '')}/admin/doctor-verification`;
+        await base44.asServiceRole.integrations.Core.SendEmail({ to: adminEmail, subject, body });
+      }
+    } catch (e) { /* best-effort */ }
 
     return ok({
       decision,

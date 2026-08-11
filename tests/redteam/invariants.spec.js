@@ -2315,6 +2315,26 @@ test('PARTNERS: nothing automated may mark a background check passed', () => {
     .toMatch(/PASSED\s*=\s*new Set\(\[\s*['"]passed['"],\s*['"]manual_override['"]\s*\]\)/);
 });
 
+test('PARTNERS: runDoctorVerificationScan never activates a doctor directly', () => {
+  // runDoctorVerificationScan (granted to M-Care) used to write status:'active'
+  // and verification_status:'verified' straight onto the Doctor record the
+  // moment its own confidence score cleared a threshold — a second, less
+  // rigorous auto-activation path that bypassed activateVerifiedDoctor,
+  // "THE SINGLE GATED FUNCTION that can set a Doctor to active" (see that
+  // file's own header), which requires background_check_status to
+  // independently reach a passed state — and that field is only ever set by
+  // a human (see the invariant above). Fixed: the scan may only ever record
+  // the sub-checks it legitimately performed (license/identity), never the
+  // top-level status or verification_status fields.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const scan = strip(read('base44/functions/runDoctorVerificationScan/entry.ts'));
+
+  expect(scan, "runDoctorVerificationScan must never write status:'active' directly")
+    .not.toMatch(/status:\s*['"]active['"]/);
+  expect(scan, "runDoctorVerificationScan must never write verification_status:'verified' directly")
+    .not.toMatch(/verification_status:\s*['"]verified['"]/);
+});
+
 test('CLAIMS: the app does not advertise checks it does not perform', () => {
   // Nothing examines criminal history, and hotels have no verification path at
   // all. These three lines said otherwise on the two highest-traffic surfaces.

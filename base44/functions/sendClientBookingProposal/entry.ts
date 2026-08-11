@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 
 // ── sendClientBookingProposal ─────────────────────────────────────────────────
 // The "click-and-pay" orchestrator. Once M-Care has confirmed the partner quotas
@@ -96,21 +97,26 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const paymentUrl = `${appUrl}/portal/proposal/${token}`;
 
     const clientName = caseRecord.client_name || 'there';
-    const price = Number(caseRecord.final_package_price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const shortMsg = `Morales: Your medical travel package ($${price}) is ready. Tap to review & pay: ${paymentUrl}`;
 
-    // Email body — clean, link-forward, mobile-friendly.
-    const emailHtml = `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#060B16;color:#EEF2F7;padding:32px 24px;border-radius:16px;">
-        <p style="font-size:12px;color:#D4AF37;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Morales Concierge</p>
-        <h2 style="margin:0 0 16px;font-size:22px;color:#fff;">Your package is ready, ${clientName}.</h2>
-        <p style="font-size:15px;line-height:1.6;color:rgba(238,242,247,0.8);margin:0 0 24px;">
-          Your complete medical travel package is confirmed and priced at <strong style="color:#D4AF37;">$${price}</strong>.
-          Tap below to review everything included and secure your dates with a deposit or full payment.
-        </p>
-        <a href="${paymentUrl}" style="display:inline-block;background:#D4AF37;color:#060B16;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:15px;">Review &amp; Pay</a>
-        <p style="font-size:12px;color:rgba(238,242,247,0.4);margin:24px 0 0;line-height:1.5;">If the button doesn't work, open this link: ${paymentUrl}</p>
-      </div>`;
+    // Link-only per shared/notify.ts: the whole point of this function is a
+    // real "click-and-pay" link, so a link is exactly right here — but the
+    // dollar amount and client name were being embedded directly in the
+    // email/SMS/WhatsApp body, which is exactly what assertLinkOnly's
+    // LEAK_PATTERNS exist to catch. Every other patient-facing sender in this
+    // codebase routes through linkOnlyEmail/linkOnlySms; this one didn't.
+    const shortMsg = linkOnlySms({
+      line: 'Your Morales travel package is ready to review and pay.',
+      url: paymentUrl,
+      from: 'sendClientBookingProposal',
+    });
+
+    const emailHtml = linkOnlyEmail({
+      title: 'Your travel package is ready.',
+      line: 'Review everything included and secure your dates with a deposit or full payment.',
+      ctaUrl: paymentUrl,
+      ctaLabel: 'Review & Pay',
+      from: 'sendClientBookingProposal',
+    });
 
     // ── Dispatch across all available channels (fault-tolerant) ──
     const channels: Record<string, { success: boolean; error?: string; sid?: string }> = {};
