@@ -2335,6 +2335,35 @@ test('PARTNERS: runDoctorVerificationScan never activates a doctor directly', ()
     .not.toMatch(/verification_status:\s*['"]verified['"]/);
 });
 
+test('PARTNERS: ContactAttempt (provider-outreach audit log) is admin-only and carries no patient PHI field', () => {
+  // ContactAttempt logs the real outreach M-Care already sends to provider
+  // partners (a travel-agency/driver quote request, a doctor case-assignment
+  // notice, a partner verification-outcome notice) — the honest, buildable
+  // version of "governed outreach" auditability. Two invariants matter: it
+  // must be admin-only to read (matches NotificationLog's precedent — this is
+  // an internal ops log, not something a patient or partner reads directly),
+  // and its schema must never grow a field shaped for a patient's own name,
+  // email, phone, or clinical detail — recipient/partner_name are always the
+  // PROVIDER's own business contact info, never a patient's.
+  const entity = read('base44/entities/ContactAttempt.jsonc');
+  const rlsAdminOnly = (op) => new RegExp(
+    `"${op}"\\s*:\\s*\\{\\s*"user_condition"\\s*:\\s*\\{\\s*"role"\\s*:\\s*"admin"\\s*\\}\\s*\\}`
+  );
+  for (const op of ['read', 'create', 'update', 'delete']) {
+    expect(entity, `ContactAttempt.${op} must be admin-gated`).toMatch(rlsAdminOnly(op));
+  }
+  // Check declared property KEYS only (colon-anchored) — not the free-text
+  // description, which legitimately discusses patient PHI in prose while
+  // explaining why the schema itself must never carry it.
+  const forbiddenFieldKey = /"(client_name|client_email|client_phone|patient_name|patient_email|medical_\w*|diagnosis|condition)"\s*:\s*\{/i;
+  expect(entity, 'ContactAttempt must never declare a patient-identity or clinical field').not.toMatch(forbiddenFieldKey);
+
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const helper = strip(read('base44/shared/logProviderContactAttempt.ts'));
+  expect(helper, 'the helper writes only to ContactAttempt').toContain('entities.ContactAttempt.create');
+  expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
+});
+
 test('CLAIMS: the app does not advertise checks it does not perform', () => {
   // Nothing examines criminal history, and hotels have no verification path at
   // all. These three lines said otherwise on the two highest-traffic surfaces.

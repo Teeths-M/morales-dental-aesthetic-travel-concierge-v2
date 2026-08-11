@@ -1,6 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { createHandler } from '../../shared/createHandler.ts';
+import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -204,6 +205,33 @@ Deno.serve(createHandler(async ({ req }) => {
 
     const failures = dispatchResults.filter(r => r.status === 'rejected').length;
     console.log(`[assignChauffeurServices] dispatched to 2 drivers, ${failures} email failures`);
+
+    await Promise.allSettled([
+      logProviderContactAttempt(base44, {
+        case_id: caseId,
+        partner_type: 'taxi_service',
+        partner_id: originDriver.id,
+        partner_name: originDriver.driver_name || originDriver.company_name || 'Driver',
+        channel: 'email',
+        purpose: 'quote_request',
+        recipient: originDriver.email || '',
+        initiated_by: 'assignChauffeurServices',
+        result: originDriver.email ? (dispatchResults[0].status === 'fulfilled' ? 'sent' : 'failed') : 'skipped',
+        error_detail: dispatchResults[0].status === 'rejected' ? String((dispatchResults[0] as PromiseRejectedResult).reason) : undefined,
+      }),
+      logProviderContactAttempt(base44, {
+        case_id: caseId,
+        partner_type: 'taxi_service',
+        partner_id: destDriver.id,
+        partner_name: destDriver.driver_name || destDriver.company_name || 'Driver',
+        channel: 'email',
+        purpose: 'quote_request',
+        recipient: destDriver.email || '',
+        initiated_by: 'assignChauffeurServices',
+        result: destDriver.email ? (dispatchResults[1].status === 'fulfilled' ? 'sent' : 'failed') : 'skipped',
+        error_detail: dispatchResults[1].status === 'rejected' ? String((dispatchResults[1] as PromiseRejectedResult).reason) : undefined,
+      }),
+    ]);
 
     return Response.json({
       status:             'DRIVERS_ASSIGNED',

@@ -2,6 +2,7 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 import { signPortalToken } from '../../shared/portalToken.ts';
 import { sendWhatsApp } from '../../shared/twilioWhatsApp.ts';
+import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -177,6 +178,17 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     subject: 'A quick travel quote for an upcoming patient trip',
     body: emailBody,
   });
+  await logProviderContactAttempt(base44, {
+    case_id: caseId,
+    partner_type: 'travel_agency',
+    partner_id: selectedAgency.id,
+    partner_name: agencyName,
+    channel: 'email',
+    purpose: 'quote_request',
+    recipient: selectedAgency.email,
+    initiated_by: 'assignTravelAgency',
+    result: 'sent',
+  });
 
   // ── WhatsApp — non-fatal bonus channel; must never affect the email send above ──
   try {
@@ -190,9 +202,32 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         `Submit your quote: ${portalUrl}`,
       ].join(' ');
       await sendWhatsApp(whatsappNumber, whatsappMessage);
+      await logProviderContactAttempt(base44, {
+        case_id: caseId,
+        partner_type: 'travel_agency',
+        partner_id: selectedAgency.id,
+        partner_name: agencyName,
+        channel: 'whatsapp',
+        purpose: 'quote_request',
+        recipient: whatsappNumber,
+        initiated_by: 'assignTravelAgency',
+        result: 'sent',
+      });
     }
-  } catch (whatsappError) {
+  } catch (whatsappError: any) {
     console.error('[assignTravelAgency] WhatsApp send failed (non-fatal):', whatsappError);
+    await logProviderContactAttempt(base44, {
+      case_id: caseId,
+      partner_type: 'travel_agency',
+      partner_id: selectedAgency.id,
+      partner_name: agencyName,
+      channel: 'whatsapp',
+      purpose: 'quote_request',
+      recipient: selectedAgency.whatsapp_number || selectedAgency.phone || '',
+      initiated_by: 'assignTravelAgency',
+      result: 'failed',
+      error_detail: whatsappError?.message || 'WhatsApp send failed',
+    });
   }
 
   return ok({

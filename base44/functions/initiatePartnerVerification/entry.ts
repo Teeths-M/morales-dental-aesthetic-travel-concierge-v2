@@ -2,6 +2,7 @@ import { createHandler } from '../../shared/createHandler.ts';
 import { createHmac } from 'node:crypto';
 import { z, strictObject, Fields } from '../../shared/validate.ts';
 import { guardedPartnerStatusUpdate, PARTNER_STATE } from '../../shared/partnerOnboardingState.ts';
+import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
 
 // partner_type is a length-capped string, not an enum — the existing if/else
 // chain below already tolerates an unrecognized value (falls through to
@@ -96,6 +97,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       });
 
       // Notify the partner — they cannot proceed.
+      let sanctionsEmailResult: 'sent' | 'failed' = 'sent';
+      let sanctionsEmailError: string | undefined;
       try {
         await base44.integrations.Core.SendEmail({
           to: partnerEmail,
@@ -104,7 +107,22 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
                  <p>After an automated review, we are unable to approve your application at this time.</p>
                  <p>If you believe this is in error, please contact our support team with your identification documents.</p>`,
         });
-      } catch (_) { /* email is non-fatal */ }
+      } catch (sendErr: any) {
+        sanctionsEmailResult = 'failed';
+        sanctionsEmailError = sendErr?.message || 'send failed';
+        /* email is non-fatal */
+      }
+      await logProviderContactAttempt(base44, {
+        partner_type: partner_type as any,
+        partner_id,
+        partner_name: partnerName,
+        channel: 'email',
+        purpose: 'verification_notification',
+        recipient: partnerEmail,
+        initiated_by: 'initiatePartnerVerification',
+        result: sanctionsEmailResult,
+        error_detail: sanctionsEmailError,
+      });
 
       return Response.json({
         success: false,
@@ -346,6 +364,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
                <p>Your credentials cleared our automated screening and your profile is now <strong>verified and active</strong> on the Morales Medical Travel Platform.</p>
                <p>Patients searching for specialists in your field can now find and book with you.</p>`,
       });
+      await logProviderContactAttempt(base44, {
+        partner_type: partner_type as any,
+        partner_id,
+        partner_name: partnerName,
+        channel: 'email',
+        purpose: 'verification_notification',
+        recipient: partnerEmail,
+        initiated_by: 'initiatePartnerVerification',
+        result: 'sent',
+      });
     } else if (newStatus === 'pending_manual_review' || newStatus === 'manual_review' ||
                (newStatus === 'auto_verified' && !doctorActuallyActivated)) {
       await base44.integrations.Core.SendEmail({
@@ -354,6 +382,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         body: `<p>Your verification documents have been received and are pending manual review by our team.</p>
                <p>This typically takes 24–48 hours. We'll notify you once complete.</p>
                <p>Verification ID: ${verification.id}</p>`,
+      });
+      await logProviderContactAttempt(base44, {
+        partner_type: partner_type as any,
+        partner_id,
+        partner_name: partnerName,
+        channel: 'email',
+        purpose: 'verification_notification',
+        recipient: partnerEmail,
+        initiated_by: 'initiatePartnerVerification',
+        result: 'sent',
       });
     }
     // No 'denied' branch here anymore — this function can no longer produce

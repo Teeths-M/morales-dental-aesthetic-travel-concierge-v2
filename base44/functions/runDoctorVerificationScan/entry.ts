@@ -1,6 +1,7 @@
 import { secrets } from 'base44:runtime';
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { runLookup, resolveCountryISO } from '../../shared/registryLookup.ts';
+import { isFresh, TTL_MS } from '../../shared/freshness.ts';
 
 // runDoctorVerificationScan — the "Red Team" doctor onboarding scan.
 // One self-contained orchestrator that runs every verification layer and
@@ -298,12 +299,30 @@ Deno.serve(createHandler(async ({ req, base44, user, body }) => {
       }
     } catch (e) { /* best-effort */ }
 
+    // ── License freshness (Section 6 — memory decay, applied honestly) ──
+    // A scan that actually attempted a license check just confirmed it, right
+    // now. A scan called with no license_number/country to check (the
+    // 'skipped' branch above, credentials.status stays 'not_performed')
+    // instead falls back to the doctor's PRIOR on-file license_last_checked_at
+    // via freshness.ts's existing 7-day doctor_license TTL — the same TTL
+    // clinic/visa/regulatory data is already held to — so a stale prior check
+    // is never silently presented as still current just because this call
+    // didn't happen to re-run it.
+    const licenseCheckedThisCall = credentials.status !== 'not_performed';
+    const licenseFreshness = licenseCheckedThisCall
+      ? 'confirmed'
+      : (doctor.license_last_checked_at
+          ? (isFresh(doctor.license_last_checked_at, TTL_MS.doctor_license) ? 'confirmed' : 'stale')
+          : 'unverified');
+
     return ok({
       decision,
       confidence_score: confidence,
       flags,
       layers: { internet, credentials, identity, device_network, background },
       steps,
-      doctor_id
+      doctor_id,
+      license_freshness: licenseFreshness,
+      license_last_checked_at: licenseCheckedThisCall ? now : (doctor.license_last_checked_at || null),
     });
 }, { name: 'runDoctorVerificationScan' }));

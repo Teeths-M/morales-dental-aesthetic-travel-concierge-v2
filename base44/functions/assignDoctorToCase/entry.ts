@@ -1,5 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 const TEAM = 'Morales Concierge Team';
@@ -249,6 +250,18 @@ Deno.serve(createHandler(async ({ req }) => {
   </table>
 </body>
 </html>`
+    });
+
+    await logProviderContactAttempt(base44, {
+      case_id: caseId,
+      partner_type: 'doctor',
+      partner_id: selectedDoctor.id,
+      partner_name: selectedDoctor.full_name,
+      channel: 'email',
+      purpose: 'case_assignment',
+      recipient: selectedDoctor.email,
+      initiated_by: 'assignDoctorToCase',
+      result: 'sent',
     });
 
     // Push notification — doctor's phone buzzes immediately with new patient alert
