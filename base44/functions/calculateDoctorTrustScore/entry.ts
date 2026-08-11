@@ -16,6 +16,7 @@
  */
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { doctorTrustReasons } from '../../shared/trustScoreReasons.ts';
 
 Deno.serve(createHandler(async ({ req, base44, body }) => {
   if (!(await cronAuthorized(req, base44))) return err('Forbidden', 403);
@@ -110,6 +111,7 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
         await base44.asServiceRole.entities.Doctor.update(doctor.id, {
           trust_score:            result.score,
           trust_components:       result.components,
+          trust_reasons:          doctorTrustReasons(result.components, result.case_count),
           trust_case_count:       result.case_count,
           trust_last_calculated:  new Date().toISOString(),
         });
@@ -123,6 +125,7 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
   await base44.asServiceRole.entities.Doctor.update(doctor_id, {
     trust_score:           result.score,
     trust_components:      result.components,
+    trust_reasons:         doctorTrustReasons(result.components, result.case_count),
     trust_case_count:      result.case_count,
     trust_last_calculated: new Date().toISOString(),
   }).catch(() => {});

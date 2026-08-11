@@ -204,6 +204,29 @@
     },
     "sign_up_completed_at": {
       "type": "string"
+    },
+    "trust_score": {
+      "type": "number",
+      "description": "Hidden internal ranking (0-100), written only by calculateDriverTrustScore — the TaxiService equivalent of Doctor.trust_score. Drivers do not see this; admin uses it for case routing priority."
+    },
+    "trust_components": {
+      "type": "object",
+      "description": "Point breakdown behind trust_score (on-time record, safety record, patient rating)."
+    },
+    "trust_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Plain-language reasons behind trust_score, derived from trust_components — never a fact not already reflected in the components themselves."
+    },
+    "trust_case_count": {
+      "type": "number",
+      "default": 0
+    },
+    "trust_last_calculated": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

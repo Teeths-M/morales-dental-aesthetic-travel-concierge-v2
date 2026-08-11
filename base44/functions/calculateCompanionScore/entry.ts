@@ -13,6 +13,7 @@
  */
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { companionTrustReasons } from '../../shared/trustScoreReasons.ts';
 
 Deno.serve(createHandler(async ({ req, base44, body }) => {
   if (!(await cronAuthorized(req, base44))) return err('Forbidden', 403);
@@ -107,6 +108,7 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
         await base44.asServiceRole.entities.Companion.update(c.id, {
           performance_score:            result.score,
           performance_components:       result.components,
+          performance_reasons:          companionTrustReasons(result.components, result.assignment_count),
           performance_last_calculated:  new Date().toISOString(),
         });
         updated++;
@@ -119,6 +121,7 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
   await base44.asServiceRole.entities.Companion.update(companion_id, {
     performance_score:           result.score,
     performance_components:      result.components,
+    performance_reasons:         companionTrustReasons(result.components, result.assignment_count),
     performance_last_calculated: new Date().toISOString(),
   }).catch(() => {});
 

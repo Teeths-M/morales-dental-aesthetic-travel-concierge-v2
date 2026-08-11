@@ -94,6 +94,7 @@ jobs:
             call detectRegulatoryChanges
             call calculateDoctorTrustScore
             call calculateCompanionScore
+            call calculateDriverTrustScore
             # Marketplace: chase doctors who were invited to quote but haven't yet (link-only).
             call remindPendingQuotes
             # On manual runs, also refresh visa and hygiene jobs so a full pass is one click.
