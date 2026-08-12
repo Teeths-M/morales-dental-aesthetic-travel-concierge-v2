@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { ShieldAlert, Loader2, CheckCircle2, ArrowRight, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,6 +23,22 @@ function parseResult(toolCall) {
 // Loading → red refusal (CRITICAL/HIGH/BLOCKED) → amber caution (MEDIUM/review) → green (cleared).
 export default function SafetyGateCard({ toolCall, onRespond }) {
   const [responded, setResponded] = useState(false);
+
+  // A judge glancing at a live demo shouldn't have to notice a card that just
+  // silently appeared — the caution/critical states below get a brief entrance
+  // and, for a genuine block, a sustained glow. Respects prefers-reduced-motion
+  // the same way LivingOrb.jsx / JourneyStageTracker.jsx do — falls back to a
+  // fully static card with zero animation.
+  const [reducedMotion, setReducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReducedMotion(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   const pending = ['pending', 'running', 'in_progress'].includes(toolCall.status);
   const failed = ['failed', 'error'].includes(toolCall.status);
   const { tier, status, flags, reason } = parseResult(toolCall);
@@ -71,7 +88,12 @@ export default function SafetyGateCard({ toolCall, onRespond }) {
 
   if (caution) {
     return (
-      <div className="mt-2 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 overflow-hidden">
+      <motion.div
+        initial={reducedMotion ? false : { opacity: 0, scale: 0.97, y: 4 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="mt-2 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 overflow-hidden"
+      >
         <div className="bg-amber-500 text-white px-4 py-2.5 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4" />
           <span className="font-semibold text-sm tracking-tight">Safety Note</span>
@@ -90,13 +112,35 @@ export default function SafetyGateCard({ toolCall, onRespond }) {
           )}
           <p className="text-xs text-muted-foreground">A licensed provider makes all clinical decisions — I'll carry these notes forward to your consultation.</p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
-  // CRITICAL / HIGH / BLOCKED — the refusal (the killer demo moment)
+  // CRITICAL / HIGH / BLOCKED — the refusal (the killer demo moment). Gets a
+  // brief entrance plus a sustained soft red glow while it's actually blocking
+  // — a judge should register this without having to spot it in a scrolling
+  // chat. The glow loops independently of the one-time entrance (per-property
+  // transition overrides below), and both drop out entirely under
+  // prefers-reduced-motion.
   return (
-    <div className="mt-2 rounded-xl border-2 border-red-500/50 bg-red-50 dark:bg-red-950/30 overflow-hidden">
+    <motion.div
+      initial={reducedMotion ? false : { opacity: 0, scale: 0.96, y: 6 }}
+      animate={reducedMotion ? { opacity: 1, scale: 1, y: 0 } : {
+        opacity: 1, scale: 1, y: 0,
+        boxShadow: [
+          '0 0 0 0px rgba(239,68,68,0)',
+          '0 0 0 6px rgba(239,68,68,0.22)',
+          '0 0 0 0px rgba(239,68,68,0)',
+        ],
+      }}
+      transition={reducedMotion ? { duration: 0 } : {
+        opacity: { duration: 0.25, ease: 'easeOut' },
+        scale: { duration: 0.25, ease: 'easeOut' },
+        y: { duration: 0.25, ease: 'easeOut' },
+        boxShadow: { duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.25 },
+      }}
+      className="mt-2 rounded-xl border-2 border-red-500/50 bg-red-50 dark:bg-red-950/30 overflow-hidden"
+    >
       <div className="bg-red-600 text-white px-4 py-3 flex items-center gap-2">
         <ShieldAlert className="w-5 h-5" />
         <span className="font-semibold tracking-tight">Safety Alert — I can't proceed</span>
@@ -165,6 +209,6 @@ export default function SafetyGateCard({ toolCall, onRespond }) {
           <p className="text-xs text-muted-foreground">Reply in the chat to let me know how you'd like to proceed.</p>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

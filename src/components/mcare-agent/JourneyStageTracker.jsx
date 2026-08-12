@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   MessageSquare, ShieldCheck, ShieldAlert, Search, Stethoscope,
   FileCheck, CalendarCheck, CheckCircle2, Activity, Flag
@@ -97,6 +98,21 @@ export default function JourneyStageTracker({ messages }) {
   const { stage, safetyBlocked } = deriveStage(messages);
   const activeIdx = STAGES.findIndex(s => s.key === stage);
 
+  // Active-stage pulse — an honest, cheap "this is what's happening right now"
+  // signal for a judge glancing at the demo mid-conversation, not just a color
+  // swap they have to notice. Respects prefers-reduced-motion the same way
+  // LivingOrb.jsx does (src/components/mcare/LivingOrb.jsx:47-55) — falls back
+  // to the original static ring with zero animation.
+  const [reducedMotion, setReducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReducedMotion(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   return (
     <div className="border-b border-border bg-muted/30">
       <div className="max-w-3xl mx-auto w-full px-4 py-3">
@@ -110,15 +126,25 @@ export default function JourneyStageTracker({ messages }) {
             return (
               <React.Fragment key={s.key}>
                 <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all"
-                    style={{
-                      borderColor: color,
-                      background: isActive ? color : 'transparent',
-                      boxShadow: isActive ? `0 0 0 3px ${color}22` : 'none',
-                    }}
-                  >
-                    <Icon className="w-3.5 h-3.5" style={{ color: isActive ? '#060B16' : color }} />
+                  <div className="relative w-7 h-7 flex items-center justify-center">
+                    {isActive && !reducedMotion && (
+                      <motion.div
+                        className="absolute inset-0 rounded-full pointer-events-none"
+                        style={{ border: `2px solid ${color}` }}
+                        animate={{ scale: [1, 1.8], opacity: [0.7, 0] }}
+                        transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+                      />
+                    )}
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all"
+                      style={{
+                        borderColor: color,
+                        background: isActive ? color : 'transparent',
+                        boxShadow: isActive ? `0 0 0 3px ${color}22` : 'none',
+                      }}
+                    >
+                      <Icon className="w-3.5 h-3.5" style={{ color: isActive ? '#060B16' : color }} />
+                    </div>
                   </div>
                   <span
                     className="text-[9px] font-semibold uppercase tracking-wide whitespace-nowrap"
