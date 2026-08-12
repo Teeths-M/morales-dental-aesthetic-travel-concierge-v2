@@ -10,7 +10,7 @@
  *
  * - idle:      slow breathing — nothing is happening, matches index.css's
  *              existing m-breathe cadence.
- * - listening: tighter, faster pulse while VoiceInputButton is actually
+ * - listening: tighter, fast pulse while VoiceInputButton is actually
  *              recording — wired to its real recording state, not simulated.
  * - thinking:  a rotating gold sweep across the core — replaces the old
  *              flat three-dot pulse for exactly the states that already set
