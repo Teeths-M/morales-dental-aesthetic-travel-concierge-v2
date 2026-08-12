@@ -19,14 +19,15 @@
  * confidence scoring before treating it as anything more than a lead — see
  * discoverProviderCandidates/entry.ts for the full pipeline.
  *
- * NOTE: Tavily's response shape below (`results[].title/url/content/score`)
- * is written from current documentation, not verified against a live call —
- * same disclosed caveat as currencyConvert.ts. Re-confirm against Tavily's
- * docs (https://docs.tavily.com) before this is trusted in production, and
- * once a real TAVILY_API_KEY exists, Publish this alongside
- * discoverProviderCandidates before adding it to m_care.jsonc's tool_configs
- * — an unpublished tool grant made M-Care go completely silent once already
- * (see CLAUDE.md's Phase 10).
+ * Response shape (`results[].title/url/content/score`) and auth mechanism
+ * (Authorization: Bearer <key>, NOT an api_key field in the JSON body) were
+ * cross-checked against Tavily's current docs + a second independent source
+ * right before this comment was written — an earlier version of this file
+ * put api_key in the request body, which is wrong and would have silently
+ * 401'd on a real key. Once a real TAVILY_API_KEY exists, Publish this
+ * alongside discoverProviderCandidates before adding it to m_care.jsonc's
+ * tool_configs — an unpublished tool grant made M-Care go completely silent
+ * once already (see CLAUDE.md's Phase 10).
  */
 
 export type ProviderSearchResult = {
@@ -56,9 +57,11 @@ export async function searchForProviders(query: string): Promise<ProviderSearchR
   try {
     const res = await fetch('https://api.tavily.com/search', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        api_key: apiKey,
         query,
         max_results: 10,
         search_depth: 'basic',
