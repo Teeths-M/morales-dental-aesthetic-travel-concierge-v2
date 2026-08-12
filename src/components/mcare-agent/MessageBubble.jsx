@@ -53,20 +53,27 @@ const extractQr = (raw) => {
   return { text, qr: { label: match[1].trim(), dest: match[2].trim() } };
 };
 
-// Extract a {{providerstatus:TIER|Name}} token M-Care emits whenever it
-// names a specific provider, so the chat visibly distinguishes what's
-// actually known about them instead of relying on a sentence alone to carry
-// that distinction. TIER is 'discovered' (a discoverProviderCandidates/
-// Tavily result) or 'approved' (a matchDoctorsForProcedure result — every
-// doctor that tool can return already cleared Morales's full pipeline).
-// 'verified' is a real tier in the data model but not yet emitted by any
-// tool — see ProviderStatusBadge.jsx.
+// Extract every {{providerstatus:TIER|Name}} token M-Care emits — a single
+// reply routinely names several providers at once (e.g. a list of web-
+// discovered candidates), unlike {{maps:...}}/{{qr:...}} which only ever
+// appear once per message, so this must find ALL matches, not just the
+// first — an earlier version only stripped one occurrence and left every
+// token after it leaking into the visible text as raw {{...}} syntax.
+// TIER is 'discovered' (a discoverProviderCandidates/Tavily result) or
+// 'approved' (a matchDoctorsForProcedure result — every doctor that tool
+// can return already cleared Morales's full pipeline). 'verified' is a real
+// tier in the data model but not yet emitted by any tool — see
+// ProviderStatusBadge.jsx.
 const extractProviderStatus = (raw) => {
-  if (!raw) return { text: '', providerStatus: null };
-  const match = raw.match(/\{\{providerstatus:([^|]*)\|([\s\S]*?)\}\}/);
-  if (!match) return { text: raw.trim(), providerStatus: null };
-  const text = raw.replace(match[0], '').trim();
-  return { text, providerStatus: { tier: match[1].trim().toLowerCase(), name: match[2].trim() } };
+  if (!raw) return { text: '', providerStatuses: [] };
+  const matches = [...raw.matchAll(/\{\{providerstatus:([^|]*)\|([\s\S]*?)\}\}/g)];
+  if (matches.length === 0) return { text: raw.trim(), providerStatuses: [] };
+  let text = raw;
+  for (const m of matches) text = text.replace(m[0], '');
+  return {
+    text: text.trim(),
+    providerStatuses: matches.map(m => ({ tier: m[1].trim().toLowerCase(), name: m[2].trim() })),
+  };
 };
 
 // Backward-compat: if M-Care emits a bare waze / google-maps / apple-maps URL
@@ -402,7 +409,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t1, choices } = extractChoices(message.content);
           const { text: t2, maps } = extractMaps(t1);
           const { text: t3, qr } = extractQr(t2);
-          const { text, providerStatus } = extractProviderStatus(t3);
+          const { text, providerStatuses } = extractProviderStatus(t3);
           const mapUrls = extractMapUrls(text);
           const chipBase = 'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95';
           // revealUpTo (word count) is undefined for every message except
@@ -415,7 +422,13 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           return (
             <>
               {displayText && !isPureVoiceNote && <p className="text-sm whitespace-pre-wrap">{stripMd(displayText)}</p>}
-              {providerStatus && <ProviderStatusBadge tier={providerStatus.tier} name={providerStatus.name} />}
+              {providerStatuses.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {providerStatuses.map((ps, idx) => (
+                    <ProviderStatusBadge key={`${ps.tier}-${ps.name}-${idx}`} tier={ps.tier} name={ps.name} />
+                  ))}
+                </div>
+              )}
               {choices.length > 0 && onChoice && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {choices.map((c, idx) => (
