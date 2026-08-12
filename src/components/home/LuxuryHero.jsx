@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import LiveJourneyCard from './LiveJourneyCard';
+import LivingMOrb from './LivingMOrb';
 import { usePlatformMode } from '@/context/PlatformModeContext';
 import { Shield, CheckCircle, Heart, Play } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
@@ -222,6 +223,11 @@ export default function LuxuryHero() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col z-10 lg:pr-20 py-20 lg:py-0"
           >
+            {/* ── LIVING M ORB — the hero's own "living agent" presence ── */}
+            <div style={{ marginBottom: 16 }}>
+              <LivingMOrb size={64} />
+            </div>
+
             {/* ── HERO CHAT EXCHANGE — replaces the badge + story ticker ── */}
             <div style={{ marginBottom: 20 }}>
               <HeroChatBubbles key={mode} isMedical={isMedical} />
