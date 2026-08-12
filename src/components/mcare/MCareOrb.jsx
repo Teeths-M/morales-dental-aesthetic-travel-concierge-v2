@@ -834,15 +834,17 @@ export default function MCareOrb() {
     if (!open) { autoResumeConversationalRef.current = false; setConversationalMode(false); }
   }, [open]);
 
-  const orbState = listening
-    ? 'listening'
-    : agentSending
-      ? 'thinking'
-      : speaking
-        ? 'speaking'
-        : (conversationalMode && conversationalListening)
-          ? 'listening'
-          : 'idle';
+  const orbState = !isOnline
+    ? 'error'
+    : listening
+      ? 'listening'
+      : agentSending
+        ? 'thinking'
+        : speaking
+          ? 'speaking'
+          : (conversationalMode && conversationalListening)
+            ? 'listening'
+            : 'idle';
 
   useEffect(() => {
     if (!open) return;

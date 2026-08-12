@@ -1,45 +1,33 @@
-// LivingMOrb — the hero's "living agent" presence (buildathon polish, per
-// Portia's Living-M-Orb spec). A separate component from M-Care's own
-// src/components/mcare/LivingOrb.jsx on purpose: that one is wired to real
-// chat state (listening/thinking/speaking); this one is the site's general
-// brand mark living in the marketing hero, with no chat state to reflect —
-// genuinely different contexts, not worth merging into one component. Both
-// now render the same /morales-m-mark.png glyph and share their eye-tracking
-// behavior via src/lib/useLivingEyes.js, so the two "living M" surfaces move
-// identically without duplicating the requestAnimationFrame logic twice.
+// LivingMOrb — the hero's "living agent" presence. A separate component
+// from M-Care's own src/components/mcare/LivingOrb.jsx on purpose: that one
+// is wired to real chat state (listening/thinking/speaking); this one is
+// the site's general brand mark living in the marketing hero, with no chat
+// state to reflect — genuinely different contexts, not worth merging into
+// one component. Both render the same /morales-m-mark.png glyph as an
+// embossed emblem, so the two "living M" surfaces read as one identity.
+//
+// 2026-08-12: removed the eye-dots and cursor-tracking added earlier the
+// same day (src/lib/useLivingEyes.js, now deleted as dead code — this was
+// its only two callers). Portia's live test of M-Care's own orb found the
+// eyes reading as a face ("something is watching me") rather than an AI
+// presence ("something intelligent is here") — a design principle stated
+// explicitly, applied consistently to both orbs rather than leaving one
+// with eyes and one without.
 //
 // Behavior (deliberately scoped to what's cheap and honest — no fabricated
-// "AI thinking" claims, this is presentational only):
-// - Idle: soft breathing glow + eyes drift slowly left/right on their own,
-//   biased slightly rightward — an honest, cheap stand-in for "glancing
-//   toward" whatever sits to its right (the live journey card), without
-//   needing per-element position math.
-// - Cursor nearby: eyes smoothly track the mouse within a generous radius.
-// - Wakes up ~300ms after mount (fade + scale in) instead of appearing
-//   fully-formed — a real "the page just loaded" moment, not a fake one.
-//
-// Not built this pass (kept out deliberately, not silently dropped): a
-// click-engagement pulse on "Start Your Journey" — that link navigates via
-// React Router immediately, so a ~1s pulse would never actually be seen
-// without adding an artificial navigation delay, which wasn't asked for; a
-// status dot; mobile touch-follow (mobile gets the idle drift for free,
-// since no mousemove ever fires there — exactly what a touch device should
-// do per the spec).
+// "AI thinking" claims, this is presentational only): soft breathing glow,
+// and wakes up ~300ms after mount (fade + scale in) instead of appearing
+// fully-formed — a real "the page just loaded" moment, not a fake one.
 //
 // Respects prefers-reduced-motion — falls back to a fully static glowing
-// mark with fixed eyes, same pattern as LivingOrb.jsx.
-import React, { useEffect, useRef, useState } from 'react';
+// mark, same pattern as LivingOrb.jsx.
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BRAND } from '@/lib/brandTokens';
-import { useLivingEyes } from '@/lib/useLivingEyes';
 
 const GOLD = BRAND.gold;
 
 export default function LivingMOrb({ size = 64 }) {
-  const orbRef = useRef(null);
-  const eyeLRef = useRef(null);
-  const eyeRRef = useRef(null);
-
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -57,8 +45,6 @@ export default function LivingMOrb({ size = 64 }) {
     return () => clearTimeout(t);
   }, []);
 
-  useLivingEyes({ orbRef, eyeLRef, eyeRRef, reducedMotion });
-
   if (reducedMotion) {
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -73,7 +59,6 @@ export default function LivingMOrb({ size = 64 }) {
 
   return (
     <motion.div
-      ref={orbRef}
       initial={{ opacity: 0, scale: 0.82 }}
       animate={awake ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.82 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -103,32 +88,12 @@ export default function LivingMOrb({ size = 64 }) {
         transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Embossed M watermark */}
+      {/* Embossed M — the emblem, never a face */}
       <img
         src="/morales-m-mark.png"
         alt="Morales"
-        style={{ width: size * 0.7, height: size * 0.7, objectFit: 'contain', position: 'relative', zIndex: 1, opacity: 0.4 }}
+        style={{ width: size * 0.7, height: size * 0.7, objectFit: 'contain', position: 'relative', zIndex: 1, opacity: 0.42 }}
       />
-
-      {/* Eyes — two small independently-tracked dots */}
-      <div style={{ position: 'absolute', top: '38%', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: size * 0.16, zIndex: 2 }}>
-        <span
-          ref={eyeLRef}
-          style={{
-            width: size * 0.09, height: size * 0.09, borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 30%, #fff, ${GOLD})`,
-            boxShadow: `0 0 4px ${GOLD}aa`, display: 'block',
-          }}
-        />
-        <span
-          ref={eyeRRef}
-          style={{
-            width: size * 0.09, height: size * 0.09, borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 30%, #fff, ${GOLD})`,
-            boxShadow: `0 0 4px ${GOLD}aa`, display: 'block',
-          }}
-        />
-      </div>
     </motion.div>
   );
 }

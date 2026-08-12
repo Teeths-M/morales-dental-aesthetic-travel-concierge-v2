@@ -6,7 +6,7 @@
  * framer-motion (already used for concentric-ring effects in
  * BeatingHeartTracker.jsx / HeartRingAnimation.jsx) drives layered,
  * staggered rings around a glass core; a `state` prop swaps the animation
- * config, never the DOM shape, between four honest states:
+ * config, never the DOM shape, between five honest states:
  *
  * - idle:      slow breathing — nothing is happening, matches index.css's
  *              existing m-breathe cadence.
@@ -20,44 +20,42 @@
  *              replying" the same way the app's thinkingStatus narration is
  *              honest: tied to a real state transition, never a fabricated
  *              audio-reactive claim (there's no real TTS signal to react to).
+ * - error:     a deliberately muted, restrained ring — wired to MCareOrb's
+ *              real `isOnline` (navigator.onLine) signal, not a fabricated
+ *              status. Same orb shape, never a different icon.
  *
  * Respects prefers-reduced-motion — falls back to today's static glow.
  *
- * flashToken (Conversational Mode) is a one-shot addition on top of the four
- * looping states above, not a fifth STATE_CONFIG entry — it's a brief ring
- * pulse confirming a real barge-in just happened (the user's own voice
+ * flashToken (Conversational Mode) is a one-shot addition on top of the
+ * looping states above, not a STATE_CONFIG entry of its own — it's a brief
+ * ring pulse confirming a real barge-in just happened (the user's own voice
  * stopped M-Care mid-reply), never a looping/ambient effect. Any change to
  * flashToken (an incrementing counter, not a boolean) replays it via a React
  * key remount, so two barge-ins in a row each get their own flash even if
  * the previous one hasn't finished fading.
  *
- * 2026-08-12: swapped the inner mark from /mcare-logo.png (a gold M inside a
- * blue globe/network graphic) to /morales-m-mark.png — the same gold M glyph
- * the homepage's LivingMOrb (src/components/home/LivingMOrb.jsx) uses — plus
- * two small eye-dots, so M-Care's own orb visually matches the hero's living
- * M instead of looking like a different mark. Eye-tracking behavior is
- * shared via src/lib/useLivingEyes.js rather than duplicated. The four
- * STATE_CONFIG ring/glow behaviors below are untouched — those are real,
- * wired to actual voice/tool state, not cosmetic.
+ * 2026-08-12: removed the eye-dots added earlier the same day — Portia's
+ * live test found them reading as a face ("something is watching me")
+ * rather than an AI presence ("something intelligent is here"), a design
+ * principle she stated explicitly. Back to an emblem-only orb: the
+ * /morales-m-mark.png glyph, embossed at reduced opacity, no eyes, no face,
+ * ever. src/lib/useLivingEyes.js (the eye-tracking hook) is removed as
+ * dead code — this was its only two callers.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useLivingEyes } from '@/lib/useLivingEyes';
 
 const GOLD = '#D4AF37';
 
 const STATE_CONFIG = {
-  idle:      { ringCount: 2, duration: 3.5, ringScale: 1.32, ringOpacity: 0.20, coreScale: [1, 1.03, 1], sweep: false },
-  listening: { ringCount: 3, duration: 1.1, ringScale: 1.6,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],  sweep: false },
-  thinking:  { ringCount: 3, duration: 1.7, ringScale: 1.45, ringOpacity: 0.30, coreScale: [1, 1.05, 1], sweep: true },
-  speaking:  { ringCount: 3, duration: 0.9, ringScale: 1.5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1], sweep: false },
+  idle:      { ringCount: 2, duration: 3.5, ringScale: 1.32, ringOpacity: 0.20, coreScale: [1, 1.03, 1], sweep: false, glowAlpha: '55' },
+  listening: { ringCount: 3, duration: 1.1, ringScale: 1.6,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],  sweep: false, glowAlpha: '55' },
+  thinking:  { ringCount: 3, duration: 1.7, ringScale: 1.45, ringOpacity: 0.30, coreScale: [1, 1.05, 1], sweep: true,  glowAlpha: '55' },
+  speaking:  { ringCount: 3, duration: 0.9, ringScale: 1.5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1], sweep: false, glowAlpha: '55' },
+  error:     { ringCount: 1, duration: 2.8, ringScale: 1.12, ringOpacity: 0.12, coreScale: [1, 1.015, 1], sweep: false, glowAlpha: '28' },
 };
 
 export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 }) {
-  const orbRef = useRef(null);
-  const eyeLRef = useRef(null);
-  const eyeRRef = useRef(null);
-
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -67,8 +65,6 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
-
-  useLivingEyes({ orbRef, eyeLRef, eyeRRef, reducedMotion });
 
   if (reducedMotion) {
     return (
@@ -81,7 +77,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
   const cfg = STATE_CONFIG[state] || STATE_CONFIG.idle;
 
   return (
-    <div ref={orbRef} style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {flashToken > 0 && (
         <motion.div
           key={flashToken}
@@ -118,34 +114,14 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
           background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.22), rgba(10,20,28,0.9))',
           backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
           border: '1px solid rgba(255,255,255,0.14)',
-          boxShadow: `0 0 ${Math.round(size * 0.5)}px ${GOLD}55, inset 0 1px 0 rgba(255,255,255,0.14)`,
+          boxShadow: `0 0 ${Math.round(size * 0.5)}px ${GOLD}${cfg.glowAlpha}, inset 0 1px 0 rgba(255,255,255,0.14)`,
         }}
         animate={{ scale: cfg.coreScale }}
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Embossed M watermark — matches the homepage's LivingMOrb */}
-      <img src="/morales-m-mark.png" alt="M-Care" style={{ width: size * 0.7, height: size * 0.7, position: 'relative', zIndex: 1, opacity: 0.4 }} />
-
-      {/* Eyes — two small independently-tracked dots, same treatment as LivingMOrb */}
-      <div style={{ position: 'absolute', top: '38%', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: size * 0.16, zIndex: 2 }}>
-        <span
-          ref={eyeLRef}
-          style={{
-            width: size * 0.09, height: size * 0.09, borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 30%, #fff, ${GOLD})`,
-            boxShadow: `0 0 4px ${GOLD}aa`, display: 'block',
-          }}
-        />
-        <span
-          ref={eyeRRef}
-          style={{
-            width: size * 0.09, height: size * 0.09, borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 30%, #fff, ${GOLD})`,
-            boxShadow: `0 0 4px ${GOLD}aa`, display: 'block',
-          }}
-        />
-      </div>
+      {/* Embossed M — the emblem, never a face */}
+      <img src="/morales-m-mark.png" alt="M-Care" style={{ width: size * 0.7, height: size * 0.7, position: 'relative', zIndex: 1, opacity: 0.42 }} />
     </div>
   );
 }
