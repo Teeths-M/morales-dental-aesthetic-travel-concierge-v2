@@ -2444,23 +2444,48 @@ test('PROVIDER TRUST TIERS: matchDoctorsForProcedure can only ever return an alr
     .not.toMatch(/(status|verification_status)\s*:\s*['"](active|verified|approved)['"]/);
 });
 
-test('PROVIDER TRUST TIERS: M-Care is never instructed to emit an unearned {{providerstatus:verified}} tag', () => {
-  // Three tiers exist in the badge component (discovered/verified/approved),
-  // but no tool gives M-Care a real signal to honestly justify 'verified'
-  // yet (see ProviderStatusBadge.jsx's own header comment). The instructions
-  // must say so explicitly, and neither provider tool's own description may
-  // suggest emitting that tag.
+test('PROVIDER TRUST TIERS: {{providerstatus:verified}} is only ever conditioned on a real registry-check result', () => {
+  // A discovered candidate CAN now honestly reach VERIFIED — but only after
+  // verifyDiscoveredCandidate actually runs a real registry check, never
+  // from identity_confidence alone and never unconditionally. The
+  // instructions must tie the emit decision to that tool's own
+  // eligible_for_verified_badge field, and must explicitly say confidence
+  // alone is not enough.
   const mcare = read('base44/agents/m_care.jsonc');
-  const verifiedTokenMentions = (mcare.match(/\{\{providerstatus:verified/g) || []).length;
-  // Both the instructions' own rule ("Never emit {{providerstatus:verified...")
-  // and a tool description ("...never {{providerstatus:verified|Name} or...")
-  // are legitimate, differently-phrased prohibitions — this only requires
-  // that "never" (case-insensitive) precedes the token somewhere nearby, not
-  // one exact fixed phrase.
-  const prohibitedMentions = (mcare.match(/never\s+(\{\{providerstatus:verified|emit\s+\{\{providerstatus:verified)/gi) || []).length;
-  expect(prohibitedMentions, 'the instructions must explicitly forbid emitting an unearned verified provider-status tag').toBeGreaterThan(0);
-  expect(verifiedTokenMentions, 'every mention of the verified provider-status token must be inside an explicit prohibition — never a positive instruction to emit it')
-    .toBe(prohibitedMentions);
+  expect(mcare, 'emitting verified must be conditioned on eligible_for_verified_badge')
+    .toMatch(/eligible_for_verified_badge:true/);
+  expect(mcare, 'the instructions must explicitly rule out confidence-alone as sufficient for the verified tag')
+    .toMatch(/identity_confidence alone[\s\S]{0,40}never/i);
+  // discoverProviderCandidates' own description (the FIRST tool a traveler's
+  // candidate comes from) must not unconditionally promise a verified tag —
+  // it must gate it on verifyDiscoveredCandidate having actually run.
+  const mcareData = JSON.parse(mcare);
+  const discoverDesc = mcareData.tool_configs.find((t) => t.function_name === 'discoverProviderCandidates')?.description || '';
+  expect(discoverDesc, 'discoverProviderCandidates must never suggest emitting verified unconditionally')
+    .toMatch(/never \{\{providerstatus:verified\|Name\}\} unless verifyDiscoveredCandidate/);
+});
+
+test('PROVIDER TRUST TIERS: verifyDiscoveredCandidate never promotes a candidate — a passed check is evidence, not approval', () => {
+  // Same structural discipline as discoverProviderCandidates's own invariant:
+  // a real registry match is genuine evidence for a human reviewer, never a
+  // self-sufficient promotion. This function may update the staging
+  // DiscoveredProviderCandidate row only — never a real partner entity, and
+  // never the candidate's own status field (which has no verified/approved
+  // value to write in the first place).
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const fn = strip(read('base44/functions/verifyDiscoveredCandidate/entry.ts'));
+
+  for (const entityName of ['Doctor', 'TravelAgency', 'TaxiService', 'Companion', 'SecurityAgency']) {
+    expect(fn, `verifyDiscoveredCandidate must never create or update a real ${entityName} record`)
+      .not.toMatch(new RegExp(`entities\\.${entityName}\\.(create|update)`));
+  }
+  expect(fn, "verifyDiscoveredCandidate must never write the candidate's status field to anything")
+    .not.toMatch(/\bstatus:\s*['"](verified|approved|active)['"]/);
+  // eligible_for_verified_badge must be a genuine AND of a real registry
+  // "found" result and NOT being routed to manual review — never a looser
+  // truthy check on confidence or relevance alone.
+  expect(fn, 'eligible_for_verified_badge must require both found and !route_to_manual')
+    .toMatch(/eligibleForVerifiedBadge\s*=\s*found\s*&&\s*!routeToManual/);
 });
 
 test('CLAIMS: the app does not advertise checks it does not perform', () => {

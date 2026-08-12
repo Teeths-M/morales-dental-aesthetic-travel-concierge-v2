@@ -1,7 +1,7 @@
 {
   "name": "DiscoveredProviderCandidate",
   "type": "object",
-  "description": "Staging record for a provider M-Care found via a Tavily web search but has NOT onboarded, verified, or contacted. This entity exists so a search result never gets confused with a real Doctor/TravelAgency/etc. record — a candidate is a lead, nothing more, until a human reviews it and runs it through the existing mcareCreate*Pending -> initiatePartnerVerification -> admin-approval pipeline (unchanged by this entity). Nothing in this schema — and no code that writes it — may ever assert a candidate is verified; verification_status intentionally has no 'verified' value at all, only what registry-check step (if any) was attempted.",
+  "description": "Staging record for a provider M-Care found via a Tavily web search but has NOT onboarded or contacted. This entity exists so a search result never gets confused with a real Doctor/TravelAgency/etc. record — a candidate is a lead, nothing more, until a human reviews it and runs it through the existing mcareCreate*Pending -> initiatePartnerVerification -> admin-approval pipeline (unchanged by this entity). verifyDiscoveredCandidate can run a REAL government-registry check (US/CO/MX) once a license number is supplied, writing an honest registry_result here — but this is evidence for a human reviewer, never a self-sufficient approval. The status field intentionally has no 'verified'/'approved'/'promoted' value at all — only a human, through the existing admin-approval pipeline, can ever move someone past 'candidate'.",
   "properties": {
     "source_query": {
       "type": "string",
@@ -66,10 +66,23 @@
       "type": "string",
       "enum": [
         "not_attempted",
-        "unsupported_country"
+        "unsupported_country",
+        "checked"
       ],
       "default": "not_attempted",
-      "description": "Whether an automated registry check was even possible at discovery time. A real registryLookup.ts check needs a license number, which a raw search snippet essentially never contains -- so this always stays 'not_attempted' or 'unsupported_country' at discovery; a real registry check happens later, during human review, once a license number is on hand."
+      "description": "Whether a registry check was even possible, and whether one has actually run. 'not_attempted'/'unsupported_country' at discovery time (a raw search snippet essentially never contains a license number). 'checked' means verifyDiscoveredCandidate ran a REAL registryLookup.ts call against a human-supplied license number -- the actual found/confidence/name-match outcome lives in registry_result, not encoded here, so this field never has to say 'verified' to convey a real result."
+    },
+    "registry_result": {
+      "type": "object",
+      "description": "The raw result object from registryLookup.ts's runLookup() the one time verifyDiscoveredCandidate actually ran a check -- found, confidence, registry_name, name_match, status, route_to_manual, etc. Absent until registry_check_status is 'checked'."
+    },
+    "license_number_checked": {
+      "type": "string",
+      "description": "The license number a human supplied to verifyDiscoveredCandidate -- kept for audit/reference, distinct from anything Tavily returned."
+    },
+    "registry_checked_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "status": {
       "type": "string",
