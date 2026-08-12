@@ -177,7 +177,7 @@ export default function MCareAgent() {
           <div className="flex items-center gap-2 flex-1">
             <McareAvatar size={36} />
             <div>
-              <h1 className="text-base font-display font-semibold text-foreground leading-tight">M-Care</h1>
+              <h1 className="text-lg font-display font-semibold text-foreground leading-tight tracking-tight">M-Care</h1>
               <p className="text-xs text-muted-foreground leading-tight">Patient Journey Coordinator</p>
             </div>
           </div>

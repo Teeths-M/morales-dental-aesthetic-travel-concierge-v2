@@ -1189,7 +1189,7 @@ export default function MCareOrb() {
               ? <LivingOrb state={orbState} size={36} flashToken={bargeInFlashToken} />
               : <McareAvatar size={36} />}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
+              <p style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
               <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Morales Super Agent</p>
             </div>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
