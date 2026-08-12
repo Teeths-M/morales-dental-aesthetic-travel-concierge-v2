@@ -34,16 +34,21 @@
  * key remount, so two barge-ins in a row each get their own flash even if
  * the previous one hasn't finished fading.
  *
- * 2026-08-12: removed the eye-dots added earlier the same day — Portia's
- * live test found them reading as a face ("something is watching me")
- * rather than an AI presence ("something intelligent is here"), a design
- * principle she stated explicitly. Back to an emblem-only orb: the
- * /morales-m-mark.png glyph, embossed at reduced opacity, no eyes, no face,
- * ever. src/lib/useLivingEyes.js (the eye-tracking hook) is removed as
- * dead code — this was its only two callers.
+ * 2026-08-12, twice: first removed eye-dots added earlier the same day
+ * (Portia's live test read them as a face). Then, looking at the resulting
+ * emblem-only orb next to her original reference image, she explicitly
+ * reversed that call — asked for a friendly, playful face (eyes that blink
+ * and occasionally wink) with the M mark removed entirely, not the emblem.
+ * Eyes are back, the M glyph is gone; the dark glass-core/gold palette is
+ * kept (this app's brand language everywhere else), and blink/wink timing
+ * comes from the shared src/lib/useBlinkState.js hook (also used by the
+ * homepage's LivingMOrb) rather than duplicated per component. No mouth —
+ * "talking" is read as the existing real `speaking` ring state below, not a
+ * literal mouth shape.
  */
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useBlinkState } from '@/lib/useBlinkState';
 
 const GOLD = '#D4AF37';
 
@@ -66,10 +71,39 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
+  const blinkState = useBlinkState(reducedMotion);
+  const eyeW = size * 0.16;
+  const eyeH = size * 0.09;
+  const leftShut = blinkState === 'blink' || blinkState === 'wink-left';
+  const rightShut = blinkState === 'blink' || blinkState === 'wink-right';
+
+  const eyes = (
+    <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: size * 0.14, zIndex: 2 }}>
+      <motion.span
+        style={{ width: eyeW, height: eyeH, borderRadius: 999, background: GOLD, boxShadow: `0 0 4px ${GOLD}aa`, display: 'block', transformOrigin: 'center' }}
+        animate={{ scaleY: leftShut ? 0.12 : 1 }}
+        transition={{ duration: 0.11, ease: 'easeInOut' }}
+      />
+      <motion.span
+        style={{ width: eyeW, height: eyeH, borderRadius: 999, background: GOLD, boxShadow: `0 0 4px ${GOLD}aa`, display: 'block', transformOrigin: 'center' }}
+        animate={{ scaleY: rightShut ? 0.12 : 1 }}
+        transition={{ duration: 0.11, ease: 'easeInOut' }}
+      />
+    </div>
+  );
+
   if (reducedMotion) {
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <img src="/morales-m-mark.png" alt="M-Care" style={{ width: size * 0.72, height: size * 0.72, objectFit: 'contain', filter: `drop-shadow(0 0 6px ${GOLD}66)` }} />
+        <div
+          style={{
+            position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.22), rgba(10,20,28,0.9))',
+            border: '1px solid rgba(255,255,255,0.14)',
+            boxShadow: `0 0 ${Math.round(size * 0.5)}px ${GOLD}55, inset 0 1px 0 rgba(255,255,255,0.14)`,
+          }}
+        />
+        {eyes}
       </div>
     );
   }
@@ -120,8 +154,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Embossed M — the emblem, never a face */}
-      <img src="/morales-m-mark.png" alt="M-Care" style={{ width: size * 0.7, height: size * 0.7, position: 'relative', zIndex: 1, opacity: 0.42 }} />
+      {eyes}
     </div>
   );
 }
