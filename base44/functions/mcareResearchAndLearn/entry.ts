@@ -1,4 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { searchForProviders } from '../../shared/providerDiscovery.ts';
+import { logExternalSearch } from '../../shared/logExternalSearch.ts';
 
 // ── mcareResearchAndLearn ─────────────────────────────────────────────────────
 // M-Care's "when stuck, research and learn" brain. Given a question it can't
@@ -6,17 +8,23 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 //   1. Checks the McareKnowledge brain for an existing >=80%-accurate answer
 //      (so repeat questions are answered instantly and the recalled_count
 //      increments).
-//   2. If no good match, researches the question via an LLM with live web
-//      context (factual, non-diagnostic), returning a structured answer with a
-//      self-reported confidence score.
+//   2. If no good match, researches the question. Tries Tavily first (real,
+//      structured, inspectable search results embedded directly in the
+//      prompt — see providerDiscovery.ts) and, only when Tavily is
+//      unavailable or returns nothing, falls straight through to the
+//      original Base44 InvokeLLM({add_context_from_internet:true}) black-box
+//      grounding call, byte-identical to before this existed. Every Tavily
+//      attempt is audit-logged via logExternalSearch regardless of outcome.
+//      Either path returns a structured answer with a self-reported
+//      confidence score — this function's request/response contract and
+//      recall/persistence logic are unchanged.
 //   3. If confidence >= 80, persists the Q&A to McareKnowledge so the next
 //      traveler who asks the same thing gets the answer from memory.
 //   4. Returns the answer, the confidence, whether it was recalled vs freshly
 //      researched, and whether it was saved to the brain.
 //
 // Public (requireAuth false) so an anonymous M-Care traveler can benefit, but
-// the user (if any) is recorded as the learner. Web research uses a model that
-// supports add_context_from_internet.
+// the user (if any) is recorded as the learner.
 
 const ACCURACY_THRESHOLD = 80;
 
@@ -86,8 +94,25 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       });
     }
 
-    // 2. Research with live web context. gemini_3_flash supports
-    //    add_context_from_internet; non-diagnostic, factual answers only.
+    // 2. Research. Try Tavily's structured, inspectable search first.
+    const tavilyResult = await searchForProviders(question);
+    await logExternalSearch(base44, {
+      query: question,
+      search_type: 'other',
+      vendor: tavilyResult.supported ? 'tavily' : 'none',
+      status: tavilyResult.supported ? 'success' : 'unavailable',
+      result_count: tavilyResult.supported ? tavilyResult.results.length : 0,
+      initiated_by: 'mcareResearchAndLearn',
+    });
+    const usedTavily = tavilyResult.supported && tavilyResult.results.length > 0;
+    const sourceContext = usedTavily
+      ? `\n\nReal web search results to ground your answer — cite what's relevant, ignore what isn't:\n${(tavilyResult as any).results.map((r: any, i: number) => `${i + 1}. ${r.title} (${r.url}): ${r.snippet}`).join('\n')}`
+      : '';
+
+    // gemini_3_flash supports add_context_from_internet; non-diagnostic,
+    // factual answers only. Only falls back to the black-box grounding flag
+    // when Tavily didn't supply real sources — preserves the exact original
+    // research path as a fallback, unchanged.
     const schema = {
       type: 'object' as const,
       properties: {
@@ -109,13 +134,13 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 - Return JSON only matching the schema.
 
 Question: """${question}"""
-${context ? `Context: ${context}` : ''}`;
+${context ? `Context: ${context}` : ''}${sourceContext}`;
 
     let research: any;
     try {
       research = await base44.asServiceRole.integrations.Core.InvokeLLM({
         model: 'gemini_3_flash',
-        add_context_from_internet: true,
+        add_context_from_internet: !usedTavily,
         prompt,
         response_json_schema: schema,
       });
@@ -166,6 +191,7 @@ ${context ? `Context: ${context}` : ''}`;
       confidence_score: confidence,
       accuracy_estimation: research?.accuracy_estimation || '',
       source_summary: research?.source_summary || '',
+      used_tavily: usedTavily,
       knowledge_id,
       threshold: ACCURACY_THRESHOLD,
       note: saved

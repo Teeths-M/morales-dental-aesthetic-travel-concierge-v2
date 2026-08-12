@@ -7,14 +7,12 @@
  * silently no-op when an underlying capability doesn't exist should instead
  * return one of these explicit states — never a fabricated success.
  *
- * Today exactly one of these is ever actually reachable end-to-end:
- * DISCOVERY_UNAVAILABLE. There is no structured, controllable, per-source
- * web-search or business-directory API anywhere in this codebase — only
- * Base44's black-box InvokeLLM({add_context_from_internet:true}) grounding
- * flag (mcareResearchAndLearn), which cannot resolve provider identity or
- * return inspectable sources. If real search/discovery infrastructure is
- * ever added, replace this file's guarantee — don't bolt a "sometimes real"
- * result on beside it.
+ * providerDiscoveryStatus() now genuinely reflects live state: it checks for
+ * a real TAVILY_API_KEY (providerDiscovery.ts's searchForProviders is the
+ * actual caller) rather than the static "always unavailable" stub this used
+ * to be. A search hit is still never a verified fact — see
+ * discoverProviderCandidates/entry.ts for the full candidate → verification
+ * → confidence → memory pipeline a Tavily result has to pass through.
  */
 
 import { REGISTRY_ADAPTERS } from './registryLookup.ts';
@@ -37,15 +35,17 @@ export type CapabilityAvailable = { available: true };
 
 /**
  * The honest answer to "can M-Care find a provider Morales has never heard
- * from?" — always unavailable today. Discovery only ever happens through
- * self-registration (mcareCreate*Pending) or a patient personally naming a
- * doctor they already know (submitDoctorNomination) — never an open-web search.
+ * from?" — true only when a real TAVILY_API_KEY is configured. Without one,
+ * discovery only ever happens through self-registration (mcareCreate*Pending)
+ * or a patient personally naming a doctor they already know
+ * (submitDoctorNomination) — never an open-web search.
  */
-export function providerDiscoveryStatus(): CapabilityGapResult {
+export function providerDiscoveryStatus(): CapabilityGapResult | CapabilityAvailable {
+  if (Deno.env.get('TAVILY_API_KEY')) return { available: true };
   return {
     available: false,
     state: CAPABILITY_GAP.DISCOVERY_UNAVAILABLE,
-    reason: 'No structured web-search or business-directory integration exists yet. M-Care can only work with providers who already signed up themselves or were personally nominated by a patient — it cannot search the open web for a new one.',
+    reason: 'No TAVILY_API_KEY configured. M-Care can only work with providers who already signed up themselves or were personally nominated by a patient — it cannot search the open web for a new one yet.',
   };
 }
 

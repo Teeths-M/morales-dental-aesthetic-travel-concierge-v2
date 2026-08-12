@@ -1,0 +1,78 @@
+{
+  "name": "ExternalSearchLog",
+  "type": "object",
+  "description": "Audit log of every external web-search call M-Care's discovery tools make (Tavily today). Separate from ContactAttempt, which logs outreach TO an already-known provider -- this logs searches FOR a lead, including ones that find nothing or fail because Tavily is unavailable. Written by logExternalSearch.ts, a never-throwing helper -- logging a search must never block the search itself. Query text and result counts only, no patient PHI.",
+  "properties": {
+    "query": {
+      "type": "string"
+    },
+    "search_type": {
+      "type": "string",
+      "enum": [
+        "provider",
+        "procedure",
+        "destination",
+        "other"
+      ]
+    },
+    "vendor": {
+      "type": "string",
+      "enum": [
+        "tavily",
+        "none"
+      ],
+      "description": "'none' when Tavily was unavailable and the caller fell back to something else (or nothing)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "unavailable",
+        "failed"
+      ]
+    },
+    "result_count": {
+      "type": "number"
+    },
+    "initiated_by": {
+      "type": "string",
+      "description": "The function that made the search call, e.g. 'discoverProviderCandidates'."
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "query",
+    "search_type",
+    "vendor",
+    "status",
+    "initiated_by"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

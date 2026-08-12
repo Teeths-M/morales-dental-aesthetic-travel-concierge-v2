@@ -1,65 +1,88 @@
 /**
- * providerDiscovery — dormant web-search adapter, modeled directly on
+ * providerDiscovery — Tavily-backed web-discovery adapter, modeled on
  * registryLookup.ts's own { supported: boolean, ... } shape.
  *
- * This file has ZERO callers anywhere in the app. It is not granted to
- * M-Care's agent (no tool_configs entry, no m_care.jsonc mention), and it is
- * not wired into any live function — the same way registryLookup.ts itself
- * sat completely unwired until Phase 31 connected it.
+ * Rewritten from an earlier dormant Serper adapter built the same session —
+ * Tavily's free tier (1,000 credits/month, no card required) is the better
+ * fit for this project's "keep burn low, no card up front" standard than
+ * either Serper (card not required either, but Tavily's response shape is
+ * purpose-built for agent/LLM search rather than raw SERP scraping, which
+ * matches this use case better) or Brave (free tier now requires a card and
+ * bills uncapped by default).
  *
- * WHY IT EXISTS LIKE THIS: M-Care's own repeated instruction this session was
- * "no simulated tool execution, no fake search results" — so this cannot
- * pretend to search the open web without a real key. Instead it does exactly
- * what registryLookup.ts already does for an unsupported country: report an
- * honest `{ supported: false, message }` until real infrastructure exists.
- * The moment a SERPER_API_KEY is added as a Base44 secret, searchForProviders
- * starts returning real results with zero further code changes — but nothing
- * here should be wired into a live function or an agent tool grant until that
- * key exists and the real response shape has been verified against Serper's
- * current docs (written without a live key to test against).
+ * Same non-negotiable discipline as every dormant adapter this session: an
+ * honest { supported: false, message } when TAVILY_API_KEY is unset or a
+ * call fails — never a fabricated or silently-empty "success." A result
+ * from this file is a SEARCH HIT, never a verified fact. Callers must run
+ * it through identity resolution (providerCandidateMatch.ts), then
+ * verification (registryLookup.ts, when a real license number exists), then
+ * confidence scoring before treating it as anything more than a lead — see
+ * discoverProviderCandidates/entry.ts for the full pipeline.
+ *
+ * NOTE: Tavily's response shape below (`results[].title/url/content/score`)
+ * is written from current documentation, not verified against a live call —
+ * same disclosed caveat as currencyConvert.ts. Re-confirm against Tavily's
+ * docs (https://docs.tavily.com) before this is trusted in production, and
+ * once a real TAVILY_API_KEY exists, Publish this alongside
+ * discoverProviderCandidates before adding it to m_care.jsonc's tool_configs
+ * — an unpublished tool grant made M-Care go completely silent once already
+ * (see CLAUDE.md's Phase 10).
  */
 
 export type ProviderSearchResult = {
   title: string;
   url: string;
   snippet: string;
+  source: 'tavily';
+  relevance: number;
+  timestamp: string;
 };
 
 export type ProviderSearchResponse =
   | { supported: false; message: string }
-  | { supported: true; source: 'serper'; results: ProviderSearchResult[] };
+  | { supported: true; source: 'tavily'; results: ProviderSearchResult[] };
 
 export async function searchForProviders(query: string): Promise<ProviderSearchResponse> {
-  const apiKey = Deno.env.get('SERPER_API_KEY');
+  const apiKey = Deno.env.get('TAVILY_API_KEY');
   if (!apiKey) {
     return {
       supported: false,
-      message: 'No SERPER_API_KEY configured — provider discovery is not live yet. Add a Serper API key as a Base44 secret to activate this.',
+      message: 'No TAVILY_API_KEY configured — provider discovery is not live yet. Add a Tavily API key as a Base44 secret to activate this.',
     };
   }
 
+  const timestamp = new Date().toISOString();
+
   try {
-    const res = await fetch('https://google.serper.dev/search', {
+    const res = await fetch('https://api.tavily.com/search', {
       method: 'POST',
-      headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: query }),
-      signal: AbortSignal.timeout(8000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        max_results: 10,
+        search_depth: 'basic',
+      }),
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
-      return { supported: false, message: `Serper search request failed (HTTP ${res.status}).` };
+      return { supported: false, message: `Tavily search request failed (HTTP ${res.status}).` };
     }
     const data = await res.json();
-    const organic = Array.isArray(data?.organic) ? data.organic : [];
+    const results = Array.isArray(data?.results) ? data.results : [];
     return {
       supported: true,
-      source: 'serper',
-      results: organic.slice(0, 10).map((r: any) => ({
+      source: 'tavily',
+      results: results.slice(0, 10).map((r: any) => ({
         title: String(r?.title || ''),
-        url: String(r?.link || ''),
-        snippet: String(r?.snippet || ''),
+        url: String(r?.url || ''),
+        snippet: String(r?.content || ''),
+        source: 'tavily' as const,
+        relevance: typeof r?.score === 'number' ? r.score : 0,
+        timestamp,
       })),
     };
   } catch {
-    return { supported: false, message: 'Serper search request failed.' };
+    return { supported: false, message: 'Tavily search request failed.' };
   }
 }

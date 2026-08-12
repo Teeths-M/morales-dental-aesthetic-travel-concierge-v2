@@ -9,11 +9,32 @@ import { logProviderContactAttempt } from '../base44/shared/logProviderContactAt
 import { isFresh, TTL_MS } from '../base44/shared/freshness.ts';
 
 describe('capabilityGap — honest "not real yet" signaling', () => {
-  it('providerDiscoveryStatus always reports unavailable — no open-web discovery exists', () => {
-    const result = providerDiscoveryStatus();
+  // providerDiscoveryStatus reads Deno.env.get('TAVILY_API_KEY') directly —
+  // no Deno global exists in vitest's environment, so these two tests stub
+  // the minimal surface it touches, restoring it afterward. Deliberately not
+  // skipped: unlike an AudioContext/SpeechRecognition-coupled function
+  // elsewhere in this repo, Deno.env.get is a trivial, deterministic stub
+  // that doesn't risk masking real behavior — worth the coverage.
+  const withDenoEnv = (value, fn) => {
+    const prevDeno = globalThis.Deno;
+    globalThis.Deno = { env: { get: (key) => (key === 'TAVILY_API_KEY' ? value : undefined) } };
+    try {
+      return fn();
+    } finally {
+      globalThis.Deno = prevDeno;
+    }
+  };
+
+  it('providerDiscoveryStatus reports unavailable when no TAVILY_API_KEY is configured', () => {
+    const result = withDenoEnv(undefined, () => providerDiscoveryStatus());
     expect(result.available).toBe(false);
     expect(result.state).toBe(CAPABILITY_GAP.DISCOVERY_UNAVAILABLE);
-    expect(result.reason).toMatch(/self-registered|search|discover/i);
+    expect(result.reason).toMatch(/self-registered|search|discover|TAVILY/i);
+  });
+
+  it('providerDiscoveryStatus reports available once a real TAVILY_API_KEY exists', () => {
+    const result = withDenoEnv('fake-tavily-key', () => providerDiscoveryStatus());
+    expect(result).toEqual({ available: true });
   });
 
   it('verificationCapabilityFor reports available for a real registry country (US)', () => {

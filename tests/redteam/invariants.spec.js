@@ -2364,6 +2364,54 @@ test('PARTNERS: ContactAttempt (provider-outreach audit log) is admin-only and c
   expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
 });
 
+test('PARTNERS: DiscoveredProviderCandidate / ExternalSearchLog are admin-only and carry no patient PHI field', () => {
+  // Same shape of guarantee as ContactAttempt above, applied to the new
+  // Tavily web-discovery staging entities: a lead M-Care found on the open
+  // web is an internal ops record, never something a patient/partner reads
+  // directly, and its schema (search query, result text, a scored guess at
+  // an existing-partner match) must never grow a patient-identity or
+  // clinical field.
+  const rlsAdminOnly = (op) => new RegExp(
+    `"${op}"\\s*:\\s*\\{\\s*"user_condition"\\s*:\\s*\\{\\s*"role"\\s*:\\s*"admin"\\s*\\}\\s*\\}`
+  );
+  const forbiddenFieldKey = /"(client_name|client_email|client_phone|patient_name|patient_email|medical_\w*|diagnosis|condition)"\s*:\s*\{/i;
+
+  for (const entityFile of ['base44/entities/DiscoveredProviderCandidate.jsonc', 'base44/entities/ExternalSearchLog.jsonc']) {
+    const entity = read(entityFile);
+    for (const op of ['read', 'create', 'update', 'delete']) {
+      expect(entity, `${entityFile}.${op} must be admin-gated`).toMatch(rlsAdminOnly(op));
+    }
+    expect(entity, `${entityFile} must never declare a patient-identity or clinical field`).not.toMatch(forbiddenFieldKey);
+  }
+
+  // The candidate entity's own lifecycle enums must never contain a
+  // 'verified'/'promoted'/'active' value — structurally, nothing can ever
+  // set a state that reads as "this is a real, verified partner."
+  const candidateEntity = read('base44/entities/DiscoveredProviderCandidate.jsonc');
+  expect(candidateEntity, "DiscoveredProviderCandidate's status/verification enums must never include a 'verified' value")
+    .not.toMatch(/"(status|verification_status|verification_check_status|registry_check_status)"\s*:\s*\{[^}]*"verified"/);
+});
+
+test('PARTNERS: discoverProviderCandidates never promotes a web search result into a real partner record', () => {
+  // "Never treat a Tavily search result as verified" — enforced structurally,
+  // not just by prompt instruction. This tool may only ever write to the
+  // staging DiscoveredProviderCandidate entity; it must never call
+  // Doctor/TravelAgency/TaxiService/Companion/SecurityAgency.create, and must
+  // never write a top-level verification_status/status of 'verified' onto
+  // any entity.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const fn = strip(read('base44/functions/discoverProviderCandidates/entry.ts'));
+
+  for (const entityName of ['Doctor', 'TravelAgency', 'TaxiService', 'Companion', 'SecurityAgency']) {
+    expect(fn, `discoverProviderCandidates must never create a real ${entityName} record`)
+      .not.toMatch(new RegExp(`entities\\.${entityName}\\.create`));
+  }
+  expect(fn, "discoverProviderCandidates must never write a 'verified' status")
+    .not.toMatch(/(verification_status|status)\s*:\s*['"]verified['"]/);
+  expect(fn, 'every search call must be audit-logged via logExternalSearch')
+    .toContain('logExternalSearch(');
+});
+
 test('CLAIMS: the app does not advertise checks it does not perform', () => {
   // Nothing examines criminal history, and hotels have no verification path at
   // all. These three lines said otherwise on the two highest-traffic surfaces.

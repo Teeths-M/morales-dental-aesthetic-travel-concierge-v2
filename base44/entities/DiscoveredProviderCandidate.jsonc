@@ -1,0 +1,122 @@
+{
+  "name": "DiscoveredProviderCandidate",
+  "type": "object",
+  "description": "Staging record for a provider M-Care found via a Tavily web search but has NOT onboarded, verified, or contacted. This entity exists so a search result never gets confused with a real Doctor/TravelAgency/etc. record — a candidate is a lead, nothing more, until a human reviews it and runs it through the existing mcareCreate*Pending -> initiatePartnerVerification -> admin-approval pipeline (unchanged by this entity). Nothing in this schema — and no code that writes it — may ever assert a candidate is verified; verification_status intentionally has no 'verified' value at all, only what registry-check step (if any) was attempted.",
+  "properties": {
+    "source_query": {
+      "type": "string",
+      "description": "The search query that surfaced this candidate."
+    },
+    "procedure_context": {
+      "type": "string",
+      "description": "The procedure/specialty M-Care was looking for when it searched, e.g. 'dental implant specialist'."
+    },
+    "title": {
+      "type": "string",
+      "description": "The raw search result title, exactly as Tavily returned it."
+    },
+    "url": {
+      "type": "string"
+    },
+    "snippet": {
+      "type": "string",
+      "description": "The raw search result snippet/content, exactly as Tavily returned it."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "tavily"
+      ]
+    },
+    "relevance_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Tavily's own relevance score for this result."
+    },
+    "discovered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "identity_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Combined confidence this is a real, distinct, useful lead. Search relevance alone is capped well below anything resembling 'verified' -- see providerCandidateMatch.ts's computeCandidateConfidence."
+    },
+    "matched_existing_partner_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "security_agency"
+      ],
+      "description": "Set only if this candidate scored as a likely duplicate of an already-onboarded partner -- informational, this record is still never auto-merged into that partner's row."
+    },
+    "matched_existing_partner_id": {
+      "type": "string"
+    },
+    "extracted_country_iso": {
+      "type": "string",
+      "description": "Best-effort ISO2 country guessed from the result text, for a human reviewer's benefit -- not itself a verification signal."
+    },
+    "registry_check_status": {
+      "type": "string",
+      "enum": [
+        "not_attempted",
+        "unsupported_country"
+      ],
+      "default": "not_attempted",
+      "description": "Whether an automated registry check was even possible at discovery time. A real registryLookup.ts check needs a license number, which a raw search snippet essentially never contains -- so this always stays 'not_attempted' or 'unsupported_country' at discovery; a real registry check happens later, during human review, once a license number is on hand."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "candidate",
+        "rejected",
+        "stale"
+      ],
+      "default": "candidate",
+      "description": "The candidate record's own lifecycle -- deliberately has no 'verified'/'promoted'/'active' value. Promotion into a real partner record is not wired by this entity at all; it stays the existing human-gated pipeline."
+    },
+    "discovered_by_case_id": {
+      "type": "string",
+      "description": "The CaseRecord this discovery was on behalf of, when known."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "source_query",
+    "title",
+    "url",
+    "source",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
