@@ -30,9 +30,19 @@
  * flashToken (an incrementing counter, not a boolean) replays it via a React
  * key remount, so two barge-ins in a row each get their own flash even if
  * the previous one hasn't finished fading.
+ *
+ * 2026-08-12: swapped the inner mark from /mcare-logo.png (a gold M inside a
+ * blue globe/network graphic) to /morales-m-mark.png — the same gold M glyph
+ * the homepage's LivingMOrb (src/components/home/LivingMOrb.jsx) uses — plus
+ * two small eye-dots, so M-Care's own orb visually matches the hero's living
+ * M instead of looking like a different mark. Eye-tracking behavior is
+ * shared via src/lib/useLivingEyes.js rather than duplicated. The four
+ * STATE_CONFIG ring/glow behaviors below are untouched — those are real,
+ * wired to actual voice/tool state, not cosmetic.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useLivingEyes } from '@/lib/useLivingEyes';
 
 const GOLD = '#D4AF37';
 
@@ -44,6 +54,10 @@ const STATE_CONFIG = {
 };
 
 export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 }) {
+  const orbRef = useRef(null);
+  const eyeLRef = useRef(null);
+  const eyeRRef = useRef(null);
+
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -54,16 +68,20 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
+  useLivingEyes({ orbRef, eyeLRef, eyeRRef, reducedMotion });
+
   if (reducedMotion) {
     return (
-      <img src="/mcare-logo.png" alt="M-Care" style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0, filter: `drop-shadow(0 0 6px ${GOLD}66)` }} />
+      <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img src="/morales-m-mark.png" alt="M-Care" style={{ width: size * 0.72, height: size * 0.72, objectFit: 'contain', filter: `drop-shadow(0 0 6px ${GOLD}66)` }} />
+      </div>
     );
   }
 
   const cfg = STATE_CONFIG[state] || STATE_CONFIG.idle;
 
   return (
-    <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div ref={orbRef} style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {flashToken > 0 && (
         <motion.div
           key={flashToken}
@@ -106,7 +124,28 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      <img src="/mcare-logo.png" alt="M-Care" style={{ width: size * 0.78, height: size * 0.78, borderRadius: '50%', position: 'relative', zIndex: 1, filter: `drop-shadow(0 0 4px ${GOLD}77)` }} />
+      {/* Embossed M watermark — matches the homepage's LivingMOrb */}
+      <img src="/morales-m-mark.png" alt="M-Care" style={{ width: size * 0.7, height: size * 0.7, position: 'relative', zIndex: 1, opacity: 0.4 }} />
+
+      {/* Eyes — two small independently-tracked dots, same treatment as LivingMOrb */}
+      <div style={{ position: 'absolute', top: '38%', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: size * 0.16, zIndex: 2 }}>
+        <span
+          ref={eyeLRef}
+          style={{
+            width: size * 0.09, height: size * 0.09, borderRadius: '50%',
+            background: `radial-gradient(circle at 35% 30%, #fff, ${GOLD})`,
+            boxShadow: `0 0 4px ${GOLD}aa`, display: 'block',
+          }}
+        />
+        <span
+          ref={eyeRRef}
+          style={{
+            width: size * 0.09, height: size * 0.09, borderRadius: '50%',
+            background: `radial-gradient(circle at 35% 30%, #fff, ${GOLD})`,
+            boxShadow: `0 0 4px ${GOLD}aa`, display: 'block',
+          }}
+        />
+      </div>
     </div>
   );
 }
