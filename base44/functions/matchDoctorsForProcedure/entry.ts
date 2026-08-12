@@ -164,7 +164,14 @@ SAFE-T 4LIFE™ Team`
       }
     }));
 
-    // Return matched doctors
+    // Return matched doctors. verification_status/status/license_verified are
+    // included here (not just used internally by the filter above) so the
+    // caller — M-Care's agent — can honestly tell a traveler this doctor is
+    // Morales-approved, instead of the fact being computed and then thrown
+    // away. Every doctor in matchedDoctors already satisfies VERIFIED_STATUSES
+    // + status:'active' + license_verified:true by construction (see the
+    // filter above), so these three fields can never reflect an unapproved
+    // doctor — there is no code path here that could include one.
     return Response.json({
       matched_doctors: matchedDoctors.map(doc => ({
         id: doc.id,
@@ -177,7 +184,10 @@ SAFE-T 4LIFE™ Team`
         review_count: doc.review_count,
         successful_procedures_count: doc.successful_procedures_count,
         language_preference: doc.language_preference,
-        next_available_date: availabilityByDoctorId[doc.id] ?? null
+        next_available_date: availabilityByDoctorId[doc.id] ?? null,
+        status: doc.status,
+        license_verified: doc.license_verified,
+        verification_status: doc.verification_status
       })),
       outreach_sent: false,
       message: `Found ${matchedDoctors.length} specialist(s) for ${procedure_interest}`

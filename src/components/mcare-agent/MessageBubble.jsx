@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paper
 import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
+import ProviderStatusBadge from '@/components/mcare-agent/ProviderStatusBadge';
 import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
@@ -50,6 +51,22 @@ const extractQr = (raw) => {
   if (!match) return { text: raw.trim(), qr: null };
   const text = raw.replace(match[0], '').trim();
   return { text, qr: { label: match[1].trim(), dest: match[2].trim() } };
+};
+
+// Extract a {{providerstatus:TIER|Name}} token M-Care emits whenever it
+// names a specific provider, so the chat visibly distinguishes what's
+// actually known about them instead of relying on a sentence alone to carry
+// that distinction. TIER is 'discovered' (a discoverProviderCandidates/
+// Tavily result) or 'approved' (a matchDoctorsForProcedure result — every
+// doctor that tool can return already cleared Morales's full pipeline).
+// 'verified' is a real tier in the data model but not yet emitted by any
+// tool — see ProviderStatusBadge.jsx.
+const extractProviderStatus = (raw) => {
+  if (!raw) return { text: '', providerStatus: null };
+  const match = raw.match(/\{\{providerstatus:([^|]*)\|([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), providerStatus: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, providerStatus: { tier: match[1].trim().toLowerCase(), name: match[2].trim() } };
 };
 
 // Backward-compat: if M-Care emits a bare waze / google-maps / apple-maps URL
@@ -384,7 +401,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
         {(() => {
           const { text: t1, choices } = extractChoices(message.content);
           const { text: t2, maps } = extractMaps(t1);
-          const { text, qr } = extractQr(t2);
+          const { text: t3, qr } = extractQr(t2);
+          const { text, providerStatus } = extractProviderStatus(t3);
           const mapUrls = extractMapUrls(text);
           const chipBase = 'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95';
           // revealUpTo (word count) is undefined for every message except
@@ -397,6 +415,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           return (
             <>
               {displayText && !isPureVoiceNote && <p className="text-sm whitespace-pre-wrap">{stripMd(displayText)}</p>}
+              {providerStatus && <ProviderStatusBadge tier={providerStatus.tier} name={providerStatus.name} />}
               {choices.length > 0 && onChoice && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {choices.map((c, idx) => (

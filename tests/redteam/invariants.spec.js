@@ -2412,6 +2412,57 @@ test('PARTNERS: discoverProviderCandidates never promotes a web search result in
     .toContain('logExternalSearch(');
 });
 
+test('PROVIDER TRUST TIERS: matchDoctorsForProcedure can only ever return an already-approved doctor\'s real status', () => {
+  // The ✓ APPROVED badge is only honest because matchDoctorsForProcedure's
+  // own pre-filter already guarantees every doctor it returns cleared the
+  // full pipeline (status:'active' + license_verified + a verified-shaped
+  // verification_status). Two things must hold: that filter must still
+  // exist and run BEFORE the response is built, and the fields the response
+  // exposes must be the doctor's own real data — never a hardcoded literal
+  // that could claim approval regardless of the filter.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const fn = strip(read('base44/functions/matchDoctorsForProcedure/entry.ts'));
+
+  const filterIdx = fn.indexOf('VERIFIED_STATUSES');
+  const responseIdx = fn.indexOf('matched_doctors:');
+  expect(filterIdx, 'the VERIFIED_STATUSES filter must exist').toBeGreaterThan(-1);
+  expect(responseIdx, 'the matched_doctors response must exist').toBeGreaterThan(-1);
+  expect(filterIdx, 'the approval filter must run before the response is built').toBeLessThan(responseIdx);
+
+  expect(fn, 'the response must expose the doctor\'s own real status fields, not a hardcoded claim')
+    .toMatch(/status:\s*doc\.status/);
+  expect(fn, 'the response must expose the doctor\'s own real verification_status, not a hardcoded claim')
+    .toMatch(/verification_status:\s*doc\.verification_status/);
+  // Scoped to the response object itself (from "matched_doctors:" onward) —
+  // a hardcoded status/verification_status literal there would be a false
+  // approval claim independent of the real filter above. The earlier query
+  // filter (`.filter({ status: 'active' }, ...)`) legitimately uses the same
+  // literal shape and must stay untouched, so this check only looks past
+  // where the response is actually built.
+  const responseSection = fn.slice(responseIdx);
+  expect(responseSection, 'the response object must never hardcode a literal approved/verified value instead of reading the real field')
+    .not.toMatch(/(status|verification_status)\s*:\s*['"](active|verified|approved)['"]/);
+});
+
+test('PROVIDER TRUST TIERS: M-Care is never instructed to emit an unearned {{providerstatus:verified}} tag', () => {
+  // Three tiers exist in the badge component (discovered/verified/approved),
+  // but no tool gives M-Care a real signal to honestly justify 'verified'
+  // yet (see ProviderStatusBadge.jsx's own header comment). The instructions
+  // must say so explicitly, and neither provider tool's own description may
+  // suggest emitting that tag.
+  const mcare = read('base44/agents/m_care.jsonc');
+  const verifiedTokenMentions = (mcare.match(/\{\{providerstatus:verified/g) || []).length;
+  // Both the instructions' own rule ("Never emit {{providerstatus:verified...")
+  // and a tool description ("...never {{providerstatus:verified|Name} or...")
+  // are legitimate, differently-phrased prohibitions — this only requires
+  // that "never" (case-insensitive) precedes the token somewhere nearby, not
+  // one exact fixed phrase.
+  const prohibitedMentions = (mcare.match(/never\s+(\{\{providerstatus:verified|emit\s+\{\{providerstatus:verified)/gi) || []).length;
+  expect(prohibitedMentions, 'the instructions must explicitly forbid emitting an unearned verified provider-status tag').toBeGreaterThan(0);
+  expect(verifiedTokenMentions, 'every mention of the verified provider-status token must be inside an explicit prohibition — never a positive instruction to emit it')
+    .toBe(prohibitedMentions);
+});
+
 test('CLAIMS: the app does not advertise checks it does not perform', () => {
   // Nothing examines criminal history, and hotels have no verification path at
   // all. These three lines said otherwise on the two highest-traffic surfaces.
