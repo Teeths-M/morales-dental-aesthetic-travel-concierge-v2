@@ -168,6 +168,8 @@ jobs:
             call checkMissedRecoveryCheckins
             call sendActivityNudge
             call sendMilestoneWhatsAppCheckIns
+            call sendTravelCountdownReminders  # real, correct, was never scheduled until now — 14/7/3/1/0-day departure milestones
+            call autoCompletePatientJourney    # real, correct, was never scheduled until now — Recovery -> Completed state transition
           elif [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Anomaly analysis calls an LLM, so it runs on the slowest cadence.
             call runSafetyMonitor
