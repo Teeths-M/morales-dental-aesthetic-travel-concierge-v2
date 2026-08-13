@@ -20,7 +20,8 @@
         "departure_milestone_3d",
         "departure_milestone_1d",
         "departure_day_of",
-        "journey_completed"
+        "journey_completed",
+        "recovery_checkin_day3"
       ]
     },
     "source": {

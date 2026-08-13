@@ -10,6 +10,7 @@
  */
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 function generateToken(): string {
   const bytes = new Uint8Array(18);
@@ -129,6 +130,20 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         .then(([rec]) => rec && base44.asServiceRole.entities.PostOpCheckIn.update(rec.id, {
           notification_sent_at: new Date().toISOString(),
         })).catch(() => {});
+
+      // Proactive chat bubble, polled by the frontend (useJourneyEvents).
+      // Sits inside the same continue-gated loop iteration as the create
+      // above, so it's idempotent for free — this can only run once per case.
+      await logJourneyEvent(base44, {
+        case_id,
+        client_email: patientEmail,
+        event_type: 'recovery_checkin_day3',
+        source: 'schedulePostOpCheckIns',
+        message_text: "You're 3 days into recovery — I've sent you a quick check-in so your doctor can see how you're doing. Reply whenever you're ready.",
+        action_taken: 'Sent Day 3 recovery check-in email and push notification',
+        tool_result: { day: 3 },
+        user_action_required: true,
+      });
     }
   }
 

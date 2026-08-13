@@ -3294,16 +3294,17 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
     .toMatch(rlsAdminOnly('create'));
   expect(entity, 'update must be admin-only').toMatch(rlsAdminOnly('update'));
 
-  // The two real writers, and the shared helper both funnel through, must
+  // The three real writers, and the shared helper they all funnel through, must
   // only ever call asServiceRole (never a client-reachable entity write) and
   // must never throw on their own failure — the real countdown-reminder /
-  // journey-completion action must never be blocked by this being unable to log.
+  // journey-completion / recovery-check-in action must never be blocked by
+  // this being unable to log.
   const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   const helper = strip(read('base44/shared/logJourneyEvent.ts'));
   expect(helper, 'the helper writes only via asServiceRole').toContain('asServiceRole.entities.JourneyEvent.create');
   expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
 
-  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney']) {
+  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns']) {
     const src = strip(read(`base44/functions/${fn}/entry.ts`));
     expect(src, `${fn} must log JourneyEvent via the shared helper, not a raw create call`).toContain('logJourneyEvent(');
     expect(src, `${fn} must not create JourneyEvent directly, bypassing the shared helper's fixed field set`)
