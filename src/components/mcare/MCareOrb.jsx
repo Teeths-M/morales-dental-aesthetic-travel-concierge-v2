@@ -54,6 +54,8 @@ import { parseMcareCommand } from '@/lib/voiceCommands';
 import { useMcarePreferences } from '@/hooks/useMcarePreferences';
 import { detectDistressSignal, distressWelfarePrompt } from '@/lib/distressDetection';
 import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguageDetect';
+import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
+import { useJourneyEvents } from '@/hooks/useJourneyEvents';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -101,6 +103,17 @@ export default function MCareOrb() {
   const { toast }         = useToast();
   const { user }          = useAuth();
   const { prefs, update: updatePrefs } = useMcarePreferences();
+  // Proactive M-Care layer — polls JourneyEvent (real records a scheduled
+  // function wrote, e.g. a departure-countdown milestone or journey
+  // completion) for the patient's active case. Rendered as its own block
+  // below, never merged into agentMessages state — that array is
+  // wholesale-replaced by subscribeToConversation on every tick (see
+  // voiceReplyAudioUrls' own comment below for the same hazard), which would
+  // silently drop anything spliced into it that didn't come from the server.
+  const { data: activeCaseRecord } = useActiveCaseRecord(user?.email);
+  const { data: journeyEvents = [] } = useJourneyEvents(activeCaseRecord?.id);
+  const [lastSeenJourneyEventsAt, setLastSeenJourneyEventsAt] = useState(0);
+  const spokenJourneyEventIdsRef = useRef(new Set());
   const { pathname, search } = useLocation();
   const navigate          = useNavigate();
   const role              = detectRole(user, pathname);
@@ -524,6 +537,7 @@ export default function MCareOrb() {
       setOpen(true);
       setDismissed(true);
       setStruggleHint(null);
+      setLastSeenJourneyEventsAt(Date.now());
     }
   }, [search, isQuietRoute]);
 
@@ -564,7 +578,7 @@ export default function MCareOrb() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [agentMessages]);
+  }, [agentMessages, journeyEvents]);
 
   // Speaking state right after a new assistant message lands. When Talk Mode
   // is off (default), this is byte-identical to the original honest fake
@@ -636,6 +650,34 @@ export default function MCareOrb() {
     }
     prevMsgCountRef.current = agentMessages.length;
   }, [agentMessages, talkMode]);
+
+  // Proactive JourneyEvent narration — deliberately a separate, symmetric
+  // effect rather than folding into the one above: it never touches
+  // agentMessages, prevMsgCountRef, spokenAssistantIdsRef, or revealState, so
+  // it carries zero risk to that already-fragile machinery. Dedup is by
+  // JourneyEvent's own real, persistent Base44 id (robust by construction —
+  // unlike agentMessages, this array is never wholesale-replaced with a
+  // different set of ids). On first load, every event already on record is
+  // marked seen WITHOUT being spoken — Talk Mode turning on shouldn't trigger
+  // a backlog of old proactive messages being read aloud; only a genuinely
+  // new one, arriving on a later poll, gets spoken.
+  const journeyEventsInitializedRef = useRef(false);
+  useEffect(() => {
+    if (journeyEvents.length === 0) return;
+    if (!journeyEventsInitializedRef.current) {
+      journeyEvents.forEach(e => { if (e.id) spokenJourneyEventIdsRef.current.add(e.id); });
+      journeyEventsInitializedRef.current = true;
+      return;
+    }
+    if (!talkMode) return;
+    const unseen = journeyEvents.filter(e => e.id && !spokenJourneyEventIdsRef.current.has(e.id));
+    if (unseen.length === 0) return;
+    // Oldest-unseen-first — a real event actually happened at that time;
+    // never skip straight to the newest and silently drop an earlier one.
+    const next = [...unseen].sort((a, b) => new Date(a.created_date) - new Date(b.created_date))[0];
+    spokenJourneyEventIdsRef.current.add(next.id);
+    speakAncillary(next.message_text, { rate: 0.9 });
+  }, [journeyEvents, talkMode]);
 
   // Turning Talk Mode off stops audio, ends the mic/speech loop, and reveals
   // the rest of the current message instantly — never leaves it half-spoken.
@@ -845,6 +887,13 @@ export default function MCareOrb() {
           : (conversationalMode && conversationalListening)
             ? 'listening'
             : 'idle';
+
+  // True whenever a real JourneyEvent landed after the panel was last opened
+  // — the honest way to satisfy "the user shouldn't have to send a message
+  // first" without a literal push: they see a dot on the closed orb, open
+  // it, and the proactive message is already waiting.
+  const hasUnseenJourneyEvent = journeyEvents.some(e =>
+    e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt);
 
   useEffect(() => {
     if (!open) return;
@@ -1142,13 +1191,14 @@ export default function MCareOrb() {
       {/* ── Floating orb + bubble ── */}
       {!open && !heroBlocksOrb && (
         <div style={{ position: 'fixed', bottom: 'calc(max(24px, env(safe-area-inset-bottom, 24px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 20, zIndex: 9000, display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: 8 }}>
-          <button onClick={() => { setOpen(true); setDismissed(true); setStruggleHint(null); }} aria-label="Open M-Care"
+          <button onClick={() => { setOpen(true); setDismissed(true); setStruggleHint(null); setLastSeenJourneyEventsAt(Date.now()); }} aria-label="Open M-Care"
             style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0, background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(10,20,28,0.92))', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.12)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, box-shadow 0.2s', position: 'relative' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
             <LivingOrb state={orbState} size={44} flashToken={bargeInFlashToken} />
             {!isOnline && <span style={{ position: 'absolute', top: 4, right: 4, width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid rgba(10,20,28,0.9)' }} />}
+            {isOnline && hasUnseenJourneyEvent && <span title="M-Care has an update for you" style={{ position: 'absolute', bottom: 4, right: 4, width: 10, height: 10, borderRadius: '50%', background: GOLD, border: '2px solid rgba(10,20,28,0.9)' }} />}
           </button>
           {showBubble && !dismissed && (
             <div style={{ background: 'rgba(10,20,28,0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: '10px 14px', maxWidth: 220, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', position: 'relative', animation: 'orbBubbleIn 0.3s ease' }}>
@@ -1279,6 +1329,25 @@ export default function MCareOrb() {
                     <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction onChoice={sendAgentMessage}
                       revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
                       extraAudioUrl={voiceReplyAudioUrls[i]} />
+                  </motion.div>
+                ))}
+
+                {/* Proactive M-Care updates — real JourneyEvent records, polled
+                    every 20s, never spliced into agentMessages (see the hook
+                    declarations above for why). Rendered in their own block
+                    so real conversation indices (revealUpTo/extraAudioUrl,
+                    both keyed by position in agentMessages) are never
+                    disturbed. Oldest-first, matching normal chat reading order. */}
+                {[...journeyEvents].reverse().map((e) => (
+                  <motion.div key={`je-${e.id}`}
+                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <div style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
+                      M-Care checked in
+                    </div>
+                    <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={PURPLE} showAvatar showMeta />
                   </motion.div>
                 ))}
 

@@ -3273,3 +3273,50 @@ test('FILE STORAGE: no function sets a Content-Type/Content-Disposition response
   }
   expect(offenders, `these functions appear to set a file response header from user-controlled metadata: ${offenders.join(', ')}`).toEqual([]);
 });
+
+test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to write, and only message_text ever reaches a chat bubble', () => {
+  // JourneyEvent is the proactive-message layer's real backend record — the
+  // opposite shape from ContactAttempt/DiscoveredProviderCandidate above
+  // (which must stay admin-only): a patient MUST be able to read their own
+  // events, since the whole point is the frontend polling and rendering them
+  // as an M-Care chat bubble. What must NOT be true is any client being able
+  // to CREATE one — an open create RLS would let an authenticated user forge
+  // a fake "M-Care" message into another patient's own feed (same client_email
+  // used for both read-scoping and, if create were open, an attacker's target).
+  const entity = read('base44/entities/JourneyEvent.jsonc');
+  expect(entity, 'read must be scoped to the owning patient (or admin), not wide open or admin-only')
+    .toMatch(/"read"\s*:\s*\{[\s\S]*?"data\.client_email"\s*:\s*"\{\{user\.email\}\}"[\s\S]*?\}/);
+
+  const rlsAdminOnly = (op) => new RegExp(
+    `"${op}"\\s*:\\s*\\{\\s*"\\$or"\\s*:\\s*\\[\\s*\\{\\s*"user_condition"\\s*:\\s*\\{\\s*"role"\\s*:\\s*"admin"`
+  );
+  expect(entity, 'create must be admin-only — every real write goes through asServiceRole, which bypasses RLS anyway')
+    .toMatch(rlsAdminOnly('create'));
+  expect(entity, 'update must be admin-only').toMatch(rlsAdminOnly('update'));
+
+  // The two real writers, and the shared helper both funnel through, must
+  // only ever call asServiceRole (never a client-reachable entity write) and
+  // must never throw on their own failure — the real countdown-reminder /
+  // journey-completion action must never be blocked by this being unable to log.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const helper = strip(read('base44/shared/logJourneyEvent.ts'));
+  expect(helper, 'the helper writes only via asServiceRole').toContain('asServiceRole.entities.JourneyEvent.create');
+  expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
+
+  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney']) {
+    const src = strip(read(`base44/functions/${fn}/entry.ts`));
+    expect(src, `${fn} must log JourneyEvent via the shared helper, not a raw create call`).toContain('logJourneyEvent(');
+    expect(src, `${fn} must not create JourneyEvent directly, bypassing the shared helper's fixed field set`)
+      .not.toMatch(/entities\.JourneyEvent\.create/);
+  }
+
+  // Frontend: only e.message_text may ever be handed to MessageBubble's
+  // content — tool_result/action_taken are audit-only, never patient-facing.
+  const orb = strip(read('src/components/mcare/MCareOrb.jsx'));
+  expect(orb, 'MCareOrb must render journey events using message_text only')
+    .toMatch(/content:\s*e\.message_text/);
+  expect(orb, 'MCareOrb must never interpolate tool_result into a rendered message')
+    .not.toMatch(/content:[^,}]*tool_result/);
+  expect(orb, 'MCareOrb must never interpolate action_taken into a rendered message')
+    .not.toMatch(/content:[^,}]*action_taken/);
+});

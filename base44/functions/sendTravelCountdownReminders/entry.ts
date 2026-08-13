@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 /**
  * sendTravelCountdownReminders
@@ -270,9 +271,33 @@ Deno.serve(async (req) => {
 
       const results = await Promise.allSettled(tasks);
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const partiesReached = succeeded - 1; // -1 for the CaseRecord update
 
-      sent.push({ case_id: c.id, milestone, parties: succeeded - 1 }); // -1 for the CaseRecord update
+      sent.push({ case_id: c.id, milestone, parties: partiesReached });
       console.log(`[sendTravelCountdownReminders] case=${c.id} milestone=${milestone} dispatches=${tasks.length - 1}`);
+
+      // Proactive chat bubble — a real, patient-visible record of this real
+      // dispatch, polled by the frontend (useJourneyEvents). Only fires once
+      // per milestone per case, riding on the same flagField gate above that
+      // already prevents duplicate sends — no separate idempotency check needed.
+      if (c.client_email) {
+        const EVENT_TYPE_BY_MILESTONE: Record<string, string> = {
+          '14d': 'departure_milestone_14d', '7d': 'departure_milestone_7d',
+          '3d': 'departure_milestone_3d', '1d': 'departure_milestone_1d', '0d': 'departure_day_of',
+        };
+        const message = daysLeft === 0
+          ? 'Today is your journey day — everything is in motion. Safe travels.'
+          : `Your journey begins ${whenPhrase(daysLeft)}. I've sent your care team their preparation briefings and reminders.`;
+        await logJourneyEvent(base44, {
+          case_id: c.id,
+          client_email: c.client_email,
+          event_type: EVENT_TYPE_BY_MILESTONE[milestone] || 'departure_day_of',
+          source: 'sendTravelCountdownReminders',
+          message_text: message,
+          action_taken: `Sent ${milestone} departure reminders to ${partiesReached} part${partiesReached === 1 ? 'y' : 'ies'}`,
+          tool_result: { milestone, daysLeft, partiesReached },
+        });
+      }
     }
 
     return Response.json({ success: true, reminders_sent: sent.length, breakdown: sent });

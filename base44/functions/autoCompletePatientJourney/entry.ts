@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -131,6 +132,23 @@ Deno.serve(async (req) => {
             }
           ]
         });
+
+        // Proactive chat bubble, polled by the frontend (useJourneyEvents).
+        // Fixed, reviewed copy — deliberately NOT the LLM-generated
+        // journeySummary above, which stays scoped to the internal
+        // timeline_log note it was already used for. Idempotent for free:
+        // 'Completed' is a terminal status in VALID_TRANSITIONS above, so
+        // this case can never re-enter this branch on a later run.
+        if (caseRecord.client_email) {
+          await logJourneyEvent(base44, {
+            case_id: caseRecord.id,
+            client_email: caseRecord.client_email,
+            event_type: 'journey_completed',
+            source: 'autoCompletePatientJourney',
+            message_text: 'Your journey is complete. Thank you for choosing Morales — wishing you a smooth continued recovery.',
+            action_taken: completionReason,
+          });
+        }
 
         updatedCount++;
         updatedCaseIds.push(caseRecord.id);
