@@ -64,9 +64,13 @@ const extractQr = (raw) => {
 // can return already cleared Morales's full pipeline). 'verified' is a real
 // tier in the data model but not yet emitted by any tool — see
 // ProviderStatusBadge.jsx.
+// Tolerant of case and incidental whitespace around the delimiters (i flag,
+// \s* around providerstatus/:/|) — a live reply that drifts slightly from
+// the exact spec byte format (a stray space, a capital letter) must still
+// render as a badge, not just avoid leaking as raw text.
 const extractProviderStatus = (raw) => {
   if (!raw) return { text: '', providerStatuses: [] };
-  const matches = [...raw.matchAll(/\{\{providerstatus:([^|]*)\|([\s\S]*?)\}\}/g)];
+  const matches = [...raw.matchAll(/\{\{\s*providerstatus\s*:\s*([^|]*?)\s*\|\s*([\s\S]*?)\s*\}\}/gi)];
   if (matches.length === 0) return { text: raw.trim(), providerStatuses: [] };
   let text = raw;
   for (const m of matches) text = text.replace(m[0], '');
@@ -409,7 +413,16 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t1, choices } = extractChoices(message.content);
           const { text: t2, maps } = extractMaps(t1);
           const { text: t3, qr } = extractQr(t2);
-          const { text, providerStatuses } = extractProviderStatus(t3);
+          const { text: t4, providerStatuses } = extractProviderStatus(t3);
+          // Final safety net: anything {{...}}-shaped that survived every
+          // known extractor above (an unrecognized token, a format drift the
+          // hardened regexes above still don't cover) must never reach the
+          // user as raw internal syntax — strip it silently, but log it so a
+          // real drift stays debuggable.
+          const text = t4.replace(/\{\{[\s\S]*?\}\}/g, (m) => {
+            console.warn('[MessageBubble] stripped an unrecognized token before render:', m);
+            return '';
+          }).replace(/ {2,}/g, ' ').trim();
           const mapUrls = extractMapUrls(text);
           const chipBase = 'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-90 active:scale-95';
           // revealUpTo (word count) is undefined for every message except
