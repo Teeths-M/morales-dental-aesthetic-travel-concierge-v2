@@ -2,6 +2,7 @@ import { createHandler } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { findDriverBackup } from '../../shared/findDriverBackup.ts';
 import { logCrisisReroute } from '../../shared/logCrisisReroute.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 // ── escalateMissedDriverHandshake — cron/scheduled function ──────────────────
 // Runs every 15 minutes via GitHub Actions, not Base44's own scheduler — see
@@ -147,6 +148,25 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
       human_escalated_reason: backupResult.success ? '' : `No backup driver available for the ${leg} leg after a ${NOSHOW_MINUTES}-minute no-show.`,
       source_message: `Driver did not confirm handshake step ${n} (${leg} leg) within ${NOSHOW_MINUTES} minutes.`,
     }).catch(() => {});
+
+    // Proactive chat bubble, polled by the frontend (useJourneyEvents). Same
+    // outcome the patient was just SMS'd, in M-Care's own first-person voice —
+    // only fires once, riding on the noshow_flagged_steps gate above.
+    const patientEmail = caseRecord.client_email || caseRecord.user_email;
+    if (patientEmail) {
+      await logJourneyEvent(base44, {
+        case_id: trip.case_id,
+        client_email: patientEmail,
+        event_type: 'driver_noshow_backup',
+        source: 'escalateMissedDriverHandshake',
+        message_text: backupResult.success
+          ? "Your ride is running behind — I've already dispatched a backup driver. Check your app for the update."
+          : "Your ride is running behind and I'm finding you a replacement right now — hang tight, I'll update you shortly.",
+        action_taken: `Driver no-show detected at handshake step ${n} (${leg} leg) — ${backupResult.success ? 'backup dispatched' : 'searching for a backup'}`,
+        tool_result: { step: n, leg, backup_dispatched: backupResult.success },
+        escalation_occurred: !backupResult.success,
+      });
+    }
 
     results.push({
       trip_id: trip.id,

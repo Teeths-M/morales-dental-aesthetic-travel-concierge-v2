@@ -3304,7 +3304,7 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(helper, 'the helper writes only via asServiceRole').toContain('asServiceRole.entities.JourneyEvent.create');
   expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
 
-  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns']) {
+  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake']) {
     const src = strip(read(`base44/functions/${fn}/entry.ts`));
     expect(src, `${fn} must log JourneyEvent via the shared helper, not a raw create call`).toContain('logJourneyEvent(');
     expect(src, `${fn} must not create JourneyEvent directly, bypassing the shared helper's fixed field set`)

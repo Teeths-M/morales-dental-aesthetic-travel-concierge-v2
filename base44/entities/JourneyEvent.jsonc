@@ -21,7 +21,8 @@
         "departure_milestone_1d",
         "departure_day_of",
         "journey_completed",
-        "recovery_checkin_day3"
+        "recovery_checkin_day3",
+        "driver_noshow_backup"
       ]
     },
     "source": {
