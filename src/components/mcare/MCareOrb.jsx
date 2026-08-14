@@ -114,6 +114,27 @@ export default function MCareOrb() {
   const { data: journeyEvents = [] } = useJourneyEvents(activeCaseRecord?.id);
   const [lastSeenJourneyEventsAt, setLastSeenJourneyEventsAt] = useState(0);
   const spokenJourneyEventIdsRef = useRef(new Set());
+
+  // Persist "seen" state per case — without this, lastSeenJourneyEventsAt
+  // resets to 0 on every page load/remount, so the unread dot would show
+  // after almost any reload regardless of whether the patient already read
+  // it. Scoped per case_id (not global) so a brand-new case's fresh events
+  // are never masked by a stale timestamp from a previous, completed one.
+  useEffect(() => {
+    if (!activeCaseRecord?.id) return;
+    try {
+      const stored = localStorage.getItem(`morales_journey_events_seen_${activeCaseRecord.id}`);
+      if (stored) setLastSeenJourneyEventsAt(Number(stored) || 0);
+    } catch (_) { /* localStorage unavailable — falls back to in-memory only */ }
+  }, [activeCaseRecord?.id]);
+
+  const markJourneyEventsSeen = () => {
+    const now = Date.now();
+    setLastSeenJourneyEventsAt(now);
+    if (activeCaseRecord?.id) {
+      try { localStorage.setItem(`morales_journey_events_seen_${activeCaseRecord.id}`, String(now)); } catch (_) { /* non-fatal */ }
+    }
+  };
   const { pathname, search } = useLocation();
   const navigate          = useNavigate();
   const role              = detectRole(user, pathname);
@@ -537,7 +558,7 @@ export default function MCareOrb() {
       setOpen(true);
       setDismissed(true);
       setStruggleHint(null);
-      setLastSeenJourneyEventsAt(Date.now());
+      markJourneyEventsSeen();
     }
   }, [search, isQuietRoute]);
 
@@ -1191,7 +1212,7 @@ export default function MCareOrb() {
       {/* ── Floating orb + bubble ── */}
       {!open && !heroBlocksOrb && (
         <div style={{ position: 'fixed', bottom: 'calc(max(24px, env(safe-area-inset-bottom, 24px)) + var(--sticky-cta-height, 0px) + var(--bottom-tab-bar-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 20, zIndex: 9000, display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: 8 }}>
-          <button onClick={() => { setOpen(true); setDismissed(true); setStruggleHint(null); setLastSeenJourneyEventsAt(Date.now()); }} aria-label="Open M-Care"
+          <button onClick={() => { setOpen(true); setDismissed(true); setStruggleHint(null); markJourneyEventsSeen(); }} aria-label="Open M-Care"
             style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0, background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(10,20,28,0.92))', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.12)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, box-shadow 0.2s', position: 'relative' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
