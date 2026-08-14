@@ -22,7 +22,9 @@
         "departure_day_of",
         "journey_completed",
         "recovery_checkin_day3",
-        "driver_noshow_backup"
+        "driver_noshow_backup",
+        "doctor_backup_dispatched",
+        "doctor_confirmation_delay_flagged"
       ]
     },
     "source": {

@@ -1,6 +1,7 @@
 import { linkOnlyEmail } from './notify.ts';
 import { escapeHtml } from './emailTemplate.ts';
 import { pickBestDoctor } from './pickBestDoctor.ts';
+import { logJourneyEvent } from './logJourneyEvent.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -177,6 +178,24 @@ export async function findDoctorBackup(
       await notifyAdminSms(caseRecord, `URGENT: no backup doctor available for ${caseRecord.client_name || 'a patient'} (case ${caseRecord.id.slice(-8)}) — patient already traveling. Manual assignment needed now.`);
     }
 
+    // Proactive chat bubble, polled by the frontend (useJourneyEvents). This
+    // is the FIRST time the patient hears about this at all today — every
+    // other notification above goes to admin/the new doctor, never them.
+    // Fixed, reviewed copy — never names a doctor, never repeats admin_notes.
+    const patientEmail = caseRecord.client_email || caseRecord.user_email;
+    if (patientEmail) {
+      await logJourneyEvent(base44, {
+        case_id: caseRecord.id,
+        client_email: patientEmail,
+        event_type: 'doctor_backup_dispatched',
+        source: 'findDoctorBackup',
+        message_text: "I'm personally following up on your doctor assignment with our care team right now — I'll update you as soon as this is resolved.",
+        action_taken: 'Doctor dropped the case and no verified backup doctor was available — escalated to Admin-Review',
+        tool_result: { outcome: 'no_backup_available', urgent },
+        escalation_occurred: true,
+      });
+    }
+
     return { success: false };
   }
 
@@ -237,6 +256,25 @@ export async function findDoctorBackup(
       caseRecord,
       'The doctor assigned to this trip changed and a new one has been automatically lined up. The trip continues on schedule — open your portal for the current details.'
     );
+  }
+
+  // Proactive chat bubble, polled by the frontend (useJourneyEvents). Same
+  // "first time the patient hears about this" reasoning as the failure
+  // branch above. Deliberately does not name the new doctor — the patient
+  // finds that through the normal case-detail flow, not a chat bubble
+  // (matches the driver_noshow_backup precedent, which didn't name the driver).
+  const patientEmail = caseRecord.client_email || caseRecord.user_email;
+  if (patientEmail) {
+    await logJourneyEvent(base44, {
+      case_id: caseRecord.id,
+      client_email: patientEmail,
+      event_type: 'doctor_backup_dispatched',
+      source: 'findDoctorBackup',
+      message_text: "I've confirmed a new doctor for your care — your case is moving forward, and the details are in your dashboard.",
+      action_taken: 'Doctor dropped the case — a verified backup doctor was found and the case was reassigned',
+      tool_result: { outcome: 'backup_found', backup_doctor_name: nextDoctor.full_name || '' },
+      escalation_occurred: false,
+    });
   }
 
   return { success: true, doctor: nextDoctor };

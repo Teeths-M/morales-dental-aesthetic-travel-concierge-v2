@@ -3304,12 +3304,48 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(helper, 'the helper writes only via asServiceRole').toContain('asServiceRole.entities.JourneyEvent.create');
   expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
 
-  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake']) {
+  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake', 'detectFallbackCrisis']) {
     const src = strip(read(`base44/functions/${fn}/entry.ts`));
     expect(src, `${fn} must log JourneyEvent via the shared helper, not a raw create call`).toContain('logJourneyEvent(');
     expect(src, `${fn} must not create JourneyEvent directly, bypassing the shared helper's fixed field set`)
       .not.toMatch(/entities\.JourneyEvent\.create/);
   }
+
+  // findDoctorBackup lives in shared/, not functions/ — the single real
+  // implementation behind every "doctor dropped the case" path (24h SLA
+  // timeout, explicit decline, explicit withdraw), so wiring it here alone
+  // covers all three real triggers.
+  const findDoctorBackupSrc = strip(read('base44/shared/findDoctorBackup.ts'));
+  expect(findDoctorBackupSrc, 'findDoctorBackup must log JourneyEvent via the shared helper, not a raw create call')
+    .toContain('logJourneyEvent(');
+  expect(findDoctorBackupSrc, 'findDoctorBackup must not create JourneyEvent directly')
+    .not.toMatch(/entities\.JourneyEvent\.create/);
+
+  // Never create an event merely because an LLM predicts something might
+  // happen: aiAdditionalRisks only ever returns data in detectFallbackCrisis's
+  // own JSON response — no CaseRecord write, no notification, no JourneyEvent.
+  const dfcRaw = read('base44/functions/detectFallbackCrisis/entry.ts');
+  const aiFnMatch = dfcRaw.match(/async function aiAdditionalRisks\([\s\S]*?\n\}/);
+  expect(aiFnMatch, 'aiAdditionalRisks function body must exist to check').toBeTruthy();
+  expect(aiFnMatch[0], 'aiAdditionalRisks must never call logJourneyEvent — an LLM prediction alone is not a real event')
+    .not.toContain('logJourneyEvent');
+
+  // The 15-min DOCTOR_MISSED_CONFIRMATION_WINDOW tier is deliberately excluded
+  // (too early, triggers no notification to anyone today) — only the two
+  // procedure-proximity tiers get a JourneyEvent.
+  expect(dfcRaw, 'detectFallbackCrisis must gate its JourneyEvent call on the two proximity reasons, not the 15-min window')
+    .toMatch(/reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_APPROACHING' \|\| reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL'\)[\s\S]{0,200}logJourneyEvent/);
+
+  // Doctor-confirmation message_text must never leak the new doctor's name,
+  // admin's internal notes, or the raw internal reason enum into a
+  // patient-facing bubble — plain, reviewed, fixed copy only.
+  const findDoctorBackupRaw = read('base44/shared/findDoctorBackup.ts');
+  for (const forbidden of [/message_text:\s*`[^`]*\$\{nextDoctor/, /message_text:\s*`[^`]*\$\{.*admin_notes/]) {
+    expect(findDoctorBackupRaw, 'findDoctorBackup message_text must not interpolate the doctor name or admin notes')
+      .not.toMatch(forbidden);
+  }
+  expect(dfcRaw, 'detectFallbackCrisis message_text must not interpolate the raw reason variable')
+    .not.toMatch(/message_text:\s*`[^`]*\$\{reason\}/);
 
   // Frontend: only e.message_text may ever be handed to MessageBubble's
   // content — tool_result/action_taken are audit-only, never patient-facing.

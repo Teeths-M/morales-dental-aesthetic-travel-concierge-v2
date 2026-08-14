@@ -3,6 +3,7 @@ import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 import { getDoctorReminderCopy } from '../../shared/doctorReminderCopy.ts';
 import { logCrisisReroute } from '../../shared/logCrisisReroute.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -294,6 +295,33 @@ Deno.serve(async (req) => {
           smsPromises.push(sendAdminSms(
             `URGENT: Dr. ${primaryPartnerName} still hasn't confirmed for ${c.client_name || 'a patient'} — procedure in ${hoursLeft}h (case ${String(c.id).slice(-8)}). Confirm or dispatch a backup doctor now.`
           ));
+        }
+
+        // Proactive chat bubble, polled by the frontend (useJourneyEvents).
+        // Deliberately excludes DOCTOR_MISSED_CONFIRMATION_WINDOW (15 minutes
+        // — too early to be meaningful, and triggers no notification to
+        // anyone today, not even the doctor) — only the two proximity-to-
+        // procedure tiers, which already page the doctor/admin for real.
+        // Rides on the same in_flux gate as logCrisisReroute above, so this
+        // fires exactly once per flux episode, never on every 15-min tick.
+        if (
+          (reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_APPROACHING' || reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL') &&
+          (c.client_email || c.user_email)
+        ) {
+          updatePromises.push(
+            logJourneyEvent(base44, {
+              case_id: c.id,
+              client_email: c.client_email || c.user_email,
+              event_type: 'doctor_confirmation_delay_flagged',
+              source: 'detectFallbackCrisis',
+              message_text: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL'
+                ? "I've flagged your doctor's confirmation for urgent follow-up with our team since your procedure is very close — I'll keep you posted."
+                : "Your procedure is coming up soon, and I'm actively following up on your doctor's confirmation to make sure everything's ready.",
+              action_taken: `Doctor confirmation still pending as the procedure approaches (${reason})`,
+              tool_result: { reason, hours_until_procedure: hoursLeftForSms },
+              escalation_occurred: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL',
+            })
+          );
         }
 
         results.flagged++;
