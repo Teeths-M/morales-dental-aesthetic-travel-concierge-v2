@@ -3,7 +3,21 @@
   "type": "object",
   "properties": {
     "case_id": {
-      "type": "string"
+      "type": "string",
+      "description": "For role=traveler, the patient's CaseRecord id. For role=driver, the RecoveryTransportRequest id (used as the linkage key)."
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "traveler",
+        "driver"
+      ],
+      "default": "traveler",
+      "description": "Whether this LiveLocation record holds the traveler's own GPS or the matched driver's approaching GPS."
+    },
+    "transport_request_id": {
+      "type": "string",
+      "description": "For role=driver, the RecoveryTransportRequest this driver position belongs to."
     },
     "user_id": {
       "type": "string"
