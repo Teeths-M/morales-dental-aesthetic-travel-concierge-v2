@@ -1,7 +1,7 @@
 {
   "name": "JourneyEvent",
   "type": "object",
-  "description": "A persistent record of one autonomous, proactive thing M-Care's scheduled automation did for a patient's journey (a departure-countdown milestone reminder, a journey marked complete, etc.) — written only by trusted scheduled functions via asServiceRole, never by a client. The frontend polls this per-case and renders message_text as a normal M-Care chat bubble, so the patient sees a proactive message without M-Care needing to inject anything into the live agent conversation (which the SDK has no mechanism for). message_text is the ONLY field ever shown to the patient — it is deterministic, reused copy, never LLM-generated, and never claims an action beyond what the writing function actually confirmed. tool_result/action_taken are audit-only detail, not for direct display.",
+  "description": "A persistent record of one autonomous, proactive thing M-Care's scheduled automation did for a patient's journey (a departure-countdown milestone reminder, a journey marked complete, etc.) \u2014 written only by trusted scheduled functions via asServiceRole, never by a client. The frontend polls this per-case and renders message_text as a normal M-Care chat bubble, so the patient sees a proactive message without M-Care needing to inject anything into the live agent conversation (which the SDK has no mechanism for). message_text is the ONLY field ever shown to the patient \u2014 it is deterministic, reused copy, never LLM-generated, and never claims an action beyond what the writing function actually confirmed. tool_result/action_taken are audit-only detail, not for direct display.",
   "properties": {
     "case_id": {
       "type": "string",
@@ -10,7 +10,7 @@
     "client_email": {
       "type": "string",
       "format": "email",
-      "description": "Denormalized for RLS — the patient owns their own journey events."
+      "description": "Denormalized for RLS \u2014 the patient owns their own journey events."
     },
     "event_type": {
       "type": "string",
@@ -34,7 +34,7 @@
     },
     "message_text": {
       "type": "string",
-      "description": "The exact, pre-reviewed sentence rendered as the M-Care chat bubble. Never freeform/LLM-authored — always a fixed template filled with real values."
+      "description": "The exact, pre-reviewed sentence rendered as the M-Care chat bubble. Never freeform/LLM-authored \u2014 always a fixed template filled with real values."
     },
     "action_taken": {
       "type": "string",
@@ -42,7 +42,7 @@
     },
     "tool_result": {
       "type": "object",
-      "description": "Real structured outcome data for audit purposes only — never interpolated directly into a patient-facing bubble."
+      "description": "Real structured outcome data for audit purposes only \u2014 never interpolated directly into a patient-facing bubble."
     },
     "user_action_required": {
       "type": "boolean",
@@ -54,8 +54,13 @@
     },
     "priority": {
       "type": "string",
-      "enum": ["low", "medium", "high", "critical"],
-      "description": "How this event is communicated: low = in-app chat bubble only; medium/high/critical additionally trigger a push notification (high/critical mark it as requiring interaction, not auto-dismissing). Set explicitly by the writing function from data it actually computed — never a default, never inferred client-side."
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "description": "How this event is communicated: low = in-app chat bubble only; medium/high/critical additionally trigger a push notification (high/critical mark it as requiring interaction, not auto-dismissing). Set explicitly by the writing function from data it actually computed \u2014 never a default, never inferred client-side."
     }
   },
   "required": [
