@@ -11,6 +11,7 @@ import { downloadQrSvgAsPng } from '@/lib/qrDownload';
 import { generateWaveformBars } from '@/lib/voiceMessageAudio';
 import { base44 } from '@/api/base44Client';
 import { useTranslation } from '@/i18n';
+import { searchProcedures } from '@/components/procedures/ProcedureData';
 
 const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 
@@ -64,6 +65,21 @@ const extractQr = (raw) => {
   if (!match) return { text: raw.trim(), qr: null };
   const text = raw.replace(match[0], '').trim();
   return { text, qr: { label: match[1].trim(), dest: match[2].trim() } };
+};
+
+// Extract a {{media:PROCEDURE_NAME}} token M-Care emits after explaining a
+// procedure/risk in words and getting an explicit yes to see a diagram — the
+// UI resolves PROCEDURE_NAME against the real, already-existing procedure
+// catalog (ProcedureData.jsx's searchProcedures, the same fuzzy lookup this
+// app already uses on /procedures) and renders a real hosted image, never
+// something generated or invented on the fly. If no real match clears that
+// lookup's own threshold, the UI says so plainly instead of showing anything.
+const extractMedia = (raw) => {
+  if (!raw) return { text: '', media: null };
+  const match = raw.match(/\{\{media:([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), media: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, media: match[1].trim() };
 };
 
 // Extract every {{providerstatus:TIER|Name}} token M-Care emits — a single
@@ -155,6 +171,32 @@ export function InlineQrBlock({ label, dest }) {
       >
         <Download className="w-3 h-3" /> Save
       </button>
+    </div>
+  );
+}
+
+// Renders a real, already-hosted illustrative image for the procedure M-Care
+// just named — resolved client-side via ProcedureData.jsx's searchProcedures
+// (the same fuzzy scorer/threshold this app already uses on /procedures), so
+// this can never show a fabricated or AI-generated-on-the-fly image, only a
+// real one that already exists in the catalog. Honest empty state when
+// nothing clears the lookup's own match threshold.
+function ProcedureMediaCard({ query }) {
+  const [match] = searchProcedures(query);
+  if (!match) {
+    return (
+      <div className="mt-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+        I don't have a diagram for that yet.
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 max-w-[240px] overflow-hidden rounded-xl border border-border bg-white">
+      <img src={match.image} alt={match.title} className="w-full h-32 object-cover" />
+      <div className="p-2.5">
+        <p className="text-xs font-semibold text-gray-800">{match.title}</p>
+        {match.desc && <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{match.desc}</p>}
+      </div>
     </div>
   );
 }
@@ -427,7 +469,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t1, choices } = extractChoices(t0);
           const { text: t2, maps } = extractMaps(t1);
           const { text: t3, qr } = extractQr(t2);
-          const { text: t4, providerStatuses } = extractProviderStatus(t3);
+          const { text: t3b, media } = extractMedia(t3);
+          const { text: t4, providerStatuses } = extractProviderStatus(t3b);
           // Final safety net: anything {{...}}-shaped that survived every
           // known extractor above (an unrecognized token, a format drift the
           // hardened regexes above still don't cover) must never reach the
@@ -490,6 +533,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                 </div>
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
+              {media && <ProcedureMediaCard query={media} />}
               {!isUser && text && typeof revealUpTo !== 'number' && !hasAudioAttachment && <SpeakButton text={text} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
