@@ -3304,7 +3304,7 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(helper, 'the helper writes only via asServiceRole').toContain('asServiceRole.entities.JourneyEvent.create');
   expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
 
-  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake', 'detectFallbackCrisis', 'runGuardianCheckInSweep']) {
+  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake', 'detectFallbackCrisis', 'runGuardianCheckInSweep', 'notifyGuardianNow']) {
     const src = strip(read(`base44/functions/${fn}/entry.ts`));
     expect(src, `${fn} must log JourneyEvent via the shared helper, not a raw create call`).toContain('logJourneyEvent(');
     expect(src, `${fn} must not create JourneyEvent directly, bypassing the shared helper's fixed field set`)
@@ -3319,6 +3319,16 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(findDoctorBackupSrc, 'findDoctorBackup must log JourneyEvent via the shared helper, not a raw create call')
     .toContain('logJourneyEvent(');
   expect(findDoctorBackupSrc, 'findDoctorBackup must not create JourneyEvent directly')
+    .not.toMatch(/entities\.JourneyEvent\.create/);
+
+  // recoveryTransportDispatch lives in shared/ too — the single real
+  // implementation behind both requestEmergencyRecoveryTransport (PinSession/
+  // admin) and requestOnDemandRide (normal authenticated traveler), so wiring
+  // it here alone covers both real dispatch triggers.
+  const recoveryDispatchSrc = strip(read('base44/shared/recoveryTransportDispatch.ts'));
+  expect(recoveryDispatchSrc, 'recoveryTransportDispatch must log JourneyEvent via the shared helper, not a raw create call')
+    .toContain('logJourneyEvent(');
+  expect(recoveryDispatchSrc, 'recoveryTransportDispatch must not create JourneyEvent directly')
     .not.toMatch(/entities\.JourneyEvent\.create/);
 
   // Never create an event merely because an LLM predicts something might
@@ -3356,4 +3366,58 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
     .not.toMatch(/content:[^,}]*tool_result/);
   expect(orb, 'MCareOrb must never interpolate action_taken into a rendered message')
     .not.toMatch(/content:[^,}]*action_taken/);
+});
+
+test('RIDE DISPATCH: requestOnDemandRide and notifyGuardianNow stay structurally distinct from their emergency-only siblings', () => {
+  // requestOnDemandRide is the routine, real-time "get me a cab" path for a
+  // normal authenticated traveler — it must never accept a PinSession token,
+  // which would let it be used to route around requestEmergencyRecoveryTransport's
+  // stricter compromised-device contract (or vice versa: a PIN holder using the
+  // "fast" function to skip whatever extra scrutiny the emergency path carries).
+  const rideSrc = read('base44/functions/requestOnDemandRide/entry.ts');
+  expect(rideSrc, 'requestOnDemandRide must require a real authenticated session')
+    .toMatch(/requireAuth:\s*true/);
+  expect(rideSrc, 'requestOnDemandRide must never accept a pin_session_token field')
+    .not.toContain('pin_session_token');
+  expect(rideSrc, 'requestOnDemandRide must verify the caller owns the case before dispatching')
+    .toMatch(/client_email:\s*user\.email/);
+
+  // notifyGuardianNow: the auto-create-a-GuardianSession branch (mirroring
+  // triggerSOS's real precedent) must only ever be reachable through the
+  // is_confirmed_emergency flag — never unconditionally, and never inferred
+  // from anything else. A routine call with no existing session must be
+  // turned away with needs_consent, not silently given a guardian relationship
+  // the traveler never set up.
+  const guardianSrc = read('base44/functions/notifyGuardianNow/entry.ts');
+  expect(guardianSrc, 'notifyGuardianNow must require a real authenticated session')
+    .toMatch(/requireAuth:\s*true/);
+  expect(guardianSrc, 'notifyGuardianNow must return needs_consent when no session exists and it is not a confirmed emergency')
+    .toMatch(/needs_consent:\s*true/);
+  const autoCreateBlock = guardianSrc.match(/if\s*\(!session\)\s*\{[\s\S]*?\n {2}\}/);
+  expect(autoCreateBlock, 'the no-session branch must exist to check').toBeTruthy();
+  expect(autoCreateBlock[0], 'the no-session branch must gate its early return on is_confirmed_emergency, not create unconditionally')
+    .toMatch(/if\s*\(!is_confirmed_emergency\)/);
+  expect(autoCreateBlock[0], 'the auto-create call itself must sit inside the is_confirmed_emergency branch')
+    .toContain('GuardianSession.create');
+
+  // Only a client-side, deterministic confirmation (never the LLM's own
+  // judgment) may set is_confirmed_emergency:true — MCareOrb's distress-confirm
+  // handler is the one real caller that does, and it must call both functions
+  // directly (bypassing the agent), the same pattern SOSDropdown.jsx already
+  // uses for triggerSOS.
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+  const confirmFnMatch = orbSrc.match(/const handleDistressConfirm = useCallback\([\s\S]*?\n {2}\}, \[/);
+  expect(confirmFnMatch, 'handleDistressConfirm function body must exist to check').toBeTruthy();
+  expect(confirmFnMatch[0], 'MCareOrb must call requestOnDemandRide directly from a confirmed distress signal')
+    .toContain('requestOnDemandRide');
+  expect(confirmFnMatch[0], 'MCareOrb must call notifyGuardianNow with is_confirmed_emergency:true from a confirmed distress signal')
+    .toMatch(/notifyGuardianNow[\s\S]{0,200}is_confirmed_emergency:\s*true/);
+
+  // requestEmergencyRecoveryTransport's own PinSession-or-admin auth contract
+  // must survive the shared-helper extraction unchanged.
+  const emergencySrc = read('base44/functions/requestEmergencyRecoveryTransport/entry.ts');
+  expect(emergencySrc, 'requestEmergencyRecoveryTransport must still accept a pin_session_token')
+    .toContain('pin_session_token');
+  expect(emergencySrc, 'requestEmergencyRecoveryTransport must still allow admin as a fallback auth path')
+    .toMatch(/role === 'admin'/);
 });

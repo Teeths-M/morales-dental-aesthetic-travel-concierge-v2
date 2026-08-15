@@ -410,15 +410,24 @@ export default function MCareOrb() {
   // Silent Guardian: a heard distress signal is logged to the audit trail and
   // answered with a calm welfare check — never an automatic emergency dispatch,
   // because ambient recognition produces false positives. Debounced 30s so a
-  // repeated re-recognition of the same utterance doesn't re-fire.
+  // repeated re-recognition of the same utterance doesn't re-fire. The welfare
+  // prompt itself now carries a real, deterministic confirm step (the
+  // {{choices:...}} tap-button mechanism MessageBubble already renders for
+  // every other closed-set question) — only an explicit "Yes" from the
+  // traveler, never the LLM's own interpretation, is allowed to trigger a
+  // real dispatch. See handleDistressConfirm below.
   const distressHandledAtRef = useRef(0);
   const handleDistressSignal = useCallback((signal, text) => {
     const now = Date.now();
     if (now - distressHandledAtRef.current < 30000) { resetSilenceNudge(); return; }
     distressHandledAtRef.current = now;
-    const prompt = distressWelfarePrompt(signal);
-    setAgentMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: prompt }]);
-    if (talkMode) speakAncillary(prompt, { rate: 0.9 });
+    const basePrompt = distressWelfarePrompt(signal);
+    const prompt = `${basePrompt}\n\n{{choices:Yes — send help now|No, I'm okay}}`;
+    setAgentMessages(prev => [...prev,
+      { role: 'user', content: text },
+      { role: 'assistant', content: prompt, __distressConfirm: { signal, text } },
+    ]);
+    if (talkMode) speakAncillary(basePrompt, { rate: 0.9 });
     base44.functions.invoke('logAuditEvent', {
       event_type: 'mcare_stage_transition',
       resource_type: 'mcare_distress_signal',
@@ -429,6 +438,66 @@ export default function MCareOrb() {
   // Keep the continuous-recognition effect able to reach the latest handler
   // without listing it as a dependency (same pattern as sendAgentMessage).
   useEffect(() => { liveRef.current.handleDistressSignal = handleDistressSignal; });
+
+  // A confirmed "Yes" from the distress welfare-check above — the one place
+  // this dispatch/alert pair is triggered from a deterministic client-side
+  // confirmation rather than the agent's own judgment, same "client calls the
+  // backend function directly" pattern SOSDropdown.jsx already uses for
+  // triggerSOS. Fans out to both a real ride request and a real guardian
+  // alert on one tap (the more protective default for someone who just
+  // confirmed they need help) — never claims either succeeded beyond what
+  // each call actually returned.
+  const handleDistressConfirm = useCallback(async (choice, ctx) => {
+    const confirmed = /^yes/i.test(choice);
+    base44.functions.invoke('logAuditEvent', {
+      event_type: 'mcare_stage_transition',
+      resource_type: 'mcare_distress_confirm',
+      details: { confirmed, category: ctx?.signal?.category },
+    }).catch(() => {});
+
+    if (!confirmed) {
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: "Okay — I'm here if that changes." }]);
+      return;
+    }
+
+    const lat = bestLocation?.latitude ?? undefined;
+    const lng = bestLocation?.longitude ?? undefined;
+    const source = bestLocation?.source === 'gps' ? 'gps' : 'ip_geo';
+
+    const [rideOutcome, guardianOutcome] = await Promise.allSettled([
+      base44.functions.invoke('requestOnDemandRide', {
+        case_id: activeCaseRecord?.id,
+        pickup_latitude: lat,
+        pickup_longitude: lng,
+        pickup_location_source: source,
+        notes: `Distress signal (${ctx?.signal?.category || 'unknown'}): "${ctx?.text || ''}"`,
+      }),
+      activeCaseRecord?.id
+        ? base44.functions.invoke('notifyGuardianNow', {
+            case_id: activeCaseRecord.id,
+            latitude: lat,
+            longitude: lng,
+            is_confirmed_emergency: true,
+            message_context: 'traveler confirmed a distress signal in M-Care',
+          })
+        : Promise.resolve(null),
+    ]);
+
+    const rideOk = rideOutcome.status === 'fulfilled' && !rideOutcome.value?.data?.error;
+    const guardianOk = guardianOutcome.status === 'fulfilled' && guardianOutcome.value && !guardianOutcome.value?.data?.error;
+    let reply;
+    if (rideOk && guardianOk) {
+      reply = "I've requested a driver for you and let your guardian know — I'll keep you updated.";
+    } else if (rideOk) {
+      reply = "I've requested a driver for you. I wasn't able to reach your guardian right now, but I've flagged it.";
+    } else if (guardianOk) {
+      reply = "I've let your guardian know. I wasn't able to line up a driver right now, but I've flagged it for the team.";
+    } else {
+      reply = "I'm having trouble reaching help right now. Please try again, or use the SOS option if this is urgent.";
+    }
+    setAgentMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    if (talkMode) speakAncillary(reply, { rate: 0.9 });
+  }, [bestLocation, activeCaseRecord, talkMode]);
 
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
@@ -1396,7 +1465,8 @@ export default function MCareOrb() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction onChoice={sendAgentMessage}
+                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction
+                      onChoice={m.__distressConfirm ? (c) => handleDistressConfirm(c, m.__distressConfirm) : sendAgentMessage}
                       revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
                       extraAudioUrl={voiceReplyAudioUrls[i]} />
                   </motion.div>

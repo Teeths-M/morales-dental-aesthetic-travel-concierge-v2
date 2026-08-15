@@ -26,7 +26,9 @@
         "doctor_backup_dispatched",
         "doctor_confirmation_delay_flagged",
         "weather_advisory",
-        "guardian_checkin_sent"
+        "guardian_checkin_sent",
+        "ride_dispatched",
+        "guardian_alert_sent"
       ]
     },
     "source": {
