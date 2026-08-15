@@ -184,7 +184,12 @@ export function buildActionPlan(
 }
 
 // ── Fetch weather from Open-Meteo (no API key) ────────────────────────────
-export async function fetchWeather(lat: number, lng: number) {
+// Retries once on a 429 (real, observed 2026-08-15 — a live checkWeatherAlerts
+// call was rate-limited by Open-Meteo). One retry after a short delay absorbs
+// a transient rate-limit blip within the same request; a second consecutive
+// failure still throws, so a genuine outage is reported honestly rather than
+// silently retried forever or masked with fabricated data.
+export async function fetchWeather(lat: number, lng: number, _attempt = 0): Promise<any> {
   const url = new URL('https://api.open-meteo.com/v1/forecast');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lng));
@@ -194,8 +199,28 @@ export async function fetchWeather(lat: number, lng: number) {
   url.searchParams.set('timezone', 'auto');
 
   const res = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
+  if (res.status === 429 && _attempt < 1) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return fetchWeather(lat, lng, _attempt + 1);
+  }
   if (!res.ok) throw new Error(`Open-Meteo ${res.status}`);
   return res.json();
+}
+
+// ── In-run memoization ─────────────────────────────────────────────────────
+// A single scan_all/checkJourneyWeather invocation can process many cases
+// that share the same destination country — COUNTRY_COORDS maps a country to
+// one fixed lat/lng, so those cases would otherwise call Open-Meteo once per
+// PATIENT instead of once per DESTINATION, needlessly multiplying real API
+// calls (and rate-limit risk) within a single run. Scoped to the caller's own
+// local Map — cleared on every fresh invocation, never a cross-request cache.
+export function createWeatherCache() {
+  const cache = new Map<string, Promise<any>>();
+  return (lat: number, lng: number): Promise<any> => {
+    const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+    if (!cache.has(key)) cache.set(key, fetchWeather(lat, lng));
+    return cache.get(key)!;
+  };
 }
 
 // ── Build alert from weather data ─────────────────────────────────────────

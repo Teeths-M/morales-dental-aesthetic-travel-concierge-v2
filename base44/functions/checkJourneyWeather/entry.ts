@@ -1,6 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
-import { resolveCountry, fetchWeather, buildAlert, resolveCaseWeatherContext } from '../../shared/weatherEngine.ts';
+import { resolveCountry, buildAlert, resolveCaseWeatherContext, createWeatherCache } from '../../shared/weatherEngine.ts';
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 /**
@@ -97,6 +97,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
   ].filter((c: any) => isStillLikelyTraveling(c, todayMs) && c.client_email);
 
   const results: { case_id: string; severity?: string; skipped?: string }[] = [];
+  const getWeather = createWeatherCache(); // shared per run — cases traveling to the same country reuse one Open-Meteo call
 
   for (const c of cases) {
     try {
@@ -117,7 +118,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
         continue;
       }
 
-      const weather = await fetchWeather(coords.lat, coords.lng);
+      const weather = await getWeather(coords.lat, coords.lng);
       const alert = buildAlert(weather, coords.name, ctx.procedureType, ctx.recoveryDay);
       const severity = alert.severity as Severity;
 

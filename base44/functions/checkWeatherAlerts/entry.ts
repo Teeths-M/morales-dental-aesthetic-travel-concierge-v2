@@ -1,6 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import {
-  SEV_RANK, resolveCountry, fetchWeather, buildAlert, mockAlert, resolveCaseWeatherContext,
+  SEV_RANK, resolveCountry, fetchWeather, buildAlert, mockAlert, resolveCaseWeatherContext, createWeatherCache,
 } from '../../shared/weatherEngine.ts';
 
 // ── checkWeatherAlerts ─────────────────────────────────────────────────────────
@@ -77,12 +77,13 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       (c: any) => c.procedure_country && c.status !== 'Completed'
     );
 
+    const getWeather = createWeatherCache(); // shared per run — cases sharing a destination country reuse one Open-Meteo call
     const results = await Promise.allSettled(
       withCountry.map(async (c: any) => {
         const ctx = resolveCaseWeatherContext(c);
         const coords = await resolveCountry(ctx.country);
         if (!coords) return { case_id: c.id, country: ctx.country, error: 'unresolvable' };
-        const weather = await fetchWeather(coords.lat, coords.lng);
+        const weather = await getWeather(coords.lat, coords.lng);
         const alert = buildAlert(weather, coords.name, ctx.procedureType, ctx.recoveryDay);
         return { case_id: c.id, client_name: c.client_name || c.client_email, ...alert };
       })
