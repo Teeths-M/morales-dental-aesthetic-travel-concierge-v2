@@ -24,7 +24,8 @@
         "recovery_checkin_day3",
         "driver_noshow_backup",
         "doctor_backup_dispatched",
-        "doctor_confirmation_delay_flagged"
+        "doctor_confirmation_delay_flagged",
+        "weather_advisory"
       ]
     },
     "source": {
