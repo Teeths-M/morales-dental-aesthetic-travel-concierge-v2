@@ -285,6 +285,12 @@ Deno.serve(async (req) => {
           '14d': 'departure_milestone_14d', '7d': 'departure_milestone_7d',
           '3d': 'departure_milestone_3d', '1d': 'departure_milestone_1d', '0d': 'departure_day_of',
         };
+        // 14d/7d are non-urgent (app-only); 3d/1d/day-of are the milestones
+        // close enough to matter, matching this function's own existing
+        // "SMS at 1d/3d only" judgment about which reminders deserve extra reach.
+        const PRIORITY_BY_MILESTONE: Record<string, 'low' | 'medium'> = {
+          '14d': 'low', '7d': 'low', '3d': 'medium', '1d': 'medium', '0d': 'medium',
+        };
         const message = daysLeft === 0
           ? 'Today is your journey day — everything is in motion. Safe travels.'
           : `Your journey begins ${whenPhrase(daysLeft)}. I've sent your care team their preparation briefings and reminders.`;
@@ -294,6 +300,7 @@ Deno.serve(async (req) => {
           event_type: EVENT_TYPE_BY_MILESTONE[milestone] || 'departure_day_of',
           source: 'sendTravelCountdownReminders',
           message_text: message,
+          priority: PRIORITY_BY_MILESTONE[milestone] || 'medium',
           action_taken: `Sent ${milestone} departure reminders to ${partiesReached} part${partiesReached === 1 ? 'y' : 'ies'}`,
           tool_result: { milestone, daysLeft, partiesReached },
         });

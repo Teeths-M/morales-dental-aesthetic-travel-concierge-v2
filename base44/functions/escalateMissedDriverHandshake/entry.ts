@@ -162,6 +162,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
         message_text: backupResult.success
           ? "Your ride is running behind — I've already dispatched a backup driver. Check your app for the update."
           : "Your ride is running behind and I'm finding you a replacement right now — hang tight, I'll update you shortly.",
+        priority: backupResult.success ? 'high' : 'critical',
         action_taken: `Driver no-show detected at handshake step ${n} (${leg} leg) — ${backupResult.success ? 'backup dispatched' : 'searching for a backup'}`,
         tool_result: { step: n, leg, backup_dispatched: backupResult.success },
         escalation_occurred: !backupResult.success,

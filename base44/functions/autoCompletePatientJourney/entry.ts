@@ -146,6 +146,7 @@ Deno.serve(async (req) => {
             event_type: 'journey_completed',
             source: 'autoCompletePatientJourney',
             message_text: 'Your journey is complete. Thank you for choosing Morales — wishing you a smooth continued recovery.',
+            priority: 'low',
             action_taken: completionReason,
           });
         }

@@ -140,6 +140,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         event_type: 'recovery_checkin_day3',
         source: 'schedulePostOpCheckIns',
         message_text: "You're 3 days into recovery — I've sent you a quick check-in so your doctor can see how you're doing. Reply whenever you're ready.",
+        priority: 'medium',
         action_taken: 'Sent Day 3 recovery check-in email and push notification',
         tool_result: { day: 3 },
         user_action_required: true,

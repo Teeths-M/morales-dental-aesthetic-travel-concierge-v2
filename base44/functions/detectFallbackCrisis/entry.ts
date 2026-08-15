@@ -317,6 +317,7 @@ Deno.serve(async (req) => {
               message_text: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL'
                 ? "I've flagged your doctor's confirmation for urgent follow-up with our team since your procedure is very close — I'll keep you posted."
                 : "Your procedure is coming up soon, and I'm actively following up on your doctor's confirmation to make sure everything's ready.",
+              priority: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL' ? 'high' : 'medium',
               action_taken: `Doctor confirmation still pending as the procedure approaches (${reason})`,
               tool_result: { reason, hours_until_procedure: hoursLeftForSms },
               escalation_occurred: reason === 'DOCTOR_UNCONFIRMED_PROCEDURE_CRITICAL',

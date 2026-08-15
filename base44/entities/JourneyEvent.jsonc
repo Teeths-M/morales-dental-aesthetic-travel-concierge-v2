@@ -50,6 +50,11 @@
     "escalation_occurred": {
       "type": "boolean",
       "default": false
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "How this event is communicated: low = in-app chat bubble only; medium/high/critical additionally trigger a push notification (high/critical mark it as requiring interaction, not auto-dismissing). Set explicitly by the writing function from data it actually computed — never a default, never inferred client-side."
     }
   },
   "required": [
@@ -57,7 +62,8 @@
     "client_email",
     "event_type",
     "source",
-    "message_text"
+    "message_text",
+    "priority"
   ],
   "rls": {
     "read": {
