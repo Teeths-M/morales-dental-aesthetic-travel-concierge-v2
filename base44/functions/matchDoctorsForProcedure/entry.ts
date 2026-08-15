@@ -172,6 +172,14 @@ SAFE-T 4LIFE™ Team`
     // + status:'active' + license_verified:true by construction (see the
     // filter above), so these three fields can never reflect an unapproved
     // doctor — there is no code path here that could include one.
+    //
+    // portfolio is the doctor's own real, self-uploaded media (image/video
+    // items, see Doctor.jsonc) — already shown publicly on ProviderDetail.jsx,
+    // so this is not a new exposure, just returning data the caller already
+    // has a legitimate use for (M-Care can show a doctor's real uploaded
+    // photo/video instead of inventing one). Defaults to [] — most doctors
+    // have not uploaded anything yet, and an empty array is the honest signal
+    // for "nothing real to show" rather than omitting the field entirely.
     return Response.json({
       matched_doctors: matchedDoctors.map(doc => ({
         id: doc.id,
@@ -187,7 +195,8 @@ SAFE-T 4LIFE™ Team`
         next_available_date: availabilityByDoctorId[doc.id] ?? null,
         status: doc.status,
         license_verified: doc.license_verified,
-        verification_status: doc.verification_status
+        verification_status: doc.verification_status,
+        portfolio: Array.isArray(doc.portfolio) ? doc.portfolio : []
       })),
       outreach_sent: false,
       message: `Found ${matchedDoctors.length} specialist(s) for ${procedure_interest}`

@@ -82,6 +82,23 @@ const extractMedia = (raw) => {
   return { text, media: match[1].trim() };
 };
 
+// Extract a {{doctormedia:DOCTOR_NAME|TYPE|URL}} token M-Care emits when a
+// matched doctor's own real portfolio (matchDoctorsForProcedure's `portfolio`
+// field — a doctor's own self-uploaded image/video, already shown publicly
+// on ProviderDetail.jsx) actually contains something and the traveler said
+// yes to seeing it. URL must be a real one the agent got back from that tool
+// call this turn — the UI only ever renders exactly what the token names, it
+// never looks anything up or invents a URL itself. TYPE is 'image' or
+// 'video'; anything else falls back to 'image' rather than rendering broken.
+const extractDoctorMedia = (raw) => {
+  if (!raw) return { text: '', doctorMedia: null };
+  const match = raw.match(/\{\{doctormedia:([^|]*)\|([^|]*)\|([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), doctorMedia: null };
+  const text = raw.replace(match[0], '').trim();
+  const type = match[2].trim().toLowerCase() === 'video' ? 'video' : 'image';
+  return { text, doctorMedia: { name: match[1].trim(), type, url: match[3].trim() } };
+};
+
 // Extract every {{providerstatus:TIER|Name}} token M-Care emits — a single
 // reply routinely names several providers at once (e.g. a list of web-
 // discovered candidates), unlike {{maps:...}}/{{qr:...}} which only ever
@@ -197,6 +214,32 @@ function ProcedureMediaCard({ query }) {
         <p className="text-xs font-semibold text-gray-800">{match.title}</p>
         {match.desc && <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{match.desc}</p>}
       </div>
+    </div>
+  );
+}
+
+// Renders a matched doctor's own real, self-uploaded portfolio media (an
+// image or video they personally added via DoctorPortfolio.jsx — already
+// shown publicly on ProviderDetail.jsx, so this is not a new exposure). The
+// URL always comes from a real matchDoctorsForProcedure tool result the
+// agent already received this turn, never invented or looked up here — if a
+// doctor's own upload fails to load, it fails visibly rather than silently
+// falling back to the generic procedure stock image, which would misrepresent
+// a generic illustration as this doctor's own real result.
+function DoctorMediaCard({ name, type, url }) {
+  if (!url) return null;
+  return (
+    <div className="mt-2 max-w-[240px] overflow-hidden rounded-xl border border-border bg-white">
+      {type === 'video' ? (
+        <video src={url} controls className="w-full h-32 bg-black object-cover" />
+      ) : (
+        <img src={url} alt={name ? `${name}'s portfolio` : 'Doctor portfolio'} className="w-full h-32 object-cover" />
+      )}
+      {name && (
+        <div className="p-2.5">
+          <p className="text-[11px] text-gray-500">From Dr. {name}&apos;s own portfolio</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -470,7 +513,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t2, maps } = extractMaps(t1);
           const { text: t3, qr } = extractQr(t2);
           const { text: t3b, media } = extractMedia(t3);
-          const { text: t4, providerStatuses } = extractProviderStatus(t3b);
+          const { text: t3c, doctorMedia } = extractDoctorMedia(t3b);
+          const { text: t4, providerStatuses } = extractProviderStatus(t3c);
           // Final safety net: anything {{...}}-shaped that survived every
           // known extractor above (an unrecognized token, a format drift the
           // hardened regexes above still don't cover) must never reach the
@@ -534,6 +578,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
               {media && <ProcedureMediaCard query={media} />}
+              {doctorMedia && <DoctorMediaCard name={doctorMedia.name} type={doctorMedia.type} url={doctorMedia.url} />}
               {!isUser && text && typeof revealUpTo !== 'number' && !hasAudioAttachment && <SpeakButton text={text} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
