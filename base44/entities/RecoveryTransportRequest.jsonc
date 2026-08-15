@@ -63,6 +63,20 @@
     "driver_phone": {
       "type": "string"
     },
+    "driver_location_token": {
+      "type": "string",
+      "description": "For driver-assigned requests, the LiveLocationRequest token the driver uses to stream their GPS. The traveler's inline map widget reads this (via getDriverLocationStatus) to render the driver's approaching dot in real time."
+    },
+    "driver_share_reminder_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the 3-minute 'your passenger is waiting' retry SMS was sent to the driver. Dedup so the scheduled sweep never sends it twice."
+    },
+    "driver_share_care_team_alerted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the 5-minute 'driver hasn't shared \u2014 call them' alert went to the M-Care care team. Dedup so the sweep never re-alerts."
+    },
     "visual_verification_token_id": {
       "type": "string"
     },
@@ -104,6 +118,11 @@
       "type": "string",
       "format": "date-time"
     },
+    "arrived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the transport was marked arrived \u2014 set by the geofence auto-arrival detector in the traveler's widget (or manually by an admin)."
+    },
     "completed_at": {
       "type": "string",
       "format": "date-time"
@@ -128,6 +147,11 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
         }
       ]
     },
@@ -137,9 +161,21 @@
       }
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     },
     "delete": {
       "user_condition": {
