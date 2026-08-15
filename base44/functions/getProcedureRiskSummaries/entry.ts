@@ -25,8 +25,11 @@ const bodySchema = strictObject({
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { titles } = await body();
 
-  const all: any[] = await base44.asServiceRole.entities.ProcedureKnowledge.list('-updated_at', 200);
-  const active = all.filter((r) => r.is_active !== false);
+  // Excludes 'Not Yet Assessed' rows (a picture-only record with no real
+  // clinical review) — a risk pill on a browsing card must never show a
+  // placeholder as if it were a genuine risk level.
+  const all: any[] = await base44.asServiceRole.entities.ProcedureKnowledge.list('-updated_at', 400);
+  const active = all.filter((r) => r.is_active !== false && r.risk_level !== 'Not Yet Assessed');
 
   const summaries: Record<string, { risk_level: string; risk_factors: string[]; complication_rate: string | null }> = {};
   if (active.length > 0) {

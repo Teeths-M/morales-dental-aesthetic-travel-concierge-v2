@@ -27,8 +27,13 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
       return err('query (procedure name) is required');
     }
 
-    const all: any[] = await base44.asServiceRole.entities.ProcedureKnowledge.list('-updated_at', 200);
-    const active = all.filter((r) => r.is_active !== false);
+    // Excludes 'Not Yet Assessed' rows (a picture-only record from
+    // generateProcedureIllustrations, no real clinical review yet) — this is
+    // the safety-lookup path, it must only ever return a record someone has
+    // actually assessed. getProcedureIllustration is the sibling that reads
+    // every row with a real image, including these.
+    const all: any[] = await base44.asServiceRole.entities.ProcedureKnowledge.list('-updated_at', 400);
+    const active = all.filter((r) => r.is_active !== false && r.risk_level !== 'Not Yet Assessed');
     if (active.length === 0) {
       return ok({
         success: true,
@@ -77,7 +82,8 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
 const m_care_protocol = {
   rule: 'PROCEDURE INQUIRY PROTOCOL — follow exactly, in order.',
   steps: [
-    '1. ASK MEDICAL BACKGROUND FIRST. Before discussing ANY procedure details, you must ask: "Before I dive into the details, I need to understand your health background. This helps me assess safety and give you the right guidance. Do you have any medical conditions (diabetes, high blood pressure, heart issues, etc.)? Are you on any medications? Have you had any previous surgeries?" Only after the traveler answers may you share risk information.',
+    '0. SHOW A REAL PICTURE FIRST, BOLDLY. Right after a short 1-2 sentence description, include the real illustrative image via the {{media:PROCEDURE_NAME}} token immediately, in this same reply — do not ask permission, do not wait for a yes, do not defer it behind medical background. A generic illustration is never a risk figure, so it is always safe to show right away.',
+    '1. ASK MEDICAL BACKGROUND. Before sharing any risk figures or clinical facts (not the general picture/overview you already gave in step 0), ask: "Before I dive into the details, I need to understand your health background. This helps me assess safety and give you the right guidance. Do you have any medical conditions (diabetes, high blood pressure, heart issues, etc.)? Are you on any medications? Have you had any previous surgeries?" Only after the traveler answers may you share risk figures.',
     '2. FLAG RISKS AGAINST THEIR BACKGROUND. Cross-reference the procedure against the traveler\'s disclosed conditions. Call out specific concerns: "Based on what you\'ve shared, I want to flag a few things to be aware of..." and "This procedure carries a higher risk for patients with [condition]. I recommend discussing this with a specialist." If they mention smoking, surface the smoker_warning. If their profile matches a red_flag_combination, state the severity and the required qualification plainly.',
     '3. BE HONEST ABOUT LIMITS. If getProcedureKnowledge returned found:false, first try recallMcareKnowledge then mcareResearchAndLearn (rule 14 — LEARN-AND-RECALL BRAIN) before giving up — a confident (>=80%) researched answer can be shared as general procedure information, clearly labeled as researched rather than from the curated safety database. Only if that also comes up empty or under 80% confident, say: "I don\'t have detailed information about that specific procedure yet, but I can help you find a verified specialist who can guide you. Would you like me to do that?" — do not invent risk data either way.',
     '4. NEVER DIAGNOSE OR RECOMMEND. Every procedure response must include this disclaimer: "I\'m not a doctor — I\'m here to organize information and help you make informed decisions. Always consult a qualified medical professional before proceeding." Never state a patient is "cleared", "safe", or "approved" based on this knowledge base — only the Safe-T4life screening + a clinician decide that.',

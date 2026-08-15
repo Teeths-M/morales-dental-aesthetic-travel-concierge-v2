@@ -193,14 +193,43 @@ export function InlineQrBlock({ label, dest }) {
 }
 
 // Renders a real, already-hosted illustrative image for the procedure M-Care
-// just named — resolved client-side via ProcedureData.jsx's searchProcedures
-// (the same fuzzy scorer/threshold this app already uses on /procedures), so
-// this can never show a fabricated or AI-generated-on-the-fly image, only a
-// real one that already exists in the catalog. Honest empty state when
-// nothing clears the lookup's own match threshold.
+// just named — two tiers, both real, never a fabricated or AI-generated-on-
+// the-fly image. Tier 1: ProcedureData.jsx's static searchProcedures (the
+// same fuzzy scorer this app already uses on /procedures) — instant, covers
+// the original curated 69. Tier 2, only if tier 1 finds nothing: the live
+// getProcedureIllustration function, which fuzzy-matches against
+// ProcedureKnowledge's expanded catalog (generateProcedureIllustrations'
+// batch-generated diagrams) — a brief loading state while that call is in
+// flight. Honest empty state if neither tier clears its own match threshold.
 function ProcedureMediaCard({ query }) {
-  const [match] = searchProcedures(query);
+  const [staticMatch] = searchProcedures(query);
+  const [liveMatch, setLiveMatch] = useState(undefined); // undefined = not checked yet, null = checked, nothing found
+  const [liveLoading, setLiveLoading] = useState(false);
+
+  useEffect(() => {
+    if (staticMatch) return; // tier 1 already has a real match, skip tier 2 entirely
+    let cancelled = false;
+    setLiveLoading(true);
+    base44.functions.invoke('getProcedureIllustration', { query })
+      .then((res) => {
+        if (cancelled) return;
+        setLiveMatch(res?.found ? { image: res.image_url, title: res.title, desc: res.desc } : null);
+      })
+      .catch(() => { if (!cancelled) setLiveMatch(null); })
+      .finally(() => { if (!cancelled) setLiveLoading(false); });
+    return () => { cancelled = true; };
+  }, [staticMatch, query]);
+
+  const match = staticMatch || liveMatch;
+
   if (!match) {
+    if (liveLoading) {
+      return (
+        <div className="mt-2 flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" /> Looking for a diagram...
+        </div>
+      );
+    }
     return (
       <div className="mt-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
         I don't have a diagram for that yet.

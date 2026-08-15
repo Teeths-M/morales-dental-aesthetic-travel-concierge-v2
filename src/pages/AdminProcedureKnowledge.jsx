@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import ConfirmDialog from '@/components/ui-system/ConfirmDialog';
-import { Activity, Plus, Search, Pencil, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Activity, Plus, Search, Pencil, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
 
 const DARK = '#060B16';
 const GOLD = '#D4AF37';
@@ -23,6 +23,7 @@ const riskColor = (r) => ({
   'Medium': 'bg-amber-100 text-amber-700',
   'High': 'bg-orange-100 text-orange-700',
   'Very High': 'bg-red-100 text-red-700',
+  'Not Yet Assessed': 'bg-slate-100 text-slate-500',
 }[r] || 'bg-secondary text-secondary-foreground');
 
 const EMPTY = {
@@ -47,6 +48,8 @@ export default function AdminProcedureKnowledge() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(null); // working copy
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateStatus, setGenerateStatus] = useState(null);
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -98,6 +101,19 @@ export default function AdminProcedureKnowledge() {
     finally { setSaving(false); }
   };
 
+  const generateMore = async () => {
+    setGenerating(true); setGenerateStatus(null); setError(null);
+    try {
+      const res = await base44.functions.invoke('generateProcedureIllustrations', {});
+      setGenerateStatus(res);
+      await load();
+    } catch (e) {
+      setError(e?.message || 'Generation failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const remove = async (id) => {
     try {
       await base44.entities.ProcedureKnowledge.delete(id);
@@ -116,8 +132,20 @@ export default function AdminProcedureKnowledge() {
             <h1 className="text-2xl font-bold">Procedure Knowledge Base</h1>
             <p className="text-sm text-muted-foreground">M-Care's medical-procedure safety reference — risk, recovery, red flags, and questions to ask. Curate what M-Care guides travelers on.</p>
           </div>
+          <Button variant="outline" onClick={generateMore} disabled={generating} className="gap-1.5">
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+            Generate More Illustrations
+          </Button>
           <Button onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" /> Add Procedure</Button>
         </div>
+
+        {generateStatus && (
+          <div className="mb-4 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+            Generated {generateStatus.generated} new illustration{generateStatus.generated === 1 ? '' : 's'} this run
+            {generateStatus.failed?.length > 0 && ` (${generateStatus.failed.length} failed — retry by clicking again)`}.
+            {' '}{generateStatus.remaining} of {generateStatus.total_target_list} procedures still don't have a picture — click again to keep going.
+          </div>
+        )}
 
         <Card className="mb-6">
           <CardContent className="pt-6">
@@ -145,10 +173,15 @@ export default function AdminProcedureKnowledge() {
               <Card key={r.id} className={r.is_active === false ? 'opacity-60' : ''}>
                 <CardContent className="pt-5">
                   <div className="flex items-start justify-between gap-3">
+                    {r.image_url && (
+                      <img src={r.image_url} alt={r.procedure_name} className="h-16 w-16 flex-shrink-0 rounded-lg object-cover border border-border" />
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-semibold">{r.procedure_name}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${riskColor(r.risk_level)}`}>{r.risk_level} risk</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${riskColor(r.risk_level)}`}>
+                          {r.risk_level === 'Not Yet Assessed' ? 'Not yet assessed' : `${r.risk_level} risk`}
+                        </span>
                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">{r.category}</span>
                         {r.is_active === false && <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">Inactive</span>}
                       </div>
