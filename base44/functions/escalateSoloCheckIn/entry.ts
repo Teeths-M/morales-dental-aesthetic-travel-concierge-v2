@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { logCrisisReroute } from '../../shared/logCrisisReroute.ts';
+import { getOrderedCaseContacts } from '../../shared/emergencyContacts.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -71,7 +72,13 @@ async function ensureGuardianLink(base44, caseRecord, patientEmail, patientName)
       patient_email: patientEmail,
       patient_name: patientName,
       guardian_name: 'Emergency Contact',
-      guardian_email: caseRecord.emergency_contact || '',
+      // caseRecord.emergency_contact is a display label ("Jane Doe (Spouse)"),
+      // not an email — the real field is emergency_contact_email. This used
+      // to write the label into guardian_email, poisoning every GuardianSession
+      // this helper created (notifyGuardianNow reads guardian_email directly).
+      // guardian_phone was never set at all before this fix.
+      guardian_email: caseRecord.emergency_contact_email || '',
+      guardian_phone: caseRecord.emergency_contact_number || '',
       view_token: token,
       expires_at: expiresAt,
       is_active: true,
@@ -90,6 +97,44 @@ async function getLatestLocation(base44, caseId) {
     const sorted = crumbs.sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
     return sorted[0];
   } catch (_) { return null; }
+}
+
+// Notify ONE ranked emergency contact via every channel we have a real value
+// for (email + SMS + WhatsApp, same primitives as above). Replaces the two
+// near-duplicate inline notify blocks the 2h and 3h tiers used to carry
+// separately — now called once per contact in a Promise.allSettled fan-out,
+// so a bad address for one contact can never stop the rest of the cascade
+// or the tier's own state transition.
+async function notifyContact(base44, contact, ctx) {
+  const result = { contact_id: contact.id || 'primary', priority: contact.priority, emailSent: false, smsSent: false, whatsappSent: false };
+  const firstName = (contact.name || '').trim().split(' ')[0];
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+  const isUrgent = ctx.tone === 'urgent';
+
+  if (contact.email && contact.email.includes('@')) {
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: contact.email,
+        subject: isUrgent
+          ? `🚨 URGENT: ${ctx.checkInName} Safety Check-In Overdue`
+          : `${ctx.checkInName} hasn't checked in yet — please take a look`,
+        body: `<p>${greeting}</p>
+          <p><strong>${ctx.checkInName}</strong> hasn't responded to their safety check-in${isUrgent ? ' for over 3 hours' : ''}.</p>
+          <p><strong>Last Known Location:</strong> ${ctx.locStr}</p>
+          ${ctx.mapsUrl ? `<p><a href="${ctx.mapsUrl}">📍 Open in Google Maps</a></p>` : ''}
+          ${ctx.guardianUrl ? `<p><a href="${ctx.guardianUrl}">👁 View live safety status, and options to reach out or request help</a></p>` : ''}
+          <p>${isUrgent ? 'Please try to contact them immediately. If you cannot reach them, Morales will continue escalating automatically.' : "We're here to protect them — please check in and make sure they're okay. This is an early, precautionary notice — no emergency has been declared."}</p>`,
+      });
+      result.emailSent = true;
+    } catch (_) { /* non-blocking */ }
+  }
+  if (contact.phone) {
+    const smsMsg = `${greeting} ${ctx.checkInName} hasn't responded to their check-in yet.${isUrgent ? ' This is urgent.' : ''} ${ctx.guardianUrl || ctx.appUrl}`;
+    const [sms, wa] = await Promise.allSettled([sendSms(contact.phone, smsMsg), sendWhatsApp(contact.phone, smsMsg)]);
+    result.smsSent = sms.status === 'fulfilled' && !!sms.value?.ok;
+    result.whatsappSent = wa.status === 'fulfilled' && !!wa.value?.ok;
+  }
+  return result;
 }
 
 Deno.serve(async (req) => {
@@ -157,51 +202,30 @@ Deno.serve(async (req) => {
           }
         }
 
-        // ── First miss: give the guardian a live-location link right away ──
-        // Previously the guardian heard nothing until 3h. A missed FIRST
-        // check-in is the earliest honest signal something might be wrong —
-        // the guardian gets it now, via every channel we have a real contact
-        // for, with a link to the same live Google-Map guardian view used at
-        // 3h/5h/9h so they can see where the patient is and reach out
-        // themselves, not wait for the heavier escalation tiers.
+        // ── First miss: give the primary contact a live-location link right
+        // away. Previously the guardian heard nothing until 3h. A missed
+        // FIRST check-in is the earliest honest signal something might be
+        // wrong — the primary contact only (priority 1) gets it now; the
+        // full ranked network doesn't widen until 3h (see that tier below).
         try {
           const recentCases = await base44.asServiceRole.entities.CaseRecord.filter(
             { client_email: checkIn.user_email }, '-created_date', 5
           );
           const caseRecord = recentCases.find(c => c.id === checkIn.case_id) || recentCases[0];
           if (caseRecord) {
-            const guardianEmail = caseRecord.emergency_contact_email;
-            const guardianPhone = caseRecord.emergency_contact_number;
-            if (guardianEmail || guardianPhone) {
+            const rankedContacts = await getOrderedCaseContacts(base44, caseRecord);
+            const primaryOnly = rankedContacts.filter(c => c.priority === 1);
+            if (primaryOnly.length) {
               const latestLoc = await getLatestLocation(base44, caseRecord.id);
               const guardianUrl = await ensureGuardianLink(base44, caseRecord, checkIn.user_email, checkIn.user_name);
               const locStr = latestLoc?.latitude
                 ? `${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
                 : latestLoc?.place_label || 'not yet available';
-              // emergency_contact is a display label ("Jane Doe (Spouse)") —
-              // take just the first name for a warm greeting, fall back to
-              // no name at all rather than printing the raw label.
-              const guardianFirstName = (caseRecord.emergency_contact || '').split(' (')[0].trim().split(' ')[0] || '';
-              const greeting = guardianFirstName ? `Hi ${guardianFirstName},` : 'Hi,';
 
-              if (guardianEmail && guardianEmail.includes('@')) {
-                await base44.asServiceRole.integrations.Core.SendEmail({
-                  to: guardianEmail,
-                  subject: `${checkIn.user_name} hasn't checked in yet — please take a look`,
-                  body: `<p>${greeting}</p>
-                    <p><strong>${checkIn.user_name}</strong> hasn't responded to their safety check-in yet. We're here to protect them — please check in and make sure they're okay.</p>
-                    <p><strong>Last known location:</strong> ${locStr}</p>
-                    ${guardianUrl ? `<p><a href="${guardianUrl}">👁 See their live location, and options to reach out or request help</a></p>` : ''}
-                    <p>This is an early, precautionary notice — no emergency has been declared. If they remain unreachable, Morales will continue escalating automatically.</p>`,
-                }).catch(() => {});
-              }
-              if (guardianPhone) {
-                const smsMsg = `${greeting} ${checkIn.user_name} hasn't responded to their check-in yet. We're here to protect them — please check in and make sure they're okay: ${guardianUrl || appUrl}`;
-                await Promise.allSettled([
-                  sendSms(guardianPhone, smsMsg),
-                  sendWhatsApp(guardianPhone, smsMsg),
-                ]);
-              }
+              await Promise.allSettled(primaryOnly.map(c => notifyContact(base44, c, {
+                checkInName: checkIn.user_name, guardianUrl, locStr, mapsUrl: null, appUrl, tone: 'first_notice',
+              })));
+
               await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
                 guardian_notified_at: now.toISOString(),
                 guardian_link_sent: !!guardianUrl,
@@ -223,7 +247,12 @@ Deno.serve(async (req) => {
           emergency_contact_notified_at: now.toISOString(),
         });
 
-        // Get case for emergency contact + latest location
+        // Get case for the full ranked contact network + latest location.
+        // This is where the Companion Network Alerts cascade actually widens:
+        // 2h reached only the primary contact; 3h reaches every ranked
+        // contact the traveler has on file (never spread further into 5h/9h
+        // — those tiers are a different audience, security/police dispatch,
+        // not personal contacts).
         let guardianUrl = null;
         let latestLoc = null;
         try {
@@ -235,11 +264,6 @@ Deno.serve(async (req) => {
             latestLoc = await getLatestLocation(base44, caseRecord.id);
             guardianUrl = await ensureGuardianLink(base44, caseRecord, checkIn.user_email, checkIn.user_name);
 
-            // emergency_contact is a display label ("Jane Doe (Spouse)"), not
-            // an email — was never going to pass the .includes('@') check
-            // below. emergency_contact_email is the real field, synced by
-            // PersonalEmergencyContactsPanel.
-            const emergencyEmail = caseRecord.emergency_contact_email;
             const locStr = latestLoc?.latitude
               ? `GPS: ${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
               : latestLoc?.place_label || 'Unknown';
@@ -247,24 +271,10 @@ Deno.serve(async (req) => {
               ? `https://www.google.com/maps/dir/?api=1&destination=${latestLoc.latitude},${latestLoc.longitude}&travelmode=driving`
               : null;
 
-            const alertBody = `<p>🚨 <strong>${checkIn.user_name}</strong> has not responded to their safety check-in for <strong>3 hours</strong>.</p>
-              <p><strong>Last Known Location:</strong> ${locStr}</p>
-              ${mapsUrl ? `<p><a href="${mapsUrl}">📍 Open in Google Maps</a></p>` : ''}
-              ${guardianUrl ? `<p><a href="${guardianUrl}">👁 View Live Safety Status</a></p>` : ''}
-              <p>Please try to contact them immediately. If you cannot reach them, reply to this email or call the Morales emergency line.</p>`;
-
-            await Promise.allSettled([
-              emergencyEmail && emergencyEmail.includes('@') ? base44.asServiceRole.integrations.Core.SendEmail({
-                to: emergencyEmail,
-                subject: `🚨 URGENT: ${checkIn.user_name} Safety Check-In Overdue`,
-                body: alertBody,
-              }) : Promise.resolve(),
-              guardianUrl && emergencyEmail && emergencyEmail.includes('@') ? base44.asServiceRole.integrations.Core.SendEmail({
-                to: emergencyEmail,
-                subject: `👁 Guardian Live Status Link for ${checkIn.user_name}`,
-                body: `<p>Use this secure link to monitor ${checkIn.user_name}'s live safety status and last known GPS location:</p><p><a href="${guardianUrl}">${guardianUrl}</a></p><p>No login required. Link expires in 48 hours.</p>`,
-              }) : Promise.resolve(),
-            ]);
+            const rankedContacts = await getOrderedCaseContacts(base44, caseRecord);
+            await Promise.allSettled(rankedContacts.map(c => notifyContact(base44, c, {
+              checkInName: checkIn.user_name, guardianUrl, locStr, mapsUrl, appUrl, tone: 'urgent',
+            })));
 
             await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
               guardian_notified_at: now.toISOString(),

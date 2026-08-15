@@ -60,6 +60,33 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
       emergency_contact_number: primary.phone,
       emergency_contact_email: primary.email || '',
     });
+
+    // Companion Network Alerts: everyone past the primary also syncs, so the
+    // real escalation ladder (escalateSoloCheckIn) can cascade through the
+    // whole ranked network at its 3h tier, not just the one primary contact.
+    // Replace-all — lists are small (1-4 contacts) and this is a low-frequency
+    // manual sync, nothing else references a row's id that a replace would orphan.
+    try {
+      const nonPrimary = contacts.filter(c => c.id !== primary.id);
+      const existing = await base44.entities.EmergencyContact.filter({ case_id: caseRecord.id }).catch(() => []);
+      await Promise.allSettled((existing || []).map(row => base44.entities.EmergencyContact.delete(row.id)));
+      await Promise.allSettled(nonPrimary.map((c, i) =>
+        base44.entities.EmergencyContact.create({
+          case_id: caseRecord.id,
+          patient_email: userEmail,
+          name: c.name,
+          relationship: c.relationship || '',
+          phone: c.phone,
+          email: c.email || '',
+          priority: i + 2, // primary always owns priority 1
+          created_at: new Date().toISOString(),
+        })
+      ));
+    } catch (_) {
+      // Non-blocking — the primary sync above already succeeded; the ranked
+      // network is an enhancement, never a reason to show the sync as failed.
+    }
+
     setSaving(false);
     setSavedMsg(true);
     setTimeout(() => setSavedMsg(false), 3000);

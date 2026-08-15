@@ -1,0 +1,119 @@
+{
+  "name": "EmergencyContact",
+  "type": "object",
+  "description": "Ranked, non-primary emergency contacts for a case's safety-alert cascade (priority 2+). The primary contact stays on CaseRecord's emergency_contact/emergency_contact_number/emergency_contact_email fields, unchanged — this entity only ever holds contact #2 and beyond, synced from PersonalEmergencyContactsPanel.jsx and read by escalateSoloCheckIn via shared/emergencyContacts.ts's getOrderedCaseContacts().",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this contact belongs to."
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Owning patient's email, matches CaseRecord.client_email — denormalized so RLS can scope directly, same pattern as GuardianSession.patient_email."
+    },
+    "name": {
+      "type": "string"
+    },
+    "relationship": {
+      "type": "string",
+      "description": "Free text, e.g. 'Spouse', 'Parent' — same convention as the primary's display label on CaseRecord.emergency_contact."
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "priority": {
+      "type": "number",
+      "description": "Cascade order among the non-primary contacts only. 2 = the next contact notified after the priority-1 primary, 3 = after that, etc. The primary is always priority 1 and is never a row in this entity."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email",
+    "name",
+    "phone",
+    "priority"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

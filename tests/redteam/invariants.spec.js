@@ -3421,3 +3421,73 @@ test('RIDE DISPATCH: requestOnDemandRide and notifyGuardianNow stay structurally
   expect(emergencySrc, 'requestEmergencyRecoveryTransport must still allow admin as a fallback auth path')
     .toMatch(/role === 'admin'/);
 });
+
+test('COMPANION NETWORK: EmergencyContact is patient-scoped, the cascade widens only at the 3h tier, and the guardian-session bug is fixed for good', () => {
+  // EmergencyContact holds contacts #2+ for the Companion Network Alerts
+  // cascade — a patient must own their own case's contacts (read/write), not
+  // wide open, matching GuardianSession's established RLS shape.
+  const entity = read('base44/entities/EmergencyContact.jsonc');
+  const scopedToPatient = (op) => new RegExp(
+    `"${op}"\\s*:\\s*\\{\\s*"\\$or"\\s*:\\s*\\[\\s*\\{\\s*"data\\.patient_email"\\s*:\\s*"\\{\\{user\\.email\\}\\}"`
+  );
+  for (const op of ['read', 'create', 'update', 'delete']) {
+    expect(entity, `EmergencyContact.${op} must be scoped to the owning patient (or admin), not wide open`)
+      .toMatch(scopedToPatient(op));
+  }
+
+  const src = read('base44/functions/escalateSoloCheckIn/entry.ts');
+
+  // The cascade must widen exactly once, at the 3h tier — never at 5h/9h,
+  // which are a different audience (security/police dispatch), and the 2h
+  // tier must stay scoped to the primary contact only (unchanged behavior).
+  const tier3Slice = src.slice(src.indexOf('hoursOverdue >= 3'), src.indexOf('hoursOverdue >= 5'));
+  const tier5Slice = src.slice(src.indexOf('hoursOverdue >= 5'), src.indexOf('hoursOverdue >= 9'));
+  const tier9Slice = src.slice(src.indexOf('hoursOverdue >= 9'));
+  expect(tier3Slice, 'the 3h tier must call getOrderedCaseContacts — this is where the cascade widens')
+    .toContain('getOrderedCaseContacts(');
+  expect(tier5Slice, 'the 5h tier must never notify the personal contact network — it stays admin/security-dispatch only')
+    .not.toMatch(/getOrderedCaseContacts\(|notifyContact\(/);
+  expect(tier9Slice, 'the 9h tier must never notify the personal contact network — it stays admin/police-dispatch only')
+    .not.toMatch(/getOrderedCaseContacts\(|notifyContact\(/);
+
+  const tier2Slice = src.slice(src.indexOf('hoursOverdue >= 2'), src.indexOf('hoursOverdue >= 3'));
+  expect(tier2Slice, 'the 2h tier must only ever notify the priority-1 primary contact')
+    .toMatch(/priority === 1/);
+
+  // notifyContact itself must be non-blocking — a bad address for one
+  // contact can never stop the rest of the cascade.
+  expect(src, 'notifyContact calls must be fanned out via Promise.allSettled, not a blocking loop')
+    .toMatch(/Promise\.allSettled\(\s*(primaryOnly|rankedContacts)\.map\(c => notifyContact\(/);
+  const notifyContactFnMatch = src.match(/async function notifyContact\([\s\S]*?\n\}/);
+  expect(notifyContactFnMatch, 'notifyContact function body must exist to check').toBeTruthy();
+  expect(notifyContactFnMatch[0], 'notifyContact must catch a failed email send so it cannot stop the rest of the fan-out')
+    .toMatch(/catch \(_\)/);
+  expect(notifyContactFnMatch[0], 'notifyContact must fan its SMS/WhatsApp sends out via Promise.allSettled, not a blocking await pair')
+    .toMatch(/Promise\.allSettled\(\[sendSms\(.*sendWhatsApp\(/);
+
+  // Regression guard for the real bug found and fixed while touching this
+  // code: emergency_contact is a display label, not an email — writing it
+  // into GuardianSession.guardian_email poisoned every session this helper
+  // created (notifyGuardianNow reads guardian_email directly).
+  expect(src, 'ensureGuardianLink must write the real email field into guardian_email')
+    .toContain('guardian_email: caseRecord.emergency_contact_email');
+  expect(src, 'ensureGuardianLink must never regress to writing the display label into guardian_email')
+    .not.toMatch(/guardian_email:\s*caseRecord\.emergency_contact\s*\|\|/);
+  expect(src, 'ensureGuardianLink must also populate guardian_phone (previously never set)')
+    .toContain('guardian_phone: caseRecord.emergency_contact_number');
+
+  // getOrderedCaseContacts stays a pure, shared data-shaping helper — no
+  // Twilio/email primitives leak into it, per this file's own stated
+  // convention of keeping notification sends inline in escalateSoloCheckIn.
+  const helperSrc = read('base44/shared/emergencyContacts.ts');
+  expect(helperSrc, 'emergencyContacts.ts must not itself send email/SMS — that stays in escalateSoloCheckIn')
+    .not.toMatch(/SendEmail|api\.twilio\.com/);
+
+  // The frontend sync must stay a direct client entity write scoped to the
+  // owning patient's own contacts, never touching another case's rows.
+  const panelSrc = read('src/components/emergency/PersonalEmergencyContactsPanel.jsx');
+  expect(panelSrc, 'PersonalEmergencyContactsPanel must sync non-primary contacts to EmergencyContact')
+    .toContain('base44.entities.EmergencyContact.create');
+  expect(panelSrc, 'the synced patient_email must come from the component\'s own userEmail prop, never a caller-suppliable field')
+    .toMatch(/patient_email:\s*userEmail/);
+});
