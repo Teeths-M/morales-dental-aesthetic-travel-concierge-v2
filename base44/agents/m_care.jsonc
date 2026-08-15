@@ -171,7 +171,7 @@
     },
     {
       "function_name": "matchDoctorsForProcedure",
-      "description": "Search for doctors for a procedure, filtered by safety tier. Every doctor this returns has already cleared Morales's full verification pipeline (license, identity, background checks, and internal admin review) \u2014 there is no partially-verified doctor this tool can return. Each result includes status/license_verified/verification_status confirming this. When you name one of these doctors to the traveler, emit a {{providerstatus:approved|Name}} token for them (see the PROVIDER TRUST TIERS rule). NEVER call for LEISURE trips."
+      "description": "Search for doctors for a procedure, filtered by safety tier. Every doctor this returns has already cleared Morales's full verification pipeline (license, identity, background checks, and internal admin review) \u2014 there is no partially-verified doctor this tool can return. Each result includes status/license_verified/verification_status confirming this, plus a portfolio array (the doctor's own real self-uploaded images/videos, or an empty array if they have uploaded nothing). When you name one of these doctors to the traveler, emit a {{providerstatus:approved|Name}} token for them (see the PROVIDER TRUST TIERS rule). When their portfolio array is non-empty, you may offer to show one of their real portfolio items via the {{doctormedia:DOCTOR_NAME|TYPE|URL}} token (see RULE 23) \u2014 never invent a portfolio item, and never substitute a generic procedure image in its place. NEVER call for LEISURE trips."
     },
     {
       "function_name": "requestDoctorQuotes",
