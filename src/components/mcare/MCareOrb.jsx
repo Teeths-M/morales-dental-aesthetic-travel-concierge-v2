@@ -936,6 +936,24 @@ export default function MCareOrb() {
     stopAllSpeech();
     setRevealState(null);
 
+    // Silent Guardian: scan TYPED text for a distress signal too, not just
+    // live Conversational Mode transcripts (that path already does this at
+    // the recognition callback above) — a typed "help me" or "I can't
+    // breathe" deserves the same calm welfare check as a spoken one, and
+    // most users type rather than talk. Same discipline as the voice path:
+    // a hit is handled entirely locally (audit log + welfare prompt) and
+    // never reaches the real agent conversation, since sending a distress
+    // cry to the booking/coordination agent as a normal question would be
+    // the wrong response to it.
+    if (!fileUrls?.length) {
+      const distressSignal = detectDistressSignal(q);
+      if (distressSignal) {
+        setInput('');
+        handleDistressSignal(distressSignal, q);
+        return;
+      }
+    }
+
     // Deterministic, client-side Voice & Privacy command layer — exact-phrase
     // match only (see voiceCommands.js), so a genuine question is never
     // mistaken for a mode command. Covers Talk Mode, Private Mode, modality,
@@ -1001,7 +1019,7 @@ export default function MCareOrb() {
         content: friendlyError(e, "I couldn't send your message just now — the connection dropped. Please try again in a moment.", 'MCareOrb'),
       }]);
     }
-  }, [input, agentConversation, agentSending, toast]);
+  }, [input, agentConversation, agentSending, toast, handleDistressSignal]);
 
   // Keeps the continuous-recognition effect's callbacks able to reach the
   // latest sendAgentMessage without listing it as a dependency (which would
