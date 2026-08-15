@@ -34,8 +34,8 @@
  * destination), not invented geo-infrastructure. Unresolvable countries are
  * skipped, not guessed at.
  *
- * Schedule: */15 * * * * (.github/workflows/safety-cron.yml, life-safety
- * tier) — a 15-minute tick is coarse relative to a specific 9am/9pm minute,
+ * Schedule: runs every 15 minutes via .github/workflows/safety-cron.yml's
+ * life-safety tier — a 15-minute tick is coarse relative to a specific 9am/9pm minute,
  * so the trigger window is "local hour === 9 (or 21)," deduped per local
  * calendar day via guardian_last_am_checkin_date / guardian_last_pm_checkin_date
  * on Consultation — whichever tick lands first in that hour sends it once.
