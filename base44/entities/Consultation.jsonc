@@ -596,6 +596,14 @@
     "last_check_in_response": {
       "type": "string",
       "description": "ISO timestamp of the patient's last Guardian check-in response"
+    },
+    "guardian_last_am_checkin_date": {
+      "type": "string",
+      "description": "Local calendar date (YYYY-MM-DD) the 9am Guardian check-in was last sent by runGuardianCheckInSweep. Dedup only — prevents sending twice on the same local day."
+    },
+    "guardian_last_pm_checkin_date": {
+      "type": "string",
+      "description": "Local calendar date (YYYY-MM-DD) the 9pm Guardian check-in was last sent by runGuardianCheckInSweep. Dedup only — prevents sending twice on the same local day."
     }
   },
   "required": [

@@ -171,6 +171,7 @@ jobs:
             call sendTravelCountdownReminders  # real, correct, was never scheduled until now — 14/7/3/1/0-day departure milestones
             call autoCompletePatientJourney    # real, correct, was never scheduled until now — Recovery -> Completed state transition
             call checkJourneyWeather           # M-Care Weather Guardian — daily destination briefing; severity doubles as a real-time severe-weather alert
+            call runGuardianCheckInSweep       # Silent Guardian am/pm check-in — real send, was never wired to anything, client or server, until now
           elif [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Anomaly analysis calls an LLM, so it runs on the slowest cadence.
             call runSafetyMonitor
@@ -188,6 +189,7 @@ jobs:
             call detectFallbackCrisis           # doctor unconfirmed as procedure nears → auto-backup
             call checkPartnerSLABreaches        # partner quiet 24h/48h → auto backup + admin escalate
             call dispatchSoloSecurity           # solo traveler 5h+ unresponsive → security welfare check
+            call runGuardianCheckInSweep        # Silent Guardian am/pm check-in — 9am/9pm local time, per opted-in traveler
             if [ "$MANUAL" = "true" ]; then
               call checkMissedRecoveryCheckins
               # runSafetyMonitor is the ONLY job here that calls an LLM, so it

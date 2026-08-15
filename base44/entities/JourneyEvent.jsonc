@@ -25,7 +25,8 @@
         "driver_noshow_backup",
         "doctor_backup_dispatched",
         "doctor_confirmation_delay_flagged",
-        "weather_advisory"
+        "weather_advisory",
+        "guardian_checkin_sent"
       ]
     },
     "source": {
