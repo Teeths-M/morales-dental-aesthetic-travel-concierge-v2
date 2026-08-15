@@ -25,7 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LivingOrb from './LivingOrb';
 import InterruptedIntentChip from './InterruptedIntentChip';
-import MessageBubble from '@/components/mcare-agent/MessageBubble';
+import MessageBubble, { InlineQrBlock } from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
@@ -56,6 +56,9 @@ import { detectDistressSignal, distressWelfarePrompt } from '@/lib/distressDetec
 import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguageDetect';
 import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 import { useJourneyEvents } from '@/hooks/useJourneyEvents';
+import { useAutoLocation } from '@/hooks/useAutoLocation';
+import { buildLocationContextBlock } from '@/lib/locationContext';
+import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -206,6 +209,12 @@ export default function MCareOrb() {
   useEffect(() => { speakingRef.current = speaking; }, [speaking]);
   useEffect(() => { revealStateRef.current = revealState; }, [revealState]);
   useEffect(() => { conversationalModeRef.current = conversationalMode; }, [conversationalMode]);
+
+  // Auto-detected approximate location (IP-based by default, GPS only if the
+  // traveler already granted it) — see src/lib/locationContext.js for why
+  // this is attached once per mount rather than on every message.
+  const { bestLocation } = useAutoLocation();
+  const locationContextSentRef = useRef(false);
 
   const silenceTimerRef = useRef(null);
   const silenceNudgeCountRef = useRef(0);
@@ -916,6 +925,13 @@ export default function MCareOrb() {
   const hasUnseenJourneyEvent = journeyEvents.some(e =>
     e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt);
 
+  // Offline-prep: while offline, no new tool call can succeed anyway (no
+  // network), so re-surface the most recent QR/maps token M-Care already
+  // generated this session — a pure client-side re-render of real data the
+  // app already has, never a fabricated placeholder. null when nothing was
+  // ever generated, or while online (the banner only renders offline).
+  const offlineArtifact = !isOnline ? findLastMapOrQrToken(agentMessages) : null;
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -1005,13 +1021,25 @@ export default function MCareOrb() {
       }
     }
 
+    // Attach the traveler's auto-detected approximate location once per
+    // mount, on the first real message — so M-Care doesn't have to ask
+    // "where are you" for anything location-based. Stripped from display by
+    // MessageBubble.jsx's extractLocationContext; only ever a hint the agent
+    // must confirm before treating as exact (see the LOCATION_CONTEXT rule
+    // in m_care.jsonc) — this repo's own getGeolocationAndCurrency comments
+    // document a real past IP-misidentification bug, which is exactly why.
+    const attachLocation = !locationContextSentRef.current;
+    const locationBlock = attachLocation ? buildLocationContextBlock(bestLocation) : null;
+    if (attachLocation) locationContextSentRef.current = true;
+    const contentToSend = locationBlock ? (q ? `${locationBlock}\n${q}` : locationBlock) : q;
+
     setInput('');
     setAgentSending(true);
     // Optimistic user message so the UI feels instant; subscription replaces
     // it with the canonical server record.
-    setAgentMessages(prev => [...prev, { role: 'user', content: q, file_urls: fileUrls }]);
+    setAgentMessages(prev => [...prev, { role: 'user', content: contentToSend, file_urls: fileUrls }]);
     try {
-      await base44.agents.addMessage(conversation, { role: 'user', content: q, file_urls: fileUrls });
+      await base44.agents.addMessage(conversation, { role: 'user', content: contentToSend, file_urls: fileUrls });
     } catch (e) {
       setAgentSending(false);
       setAgentMessages(prev => [...prev, {
@@ -1019,7 +1047,7 @@ export default function MCareOrb() {
         content: friendlyError(e, "I couldn't send your message just now — the connection dropped. Please try again in a moment.", 'MCareOrb'),
       }]);
     }
-  }, [input, agentConversation, agentSending, toast, handleDistressSignal]);
+  }, [input, agentConversation, agentSending, toast, handleDistressSignal, bestLocation]);
 
   // Keeps the continuous-recognition effect's callbacks able to reach the
   // latest sendAgentMessage without listing it as a dependency (which would
@@ -1043,6 +1071,9 @@ export default function MCareOrb() {
       });
       setAgentConversation(conversation);
       setAgentMessages(conversation.messages || []);
+      // A fresh journey may start somewhere new — re-attach location on its
+      // first message rather than carrying a possibly-stale reading forward.
+      locationContextSentRef.current = false;
     } catch (e) {
       toast({ title: 'Could not start a new journey', description: friendlyError(e, 'Please try again.', 'MCareOrb'), variant: 'destructive' });
     }
@@ -1399,6 +1430,26 @@ export default function MCareOrb() {
                       ))}
                     </div>
                     <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>M-Safe is coordinating…</span>
+                  </div>
+                )}
+
+                {!isOnline && (
+                  <div style={{ borderRadius: 14, border: '1px solid #FDE68A', background: '#FFFBEB', padding: '10px 14px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#B45309', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
+                      {t('guide.offline_badge')}
+                    </div>
+                    {offlineArtifact ? (
+                      <>
+                        <p style={{ margin: '0 0 6px', fontSize: 12.5, color: '#78350F' }}>
+                          Here's what I already prepared before the connection dropped:
+                        </p>
+                        <InlineQrBlock label={offlineArtifact.label} dest={offlineArtifact.dest} />
+                      </>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: 12.5, color: '#78350F' }}>
+                        I don't have anything saved for you yet this session. Ask me for directions or a QR code the next time you're connected, and I'll have it ready if you go offline again.
+                      </p>
+                    )}
                   </div>
                 )}
                 <div ref={bottomRef} />

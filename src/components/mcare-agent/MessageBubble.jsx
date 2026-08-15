@@ -18,6 +18,19 @@ const isImageUrl = (url) => /\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url || '');
 const isAudioUrl = (url) => /\.(webm|ogg|mp3|wav|m4a|opus)(\?|$)/i.test(url || '');
 const fileNameFromUrl = (url) => decodeURIComponent((url || '').split('/').pop()?.split('?')[0] || 'document');
 
+// Strip a [[LOCATION_CONTEXT: ...]] block MCareOrb.jsx silently prepends to
+// the first message of a session with the traveler's auto-detected
+// approximate location (see src/lib/locationContext.js) — a machine-
+// readable hint for the agent, never shown to the user as raw text; the
+// user only ever sees their own typed words.
+const extractLocationContext = (raw) => {
+  if (!raw) return { text: '', locationContext: null };
+  const match = raw.match(/\[\[LOCATION_CONTEXT:\s*([\s\S]*?)\]\]\s*/);
+  if (!match) return { text: raw, locationContext: null };
+  const text = raw.replace(match[0], '');
+  return { text, locationContext: match[1].trim() };
+};
+
 // Extract a {{choices:a|b|c}} token the agent emits for closed-set questions.
 // The UI strips it from the visible text and renders it as tappable chips.
 const extractChoices = (raw) => {
@@ -121,7 +134,7 @@ const stripMd = (s) => {
 // traveler can download it. Value is a Google Maps universal link (resolves
 // natively on iOS and Android) built the same way the {{maps:...}} buttons
 // already do, via generateMapLink.
-function InlineQrBlock({ label, dest }) {
+export function InlineQrBlock({ label, dest }) {
   const containerRef = useRef(null);
   const url = generateMapLink(dest, 'google_maps');
   if (!url) return null;
@@ -410,7 +423,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
       )}
       <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
         {(() => {
-          const { text: t1, choices } = extractChoices(message.content);
+          const { text: t0 } = extractLocationContext(message.content);
+          const { text: t1, choices } = extractChoices(t0);
           const { text: t2, maps } = extractMaps(t1);
           const { text: t3, qr } = extractQr(t2);
           const { text: t4, providerStatuses } = extractProviderStatus(t3);
