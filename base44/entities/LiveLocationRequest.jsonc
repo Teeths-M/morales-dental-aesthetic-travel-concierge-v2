@@ -1,15 +1,32 @@
 {
   "name": "LiveLocationRequest",
   "type": "object",
-  "description": "A secure, one-time link M-Care sends to a patient who reported feeling unsafe during medical travel. Opening the link (on any device, no login) shows a consent screen and streams the device GPS into the LiveLocation record tied to the patient's case. The token \u2014 not a user session \u2014 authorizes the public store endpoint.",
+  "description": "A secure, one-time link M-Care sends to a patient (or a driver) who needs to stream their live GPS. Opening the link (on any device, no login) shows a consent screen and streams the device GPS into the LiveLocation record tied to the patient's case (role=traveler) OR the RecoveryTransportRequest (role=driver). The token \u2014 not a user session \u2014 authorizes the public store endpoint.",
   "properties": {
     "token": {
       "type": "string",
       "description": "LT_<random> \u2014 the opaque token in the /share-location/:token URL"
     },
+    "role": {
+      "type": "string",
+      "enum": [
+        "traveler",
+        "driver"
+      ],
+      "default": "traveler",
+      "description": "Who this link is for. 'traveler' = the patient sharing their own location for safety; 'driver' = the matched taxi partner sharing their location so the traveler can watch them approach."
+    },
     "case_id": {
       "type": "string",
-      "description": "The patient's CaseRecord the streamed LiveLocation is attached to"
+      "description": "For role=traveler, the patient's CaseRecord the streamed LiveLocation is attached to. For role=driver, the RecoveryTransportRequest id (stored here as the linkage key so storeLiveLocationUpdate's existing case_id-based upsert works unchanged)."
+    },
+    "transport_request_id": {
+      "type": "string",
+      "description": "For role=driver, the RecoveryTransportRequest this driver link belongs to. Lets getDriverLocationStatus resolve the driver's request from the transport request id the traveler's widget holds."
+    },
+    "driver_id": {
+      "type": "string",
+      "description": "For role=driver, the TaxiService record id of the matched driver."
     },
     "user_id": {
       "type": "string"
@@ -19,11 +36,27 @@
       "format": "email"
     },
     "patient_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Display name shown on the consent screen. For role=driver, this is the driver's name (the person being asked to share)."
+    },
+    "driver_name": {
+      "type": "string",
+      "description": "For role=driver, the driver's display name \u2014 denormalized so the traveler's widget can show 'Carlos is on the way' without a join."
+    },
+    "visual_code": {
+      "type": "string",
+      "description": "For role=driver, the visual verification code (e.g. MANGO-7421) from the dispatch \u2014 shown as a gold badge under the traveler's live map so the safety code is always visible alongside the tracking view."
+    },
+    "pickup_latitude": {
+      "type": "number",
+      "description": "For role=driver, the pickup coordinates \u2014 used by the traveler's widget for geofence auto-arrival detection and route rendering."
+    },
+    "pickup_longitude": {
+      "type": "number"
     },
     "reason": {
       "type": "string",
-      "description": "Why M-Care requested live location (e.g. 'Patient reported feeling unsafe during medical travel')"
+      "description": "Why M-Care requested live location (e.g. 'Patient reported feeling unsafe during medical travel' or 'Driver \u2014 share your live location so your passenger can watch you approach')"
     },
     "status": {
       "type": "string",
@@ -34,7 +67,7 @@
         "expired"
       ],
       "default": "requested",
-      "description": "requested = link generated, not yet opened; active = first GPS update received; revoked = patient stopped sharing or link invalidated; expired = past expires_at"
+      "description": "requested = link generated, not yet opened; active = first GPS update received; revoked = sharing stopped or link invalidated; expired = past expires_at"
     },
     "expires_at": {
       "type": "string",
@@ -44,6 +77,11 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp of the most recent GPS update received via this link"
+    },
+    "traveler_notified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "For role=driver, the moment the traveler was push-notified that the driver started moving. Set once on the first active transition so we never send the 'driver is moving' push twice."
     },
     "created_at": {
       "type": "string",
@@ -84,6 +122,11 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
           }
         }
       ]
