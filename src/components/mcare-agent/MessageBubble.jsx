@@ -5,6 +5,7 @@ import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import ProviderStatusBadge from '@/components/mcare-agent/ProviderStatusBadge';
+import DriverMapWidget from '@/components/mcare-agent/DriverMapWidget';
 import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
@@ -97,6 +98,19 @@ const extractDoctorMedia = (raw) => {
   const text = raw.replace(match[0], '').trim();
   const type = match[2].trim().toLowerCase() === 'video' ? 'video' : 'image';
   return { text, doctorMedia: { name: match[1].trim(), type, url: match[3].trim() } };
+};
+
+// Extract a {{drivermap:REQUEST_ID}} token M-Care emits at the end of a ride
+// dispatch reply. REQUEST_ID is the RecoveryTransportRequest id the dispatch
+// returned. The UI strips the token and renders an inline live driver-tracking
+// map widget (DriverMapWidget) right inside the chat bubble — the traveler
+// watches the matched driver approach in real time without leaving the chat.
+const extractDriverMap = (raw) => {
+  if (!raw) return { text: '', driverMap: null };
+  const match = raw.match(/\{\{drivermap:([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), driverMap: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, driverMap: match[1].trim() };
 };
 
 // Extract every {{providerstatus:TIER|Name}} token M-Care emits — a single
@@ -543,7 +557,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t3, qr } = extractQr(t2);
           const { text: t3b, media } = extractMedia(t3);
           const { text: t3c, doctorMedia } = extractDoctorMedia(t3b);
-          const { text: t4, providerStatuses } = extractProviderStatus(t3c);
+          const { text: t3d, driverMap } = extractDriverMap(t3c);
+          const { text: t4, providerStatuses } = extractProviderStatus(t3d);
           // Final safety net: anything {{...}}-shaped that survived every
           // known extractor above (an unrecognized token, a format drift the
           // hardened regexes above still don't cover) must never reach the
@@ -608,6 +623,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
               {media && <ProcedureMediaCard query={media} />}
               {doctorMedia && <DoctorMediaCard name={doctorMedia.name} type={doctorMedia.type} url={doctorMedia.url} />}
+              {driverMap && <DriverMapWidget transportId={driverMap} />}
               {!isUser && text && typeof revealUpTo !== 'number' && !hasAudioAttachment && <SpeakButton text={text} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">

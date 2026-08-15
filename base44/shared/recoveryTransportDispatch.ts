@@ -122,6 +122,40 @@ export async function dispatchRecoveryTransport(
     visualTokenId = vt?.id || null;
   } catch (_) { /* best-effort — dispatch still proceeds without a stored token row */ }
 
+  // ── Driver live-location link (so the traveler can watch the driver approach)
+  // PRD: when a driver is matched, generate a secure token-link the driver opens
+  // in a browser to stream their GPS — the same mechanism the traveler uses for
+  // safety sharing. Stored on the transport request as driver_location_token so
+  // the traveler's inline map widget can poll it via getDriverLocationStatus.
+  let driverLocationToken = '';
+  let driverLocationUrl: string | null = null;
+  if (driverRecord) {
+    try {
+      const dlToken = 'LT_' + generateHex(20);
+      const dlExpiresAt = new Date(now.getTime() + 2 * 3600 * 1000).toISOString(); // 2h — a ride share shouldn't live forever
+      await base44.asServiceRole.entities.LiveLocationRequest.create({
+        token: dlToken,
+        role: 'driver',
+        case_id: '', // filled below once the transport request id is known
+        transport_request_id: '', // filled below
+        driver_id: driverRecord.id,
+        user_id: driverRecord.id, // not an app user; use driver_id so LiveLocation RLS doesn't collide
+        user_email: `driver+${driverRecord.id}@morales.local`,
+        patient_name: driverRecord.driver_name || driverRecord.agency_name || 'Driver',
+        driver_name: driverRecord.driver_name || driverRecord.agency_name || 'Driver',
+        visual_code: visualCode,
+        pickup_latitude: pickupLatitude ?? null,
+        pickup_longitude: pickupLongitude ?? null,
+        reason: 'Driver — share your live location so your passenger can watch you approach',
+        status: 'requested',
+        expires_at: dlExpiresAt,
+        created_at: now.toISOString(),
+      });
+      driverLocationToken = dlToken;
+      driverLocationUrl = `${appUrl.replace(/\/$/, '')}/share-location/${dlToken}`;
+    } catch (_) { /* best-effort — dispatch proceeds without driver tracking */ }
+  }
+
   // ── Create RecoveryTransportRequest ─────────────────────────────────────
   const requestToken = `RTRANS_${generateHex(12)}`;
   const mapsUrl = pickupLatitude != null
@@ -142,6 +176,7 @@ export async function dispatchRecoveryTransport(
     driver_id: driverRecord?.id || '',
     driver_name: driverRecord?.driver_name || driverRecord?.agency_name || '',
     driver_phone: driverRecord?.phone || '',
+    driver_location_token: driverLocationToken,
     visual_verification_token_id: visualTokenId || '',
     payment_status: 'emergency_transport_authorized',
     status: driverRecord ? 'driver_assigned' : 'no_driver',
@@ -149,6 +184,22 @@ export async function dispatchRecoveryTransport(
     dispatched_at: now.toISOString(),
     created_at: now.toISOString(),
   });
+
+  // ── Backfill the driver LiveLocationRequest's linkage keys now that the
+  // transport request id exists (we created the link record just above). The
+  // case_id on the driver's LiveLocationRequest is the transport request id —
+  // that's the linkage key storeLiveLocationUpdate upserts against.
+  if (driverLocationToken && transportRequest?.id) {
+    try {
+      const dlReqs = await base44.asServiceRole.entities.LiveLocationRequest.filter({ token: driverLocationToken }, '-created_at', 1);
+      if (dlReqs?.[0]) {
+        await base44.asServiceRole.entities.LiveLocationRequest.update(dlReqs[0].id, {
+          case_id: transportRequest.id,
+          transport_request_id: transportRequest.id,
+        });
+      }
+    } catch (_) { /* best-effort */ }
+  }
 
   // ── Alert admin ──────────────────────────────────────────────────────────
   if (adminEmail) {
@@ -189,7 +240,7 @@ ${!driverRecord ? `<p style="color:#dc2626;font-weight:bold;margin-top:16px;">�
     const locStr = pickupLatitude != null
       ? `${Number(pickupLatitude).toFixed(5)}, ${Number(pickupLongitude).toFixed(5)}`
       : pickupAddress || 'Unknown';
-    const driverSms = `MORALES PICKUP REQUEST: Patient at ${locStr}. Visual code: ${visualCode}. Confirm code before pickup. ${mapsUrl || 'Contact admin for directions.'}`;
+    const driverSms = `MORALES PICKUP REQUEST: Patient at ${locStr}. Visual code: ${visualCode}. Confirm code before pickup. ${mapsUrl || 'Contact admin for directions.'}${driverLocationUrl ? ` Tap to share your live location with your passenger: ${driverLocationUrl}` : ''}`;
     try {
       await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
         method: 'POST',

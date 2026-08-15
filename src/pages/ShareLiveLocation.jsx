@@ -19,8 +19,40 @@ export default function ShareLiveLocation() {
   const [geoError, setGeoError] = useState('');
   const [stopping, setStopping] = useState(false);
   const [stopped, setStopped] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState(null);
+  const [batteryCriticalAlerted, setBatteryCriticalAlerted] = useState(false);
   const watchIdRef = useRef(null);
   const tickRef = useRef(null);
+
+  // Battery warning (PRD §5): GPS streaming drains battery. Warn the driver at
+  // <20% so they plug in, and silently alert the care team at <10% so they know
+  // tracking may drop. navigator.getBattery is best-effort — not all browsers.
+  useEffect(() => {
+    let bat;
+    const update = () => {
+      if (bat?.level != null) setBatteryLevel(Math.round(bat.level * 100));
+    };
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then((b) => {
+        bat = b;
+        update();
+        b.addEventListener('levelchange', update);
+      }).catch(() => {});
+    }
+    return () => { if (bat) bat.removeEventListener('levelchange', update); };
+  }, []);
+
+  useEffect(() => {
+    if (batteryLevel != null && batteryLevel <= 10 && !batteryCriticalAlerted && token) {
+      setBatteryCriticalAlerted(true);
+      try {
+        base44.functions.invoke('storeSafetySignal', {
+          signal_type: 'driver_battery_critical',
+          context: { battery_level: batteryLevel, token },
+        }).catch(() => {});
+      } catch (_) {}
+    }
+  }, [batteryLevel, batteryCriticalAlerted, token]);
 
   const loadContext = async () => {
     setLoadingCtx(true);
@@ -153,6 +185,16 @@ export default function ShareLiveLocation() {
               When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to Morales securely. We share it only with your care team so they can keep you safe. You can <span className="font-medium text-foreground">stop sharing at any time</span> — no one is watching unless you say so.
             </p>
           </div>
+
+          {/* Battery warning (driver-side reliability) */}
+          {batteryLevel != null && batteryLevel <= 20 && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 mb-4 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-amber-900 dark:text-amber-200">
+                Your phone battery is at {batteryLevel}%. Plug it in to keep location sharing active for your passenger.
+              </p>
+            </div>
+          )}
 
           {/* Not sharing yet */}
           {!sharing && !stopped && (

@@ -2,9 +2,9 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
 // getLiveLocationRequest — public, token-gated. Returns the context the
 // /share-location/:token page needs to render the consent screen: who asked,
-// why, expiry, current status, and the last known location (if any) so the
-// patient can see what's already on file. No user session — the token IS the
-// authority, and it is opaque + single-use-by-link.
+// why, expiry, current status, role (traveler vs driver), and the last known
+// location (if any). No user session — the token IS the authority, opaque +
+// single-use-by-link.
 
 export default createHandler(async ({ base44, body }) => {
   const b = await body().catch(() => ({}));
@@ -33,7 +33,12 @@ export default createHandler(async ({ base44, body }) => {
   }
 
   return ok({
+    role: req.role || 'traveler',
     patient_name: req.patient_name || '',
+    driver_name: req.driver_name || '',
+    visual_code: req.visual_code || '',
+    pickup_latitude: req.pickup_latitude ?? null,
+    pickup_longitude: req.pickup_longitude ?? null,
     reason: req.reason || '',
     status: req.status,
     expires_at: req.expires_at,
