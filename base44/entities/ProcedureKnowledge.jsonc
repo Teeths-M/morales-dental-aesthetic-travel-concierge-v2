@@ -50,7 +50,7 @@
         "Very High",
         "Not Yet Assessed"
       ],
-      "description": "'Not Yet Assessed' is an honest placeholder for a record that only has an illustrative image, never a real level someone made up. getProcedureKnowledge and getProcedureRiskSummaries both exclude 'Not Yet Assessed' rows from their results — this value must never be narrated to a traveler as if it were a real clinical answer, and must never be treated as a genuine risk assessment by anything that reads this field."
+      "description": "'Not Yet Assessed' is an honest placeholder for a record that only has an illustrative image, never a real level someone made up. getProcedureKnowledge and getProcedureRiskSummaries both exclude 'Not Yet Assessed' rows from their results \u2014 this value must never be narrated to a traveler as if it were a real clinical answer, and must never be treated as a genuine risk assessment by anything that reads this field."
     },
     "risk_factors": {
       "type": "array",
@@ -119,7 +119,7 @@
     },
     "image_url": {
       "type": "string",
-      "description": "A real, already-generated illustrative diagram for this procedure (never a before/after, never a specific patient) — surfaced to M-Care's chat via getProcedureIllustration/RULE 22. Populated either by an admin directly or by the generateProcedureIllustrations batch tool."
+      "description": "A real, already-generated illustrative diagram for this procedure (never a before/after, never a specific patient) \u2014 surfaced to M-Care's chat via getProcedureIllustration/RULE 22. Populated either by an admin directly or by the generateProcedureIllustrations batch tool."
     },
     "is_active": {
       "type": "boolean",
