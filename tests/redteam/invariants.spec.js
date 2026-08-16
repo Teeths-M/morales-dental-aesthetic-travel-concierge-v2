@@ -325,11 +325,20 @@ test('PIN: no unsalted single-round hash is written or accepted', () => {
   expect(serverCall, 'server check must precede the local check').toBeLessThan(localCall);
 });
 
-test('PIN: emergency PIN hashing is 600k on the server, both sides', () => {
+test('PIN: emergency PIN hashing sources its iteration count from the shared, confirmed-safe constant on the server, both sides', () => {
+  // Originally pinned a literal 'iterations: 600000' in both files (the
+  // SEC-04 200k->600k hardening). Rewritten after a live incident showed
+  // 600k exceeds this Deno runtime's PBKDF2 cap (100k) -- every hash call
+  // was throwing. The invariant this guards is unchanged (never silently
+  // weaken PIN hashing back to 200k, or to nothing) but the mechanism is now
+  // "both files defer to one shared, capped constant" rather than a literal
+  // number repeated in each file — see the PBKDF2 ITERATIONS test below for
+  // the full fix.
   for (const fn of ['verifyEmergencyPIN', 'confirmPINReset']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
-    expect(src, `${fn} still hashes at 200k`).not.toContain('iterations: 200000');
-    expect(src, `${fn} missing 600k`).toContain('iterations: 600000');
+    expect(src, `${fn} still hashes at the pre-hardening 200k`).not.toContain('iterations: 200000');
+    expect(src, `${fn} must source its iteration count from the shared pinHashing module, not a local literal`)
+      .toMatch(/from ['"]\.\.\/\.\.\/shared\/pinHashing\.ts['"]/);
   }
 });
 
@@ -3565,4 +3574,66 @@ test('DRIVER LIVE MAP: the {{drivermap:...}} token is actually emitted, its cron
     .toMatch(/dispatched_at:\s*transport\.dispatched_at/);
   expect(statusSrc, 'getDriverLocationStatus must fall back to the caller-supplied transport_request_id if driverReq.case_id is empty')
     .toMatch(/driverReq\.case_id \|\| transport_request_id/);
+});
+
+test('PBKDF2 ITERATIONS: the platform ceiling is never exceeded, all three PIN functions share one implementation, and a legacy record fails gracefully', () => {
+  // Live incident: three independent inline PBKDF2 implementations
+  // (verifyVaultPIN.ts, confirmPINReset.ts, verifyEmergencyPIN.ts) all
+  // hardcoded 600,000 iterations (OWASP 2023) -- this Deno runtime's
+  // WebCrypto caps PBKDF2 at 100,000, so every one of them threw on every
+  // call, two of them completely silently (self-caught, never reaching
+  // createHandler's automatic incident reporting). Fixed with one shared
+  // implementation per hash shape in base44/shared/pinHashing.ts.
+  const pinHashingSrc = read('base44/shared/pinHashing.ts');
+  const maxItersMatch = pinHashingSrc.match(/export const MAX_PBKDF2_ITERATIONS\s*=\s*(\d+)/);
+  expect(maxItersMatch, 'MAX_PBKDF2_ITERATIONS must be declared and exported').toBeTruthy();
+  expect(Number(maxItersMatch[1]), 'MAX_PBKDF2_ITERATIONS must never exceed the confirmed platform ceiling of 100,000')
+    .toBeLessThanOrEqual(100000);
+  expect(pinHashingSrc, 'hashVaultPIN must be exported').toContain('export async function hashVaultPIN');
+  expect(pinHashingSrc, 'hashEmergencyPIN must be exported').toContain('export async function hashEmergencyPIN');
+
+  const pinFunctionFiles = [
+    'base44/functions/verifyVaultPIN/entry.ts',
+    'base44/functions/confirmPINReset/entry.ts',
+    'base44/functions/verifyEmergencyPIN/entry.ts',
+  ];
+  for (const file of pinFunctionFiles) {
+    const src = read(file);
+    expect(src, `${file} must import from the shared pinHashing module, not maintain its own PBKDF2 implementation`)
+      .toMatch(/from ['"]\.\.\/\.\.\/shared\/pinHashing\.ts['"]/);
+    expect(src, `${file} must never hardcode the old unreachable 600000 iteration count`)
+      .not.toContain('600000');
+    expect(src, `${file} must never call crypto.subtle.deriveBits directly — that belongs only in pinHashing.ts now`)
+      .not.toContain('deriveBits');
+  }
+
+  // Both entities must carry the self-describing iterations field a legacy
+  // (pre-fix) record won't have — the whole reason a future iteration-count
+  // change can't silently break existing verification again.
+  const vaultEntity = JSON.parse(read('base44/entities/VaultPIN.jsonc'));
+  const emergencyEntity = JSON.parse(read('base44/entities/EmergencyPIN.jsonc'));
+  expect(vaultEntity.properties.iterations, 'VaultPIN must declare an iterations field').toBeTruthy();
+  expect(emergencyEntity.properties.iterations, 'EmergencyPIN must declare an iterations field').toBeTruthy();
+
+  // A record with no stored iterations (or one whose stored value still
+  // exceeds the cap) must fail with a clean, actionable message -- never an
+  // unhandled throw reaching the generic 500 path. Checked structurally: the
+  // graceful-message constant must appear at least once per verify-shaped
+  // function, and must appear BEFORE any attempt to hash against a
+  // caller-supplied value in that file (i.e. the guard actually gates the
+  // risky call, not just exists somewhere unrelated).
+  const vaultSrc = read('base44/functions/verifyVaultPIN/entry.ts');
+  const emergencySrc = read('base44/functions/verifyEmergencyPIN/entry.ts');
+  expect(vaultSrc, 'verifyVaultPIN must import the graceful legacy-record message')
+    .toMatch(/LEGACY_PIN_RESET_MESSAGE/);
+  expect(emergencySrc, 'verifyEmergencyPIN must import the graceful legacy-record message')
+    .toMatch(/LEGACY_PIN_RESET_MESSAGE/);
+  // At least 2 real gates per file: the current/existing-PIN check and the
+  // main verify path both touch a record that might predate this fix.
+  const vaultGuardCount = (vaultSrc.match(/if \(!.*\.iterations\)/g) || []).length;
+  const emergencyGuardCount = (emergencySrc.match(/if \(!.*\.iterations\)/g) || []).length;
+  expect(vaultGuardCount, 'verifyVaultPIN must gate both the current_pin check and the main verify path on a missing iterations value')
+    .toBeGreaterThanOrEqual(2);
+  expect(emergencyGuardCount, 'verifyEmergencyPIN must gate both the current_pin check and the main verify path on a missing iterations value')
+    .toBeGreaterThanOrEqual(2);
 });

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
 import { z, strictObject, Fields, validate } from '../../shared/validate.ts';
+import { hashEmergencyPIN, MAX_PBKDF2_ITERATIONS, LEGACY_PIN_RESET_MESSAGE } from '../../shared/pinHashing.ts';
 
 // Single flexible schema rather than a per-action discriminated union — the
 // existing top-level check requires action+user_email for EVERY action
@@ -41,23 +42,14 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// SEC-04: PBKDF2 PIN hashing — 600k iterations (OWASP 2023), matching
-// verifyVaultPIN and the client. This was 200k while the client, the docs and
-// the security copy all stated 600k; the Emergency PIN is the credential
-// guarding the emergency vault, so it gets the documented strength.
-// Salt is derived from email so it's consistent per-user without storing it separately.
-// NOTE: must stay identical to confirmPINReset's emergency-PIN hash.
-async function pbkdf2Hash(pin, email) {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
-  // Use SHA-256 of email as salt — deterministic, non-secret, avoids extra DB field
-  const saltBuf = await crypto.subtle.digest('SHA-256', enc.encode('morales-pin-salt:' + email.toLowerCase()));
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBuf, iterations: 600000 },
-    keyMaterial, 256
-  );
-  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
+// SEC-04: PBKDF2 PIN hashing — extracted to base44/shared/pinHashing.ts
+// (hashEmergencyPIN), the single implementation confirmPINReset.ts's
+// emergency-PIN branch also uses ("must stay identical" is now structural,
+// not a comment to remember). Was hardcoded to 600k iterations (OWASP 2023)
+// until a live incident showed this Deno runtime's WebCrypto caps PBKDF2 at
+// 100,000 — every call was throwing. Every EmergencyPIN record now stores
+// the exact iteration count it was hashed with (see the entity schema),
+// self-describing so a future change can't silently break this again.
 
 // Generates a cryptographically random hex token
 function generateRawToken() {
@@ -111,7 +103,6 @@ Deno.serve(createHandler(async ({ req }) => {
       if (!new_pin || new_pin.length !== 6 || !/^\d{6}$/.test(new_pin)) {
         return Response.json({ error: 'PIN must be exactly 6 digits' }, { status: 400 });
       }
-      const hash = await pbkdf2Hash(new_pin, user_email);
       const existing = await base44.asServiceRole.entities.EmergencyPIN.filter({ user_email });
       const now = new Date().toISOString();
 
@@ -126,7 +117,19 @@ Deno.serve(createHandler(async ({ req }) => {
           if (existing[0].locked_until && new Date(existing[0].locked_until) > new Date()) {
             return Response.json({ error: 'Too many failed attempts. Try again later.', locked_until: existing[0].locked_until }, { status: 429 });
           }
-          const currentHash = await pbkdf2Hash(pin, user_email);
+          // A record with no stored iterations predates this fix and was
+          // hashed at a count this runtime can no longer compute (see
+          // pinHashing.ts) -- structurally unverifiable, not a wrong guess,
+          // so this must never count as a failed attempt.
+          if (!existing[0].iterations) {
+            return Response.json({ error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+          }
+          let currentHash;
+          try {
+            currentHash = await hashEmergencyPIN(pin, user_email, existing[0].iterations);
+          } catch (_) {
+            return Response.json({ error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+          }
           if (currentHash !== existing[0].pin_hash) {
             const newFailCount = (existing[0].failed_attempts || 0) + 1;
             const lockedUntil = newFailCount >= 5 ? new Date(Date.now() + 30 * 60 * 1000).toISOString() : null;
@@ -134,8 +137,9 @@ Deno.serve(createHandler(async ({ req }) => {
             return Response.json({ error: 'Incorrect current PIN', attempts_remaining: Math.max(0, 5 - newFailCount) }, { status: 403 });
           }
         }
+        const hash = await hashEmergencyPIN(new_pin, user_email, MAX_PBKDF2_ITERATIONS);
         await base44.asServiceRole.entities.EmergencyPIN.update(existing[0].id, {
-          pin_hash: hash, pin_hint: hint || '', is_active: true,
+          pin_hash: hash, pin_hint: hint || '', is_active: true, iterations: MAX_PBKDF2_ITERATIONS,
           failed_attempts: 0, locked_until: null, created_at: now
         });
       } else {
@@ -148,8 +152,9 @@ Deno.serve(createHandler(async ({ req }) => {
             error: 'Authentication required to set up an Emergency PIN for the first time. Please log in and try again.'
           }, { status: 401 });
         }
+        const hash = await hashEmergencyPIN(new_pin, user_email, MAX_PBKDF2_ITERATIONS);
         await base44.asServiceRole.entities.EmergencyPIN.create({
-          user_id: authedUser.id, user_email, pin_hash: hash, pin_hint: hint || '',
+          user_id: authedUser.id, user_email, pin_hash: hash, pin_hint: hint || '', iterations: MAX_PBKDF2_ITERATIONS,
           is_active: true, use_count: 0, failed_attempts: 0, created_at: now
         });
       }
@@ -192,7 +197,19 @@ Deno.serve(createHandler(async ({ req }) => {
         return Response.json({ verified: false, error: 'Too many failed attempts. Try again later.', locked_until: record.locked_until }, { status: 429 });
       }
 
-      const hash = await pbkdf2Hash(pin, user_email);
+      // A record with no stored iterations predates this fix and was hashed
+      // at a count this runtime can no longer compute -- structurally
+      // unverifiable, not a wrong guess, so this must never count as a
+      // failed attempt (which could lock a user out of an already-broken PIN).
+      if (!record.iterations) {
+        return Response.json({ verified: false, error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+      }
+      let hash;
+      try {
+        hash = await hashEmergencyPIN(pin, user_email, record.iterations);
+      } catch (_) {
+        return Response.json({ verified: false, error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+      }
       const isMatch = hash === record.pin_hash;
 
       if (isMatch) {
@@ -358,9 +375,9 @@ Deno.serve(createHandler(async ({ req }) => {
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    // SEC-10: Never expose internal error details; SEC-04: PIN hash migration note:
-    // SHA-256(pin+email) is vulnerable to GPU brute-force on DB breach.
-    // Migrate to PBKDF2 (SubtleCrypto, ≥200k iterations) or server-side bcrypt when available.
+    // SEC-10: Never expose internal error details. (The SEC-04 PBKDF2
+    // migration this comment used to flag as a TODO is done -- see the
+    // hashEmergencyPIN import above.)
     console.error('[verifyEmergencyPIN]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }

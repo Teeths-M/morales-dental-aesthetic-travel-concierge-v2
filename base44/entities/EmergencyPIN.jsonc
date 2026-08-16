@@ -11,7 +11,11 @@
     },
     "pin_hash": {
       "type": "string",
-      "description": "SHA-256 hash of the 6-digit PIN \u2014 never store plaintext"
+      "description": "PBKDF2-SHA256 hash of the 6-digit PIN \u2014 never store plaintext. Always hashed at the count stored in `iterations` on this same record -- never assume a fixed global value here."
+    },
+    "iterations": {
+      "type": "number",
+      "description": "The exact PBKDF2 iteration count pin_hash was computed with. Self-describing so a future platform/strength change only affects new PINs, never silently breaks verification of existing ones -- see base44/shared/pinHashing.ts. A record with no value here predates this field; assumed to be the historical 200,000 value, which also exceeds this platform's PBKDF2 cap -- the user must reset."
     },
     "pin_hint": {
       "type": "string",

@@ -11,11 +11,15 @@
     },
     "pin_hash": {
       "type": "string",
-      "description": "PBKDF2-SHA256 hash (600,000 iterations) of the 4-digit PIN"
+      "description": "PBKDF2-SHA256 hash of the 4-digit PIN. Always hashed at the count stored in `iterations` on this same record -- never assume a fixed global value here."
     },
     "pin_salt": {
       "type": "string",
       "description": "Base64 encoded salt for PBKDF2 - derived from user email"
+    },
+    "iterations": {
+      "type": "number",
+      "description": "The exact PBKDF2 iteration count pin_hash was computed with. Self-describing so a future platform/strength change only affects new PINs, never silently breaks verification of existing ones -- see base44/shared/pinHashing.ts. A record with no value here predates this field and cannot be verified on this runtime (the historical 600,000 value exceeds this platform's PBKDF2 cap) -- the user must reset."
     },
     "created_at": {
       "type": "string",

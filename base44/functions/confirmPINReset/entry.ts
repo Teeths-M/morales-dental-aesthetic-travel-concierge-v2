@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
 import { z, strictObject, validate } from '../../shared/validate.ts';
+import { hashVaultPIN, hashEmergencyPIN, MAX_PBKDF2_ITERATIONS } from '../../shared/pinHashing.ts';
 
 // All fields optional here on purpose — a missing/malformed token or sig
 // must keep failing the same soft way it already does ({valid:false,
@@ -69,30 +70,20 @@ async function writeAuditEntry(base44: any, eventType: string, email: string, ip
   });
 }
 
-async function pinHashForServer(pin: string, email: string): Promise<string> {
-  const enc = new TextEncoder();
-  const km = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
-  const saltBuf = await crypto.subtle.digest('SHA-256', enc.encode('morales-pin-salt:' + email.toLowerCase()));
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBuf, iterations: 600000 },
-    km, 256
-  );
-  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// VaultPIN uses a different scheme (matches verifyVaultPIN.ts + client vaultPINHashing.js):
-// salt = base64(SHA256("morales_vault_"+email)), 600k PBKDF2 iterations, base64 output.
+// Both PIN hash shapes now live in base44/shared/pinHashing.ts -- the same
+// implementation verifyEmergencyPIN.ts and verifyVaultPIN.ts use, so "must
+// stay identical" is structural, not a comment to remember. Was hardcoded to
+// 600k iterations (OWASP 2023) until a live incident showed this Deno
+// runtime's WebCrypto caps PBKDF2 at 100,000 -- every reset via this flow
+// was throwing. A reset always writes a fresh iterations value (see below) --
+// unlike direct verification, a reset never needs to read an old one, since
+// the emailed token is its own proof of identity and there's nothing to
+// compare the new PIN against.
 async function vaultPINHash(pin: string, email: string): Promise<{ hash: string; salt: string }> {
   const enc = new TextEncoder();
   const saltDigest = await crypto.subtle.digest('SHA-256', enc.encode('morales_vault_' + email.toLowerCase()));
   const salt = btoa(String.fromCharCode(...new Uint8Array(saltDigest)));
-  const saltBinary = Uint8Array.from(atob(salt), c => c.charCodeAt(0));
-  const km = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBinary, iterations: 600000 },
-    km, 256
-  );
-  const hash = btoa(String.fromCharCode(...new Uint8Array(bits)));
+  const hash = await hashVaultPIN(pin, email, MAX_PBKDF2_ITERATIONS);
   return { hash, salt };
 }
 
@@ -179,20 +170,20 @@ Deno.serve(createHandler(async ({ req }) => {
           return Response.json({ error: 'No vault PIN found for this account. Set one up from the Vault page.' }, { status: 404 });
         }
         await base44.asServiceRole.entities.VaultPIN.update(existing[0].id, {
-          pin_hash: hash, pin_salt: salt, failed_attempts: 0, locked_until: null, updated_at: now,
+          pin_hash: hash, pin_salt: salt, iterations: MAX_PBKDF2_ITERATIONS, failed_attempts: 0, locked_until: null, updated_at: now,
         });
       } else {
         // Update EmergencyPIN entity directly — avoids the auth guard in verifyEmergencyPIN
         // (reset tokens are their own proof of identity; no login session needed)
-        const hash = await pinHashForServer(String(new_pin), decoded.email);
+        const hash = await hashEmergencyPIN(String(new_pin), decoded.email, MAX_PBKDF2_ITERATIONS);
         const existing = await base44.asServiceRole.entities.EmergencyPIN.filter({ user_email: decoded.email });
         if (existing.length > 0) {
           await base44.asServiceRole.entities.EmergencyPIN.update(existing[0].id, {
-            pin_hash: hash, failed_attempts: 0, locked_until: null, created_at: now, is_active: true,
+            pin_hash: hash, iterations: MAX_PBKDF2_ITERATIONS, failed_attempts: 0, locked_until: null, created_at: now, is_active: true,
           });
         } else {
           await base44.asServiceRole.entities.EmergencyPIN.create({
-            user_email: decoded.email, pin_hash: hash, is_active: true,
+            user_email: decoded.email, pin_hash: hash, iterations: MAX_PBKDF2_ITERATIONS, is_active: true,
             use_count: 0, failed_attempts: 0, created_at: now,
           });
         }

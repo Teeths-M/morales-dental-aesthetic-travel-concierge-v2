@@ -1,4 +1,5 @@
-﻿import { createHandler } from '../../shared/createHandler.ts';
+import { createHandler } from '../../shared/createHandler.ts';
+import { hashVaultPIN, MAX_PBKDF2_ITERATIONS, LEGACY_PIN_RESET_MESSAGE } from '../../shared/pinHashing.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { pin, action, current_pin } = await body();
@@ -7,7 +8,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       return Response.json({ error: 'Invalid PIN format' }, { status: 400 });
     }
 
-    // Hash the PIN using SHA-256
+    // Hash the PIN using SHA-256 -- kept for the legacy (pre-PBKDF2-migration)
+    // plain-SHA256 fallback path further below, unrelated to the PBKDF2 fix.
     const encoder = new TextEncoder();
     const data = encoder.encode(pin);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -15,23 +17,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const pinHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     if (action === 'set') {
-      // Generate salt for PBKDF2 (same as client-side)
-      const emailData = encoder.encode(`morales_vault_${user.email.toLowerCase()}`);
-      const salt = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256', emailData))));
-      
-      // Hash PIN with PBKDF2 (600,000 iterations to match client)
-      const keyMaterial = await crypto.subtle.importKey('raw', data, 'PBKDF2', false, ['deriveBits']);
-      const saltBinary = Uint8Array.from(atob(salt), c => c.charCodeAt(0));
-      const derivedBits = await crypto.subtle.deriveBits(
-        { name: 'PBKDF2', salt: saltBinary, iterations: 600000, hash: 'SHA-256' },
-        keyMaterial,
-        256
-      );
-      const pbkdf2Hash = btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
-      
       // Check if PIN already exists
       const existingPins = await base44.asServiceRole.entities.VaultPIN.filter({ user_id: user.id });
-      
+
       if (existingPins.length > 0) {
         // SECURITY: a PIN already exists -- require the CURRENT pin (sent as
         // `current_pin`) to change it. Without this, a valid login session
@@ -42,14 +30,20 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         }
         let currentHashToCompare;
         if (existingPins[0].pin_salt) {
-          const curKeyMaterial = await crypto.subtle.importKey('raw', encoder.encode(current_pin), 'PBKDF2', false, ['deriveBits']);
-          const curSaltBinary = Uint8Array.from(atob(existingPins[0].pin_salt), c => c.charCodeAt(0));
-          const curDerivedBits = await crypto.subtle.deriveBits(
-            { name: 'PBKDF2', salt: curSaltBinary, iterations: 600000, hash: 'SHA-256' },
-            curKeyMaterial, 256
-          );
-          currentHashToCompare = btoa(String.fromCharCode(...new Uint8Array(curDerivedBits)));
+          // PBKDF2 record. Only verifiable if it carries a real iterations
+          // count -- a pre-this-fix record (600,000, unreachable on this
+          // runtime) has none and can never be recomputed. See pinHashing.ts.
+          if (!existingPins[0].iterations) {
+            return Response.json({ error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+          }
+          try {
+            currentHashToCompare = await hashVaultPIN(current_pin, user.email, existingPins[0].iterations);
+          } catch (_) {
+            return Response.json({ error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+          }
         } else {
+          // Pre-PBKDF2-migration plain SHA-256 record -- unaffected by the
+          // iteration-cap bug, unchanged.
           const curData = encoder.encode(current_pin);
           const curHashBuffer = await crypto.subtle.digest('SHA-256', curData);
           currentHashToCompare = Array.from(new Uint8Array(curHashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -57,10 +51,21 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         if (currentHashToCompare !== existingPins[0].pin_hash) {
           return Response.json({ error: 'Incorrect current PIN' }, { status: 403 });
         }
+      }
 
+      // Hash PIN with PBKDF2 at the confirmed platform ceiling, and store
+      // that exact count alongside the hash -- self-describing, so a future
+      // change can only ever affect new PINs, never silently break this one.
+      const salt = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest(
+        'SHA-256', encoder.encode(`morales_vault_${user.email.toLowerCase()}`),
+      ))));
+      const pbkdf2Hash = await hashVaultPIN(pin, user.email, MAX_PBKDF2_ITERATIONS);
+
+      if (existingPins.length > 0) {
         await base44.asServiceRole.entities.VaultPIN.update(existingPins[0].id, {
           pin_hash: pbkdf2Hash,
           pin_salt: salt,
+          iterations: MAX_PBKDF2_ITERATIONS,
           updated_at: new Date().toISOString()
         });
       } else {
@@ -70,6 +75,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
           user_email: user.email,
           pin_hash: pbkdf2Hash,
           pin_salt: salt,
+          iterations: MAX_PBKDF2_ITERATIONS,
           created_at: new Date().toISOString()
         });
       }
@@ -102,14 +108,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       // Use PBKDF2 hash if salt exists, otherwise fallback to SHA-256
       let hashToCompare = pinHash;
       if (pins[0].pin_salt) {
-        const keyMaterial = await crypto.subtle.importKey('raw', data, 'PBKDF2', false, ['deriveBits']);
-        const saltBinary = Uint8Array.from(atob(pins[0].pin_salt), c => c.charCodeAt(0));
-        const derivedBits = await crypto.subtle.deriveBits(
-          { name: 'PBKDF2', salt: saltBinary, iterations: 600000, hash: 'SHA-256' },
-          keyMaterial,
-          256
-        );
-        hashToCompare = btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
+        if (!pins[0].iterations) {
+          return Response.json({ valid: false, error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+        }
+        try {
+          hashToCompare = await hashVaultPIN(pin, user.email, pins[0].iterations);
+        } catch (_) {
+          return Response.json({ valid: false, error: LEGACY_PIN_RESET_MESSAGE }, { status: 409 });
+        }
       }
 
       const isValid = pins[0].pin_hash === hashToCompare;
