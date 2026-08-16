@@ -86,7 +86,7 @@
     "battery_critical_alerted_at": {
       "type": "string",
       "format": "date-time",
-      "description": "For role=driver, the moment the care team was alerted that the driver's phone battery dropped to 10% or below during location sharing. Set once so a low battery doesn't re-alert on every 10s GPS tick."
+      "description": "When a critical-battery warning was last sent for this sharing session (battery < 15%). Dedup so the traveler (or driver) isn't warned twice for the same low-battery event \u2014 a phone about to die mid-share is a real safety risk, but nagging about it every poll is worse."
     },
     "created_at": {
       "type": "string",
