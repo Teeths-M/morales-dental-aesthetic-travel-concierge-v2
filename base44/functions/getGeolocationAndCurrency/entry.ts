@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
 import { createKeyedMemoCache } from '../../shared/memoCache.ts';
+import { reportIncident, generateIncidentCode } from '../../shared/incidentReporting.ts';
 
 // ── SAFE-T GEO ENGINE ───────────────────────────────────────────────────────
 // Primary:   ipapi.co   (free, no key, HTTPS, 30k req/month, good Caribbean accuracy)
@@ -140,24 +141,25 @@ const DEFAULT_FALLBACK = {
 // Try primary then secondary; throws if both fail, so the memo cache never
 // stores a fallback result — matches the original "only cache real hits" rule.
 //
-// Both failure reasons are logged (console.error, visible in Base44's own
-// function invocation logs) rather than swallowed silently — the outer
-// handler already catches this into an honest DEFAULT_FALLBACK either way,
-// but with zero logging there was no way to tell "both free-tier providers
-// are genuinely down" apart from "something about this runtime's own
-// outbound network can't reach them at all" — a real, previously invisible
-// gap found while diagnosing a live report of location context never
-// reaching M-Care.
+// Both failure reasons are logged (console.error) AND combined into the
+// thrown error so the caller can report a real incident with the specific
+// reason both providers failed — console.error alone was confirmed (live,
+// via Base44's own log viewer) to never actually surface for this function:
+// createHandler.ts has no logger on the success path, only on an unhandled
+// throw, and this function deliberately never lets one reach it. Found while
+// diagnosing a live report of location context never reaching M-Care.
 async function resolveGeo(ip) {
   try {
     return await fromIpapiCo(ip);
   } catch (e1) {
-    console.error(`[getGeolocationAndCurrency] ipapi.co failed for ip=${ip}:`, e1?.message || e1);
+    const msg1 = e1?.message || String(e1);
+    console.error(`[getGeolocationAndCurrency] ipapi.co failed for ip=${ip}:`, msg1);
     try {
       return await fromIpwhoIs(ip);
     } catch (e2) {
-      console.error(`[getGeolocationAndCurrency] ipwho.is failed for ip=${ip}:`, e2?.message || e2);
-      throw e2;
+      const msg2 = e2?.message || String(e2);
+      console.error(`[getGeolocationAndCurrency] ipwho.is failed for ip=${ip}:`, msg2);
+      throw new Error(`ipapi.co: ${msg1} | ipwho.is: ${msg2}`);
     }
   }
 }
@@ -165,12 +167,50 @@ async function resolveGeo(ip) {
 // v3 in the key clears stale v1/v2 misidentified entries.
 const geoCache = createKeyedMemoCache(resolveGeo, GEO_CACHE_TTL, (ip) => `geo_v3_${ip}`);
 
-Deno.serve(createHandler(async ({ req }) => {
+// This function is called on nearly every session's first location check —
+// a sustained outage (like the one that surfaced this) would otherwise
+// create a fresh ReliabilityIncident, and a fresh 'high'-severity alert
+// email, on every single request. One hour is a deliberately coarse
+// cooldown — "tell someone this is broken," not a precise failure counter.
+// Module-level state resets on a cold isolate restart (same documented
+// caveat as memoCache.ts's own "free win, not a durable guarantee") — an
+// acceptable, bounded amount of noise, never per-request spam.
+let lastIncidentAt = 0;
+const INCIDENT_COOLDOWN_MS = 60 * 60 * 1000;
+
+Deno.serve(createHandler(async ({ req, base44 }) => {
   try {
     const ip = extractClientIp(req);
-    const result = await geoCache(ip).catch(() => DEFAULT_FALLBACK);
+    const result = await geoCache(ip);
     return Response.json(result);
-  } catch (_) {
+  } catch (geoErr) {
+    // Both providers failed. console.error was confirmed not to surface in
+    // Base44's log viewer for this function's shape (see resolveGeo's own
+    // comment) — reportIncident is the same real, proven mechanism
+    // createHandler.ts's own catch-all already uses: a real, queryable
+    // ReliabilityIncident row, plus a real alert email if
+    // INCIDENT_ALERT_EMAILS is configured. Awaited (bounded by the same
+    // 2s timeout race createHandler.ts's own catch-all uses) rather than
+    // fire-and-forget — the Deno isolate can tear down right after this
+    // response returns, which would otherwise silently drop the report more
+    // often than not. Never lets a reporting failure affect the response —
+    // the app still gets its honest fallback either way.
+    if (Date.now() - lastIncidentAt > INCIDENT_COOLDOWN_MS) {
+      lastIncidentAt = Date.now();
+      try {
+        await Promise.race([
+          reportIncident({
+            base44,
+            incidentCode: generateIncidentCode(),
+            severity: 'high',
+            source: 'api',
+            feature: 'getGeolocationAndCurrency',
+            errorMessage: geoErr instanceof Error ? geoErr.message : String(geoErr),
+          }),
+          new Promise((resolve) => setTimeout(resolve, 2000)),
+        ]);
+      } catch (_) { /* incident reporting must never affect the response */ }
+    }
     return Response.json(DEFAULT_FALLBACK);
   }
 }, { name: 'getGeolocationAndCurrency', requireAuth: false }));
