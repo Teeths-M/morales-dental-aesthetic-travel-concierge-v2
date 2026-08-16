@@ -2322,6 +2322,54 @@ test('PARTNERS: nothing automated may mark a background check passed', () => {
     .toMatch(/background_check_status/);
   expect(gate, "only 'passed' and 'manual_override' may count as cleared")
     .toMatch(/PASSED\s*=\s*new Set\(\[\s*['"]passed['"],\s*['"]manual_override['"]\s*\]\)/);
+
+  // A third, independently-discovered path: stripeIdentityWebhook.ts's
+  // syncVerificationStateToProvider reads a ProviderVerification row's own
+  // status and writes it straight onto background_check_status. Inert today
+  // (initiateCheckrScreening is an admitted stub, so no automated source can
+  // actually produce status:'passed' for a background_check row) — but the
+  // sync function itself must not trust an upstream 'passed' verbatim, so a
+  // real Checkr integration wired up later can't silently reopen this.
+  const webhook = strip(read('base44/functions/stripeIdentityWebhook/entry.ts'));
+  const backgroundWriteMatch = webhook.match(/background_check_status:\s*(\w+)/);
+  expect(backgroundWriteMatch, 'stripeIdentityWebhook must write background_check_status from a local variable, not a literal').toBeTruthy();
+  expect(backgroundWriteMatch[1], 'that variable must never be the raw upstream status — it must be the guarded one')
+    .not.toBe('rawBackgroundStatus');
+  expect(webhook, 'an untrusted automated "passed" must be downgraded unless manually overridden')
+    .toMatch(/rawBackgroundStatus === ['"]passed['"] && !backgroundOverridden/);
+
+  // Same file, unrelated small finding: admin alert emails were hardcoded to
+  // 'admin@morales.com' (a domain that doesn't even match this app's real
+  // one) instead of the ADMIN_EMAIL env var every other function uses —
+  // meaning these alerts likely went nowhere. Regression guard.
+  expect(webhook, 'stripeIdentityWebhook must not hardcode an admin email address')
+    .not.toContain('admin@morales.com');
+  expect(webhook, 'stripeIdentityWebhook must read the admin address from ADMIN_EMAIL like every other function')
+    .toContain("Deno.env.get('ADMIN_EMAIL')");
+});
+
+test('STALE CHUNK RECOVERY: a deploy-changed JS chunk reloads once instead of showing a scary crash screen or spamming an incident', () => {
+  // "Failed to fetch dynamically imported module" (a tab left open across a
+  // deploy, holding chunk filenames the server no longer has) was reaching
+  // ErrorBoundary's generic crash screen — whose own two recovery buttons
+  // both navigate within the SAME stale bundle that just failed — and
+  // reporting a fresh 'high'-severity incident on every occurrence, which is
+  // what surfaced this as a false "backend instability" finding in the first
+  // place. Fixed with Vite's own documented mechanism, not a support-ticket
+  // workaround ("tell users to hard refresh").
+  const mainSrc = read('src/main.jsx');
+  expect(mainSrc, 'main.jsx must listen for vite:preloadError')
+    .toContain("addEventListener('vite:preloadError'");
+  expect(mainSrc, 'the listener must guard against a reload loop, not reload unconditionally')
+    .toMatch(/PRELOAD_ERROR_RELOAD_COOLDOWN_MS/);
+
+  const boundarySrc = read('src/components/ErrorBoundary.jsx');
+  expect(boundarySrc, 'ErrorBoundary must recognize the same error class as a second-layer safety net')
+    .toContain('STALE_CHUNK_ERROR_RE');
+  expect(boundarySrc, 'a stale-chunk error must never generate a ReliabilityIncident — it is not an application bug')
+    .toMatch(/STALE_CHUNK_ERROR_RE\.test\(error\?\.message[\s\S]{0,20}\)\)\s*return;/);
+  expect(boundarySrc, 'the stale-chunk render path must offer a real one-click recovery, not the generic dead-end buttons')
+    .toContain('handleReloadForNewVersion');
 });
 
 test('PARTNERS: runDoctorVerificationScan never activates a doctor directly', () => {

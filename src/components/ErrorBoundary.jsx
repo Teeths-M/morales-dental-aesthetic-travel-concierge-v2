@@ -18,6 +18,13 @@ const DARK = '#060B16';
 const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
+// A stale deployed chunk (see main.jsx's vite:preloadError listener, the
+// primary handler for this) occasionally still reaches React's render pass
+// instead of being caught by that listener first -- timing-dependent, and
+// not every browser fires vite:preloadError reliably. Matched by message
+// text across the phrasing different browsers/Vite versions actually throw.
+const STALE_CHUNK_ERROR_RE = /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed/i;
+
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -28,8 +35,21 @@ class ErrorBoundary extends Component {
     return { hasError: true, error };
   }
 
+  handleReloadForNewVersion = () => {
+    window.location.reload();
+  };
+
   componentDidCatch(error, errorInfo) {
     console.error('[ErrorBoundary] Uncaught error:', error, errorInfo);
+
+    // A stale chunk isn't an application bug — main.jsx's vite:preloadError
+    // listener should catch nearly all of these before they ever reach here,
+    // and this render path already tells the user plainly and lets them
+    // recover in one click. Reporting it as a 'high' severity incident every
+    // time (previously unconditional) just re-adds noise a real audit has to
+    // wade through to find genuine problems, exactly what happened here.
+    if (STALE_CHUNK_ERROR_RE.test(error?.message || '')) return;
+
     try {
       Sentry.captureException(error, { extra: errorInfo });
     } catch (_) { /* Sentry may not be initialized — safe to ignore */ }
@@ -60,6 +80,41 @@ class ErrorBoundary extends Component {
 
   render() {
     if (!this.state.hasError) return this.props.children;
+
+    if (STALE_CHUNK_ERROR_RE.test(this.state.error?.message || '')) {
+      return (
+        <div style={{
+          minHeight: '100vh', background: DARK, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', padding: 20, fontFamily: '"SF Pro Display", system-ui, sans-serif',
+        }}>
+          <div style={{
+            maxWidth: 440, width: '100%', background: CARD, border: `1px solid ${BORDER}`,
+            borderRadius: 24, padding: '40px 32px', textAlign: 'center',
+          }}>
+            <img src="/morales-m-mark.png" alt="Morales" style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }} />
+            <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: GOLD }}>
+              Update Available
+            </p>
+            <h2 style={{ margin: '0 0 14px', fontSize: 22, fontWeight: 600, color: '#fff', lineHeight: 1.35 }}>
+              A newer version of this app is available.
+            </h2>
+            <p style={{ margin: '0 0 28px', fontSize: 14, lineHeight: 1.65, color: 'rgba(255,255,255,0.6)' }}>
+              Nothing is broken — this tab was just open across an update. Refreshing will pick up the current version.
+            </p>
+            <button
+              type="button"
+              onClick={this.handleReloadForNewVersion}
+              style={{
+                width: '100%', padding: '13px 16px', borderRadius: 12, cursor: 'pointer',
+                background: GOLD, border: 'none', color: DARK, fontSize: 13, fontWeight: 700,
+              }}
+            >
+              Refresh Now
+            </button>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div style={{

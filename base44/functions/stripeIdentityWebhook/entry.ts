@@ -92,21 +92,31 @@ Deno.serve(async (req) => {
 
       } catch (error) {
         console.error(`✗ Failed to auto-trigger background check for ${provider_email}:`, error);
-        
+
         // Alert admin
-        await base44.integrations.Core.SendEmail({
-          to: 'admin@morales.com',
-          subject: `⚠️ Auto-Trigger Failed: Background Check for ${provider_email}`,
-          body: `The automatic background check initiation failed. Manual intervention needed.\n\nError: ${error.message}`
-        });
+        const adminEmail = Deno.env.get('ADMIN_EMAIL');
+        if (adminEmail) {
+          await base44.integrations.Core.SendEmail({
+            to: adminEmail,
+            subject: `⚠️ Auto-Trigger Failed: Background Check for ${provider_email}`,
+            body: `The automatic background check initiation failed. Manual intervention needed.\n\nError: ${error.message}`
+          });
+        } else {
+          console.error('[stripeIdentityWebhook] ADMIN_EMAIL not set -- background-check auto-trigger failure alert not sent');
+        }
       }
     } else {
       // Identity failed - alert admin
-      await base44.integrations.Core.SendEmail({
-        to: 'admin@morales.com',
-        subject: `⚠️ Identity Verification Failed: ${provider_email}`,
-        body: `Provider ${provider_type} (${provider_email}) failed Stripe Identity verification.\n\nVerification ID: ${verificationSession.id}`
-      });
+      const adminEmail = Deno.env.get('ADMIN_EMAIL');
+      if (adminEmail) {
+        await base44.integrations.Core.SendEmail({
+          to: adminEmail,
+          subject: `⚠️ Identity Verification Failed: ${provider_email}`,
+          body: `Provider ${provider_type} (${provider_email}) failed Stripe Identity verification.\n\nVerification ID: ${verificationSession.id}`
+        });
+      } else {
+        console.error('[stripeIdentityWebhook] ADMIN_EMAIL not set -- identity-verification-failed alert not sent');
+      }
     }
 
     return Response.json({ received: true, processed: true });
@@ -130,13 +140,28 @@ async function syncVerificationStateToProvider(base44, provider_id, provider_typ
     const licenseCheck = allChecks.find(c => c.verification_type === 'license');
 
     const identityStatus = identityCheck?.status || 'pending';
-    const backgroundStatus = backgroundCheck?.status || 'pending';
     const licenseStatus = licenseCheck?.status || 'pending';
 
     // Check if any are manually overridden
     const identityOverridden = identityCheck?.manual_override_status === 'approved_by_admin';
     const backgroundOverridden = backgroundCheck?.manual_override_status === 'approved_by_admin';
     const licenseOverridden = licenseCheck?.manual_override_status === 'approved_by_admin';
+
+    // SAFETY: nothing automated may ever mark a background check "passed" --
+    // only an explicit human review (manual_override_status:'approved_by_admin')
+    // may. Today this is inert (initiateCheckrScreening is an admitted stub --
+    // see its own comment -- so a real ProviderVerification row can never
+    // actually carry status:'passed' from a genuine automated source), but this
+    // sync function has no business trusting an upstream status verbatim
+    // regardless of how it got there. If a real Checkr integration is ever
+    // wired up, a webhook writing 'passed' must still require this same human
+    // click before it's ever written here -- an untrusted automated "passed"
+    // is downgraded to 'pending' (a valid, honest enum value: no trustworthy
+    // answer yet), never silently accepted.
+    const rawBackgroundStatus = backgroundCheck?.status || 'pending';
+    const backgroundStatus = (rawBackgroundStatus === 'passed' && !backgroundOverridden)
+      ? 'pending'
+      : rawBackgroundStatus;
 
     // All passed (or manually overridden)
     const allPassed = 

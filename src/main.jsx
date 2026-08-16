@@ -156,3 +156,25 @@ window.addEventListener('pageshow', (event) => {
     window.location.reload();
   }
 });
+
+// Stale-chunk recovery: a tab left open across a deploy holds an index.html
+// referencing JS chunk filenames that no longer exist on the server once new
+// hashed chunks replace them — the browser's next lazy-loaded route then
+// throws "Failed to fetch dynamically imported module". Vite fires this event
+// for exactly that case (it wraps every dynamic import() it can statically
+// analyze, which covers every React.lazy() route in this app). Reload once —
+// a real redeploy resolves itself the instant the tab reloads and picks up
+// the new index.html. Guarded against a reload loop (sessionStorage, 15s):
+// if this fires again immediately after a reload-for-this-reason, the cause
+// isn't a stale chunk anymore (e.g. genuinely offline), so let it fall
+// through to ErrorBoundary's own handling instead of reloading forever.
+const PRELOAD_ERROR_RELOAD_KEY = 'morales_preload_error_reload_at';
+const PRELOAD_ERROR_RELOAD_COOLDOWN_MS = 15_000;
+window.addEventListener('vite:preloadError', (event) => {
+  let lastReloadAt = 0;
+  try { lastReloadAt = Number(sessionStorage.getItem(PRELOAD_ERROR_RELOAD_KEY)) || 0; } catch (_) {}
+  if (Date.now() - lastReloadAt < PRELOAD_ERROR_RELOAD_COOLDOWN_MS) return;
+  event.preventDefault();
+  try { sessionStorage.setItem(PRELOAD_ERROR_RELOAD_KEY, String(Date.now())); } catch (_) {}
+  window.location.reload();
+});
