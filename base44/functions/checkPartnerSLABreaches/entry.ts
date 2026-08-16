@@ -112,6 +112,12 @@ Deno.serve(async (req) => {
 
     for (const c of cases as any[]) {
       if (!c.quotas_requested_at) continue;
+      // Everything below is wrapped per-case — makeToken() throws (by design,
+      // fail-closed) if PORTAL_TOKEN_SECRET is ever unset, and that call used
+      // to sit unguarded inside this loop with no per-iteration try/catch:
+      // one missing env var would abort processing for every remaining case
+      // in this batch, silently, for as long as the misconfiguration lasted.
+      try {
       const age = now - new Date(c.quotas_requested_at).getTime();
       const caseRef     = c.id.slice(-8).toUpperCase();
       const patientName = c.client_name;
@@ -267,6 +273,10 @@ Deno.serve(async (req) => {
       }
 
       if (tasks.length > 0) await Promise.allSettled(tasks);
+      } catch (caseErr) {
+        console.error(`[checkPartnerSLABreaches] Failed processing case ${c.id}:`, caseErr instanceof Error ? caseErr.stack || caseErr.message : String(caseErr));
+        continue;
+      }
     }
 
     // ── Doctor SLA ───────────────────────────────────────────────────────────
@@ -281,6 +291,10 @@ Deno.serve(async (req) => {
 
     for (const c of doctorPendingCases as any[]) {
       if (!c.doctor_notified_at || c.sla_breached_doctor) continue;
+      // Same per-case isolation as the vendor-pending loop above — a single
+      // case throwing here (a malformed record, a transient write conflict)
+      // must not stop the doctor-SLA sweep from reaching every other case.
+      try {
       const age = now - new Date(c.doctor_notified_at).getTime();
 
       // Give the doctor an actual, communicated window before any reassignment:
@@ -345,6 +359,10 @@ Deno.serve(async (req) => {
           human_escalated_reason: result.success ? '' : 'No verified backup doctor available within the 24h SLA.',
           source_message: 'Doctor did not respond within the 24h SLA.',
         }).catch(() => {});
+      }
+      } catch (doctorCaseErr) {
+        console.error(`[checkPartnerSLABreaches] Failed processing doctor-pending case ${c.id}:`, doctorCaseErr instanceof Error ? doctorCaseErr.stack || doctorCaseErr.message : String(doctorCaseErr));
+        continue;
       }
     }
 

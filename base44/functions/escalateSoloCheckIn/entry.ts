@@ -183,6 +183,15 @@ Deno.serve(async (req) => {
       const sentAt = new Date(checkIn.sent_time);
       const hoursOverdue = (now - sentAt) / (1000 * 60 * 60);
 
+      // Everything below (all 4 tiers) is wrapped per-checkIn — this whole
+      // block used to sit outside any try/catch, so one bad record throwing
+      // (a malformed row, a transient write conflict) aborted the ENTIRE
+      // loop, silently skipping every check-in after it in this run —
+      // including anyone overdue for the 5h/9h security/police tier. A
+      // failure here is now isolated to this one check-in; the rest of the
+      // batch still gets processed this tick.
+      try {
+
       // ── 2h: Second reminder ─────────────────────────────────────────────
       if (hoursOverdue >= 2 && checkIn.status === 'pending') {
         // Atomic claim first
@@ -507,6 +516,11 @@ Deno.serve(async (req) => {
         }).catch(() => {});
 
         escalated9h++;
+      }
+
+      } catch (checkInErr) {
+        console.error(`[escalateSoloCheckIn] Failed processing check-in ${checkIn.id} (case ${checkIn.case_id || 'unknown'}):`, checkInErr instanceof Error ? checkInErr.stack || checkInErr.message : String(checkInErr));
+        continue;
       }
     }
 
