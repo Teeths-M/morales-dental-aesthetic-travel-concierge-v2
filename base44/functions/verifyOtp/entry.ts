@@ -14,7 +14,7 @@ const VerifyOtpSchema = strictObject({
   code: z.string().trim().min(1).max(10),
 });
 
-export default createHandler(async ({ base44, body }) => {
+Deno.serve(createHandler(async ({ base44, body }) => {
   const { phone, email, code } = await body();
   if ((!phone && !email) || !code) return err('Phone or email, plus code, are required');
   if (phone && email) return err('Provide either phone or email, not both');
@@ -63,4 +63,4 @@ export default createHandler(async ({ base44, body }) => {
   const userEmail = users?.[0]?.email ?? null;
 
   return ok({ verified: true, phone: identifier, user_email: userEmail });
-}, { name: 'verifyOtp', requireAuth: false, bodySchema: VerifyOtpSchema });
+}, { name: 'verifyOtp', requireAuth: false, bodySchema: VerifyOtpSchema }));

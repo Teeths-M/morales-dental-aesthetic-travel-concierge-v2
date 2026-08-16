@@ -42,7 +42,7 @@ async function checkRateLimit(base44: any, key: string, windowSeconds: number, m
   return true;
 }
 
-export default createHandler(async ({ req, base44, body }) => {
+Deno.serve(createHandler(async ({ req, base44, body }) => {
   const raw = await body<Record<string, string>>();
   const doctor_name = sanitize(raw.doctor_name, 200);
   const clinic_name = sanitize(raw.clinic, 200);
@@ -85,4 +85,4 @@ export default createHandler(async ({ req, base44, body }) => {
   return ok({ received: true });
 // Already rate-limited inline above via RateLimitBucket — rateLimit:false here
 // avoids silently double-limiting through two independent mechanisms.
-}, { name: 'submitDoctorCorrection', requireAuth: false, rateLimit: false, bodySchema: DoctorCorrectionSchema });
+}, { name: 'submitDoctorCorrection', requireAuth: false, rateLimit: false, bodySchema: DoctorCorrectionSchema }));

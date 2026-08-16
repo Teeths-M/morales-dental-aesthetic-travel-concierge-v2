@@ -22,7 +22,7 @@ const TrackSignupSchema = strictObject({
   last_step_reached: z.string().trim().max(60).optional().default(''),
 });
 
-export default createHandler(async ({ base44, body }) => {
+Deno.serve(createHandler(async ({ base44, body }) => {
   const { phone, email, flow, last_step_reached } = await body<z.infer<typeof TrackSignupSchema>>();
 
   if (!phone && !email) {
@@ -55,4 +55,4 @@ export default createHandler(async ({ base44, body }) => {
   }
 
   return ok({ tracked: true });
-}, { name: 'trackSignupAbandon', requireAuth: false, bodySchema: TrackSignupSchema });
+}, { name: 'trackSignupAbandon', requireAuth: false, bodySchema: TrackSignupSchema }));

@@ -6,7 +6,7 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 // location (if any). No user session — the token IS the authority, opaque +
 // single-use-by-link.
 
-export default createHandler(async ({ base44, body }) => {
+Deno.serve(createHandler(async ({ base44, body }) => {
   const b = await body().catch(() => ({}));
   const token = String(b.token || '').trim();
   if (!token) return err('Token is required.', 400);
@@ -51,4 +51,4 @@ export default createHandler(async ({ base44, body }) => {
         }
       : null,
   });
-}, { name: 'getLiveLocationRequest', requireAuth: false });
+}, { name: 'getLiveLocationRequest', requireAuth: false }));

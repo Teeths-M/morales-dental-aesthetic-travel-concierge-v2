@@ -9,7 +9,7 @@ import { evaluateGuardianGate } from '../../shared/guardianGate.ts';
 // from the submitted age server-side so the block cannot be bypassed by going
 // around the frontend. Called before every Consultation.create() in both flows.
 // Mirrors validateProcedureSafety (the RED procedure block).
-export default createHandler(async ({ body }) => {
+Deno.serve(createHandler(async ({ body }) => {
   const { age, guardian_name, guardian_contact } = await body<{
     age?: unknown; guardian_name?: unknown; guardian_contact?: unknown;
   }>();
@@ -22,4 +22,4 @@ export default createHandler(async ({ body }) => {
     missing: gate.missing,
     reason: gate.reason,
   });
-}, { name: 'validateGuardianRequirement', requireAuth: false });
+}, { name: 'validateGuardianRequirement', requireAuth: false }));

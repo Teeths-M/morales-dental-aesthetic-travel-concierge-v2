@@ -3250,6 +3250,32 @@ test('BUNDLER: no function directory keeps a local copy of a shared helper — e
   expect(offenders, 'every function directory must contain only entry.ts').toEqual([]);
 });
 
+test('BUNDLER: every function entry.ts actually calls Deno.serve — a bare export default createHandler(...) never registers a real entrypoint', () => {
+  // 2026-08-16: 13 functions (generateLiveLocationRequestLink,
+  // getDriverLocationStatus, getLiveLocationRequest, markTransportArrived,
+  // retryDriverLocationSms, storeLiveLocationUpdate, sendOtp, verifyOtp,
+  // checkStalledSignups, enrollExternalJourney, submitDoctorCorrection,
+  // trackSignupAbandon, validateGuardianRequirement — including the OTP
+  // login functions) used `export default createHandler(fn, opts);` instead
+  // of the documented `Deno.serve(createHandler(fn, opts));` pattern.
+  // createHandler's own factory just returns a plain (req) => Promise<Response>
+  // function — exporting it as the module default never registers it with
+  // Deno's HTTP server, so Base44's real sync/bundle step (which requires an
+  // actual Deno.serve() call to exist) failed with "Couldn't sync your
+  // backend functions" / "Missing Deno.serve() entrypoint", confirmed
+  // directly by Base44 support. Every real function must call Deno.serve
+  // somewhere in its own file — this is a structural sweep, not a sample.
+  const fnRoot = join(ROOT, 'base44/functions');
+  const dirs = readdirSync(fnRoot).filter((name) => name !== '_shared' && existsSync(join(fnRoot, name, 'entry.ts')));
+  expect(dirs.length, 'expected to find function directories to check').toBeGreaterThan(200);
+  const offenders = [];
+  for (const dir of dirs) {
+    const src = read(`base44/functions/${dir}/entry.ts`);
+    if (!src.includes('Deno.serve(')) offenders.push(dir);
+  }
+  expect(offenders, 'every function entry.ts must call Deno.serve(...) directly').toEqual([]);
+});
+
 test('XSS HARDENING: the canonical shared emailTemplate.ts still escapes user text (single source of truth, no per-function copies to drift)', () => {
   const canonical = read('base44/shared/emailTemplate.ts');
   expect(canonical).toContain('export const escapeHtml');

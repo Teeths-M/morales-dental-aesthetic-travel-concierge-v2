@@ -16,7 +16,7 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default createHandler(async ({ base44, user, body }) => {
+Deno.serve(createHandler(async ({ base44, user, body }) => {
   const b = await body().catch(() => ({}));
   const transport_request_id = String(b.transport_request_id || '').trim();
   if (!transport_request_id) return err('transport_request_id is required.', 400);
@@ -140,4 +140,4 @@ export default createHandler(async ({ base44, user, body }) => {
     eta_minutes: etaMinutes,
     is_stale: !!isStale,
   });
-}, { name: 'getDriverLocationStatus', requireAuth: true });
+}, { name: 'getDriverLocationStatus', requireAuth: true }));

@@ -21,7 +21,7 @@ function validCoord(lat: any, lng: any): boolean {
     && !isNaN(lat) && !isNaN(lng);
 }
 
-export default createHandler(async ({ base44, body }) => {
+Deno.serve(createHandler(async ({ base44, body }) => {
   const b = await body().catch(() => ({}));
   const token = String(b.token || '').trim();
   if (!token) return err('Token is required.', 400);
@@ -164,4 +164,4 @@ export default createHandler(async ({ base44, body }) => {
   }
 
   return ok({ success: true, updated_at: now.toISOString() });
-}, { name: 'storeLiveLocationUpdate', requireAuth: false, rateLimit: { max: 180, windowSeconds: 60 } });
+}, { name: 'storeLiveLocationUpdate', requireAuth: false, rateLimit: { max: 180, windowSeconds: 60 } }));

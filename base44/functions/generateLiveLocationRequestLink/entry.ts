@@ -44,7 +44,7 @@ async function reportBestEffort(base44: any, feature: string, note: string, erro
   } catch (_) { /* incident reporting must never affect the response */ }
 }
 
-export default createHandler(async ({ base44, user, body }) => {
+Deno.serve(createHandler(async ({ base44, user, body }) => {
   const b = await body().catch(() => ({}));
   const role = String(b.role || 'traveler').trim().toLowerCase() === 'driver' ? 'driver' : 'traveler';
   const case_id = String(b.case_id || '').trim();
@@ -157,4 +157,4 @@ export default createHandler(async ({ base44, user, body }) => {
       ? 'Share this secure link with the driver. They open it on their phone, tap once to consent, and their live location streams to the traveler — no app or login needed.'
       : 'Share this secure link with the patient. They open it on their phone, tap once to consent, and their live location streams to your care team — no app or login needed.',
   });
-}, { name: 'generateLiveLocationRequestLink', requireAuth: true });
+}, { name: 'generateLiveLocationRequestLink', requireAuth: true }));

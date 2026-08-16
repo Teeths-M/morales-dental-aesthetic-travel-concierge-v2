@@ -42,7 +42,7 @@ async function sendSms(to: string, msg: string) {
   }).catch(() => {});
 }
 
-export default createHandler(async ({ req, base44 }) => {
+Deno.serve(createHandler(async ({ req, base44 }) => {
   if (!(await cronAuthorized(req, base44))) {
     return err('Forbidden', 403);
   }
@@ -92,4 +92,4 @@ export default createHandler(async ({ req, base44 }) => {
   }
 
   return ok({ nudged: nudged.length });
-}, { name: 'checkStalledSignups', requireAuth: false });
+}, { name: 'checkStalledSignups', requireAuth: false }));

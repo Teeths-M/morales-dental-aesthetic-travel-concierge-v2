@@ -7,7 +7,7 @@ import { renderEmail } from '../../shared/emailTemplate.ts';
 //   { email } → branded email via the built-in SendEmail integration
 // Public endpoint (login flow), so resends are throttled per identifier:
 // 5 sends per 30-minute window, mirroring the verifyVaultPIN lockout pattern.
-export default createHandler(async ({ base44, body }) => {
+Deno.serve(createHandler(async ({ base44, body }) => {
   const { phone, email } = await body();
   if (!phone && !email) return err('Phone number or email is required');
   if (phone && email) return err('Provide either phone or email, not both');
@@ -152,4 +152,4 @@ export default createHandler(async ({ base44, body }) => {
   return ok({ sent: true, channel: 'phone', mock: true, demo_code: code });
 // Already rate-limited inline above via RateLimitBucket — rateLimit:false here
 // avoids silently double-limiting through two independent mechanisms.
-}, { name: 'sendOtp', requireAuth: false, rateLimit: false });
+}, { name: 'sendOtp', requireAuth: false, rateLimit: false }));

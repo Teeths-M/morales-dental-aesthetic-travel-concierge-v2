@@ -5,7 +5,7 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 // geofence hasn't triggered (e.g. GPS jitter keeps it just over 50m) or when
 // the traveler confirms the driver is there. Verifies ownership.
 
-export default createHandler(async ({ base44, user, body }) => {
+Deno.serve(createHandler(async ({ base44, user, body }) => {
   const b = await body().catch(() => ({}));
   const transport_request_id = String(b.transport_request_id || '').trim();
   if (!transport_request_id) return err('transport_request_id is required.', 400);
@@ -38,4 +38,4 @@ export default createHandler(async ({ base44, user, body }) => {
   }
 
   return ok({ marked_arrived: true, transport_status: 'arrived' });
-}, { name: 'markTransportArrived', requireAuth: true });
+}, { name: 'markTransportArrived', requireAuth: true }));

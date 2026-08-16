@@ -12,7 +12,7 @@ import { cronAuthorized } from '../../shared/cronAuth.ts';
 // PRD §3 (SMS Retry + Reminder). Dedup via driver_share_reminder_sent_at and
 // driver_share_care_team_alerted_at on the RecoveryTransportRequest.
 
-export default createHandler(async ({ req, base44 }) => {
+Deno.serve(createHandler(async ({ req, base44 }) => {
   if (!(await cronAuthorized(req, base44))) return err('Forbidden', 403);
 
   const now = new Date();
@@ -103,4 +103,4 @@ export default createHandler(async ({ req, base44 }) => {
   }
 
   return ok({ checked: active.length, reminders_sent: remindersSent, care_alerts_sent: careAlertsSent });
-}, { name: 'retryDriverLocationSms', requireAuth: false });
+}, { name: 'retryDriverLocationSms', requireAuth: false }));

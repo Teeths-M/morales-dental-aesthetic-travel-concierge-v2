@@ -15,7 +15,7 @@ import { BYOJ_PLANS, BYOJ_DISCLOSURE_VERSION } from '../../shared/byoj.ts';
 // flag lets the journey ride every existing protection pipeline (SAFE-T, MedGuard,
 // recovery check-ins, guardian, SOS) with no re-plumbing, while staying visibly
 // distinct to coordinators.
-export default createHandler(async ({ base44, user, body }) => {
+Deno.serve(createHandler(async ({ base44, user, body }) => {
   const b = await body<Record<string, any>>();
   const external_journey_id = String(b.external_journey_id || '').trim();
   const disclosure_accepted = b.disclosure_accepted === true;
@@ -108,4 +108,4 @@ export default createHandler(async ({ base44, user, body }) => {
       ? 'You’re enrolled and protected. Because our checks flagged something, a coordinator is already reaching out.'
       : 'You’re enrolled. Morales is now monitoring your journey end to end.',
   });
-}, { name: 'enrollExternalJourney', requireAuth: true });
+}, { name: 'enrollExternalJourney', requireAuth: true }));
