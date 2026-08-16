@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Shield, MapPin, Loader2, CheckCircle2, AlertTriangle, StopCircle, RefreshCw } from 'lucide-react';
 
 // ShareLiveLocation — public, token-gated page (/share-location/:token).
-// M-Care sends this secure link to a patient who reported feeling unsafe.
-// The patient opens it on their phone, consents once, and their device GPS
-// streams into the LiveLocation record tied to their case. No login required.
+// Two roles share this one page (role comes back from getLiveLocationRequest,
+// keyed off the token — no separate route): role=traveler is a patient who
+// reported feeling unsafe, sharing their own location with their care team.
+// role=driver is a matched taxi driver sharing their location so a waiting
+// passenger can watch them approach (see recoveryTransportDispatch.ts). Either
+// way: open the link, consent once, device GPS streams via
+// storeLiveLocationUpdate. No login required.
 
 export default function ShareLiveLocation() {
   const { token } = useParams();
@@ -20,20 +24,39 @@ export default function ShareLiveLocation() {
   const [stopping, setStopping] = useState(false);
   const [stopped, setStopped] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState(null);
-  const [batteryCriticalAlerted, setBatteryCriticalAlerted] = useState(false);
   const watchIdRef = useRef(null);
   const tickRef = useRef(null);
+  // startSharing's watchPosition callback closes over sendUpdate once, when
+  // sharing starts — a ref (not the batteryLevel state directly) is what lets
+  // every later GPS tick see the CURRENT battery reading as it actually drains
+  // over the ride, rather than freezing whatever it was at the moment sharing
+  // began.
+  const batteryLevelRef = useRef(null);
 
-  // Battery warning (PRD §5): GPS streaming drains battery. Warn the driver at
-  // <20% so they plug in, and silently alert the care team at <10% so they know
-  // tracking may drop. navigator.getBattery is best-effort — not all browsers.
+  // Battery warning (PRD §5): GPS streaming drains battery. Warn the sharer at
+  // <=20% so they plug in. navigator.getBattery is best-effort — not
+  // implemented in Firefox/Safari, and Chrome only exposes rounded values —
+  // this degrades to no warning at all rather than throwing.
+  //
+  // The <=10% "silently alert the care team" half is handled server-side, in
+  // storeLiveLocationUpdate — batteryLevel is included in every regular GPS
+  // tick below (sendUpdate) rather than fired as its own separate call, since
+  // that endpoint is the one real, public, token-verified place this page can
+  // already reach, and it can dedup the alert (once per link) server-side.
   useEffect(() => {
     let bat;
     const update = () => {
-      if (bat?.level != null) setBatteryLevel(Math.round(bat.level * 100));
+      if (bat?.level != null) {
+        const pct = Math.round(bat.level * 100);
+        batteryLevelRef.current = pct;
+        setBatteryLevel(pct);
+      }
     };
     if ('getBattery' in navigator) {
-      navigator.getBattery().then((b) => {
+      // Battery Status API isn't in TS's standard DOM lib — same cast pattern
+      // VoiceMode.jsx already established for SpeechRecognition elsewhere in
+      // this repo, rather than a repo-wide lib.dom augmentation for one call.
+      /** @type {any} */(navigator).getBattery().then((b) => {
         bat = b;
         update();
         b.addEventListener('levelchange', update);
@@ -41,18 +64,6 @@ export default function ShareLiveLocation() {
     }
     return () => { if (bat) bat.removeEventListener('levelchange', update); };
   }, []);
-
-  useEffect(() => {
-    if (batteryLevel != null && batteryLevel <= 10 && !batteryCriticalAlerted && token) {
-      setBatteryCriticalAlerted(true);
-      try {
-        base44.functions.invoke('storeSafetySignal', {
-          signal_type: 'driver_battery_critical',
-          context: { battery_level: batteryLevel, token },
-        }).catch(() => {});
-      } catch (_) {}
-    }
-  }, [batteryLevel, batteryCriticalAlerted, token]);
 
   const loadContext = async () => {
     setLoadingCtx(true);
@@ -86,6 +97,7 @@ export default function ShareLiveLocation() {
         heading: coords.heading,
         speed: coords.speed,
         altitude: coords.altitude,
+        battery_level: batteryLevelRef.current,
       });
       setLastUpdate(new Date());
       setGeoError('');
@@ -155,6 +167,7 @@ export default function ShareLiveLocation() {
   }
 
   const firstName = (ctx?.patient_name || '').split(' ')[0] || '';
+  const isDriverLink = ctx?.role === 'driver';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -168,7 +181,9 @@ export default function ShareLiveLocation() {
             <h1 className="text-xl font-display font-semibold text-foreground">
               {firstName ? `Hi ${firstName}` : 'Hello'}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">M-Care is requesting your live location</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isDriverLink ? 'Your passenger would like to see your live location' : 'M-Care is requesting your live location'}
+            </p>
           </div>
 
           {/* Reason */}
@@ -182,16 +197,24 @@ export default function ShareLiveLocation() {
           {/* Privacy notice */}
           <div className="rounded-xl border border-border bg-secondary/40 p-4 mb-6">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to Morales securely. We share it only with your care team so they can keep you safe. You can <span className="font-medium text-foreground">stop sharing at any time</span> — no one is watching unless you say so.
+              {isDriverLink ? (
+                <>
+                  When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to Morales securely, so your passenger can watch you approach on their map. You can <span className="font-medium text-foreground">stop sharing at any time</span> — it stops the moment you tap Stop.
+                </>
+              ) : (
+                <>
+                  When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to Morales securely. We share it only with your care team so they can keep you safe. You can <span className="font-medium text-foreground">stop sharing at any time</span> — no one is watching unless you say so.
+                </>
+              )}
             </p>
           </div>
 
-          {/* Battery warning (driver-side reliability) */}
+          {/* Battery warning (streaming GPS drains battery either role) */}
           {batteryLevel != null && batteryLevel <= 20 && (
             <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 mb-4 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
               <p className="text-xs text-amber-900 dark:text-amber-200">
-                Your phone battery is at {batteryLevel}%. Plug it in to keep location sharing active for your passenger.
+                Your phone battery is at {batteryLevel}%. Plug it in to keep location sharing active{isDriverLink ? ' for your passenger' : ''}.
               </p>
             </div>
           )}

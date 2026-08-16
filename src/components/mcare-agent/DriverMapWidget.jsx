@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, MapPin, Car, CheckCircle2, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { Loader2, Car, CheckCircle2, AlertTriangle, WifiOff } from 'lucide-react';
 
 // DriverMapWidget — renders inline inside the M-Care chat conversation right
 // after a ride is dispatched. Polls getDriverLocationStatus every 10 seconds
@@ -40,7 +40,6 @@ export default function DriverMapWidget({ transportId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [dispatchedAt, setDispatchedAt] = useState(null);
   const [now, setNow] = useState(Date.now());
   const pollRef = useRef(null);
   const stoppedRef = useRef(false);
@@ -51,10 +50,6 @@ export default function DriverMapWidget({ transportId }) {
       if (stoppedRef.current) return;
       setData(res);
       setError('');
-      // Capture dispatch time for the 5-min fallback clock (derive from the
-      // first successful poll — close enough; the real dispatched_at is on the
-      // transport record but isn't returned, so we start the clock on first load).
-      if (!dispatchedAt) setDispatchedAt(Date.now());
       // Stop polling once the ride reached a terminal state.
       const terminal = ['arrived', 'completed', 'cancelled'].includes(res?.transport_status)
         || ['revoked', 'expired'].includes(res?.driver_request_status);
@@ -111,7 +106,10 @@ export default function DriverMapWidget({ transportId }) {
   const isStale = data?.is_stale || (driverLoc && driverLoc.updated_at && (now - new Date(driverLoc.updated_at).getTime()) > STALE_MS);
   const isArrived = transportStatus === 'arrived';
   const isEnded = ['completed', 'cancelled'].includes(transportStatus) || ['revoked', 'expired'].includes(driverReqStatus);
-  const minutesSinceDispatch = dispatchedAt ? (now - dispatchedAt) / 60000 : 0;
+  // The real dispatch time from the transport record — not when this widget
+  // happened to mount, which could be minutes after the ride was actually
+  // dispatched if the traveler didn't open the chat message right away.
+  const minutesSinceDispatch = data?.dispatched_at ? (now - new Date(data.dispatched_at).getTime()) / 60000 : 0;
   const noShareFallback = !driverLoc && minutesSinceDispatch >= 5;
 
   // ── Render states ──────────────────────────────────────────────────────────

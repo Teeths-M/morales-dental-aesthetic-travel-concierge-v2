@@ -188,9 +188,14 @@ export async function dispatchRecoveryTransport(
   // ── Backfill the driver LiveLocationRequest's linkage keys now that the
   // transport request id exists (we created the link record just above). The
   // case_id on the driver's LiveLocationRequest is the transport request id —
-  // that's the linkage key storeLiveLocationUpdate upserts against.
+  // that's the linkage key storeLiveLocationUpdate upserts against. Retried
+  // once on failure — a permanently-empty case_id here silently breaks the
+  // driver's tracking link for the entire ride (getDriverLocationStatus falls
+  // back to transport_request_id directly, see below, but that fallback only
+  // covers reads — the driver's own storeLiveLocationUpdate POSTs still need
+  // req.case_id set to succeed at all).
   if (driverLocationToken && transportRequest?.id) {
-    try {
+    const backfillOnce = async () => {
       const dlReqs = await base44.asServiceRole.entities.LiveLocationRequest.filter({ token: driverLocationToken }, '-created_at', 1);
       if (dlReqs?.[0]) {
         await base44.asServiceRole.entities.LiveLocationRequest.update(dlReqs[0].id, {
@@ -198,7 +203,12 @@ export async function dispatchRecoveryTransport(
           transport_request_id: transportRequest.id,
         });
       }
-    } catch (_) { /* best-effort */ }
+    };
+    try {
+      await backfillOnce();
+    } catch (_) {
+      try { await backfillOnce(); } catch (_) { /* best-effort — getDriverLocationStatus's own fallback still covers reads */ }
+    }
   }
 
   // ── Alert admin ──────────────────────────────────────────────────────────
@@ -270,9 +280,19 @@ ${!driverRecord ? `<p style="color:#dc2626;font-weight:bold;margin-top:16px;">�
   // ── Felt back in M-Care's own chat, regardless of which caller dispatched
   // this — the one addition this extraction makes over the original inline
   // logic. Never claims a driver is coming when none was matched.
+  //
+  // When a driver was matched, the message also carries a {{drivermap:...}}
+  // token — MessageBubble.jsx's extractDriverMap strips it and renders the
+  // inline live-tracking widget. This is the ONLY place that token is ever
+  // emitted: MCareOrb.jsx renders every JourneyEvent's message_text through
+  // the same MessageBubble component real chat replies use (confirmed by
+  // reading its render loop), so this reaches the traveler with zero
+  // dependency on the LLM agent's own judgment and zero m_care.jsonc change —
+  // it would otherwise never appear, since nothing told the agent this token
+  // exists.
   if (resolvedCaseId) {
     const messageText = driverRecord
-      ? `I've sent a driver your way. Your safety code is ${visualCode} — the driver will confirm it before pickup.`
+      ? `I've sent a driver your way. Your safety code is ${visualCode} — the driver will confirm it before pickup.\n\n{{drivermap:${transportRequest.id}}}`
       : "I tried to find you a driver but none are available right now. I've flagged this for the team to arrange one manually.";
     await logJourneyEvent(base44, {
       case_id: resolvedCaseId,

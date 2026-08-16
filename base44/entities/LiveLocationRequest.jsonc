@@ -83,6 +83,11 @@
       "format": "date-time",
       "description": "For role=driver, the moment the traveler was push-notified that the driver started moving. Set once on the first active transition so we never send the 'driver is moving' push twice."
     },
+    "battery_critical_alerted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "For role=driver, the moment the care team was alerted that the driver's phone battery dropped to 10% or below during location sharing. Set once so a low battery doesn't re-alert on every 10s GPS tick."
+    },
     "created_at": {
       "type": "string",
       "format": "date-time"

@@ -44,6 +44,7 @@ export default createHandler(async ({ base44, user, body }) => {
       role: 'driver',
       transport_id: transport_request_id,
       transport_status: transport.status,
+      dispatched_at: transport.dispatched_at || null,
       driver_assigned: !!transport.driver_id,
       driver_name: transport.driver_name || '',
       driver_phone: transport.driver_phone || '',
@@ -69,9 +70,15 @@ export default createHandler(async ({ base44, user, body }) => {
   }
 
   // ── Read the driver's current LiveLocation ────────────────────────────────
+  // driverReq.case_id is normally backfilled to transport_request_id right
+  // after dispatch (see recoveryTransportDispatch.ts). If that best-effort
+  // backfill ever failed and left it empty, fall back to the transport id we
+  // already resolved and verified ownership of above — self-heals the read
+  // path even when the write-side backfill didn't land.
+  const driverLocationKey = driverReq.case_id || transport_request_id;
   let driverLoc: any = null;
   try {
-    const locs = await base44.asServiceRole.entities.LiveLocation.filter({ case_id: driverReq.case_id }, '-updated_at', 1);
+    const locs = await base44.asServiceRole.entities.LiveLocation.filter({ case_id: driverLocationKey }, '-updated_at', 1);
     driverLoc = locs?.[0] || null;
   } catch (_) { driverLoc = null; }
 
@@ -111,6 +118,7 @@ export default createHandler(async ({ base44, user, body }) => {
     role: 'driver',
     transport_id: transport_request_id,
     transport_status: transportStatus,
+    dispatched_at: transport.dispatched_at || null,
     driver_assigned: !!transport.driver_id,
     driver_name: driverReq.driver_name || transport.driver_name || '',
     driver_phone: transport.driver_phone || '',

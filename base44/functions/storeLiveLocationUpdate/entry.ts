@@ -10,7 +10,10 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 // push notification to the traveler ("Your driver is on the way") and bump the
 // RecoveryTransportRequest to 'en_route' — so the traveler doesn't have to
 // stare at the chat waiting for the driver dot to appear (PRD §4), and so the
-// transport status reflects real movement without a manual hook.
+// transport status reflects real movement without a manual hook. An optional
+// battery_level in the body also drives a one-time care-team alert at <=10%
+// (PRD §5) — reusing this endpoint since it's already the one real, public,
+// token-verified place a driver's own browser can reach.
 
 function validCoord(lat: any, lng: any): boolean {
   return typeof lat === 'number' && typeof lng === 'number'
@@ -51,7 +54,7 @@ export default createHandler(async ({ base44, body }) => {
   }
 
   // ── Store a GPS update ──────────────────────────────────────────────────────
-  const { latitude, longitude, accuracy_meters, heading, speed, altitude, source = 'gps' } = b;
+  const { latitude, longitude, accuracy_meters, heading, speed, altitude, source = 'gps', battery_level } = b;
   if (!validCoord(latitude, longitude)) return err('Invalid coordinates.', 400);
   if (!req.case_id) return err('No case is linked to this request.', 400);
 
@@ -129,6 +132,35 @@ export default createHandler(async ({ base44, body }) => {
         }
       }
     } catch (_) { /* best-effort */ }
+  }
+
+  // ── Driver battery critical: alert the care team, once ─────────────────────
+  // The client (ShareLiveLocation.jsx) reports its own best-effort battery
+  // reading alongside its normal GPS ticks — this endpoint is already the one
+  // real, public, token-verified place a driver's browser can reach, so a
+  // second call to a separately-authorized function isn't needed. Dedup via
+  // battery_critical_alerted_at so a battery sitting at 8% for the rest of the
+  // ride doesn't re-alert on every 10s tick.
+  if (role === 'driver' && typeof battery_level === 'number' && battery_level <= 10 && !req.battery_critical_alerted_at) {
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+    if (adminEmail) {
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: 'Morales Safety — Driver Battery Alert',
+          to: adminEmail,
+          subject: `Driver's phone battery critical during location sharing (${req.driver_name || 'Driver'})`,
+          body: `<div style="font-family:sans-serif;max-width:560px;padding:24px;border:2px solid #dc2626;border-radius:12px;">
+<p style="margin:0 0 8px;color:#b91c1c;font-weight:700;">🔋 Driver's phone battery at ${battery_level}% while sharing location</p>
+<table style="width:100%;border-collapse:collapse;">
+<tr><td style="padding:4px 0;color:#6b7280;">Driver</td><td>${req.driver_name || 'Driver'}</td></tr>
+<tr><td style="padding:4px 0;color:#6b7280;">Ride / transport request</td><td>${req.transport_request_id || req.case_id || ''}</td></tr>
+</table>
+<p style="margin-top:12px;color:#374151;">Live tracking may drop soon if their phone dies. Consider calling the driver directly.</p>
+</div>`,
+        });
+      } catch (_) { /* best-effort */ }
+    }
+    try { await base44.asServiceRole.entities.LiveLocationRequest.update(req.id, { battery_critical_alerted_at: now.toISOString() }); } catch (_) { /* best-effort */ }
   }
 
   return ok({ success: true, updated_at: now.toISOString() });

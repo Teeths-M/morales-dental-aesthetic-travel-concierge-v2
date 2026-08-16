@@ -172,6 +172,7 @@ jobs:
             call autoCompletePatientJourney    # real, correct, was never scheduled until now — Recovery -> Completed state transition
             call checkJourneyWeather           # M-Care Weather Guardian — daily destination briefing; severity doubles as a real-time severe-weather alert
             call runGuardianCheckInSweep       # Silent Guardian am/pm check-in — real send, was never wired to anything, client or server, until now
+            call retryDriverLocationSms        # driver-location-share reminder/care-team-alert — real, cronAuthorized-gated, was never wired to anything until now
           elif [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Anomaly analysis calls an LLM, so it runs on the slowest cadence.
             call runSafetyMonitor
@@ -190,6 +191,13 @@ jobs:
             call checkPartnerSLABreaches        # partner quiet 24h/48h → auto backup + admin escalate
             call dispatchSoloSecurity           # solo traveler 5h+ unresponsive → security welfare check
             call runGuardianCheckInSweep        # Silent Guardian am/pm check-in — 9am/9pm local time, per opted-in traveler
+            # retryDriverLocationSms's own thresholds (3-min reminder, 5-min
+            # care-team alert) assume near-minute granularity — GitHub Actions
+            # cron can't reliably go below ~5 min, so the 15-min tick here can
+            # miss the narrow 3-5-min reminder window entirely on an unlucky
+            # dispatch time. The open-ended 5+-min care-team alert is NOT
+            # affected — it still fires reliably on the next tick either way.
+            call retryDriverLocationSms         # driver-location-share reminder/care-team-alert
             if [ "$MANUAL" = "true" ]; then
               call checkMissedRecoveryCheckins
               # runSafetyMonitor is the ONLY job here that calls an LLM, so it

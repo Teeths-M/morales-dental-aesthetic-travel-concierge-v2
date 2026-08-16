@@ -3491,3 +3491,78 @@ test('COMPANION NETWORK: EmergencyContact is patient-scoped, the cascade widens 
   expect(panelSrc, 'the synced patient_email must come from the component\'s own userEmail prop, never a caller-suppliable field')
     .toMatch(/patient_email:\s*userEmail/);
 });
+
+test('DRIVER LIVE MAP: the {{drivermap:...}} token is actually emitted, its cron reminder is actually scheduled, and RecoveryTransportRequest.update stays admin-only', () => {
+  // Base44 shipped the driver-location-tracking feature directly (dispatch,
+  // token creation, the SMS append, getDriverLocationStatus, DriverMapWidget,
+  // MessageBubble's extractor) with every piece real and self-consistent
+  // EXCEPT the one thing that ever causes the widget to render: nothing
+  // produced the {{drivermap:REQUEST_ID}} token. MCareOrb renders every
+  // JourneyEvent's message_text through the same MessageBubble component real
+  // chat replies use, so putting the token there — not in m_care.jsonc, which
+  // was never touched and carries real Publish-order risk — is the fix.
+  // Regression guard: a future change to this message text must not silently
+  // drop the token again.
+  const dispatchSrc = read('base44/shared/recoveryTransportDispatch.ts');
+  expect(dispatchSrc, 'dispatchRecoveryTransport must emit {{drivermap:...}} in the driver-matched branch of its JourneyEvent message')
+    .toMatch(/\{\{drivermap:\$\{transportRequest\.id\}\}\}/);
+  const matchedBranch = dispatchSrc.match(/const messageText = driverRecord\s*\?\s*`[\s\S]*?`\s*:/);
+  expect(matchedBranch, 'the driverRecord ? ... : ... messageText ternary must exist to check').toBeTruthy();
+  expect(matchedBranch[0], 'the drivermap token must sit in the driver-matched (truthy) branch, not the no-driver branch')
+    .toContain('{{drivermap:');
+
+  // MessageBubble must actually know how to render what dispatch now emits —
+  // confirms the two ends of this wiring still agree on the token name.
+  const bubbleSrc = read('src/components/mcare-agent/MessageBubble.jsx');
+  expect(bubbleSrc, 'MessageBubble must parse a {{drivermap:...}} token')
+    .toMatch(/\{\{drivermap:/);
+  expect(bubbleSrc, 'MessageBubble must render DriverMapWidget from the parsed token')
+    .toContain('<DriverMapWidget');
+
+  // retryDriverLocationSms (the 3-min reminder / 5-min care-team alert) is
+  // real and cronAuthorized-gated but was shipped with zero scheduling —
+  // the exact recurring "real function, never wired to cron" bug class this
+  // repo has hit repeatedly (checkPartnerSLABreaches, sendTravelCountdownReminders,
+  // detectFallbackCrisis, etc. — see safety-cron.yml's own header). Must
+  // appear in both the 15-min life-safety tier and the daily deployment audit.
+  const cronSrc = read('.github/workflows/safety-cron.yml');
+  const dailyIdx = cronSrc.indexOf('if [ "$DAILY" = "true"');
+  const sixHourlyIdx = cronSrc.indexOf('elif [ "$SIX_HOURLY"');
+  const fifteenMinIdx = cronSrc.indexOf('# Every 15 min');
+  expect(dailyIdx, 'the DAILY block must exist to check').toBeGreaterThan(-1);
+  expect(sixHourlyIdx, 'the SIX_HOURLY block must exist to check').toBeGreaterThan(-1);
+  expect(fifteenMinIdx, 'the 15-minute life-safety block must exist to check').toBeGreaterThan(-1);
+  const callCount = (cronSrc.match(/call retryDriverLocationSms/g) || []).length;
+  expect(callCount, 'retryDriverLocationSms must be called exactly twice — once in the daily audit, once in the 15-min tier')
+    .toBe(2);
+  const dailyCallIdx = cronSrc.indexOf('call retryDriverLocationSms');
+  expect(dailyCallIdx, 'one retryDriverLocationSms call must fall inside the daily deployment-audit block')
+    .toBeGreaterThan(dailyIdx);
+  expect(dailyCallIdx).toBeLessThan(sixHourlyIdx);
+  const fifteenMinCallIdx = cronSrc.indexOf('call retryDriverLocationSms', sixHourlyIdx);
+  expect(fifteenMinCallIdx, 'one retryDriverLocationSms call must fall inside the 15-minute life-safety tier')
+    .toBeGreaterThan(fifteenMinIdx);
+
+  // RecoveryTransportRequest.update was widened to any owning traveler in the
+  // same push, even though every real write path (markTransportArrived,
+  // storeLiveLocationUpdate's en_route bump, DriverMapWidget's own two
+  // function calls) writes via asServiceRole and never needed it — an unused,
+  // real RLS regression (Base44 has no field-level RLS, so this let a
+  // traveler directly rewrite payment_status/driver_id/status on their own
+  // row from the client). Pinned back to admin-only.
+  const entitySrc = read('base44/entities/RecoveryTransportRequest.jsonc');
+  const entityJson = JSON.parse(entitySrc);
+  expect(entityJson.rls.update, 'RecoveryTransportRequest.update must stay admin/platform_admin only, never data.user_email')
+    .toEqual({ '$or': [{ user_condition: { role: 'admin' } }, { user_condition: { role: 'platform_admin' } }] });
+
+  // getDriverLocationStatus must self-heal a driver LiveLocationRequest whose
+  // case_id backfill never landed (a real, silent-failure race in dispatch's
+  // best-effort backfill step), and must return dispatched_at so the widget's
+  // "5 minutes, no share yet" fallback clocks off the real dispatch time
+  // instead of whenever the traveler happened to open the chat message.
+  const statusSrc = read('base44/functions/getDriverLocationStatus/entry.ts');
+  expect(statusSrc, 'getDriverLocationStatus must return dispatched_at so the widget does not derive its own fallback clock')
+    .toMatch(/dispatched_at:\s*transport\.dispatched_at/);
+  expect(statusSrc, 'getDriverLocationStatus must fall back to the caller-supplied transport_request_id if driverReq.case_id is empty')
+    .toMatch(/driverReq\.case_id \|\| transport_request_id/);
+});
