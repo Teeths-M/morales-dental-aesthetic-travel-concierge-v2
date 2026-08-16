@@ -73,9 +73,13 @@ export default function ProximityWatcher() {
     base44.functions.invoke('analyzeProximityContext', {
       poi: nudge,
       current_time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-    }).then(result => {
+    }).then(res => {
       clearTimeout(timer);
       if (cancelled) return;
+      // base44.functions.invoke resolves to the raw axios response, not the
+      // JSON body -- this used to read fields straight off res, so relevant/
+      // message were always undefined and the AI upgrade never applied.
+      const result = res?.data;
       if (result?.relevant === false) {
         setNudge(null); // AI decided this isn't relevant — suppress silently
       } else if (result?.message) {

@@ -48,11 +48,17 @@ export default function DriverMapWidget({ transportId }) {
     try {
       const res = await base44.functions.invoke('getDriverLocationStatus', { transport_request_id: transportId });
       if (stoppedRef.current) return;
-      setData(res);
+      // base44.functions.invoke resolves to the raw axios response, not the
+      // JSON body -- reading fields straight off res (as this used to) means
+      // every field below is always undefined, the widget never leaves
+      // "No driver assigned yet", and it never reaches a terminal state, so
+      // it polls forever instead of stopping when the ride actually ends.
+      const body = res?.data;
+      setData(body);
       setError('');
       // Stop polling once the ride reached a terminal state.
-      const terminal = ['arrived', 'completed', 'cancelled'].includes(res?.transport_status)
-        || ['revoked', 'expired'].includes(res?.driver_request_status);
+      const terminal = ['arrived', 'completed', 'cancelled'].includes(body?.transport_status)
+        || ['revoked', 'expired'].includes(body?.driver_request_status);
       if (terminal) {
         stoppedRef.current = true;
         if (pollRef.current) clearInterval(pollRef.current);

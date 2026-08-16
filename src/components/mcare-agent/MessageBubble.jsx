@@ -227,7 +227,11 @@ function ProcedureMediaCard({ query }) {
     base44.functions.invoke('getProcedureIllustration', { query })
       .then((res) => {
         if (cancelled) return;
-        setLiveMatch(res?.found ? { image: res.image_url, title: res.title, desc: res.desc } : null);
+        // base44.functions.invoke resolves to the raw axios response, not the
+        // JSON body -- the real payload is res.data (see DriverMapWidget.jsx
+        // for the sibling bug this pattern caused).
+        const body = res?.data;
+        setLiveMatch(body?.found ? { image: body.image_url, title: body.title, desc: body.desc } : null);
       })
       .catch(() => { if (!cancelled) setLiveMatch(null); })
       .finally(() => { if (!cancelled) setLiveLoading(false); });

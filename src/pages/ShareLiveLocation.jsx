@@ -69,8 +69,14 @@ export default function ShareLiveLocation() {
     setLoadingCtx(true);
     try {
       const res = await base44.functions.invoke('getLiveLocationRequest', { token });
-      setCtx(res);
-      if (res?.status === 'active') setSharing(true);
+      // base44.functions.invoke resolves to the raw axios response, not the
+      // JSON body -- reading fields straight off res (as this used to) meant
+      // ctx.role/ctx.patient_name/ctx.reason/ctx.expires_at were always
+      // undefined, so the driver-vs-traveler framing below never actually
+      // branched correctly no matter what the server returned.
+      const body = res?.data;
+      setCtx(body);
+      if (body?.status === 'active') setSharing(true);
     } catch (e) {
       setLinkError(e?.message || 'This location-sharing link could not be loaded.');
     } finally {
