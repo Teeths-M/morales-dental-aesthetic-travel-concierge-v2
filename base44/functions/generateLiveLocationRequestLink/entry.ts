@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { reportIncident, generateIncidentCode } from '../../shared/incidentReporting.ts';
 
 // generateLiveLocationRequestLink — M-Care (or the patient) creates a secure,
 // one-time link someone opens on any device to stream their live GPS into the
@@ -18,6 +19,29 @@ function generateToken(len = 40): string {
   const buf = new Uint8Array(len);
   crypto.getRandomValues(buf);
   return 'LT_' + Array.from(buf).map((b) => chars[b % chars.length]).join('');
+}
+
+// Found while diagnosing a live M-Care report: this function's own error
+// paths swallowed the real cause completely (bare catch, generic message),
+// so "the link service isn't responding" had no way to become "here's the
+// actual reason" without guessing. Reports a real ReliabilityIncident —
+// awaited with the same bounded 2s timeout race createHandler.ts's own
+// catch-all uses, since the isolate can tear down right after the response
+// returns — and never lets a reporting failure affect the response itself.
+async function reportBestEffort(base44: any, feature: string, note: string, error: unknown): Promise<void> {
+  try {
+    await Promise.race([
+      reportIncident({
+        base44,
+        incidentCode: generateIncidentCode(),
+        severity: 'high',
+        source: 'api',
+        feature,
+        errorMessage: `${note}: ${error instanceof Error ? error.message : String(error)}`,
+      }),
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+    ]);
+  } catch (_) { /* incident reporting must never affect the response */ }
 }
 
 export default createHandler(async ({ base44, user, body }) => {
@@ -65,10 +89,28 @@ export default createHandler(async ({ base44, user, body }) => {
       if (!cases?.[0] || cases[0].client_email !== user.email) {
         return err('Case not found or access denied.', 403);
       }
-    } catch (_) {
-      return err('Case not found or access denied.', 403);
+    } catch (caseErr) {
+      // A transient lookup failure isn't the same claim as "access denied" —
+      // don't tell the caller they're not allowed to see a case when the real
+      // reason is the read itself failed. Logged (bounded, non-blocking) so
+      // the real cause is visible instead of only ever "access denied."
+      await reportBestEffort(base44, 'generateLiveLocationRequestLink', 'case ownership lookup failed', caseErr);
+      return err('Could not verify that case right now. Please try again.', 500);
     }
   }
+
+  // Fail honestly, and before writing anything, rather than silently ship a
+  // broken link — a relative /share-location/:token path (no domain) is only
+  // reachable from a device already on this app's own origin, useless in the
+  // SMS/external-device context this link exists for. A patient who feels
+  // unsafe getting a link that quietly doesn't work is worse than an honest
+  // "try again" here.
+  const rawAppUrl = Deno.env.get('APP_URL') || '';
+  if (!rawAppUrl) {
+    await reportBestEffort(base44, 'generateLiveLocationRequestLink', 'APP_URL is not set — cannot build a usable share link', new Error('APP_URL missing'));
+    return err('Could not create the location-sharing link. Please try again.', 500);
+  }
+  const appUrl = rawAppUrl.replace(/\/$/, '');
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + expires_hours * 3600 * 1000).toISOString();
@@ -96,11 +138,11 @@ export default createHandler(async ({ base44, user, body }) => {
   let rec: any = null;
   try {
     rec = await base44.asServiceRole.entities.LiveLocationRequest.create(record);
-  } catch (_) {
+  } catch (createErr) {
+    await reportBestEffort(base44, 'generateLiveLocationRequestLink', 'LiveLocationRequest.create failed', createErr);
     return err('Could not create the location-sharing link. Please try again.', 500);
   }
 
-  const appUrl = (Deno.env.get('APP_URL') || '').replace(/\/$/, '');
   const url = `${appUrl}/share-location/${token}`;
 
   return ok({
