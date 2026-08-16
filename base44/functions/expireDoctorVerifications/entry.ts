@@ -1,11 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../../shared/cronAuth.ts';
 
-// Scheduled daily — expires overdue verifications and sends 30-day renewal reminders
+// Scheduled daily — expires overdue verifications and sends 30-day renewal reminders.
+// Was gated on an admin session only (base44.auth.me() + role check), so no
+// scheduler could ever call it -- a cron request has no user session and
+// would always 403. cronAuthorized accepts a cron secret OR an admin
+// session, so the admin-triggered path keeps working exactly as before and a
+// real scheduler can now drive it too.
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

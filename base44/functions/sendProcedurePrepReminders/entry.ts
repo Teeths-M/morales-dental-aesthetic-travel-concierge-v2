@@ -92,6 +92,11 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
         title: '🤖 M Prep Coach',
         body: `Your procedure is ${when}. Tap to see what's left on your checklist.`,
         url: '/dashboard',
+        // sendPushNotification requires internalOrAdminAuthorized for a
+        // service-role caller (a custom header can't cross .functions.invoke) —
+        // this was missing, so the push silently 403'd on every call while the
+        // email above kept working, hiding the failure.
+        internal_secret: Deno.env.get('CRON_SECRET'),
       }).catch(() => {});
     }
 

@@ -80,6 +80,20 @@ jobs:
             call expirePassportGrants
             call expireConfigChanges
             call cleanupExpiredGuardianSessions
+            # These three each say "every 30 min" in their own header — real,
+            # gated, and each one is idempotent off a one-time *_sent_at flag,
+            # so running them hourly instead only means up to ~30 extra
+            # minutes before the flag gets set, never a duplicate send. Not
+            # worth a brand-new 30-min schedule trigger (double the workflow
+            # runs/day) for a business nudge, not a life-safety escalation.
+            call autoPartnerPortalDelivery      # was never scheduled — real, correct, portal/proposal link delivery
+            call autoTriggerDoctorVerification  # was never scheduled — real, correct, auto-starts AI doc verification
+            call checkStalledSignups            # was never scheduled — real, correct, one-shot signup-abandon nudge
+            # Header says "every 2 hours" — same reasoning as above: every
+            # branch here is gated on a one-time *_sent/*_released_at flag
+            # (see checkAbandonedBookings' own header), so hourly just checks
+            # the 2h/24h/48h thresholds sooner, it cannot double-send.
+            call checkAbandonedBookings          # was never scheduled — real, correct, 3-stage abandoned-payment recovery
           elif [ "$IS_SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # 6-hourly slot: rate-limit bucket cleanup (pure DB hygiene, per its own header comment).
             call purgeRateLimitBuckets
@@ -97,6 +111,13 @@ jobs:
             call calculateDriverTrustScore
             # Marketplace: chase doctors who were invited to quote but haven't yet (link-only).
             call remindPendingQuotes
+            # All four below say "run daily" in their own header and are
+            # gated on exact-day-boundary flags (daysLeft === 7/3/1/0, etc.)
+            # — real, correct, complete code that was simply never scheduled.
+            call sendPaymentReminders        # 7/3/1-day balance-due reminders
+            call sendProcedurePrepReminders  # 7/3/1/0-day M Prep Coach nudges
+            call expireDoctorVerifications   # expires overdue license verifications + 30-day renewal reminders
+            call sendQuoteReminders          # travel-agency/chauffeur 24h/48h/72h quote reminders — no per-send flag of its own, so keep this one at daily (not folded into the hourly tier like its siblings above) to avoid re-sending within the same stage window
             # On manual runs, also refresh visa and hygiene jobs so a full pass is one click.
             if [ "$MANUAL" = "true" ]; then
               call recheckVisaRequirements
@@ -104,6 +125,10 @@ jobs:
               call expireConfigChanges
               call cleanupExpiredGuardianSessions
               call purgeRateLimitBuckets
+              call autoPartnerPortalDelivery
+              call autoTriggerDoctorVerification
+              call checkStalledSignups
+              call checkAbandonedBookings
             fi
           fi
 
