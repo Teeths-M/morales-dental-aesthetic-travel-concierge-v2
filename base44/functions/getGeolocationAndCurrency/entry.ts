@@ -139,11 +139,26 @@ const DEFAULT_FALLBACK = {
 
 // Try primary then secondary; throws if both fail, so the memo cache never
 // stores a fallback result — matches the original "only cache real hits" rule.
+//
+// Both failure reasons are logged (console.error, visible in Base44's own
+// function invocation logs) rather than swallowed silently — the outer
+// handler already catches this into an honest DEFAULT_FALLBACK either way,
+// but with zero logging there was no way to tell "both free-tier providers
+// are genuinely down" apart from "something about this runtime's own
+// outbound network can't reach them at all" — a real, previously invisible
+// gap found while diagnosing a live report of location context never
+// reaching M-Care.
 async function resolveGeo(ip) {
   try {
     return await fromIpapiCo(ip);
-  } catch (_e1) {
-    return await fromIpwhoIs(ip);
+  } catch (e1) {
+    console.error(`[getGeolocationAndCurrency] ipapi.co failed for ip=${ip}:`, e1?.message || e1);
+    try {
+      return await fromIpwhoIs(ip);
+    } catch (e2) {
+      console.error(`[getGeolocationAndCurrency] ipwho.is failed for ip=${ip}:`, e2?.message || e2);
+      throw e2;
+    }
   }
 }
 
