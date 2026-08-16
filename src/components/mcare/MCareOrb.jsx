@@ -213,8 +213,18 @@ export default function MCareOrb() {
   // Auto-detected approximate location (IP-based by default, GPS only if the
   // traveler already granted it) — see src/lib/locationContext.js for why
   // this is attached once per mount rather than on every message.
-  const { bestLocation } = useAutoLocation();
+  const { bestLocation, isLoading: locationLoading } = useAutoLocation();
   const locationContextSentRef = useRef(false);
+  // sendAgentMessage's useCallback closure only sees bestLocation/locationLoading
+  // as of whenever it was last recreated — these refs let the brief bounded
+  // wait below (for the very first message of a session, when geolocation is
+  // still in flight) see a location that resolves mid-wait, same "read the
+  // latest value via a ref" pattern already used elsewhere in this file
+  // (liveRef.current.sendAgentMessage and friends).
+  const bestLocationRef = useRef(bestLocation);
+  const locationLoadingRef = useRef(locationLoading);
+  useEffect(() => { bestLocationRef.current = bestLocation; }, [bestLocation]);
+  useEffect(() => { locationLoadingRef.current = locationLoading; }, [locationLoading]);
 
   const silenceTimerRef = useRef(null);
   const silenceNudgeCountRef = useRef(0);
@@ -1090,6 +1100,12 @@ export default function MCareOrb() {
       }
     }
 
+    // Clear the input and show "sending" immediately — the location wait
+    // below is bounded and invisible to the user, not a delay on their own
+    // sense that the message went out.
+    setInput('');
+    setAgentSending(true);
+
     // Attach the traveler's auto-detected approximate location once per
     // mount, on the first real message — so M-Care doesn't have to ask
     // "where are you" for anything location-based. Stripped from display by
@@ -1097,13 +1113,30 @@ export default function MCareOrb() {
     // must confirm before treating as exact (see the LOCATION_CONTEXT rule
     // in m_care.jsonc) — this repo's own getGeolocationAndCurrency comments
     // document a real past IP-misidentification bug, which is exactly why.
-    const attachLocation = !locationContextSentRef.current;
-    const locationBlock = attachLocation ? buildLocationContextBlock(bestLocation) : null;
-    if (attachLocation) locationContextSentRef.current = true;
+    //
+    // Real race this used to have: the one-shot flag flipped to "sent" the
+    // instant this ran, even when useAutoLocation's IP lookup hadn't resolved
+    // yet (bestLocation still null) — a brand-new session with someone typing
+    // fast burned its only chance and every later message in that
+    // conversation went out with no location at all. Fixed two ways: (1) the
+    // flag is only ever consumed once a real block was actually attached, so
+    // a later message picks up what an earlier one missed; (2) on the very
+    // first attempt only, if location is still genuinely loading, wait a
+    // short bounded amount (checking the live ref, since this closure's own
+    // bestLocation can be stale) rather than sending with nothing — most
+    // sessions never even reach this branch, since useAutoLocation's IP fetch
+    // already started when MCareOrb itself mounted, well before the panel is
+    // opened.
+    if (!locationContextSentRef.current && !bestLocationRef.current && locationLoadingRef.current) {
+      const deadline = Date.now() + 1500;
+      while (locationLoadingRef.current && !bestLocationRef.current && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 150));
+      }
+    }
+    const locationBlock = !locationContextSentRef.current ? buildLocationContextBlock(bestLocationRef.current) : null;
+    if (locationBlock) locationContextSentRef.current = true;
     const contentToSend = locationBlock ? (q ? `${locationBlock}\n${q}` : locationBlock) : q;
 
-    setInput('');
-    setAgentSending(true);
     // Optimistic user message so the UI feels instant; subscription replaces
     // it with the canonical server record.
     setAgentMessages(prev => [...prev, { role: 'user', content: contentToSend, file_urls: fileUrls }]);
