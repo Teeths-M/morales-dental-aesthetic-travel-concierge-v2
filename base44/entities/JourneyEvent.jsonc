@@ -28,7 +28,8 @@
         "weather_advisory",
         "guardian_checkin_sent",
         "ride_dispatched",
-        "guardian_alert_sent"
+        "guardian_alert_sent",
+        "document_vaulted"
       ]
     },
     "source": {

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2, Play, Pause } from 'lucide-react';
 import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
+import DocumentScannerCard from '@/components/mcare/DocumentScannerCard';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import ProviderStatusBadge from '@/components/mcare-agent/ProviderStatusBadge';
 import DriverMapWidget from '@/components/mcare-agent/DriverMapWidget';
@@ -673,6 +674,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
         )}
         {message.tool_calls?.map((toolCall, idx) => (toolCall.name === 'computeSafeTScreening' || toolCall.name === 'safeT4LifeScan')
           ? <SafetyGateCard key={idx} toolCall={toolCall} onRespond={onRespond} />
+          : toolCall.name === 'openMcareScanner'
+          ? <DocumentScannerCard key={idx} toolCall={toolCall} onRespond={onRespond} />
           : <ToolCallDisplay key={idx} toolCall={toolCall} />)}
         {isUser && showMeta && time && (
           <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-80">

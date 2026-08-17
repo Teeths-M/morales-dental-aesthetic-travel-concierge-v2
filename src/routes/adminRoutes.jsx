@@ -50,6 +50,7 @@ const AdminDoctorNominations   = lazy(() => import('@/pages/AdminDoctorNominatio
 const AdminIntelligenceReport  = lazy(() => import('@/pages/AdminIntelligenceReport'));
 const AdminMcareKnowledge      = lazy(() => import('@/pages/AdminMcareKnowledge'));
 const AdminProcedureKnowledge  = lazy(() => import('@/pages/AdminProcedureKnowledge'));
+const AdminVaultDocumentReview = lazy(() => import('@/pages/AdminVaultDocumentReview'));
 
 export const adminRoutes = (
   <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
@@ -93,6 +94,7 @@ export const adminRoutes = (
       <Route path="/admin/intelligence-report"      element={<ErrorBoundary><AdminIntelligenceReport /></ErrorBoundary>} />
       <Route path="/admin/mcare-knowledge"         element={<ErrorBoundary><AdminMcareKnowledge /></ErrorBoundary>} />
       <Route path="/admin/procedure-knowledge"     element={<ErrorBoundary><AdminProcedureKnowledge /></ErrorBoundary>} />
+      <Route path="/admin/vault-document-review"   element={<ErrorBoundary><AdminVaultDocumentReview /></ErrorBoundary>} />
       {/* Dev/test tools */}
       <Route path="/test-portal-link"                element={<ErrorBoundary><TestPortalLink /></ErrorBoundary>} />
       <Route path="/portal-test-hub"                 element={<ErrorBoundary><PortalTestHub /></ErrorBoundary>} />

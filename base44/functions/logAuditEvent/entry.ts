@@ -43,6 +43,10 @@ const ALLOWED_EVENT_TYPES = new Set([
   'account_deletion_requested',
   'account_deletion_completed',
   'mcare_stage_transition',
+  'vault_document_scanned',
+  'vault_document_verification_result',
+  'vault_document_reviewed',
+  'vault_document_accessed',
 ]);
 
 async function sha256(text: string): Promise<string> {

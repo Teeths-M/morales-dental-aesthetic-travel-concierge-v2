@@ -3711,3 +3711,63 @@ test('PBKDF2 ITERATIONS: the platform ceiling is never exceeded, all three PIN f
   expect(emergencyGuardCount, 'verifyEmergencyPIN must gate both the current_pin check and the main verify path on a missing iterations value')
     .toBeGreaterThanOrEqual(2);
 });
+
+test('VAULT DOCUMENT: VaultDocument RLS is owner-or-admin only, only scanVaultDocument/reviewVaultDocument can write it, and verified is never emitted without a real registry result', () => {
+  // Read/update owner-or-admin, create/update/delete admin-only — matching
+  // JourneyEvent's established shape (real writes happen via asServiceRole
+  // inside the two gated functions, so a client can never directly fabricate
+  // a verification_status). Never wide-open, never authenticated:true.
+  const entity = read('base44/entities/VaultDocument.jsonc');
+  expect(entity, 'read must be scoped to owner_email or admin/platform_admin, not wide open')
+    .toMatch(/"read"\s*:\s*\{\s*"\$or"\s*:\s*\[\s*\{\s*"data\.owner_email"\s*:\s*"\{\{user\.email\}\}"/);
+  for (const op of ['create', 'update']) {
+    const opSlice = entity.slice(entity.indexOf(`"${op}"`), entity.indexOf(`"${op}"`) + 200);
+    expect(opSlice, `${op} must be admin/platform_admin only — all real writes go through scanVaultDocument/reviewVaultDocument via asServiceRole`)
+      .toMatch(/"role"\s*:\s*"admin"/);
+    expect(opSlice, `${op} must never grant a plain authenticated user direct write access`)
+      .not.toMatch(/"authenticated"\s*:\s*true/);
+  }
+  expect(entity, 'delete must be admin-only')
+    .toMatch(/"delete"\s*:\s*\{\s*"user_condition"\s*:\s*\{\s*"role"\s*:\s*"admin"/);
+
+  // No other file may write VaultDocument directly — the two gated functions
+  // are the only real write path, and openMcareScanner (a real granted M-Care
+  // tool) must never itself create/update a document.
+  const openScannerSrc = read('base44/functions/openMcareScanner/entry.ts');
+  expect(openScannerSrc, 'openMcareScanner only resolves owner context — it must never write VaultDocument itself')
+    .not.toMatch(/VaultDocument\.(create|update)\(/);
+
+  // m_care.jsonc must grant VaultDocument read-only — never raw create/update,
+  // applying the Phase-8 lesson (Doctor/TravelAgency) from day one instead of
+  // relearning it for a new entity.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const grantMatch = agentConfig.match(/\{\s*"entity_name"\s*:\s*"VaultDocument"\s*,\s*"allowed_operations"\s*:\s*\[([^\]]*)\]\s*\}/);
+  expect(grantMatch, 'VaultDocument must be granted to the M-Care agent to check its allowed_operations').toBeTruthy();
+  const grantedOps = grantMatch[1];
+  expect(grantedOps, 'the agent VaultDocument grant must include read').toMatch(/"read"/);
+  expect(grantedOps, 'the agent VaultDocument grant must never include create').not.toMatch(/"create"/);
+  expect(grantedOps, 'the agent VaultDocument grant must never include update').not.toMatch(/"update"/);
+  expect(grantedOps, 'the agent VaultDocument grant must never include delete').not.toMatch(/"delete"/);
+
+  // scanVaultDocument must only ever mark a document 'verified' inside the
+  // real registry-result branch — never from classification/OCR confidence
+  // alone. Structural check: the string literal 'verified' must sit inside
+  // the runLookup() result-handling block, not assigned unconditionally.
+  const scanSrc = read('base44/functions/scanVaultDocument/entry.ts');
+  const lookupBlock = scanSrc.slice(scanSrc.indexOf('runLookup('), scanSrc.indexOf('runLookup(') + 700);
+  expect(lookupBlock, "the only assignment of verification_status = 'verified' must be inside the real runLookup() result branch")
+    .toMatch(/result\.found\s*&&\s*!result\.route_to_manual[\s\S]*?verification_status\s*=\s*'verified'/);
+  const outsideLookup = scanSrc.slice(0, scanSrc.indexOf('runLookup(')) + scanSrc.slice(scanSrc.indexOf('runLookup(') + 700);
+  expect(outsideLookup, "verification_status must never be assigned 'verified' anywhere outside the real registry-result branch")
+    .not.toMatch(/verification_status\s*=\s*'verified'/);
+
+  // reviewVaultDocument's own 'verified' write is a real, human-attributed
+  // event (an admin directly confirming a document) — must always carry a
+  // real verification_source, never blank/silent.
+  const reviewSrc = read('base44/functions/reviewVaultDocument/entry.ts');
+  const approveBlock = reviewSrc.slice(reviewSrc.indexOf("action === 'approve'"), reviewSrc.indexOf("} else if"));
+  expect(approveBlock, "reviewVaultDocument's approve branch must set verification_status to 'verified'")
+    .toMatch(/verification_status\s*=\s*'verified'/);
+  expect(approveBlock, "reviewVaultDocument's approve branch must always set a real, non-empty verification_source")
+    .toMatch(/verification_source\s*=\s*'Manual admin review'/);
+});

@@ -1509,6 +1509,7 @@ export default function MCareOrb() {
                   >
                     <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction
                       onChoice={m.__distressConfirm ? (c) => handleDistressConfirm(c, m.__distressConfirm) : sendAgentMessage}
+                      onRespond={sendAgentMessage}
                       revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
                       extraAudioUrl={voiceReplyAudioUrls[i]} />
                   </motion.div>

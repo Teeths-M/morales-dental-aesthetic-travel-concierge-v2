@@ -1,0 +1,145 @@
+{
+  "name": "VaultDocument",
+  "type": "object",
+  "description": "A single logical document (one or more captured/uploaded pages) processed by the M-Care Scanner: OCR'd, classified, quality-checked, and — where a real authoritative source exists — verification-routed. Distinct from PassportVault, which stays a separate, zero-knowledge, passport-only vault the server never decrypts; this entity's whole pipeline requires the server to see the image, so it is never used for that zero-knowledge flow. All writes go through scanVaultDocument (creation) or reviewVaultDocument (admin review) via asServiceRole — create/update RLS is admin-only so a client can never directly write a fabricated verification_status. original_file_urls are the untouched captured pages and are never overwritten by processed_file_url/combined_pdf_url.",
+  "properties": {
+    "owner_type": {
+      "type": "string",
+      "enum": ["patient", "doctor", "travel_agency", "driver", "companion", "security_agency", "other"]
+    },
+    "owner_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized RLS anchor — the person/partner this document belongs to."
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "Optional app-level FK to the owner's own record (CaseRecord id, Doctor id, etc.) — not enforced, informational."
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "passport", "national_id", "drivers_license", "medical_record", "medical_report",
+        "lab_result", "prescription", "doctor_license", "professional_certificate",
+        "insurance_document", "visa", "flight_document", "hotel_confirmation", "invoice",
+        "consent_document", "travel_document", "partner_credential", "security_credential", "other"
+      ]
+    },
+    "document_type_confidence": {
+      "type": "number",
+      "description": "0-100. Below the model's own confidence bar, the scanner asks the user what to save it as rather than silently classifying."
+    },
+    "original_file_urls": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Ordered, untouched captured/uploaded pages, private storage. NEVER overwritten by processed_file_url or combined_pdf_url."
+    },
+    "processed_file_url": {
+      "type": "string",
+      "description": "Enhanced/cropped single-page copy, optional."
+    },
+    "combined_pdf_url": {
+      "type": "string",
+      "description": "Multi-page pages combined into one PDF, optional."
+    },
+    "ocr_text": {
+      "type": "string"
+    },
+    "extracted_fields": {
+      "type": "object",
+      "description": "Structured fields the vision model extracted (name, license_number, jurisdiction, expiration_date, etc.) — varies by document_type."
+    },
+    "quality_status": {
+      "type": "string",
+      "enum": [
+        "pending", "passed", "failed_blur", "failed_glare", "failed_incomplete",
+        "failed_low_resolution", "saved_despite_issue"
+      ],
+      "default": "pending"
+    },
+    "quality_issues": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "unreviewed", "scanned", "ocr_complete", "quality_passed", "fields_extracted",
+        "verification_pending", "verified", "verification_failed", "requires_human_review",
+        "not_applicable_no_authority"
+      ],
+      "default": "unreviewed",
+      "description": "not_applicable_no_authority is the honest terminal state for a document type with no real authoritative source to check against (OCR/classification succeeded, nothing exists to verify it against) — distinct from requires_human_review, which means a person still needs to look at it. Only ever set to 'verified' with a real verification_source — OCR/classification confidence is never treated as verification."
+    },
+    "verification_source": {
+      "type": "string",
+      "description": "e.g. 'US NPI Registry', 'Manual admin review', or blank if none available."
+    },
+    "verification_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "review_status": {
+      "type": "string",
+      "enum": ["not_required", "pending_review", "approved", "rejected", "requires_new_scan"],
+      "default": "not_required"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_duplicate_of": {
+      "type": "string",
+      "description": "Self-reference to an existing VaultDocument id this appears to duplicate, or blank."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["scanner", "upload"]
+    },
+    "created_by_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Who actually captured/uploaded this — usually == owner_email, but may differ (staff scanning on a partner's behalf)."
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Soft-delete marker. A document is archived, not hard-removed, to preserve the audit trail — matches this app's account-deletion precedent of redacting identity while keeping the legal/audit-relevant record. Real GDPR erasure is a separate, deliberate admin action."
+    }
+  },
+  "required": ["owner_type", "owner_email", "document_type", "original_file_urls", "source", "created_by_email"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.owner_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "admin" }
+    }
+  }
+}

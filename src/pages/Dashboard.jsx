@@ -17,7 +17,7 @@ import PreparationChecklist from '@/components/dashboard/PreparationChecklist';
 import CaseStatusIndicator from '@/components/dashboard/CaseStatusIndicator';
 import ConsultationsModule from '@/components/dashboard/modules/ConsultationsModule';
 import MedicalProfileModule from '@/components/dashboard/modules/MedicalProfileModule';
-import DocumentsModule from '@/components/dashboard/modules/DocumentsModule';
+import VaultDocumentsPanel from '@/components/dashboard/modules/VaultDocumentsPanel';
 import BookingsModule from '@/components/dashboard/modules/BookingsModule';
 import MessagesModule from '@/components/dashboard/modules/MessagesModule';
 import JourneyModule from '@/components/dashboard/modules/JourneyModule';
@@ -928,7 +928,7 @@ export default function Dashboard() {
     const p = location.pathname;
     if (p === '/dashboard/consultations') return <ConsultationsModule consultations={consultations} />;
     if (p === '/dashboard/profile') return <MedicalProfileModule />;
-    if (p === '/dashboard/documents') return <DocumentsModule />;
+    if (p === '/dashboard/documents') return <VaultDocumentsPanel />;
     if (p === '/dashboard/bookings') return <BookingsModule />;
     if (p === '/dashboard/messages') return <MessagesModule />;
     if (p === '/dashboard/journey') return <JourneyModule />;
