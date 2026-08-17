@@ -15,6 +15,11 @@
  * - thinking:  a rotating gold sweep across the core — replaces the old
  *              flat three-dot pulse for exactly the states that already set
  *              `thinking` true in MCareOrb.jsx.
+ * - acting:    a slower, layered, brighter glow (no frantic sweep) shown
+ *              the moment an autonomous backend action lands a JourneyEvent
+ *              the user hasn't seen yet — M-Care did something on its own
+ *              (rerouted a no-show driver, fired a milestone) and the orb
+ *              confirms it without the user ever sending a message.
  * - speaking:  a brighter, quicker ripple for a short honest window right
  *              after a new assistant message lands — approximates "M is
  *              replying" the same way the app's thinkingStatus narration is
@@ -57,6 +62,13 @@ const STATE_CONFIG = {
   listening: { ringCount: 3, duration: 1.1, ringScale: 1.6,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],  sweep: false, glowAlpha: '55' },
   thinking:  { ringCount: 3, duration: 1.7, ringScale: 1.45, ringOpacity: 0.30, coreScale: [1, 1.05, 1], sweep: true,  glowAlpha: '55' },
   speaking:  { ringCount: 3, duration: 0.9, ringScale: 1.5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1], sweep: false, glowAlpha: '55' },
+  // acting: deliberate, layered background work — NOT the frantic LLM
+  // sweep of `thinking`. More rings, slower cadence, brighter glow, no
+  // conic sweep: reads as "M-Care is steadily doing something on its own
+  // in the background" (an autonomous reroute, a milestone it fired). Wired
+  // to hasUnseenJourneyEvent in MCareOrb — a real JourneyEvent a backend
+  // function just wrote — never a fabricated animation.
+  acting:    { ringCount: 4, duration: 2.6, ringScale: 1.5,  ringOpacity: 0.32, coreScale: [1, 1.04, 1], sweep: false, glowAlpha: '72' },
   error:     { ringCount: 1, duration: 2.8, ringScale: 1.12, ringOpacity: 0.12, coreScale: [1, 1.015, 1], sweep: false, glowAlpha: '28' },
 };
 

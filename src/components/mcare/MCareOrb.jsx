@@ -985,6 +985,20 @@ export default function MCareOrb() {
     if (!open) { autoResumeConversationalRef.current = false; setConversationalMode(false); }
   }, [open]);
 
+  // True whenever a real JourneyEvent landed after the panel was last opened
+  // — the honest way to satisfy "the user shouldn't have to send a message
+  // first" without a literal push: they see a dot on the closed orb, open
+  // it, and the proactive message is already waiting.
+  const hasUnseenJourneyEvent = journeyEvents.some(e =>
+    e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt);
+
+  // The orb's state. `acting` is the autonomous-work signal: when M-Care has
+  // done something on its own in the background (a JourneyEvent the user
+  // hasn't seen — e.g. the driver no-show reroute fired), the orb shows a
+  // deliberate, layered glow instead of going idle. It sits just above idle
+  // in priority, so an active conversation (listening/thinking/speaking)
+  // still wins — `acting` only surfaces when M-Care acted without the user
+  // prompting anything, which is exactly the "super-agent" moment to confirm.
   const orbState = !isOnline
     ? 'error'
     : listening
@@ -995,14 +1009,9 @@ export default function MCareOrb() {
           ? 'speaking'
           : (conversationalMode && conversationalListening)
             ? 'listening'
-            : 'idle';
-
-  // True whenever a real JourneyEvent landed after the panel was last opened
-  // — the honest way to satisfy "the user shouldn't have to send a message
-  // first" without a literal push: they see a dot on the closed orb, open
-  // it, and the proactive message is already waiting.
-  const hasUnseenJourneyEvent = journeyEvents.some(e =>
-    e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt);
+            : hasUnseenJourneyEvent
+              ? 'acting'
+              : 'idle';
 
   // Offline-prep: while offline, no new tool call can succeed anyway (no
   // network), so re-surface the most recent QR/maps token M-Care already
