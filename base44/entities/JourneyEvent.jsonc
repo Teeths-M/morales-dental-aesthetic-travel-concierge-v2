@@ -25,6 +25,7 @@
         "driver_noshow_backup",
         "doctor_backup_dispatched",
         "doctor_confirmation_delay_flagged",
+        "flight_disruption_handled",
         "weather_advisory",
         "guardian_checkin_sent",
         "ride_dispatched",
