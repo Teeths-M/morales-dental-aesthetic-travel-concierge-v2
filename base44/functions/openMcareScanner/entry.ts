@@ -86,3 +86,4 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     document_type_hint,
   });
 }, { name: 'openMcareScanner', requireAuth: true, bodySchema }));
+// End of openMcareScanner
