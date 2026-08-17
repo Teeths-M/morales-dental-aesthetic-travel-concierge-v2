@@ -40,5 +40,19 @@
       "type": "string",
       "description": "Hosted URL (Base44 file storage) of the patient's dashboard avatar, set via base44.auth.updateMe(). localStorage mirrors it for instant load; this is the durable copy."
     }
+  },
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
   }
 }

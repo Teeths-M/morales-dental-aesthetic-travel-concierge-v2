@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
@@ -74,8 +75,16 @@ function receiptHtml({ clientName, clientEmail, caseRef, receiptNumber, procedur
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, payment_type: claimedPaymentType, amount_paid: claimedAmountPaid, stripe_payment_id: claimedStripeId } = await body();
+  const { case_id, payment_type: claimedPaymentType, amount_paid: claimedAmountPaid, stripe_payment_id: claimedStripeId, internal_secret } = await body();
   if (!case_id) return err('case_id is required');
+
+  // SECURITY: had no ownership/token check on case_id at all — anyone who
+  // guessed/knew a case_id could pull that patient's client_email out of the
+  // response and re-trigger a receipt re-send. Real caller is
+  // processPaymentCascade (service-role, no forwardable session).
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
 
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
   if (!c) return err('Case not found', 404);

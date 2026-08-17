@@ -234,7 +234,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       status:               isFullPay || isBalance ? 'Travel-Coordination' : 'Deposit-Paid',
     }),
     // Generate receipt
-    base44.asServiceRole.functions?.invoke?.('sendPaymentReceipt', { case_id, payment_type, amount_paid: amountPaid, stripe_payment_id }).catch(() => {}),
+    base44.asServiceRole.functions?.invoke?.('sendPaymentReceipt', { case_id, payment_type, amount_paid: amountPaid, stripe_payment_id, internal_secret: Deno.env.get('CRON_SECRET') }).catch(() => {}),
     // Push notification — confident double buzz when payment lands
     c.client_email ? base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
       user_email: c.client_email,

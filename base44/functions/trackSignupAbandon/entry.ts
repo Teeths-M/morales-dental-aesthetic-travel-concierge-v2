@@ -1,5 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { z, strictObject } from '../../shared/validate.ts';
+import { checkRateLimit } from '../../shared/rateLimit.ts';
 
 /**
  * trackSignupAbandon — the write side of struggle-aware recovery for
@@ -28,6 +29,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   if (!phone && !email) {
     return err('phone or email is required');
   }
+
+  // SECURITY: createHandler's default rate limit keys by caller IP/session,
+  // not by the SUBMITTED phone/email — without this, one caller could mass-
+  // create SignupProgress rows for arbitrary third parties, each later
+  // triggering a real one-shot nudge via checkStalledSignups. Same pattern
+  // as requestGuardianAccess's per-address cap; fails open (returns success)
+  // rather than revealing the limit exists.
+  const allowed = await checkRateLimit(base44, `signup_abandon:${phone || email}`, 3600, 5);
+  if (!allowed) return ok({ tracked: true });
 
   const now = new Date().toISOString();
   const filterField = phone ? { phone } : { email };

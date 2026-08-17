@@ -112,6 +112,31 @@ Deno.serve(createHandler(async ({ req }) => {
     });
   }
 
+  // IDEMPOTENCY: this function has no caller-identity check (left open —
+  // see the "AUTH: known-open gaps" redteam invariant — a real caller
+  // includes an admin-only dashboard, a backend retry function, and an
+  // unverifiable Base44-native automation, so an auth gate would break real
+  // callers). A repeated/duplicate invocation for the same consultation_id
+  // must not re-run the LLM risk check or re-notify doctors every time — if
+  // a real prior outcome already exists, short-circuit and return it.
+  if (workflow.stage === 'blocked') {
+    return Response.json({
+      status: 'blocked',
+      message: 'Risk check already completed — patient flagged as blocked.',
+      risk: { result: 'blocked', flags: workflow.risk_flags || [], summary: workflow.risk_summary || null },
+      workflow_id: workflow.id,
+      already_processed: true,
+    });
+  }
+  if (workflow.doctor_status === 'notified') {
+    return Response.json({
+      status: 'approved',
+      message: 'Risk already approved and doctors already notified for this consultation — no action taken.',
+      workflow_id: workflow.id,
+      already_processed: true,
+    });
+  }
+
   // 3. AI Risk Check (SAFE-T 4LIFE™)
   // LEAK-SCAN-IGNORE-START — this builds the InvokeLLM prompt, not an
   // outbound email/SMS body. Neither outbound email below includes any of

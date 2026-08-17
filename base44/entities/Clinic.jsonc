@@ -74,7 +74,7 @@
   "rls": {
     "read": {
       "user_condition": {
-        "id": "{{user.id}}"
+        "role": "admin"
       }
     },
     "create": {

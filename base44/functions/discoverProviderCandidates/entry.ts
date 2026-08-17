@@ -170,4 +170,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     candidates: candidateRows.slice(0, 8),
     message: `Checked the Morales network first (${knownMatches.length} match${knownMatches.length === 1 ? '' : 'es'}), then searched the web and found ${candidateRows.length} new candidate${candidateRows.length === 1 ? '' : 's'}. None of the web candidates are verified — that's a separate step a human completes before anyone is contacted.`,
   });
-}, { name: 'discoverProviderCandidates', requireAuth: false, bodySchema }));
+}, { name: 'discoverProviderCandidates', requireAuth: false, bodySchema, rateLimit: { max: 8, windowSeconds: 300 } }));

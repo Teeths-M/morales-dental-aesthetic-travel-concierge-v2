@@ -92,4 +92,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         ? `A registry record exists but the match isn't confident enough (or the name doesn't clearly match) — this needs manual human review, not an automatic verified label.`
         : `No matching registry record found for that license number — this needs manual human review before treating this candidate as anything more than a lead.`,
   });
-}, { name: 'verifyDiscoveredCandidate', requireAuth: false, bodySchema }));
+}, { name: 'verifyDiscoveredCandidate', requireAuth: false, bodySchema, rateLimit: { max: 8, windowSeconds: 300 } }));

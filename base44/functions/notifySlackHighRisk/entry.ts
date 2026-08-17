@@ -1,10 +1,10 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
 
     // PRIVACY BY DESIGN: Slack is a third-party channel with no health-data (BAA)
     // agreement, so NO patient PHI is sent here — not the name, not the flagged
@@ -12,7 +12,18 @@ Deno.serve(createHandler(async ({ req }) => {
     // and a login-gated link. The reviewing admin opens the secure portal (which
     // requires authentication) to see the actual medical detail. Any PHI fields
     // still present in the request body are intentionally ignored.
-    const { case_id } = await req.json();
+    const { case_id, internal_secret } = await req.json();
+
+    // SECURITY: had zero auth — anyone could post fabricated "high-risk case"
+    // alerts into the internal Slack channel with an arbitrary case_id. Same
+    // gate as its sibling notifySlackAssignment; the real caller
+    // (createCaseFromConsultation.ts, cron-triggered, no forwardable session)
+    // now passes internal_secret explicitly.
+    if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
 
     const appUrl = (Deno.env.get('APP_URL') || '').replace(/\/$/, '');
     const caseUrl = `${appUrl}/admin/portal-viewer?case_id=${case_id}`;

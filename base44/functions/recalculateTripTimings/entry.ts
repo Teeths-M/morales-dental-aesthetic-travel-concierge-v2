@@ -41,10 +41,6 @@ Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    if (user && !['admin', 'platform_admin', 'coordinator'].includes(user.role)) {
-      // Allow self-calls from manageTripPause or scheduler; restrict external callers
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
 
     const { trip_id, duration_minutes, pause_event_id } = await req.json();
     if (!trip_id || !duration_minutes) {
@@ -58,7 +54,22 @@ Deno.serve(createHandler(async ({ req }) => {
     const shifted = [];
 
     // ── 1. Shift TravelRequest.scheduled_arrival ─────────────────────────────
-    const trip = await base44.asServiceRole.entities.TravelRequest.get(trip_id);
+    const trip = await base44.asServiceRole.entities.TravelRequest.get(trip_id).catch(() => null);
+    if (!trip) return Response.json({ error: 'Trip not found' }, { status: 404 });
+
+    // SECURITY: `user && !allowedRoles.includes(...)` used to SKIP this check
+    // entirely when user was null (no session) since `user && ...` short-
+    // circuits to false — the same bug pattern already found and fixed in
+    // escalateMissedDriverHandshake/pollActiveTripFlights. The correct
+    // replacement here is an ownership check, not cronAuthorized, since the
+    // real (and only) caller is manageTripPause, which forwards the acting
+    // patient's/admin's own session and already runs this identical check
+    // on itself before invoking this function.
+    const isAdmin = !!user && ['admin', 'platform_admin', 'coordinator'].includes(user.role);
+    if (!user || (!isAdmin && trip.user_email !== user.email && trip.user_id !== user.id)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     if (trip) {
       const updates = {};
       if (trip.scheduled_arrival) updates.scheduled_arrival = shiftIso(trip.scheduled_arrival, duration_minutes);

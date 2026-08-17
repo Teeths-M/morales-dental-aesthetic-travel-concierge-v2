@@ -200,4 +200,4 @@ ${context ? `Context: ${context}` : ''}${sourceContext}`;
           ? `Answered but confidence (${confidence}%) is below the ${ACCURACY_THRESHOLD}% memorization threshold — not saved to the brain.`
           : 'Answered; could not persist to the brain just now.',
     });
-}, { name: 'mcareResearchAndLearn', requireAuth: false }));
+}, { name: 'mcareResearchAndLearn', requireAuth: false, rateLimit: { max: 8, windowSeconds: 300 } }));

@@ -132,6 +132,7 @@ export async function createCaseFromConsultation(base44: any, consultation_id: s
       flagged_condition: consultation.high_risk_flagged_condition || 'High-risk condition',
       procedure: consultation.procedure_interest,
       case_id: caseRecord.id,
+      internal_secret: Deno.env.get('CRON_SECRET'),
     }).catch((e: any) => console.error('[createCaseFromConsultation] Slack notify failed (non-fatal):', e.message));
   }
 
