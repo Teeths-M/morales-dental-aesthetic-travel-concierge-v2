@@ -12,10 +12,10 @@
         "doctor",
         "travel_agency",
         "taxi_service",
-        "companion_agency",
+        "companion",
         "security_agency"
       ],
-      "description": "Type of partner being verified"
+      "description": "Type of partner being verified. Was 'companion_agency' — a bug: every real caller (initiatePartnerVerification, providerCandidateMatch.ts's KnownProviderSignature union, DiscoveredProviderCandidate.matched_existing_partner_type) has always written 'companion', so verification records for companion partners were very likely failing this enum check. Do not confuse with ROLES.COMPANION_AGENCY in src/lib/constants.js — that's an unrelated user-role string, not this field."
     },
     "partner_name": {
       "type": "string",

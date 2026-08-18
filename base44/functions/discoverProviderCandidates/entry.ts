@@ -1,9 +1,10 @@
 import { createHandler, ok } from '../../shared/createHandler.ts';
-import { strictObject, Fields } from '../../shared/validate.ts';
+import { strictObject, Fields, z } from '../../shared/validate.ts';
 import { searchForProviders } from '../../shared/providerDiscovery.ts';
 import { logExternalSearch } from '../../shared/logExternalSearch.ts';
 import { isLikelyKnownProvider, computeCandidateConfidence, type KnownProviderSignature } from '../../shared/providerCandidateMatch.ts';
 import { resolveCountryISO, REGISTRY_ADAPTERS } from '../../shared/registryLookup.ts';
+import { PARTNER_TYPE_CONFIG, partnerDisplayName, type PartnerType } from '../../shared/partnerTypeConfig.ts';
 
 // ── discoverProviderCandidates ───────────────────────────────────────────────
 // M-Care's controlled web-discovery tool. Runs when a traveler asks for a
@@ -36,47 +37,54 @@ const bodySchema = strictObject({
   need: Fields.shortText(200),
   location: Fields.shortText(200),
   case_id: Fields.optionalText(100),
+  partner_type: z.enum(['doctor', 'travel_agency', 'taxi_service', 'companion', 'security_agency']).optional().default('doctor'),
 });
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { need, location, case_id } = await body();
+  const { need, location, case_id, partner_type } = await body();
+  const cfg = PARTNER_TYPE_CONFIG[partner_type as PartnerType];
   const query = `${need} in ${location}`.trim();
 
-  // 1. Existing provider memory.
-  let knownDoctors: any[] = [];
+  // 1. Existing provider memory — generalized across all 5 partner types.
+  // City matching only applies where the entity actually has a city field
+  // (doctor, confirmed) — the other 4 entities are country-level only, so
+  // cityLow is always '' for them and this condition simply never fires,
+  // falling through to the country match below.
+  let knownPartners: any[] = [];
   try {
-    knownDoctors = await base44.asServiceRole.entities.Doctor.filter({}, '-created_date', 200);
+    knownPartners = await base44.asServiceRole.entities[cfg.entity].filter({}, '-created_date', 200);
   } catch (_) {
-    knownDoctors = [];
+    knownPartners = [];
   }
 
   const needLow = need.toLowerCase();
   const locationLow = location.toLowerCase();
-  const knownMatches = knownDoctors
-    .filter((d: any) => {
-      const specialtyLow = (d.specialty || '').toLowerCase();
-      const cityLow = (d.clinic_city || '').toLowerCase();
-      const countryLow = (d.clinic_country || '').toLowerCase();
+  const knownMatches = knownPartners
+    .filter((p: any) => {
+      const specialtyRaw = cfg.specialtyIsArray ? (Array.isArray(p[cfg.specialtyField]) ? p[cfg.specialtyField].join(' ') : '') : (p[cfg.specialtyField] || '');
+      const specialtyLow = String(specialtyRaw).toLowerCase();
+      const cityLow = cfg.cityField ? (p[cfg.cityField] || '').toLowerCase() : '';
+      const countryLow = (p[cfg.countryField] || '').toLowerCase();
       const specialtyHit = !!specialtyLow && (needLow.includes(specialtyLow) || specialtyLow.split(/\s+/).some((w: string) => w.length > 3 && needLow.includes(w)));
       const locationHit = (!!cityLow && locationLow.includes(cityLow)) || (!!countryLow && locationLow.includes(countryLow));
       return specialtyHit && locationHit;
     })
     .slice(0, 5)
-    .map((d: any) => ({
-      id: d.id,
-      name: d.full_name,
-      city: d.clinic_city,
-      country: d.clinic_country,
-      specialty: d.specialty,
+    .map((p: any) => ({
+      id: p.id,
+      name: partnerDisplayName(cfg, p),
+      city: cfg.cityField ? p[cfg.cityField] : undefined,
+      country: p[cfg.countryField],
+      specialty: cfg.specialtyIsArray ? p[cfg.specialtyField] : p[cfg.specialtyField],
     }));
 
-  const knownSignatures: KnownProviderSignature[] = knownDoctors.map((d: any) => ({
-    id: d.id,
-    partner_type: 'doctor' as const,
-    name: d.full_name || '',
-    city: d.clinic_city,
-    country: d.clinic_country,
-    specialty: d.specialty,
+  const knownSignatures: KnownProviderSignature[] = knownPartners.map((p: any) => ({
+    id: p.id,
+    partner_type: partner_type as PartnerType,
+    name: partnerDisplayName(cfg, p),
+    city: cfg.cityField ? p[cfg.cityField] : undefined,
+    country: p[cfg.countryField],
+    specialty: cfg.specialtyIsArray ? (Array.isArray(p[cfg.specialtyField]) ? p[cfg.specialtyField].join(', ') : '') : p[cfg.specialtyField],
   }));
 
   // 2. Tavily web discovery.
@@ -99,8 +107,8 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       known_providers: knownMatches,
       candidates: [],
       message: knownMatches.length > 0
-        ? `Found ${knownMatches.length} doctor(s) already in the Morales network matching this. Open-web discovery isn't configured yet (${searchResult.message}), so I can't search beyond that right now.`
-        : `No matching doctor found in the Morales network yet, and open-web discovery isn't configured (${searchResult.message}). This would need a human to source a candidate manually.`,
+        ? `Found ${knownMatches.length} ${cfg.noun}(s) already in the Morales network matching this. Open-web discovery isn't configured yet (${searchResult.message}), so I can't search beyond that right now.`
+        : `No matching ${cfg.noun} found in the Morales network yet, and open-web discovery isn't configured (${searchResult.message}). This would need a human to source a candidate manually.`,
     });
   }
 
@@ -134,6 +142,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
           relevance_score: result.relevance,
           discovered_at: result.timestamp,
           identity_confidence,
+          partner_type,
           extracted_country_iso: extractedCountry || '',
           registry_check_status,
           status: 'candidate',

@@ -20,12 +20,18 @@
         "travel_agency",
         "guardian",
         "admin",
-        "doctor"
+        "doctor",
+        "driver",
+        "companion"
       ]
     },
     "ai_recommendation": {
       "type": "string",
-      "description": "Best-effort, read-only recommendation from mcare_orchestrator (a separate backend agent, never patient-facing) surfaced when the deterministic fallback found nothing — e.g. a near-verified doctor one click from ready, or a previously-discovered candidate lead. Informational only; the orchestrator cannot act, only investigate. Empty if the agent found nothing, was unavailable, or wasn't asked."
+      "description": "Best-effort, read-only recommendation from mcare_orchestrator (a separate backend agent, never patient-facing) surfaced when the deterministic fallback found nothing — e.g. a near-ready partner one click from ready, or a previously-discovered candidate lead. Informational only; the orchestrator cannot act, only investigate. Empty if the agent found nothing, was unavailable, or wasn't asked."
+    },
+    "fallback_action": {
+      "type": "string",
+      "description": "Plain label for what actually happened when this failure was logged, e.g. 'admin_critical_alert_sent', 'admin_critical_alert_sent_urgent', 'admin_expedited_review_sent'. Every real caller already sets this; declaring it here so writes stop silently dropping an undeclared field."
     },
     "status": {
       "type": "string",

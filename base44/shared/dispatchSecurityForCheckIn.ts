@@ -1,4 +1,6 @@
 import { logCrisisReroute } from './logCrisisReroute.ts';
+import { logJourneyEvent } from './logJourneyEvent.ts';
+import { widenPartnerSearch } from './partnerSearchWidening.ts';
 
 const TIMEOUT_MINUTES = 15;
 
@@ -73,6 +75,19 @@ export async function dispatchSecurityForCheckIn(
 
   if (!next) {
     await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { security_dispatch_status: 'failed' }).catch(() => {});
+
+    // Deterministic-first widening (Portia's confirmed "M-Care never gives
+    // up" design) — same treatment every other partner type's give-up path
+    // now gets. Only affects the tail-end failure logging/alerting below;
+    // never delays the real dispatch attempts already completed above.
+    const widened = await widenPartnerSearch(base44, {
+      partnerType: 'security_agency',
+      country: destinationCountry !== 'Unknown' ? destinationCountry : undefined,
+      need: 'a security escort for an unresponsive solo traveler welfare check',
+      location: destinationCountry !== 'Unknown' ? destinationCountry : '',
+      case_id: checkIn.case_id,
+    }).catch(() => null);
+
     if (adminEmail) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: adminEmail,
@@ -82,16 +97,19 @@ export async function dispatchSecurityForCheckIn(
           <div style="padding:20px;border:1px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;">
           <p>Every available security agency in <strong>${destinationCountry}</strong> has been tried for this unresponsive solo traveler and none confirmed. This needs immediate human intervention.</p>
           <p><strong>Traveler:</strong> ${checkIn.user_name}<br/><strong>Phone:</strong> ${checkIn.user_phone || 'N/A'}<br/><strong>Case ID:</strong> ${checkIn.case_id}<br/><strong>Last known location:</strong> ${checkIn.location_label || (checkIn.location_lat ? `${checkIn.location_lat},${checkIn.location_lng}` : 'Unknown')}</p>
-          <p style="color:#fca5a5;font-weight:bold;">NO SECURITY RESPONSE — ESCALATE MANUALLY NOW</p></div>`,
+          <p style="color:#fca5a5;font-weight:bold;">NO SECURITY RESPONSE — ESCALATE MANUALLY NOW</p>
+          ${widened?.adminHtml || ''}
+          </div>`,
       }).catch(() => {});
     }
     try {
       await base44.asServiceRole.entities.DispatchFailureLog.create({
         case_id: checkIn.case_id,
         partner_type: 'security',
-        reason: `All ${tried.length + 1} available security agencies in ${destinationCountry} exhausted with no confirmation`,
-        timestamp: now.toISOString(),
+        failure_reason: `All ${tried.length + 1} available security agencies in ${destinationCountry} exhausted with no confirmation.${widened?.failureReasonSuffix ? ' ' + widened.failureReasonSuffix : ''}`,
+        created_at: now.toISOString(),
         fallback_action: 'admin_critical_alert_sent',
+        ai_recommendation: widened?.aiRecommendation || '',
       });
     } catch (_) {}
 
@@ -105,6 +123,23 @@ export async function dispatchSecurityForCheckIn(
       human_escalated_reason: `All ${tried.length + 1} available security agencies in ${destinationCountry} were tried — none confirmed. Needs immediate human intervention.`,
       source_message: `Solo traveler ${checkIn.user_name || 'unknown'} unresponsive — security welfare check requested.`,
     }).catch(() => {});
+
+    // Still critical regardless of what widening found — an unresponsive
+    // traveler with no security agency confirmed yet is critical either way,
+    // since nobody has physically reached them.
+    if (checkIn.user_email) {
+      await logJourneyEvent(base44, {
+        case_id: checkIn.case_id,
+        client_email: checkIn.user_email,
+        event_type: 'partner_search_widened',
+        source: 'dispatchSecurityForCheckIn',
+        message_text: widened?.journeyMessage || "I'm actively searching for another verified security escort for you right now — I'll update you the moment this is resolved.",
+        priority: 'critical',
+        action_taken: 'Every available security agency was tried and none confirmed — escalated to admin for immediate human intervention',
+        tool_result: { outcome: widened?.outcome || 'no_agency_available' },
+        escalation_occurred: true,
+      });
+    }
 
     return { outcome: 'failed' };
   }

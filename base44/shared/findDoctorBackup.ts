@@ -2,7 +2,7 @@ import { linkOnlyEmail } from './notify.ts';
 import { escapeHtml } from './emailTemplate.ts';
 import { pickBestDoctor } from './pickBestDoctor.ts';
 import { logJourneyEvent } from './logJourneyEvent.ts';
-import { askDispatchOrchestrator } from './askDispatchOrchestrator.ts';
+import { widenPartnerSearch } from './partnerSearchWidening.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -148,22 +148,24 @@ export async function findDoctorBackup(
 
     const urgent = isUrgent(caseRecord);
 
-    // Best-effort: ask the bounded, read-only-tooled mcare_orchestrator agent
-    // whether it can find a faster path than "start from zero" — a near-
-    // verified doctor one click from ready, or a previously-discovered
-    // candidate lead. Never blocks or breaks this failure path: the helper
-    // itself is fully fail-closed (unavailable/errored/timed out -> null),
-    // and a null recommendation just means the email/log look exactly as
-    // they always have. This agent can only investigate, never act.
+    // Deterministic-first (Portia's confirmed design): directly checks for a
+    // near-ready doctor or a previously-discovered candidate lead — no LLM
+    // in this decision. mcare_orchestrator is still asked, best-effort, only
+    // for extra narrative color folded into the admin email; it never drives
+    // what happens next. Never blocks or breaks this failure path — a failed
+    // widenPartnerSearch call just means the email/log fall back to the
+    // original, pre-widening behavior. See partnerSearchWidening.ts.
     const procedureSummary = Array.isArray(caseRecord.procedures)
       ? caseRecord.procedures.join(', ')
       : (caseRecord.procedures || 'not specified');
-    const aiRecommendation = await askDispatchOrchestrator(base44,
-      `Dispatch failure: no verified backup doctor is available for a case. ` +
-      `Specialty/procedure needed: ${procedureSummary}. Destination country: ${caseRecord.procedure_country || 'not specified'}. ` +
-      `The deterministic search already checked every active, license-verified, identity-verified doctor and found none. ` +
-      `Check for any faster path forward using your available tools.`
-    ).catch(() => null);
+    const widened = await widenPartnerSearch(base44, {
+      partnerType: 'doctor',
+      specialty: procedureSummary !== 'not specified' ? procedureSummary : undefined,
+      country: caseRecord.procedure_country || undefined,
+      need: procedureSummary !== 'not specified' ? procedureSummary : 'a licensed doctor',
+      location: caseRecord.procedure_country || '',
+      case_id: caseRecord.id,
+    }).catch(() => null);
 
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
     if (adminEmail) {
@@ -179,10 +181,7 @@ export async function findDoctorBackup(
           <strong>Case ID:</strong> ${escapeHtml(caseRecord.id)}<br/>
           <strong>Procedure country:</strong> ${escapeHtml(caseRecord.procedure_country || 'Unknown')}</p>
           ${urgent ? '<p style="color:#fca5a5;font-weight:bold;">Patient is already traveling or has a procedure within 72 hours.</p>' : ''}
-          ${aiRecommendation ? `<div style="margin-top:16px;padding:12px;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;">
-          <p style="margin:0 0 4px;font-weight:bold;color:#9a3412;">Possible faster paths (AI-checked, not acted on):</p>
-          <p style="margin:0;color:#7c2d12;">${escapeHtml(aiRecommendation)}</p>
-          </div>` : ''}
+          ${widened?.adminHtml || ''}
           </div>`,
       }).catch(() => {});
     }
@@ -191,10 +190,10 @@ export async function findDoctorBackup(
       await base44.asServiceRole.entities.DispatchFailureLog.create({
         case_id: caseRecord.id,
         partner_type: 'doctor',
-        reason: 'No verified backup doctor available after original doctor dropped the case',
-        timestamp: new Date().toISOString(),
+        failure_reason: `No verified backup doctor available after original doctor dropped the case.${widened?.failureReasonSuffix ? ' ' + widened.failureReasonSuffix : ''}`,
+        created_at: new Date().toISOString(),
         fallback_action: urgent ? 'admin_critical_alert_sent_urgent' : 'admin_critical_alert_sent',
-        ai_recommendation: aiRecommendation || '',
+        ai_recommendation: widened?.aiRecommendation || '',
       });
     } catch (_) {}
 
@@ -205,7 +204,10 @@ export async function findDoctorBackup(
     // Proactive chat bubble, polled by the frontend (useJourneyEvents). This
     // is the FIRST time the patient hears about this at all today — every
     // other notification above goes to admin/the new doctor, never them.
-    // Fixed, reviewed copy — never names a doctor, never repeats admin_notes.
+    // message_text is still fixed-template — widened.journeyMessage is one
+    // of a small set of reviewed strings widenPartnerSearch picks between
+    // based on its own deterministic outcome, never LLM-authored, and never
+    // names a doctor or repeats admin_notes.
     const patientEmail = caseRecord.client_email || caseRecord.user_email;
     if (patientEmail) {
       await logJourneyEvent(base44, {
@@ -213,10 +215,10 @@ export async function findDoctorBackup(
         client_email: patientEmail,
         event_type: 'doctor_backup_dispatched',
         source: 'findDoctorBackup',
-        message_text: "I'm personally following up on your doctor assignment with our care team right now — I'll update you as soon as this is resolved.",
-        priority: 'critical',
+        message_text: widened?.journeyMessage || "I'm personally following up on your doctor assignment with our care team right now — I'll update you as soon as this is resolved.",
+        priority: widened?.journeyPriority || 'critical',
         action_taken: 'Doctor dropped the case and no verified backup doctor was available — escalated to Admin-Review',
-        tool_result: { outcome: 'no_backup_available', urgent },
+        tool_result: { outcome: widened?.outcome || 'no_backup_available', urgent },
         escalation_occurred: true,
       });
     }

@@ -30,7 +30,8 @@
         "guardian_checkin_sent",
         "ride_dispatched",
         "guardian_alert_sent",
-        "document_vaulted"
+        "document_vaulted",
+        "partner_search_widened"
       ]
     },
     "source": {

@@ -3,6 +3,8 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 import { signPortalToken } from '../../shared/portalToken.ts';
 import { sendWhatsApp } from '../../shared/twilioWhatsApp.ts';
 import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
+import { widenPartnerSearch } from '../../shared/partnerSearchWidening.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -70,10 +72,67 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const travelAgencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' });
 
   if (travelAgencies.length === 0) {
+    // This branch used to just flip CaseRecord.status with no admin email,
+    // no failure log, and nothing to the patient. Widened + made loud to
+    // match every other partner type's give-up path (Portia's confirmed
+    // "M-Care never gives up" design).
+    const destCountry = caseRecord?.procedure_country || caseRecord?.destination_country || null;
+    const widened = await widenPartnerSearch(base44, {
+      partnerType: 'travel_agency',
+      country: destCountry || undefined,
+      need: 'a travel agency to arrange flights, hotel, and transfers for a medical travel patient',
+      location: destCountry || '',
+      case_id: caseId,
+    }).catch(() => null);
+
     await base44.asServiceRole.entities.CaseRecord.update(caseId, {
       status: 'Admin-Review',
       admin_notes: 'No travel agencies available for booking'
     });
+
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (adminEmail) {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        from_name: BRAND,
+        to: adminEmail,
+        subject: `🚨 CRITICAL: no travel agency available — ${e(caseRecord.client_name || 'patient')}`,
+        body: `<div style="background:#7f1d1d;color:white;padding:20px;border-radius:8px;">
+          <h2 style="margin:0;">No travel agency available</h2></div>
+          <div style="padding:20px;border:1px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;">
+          <p>No active travel agency was found for this case. Manual assignment or onboarding a new partner is needed now.</p>
+          <p><strong>Patient:</strong> ${e(caseRecord.client_name || 'Unknown')}<br/>
+          <strong>Case ID:</strong> ${e(caseId)}<br/>
+          <strong>Destination:</strong> ${e(destCountry || 'Unknown')}</p>
+          ${widened?.adminHtml || ''}
+          </div>`,
+      }).catch(() => {});
+    }
+
+    try {
+      await base44.asServiceRole.entities.DispatchFailureLog.create({
+        case_id: caseId,
+        partner_type: 'travel_agency',
+        failure_reason: `No active travel agency available for booking.${widened?.failureReasonSuffix ? ' ' + widened.failureReasonSuffix : ''}`,
+        created_at: new Date().toISOString(),
+        fallback_action: 'admin_critical_alert_sent',
+        ai_recommendation: widened?.aiRecommendation || '',
+      });
+    } catch (_) {}
+
+    if (caseRecord.client_email) {
+      await logJourneyEvent(base44, {
+        case_id: caseId,
+        client_email: caseRecord.client_email,
+        event_type: 'partner_search_widened',
+        source: 'assignTravelAgency',
+        message_text: widened?.journeyMessage || "I'm actively searching for another verified travel agency for you right now — I'll update you the moment this is resolved.",
+        priority: widened?.journeyPriority || 'critical',
+        action_taken: 'No active travel agency was available for booking — escalated to admin',
+        tool_result: { outcome: widened?.outcome || 'no_agency_available' },
+        escalation_occurred: true,
+      });
+    }
+
     return ok({ status: 'NO_TRAVEL_AGENCIES', message: 'No travel agencies available. Admin review required.' });
   }
 

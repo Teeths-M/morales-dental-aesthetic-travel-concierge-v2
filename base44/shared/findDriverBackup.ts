@@ -1,4 +1,7 @@
 import { linkOnlyEmail } from './notify.ts';
+import { escapeHtml } from './emailTemplate.ts';
+import { logJourneyEvent } from './logJourneyEvent.ts';
+import { widenPartnerSearch } from './partnerSearchWidening.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -58,20 +61,34 @@ export async function findDriverBackup(
 
     // Same silent-failure gap findDoctorBackup closed earlier tonight — a
     // patient physically waiting for this leg deserves a loud failure, not
-    // a status flip nobody is told about.
+    // a status flip nobody is told about. Deterministic-first widening
+    // (Portia's confirmed "M-Care never gives up" design) — see
+    // partnerSearchWidening.ts for why nudging a partner directly isn't the
+    // right "safe next step" here (the bottleneck is always a required
+    // admin background-check click, never something the partner still owes).
+    const legCountry = leg === 'origin' ? caseRecord.client_country : caseRecord.procedure_country;
+    const widened = await widenPartnerSearch(base44, {
+      partnerType: 'taxi_service',
+      country: legCountry || undefined,
+      need: 'ground transportation for a medical travel patient',
+      location: legCountry || '',
+      case_id: caseRecord.id,
+    }).catch(() => null);
+
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
     if (adminEmail) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND,
         to: adminEmail,
-        subject: `🚨 CRITICAL: no backup driver available — ${caseRecord.client_name || 'patient'}`,
+        subject: `🚨 CRITICAL: no backup driver available — ${escapeHtml(caseRecord.client_name || 'patient')}`,
         body: `<div style="background:#7f1d1d;color:white;padding:20px;border-radius:8px;">
           <h2 style="margin:0;">No verified backup driver available</h2></div>
           <div style="padding:20px;border:1px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;">
           <p>${reasonText === 'the assigned driver did not arrive for pickup' ? 'A driver did not show for pickup' : 'A driver cancelled'} and every currently active driver company was tried — none available. This leg needs manual assignment now.</p>
-          <p><strong>Patient:</strong> ${caseRecord.client_name || 'Unknown'}<br/>
-          <strong>Case ID:</strong> ${caseRecord.id}<br/>
-          <strong>Leg:</strong> ${leg}</p>
+          <p><strong>Patient:</strong> ${escapeHtml(caseRecord.client_name || 'Unknown')}<br/>
+          <strong>Case ID:</strong> ${escapeHtml(caseRecord.id)}<br/>
+          <strong>Leg:</strong> ${escapeHtml(leg)}</p>
+          ${widened?.adminHtml || ''}
           </div>`,
       }).catch(() => {});
     }
@@ -80,11 +97,27 @@ export async function findDriverBackup(
       await base44.asServiceRole.entities.DispatchFailureLog.create({
         case_id: caseRecord.id,
         partner_type: 'driver',
-        reason: `No verified backup driver available — ${reasonText} (${leg} leg)`,
-        timestamp: new Date().toISOString(),
+        failure_reason: `No verified backup driver available — ${reasonText} (${leg} leg).${widened?.failureReasonSuffix ? ' ' + widened.failureReasonSuffix : ''}`,
+        created_at: new Date().toISOString(),
         fallback_action: 'admin_critical_alert_sent',
+        ai_recommendation: widened?.aiRecommendation || '',
       });
     } catch (_) {}
+
+    const patientEmail = caseRecord.client_email || caseRecord.user_email;
+    if (patientEmail) {
+      await logJourneyEvent(base44, {
+        case_id: caseRecord.id,
+        client_email: patientEmail,
+        event_type: 'partner_search_widened',
+        source: 'findDriverBackup',
+        message_text: widened?.journeyMessage || "I'm actively searching for another verified driver for you right now — I'll update you the moment this is resolved.",
+        priority: widened?.journeyPriority || 'critical',
+        action_taken: `A driver ${reason === 'no_show' ? 'did not arrive' : 'cancelled'} and no verified backup was available for the ${leg} leg — escalated to admin`,
+        tool_result: { outcome: widened?.outcome || 'no_backup_available', leg },
+        escalation_occurred: true,
+      });
+    }
 
     return { success: false };
   }

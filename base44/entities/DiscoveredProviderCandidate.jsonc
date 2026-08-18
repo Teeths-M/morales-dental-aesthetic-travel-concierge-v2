@@ -44,6 +44,17 @@
       "maximum": 100,
       "description": "Combined confidence this is a real, distinct, useful lead. Search relevance alone is capped well below anything resembling 'verified' -- see providerCandidateMatch.ts's computeCandidateConfidence."
     },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "security_agency"
+      ],
+      "description": "The partner type this lead was discovered for (what discoverProviderCandidates was searching for) -- distinct from matched_existing_partner_type below, which is only ever set when this candidate scored as a likely duplicate of an already-onboarded partner."
+    },
     "matched_existing_partner_type": {
       "type": "string",
       "enum": [

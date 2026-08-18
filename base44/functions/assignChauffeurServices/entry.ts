@@ -2,6 +2,8 @@
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { createHandler } from '../../shared/createHandler.ts';
 import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
+import { widenPartnerSearch } from '../../shared/partnerSearchWidening.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -113,10 +115,68 @@ Deno.serve(createHandler(async ({ req }) => {
     ]);
 
     if (originDrivers.length === 0 || destDrivers.length === 0) {
+      // Used to be a silent status flip — no admin email, no failure log,
+      // nothing to the patient. Widened + made loud to match every other
+      // partner type's give-up path (Portia's confirmed "M-Care never gives
+      // up" design).
+      const missingCountry = originDrivers.length === 0 ? caseRecord.client_country : caseRecord.procedure_country;
+      const widened = await widenPartnerSearch(base44, {
+        partnerType: 'taxi_service',
+        country: missingCountry || undefined,
+        need: 'ground transportation for a medical travel patient',
+        location: missingCountry || '',
+        case_id: caseId,
+      }).catch(() => null);
+
       await base44.asServiceRole.entities.CaseRecord.update(caseId, {
         status: 'Admin-Review',
         admin_notes: 'Chauffeur service unavailable in origin or destination',
       });
+
+      const adminEmail = Deno.env.get('ADMIN_EMAIL');
+      if (adminEmail) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: BRAND,
+          to: adminEmail,
+          subject: `🚨 CRITICAL: no chauffeur service available — ${e(caseRecord.client_name || 'patient')}`,
+          body: `<div style="background:#7f1d1d;color:white;padding:20px;border-radius:8px;">
+            <h2 style="margin:0;">No chauffeur service available</h2></div>
+            <div style="padding:20px;border:1px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;">
+            <p>${originDrivers.length === 0 ? 'No active driver company in the origin country' : 'No active driver company in the destination country'} — every currently active company was tried. Manual assignment is needed now.</p>
+            <p><strong>Patient:</strong> ${e(caseRecord.client_name || 'Unknown')}<br/>
+            <strong>Case ID:</strong> ${e(caseId)}<br/>
+            <strong>Origin:</strong> ${e(caseRecord.client_country || 'Unknown')}<br/>
+            <strong>Destination:</strong> ${e(caseRecord.procedure_country || 'Unknown')}</p>
+            ${widened?.adminHtml || ''}
+            </div>`,
+        }).catch(() => {});
+      }
+
+      try {
+        await base44.asServiceRole.entities.DispatchFailureLog.create({
+          case_id: caseId,
+          partner_type: 'taxi',
+          failure_reason: `Chauffeur service unavailable in the ${originDrivers.length === 0 ? 'origin' : 'destination'} country.${widened?.failureReasonSuffix ? ' ' + widened.failureReasonSuffix : ''}`,
+          created_at: new Date().toISOString(),
+          fallback_action: 'admin_critical_alert_sent',
+          ai_recommendation: widened?.aiRecommendation || '',
+        });
+      } catch (_) {}
+
+      if (caseRecord.client_email) {
+        await logJourneyEvent(base44, {
+          case_id: caseId,
+          client_email: caseRecord.client_email,
+          event_type: 'partner_search_widened',
+          source: 'assignChauffeurServices',
+          message_text: widened?.journeyMessage || "I'm actively searching for another verified driver for you right now — I'll update you the moment this is resolved.",
+          priority: widened?.journeyPriority || 'critical',
+          action_taken: 'No chauffeur service was available for the trip — escalated to admin',
+          tool_result: { outcome: widened?.outcome || 'no_drivers_available' },
+          escalation_occurred: true,
+        });
+      }
+
       return Response.json({ status: 'NO_DRIVERS', message: 'Chauffeur services not available. Admin review required.' });
     }
 
