@@ -3,6 +3,7 @@ import { createHmac } from 'node:crypto';
 import { z, strictObject, Fields } from '../../shared/validate.ts';
 import { guardedPartnerStatusUpdate, PARTNER_STATE } from '../../shared/partnerOnboardingState.ts';
 import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
+import { computeRiskTier } from '../../shared/riskTieredApproval.ts';
 
 // partner_type is a length-capped string, not an enum — the existing if/else
 // chain below already tolerates an unrecognized value (falls through to
@@ -13,12 +14,6 @@ const InitiatePartnerVerificationSchema = strictObject({
   partner_type: Fields.shortText(50),
   documents: z.array(z.any()).max(50).optional().default([]),
 });
-
-// Doctor auto-activation clear-scan bands.
-// <= CLEAR_THRESHOLD:            "clear" — auto-activate, no human touch.
-// CLEAR_THRESHOLD < x <= 70:      "neutral" — human review (unchanged behavior).
-// > 70:                          denied (unchanged behavior).
-const CLEAR_THRESHOLD = 20;
 
 // Generates the short-lived proof activateVerifiedDoctor requires for its
 // auto-activation path. Both functions read the same DOCTOR_AUTO_ACTIVATION_SECRET —
@@ -192,36 +187,43 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     const { fraud_score, fraud_indicators } = analysisResult.data;
 
-    let newStatus = 'ai_analysis_complete';
+    let newStatus = 'manual_review';
     let autoVerified = false;
     let verifiedBy = 'ai_auto';
     let verifiedAt: string | null = null;
-
-    // Auto-decision based on fraud score.
-    // Doctors: <= CLEAR_THRESHOLD auto-activates with no human touch. Above
-    // that always goes to manual review — a fraud score above 70 used to
-    // auto-DENY here, with no human ever looking at the application (just an
-    // email telling the applicant to contact support if it was wrong). That
-    // was removed: a generic vision-based fraud score — especially without
-    // the country/document context analyzePartnerDocuments now receives
-    // above — is not reliable enough to be the sole reason someone's
-    // livelihood application is rejected, and false positives skew heavily
-    // toward applicants whose documents simply look unfamiliar to the model
-    // rather than actually fraudulent. It can still escalate urgency; it can
-    // never resolve the outcome by itself. All other partner types still
-    // always require manual admin review — none are auto-activated.
     let urgentReview = false;
-    if (partner_type === 'doctor') {
-      if (fraud_score <= CLEAR_THRESHOLD) {
-        newStatus = 'auto_verified';
-        autoVerified = true;
-        verifiedAt = now;
-      } else {
-        newStatus = 'manual_review';
-        urgentReview = fraud_score > 70;
-      }
+    let riskTierResult: ReturnType<typeof computeRiskTier> | null = null;
+
+    // ── Risk-Tiered Approval Decision ──────────────────────────────────────
+    // Replaces the old siloed "doctor fraud_score <= threshold auto-activates,
+    // everyone else always manual" with a composite confidence score that
+    // combines ALL available verification signals (fraud scan + sanctions +
+    // registry when available), and extends auto-approval to ALL eligible
+    // partner types — not just doctors.
+    //
+    // Safety invariants (sanctions flagged, critical fraud indicators,
+    // security_agency type) structurally prevent auto-approval regardless of
+    // the composite score — see riskTieredApproval.ts.
+    riskTierResult = computeRiskTier({
+      fraud_score,
+      fraud_indicators: fraud_indicators || [],
+      sanctions_status: sanctionsStatus as 'clear' | 'flagged' | 'unknown',
+      partner_type,
+    });
+
+    if (riskTierResult.tier === 'blocked') {
+      // Already handled by the sanctions block above — defensive fallback.
+      newStatus = 'sanctions_blocked';
+    } else if (riskTierResult.auto_eligible) {
+      newStatus = 'auto_verified';
+      autoVerified = true;
+      verifiedAt = now;
+    } else if (riskTierResult.tier === 'borderline_review') {
+      newStatus = 'manual_review';
+      urgentReview = true;
     } else {
-      newStatus = 'pending_manual_review';
+      newStatus = 'manual_review';
+      urgentReview = riskTierResult.urgent;
     }
 
     // BUG-R16-05 FIX: use asServiceRole for update.
@@ -237,16 +239,15 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     });
 
     // Update partner verification status.
+    const tierReasons = riskTierResult?.reasons.join(' ') || '';
     const partnerUpdate: Record<string, unknown> = {
       verification_status: newStatus,
-      verification_confidence: 100 - fraud_score,
-      verification_notes: partner_type === 'doctor'
-        ? (newStatus === 'auto_verified'
-            ? `AI pre-screen clear (score ${fraud_score}/100, threshold ${CLEAR_THRESHOLD}). Auto-activating with no manual review.`
-            : urgentReview
-              ? `AI pre-screen flagged ${fraud_indicators.length} indicator(s), HIGH score (${fraud_score}/100). Routed to URGENT manual review — a human must review before any decision; never auto-denied.`
-              : `AI pre-screen: ${fraud_indicators.length} indicators detected (score ${fraud_score}/100). Routed to manual review — doctor activation requires admin approval.`)
-        : `AI Analysis: ${fraud_indicators.length} indicators detected. Score: ${fraud_score}/100`,
+      verification_confidence: riskTierResult?.composite_score ?? (100 - fraud_score),
+      verification_notes: newStatus === 'auto_verified'
+        ? `Auto-approved: composite confidence ${riskTierResult?.composite_score}/100. ${tierReasons}`
+        : urgentReview
+          ? `URGENT manual review: composite confidence ${riskTierResult?.composite_score}/100 (tier: ${riskTierResult?.tier}). ${tierReasons}`
+          : `Manual review: composite confidence ${riskTierResult?.composite_score}/100 (tier: ${riskTierResult?.tier}). ${tierReasons}`,
       updated_at: now,
     };
 
@@ -327,10 +328,51 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       }
     }
 
-    // A doctor only counts as truly activated if activateVerifiedDoctor actually
-    // succeeded — an unconfigured secret or a failed call must fall back to the
-    // normal manual-review experience, never claim activation that didn't happen.
-    const doctorActuallyActivated = newStatus === 'auto_verified' && autoActivationResult.activated;
+    // ── AUTO-ACTIVATION: non-doctor partner types ──────────────────────────
+    // The risk-tiered engine can auto-approve travel_agency, taxi_service, and
+    // companion — previously ALL non-doctor types always went to manual review.
+    // For taxi_service, the state machine transition (VERIFYING -> ACTIVE) is
+    // guarded. For others, a direct status update is safe.
+    let nonDoctorActivated = false;
+    if (newStatus === 'auto_verified' && partner_type !== 'doctor') {
+      try {
+        if (partner_type === 'taxi_service') {
+          // Taxi uses the guarded state machine — VERIFYING -> ACTIVE.
+          await guardedPartnerStatusUpdate(base44, 'TaxiService', partner_id, PARTNER_STATE.ACTIVE, {
+            verification_status: 'verified',
+            approved_at: now,
+          });
+        } else if (partner_type === 'travel_agency') {
+          await base44.asServiceRole.entities.TravelAgency.update(partner_id, {
+            status: 'active',
+            verification_status: 'verified',
+            approved_at: now,
+          });
+        } else if (partner_type === 'companion') {
+          await base44.asServiceRole.entities.Companion.update(partner_id, {
+            status: 'active',
+            verification_status: 'verified',
+            approved_at: now,
+          });
+        }
+        // security_agency is structurally excluded by computeRiskTier's
+        // ALWAYS_MANUAL_TYPES — it can never reach auto_verified here.
+        nonDoctorActivated = true;
+      } catch (activationErr) {
+        console.error(`[initiatePartnerVerification] ${partner_type} auto-activation failed:`, activationErr);
+        autoActivationResult = { activated: false, reason: `${partner_type}_activation_failed` };
+        // Fall back to manual review — the verification_status is already set
+        // to auto_verified on the partner record, but status wasn't flipped to
+        // active. Admin sees the high confidence score and can activate with
+        // one click.
+      }
+    }
+
+    // A partner only counts as truly activated if the activation path actually
+    // succeeded — a failed auto-activation must fall back to manual review,
+    // never claim activation that didn't happen.
+    const doctorActuallyActivated = partner_type === 'doctor' && newStatus === 'auto_verified' && autoActivationResult.activated;
+    const partnerActuallyActivated = doctorActuallyActivated || nonDoctorActivated;
 
     // Log to AuditLog.
     await base44.functions.invoke('logAuditEvent', {
@@ -346,21 +388,24 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         partner_id,
         partner_type,
         fraud_score,
+        composite_score: riskTierResult?.composite_score,
+        risk_tier: riskTierResult?.tier,
+        hard_blocks: riskTierResult?.hard_blocks,
         auto_verified: autoVerified,
         status: newStatus,
-        sanctions_status: 'clear',
-        auto_activated: doctorActuallyActivated,
-        auto_activation_fallback_reason: doctorActuallyActivated ? null : autoActivationResult.reason || null,
+        sanctions_status: sanctionsStatus,
+        auto_activated: partnerActuallyActivated,
+        auto_activation_fallback_reason: partnerActuallyActivated ? null : autoActivationResult.reason || null,
       },
       sensitive: true,
     });
 
     // Notify partner.
-    if (doctorActuallyActivated) {
+    if (partnerActuallyActivated) {
       await base44.integrations.Core.SendEmail({
         to: partnerEmail,
         subject: '✅ Your Profile is Now Verified — Welcome to the Morales Network',
-        body: `<p>Dear Dr. ${partnerName},</p>
+        body: `<p>Dear ${partnerName},</p>
                <p>Your credentials cleared our automated screening and your profile is now <strong>verified and active</strong> on the Morales Medical Travel Platform.</p>
                <p>Patients searching for specialists in your field can now find and book with you.</p>`,
       });
@@ -375,7 +420,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         result: 'sent',
       });
     } else if (newStatus === 'pending_manual_review' || newStatus === 'manual_review' ||
-               (newStatus === 'auto_verified' && !doctorActuallyActivated)) {
+               (newStatus === 'auto_verified' && !partnerActuallyActivated)) {
       await base44.integrations.Core.SendEmail({
         to: partnerEmail,
         subject: 'Verification Pending Manual Review',
@@ -395,17 +440,18 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       });
     }
     // No 'denied' branch here anymore — this function can no longer produce
-    // an autonomous denial (see the fraud-score branching above). A real
-    // denial now only ever comes from a human decision elsewhere in the
-    // pipeline (e.g. verifyDoctorBackground's 'reject' action,
-    // manualReviewVerification), never from this automated first pass.
+    // an autonomous denial. A real denial now only ever comes from a human
+    // decision elsewhere in the pipeline (e.g. verifyDoctorBackground's 'reject'
+    // action, manualReviewVerification), never from this automated first pass.
 
     return Response.json({
       success: true,
       verification_id: verification.id,
-      status: doctorActuallyActivated ? 'active' : (newStatus === 'auto_verified' ? 'manual_review' : newStatus),
+      status: partnerActuallyActivated ? 'active' : (newStatus === 'auto_verified' ? 'manual_review' : newStatus),
       fraud_score,
+      composite_score: riskTierResult?.composite_score,
+      risk_tier: riskTierResult?.tier,
       auto_verified: autoVerified,
-      auto_activated: doctorActuallyActivated,
+      auto_activated: partnerActuallyActivated,
     });
 }, { name: 'initiatePartnerVerification', bodySchema: InitiatePartnerVerificationSchema }));

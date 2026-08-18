@@ -29,6 +29,7 @@ import ShareJourneyButton from '@/components/journey/ShareJourneyButton';
 import PostOpRecoveryTracker from '@/components/dashboard/PostOpRecoveryTracker';
 import RecoveryGuidancePanel from '@/components/patient/RecoveryGuidancePanel';
 import NominateDoctorCard from '@/components/patient/NominateDoctorCard';
+import EcosystemStatusBanner from '@/components/dashboard/EcosystemStatusBanner';
 import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
@@ -108,6 +109,7 @@ function DashboardHome({ user, consultations, language }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const welcomeDebounceRef = useRef(null);
 
+  const [showEcosystem, setShowEcosystem] = useState(true);
   // PERFORMANCE: Memoize displayName to prevent recalculation
   const displayName = useMemo(() => user?.full_name?.split(' ')[0] || 'there', [user?.full_name]);
 
@@ -254,6 +256,7 @@ function DashboardHome({ user, consultations, language }) {
 
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
+      {showEcosystem && <EcosystemStatusBanner />}
 
       {/* ── MedGuard "knows you" chip — tappable, shows fingerprint in plain language ── */}
       {!isLearning && activeTrip && (
