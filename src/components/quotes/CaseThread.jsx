@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Send, MessageCircle, HelpCircle, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
+import CaseVaultAttachments from './CaseVaultAttachments';
 
 /**
  * CaseThread — the on-platform clarification thread (doctor/partner ↔ patient).
@@ -154,6 +155,8 @@ export default function CaseThread({ caseId, quoteId = null, viewer = 'patient',
           })}
         </div>
       )}
+
+      {viewer === 'doctor' && <CaseVaultAttachments caseId={caseId} theme={theme} />}
 
       <textarea
         value={text} onChange={(e) => setText(e.target.value)}
