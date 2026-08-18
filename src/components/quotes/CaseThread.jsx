@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Send, MessageCircle, HelpCircle, Loader2 } from 'lucide-react';
+import { Send, MessageCircle, HelpCircle, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 
 /**
  * CaseThread — the on-platform clarification thread (doctor/partner ↔ patient).
  * Theme-aware (dark for the patient board, light for the doctor dashboard). Content is
  * read here in-portal; the backend scrubs contact details at the quote stage.
  *
- * Props: caseId, quoteId, viewer ('patient' | 'doctor'), theme ('dark' | 'light').
+ * Props: caseId, quoteId (optional — omit for the Care Room's ongoing,
+ * case-wide thread, matching the CARE ROOM redteam invariant), viewer
+ * ('patient' | 'doctor'), theme ('dark' | 'light').
  */
-export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme = 'light' }) {
+export default function CaseThread({ caseId, quoteId = null, viewer = 'patient', theme = 'light' }) {
   const qc = useQueryClient();
   const [text, setText] = useState('');
   const dark = theme === 'dark';
@@ -67,6 +69,11 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
     onSettled: () => { qc.invalidateQueries({ queryKey: ['case-messages'] }); },
   });
 
+  const confirm = useMutation({
+    mutationFn: (messageId) => base44.functions.invoke('confirmCareRoomMessage', { message_id: messageId }),
+    onSettled: () => { qc.invalidateQueries({ queryKey: ['case-messages'] }); },
+  });
+
   // The patient's send is an "answer" when the doctor's last message asked for info.
   const lastFromOther = [...messages].reverse().find((m) => m.from_party !== viewer);
   const patientAnswering = viewer === 'patient' && lastFromOther?.message_type === 'info_request';
@@ -95,13 +102,21 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto', marginBottom: 10 }}>
           {messages.map((m) => {
             const mine = m.from_party === viewer;
+            const isMCare = m.from_party === 'm_care';
+            const needsMyConfirm = m.requires_confirmation && !m.confirmed && m.to_party === viewer;
             return (
               <div key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%',
-                background: mine ? c.mine : c.theirs, borderRadius: 10, padding: '7px 11px',
+                background: isMCare ? 'rgba(212,175,55,0.12)' : mine ? c.mine : c.theirs,
+                border: isMCare ? '1px solid rgba(212,175,55,0.3)' : 'none',
+                borderRadius: 10, padding: '7px 11px',
                 opacity: m._pending ? 0.6 : 1 }}>
                 {m._pending ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: c.sub, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
                     <Loader2 size="11" className="animate-spin" /> Sending…
+                  </div>
+                ) : isMCare ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#D4AF37', fontSize: 10, fontWeight: 800, marginBottom: 2 }}>
+                    <Sparkles size="11" /> M-Care
                   </div>
                 ) : m.message_type === 'info_request' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: c.sub, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
@@ -109,8 +124,30 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
                   </div>
                 )}
                 <p style={{ color: c.text, fontSize: 13, margin: 0, lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{m.body}</p>
+                {m.body_translated && (
+                  <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${c.border}` }}>
+                    <p style={{ color: c.sub, fontSize: 10, margin: '0 0 2px', fontWeight: 700 }}>Translated</p>
+                    <p style={{ color: c.text, fontSize: 13, margin: 0, lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{m.body_translated}</p>
+                  </div>
+                )}
                 {m.contact_scrubbed && (
                   <p style={{ color: c.sub, fontSize: 10, margin: '3px 0 0', fontStyle: 'italic' }}>Contact details are kept in-platform.</p>
+                )}
+                {m.confirmed && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#4ade80', fontSize: 10, fontWeight: 700, marginTop: 4 }}>
+                    <CheckCircle2 size="11" /> Confirmed
+                  </div>
+                )}
+                {needsMyConfirm && (
+                  <button
+                    onClick={() => confirm.mutate(m.id)}
+                    disabled={confirm.isPending}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
+                      background: '#D4AF37', color: '#060B16', border: 'none', borderRadius: 99,
+                      padding: '5px 12px', fontSize: 11, fontWeight: 800, cursor: 'pointer',
+                      opacity: confirm.isPending ? 0.6 : 1 }}>
+                    <CheckCircle2 size="11" /> I understand
+                  </button>
                 )}
               </div>
             );

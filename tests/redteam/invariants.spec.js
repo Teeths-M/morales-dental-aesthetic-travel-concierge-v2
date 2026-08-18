@@ -3771,3 +3771,44 @@ test('VAULT DOCUMENT: VaultDocument RLS is owner-or-admin only, only scanVaultDo
   expect(approveBlock, "reviewVaultDocument's approve branch must always set a real, non-empty verification_source")
     .toMatch(/verification_source\s*=\s*'Manual admin review'/);
 });
+
+test('CARE ROOM: QuoteMessage RLS is unchanged by the new fields, only the addressed party can confirm a message, and parseCareRoomMessage never writes', () => {
+  // The 3-Way Care Gate extends QuoteMessage/postCaseMessage/CaseThread
+  // rather than inventing a new chat entity. Its RLS (patient_email OR
+  // doctor_email OR admin to read; self to create) must stay exactly as
+  // narrow as it already was — the new from_party value and confirmation
+  // fields must never widen who can read or write the thread.
+  const entity = read('base44/entities/QuoteMessage.jsonc');
+  expect(entity, 'read must still be scoped to patient_email OR doctor_email OR admin, not widened')
+    .toMatch(/"read"\s*:\s*\{\s*"\$or"\s*:\s*\[\s*\{\s*"data\.patient_email"\s*:\s*"\{\{user\.email\}\}"\s*\}\s*,\s*\{\s*"data\.doctor_email"\s*:\s*"\{\{user\.email\}\}"\s*\}\s*,\s*\{\s*"user_condition"\s*:\s*\{\s*"role"\s*:\s*"admin"\s*\}\s*\}\s*\]\s*\}/);
+  expect(entity, "from_party enum must include m_care so M-Care's own Care Room messages are attributable")
+    .toMatch(/"m_care"/);
+  expect(entity, 'requires_confirmation/confirmed must default to false, never true, on a raw record')
+    .toMatch(/"requires_confirmation"[\s\S]{0,80}"default"\s*:\s*false/);
+
+  // confirmCareRoomMessage is the only place a confirmation is ever recorded
+  // — must reject anyone who isn't the addressed party (to_party match) with
+  // their own email on the message, admin aside.
+  const confirmSrc = read('base44/functions/confirmCareRoomMessage/entry.ts');
+  expect(confirmSrc, 'confirmCareRoomMessage must check to_party matches the caller\'s own role')
+    .toMatch(/message\.to_party\s*===\s*callerParty/);
+  expect(confirmSrc, "confirmCareRoomMessage must verify the caller's own email against the message's denormalised patient_email/doctor_email")
+    .toMatch(/message\.doctor_email\s*===\s*callerEmail/);
+  expect(confirmSrc, 'confirmCareRoomMessage must refuse a non-addressed, non-admin caller with a 403')
+    .toMatch(/!isAdmin\s*&&\s*!isAddressedParty[\s\S]{0,80}403/);
+
+  // parseCareRoomMessage is parse-only, matching parseAvailabilityIntent's
+  // proven "LLM extracts, a separate function decides whether to act" shape
+  // — it must never itself create or update any entity.
+  const parseSrc = read('base44/functions/parseCareRoomMessage/entry.ts');
+  expect(parseSrc, 'parseCareRoomMessage must never write any entity — it only returns a parsed candidate fact')
+    .not.toMatch(/\.(create|update)\(/);
+
+  // postCaseMessage's reactive Care Room pipeline must be wrapped so it can
+  // never block or fail the human sender's own message.
+  const postSrc = read('base44/functions/postCaseMessage/entry.ts');
+  expect(postSrc, "postCaseMessage's Care Room pipeline must be wrapped in try/catch so it can never fail the human's send")
+    .toMatch(/Care Room reactive pipeline[\s\S]{0,700}try\s*\{/);
+  expect(postSrc, 'the reactive pipeline must never run for an m_care-authored message (no self-reactions)')
+    .toMatch(/fromParty\s*===\s*'patient'\s*\|\|\s*fromParty\s*===\s*'doctor'/);
+});

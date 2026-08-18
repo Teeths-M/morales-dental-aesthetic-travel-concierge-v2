@@ -15,6 +15,8 @@ import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvai
 import ProcedureRequestForm from '@/components/doctor-dashboard/ProcedureRequestForm';
 import DoctorVerificationPanel from '@/components/doctor/DoctorVerificationPanel';
 import DoctorQuoteInbox from '@/components/quotes/DoctorQuoteInbox';
+import CaseThread from '@/components/quotes/CaseThread';
+import CareTimeline from '@/components/quotes/CareTimeline';
 import SignedConsentPanel from '@/components/doctor-dashboard/SignedConsentPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
@@ -424,6 +426,14 @@ export default function DoctorDashboard() {
                         {/* Date-confirm gate — shows after the patient picks this doctor */}
                         {c.doctor_confirmation_status === 'PENDING' && (
                           <DateConfirmForm caseId={c.id} />
+                        )}
+                        {/* 3-Way Care Gate — the same Care Room the patient sees on
+                            their own dashboard, once this case is CONFIRMED. */}
+                        {c.doctor_confirmation_status === 'CONFIRMED' && (
+                          <div className="mt-3">
+                            <CareTimeline caseRecord={c} theme="light" />
+                            <CaseThread caseId={c.id} viewer="doctor" theme="light" />
+                          </div>
                         )}
                         <SignedConsentPanel caseRecord={c} />
                       </motion.div>

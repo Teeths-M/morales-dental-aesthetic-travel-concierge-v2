@@ -9,7 +9,7 @@
     "doctor_email": { "type": "string", "format": "email" },
     "from_party": {
       "type": "string",
-      "enum": ["patient", "doctor", "travel_agency", "taxi_service", "companion", "security_agency", "admin"],
+      "enum": ["patient", "doctor", "travel_agency", "taxi_service", "companion", "security_agency", "admin", "m_care"],
       "default": "patient"
     },
     "from_id": { "type": "string" },
@@ -20,6 +20,13 @@
     "recipient_language": { "type": "string" },
     "contact_scrubbed": { "type": "boolean", "default": false },
     "status": { "type": "string", "enum": ["unread", "read", "answered"], "default": "unread" },
+    "requires_confirmation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set by M-Care on a message that needs the addressed party to explicitly confirm understanding (e.g. a parsed appointment time or instruction) — the Care Room's Confirmation Engine. Never set true by a raw client write; only via postCaseMessage's own parse step or confirmCareRoomMessage."
+    },
+    "confirmed": { "type": "boolean", "default": false },
+    "confirmed_at": { "type": "string", "format": "date-time" },
     "created_at": { "type": "string", "format": "date-time" }
   },
   "required": ["case_id", "message_type", "body"],

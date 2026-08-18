@@ -36,6 +36,7 @@ import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
 import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
 import JourneyMap from '@/components/dashboard/JourneyMap';
 import TravelPassCard from '@/components/dashboard/TravelPassCard';
+import CareRoomPanel from '@/components/dashboard/CareRoomPanel';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
 import PreDepartureBriefing from '@/components/dashboard/PreDepartureBriefing';
@@ -540,6 +541,11 @@ function DashboardHome({ user, consultations, language }) {
           JourneyMap above) via useActiveCaseRecord — renders nothing until
           real hotel/clinic address data exists. */}
       <TravelPassCard userEmail={user?.email} />
+
+      {/* 3-Way Care Gate — a secure Care Room (patient <-> doctor <-> M-Care)
+          that opens once the case's doctor_confirmation_status flips to
+          CONFIRMED (Gate 2/3). Renders nothing before that. */}
+      <CareRoomPanel userEmail={user?.email} />
 
       {/* Journey Status Timeline — Stripe/Apple order-status model */}
       {latestConsultation && (

@@ -2,9 +2,13 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { scrubContact } from '../../shared/contactScrub.ts';
 import { guardText } from '../../shared/blocker.ts';
+import { translateText } from '../../shared/translateText.ts';
 
 /**
  * postCaseMessage — the two-way clarification thread (doctor/partner ↔ patient).
+ * Also the Care Room's real message substrate once a doctor is confirmed:
+ * called with just case_id (no quote_id), this thread becomes an ongoing,
+ * case-wide channel — CaseThread.jsx already renders it that way.
  *
  * INVARIANTS:
  *   • ON-PLATFORM: at the QUOTE stage (request not yet 'selected'), direct contact
@@ -15,6 +19,15 @@ import { guardText } from '../../shared/blocker.ts';
  *     body itself lives in-portal.
  *   • A patient's answer that flags new medical info re-runs the deterministic Safe-T
  *     scan (fail-closed — a clarification can raise a flag, never clear one).
+ *   • CARE ROOM (M-Care as third participant): after a human message is stored,
+ *     three best-effort, non-blocking steps run — translate if the two parties'
+ *     languages differ; parse the message for a confirmable appointment/instruction
+ *     fact (parseCareRoomMessage — parse-only, never writes) and, if found, post a
+ *     follow-up m_care message asking the recipient to explicitly confirm it; and,
+ *     for an appointment-shaped fact, a best-effort check against CaseRecord.procedure_date
+ *     for a possible conflict. None of this can block or fail the human's own send —
+ *     every step is wrapped and swallowed. M-Care only ever flags here; it never
+ *     resolves, diagnoses, or silently rewrites anything.
  *
  * Requires: entity QuoteMessage (+ DoctorQuote / DoctorQuoteRequest for context).
  */
@@ -52,6 +65,10 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const request = quote?.request_id
     ? await base44.asServiceRole.entities.DoctorQuoteRequest.get(quote.request_id).catch(() => null)
     : null;
+  // The Care Room's post-confirmation ongoing thread is called with just
+  // case_id (no quote/request context) — fall back to CaseRecord for the
+  // patient/doctor emails that scope the thread's RLS.
+  const caseRec = await base44.asServiceRole.entities.CaseRecord.get(caseId).catch(() => null);
 
   // From/to. Doctors and partners have their own roles; everyone else is the patient.
   const role = user?.role || 'client';
@@ -98,8 +115,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const message = await base44.asServiceRole.entities.QuoteMessage.create({
     case_id: caseId,
     quote_id: quote_id || '',
-    patient_email: request?.patient_email || '',   // denormalised so RLS scopes the thread to its participants
-    doctor_email: quote?.doctor_email || '',
+    patient_email: request?.patient_email || caseRec?.client_email || '',   // denormalised so RLS scopes the thread to its participants
+    doctor_email: quote?.doctor_email || caseRec?.doctor_email || '',
     from_party: fromParty,
     from_id: user?.id || '',
     to_party: to_party || (fromParty === 'patient' ? 'doctor' : 'patient'),
@@ -125,10 +142,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }
 
   // LINK-ONLY notify the recipient (best-effort). We nudge; the content stays in-portal.
-  const recipientEmail = message.to_party === 'doctor' ? quote?.doctor_email : request?.patient_email;
+  const recipientEmail = message.to_party === 'doctor'
+    ? (quote?.doctor_email || caseRec?.doctor_email)
+    : (request?.patient_email || caseRec?.client_email);
   const portalUrl = message.to_party === 'doctor'
-    ? `${APP_URL}/doctor-dashboard?request=${quote?.request_id || ''}`
-    : `${APP_URL}/my-quotes?request=${quote?.request_id || ''}`;
+    ? (quote?.request_id ? `${APP_URL}/doctor-dashboard?request=${quote.request_id}` : `${APP_URL}/doctor-dashboard`)
+    : (quote?.request_id ? `${APP_URL}/my-quotes?request=${quote.request_id}` : `${APP_URL}/dashboard`);
   if (recipientEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: recipientEmail, subject: `You have a new message — ${BRAND}`,
@@ -144,6 +163,97 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     details: { message_type, from_party: fromParty, contact_scrubbed: scrub.redactedCount > 0 },
     prev_hash: await computePrevHash(base44),
   }).catch(() => {});
+
+  // ── Care Room reactive pipeline ─────────────────────────────────────────
+  // Best-effort, fully wrapped — nothing here can fail or delay the human's
+  // own send, which has already succeeded above. Only runs for a genuine
+  // human-authored message (never on an m_care message itself, so M-Care
+  // never reacts to its own output) once both parties are actually known.
+  if ((fromParty === 'patient' || fromParty === 'doctor') && caseRec) {
+    try {
+      const patientEmail = message.patient_email;
+      const doctorEmail = message.doctor_email;
+      const recipientParty = message.to_party;
+
+      const consultation = caseRec.consultation_id
+        ? await base44.asServiceRole.entities.Consultation.get(caseRec.consultation_id).catch(() => null)
+        : null;
+      const doctorRecords = doctorEmail
+        ? await base44.asServiceRole.entities.Doctor.filter({ email: doctorEmail }, '-created_date', 1).catch(() => [])
+        : [];
+      const doctorLang = doctorRecords[0]?.language_preference || 'en';
+      const patientLang = consultation?.preferred_language || 'en';
+      const senderLang = fromParty === 'doctor' ? doctorLang : patientLang;
+      const recipientLang = recipientParty === 'doctor' ? doctorLang : patientLang;
+
+      // 1. Translate, only if the two parties' languages actually differ.
+      if (senderLang && recipientLang && senderLang !== recipientLang) {
+        const translated = await translateText(base44, message.body, senderLang, recipientLang);
+        if (translated && translated !== message.body) {
+          await base44.asServiceRole.entities.QuoteMessage.update(message.id, {
+            body_translated: translated,
+            recipient_language: recipientLang,
+          }).catch(() => {});
+        }
+      }
+
+      // 2. Parse for a confirmable fact (parse-only — never writes itself).
+      const parseRes = await base44.functions.invoke('parseCareRoomMessage', { text: message.body }).catch(() => null);
+      const parsed = (parseRes && typeof parseRes === 'object' && 'data' in parseRes) ? (parseRes as any).data : parseRes;
+
+      if (parsed?.is_confirmable && parsed?.fact_type) {
+        await base44.asServiceRole.entities.QuoteMessage.create({
+          case_id: caseId,
+          quote_id: '',
+          patient_email: patientEmail,
+          doctor_email: doctorEmail,
+          from_party: 'm_care',
+          from_id: '',
+          to_party: recipientParty,
+          message_type: 'message',
+          body: `${parsed.summary} Please confirm you understood.`,
+          body_translated: '',
+          recipient_language: '',
+          contact_scrubbed: false,
+          status: 'unread',
+          requires_confirmation: true,
+          confirmed: false,
+          created_at: new Date().toISOString(),
+        }).catch(() => {});
+
+        // 3. Best-effort logistics-conflict check — the only clean, single
+        //    source of a scheduled date this app has today is
+        //    CaseRecord.procedure_date; a real conflict elsewhere (e.g. a
+        //    driver pickup time) may be missed given how scattered that data
+        //    is. Never a hard stop, never a diagnosis — a flag only.
+        if (parsed.fact_type === 'appointment' && parsed.extracted_date && caseRec.procedure_date) {
+          const existingDate = String(caseRec.procedure_date).slice(0, 10);
+          if (existingDate && existingDate !== parsed.extracted_date) {
+            await base44.asServiceRole.entities.QuoteMessage.create({
+              case_id: caseId,
+              quote_id: '',
+              patient_email: patientEmail,
+              doctor_email: doctorEmail,
+              from_party: 'm_care',
+              from_id: '',
+              to_party: 'both',
+              message_type: 'message',
+              body: `Heads up — this mentions ${parsed.extracted_date}${parsed.extracted_time ? ' at ' + parsed.extracted_time : ''}, but the procedure date on file is ${existingDate}. Worth confirming which is correct before travel is finalized.`,
+              body_translated: '',
+              recipient_language: '',
+              contact_scrubbed: false,
+              status: 'unread',
+              requires_confirmation: false,
+              confirmed: false,
+              created_at: new Date().toISOString(),
+            }).catch(() => {});
+          }
+        }
+      }
+    } catch (_) {
+      // Never let the reactive layer affect the human's own message send.
+    }
+  }
 
   return ok({ message_id: message.id, contact_scrubbed: scrub.redactedCount > 0, redactions: scrub.redactedCount });
 }, { name: 'postCaseMessage', requireAuth: true }));
