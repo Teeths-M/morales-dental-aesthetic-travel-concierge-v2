@@ -2346,6 +2346,25 @@ test('PARTNERS: nothing automated may mark a background check passed', () => {
     .not.toContain('admin@morales.com');
   expect(webhook, 'stripeIdentityWebhook must read the admin address from ADMIN_EMAIL like every other function')
     .toContain("Deno.env.get('ADMIN_EMAIL')");
+
+  // A fourth path, found while widening the "M-Care never gives up" dispatch
+  // search to all 5 partner types: a concurrent base44-builder[bot] commit
+  // ("risk-tiered auto-approval engine") added a composite fraud/sanctions/
+  // registry confidence score that could auto-activate a partner with
+  // status:'active' directly — bypassing activatePartner's background-check
+  // gate entirely, since initiatePartnerVerification writes the status field
+  // itself rather than calling activatePartner. Its own ALWAYS_MANUAL_TYPES
+  // hard-block set only had security_agency, leaving companion and
+  // taxi_service — the other two roles activatePartner's own header comment
+  // names as having unsupervised physical access to a vulnerable/sedated
+  // patient — able to auto-activate with zero human review. Fixed by adding
+  // both to the hard-block set; pinned here so it can't silently regress.
+  const riskTiered = strip(read('base44/shared/riskTieredApproval.ts'));
+  const alwaysManualMatch = riskTiered.match(/ALWAYS_MANUAL_TYPES\s*=\s*new Set\(\[([^\]]+)\]\)/);
+  expect(alwaysManualMatch, 'riskTieredApproval.ts must declare ALWAYS_MANUAL_TYPES as a literal Set').toBeTruthy();
+  const alwaysManualTypes = [...alwaysManualMatch[1].matchAll(/['"]([^'"]+)['"]/g)].map(m => m[1]);
+  expect(alwaysManualTypes.sort(), 'companion and taxi_service have direct, unsupervised physical access to a vulnerable patient — same as security_agency — and must never be composite-score auto-approved')
+    .toEqual(['companion', 'security_agency', 'taxi_service']);
 });
 
 test('STALE CHUNK RECOVERY: a deploy-changed JS chunk reloads once instead of showing a scary crash screen or spamming an incident', () => {
