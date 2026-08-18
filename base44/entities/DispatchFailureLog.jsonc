@@ -19,8 +19,13 @@
         "taxi",
         "travel_agency",
         "guardian",
-        "admin"
+        "admin",
+        "doctor"
       ]
+    },
+    "ai_recommendation": {
+      "type": "string",
+      "description": "Best-effort, read-only recommendation from mcare_orchestrator (a separate backend agent, never patient-facing) surfaced when the deterministic fallback found nothing — e.g. a near-verified doctor one click from ready, or a previously-discovered candidate lead. Informational only; the orchestrator cannot act, only investigate. Empty if the agent found nothing, was unavailable, or wasn't asked."
     },
     "status": {
       "type": "string",

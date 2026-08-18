@@ -3812,3 +3812,52 @@ test('CARE ROOM: QuoteMessage RLS is unchanged by the new fields, only the addre
   expect(postSrc, 'the reactive pipeline must never run for an m_care-authored message (no self-reactions)')
     .toMatch(/fromParty\s*===\s*'patient'\s*\|\|\s*fromParty\s*===\s*'doctor'/);
 });
+
+test('DISPATCH ORCHESTRATOR: mcare_orchestrator is a separate, non-anonymous, read-only-tooled agent that can never act', () => {
+  // mcare_orchestrator is a NEW, separate Base44 Agent from m_care — a
+  // backend dispatch-failure assistant invoked server-side by
+  // findDoctorBackup, never by a patient. It must never be reachable
+  // anonymously, and its only two granted tools must both be genuinely
+  // read-only, so "search/retry only, never executes consequentially"
+  // (Portia's own explicit boundary) is enforced structurally, not just by
+  // prompt wording.
+  const agentConfig = read('base44/agents/mcare_orchestrator.jsonc');
+  expect(agentConfig, 'mcare_orchestrator must never allow anonymous access — it is an internal, backend-triggered agent only')
+    .toMatch(/"allow_anonymous_access"\s*:\s*false/);
+
+  const toolNames = [...agentConfig.matchAll(/"function_name"\s*:\s*"([^"]+)"/g)].map(m => m[1]);
+  expect(toolNames.sort(), 'mcare_orchestrator must be granted exactly its two intended read-only tools — nothing more')
+    .toEqual(['checkDiscoveredCandidates', 'checkNearVerifiedDoctors']);
+  expect(agentConfig, 'mcare_orchestrator must never be granted a raw entity_name tool_configs entry (no direct read/write access to any entity)')
+    .not.toMatch(/"entity_name"\s*:/);
+
+  for (const fn of ['checkNearVerifiedDoctors', 'checkDiscoveredCandidates']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must be genuinely read-only — no create/update/delete calls anywhere`)
+      .not.toMatch(/\.(create|update|delete)\(/);
+  }
+
+  // findDoctorBackup's use of the orchestrator must be fully fail-closed and
+  // must only ever influence the admin-facing DispatchFailureLog/email —
+  // never CaseRecord, Doctor, or the patient-facing JourneyEvent message.
+  const helperSrc = read('base44/shared/askDispatchOrchestrator.ts');
+  expect(helperSrc, 'askDispatchOrchestrator must catch its own errors and resolve to null, never throw to its caller')
+    .toMatch(/catch\s*\(_\)\s*\{\s*return null;\s*\}/);
+
+  const backupSrc = read('base44/shared/findDoctorBackup.ts');
+  const aiVarSlice = backupSrc.slice(backupSrc.indexOf('aiRecommendation'), backupSrc.indexOf('return { success: false }'));
+  expect(aiVarSlice, "the orchestrator's recommendation must never be written onto CaseRecord")
+    .not.toMatch(/CaseRecord\.(create|update)\(/);
+  expect(aiVarSlice, "the orchestrator's recommendation must never be written onto a Doctor record")
+    .not.toMatch(/Doctor\.(create|update)\(/);
+
+  // The patient-facing JourneyEvent call in this branch must stay the
+  // existing fixed, reviewed copy — the orchestrator's output must never
+  // flow into what the patient themselves is told.
+  const journeyEventStart = aiVarSlice.indexOf('logJourneyEvent(');
+  const journeyEventBlock = aiVarSlice.slice(journeyEventStart, journeyEventStart + 500);
+  expect(journeyEventBlock, "the failure branch's patient-facing logJourneyEvent call must exist with its fixed message")
+    .toMatch(/message_text:\s*"I'm personally following up/);
+  expect(journeyEventBlock, "the orchestrator's recommendation must never reach the patient-facing JourneyEvent message")
+    .not.toMatch(/aiRecommendation/);
+});

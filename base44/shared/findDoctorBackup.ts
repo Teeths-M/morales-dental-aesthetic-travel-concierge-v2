@@ -2,6 +2,7 @@ import { linkOnlyEmail } from './notify.ts';
 import { escapeHtml } from './emailTemplate.ts';
 import { pickBestDoctor } from './pickBestDoctor.ts';
 import { logJourneyEvent } from './logJourneyEvent.ts';
+import { askDispatchOrchestrator } from './askDispatchOrchestrator.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -146,6 +147,24 @@ export async function findDoctorBackup(
     });
 
     const urgent = isUrgent(caseRecord);
+
+    // Best-effort: ask the bounded, read-only-tooled mcare_orchestrator agent
+    // whether it can find a faster path than "start from zero" — a near-
+    // verified doctor one click from ready, or a previously-discovered
+    // candidate lead. Never blocks or breaks this failure path: the helper
+    // itself is fully fail-closed (unavailable/errored/timed out -> null),
+    // and a null recommendation just means the email/log look exactly as
+    // they always have. This agent can only investigate, never act.
+    const procedureSummary = Array.isArray(caseRecord.procedures)
+      ? caseRecord.procedures.join(', ')
+      : (caseRecord.procedures || 'not specified');
+    const aiRecommendation = await askDispatchOrchestrator(base44,
+      `Dispatch failure: no verified backup doctor is available for a case. ` +
+      `Specialty/procedure needed: ${procedureSummary}. Destination country: ${caseRecord.procedure_country || 'not specified'}. ` +
+      `The deterministic search already checked every active, license-verified, identity-verified doctor and found none. ` +
+      `Check for any faster path forward using your available tools.`
+    ).catch(() => null);
+
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
     if (adminEmail) {
       await base44.asServiceRole.integrations.Core.SendEmail({
@@ -160,6 +179,10 @@ export async function findDoctorBackup(
           <strong>Case ID:</strong> ${escapeHtml(caseRecord.id)}<br/>
           <strong>Procedure country:</strong> ${escapeHtml(caseRecord.procedure_country || 'Unknown')}</p>
           ${urgent ? '<p style="color:#fca5a5;font-weight:bold;">Patient is already traveling or has a procedure within 72 hours.</p>' : ''}
+          ${aiRecommendation ? `<div style="margin-top:16px;padding:12px;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;">
+          <p style="margin:0 0 4px;font-weight:bold;color:#9a3412;">Possible faster paths (AI-checked, not acted on):</p>
+          <p style="margin:0;color:#7c2d12;">${escapeHtml(aiRecommendation)}</p>
+          </div>` : ''}
           </div>`,
       }).catch(() => {});
     }
@@ -171,6 +194,7 @@ export async function findDoctorBackup(
         reason: 'No verified backup doctor available after original doctor dropped the case',
         timestamp: new Date().toISOString(),
         fallback_action: urgent ? 'admin_critical_alert_sent_urgent' : 'admin_critical_alert_sent',
+        ai_recommendation: aiRecommendation || '',
       });
     } catch (_) {}
 
