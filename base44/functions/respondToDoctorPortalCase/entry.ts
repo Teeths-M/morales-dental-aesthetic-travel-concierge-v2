@@ -38,6 +38,44 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       ...coordsUpdate,
     });
 
+    // ── 3-Way Care Room handoff ───────────────────────────────────────────
+    // The moment the doctor confirms is the moment the Care Room becomes a
+    // genuine 3-way conversation. M-Care posts the "I'm adding your doctor to
+    // our chat" system message so the patient sees the doctor join by name and
+    // origin, and understands M-Care stays in the room as the translating,
+    // transparency-keeping middleman. Best-effort and fully wrapped — a
+    // failure here must never block the doctor's own confirm action above.
+    try {
+      const doctorEmail = caseRecord.doctor_email || '';
+      const doctorName = caseRecord.doctor_selected || caseRecord.doctor_name || 'your doctor';
+      let doctorCountry = caseRecord.procedure_country || '';
+      if (doctorEmail) {
+        const doctorRecords = await base44.asServiceRole.entities.Doctor.filter({ email: doctorEmail }, '-created_date', 1).catch(() => []);
+        if (doctorRecords[0]?.clinic_country) doctorCountry = doctorRecords[0].clinic_country;
+      }
+      const originClause = doctorCountry ? `, joining from ${doctorCountry}` : '';
+      await base44.asServiceRole.entities.QuoteMessage.create({
+        case_id: caseRecord.id,
+        quote_id: '',
+        patient_email: caseRecord.client_email || '',
+        doctor_email: doctorEmail,
+        from_party: 'm_care',
+        from_id: '',
+        to_party: 'patient',
+        message_type: 'message',
+        body: `I've added Dr. ${doctorName} to our chat${originClause}. You can now coordinate your care directly with them right here — I'll stay in the room to translate in real time, keep us all on the same page, and flag anything that needs confirming. Nothing happens off-platform.`,
+        body_translated: '',
+        recipient_language: '',
+        contact_scrubbed: false,
+        status: 'unread',
+        requires_confirmation: false,
+        confirmed: false,
+        created_at: new Date().toISOString(),
+      });
+    } catch (handoffError) {
+      console.error('[respondToDoctorPortalCase] Care Room handoff message failed (non-fatal):', handoffError);
+    }
+
     // Real trigger for travel-agency quote requests, now that
     // assignTravelAgency's own precondition actually matches what this
     // function writes ('Confirmed', mixed-case) and its portal token is
