@@ -1,0 +1,149 @@
+{
+  "name": "PersonalProviderInvite",
+  "type": "object",
+  "description": "A provider (doctor, travel agency, taxi, security agency, or companion) that a patient personally invited into the M-Care ecosystem \u2014 the 'bring your own partner' trust-injection loop. When a patient adds their own trusted provider, M-Care creates one of these records and immediately kicks off the standard verification pipeline (initiatePartnerVerification). The patient sees a calm 'I'm verifying your provider now' message; the record tracks verification_status through pending -> verifying -> verified / rejected. Once verified, the partner becomes a first-class citizen in the patient's care network. Distinct from DiscoveredProviderCandidate (M-Care's own web-discovery leads) \u2014 this is a patient-vouched provider that still goes through the same safety gate before anyone is assigned or contacted.",
+  "properties": {
+    "invited_by_user_id": {
+      "type": "string",
+      "description": "The patient who invited this provider."
+    },
+    "invited_by_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the patient owns their own invites."
+    },
+    "invited_by_name": {
+      "type": "string"
+    },
+    "provider_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi",
+        "security",
+        "companion"
+      ],
+      "description": "Which kind of partner the patient is bringing into the ecosystem."
+    },
+    "provider_name": {
+      "type": "string",
+      "description": "Doctor's name, agency name, or driver name \u2014 as the patient provided it."
+    },
+    "provider_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Contact email so M-Care can reach out and invite them to onboard."
+    },
+    "provider_phone": {
+      "type": "string"
+    },
+    "provider_country": {
+      "type": "string",
+      "description": "Country where this provider operates."
+    },
+    "provider_city": {
+      "type": "string"
+    },
+    "clinic_name": {
+      "type": "string",
+      "description": "For doctors \u2014 the clinic/hospital they practice at."
+    },
+    "specialty": {
+      "type": "string",
+      "description": "For doctors \u2014 their specialty or procedure focus."
+    },
+    "website_url": {
+      "type": "string"
+    },
+    "patient_relationship": {
+      "type": "string",
+      "description": "How the patient knows this provider \u2014 e.g. 'my family dentist', 'treated me last year', 'recommended by a friend'."
+    },
+    "patient_note": {
+      "type": "string",
+      "description": "Free-text context the patient wants M-Care to know about this provider."
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verifying",
+        "verified",
+        "rejected",
+        "already_in_network"
+      ],
+      "default": "pending",
+      "description": "Tracks where this invite is in the verification pipeline. 'already_in_network' = M-Care found this provider already exists as a verified partner and linked them directly."
+    },
+    "linked_partner_id": {
+      "type": "string",
+      "description": "Once verified and onboarded, the id of the real Doctor/TravelAgency/TaxiService/SecurityAgency/Companion record this invite became."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Optional \u2014 the active case this invite is related to, if the patient invited the provider mid-journey."
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "invited_by_email",
+    "provider_type",
+    "provider_name",
+    "verification_status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.invited_by_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.invited_by_email": "{{user.email}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "data.invited_by_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

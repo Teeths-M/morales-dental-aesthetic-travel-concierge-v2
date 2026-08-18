@@ -58,11 +58,12 @@ const FEATURE_CATEGORIES = [
     ]
   },
   {
-    id: 'support',
-    title: 'Support & Messages',
-    icon: MessageCircle,
+    id: 'ecosystem',
+    title: 'My Care Network',
+    icon: Sparkles,
     theme: 'support',
     features: [
+      { label: 'Add a Provider', path: '/invite-provider', icon: Sparkles, desc: 'Bring your own doctor or partner' },
       { label: 'Messages', path: '/dashboard/messages', icon: MessageCircle, desc: 'Chat with coordinator' },
       { label: 'Support Center', path: '/dashboard/support', icon: MessageCircle, desc: 'Help & FAQs' },
       { label: 'My Journey', path: '/dashboard/journey', icon: MapPin, desc: 'Track progress' },

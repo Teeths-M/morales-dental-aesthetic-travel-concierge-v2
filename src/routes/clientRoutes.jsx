@@ -32,6 +32,7 @@ const EmergencyMedCard       = lazy(() => import('@/pages/EmergencyMedCard'));
 const DischargePaperReader   = lazy(() => import('@/pages/DischargePaperReader'));
 const MyQuotes               = lazy(() => import('@/pages/MyQuotes'));
 const NominateDoctor         = lazy(() => import('@/pages/NominateDoctor'));
+const InviteProvider         = lazy(() => import('@/pages/InviteProvider'));
 const MCareAgent             = lazy(() => import('@/pages/MCareAgent'));
 const TravelerGuardian       = lazy(() => import('@/pages/TravelerGuardian'));
 
@@ -72,6 +73,7 @@ export const clientRoutes = (
       <Route path="/discharge-reader"            element={<ErrorBoundary><DischargePaperReader /></ErrorBoundary>} />
       <Route path="/my-quotes"                   element={<ErrorBoundary><MyQuotes /></ErrorBoundary>} />
       <Route path="/nominate-doctor"             element={<ErrorBoundary><NominateDoctor /></ErrorBoundary>} />
+      <Route path="/invite-provider"             element={<ErrorBoundary><InviteProvider /></ErrorBoundary>} />
       <Route path="/m-care"                      element={<ErrorBoundary><MCareAgent /></ErrorBoundary>} />
       <Route path="/traveler-guardian"           element={<ErrorBoundary><TravelerGuardian /></ErrorBoundary>} />
     </Route>
