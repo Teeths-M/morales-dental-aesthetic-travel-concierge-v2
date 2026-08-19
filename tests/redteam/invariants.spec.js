@@ -3996,3 +3996,47 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
   expect(sendBlock, 'a detected typed GPS-consent request must call triggerGpsUpgrade, not send the raw text to the agent')
     .toMatch(/triggerGpsUpgrade\(q\)/);
 });
+
+test('PROACTIVE LOCATION GATE: only ever requests GPS from inside a real "Allow" tap, and a soft decline never writes a false denial', () => {
+  // "M-Care should always know where the traveler is" (Portia's own words) —
+  // the proactive ask fires the moment the panel opens, not only reactively
+  // after a wrong answer. Must stay consent-gated the same way
+  // MicPermissionGate.jsx already is: a dialog first, the real
+  // navigator.geolocation call only inside a genuine user tap.
+  const gateSrc = read('src/components/mcare/LocationPermissionGate.jsx');
+  expect(gateSrc, 'LocationPermissionGate must not call navigator.geolocation directly — only via the onAllow prop the caller supplies')
+    .not.toMatch(/navigator\.geolocation/);
+  expect(gateSrc, 'LocationPermissionGate must render a real dialog, not an invisible/no-op component')
+    .toMatch(/Dialog/);
+
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+  expect(orbSrc, 'MCareOrb.jsx must import LocationPermissionGate')
+    .toMatch(/import LocationPermissionGate from '\.\/LocationPermissionGate'/);
+
+  // The proactive effect: must never fire once a real GPS decision (granted
+  // or genuinely denied/failed) is already on record.
+  const effectIdx = orbSrc.indexOf('if (proactiveLocationAskShownRef.current) return;');
+  expect(effectIdx, 'the proactive location-ask effect must exist').toBeGreaterThan(-1);
+  const effectBlock = orbSrc.slice(effectIdx - 200, effectIdx + 400);
+  expect(effectBlock, "the proactive ask must skip once gpsStatus is no longer 'idle'")
+    .toMatch(/gpsStatus !== 'idle'/);
+  expect(effectBlock, 'the proactive ask must skip once a real denial/failure is on record — the browser will not re-prompt anyway')
+    .toMatch(/locationPrefs\.gpsGranted === false/);
+
+  // requestGPS() must only ever be invoked from inside onAllow — never
+  // unconditionally on mount or on open.
+  const renderIdx = orbSrc.indexOf('<LocationPermissionGate');
+  expect(renderIdx, 'LocationPermissionGate must actually be rendered').toBeGreaterThan(-1);
+  const renderBlock = orbSrc.slice(renderIdx, renderIdx + 300);
+  expect(renderBlock, 'requestGPS() must be called from onAllow, not onCancel or unconditionally')
+    .toMatch(/onAllow=\{\(\) => \{ setShowLocationGate\(false\); requestGPS\(\); \}\}/);
+  expect(renderBlock, 'onCancel must never call requestGPS()')
+    .not.toMatch(/onCancel=\{[^}]*requestGPS/);
+
+  // A soft "Not now" (onCancel) only closes the dialog — it must never write
+  // gpsGranted:false, since that flag means "we know the real outcome of an
+  // attempt," and a decline-to-ask isn't one; writing it would silently
+  // suppress every future proactive (and reactive) offer for no real reason.
+  expect(renderBlock, 'onCancel must never write a false gpsGranted denial into persisted prefs')
+    .not.toMatch(/onCancel=\{[^}]*gpsGranted/);
+});

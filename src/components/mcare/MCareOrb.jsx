@@ -23,6 +23,7 @@ import { base44 } from '@/api/base44Client';
 import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
+import LocationPermissionGate from './LocationPermissionGate';
 import LivingOrb from './LivingOrb';
 import InterruptedIntentChip from './InterruptedIntentChip';
 import MessageBubble, { InlineQrBlock } from '@/components/mcare-agent/MessageBubble';
@@ -215,7 +216,15 @@ export default function MCareOrb() {
   // Auto-detected approximate location (IP-based by default, GPS only if the
   // traveler already granted it) — see src/lib/locationContext.js for why
   // this is attached once per mount rather than on every message.
-  const { bestLocation, isLoading: locationLoading, requestGPS, gpsStatus } = useAutoLocation();
+  // prefs aliased to locationPrefs — `prefs` is already bound to
+  // useMcarePreferences()'s object elsewhere in this file.
+  const { bestLocation, isLoading: locationLoading, requestGPS, gpsStatus, prefs: locationPrefs } = useAutoLocation();
+  const [showLocationGate, setShowLocationGate] = useState(false);
+  // Session-lifetime only (not persisted) — a fresh page load always gets
+  // one proactive ask, matching "M-Care should always know where the
+  // traveler is," while a single open session never re-shows it once
+  // the traveler has made a decision (Allow or Not now).
+  const proactiveLocationAskShownRef = useRef(false);
   const locationContextSentRef = useRef(false);
   // sendAgentMessage's useCallback closure only sees bestLocation/locationLoading
   // as of whenever it was last recreated — these refs let the brief bounded
@@ -581,6 +590,28 @@ export default function MCareOrb() {
       .finally(() => { if (mounted) setAgentLoading(false); });
     return () => { mounted = false; };
   }, [open, isAuthenticated, agentConversation, agentLoading]);
+
+  // Proactively ask for precise location the moment M-Care opens, rather
+  // than only reactively after a wrong IP-approximate answer or waiting for
+  // the traveler to ask for it themselves — "M-Care should always know
+  // where the traveler is," not just sometimes. Only fires when there is
+  // no real GPS decision on record yet: gpsStatus === 'idle' means neither
+  // this session's own attempts nor a prior session's silent on-mount
+  // refresh (useAutoLocation.js) has resolved one way or the other, and
+  // locationPrefs.gpsGranted !== false means we've never recorded a real
+  // denial/failure — the browser won't re-prompt after an actual deny, so
+  // showing this dialog again would just be friction with no possible
+  // different outcome. Same explicit-tap-required discipline as
+  // MicPermissionGate.jsx: this only shows a dialog; the real
+  // navigator.geolocation call happens inside the "Allow" tap itself.
+  useEffect(() => {
+    if (!open || !isAuthenticated) return;
+    if (proactiveLocationAskShownRef.current) return;
+    if (gpsStatus !== 'idle') return;
+    if (locationPrefs.gpsGranted === false || locationPrefs.locationPaused) return;
+    proactiveLocationAskShownRef.current = true;
+    setShowLocationGate(true);
+  }, [open, isAuthenticated, gpsStatus, locationPrefs.gpsGranted, locationPrefs.locationPaused]);
 
   // Subscribe to the active conversation — streamed agent turns + tool calls
   // arrive in real time; JourneyStageTracker derives stage from these.
@@ -1762,6 +1793,12 @@ export default function MCareOrb() {
         @keyframes mcareBackdropIn { from { opacity:0; } to { opacity:1; } }
         @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
       `}</style>
+
+      <LocationPermissionGate
+        open={showLocationGate}
+        onAllow={() => { setShowLocationGate(false); requestGPS(); }}
+        onCancel={() => setShowLocationGate(false)}
+      />
     </>
   );
 }
