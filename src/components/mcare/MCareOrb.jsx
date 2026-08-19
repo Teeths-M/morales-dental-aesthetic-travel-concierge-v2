@@ -1197,7 +1197,13 @@ export default function MCareOrb() {
     // already started when MCareOrb itself mounted, well before the panel is
     // opened.
     const locationSensitive = /\b(near(?:by|est)?|around me|where am i|find me|close by|in my area|closest|next to me|near here|near me)\b/i.test(q);
-    const needsLocation = !locationContextSentRef.current || locationSensitive;
+    // Once GPS is granted, ALWAYS attach the precise block on every outgoing
+    // message — bypassing both the one-shot flag and the locationSensitive
+    // regex — so the agent never reverts to the stale IP-approximate reading
+    // between turns. The one-shot + regex behavior stays unchanged for the
+    // IP-approximate case.
+    const hasGps = bestLocationRef.current?.source === 'gps';
+    const needsLocation = hasGps || !locationContextSentRef.current || locationSensitive;
     if (needsLocation && !bestLocationRef.current && locationLoadingRef.current) {
       const deadline = Date.now() + 1500;
       while (locationLoadingRef.current && !bestLocationRef.current && Date.now() < deadline) {
@@ -1237,6 +1243,12 @@ export default function MCareOrb() {
   useEffect(() => {
     if (!pendingGpsRetryQueryRef.current) return;
     if (gpsStatus === 'granted') {
+      // If the agent is mid-response, defer the retry until it finishes —
+      // sendAgentMessage bails on agentSending=true, which would silently
+      // drop the GPS-carrying retry. The safety-net effects above clear
+      // agentSending on reply (or timeout), and this effect re-runs because
+      // sendAgentMessage changes identity when agentSending flips back.
+      if (agentSending) return;
       const retryText = pendingGpsRetryQueryRef.current;
       pendingGpsRetryQueryRef.current = null;
       locationContextSentRef.current = false;
@@ -1248,7 +1260,7 @@ export default function MCareOrb() {
         content: "I wasn't able to get your exact location, so I'll keep using your approximate area.",
       }]);
     }
-  }, [gpsStatus, sendAgentMessage]);
+  }, [gpsStatus, sendAgentMessage, agentSending]);
 
   const startNewJourney = useCallback(async () => {
     // A fresh journey drops any live voice conversation and pending
