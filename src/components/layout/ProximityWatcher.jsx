@@ -4,9 +4,10 @@ import { Navigation, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { POIS_KEY, SHOWN_KEY } from '@/lib/surroundingAwareness';
 
 const THRESHOLD_M = 200;
+const POIS_KEY    = 'm_nearby_pois';
+const SHOWN_KEY   = 'm_proximity_shown'; // sessionStorage — resets on tab close
 const AI_TIMEOUT  = 3500; // ms — fall back to generic if AI takes longer
 
 function haversine(lat1, lng1, lat2, lng2) {

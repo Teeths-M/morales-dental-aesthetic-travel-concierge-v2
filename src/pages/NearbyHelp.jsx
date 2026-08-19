@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Navigation, AlertCircle, ExternalLink, Search, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { CATEGORIES } from '@/lib/nearbyCategories';
+import SurroundingAwarenessPanel from '@/components/nearby/SurroundingAwarenessPanel';
 
 function fmtDist(m) {
   return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
@@ -136,6 +137,11 @@ export default function NearbyHelp() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Surrounding Awareness (proactive proximity layer) */}
+      <div className="px-4 sm:px-6 max-w-lg mx-auto mt-2">
+        <SurroundingAwarenessPanel />
       </div>
 
       {/* Category grid */}

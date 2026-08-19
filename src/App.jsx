@@ -19,6 +19,7 @@ import { useAndroidBackButton } from './hooks/useAndroidBackButton';
 import { PUBLIC_BYPASS_PATHS } from '@/lib/constants';
 import SafetyWatcher from '@/components/safety/SafetyWatcher';
 import SafetyPivotOverlay from '@/components/safety/SafetyPivotOverlay';
+import SurroundingAwarenessWatcher from '@/components/nearby/SurroundingAwarenessWatcher';
 
 // Route modules — each owns its section of the route tree
 import { publicRoutes }  from './routes/publicRoutes';
@@ -102,6 +103,7 @@ const AuthenticatedApp = () => {
       <ScrollToTop />
       <SafetyWatcher />
       <SafetyPivotOverlay />
+      <SurroundingAwarenessWatcher />
       {/* Suspense boundary catches all lazy page chunks inside route modules */}
       <Suspense fallback={<PageLoader />}>
         <Routes location={location}>

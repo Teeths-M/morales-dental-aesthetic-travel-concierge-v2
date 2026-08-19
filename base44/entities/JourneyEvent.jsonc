@@ -32,7 +32,7 @@
         "guardian_alert_sent",
         "document_vaulted",
         "partner_search_widened",
-        "proximity_alert"
+        "proximity_help_detected"
       ]
     },
     "source": {

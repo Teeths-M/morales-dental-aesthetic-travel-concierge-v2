@@ -76,7 +76,7 @@ describe('parseMcareCommand', () => {
     it('"M, watch my surroundings" → on', () => {
       const c = parseMcareCommand('M, watch my surroundings');
       expect(c).toEqual(expect.objectContaining({ type: 'surrounding_awareness', value: 'on' }));
-      expect(c.confirmText).toMatch(/checking/i);
+      expect(c.confirmText).toMatch(/keep an eye/i);
     });
     it('"M, stop watching my surroundings" → off', () => {
       const c = parseMcareCommand('M, stop watching my surroundings');

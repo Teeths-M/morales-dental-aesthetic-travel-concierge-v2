@@ -178,11 +178,7 @@ const CONFIRM = {
   modality_text: "Text mode on. I'll keep my replies on screen only.",
   listen_on: "Always listening on. I'll keep an ear out for you.",
   listen_off: "Listening stopped. I'll wait for you to tap the mic.",
-  // surrounding_on is a placeholder shown immediately — the real, honest
-  // confirmation (with an actual count of what was found nearby) is
-  // composed by the caller once the real search finishes, since a canned
-  // string can't promise coverage that hasn't been checked yet.
-  surrounding_on: "On it — checking what's around you now...",
+  surrounding_on: "Done — I'll keep an eye on your surroundings and let you know if I spot something useful nearby.",
   surrounding_off: "Surrounding awareness is off. I'll stop watching for nearby places.",
 };
 

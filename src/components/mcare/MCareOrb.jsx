@@ -510,61 +510,26 @@ export default function MCareOrb() {
     if (talkMode) speakAncillary(reply, { rate: 0.9 });
   }, [bestLocation, activeCaseRecord, talkMode]);
 
-  // Arms the real background proximity engine (src/components/layout/
-  // ProximityWatcher.jsx) — shared by both entry points: the deterministic
-  // "watch my surroundings" voice command above, and a confirmed "Yes" tap
-  // on the agent's own narrated offer (handleSurroundingAwarenessConfirm
-  // below). Appends its own follow-up message once the real search
-  // resolves, since the honest result (how many places were actually
-  // found) isn't knowable until then — never claims coverage up front.
-  const armSurroundingAwarenessNow = useCallback(() => {
-    const coords = (typeof bestLocationRef.current?.latitude === 'number' && typeof bestLocationRef.current?.longitude === 'number')
-      ? { lat: bestLocationRef.current.latitude, lng: bestLocationRef.current.longitude }
-      : null;
-
-    const runArm = (c) => armSurroundingAwareness(base44, c)
-      .then(({ count, categories }) => {
-        const resultText = count > 0
-          ? `Done — I'll let you know if you pass near a ${categories.join(', ').toLowerCase()}.`
-          : "I couldn't find much nearby to watch for yet, but I'll keep checking as you move.";
-        setAgentMessages(prev => [...prev, { role: 'assistant', content: resultText }]);
-        if (talkMode) speakAncillary(resultText, { rate: 0.9 });
-      })
-      .catch(() => {
-        const failText = "I couldn't check your location just now — try again in a moment.";
-        setAgentMessages(prev => [...prev, { role: 'assistant', content: failText }]);
-        if (talkMode) speakAncillary(failText, { rate: 0.9 });
-      });
-
-    if (coords) {
-      runArm(coords);
-    } else if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => runArm({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {
-          const deniedText = "I need location access to watch your surroundings — please allow it and try again.";
-          setAgentMessages(prev => [...prev, { role: 'assistant', content: deniedText }]);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-      );
-    } else {
-      setAgentMessages(prev => [...prev, { role: 'assistant', content: "This device doesn't support location, so I can't watch your surroundings here." }]);
-    }
-  }, [talkMode]);
-
   // A confirmed "Yes" on the agent's own narrated surrounding-awareness
-  // offer ({{choices:...}} tap, __surroundingAwarenessConfirm) — same
-  // discipline as handleDistressConfirm: a passively-inferred trigger
-  // (the traveler just mentioning they're somewhere unfamiliar) must never
-  // arm anything without an explicit human tap.
+  // offer ({{choices:...}} tap, matched on the exact literal choice text in
+  // the render loop below) — same discipline as handleDistressConfirm: a
+  // passively-inferred trigger (the traveler just mentioning they're
+  // somewhere unfamiliar) must never arm anything without an explicit human
+  // tap. armSurroundingAwareness (src/lib/surroundingAwareness.js) is a
+  // synchronous, instant call — it just flips the same real, already-armed
+  // background engine (useSurroundingAwareness.js) the /nearby settings
+  // panel's own toggle uses, so there's nothing to await here.
   const handleSurroundingAwarenessConfirm = useCallback((choice) => {
     const confirmed = /^yes/i.test(choice);
     if (!confirmed) {
       setAgentMessages(prev => [...prev, { role: 'assistant', content: "No problem — just ask any time if you change your mind." }]);
       return;
     }
-    armSurroundingAwarenessNow();
-  }, [armSurroundingAwarenessNow]);
+    armSurroundingAwareness();
+    const resultText = "Done — I'll keep an eye on your surroundings and let you know if I spot something useful nearby.";
+    setAgentMessages(prev => [...prev, { role: 'assistant', content: resultText }]);
+    if (talkMode) speakAncillary(resultText, { rate: 0.9 });
+  }, [talkMode]);
 
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
@@ -1145,11 +1110,8 @@ export default function MCareOrb() {
           updatePrefs({ responseLanguage: command.value });
           if (i18n?.changeLanguage) i18n.changeLanguage(command.value).catch(() => {});
         } else if (command.type === 'surrounding_awareness') {
-          if (command.value === 'off') {
-            disarmSurroundingAwareness();
-          } else {
-            armSurroundingAwarenessNow();
-          }
+          if (command.value === 'off') disarmSurroundingAwareness();
+          else armSurroundingAwareness();
         }
         logVoiceCommand(command);
         if (willSpeak) speakTextNeural(confirm, { rate: 0.9, language: i18n.language });
@@ -1221,7 +1183,7 @@ export default function MCareOrb() {
         content: friendlyError(e, "I couldn't send your message just now — the connection dropped. Please try again in a moment.", 'MCareOrb'),
       }]);
     }
-  }, [input, agentConversation, agentSending, toast, handleDistressSignal, bestLocation, armSurroundingAwarenessNow]);
+  }, [input, agentConversation, agentSending, toast, handleDistressSignal, bestLocation]);
 
   // Keeps the continuous-recognition effect's callbacks able to reach the
   // latest sendAgentMessage without listing it as a dependency (which would
