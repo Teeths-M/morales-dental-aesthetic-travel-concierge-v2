@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const MODEL         = 'claude-haiku-4-5-20251001';
@@ -75,9 +76,34 @@ Rules:
 
 Output ONLY valid JSON: {"relevant":true,"message":"..."} or {"relevant":false}`;
 
+  // Logs a real JourneyEvent alongside the toast when this POI was decided
+  // relevant (or the relevance check couldn't run — same "keep the generic
+  // nudge" fallback the toast itself uses). Fixed, deterministic text built
+  // only from the real poi/case data — never the AI's own personalized
+  // `message`, which stays exclusive to the toast (JourneyEvent copy is
+  // never LLM-authored, same rule as every other writer of this entity).
+  // Best-effort: awaited (not fire-and-forget) since an un-awaited call can
+  // silently drop when the isolate tears down right after the response
+  // returns, but logJourneyEvent itself never throws, so this can't fail
+  // the real response either way.
+  async function respond(parsed: { relevant: boolean; message?: string | null }) {
+    if (parsed.relevant !== false && activeCase) {
+      const distText = typeof poi!.dist === 'number' ? `${poi!.dist}m away` : 'nearby';
+      await logJourneyEvent(base44, {
+        case_id: activeCase.id,
+        client_email: user!.email,
+        event_type: 'proximity_alert',
+        source: 'analyzeProximityContext',
+        message_text: `You're near ${poi!.name} (${poi!.category}, ${distText}) — noted in case you need it.`,
+        priority: 'low',
+      });
+    }
+    return ok(parsed);
+  }
+
   // ── Call Claude Haiku ──────────────────────────────────────────────────────
   if (!ANTHROPIC_KEY) {
-    return ok({ relevant: true, message: null });
+    return respond({ relevant: true, message: null });
   }
 
   const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -94,7 +120,7 @@ Output ONLY valid JSON: {"relevant":true,"message":"..."} or {"relevant":false}`
     }),
   });
 
-  if (!aiRes.ok) return ok({ relevant: true, message: null });
+  if (!aiRes.ok) return respond({ relevant: true, message: null });
 
   const aiData = await aiRes.json();
   const text   = (aiData.content?.[0]?.text ?? '').trim();
@@ -105,5 +131,5 @@ Output ONLY valid JSON: {"relevant":true,"message":"..."} or {"relevant":false}`
     if (match) parsed = JSON.parse(match[0]);
   } catch (_) {}
 
-  return ok(parsed);
+  return respond(parsed);
 }, { name: 'analyzeProximityContext', requireAuth: true }));

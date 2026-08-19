@@ -72,6 +72,27 @@ describe('parseMcareCommand', () => {
     });
   });
 
+  describe('surrounding awareness', () => {
+    it('"M, watch my surroundings" → on', () => {
+      const c = parseMcareCommand('M, watch my surroundings');
+      expect(c).toEqual(expect.objectContaining({ type: 'surrounding_awareness', value: 'on' }));
+      expect(c.confirmText).toMatch(/checking/i);
+    });
+    it('"M, stop watching my surroundings" → off', () => {
+      const c = parseMcareCommand('M, stop watching my surroundings');
+      expect(c).toEqual(expect.objectContaining({ type: 'surrounding_awareness', value: 'off' }));
+      expect(c.confirmText).toMatch(/off/i);
+    });
+    it('"turn off surrounding awareness" → off, without a wake word', () => {
+      expect(parseMcareCommand('turn off surrounding awareness')).toEqual(
+        expect.objectContaining({ type: 'surrounding_awareness', value: 'off' })
+      );
+    });
+    it('a passive mention is not a command — the agent handles it conversationally, not this parser', () => {
+      expect(parseMcareCommand("I'm walking around an unfamiliar city")).toBeNull();
+    });
+  });
+
   describe('language', () => {
     it('"M, respond in Spanish" → es', () => {
       const c = parseMcareCommand('M, respond in Spanish');

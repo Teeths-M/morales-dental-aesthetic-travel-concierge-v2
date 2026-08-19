@@ -102,6 +102,28 @@ const LISTEN_OFF_PHRASES = new Set([
   'mute the mic',
 ]);
 
+// ── Surrounding Awareness ────────────────────────────────────────────────────
+// An explicit ask ("watch my surroundings") is already clear consent — arm
+// immediately, same as Private Mode, no separate tap-confirm needed. A
+// *passive* mention ("I'm walking around an unfamiliar city") is handled
+// separately, agent-side, with a narrated {{choices:...}} offer before
+// anything arms — see RULE (SURROUNDING AWARENESS) in m_care.jsonc.
+const SURROUNDING_ON_PHRASES = new Set([
+  'watch my surroundings',
+  'keep an eye on my surroundings',
+  'keep watch on my surroundings',
+  'surrounding awareness on',
+  'turn on surrounding awareness',
+  'enable surrounding awareness',
+]);
+const SURROUNDING_OFF_PHRASES = new Set([
+  'stop watching my surroundings',
+  'turn off surrounding awareness',
+  'disable surrounding awareness',
+  'stop surroundings alerts',
+  'stop surrounding awareness',
+]);
+
 // ── Language selection ─────────────────────────────────────────────────────
 // "M, respond in Spanish" / "M, speak in French" / "M, switch to Portuguese".
 // Maps a human language name to the i18n locale code used elsewhere in the app
@@ -156,6 +178,12 @@ const CONFIRM = {
   modality_text: "Text mode on. I'll keep my replies on screen only.",
   listen_on: "Always listening on. I'll keep an ear out for you.",
   listen_off: "Listening stopped. I'll wait for you to tap the mic.",
+  // surrounding_on is a placeholder shown immediately — the real, honest
+  // confirmation (with an actual count of what was found nearby) is
+  // composed by the caller once the real search finishes, since a canned
+  // string can't promise coverage that hasn't been checked yet.
+  surrounding_on: "On it — checking what's around you now...",
+  surrounding_off: "Surrounding awareness is off. I'll stop watching for nearby places.",
 };
 
 /**
@@ -166,6 +194,7 @@ const CONFIRM = {
  *   { type: 'private_mode', value: 'on'|'off', confirmText }
  *   { type: 'modality',     value: 'voice'|'text', confirmText }
  *   { type: 'always_listen',value: 'on'|'off', confirmText }
+ *   { type: 'surrounding_awareness', value: 'on'|'off', confirmText }
  *   { type: 'language',     value: <locale>|null, confirmText }
  *
  * @param {string} rawText
@@ -193,6 +222,10 @@ export function parseMcareCommand(rawText) {
   if (LISTEN_ON_PHRASES.has(normalized)) return { type: 'always_listen', value: 'on', confirmText: CONFIRM.listen_on };
   if (LISTEN_OFF_PHRASES.has(normalized)) return { type: 'always_listen', value: 'off', confirmText: CONFIRM.listen_off };
 
+  // ── Surrounding Awareness ──
+  if (SURROUNDING_ON_PHRASES.has(normalized)) return { type: 'surrounding_awareness', value: 'on', confirmText: CONFIRM.surrounding_on };
+  if (SURROUNDING_OFF_PHRASES.has(normalized)) return { type: 'surrounding_awareness', value: 'off', confirmText: CONFIRM.surrounding_off };
+
   // ── Language ──
   const lang = matchLanguage(normalized);
   if (lang !== undefined) {
@@ -214,6 +247,8 @@ export const COMMAND_PHRASES = {
   modalityTextOnly: [...MODALITY_TEXT_ONLY],
   listenOn: [...LISTEN_ON_PHRASES],
   listenOff: [...LISTEN_OFF_PHRASES],
+  surroundingOn: [...SURROUNDING_ON_PHRASES],
+  surroundingOff: [...SURROUNDING_OFF_PHRASES],
   languagePrefixes: [...LANGUAGE_PREFIXES],
   languageNames: { ...LANGUAGE_NAMES },
 };

@@ -2,15 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Navigation, AlertCircle, ExternalLink, Search, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-
-const CATEGORIES = [
-  { id: 'doctors',  label: 'Doctor',   emoji: '🩺', color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  gmaps: 'doctor',           apple: 'Doctor'           },
-  { id: 'clinic',   label: 'Clinic',   emoji: '🏥', color: '#00E5FF', bg: 'rgba(0,229,255,0.12)',  border: 'rgba(0,229,255,0.25)',  gmaps: 'clinic',           apple: 'Medical+Clinic'   },
-  { id: 'hospital', label: 'Hospital', emoji: '🚑', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  gmaps: 'hospital',         apple: 'Hospital'         },
-  { id: 'pharmacy', label: 'Pharmacy', emoji: '💊', color: '#a855f7', bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.25)', gmaps: 'pharmacy',         apple: 'Pharmacy'         },
-  { id: 'police',   label: 'Police',   emoji: '🚔', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.25)', gmaps: 'police+station',   apple: 'Police+Station'   },
-  { id: 'embassy',  label: 'Embassy',  emoji: '🏛️',  color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.25)', gmaps: 'embassy+consulate', apple: 'Embassy'         },
-];
+import { CATEGORIES } from '@/lib/nearbyCategories';
 
 function fmtDist(m) {
   return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
