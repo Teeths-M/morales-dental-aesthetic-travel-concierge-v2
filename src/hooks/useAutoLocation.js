@@ -133,28 +133,54 @@ export function useAutoLocation() {
     if (prefs.locationPaused && !force) return;
 
     setGpsStatus('requesting');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (!mountedRef.current) return;
-        const loc = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy_meters: pos.coords.accuracy ?? null,
-          source: 'gps',
-          precision: 'precise',
-          logged_at: new Date().toISOString(),
-        };
-        setGpsLocation(loc);
-        setGpsStatus('granted');
-        updatePref('gpsGranted', true);
-      },
-      (err) => {
-        if (!mountedRef.current) return;
-        setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
-        updatePref('gpsGranted', false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+
+    // Before calling getCurrentPosition, check the Permissions API. In a
+    // preview iframe whose Permissions-Policy disallows geolocation, the
+    // browser reports the permission as 'denied' AND never shows the native
+    // prompt — getCurrentPosition hangs with neither callback firing, so the
+    // 15s safety net is the only thing that ever resolves it. Catching
+    // 'denied' here fails fast and honestly instead. Any other state, or a
+    // throwing/unavailable Permissions API, falls through to the normal call.
+    const proceed = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (!mountedRef.current) return;
+          const loc = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy_meters: pos.coords.accuracy ?? null,
+            source: 'gps',
+            precision: 'precise',
+            logged_at: new Date().toISOString(),
+          };
+          setGpsLocation(loc);
+          setGpsStatus('granted');
+          updatePref('gpsGranted', true);
+        },
+        (err) => {
+          if (!mountedRef.current) return;
+          setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
+          updatePref('gpsGranted', false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    };
+
+    try {
+      if (!navigator.permissions || !navigator.permissions.query) { proceed(); return; }
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((result) => {
+          if (!mountedRef.current) return;
+          if (result.state === 'denied') {
+            setGpsStatus('denied');
+            updatePref('gpsGranted', false);
+            return;
+          }
+          proceed();
+        })
+        .catch(() => proceed());
+    } catch { proceed(); }
   }, [prefs.locationPaused]);
 
   // If user previously granted GPS, silently refresh on mount
