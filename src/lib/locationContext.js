@@ -18,7 +18,8 @@ export function buildLocationContextBlock(loc) {
 
   if (loc.source === 'gps') {
     if (loc.latitude == null || loc.longitude == null) return null;
-    return `[[LOCATION_CONTEXT: lat=${loc.latitude}, lng=${loc.longitude}, source=gps_precise]]`;
+    const accuracySegment = loc.accuracy_meters != null ? `, accuracy_m=${Math.round(loc.accuracy_meters)}` : '';
+    return `[[LOCATION_CONTEXT: lat=${loc.latitude}, lng=${loc.longitude}, source=gps_precise${accuracySegment}]]`;
   }
 
   if (loc.country === 'Unknown') return null;

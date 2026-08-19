@@ -3945,6 +3945,19 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
   expect(agentConfig, 'the agent must be told it cannot request GPS itself')
     .toMatch(/You cannot request GPS yourself/);
 
+  // A live incident: the offer appeared and the client-side retry mechanism
+  // correctly resent the question with a fresh gps_precise location block,
+  // but nothing told the agent that receiving that block after making this
+  // offer was a mandate to actually re-run the location tool rather than
+  // just repeat its previous ip_approximate answer — so tapping "Yes"
+  // visibly changed nothing. The instruction must rule this out explicitly.
+  expect(agentConfig, 'a gps_precise retry must mandate re-calling the location tool, not repeating the prior answer')
+    .toMatch(/mandate to actually call the same location tool again/);
+  expect(agentConfig, 'the agent must say plainly whether the corrected answer changed')
+    .toMatch(/Say plainly whether the corrected answer changed/);
+  expect(agentConfig, 'a poor-accuracy GPS fix must be disclosed honestly, never treated as pinpoint-precise')
+    .toMatch(/accuracy_m/);
+
   // handleGpsUpgradeConfirm must only ever call the real requestGPS() behind
   // a confirmed "Yes" — never unconditionally, since a false positive would
   // fire a real browser permission prompt with no consent behind it.

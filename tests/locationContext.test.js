@@ -17,6 +17,11 @@ describe('locationContext.buildLocationContextBlock', () => {
     expect(buildLocationContextBlock({ source: 'gps' })).toBeNull();
   });
 
+  it('includes accuracy_m when a GPS reading reports its accuracy', () => {
+    const block = buildLocationContextBlock({ source: 'gps', latitude: 10.65, longitude: -61.51, accuracy_meters: 1834.6 });
+    expect(block).toBe('[[LOCATION_CONTEXT: lat=10.65, lng=-61.51, source=gps_precise, accuracy_m=1835]]');
+  });
+
   it('builds an approximate block for a real IP hit', () => {
     const block = buildLocationContextBlock({
       source: 'ip_geo', city: 'Port of Spain', country: 'Trinidad and Tobago',
