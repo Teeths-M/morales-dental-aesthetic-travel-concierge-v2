@@ -11,8 +11,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { fetchClientIpGeo } from '@/lib/clientIpGeo';
 
-const IP_CACHE_KEY = 'auto_location_ip_v3'; // v3: clears stale misidentified entries from ipinfo.io era
+// v4: tries a direct-from-browser lookup (clientIpGeo.js) before falling
+// back to the Base44 edge function, and no longer caches a failed/Unknown
+// result as if it were real data — bump clears any session that already
+// cached a bad "Unknown" from the prior generation's outage.
+const IP_CACHE_KEY = 'auto_location_ip_v4';
 const IP_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 const PREFS_KEY = 'location_prefs_v1';
 
@@ -62,18 +67,31 @@ export function useAutoLocation() {
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  // Load IP geolocation on mount (cached, never blocks app)
+  // Load IP geolocation on mount (cached, never blocks app). Tries a direct
+  // browser->provider call first (sidesteps a confirmed, unresolved issue
+  // where Base44's own server-side call to the same two providers reliably
+  // fails — see getGeolocationAndCurrency/entry.ts's own header comment and
+  // CLAUDE.md's "MCare auto-location" section). Falls back to the Base44
+  // edge function only if that returns nothing.
   useEffect(() => {
     const cached = readCache();
     if (cached) { setIpLocation(cached); setIsLoading(false); return; }
 
     setIsLoading(true);
-    base44.functions.invoke('getGeolocationAndCurrency', {})
-      .then(res => {
-        if (!mountedRef.current) return;
+
+    async function resolve() {
+      const clientGeo = await fetchClientIpGeo();
+      if (clientGeo) {
+        return { ...clientGeo, source: 'ip_geo', precision: 'approximate' };
+      }
+
+      try {
+        const res = await base44.functions.invoke('getGeolocationAndCurrency', {});
         const d = res?.data;
-        if (d && !d.error) {
-          const loc = {
+        // default_fallback means both providers failed server-side too —
+        // that's not real data, never cache or use it as if it were.
+        if (d && !d.error && d.source !== 'default_fallback') {
+          return {
             country: d.country,
             country_code: d.country_code || d.country,
             city: d.city || null,
@@ -85,11 +103,17 @@ export function useAutoLocation() {
             source: 'ip_geo',
             precision: 'approximate',
           };
-          writeCache(loc);
-          setIpLocation(loc);
         }
+      } catch { /* honest failure — no location, no cache write */ }
+      return null;
+    }
+
+    resolve()
+      .then((loc) => {
+        if (!mountedRef.current || !loc) return;
+        writeCache(loc);
+        setIpLocation(loc);
       })
-      .catch(() => {})
       .finally(() => { if (mountedRef.current) setIsLoading(false); });
   }, []);
 
