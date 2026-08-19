@@ -4040,3 +4040,35 @@ test('PROACTIVE LOCATION GATE: only ever requests GPS from inside a real "Allow"
   expect(renderBlock, 'onCancel must never write a false gpsGranted denial into persisted prefs')
     .not.toMatch(/onCancel=\{[^}]*gpsGranted/);
 });
+
+test('GPS REQUEST TIMEOUT: a hung requestGPS() call cannot leave "Getting your exact location now" stuck forever', () => {
+  // A live incident: requestGPS()'s own { timeout: 10000 } only bounds
+  // acquisition time once permission is already decided — it does not
+  // cover an unanswered native permission prompt, which can hang
+  // indefinitely (e.g. blocked by a Permissions-Policy restriction on a
+  // preview iframe, the same class of gap that previously silently broke
+  // mic/speech APIs in that exact context elsewhere in this project).
+  // triggerGpsUpgrade must arm its own client-side timeout so the pending
+  // state always resolves one way or another.
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+
+  const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
+  expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const triggerEndIdx = orbSrc.indexOf('}, [requestGPS]);', triggerIdx);
+  expect(triggerEndIdx, 'triggerGpsUpgrade must end where expected').toBeGreaterThan(-1);
+  const triggerBlock = orbSrc.slice(triggerIdx, triggerEndIdx);
+  expect(triggerBlock, 'triggerGpsUpgrade must arm a real setTimeout safety net')
+    .toMatch(/gpsRequestTimeoutRef\.current\s*=\s*setTimeout\(/);
+  expect(triggerBlock, 'the timeout callback must only fire if the retry is still genuinely pending')
+    .toMatch(/if \(!pendingGpsRetryQueryRef\.current\) return;/);
+  expect(triggerBlock, 'a fired timeout must clear the pending ref so it cannot also double-fire later')
+    .toMatch(/pendingGpsRetryQueryRef\.current = null;/);
+
+  // The retry effect's real-resolution branches must clear the timeout so
+  // a normal grant/deny never ALSO triggers the stuck-state fallback.
+  const effectIdx = orbSrc.indexOf("if (gpsStatus === 'granted') {", triggerEndIdx);
+  expect(effectIdx, 'the retry effect must exist after triggerGpsUpgrade').toBeGreaterThan(-1);
+  const effectBlock = orbSrc.slice(effectIdx, orbSrc.indexOf('}, [gpsStatus, sendAgentMessage, agentSending]);', effectIdx));
+  const clearCount = (effectBlock.match(/clearGpsRequestTimeout\(\);/g) || []).length;
+  expect(clearCount, 'both the granted and denied/unavailable branches must clear the timeout').toBe(2);
+});

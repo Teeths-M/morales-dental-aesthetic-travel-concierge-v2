@@ -244,6 +244,13 @@ export default function MCareOrb() {
   // Set on a confirmed GPS-upgrade "Yes" tap; consumed by the gpsStatus
   // effect below once permission resolves (granted or not).
   const pendingGpsRetryQueryRef = useRef(null);
+  // Safety net for requestGPS() never resolving at all — the browser's own
+  // { timeout: 10000 } only bounds acquisition time once permission is
+  // already decided, not time spent waiting on an unanswered native
+  // permission prompt (which can hang forever, e.g. behind a Permissions-
+  // Policy restriction on a preview iframe). Cleared the moment the retry
+  // effect below sees a real resolution.
+  const gpsRequestTimeoutRef = useRef(null);
 
   const silenceTimerRef = useRef(null);
   const silenceNudgeCountRef = useRef(0);
@@ -299,6 +306,9 @@ export default function MCareOrb() {
 
   const clearSilenceNudge = () => {
     if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+  };
+  const clearGpsRequestTimeout = () => {
+    if (gpsRequestTimeoutRef.current) { clearTimeout(gpsRequestTimeoutRef.current); gpsRequestTimeoutRef.current = null; }
   };
   const resetSilenceNudge = () => {
     clearSilenceNudge();
@@ -561,6 +571,22 @@ export default function MCareOrb() {
     pendingGpsRetryQueryRef.current = retryQuery || null;
     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
     requestGPS();
+    // Safety net: requestGPS()'s own { timeout: 10000 } doesn't cover an
+    // unanswered native permission prompt (that's not "acquisition" yet),
+    // so gpsStatus can sit at 'requesting' forever with nothing to resolve
+    // it. 15s gives the browser's own timeout room to fire first; if
+    // nothing has happened by then, give up honestly instead of leaving
+    // "Getting your exact location now" as the last thing anyone ever sees.
+    clearGpsRequestTimeout();
+    gpsRequestTimeoutRef.current = setTimeout(() => {
+      gpsRequestTimeoutRef.current = null;
+      if (!pendingGpsRetryQueryRef.current) return;
+      pendingGpsRetryQueryRef.current = null;
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow. I'll keep using your approximate area for now; just ask again anytime.",
+      }]);
+    }, 15000);
   }, [requestGPS]);
 
   // Called only when the tapped choice text itself matched
@@ -1304,11 +1330,13 @@ export default function MCareOrb() {
       // agentSending on reply (or timeout), and this effect re-runs because
       // sendAgentMessage changes identity when agentSending flips back.
       if (agentSending) return;
+      clearGpsRequestTimeout();
       const retryText = pendingGpsRetryQueryRef.current;
       pendingGpsRetryQueryRef.current = null;
       locationContextSentRef.current = false;
       sendAgentMessage(retryText);
     } else if (gpsStatus === 'denied' || gpsStatus === 'unavailable') {
+      clearGpsRequestTimeout();
       pendingGpsRetryQueryRef.current = null;
       setAgentMessages(prev => [...prev, {
         role: 'assistant',
