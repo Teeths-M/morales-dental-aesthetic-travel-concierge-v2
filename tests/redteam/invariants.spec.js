@@ -3908,3 +3908,54 @@ test('DISPATCH ORCHESTRATOR: mcare_orchestrator is a separate, non-anonymous, re
     }
   }
 });
+
+test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, never a false "service down" claim, and the GPS upgrade is confirm-gated', () => {
+  // A live incident: searchNearbyPlaces returned a real, successful empty
+  // results array (nothing OSM-tagged within the search radius), and the
+  // model narrated it as "the service isn't responding," then silently
+  // substituted an ungrounded web_search answer for something
+  // safety-relevant (a police station's address/phone number). The tool
+  // description must rule this out explicitly, not just leave it implied.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const descMatch = agentConfig.match(/"function_name"\s*:\s*"searchNearbyPlaces"\s*,\s*"description"\s*:\s*"([^"]*)"/);
+  expect(descMatch, 'searchNearbyPlaces must have a tool_configs description to check').toBeTruthy();
+  const desc = descMatch[1];
+  expect(desc, 'the description must state an empty results array is real and honest, not a failure')
+    .toMatch(/empty results array is a real, honest answer/i);
+  expect(desc, "the description must forbid claiming the search service isn't responding")
+    .toMatch(/Never say the location search isn't responding/);
+  expect(desc, 'the description must forbid silently falling back to web_search for this')
+    .toMatch(/never silently fall back to a generic web search/i);
+  expect(desc, 'the description must tell the agent to pass real coordinates, never a free-text place name')
+    .toMatch(/never a free-text place name/);
+
+  // searchNearbyPlaces/entry.ts must widen its radius before concluding
+  // there's nothing nearby, and a genuine empty result must still be a
+  // real ok() success, never routed through the network-failure err() path.
+  const searchSrc = read('base44/functions/searchNearbyPlaces/entry.ts');
+  expect(searchSrc, 'searchNearbyPlaces must try more than one radius before giving up')
+    .toMatch(/radiiToTry/);
+  expect(searchSrc, 'a completed search (found or genuinely empty) must return ok() with searched_radius_km, never err()')
+    .toMatch(/return ok\(\{ results, searched_radius_km/);
+
+  // The GPS-upgrade offer (LOCATION CONTEXT rule) must exist, and must tell
+  // the agent it cannot trigger GPS itself — only a real client-side tap can.
+  expect(agentConfig, 'the GPS-upgrade offer paragraph must exist in the instructions')
+    .toMatch(/GPS UPGRADE OFFER/);
+  expect(agentConfig, 'the agent must be told it cannot request GPS itself')
+    .toMatch(/You cannot request GPS yourself/);
+
+  // handleGpsUpgradeConfirm must only ever call the real requestGPS() behind
+  // a confirmed "Yes" — never unconditionally, since a false positive would
+  // fire a real browser permission prompt with no consent behind it.
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+  const handlerIdx = orbSrc.indexOf('const handleGpsUpgradeConfirm = useCallback');
+  expect(handlerIdx, 'handleGpsUpgradeConfirm must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const handlerBlock = orbSrc.slice(handlerIdx, handlerIdx + 700);
+  const confirmedGuardIdx = handlerBlock.indexOf('if (!confirmed)');
+  const requestGpsIdx = handlerBlock.indexOf('requestGPS();');
+  expect(confirmedGuardIdx, 'handleGpsUpgradeConfirm must check a confirmed flag before acting').toBeGreaterThan(-1);
+  expect(requestGpsIdx, 'handleGpsUpgradeConfirm must call the real requestGPS()').toBeGreaterThan(-1);
+  expect(requestGpsIdx, 'requestGPS() must only be reached after the confirmed-guard check, never before it')
+    .toBeGreaterThan(confirmedGuardIdx);
+});

@@ -214,7 +214,7 @@ export default function MCareOrb() {
   // Auto-detected approximate location (IP-based by default, GPS only if the
   // traveler already granted it) — see src/lib/locationContext.js for why
   // this is attached once per mount rather than on every message.
-  const { bestLocation, isLoading: locationLoading } = useAutoLocation();
+  const { bestLocation, isLoading: locationLoading, requestGPS, gpsStatus } = useAutoLocation();
   const locationContextSentRef = useRef(false);
   // sendAgentMessage's useCallback closure only sees bestLocation/locationLoading
   // as of whenever it was last recreated — these refs let the brief bounded
@@ -226,6 +226,14 @@ export default function MCareOrb() {
   const locationLoadingRef = useRef(locationLoading);
   useEffect(() => { bestLocationRef.current = bestLocation; }, [bestLocation]);
   useEffect(() => { locationLoadingRef.current = locationLoading; }, [locationLoading]);
+  // Holds the traveler's most recent real outgoing message text — the GPS
+  // upgrade offer (see handleGpsUpgradeConfirm below) is always a direct
+  // agent reply to that exact message, so this reliably identifies "the
+  // question to redo" once precise GPS is granted, with no extra bookkeeping.
+  const lastUserMessageRef = useRef('');
+  // Set on a confirmed GPS-upgrade "Yes" tap; consumed by the gpsStatus
+  // effect below once permission resolves (granted or not).
+  const pendingGpsRetryQueryRef = useRef(null);
 
   const silenceTimerRef = useRef(null);
   const silenceNudgeCountRef = useRef(0);
@@ -530,6 +538,23 @@ export default function MCareOrb() {
     setAgentMessages(prev => [...prev, { role: 'assistant', content: resultText }]);
     if (talkMode) speakAncillary(resultText, { rate: 0.9 });
   }, [talkMode]);
+
+  // Confirms M-Care's own narrated GPS-upgrade offer (LOCATION CONTEXT rule
+  // in m_care.jsonc) — a real precise-location request, never something the
+  // agent can trigger itself. On "Yes", stash the exact question this offer
+  // was replying to (lastUserMessageRef) and call requestGPS(); the
+  // gpsStatus effect below redoes that question automatically once
+  // permission resolves, so the traveler never has to ask twice.
+  const handleGpsUpgradeConfirm = useCallback((choice) => {
+    const confirmed = /^yes/i.test(choice);
+    if (!confirmed) {
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: "No problem — I'll keep using your approximate area." }]);
+      return;
+    }
+    pendingGpsRetryQueryRef.current = lastUserMessageRef.current || null;
+    setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
+    requestGPS();
+  }, [requestGPS]);
 
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
@@ -1056,6 +1081,10 @@ export default function MCareOrb() {
   const sendAgentMessage = useCallback(async (displayText, fileUrls) => {
     const q = (displayText ?? input).trim();
     if ((!q && !fileUrls?.length) || agentSending) return;
+    // Tracks the real question behind a GPS-upgrade offer (see
+    // handleGpsUpgradeConfirm below) so it can be redone automatically once
+    // precise location is granted — never overwritten by an empty/file-only send.
+    if (q) lastUserMessageRef.current = q;
 
     // Sending any new message interrupts in-progress Talk Mode speech —
     // never let old audio keep playing over a new exchange.
@@ -1197,6 +1226,29 @@ export default function MCareOrb() {
   // latest sendAgentMessage without listing it as a dependency (which would
   // restart the whole SpeechRecognition session every time it's recreated).
   useEffect(() => { liveRef.current.sendAgentMessage = sendAgentMessage; });
+
+  // Resolves a pending GPS-upgrade request (see handleGpsUpgradeConfirm).
+  // Once permission actually resolves, redo the exact question that
+  // triggered the offer — forcing a fresh location-block attach regardless
+  // of keyword matching (locationContextSentRef reset) is simpler and more
+  // robust than depending on the resent text happening to match the
+  // location-sensitive regex above, and bestLocation already prefers GPS
+  // over IP once gpsLocation is set, so the redo carries the precise fix.
+  useEffect(() => {
+    if (!pendingGpsRetryQueryRef.current) return;
+    if (gpsStatus === 'granted') {
+      const retryText = pendingGpsRetryQueryRef.current;
+      pendingGpsRetryQueryRef.current = null;
+      locationContextSentRef.current = false;
+      sendAgentMessage(retryText);
+    } else if (gpsStatus === 'denied' || gpsStatus === 'unavailable') {
+      pendingGpsRetryQueryRef.current = null;
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I wasn't able to get your exact location, so I'll keep using your approximate area.",
+      }]);
+    }
+  }, [gpsStatus, sendAgentMessage]);
 
   const startNewJourney = useCallback(async () => {
     // A fresh journey drops any live voice conversation and pending
@@ -1552,7 +1604,13 @@ export default function MCareOrb() {
                           // client-synthesized.
                           : (m.role === 'assistant' && m.content?.includes('{{choices:Yes, watch my surroundings|No thanks}}'))
                             ? handleSurroundingAwarenessConfirm
-                            : sendAgentMessage
+                            // Same literal-text-match shape as the surrounding-awareness
+                            // offer above — the agent's own narrated GPS-upgrade offer
+                            // (LOCATION CONTEXT rule, m_care.jsonc) always uses this exact
+                            // choices token.
+                            : (m.role === 'assistant' && m.content?.includes('{{choices:Yes, use my exact location|No, that\'s fine}}'))
+                              ? handleGpsUpgradeConfirm
+                              : sendAgentMessage
                       }
                       onRespond={sendAgentMessage}
                       revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}

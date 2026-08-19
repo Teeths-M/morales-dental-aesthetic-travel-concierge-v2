@@ -36,6 +36,27 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function parseElements(json: Record<string, unknown>, lat: number, lng: number) {
+  return ((json.elements || []) as Record<string, unknown>[])
+    .map(el => {
+      const elLat = (el.lat as number) ?? (el.center as Record<string, number>)?.lat;
+      const elLng = (el.lon as number) ?? (el.center as Record<string, number>)?.lon;
+      const tags  = (el.tags || {}) as Record<string, string>;
+      return {
+        id:       el.id,
+        name:     tags.name || tags['name:en'] || null,
+        lat:      elLat,
+        lng:      elLng,
+        phone:    tags.phone || tags['contact:phone'] || null,
+        address:  [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || null,
+        distance: elLat != null ? haversine(lat, lng, elLat, elLng) : Infinity,
+      };
+    })
+    .filter(el => el.lat != null)
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 12);
+}
+
 Deno.serve(createHandler(async ({ body }) => {
   const { lat, lng, category, radius_km } = await body<{
     lat: number; lng: number; category: string; radius_km?: number;
@@ -43,44 +64,51 @@ Deno.serve(createHandler(async ({ body }) => {
 
   if (!lat || !lng || !category) return err('lat, lng, category required');
 
-  const tags    = TAGS[category] || [['amenity', category]];
-  const radiusM = (radius_km ?? 5) * 1000;
-  const query   = buildQuery(lat, lng, radiusM, tags);
+  const tags = TAGS[category] || [['amenity', category]];
+  const requestedRadiusKm = radius_km ?? 5;
+  // A real empty result at the requested radius can just mean the center
+  // point (often an IP-approximate location, easily tens of km off the
+  // traveler's real position) doesn't happen to have anything tagged within
+  // it — widen once before concluding there's really nothing nearby. Capped
+  // well under the 50km threshold that would trigger the longer Overpass
+  // timeout below.
+  const widenedRadiusKm = Math.min(requestedRadiusKm * 3, 25);
+  const radiiToTry = widenedRadiusKm > requestedRadiusKm
+    ? [requestedRadiusKm, widenedRadiusKm]
+    : [requestedRadiusKm];
 
   let lastErr = '';
-  for (const mirror of MIRRORS) {
-    try {
-      const fetchTimeout = (radius_km ?? 5) > 50 ? 50000 : 25000;
-      const res = await fetch(mirror, {
-        method: 'POST',
-        body: query,
-        signal: AbortSignal.timeout(fetchTimeout),
-      });
-      if (!res.ok) { lastErr = `HTTP ${res.status}`; continue; }
+  for (let i = 0; i < radiiToTry.length; i++) {
+    const attemptRadiusKm = radiiToTry[i];
+    const isLastRadius = i === radiiToTry.length - 1;
+    const radiusM = attemptRadiusKm * 1000;
+    const query = buildQuery(lat, lng, radiusM, tags);
 
-      const json = await res.json();
-      const results = ((json.elements || []) as Record<string, unknown>[])
-        .map(el => {
-          const elLat = (el.lat as number) ?? (el.center as Record<string, number>)?.lat;
-          const elLng = (el.lon as number) ?? (el.center as Record<string, number>)?.lon;
-          const tags  = (el.tags || {}) as Record<string, string>;
-          return {
-            id:       el.id,
-            name:     tags.name || tags['name:en'] || null,
-            lat:      elLat,
-            lng:      elLng,
-            phone:    tags.phone || tags['contact:phone'] || null,
-            address:  [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || null,
-            distance: elLat != null ? haversine(lat, lng, elLat, elLng) : Infinity,
-          };
-        })
-        .filter(el => el.lat != null)
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 12);
+    for (const mirror of MIRRORS) {
+      try {
+        const fetchTimeout = attemptRadiusKm > 50 ? 50000 : 25000;
+        const res = await fetch(mirror, {
+          method: 'POST',
+          body: query,
+          signal: AbortSignal.timeout(fetchTimeout),
+        });
+        if (!res.ok) { lastErr = `HTTP ${res.status}`; continue; }
 
-      return ok({ results });
-    } catch (e: unknown) {
-      lastErr = (e as Error)?.message || String(e);
+        const json = await res.json();
+        const results = parseElements(json, lat, lng);
+
+        if (results.length > 0 || isLastRadius) {
+          // Either a real match, or this was the last (widest) radius to
+          // try — either way, a genuine, complete answer, never a failure.
+          return ok({ results, searched_radius_km: attemptRadiusKm });
+        }
+        // Genuinely empty at this radius — other mirrors mirror the same
+        // underlying OSM data, so retrying them here wouldn't find more.
+        // Move on to the wider radius instead.
+        break;
+      } catch (e: unknown) {
+        lastErr = (e as Error)?.message || String(e);
+      }
     }
   }
 
