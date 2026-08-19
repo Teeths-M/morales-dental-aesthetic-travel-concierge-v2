@@ -1140,13 +1140,19 @@ export default function MCareOrb() {
     setInput('');
     setAgentSending(true);
 
-    // Attach the traveler's auto-detected approximate location once per
-    // mount, on the first real message — so M-Care doesn't have to ask
-    // "where are you" for anything location-based. Stripped from display by
-    // MessageBubble.jsx's extractLocationContext; only ever a hint the agent
-    // must confirm before treating as exact (see the LOCATION_CONTEXT rule
-    // in m_care.jsonc) — this repo's own getGeolocationAndCurrency comments
-    // document a real past IP-misidentification bug, which is exactly why.
+    // Attach the traveler's auto-detected approximate location on the first
+    // real message of a session AND re-attach it on any later message that is
+    // itself location-sensitive — "nearest police station", "around me",
+    // "where am I", "find me a pharmacy" — so M-Care never has to ask "where
+    // are you?" mid-conversation just because the first-message block was
+    // already consumed. The one-shot first-message attach covers most
+    // sessions; this closes the gap for every location-dependent message
+    // after it. Stripped from display by MessageBubble.jsx's
+    // extractLocationContext; only ever a hint the agent must confirm before
+    // treating as exact for anything address- or emergency-sensitive (see
+    // the LOCATION_CONTEXT rule in m_care.jsonc) — this repo's own
+    // getGeolocationAndCurrency comments document a real past
+    // IP-misidentification bug, which is exactly why.
     //
     // Real race this used to have: the one-shot flag flipped to "sent" the
     // instant this ran, even when useAutoLocation's IP lookup hadn't resolved
@@ -1161,13 +1167,15 @@ export default function MCareOrb() {
     // sessions never even reach this branch, since useAutoLocation's IP fetch
     // already started when MCareOrb itself mounted, well before the panel is
     // opened.
-    if (!locationContextSentRef.current && !bestLocationRef.current && locationLoadingRef.current) {
+    const locationSensitive = /\b(near(?:by|est)?|around me|where am i|find me|close by|in my area|closest|next to me|near here|near me)\b/i.test(q);
+    const needsLocation = !locationContextSentRef.current || locationSensitive;
+    if (needsLocation && !bestLocationRef.current && locationLoadingRef.current) {
       const deadline = Date.now() + 1500;
       while (locationLoadingRef.current && !bestLocationRef.current && Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 150));
       }
     }
-    const locationBlock = !locationContextSentRef.current ? buildLocationContextBlock(bestLocationRef.current) : null;
+    const locationBlock = needsLocation ? buildLocationContextBlock(bestLocationRef.current) : null;
     if (locationBlock) locationContextSentRef.current = true;
     const contentToSend = locationBlock ? (q ? `${locationBlock}\n${q}` : locationBlock) : q;
 
