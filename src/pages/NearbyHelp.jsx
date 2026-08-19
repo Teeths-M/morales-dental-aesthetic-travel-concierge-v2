@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Navigation, AlertCircle, ExternalLink, Search, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import SurroundingAwarenessPanel from '@/components/nearby/SurroundingAwarenessPanel';
 
 const CATEGORIES = [
   { id: 'doctors',  label: 'Doctor',   emoji: '🩺', color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  gmaps: 'doctor',           apple: 'Doctor'           },
@@ -144,6 +145,11 @@ export default function NearbyHelp() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Surrounding Awareness (proactive proximity layer) */}
+      <div className="px-4 sm:px-6 max-w-lg mx-auto mt-2">
+        <SurroundingAwarenessPanel />
       </div>
 
       {/* Category grid */}
