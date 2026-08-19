@@ -570,7 +570,12 @@ export default function MCareOrb() {
   const triggerGpsUpgrade = useCallback((retryQuery) => {
     pendingGpsRetryQueryRef.current = retryQuery || null;
     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
-    requestGPS();
+    // force=true: this only ever fires from a real, explicit, freshly-given
+    // request (a confirmed GPS-consent choice tap or a directly-typed
+    // request) — it must never be silently vetoed by locationPaused, a flag
+    // meant for passive background tracking on a completely different page
+    // (Emergency Hub), not for an explicit request the traveler just made.
+    requestGPS(true);
     // Safety net: requestGPS()'s own { timeout: 10000 } doesn't cover an
     // unanswered native permission prompt (that's not "acquisition" yet),
     // so gpsStatus can sit at 'requesting' forever with nothing to resolve
@@ -1824,7 +1829,7 @@ export default function MCareOrb() {
 
       <LocationPermissionGate
         open={showLocationGate}
-        onAllow={() => { setShowLocationGate(false); requestGPS(); }}
+        onAllow={() => { setShowLocationGate(false); requestGPS(true); }}
         onCancel={() => setShowLocationGate(false)}
       />
     </>

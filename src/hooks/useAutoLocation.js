@@ -117,13 +117,20 @@ export function useAutoLocation() {
       .finally(() => { if (mountedRef.current) setIsLoading(false); });
   }, []);
 
-  // Request precise GPS (called explicitly by UI, not on mount)
-  const requestGPS = useCallback(() => {
+  // Request precise GPS (called explicitly by UI, not on mount). locationPaused
+  // means "don't passively track me in the background" (e.g. the Emergency
+  // Hub's breadcrumb auto-logging) — it must never silently veto a request
+  // the traveler just explicitly made right now (a typed "where is my
+  // location" or a tapped "Yes, use my exact location"). Callers making an
+  // explicit, freshly-consented request pass force=true to bypass the pause
+  // check entirely; a passive/automatic caller (the silent on-mount refresh
+  // below, or a background-tracking UI) omits it and still respects pause.
+  const requestGPS = useCallback((force = false) => {
     if (!('geolocation' in navigator)) {
       setGpsStatus('unavailable');
       return;
     }
-    if (prefs.locationPaused) return;
+    if (prefs.locationPaused && !force) return;
 
     setGpsStatus('requesting');
     navigator.geolocation.getCurrentPosition(

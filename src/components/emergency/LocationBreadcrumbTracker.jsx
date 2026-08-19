@@ -294,7 +294,7 @@ export default function LocationBreadcrumbTracker({ caseId, caseStatus, guardian
         </div>
         <div className="flex gap-2 flex-wrap">
           {gpsStatus === 'idle' && !prefs.locationPaused && (
-            <button onClick={requestGPS}
+            <button onClick={() => requestGPS()}
               className="flex items-center gap-1.5 text-xs font-semibold border border-blue-200 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-50">
               <Navigation className="w-3.5 h-3.5" /> Enable GPS
             </button>

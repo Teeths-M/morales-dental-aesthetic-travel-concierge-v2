@@ -3973,8 +3973,8 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
 
   const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
   expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
-  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 400);
-  expect(triggerBlock, 'triggerGpsUpgrade must call the real requestGPS()').toMatch(/requestGPS\(\);/);
+  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 800);
+  expect(triggerBlock, 'triggerGpsUpgrade must call the real requestGPS()').toMatch(/requestGPS\(true\);/);
 
   // The choice-router: a tapped choice must be gated by the intent
   // detector, not a per-message literal-token match, before ever reaching
@@ -4028,8 +4028,8 @@ test('PROACTIVE LOCATION GATE: only ever requests GPS from inside a real "Allow"
   const renderIdx = orbSrc.indexOf('<LocationPermissionGate');
   expect(renderIdx, 'LocationPermissionGate must actually be rendered').toBeGreaterThan(-1);
   const renderBlock = orbSrc.slice(renderIdx, renderIdx + 300);
-  expect(renderBlock, 'requestGPS() must be called from onAllow, not onCancel or unconditionally')
-    .toMatch(/onAllow=\{\(\) => \{ setShowLocationGate\(false\); requestGPS\(\); \}\}/);
+  expect(renderBlock, 'requestGPS(true) must be called from onAllow, not onCancel or unconditionally')
+    .toMatch(/onAllow=\{\(\) => \{ setShowLocationGate\(false\); requestGPS\(true\); \}\}/);
   expect(renderBlock, 'onCancel must never call requestGPS()')
     .not.toMatch(/onCancel=\{[^}]*requestGPS/);
 
@@ -4071,4 +4071,40 @@ test('GPS REQUEST TIMEOUT: a hung requestGPS() call cannot leave "Getting your e
   const effectBlock = orbSrc.slice(effectIdx, orbSrc.indexOf('}, [gpsStatus, sendAgentMessage, agentSending]);', effectIdx));
   const clearCount = (effectBlock.match(/clearGpsRequestTimeout\(\);/g) || []).length;
   expect(clearCount, 'both the granted and denied/unavailable branches must clear the timeout').toBe(2);
+});
+
+test('LOCATION PAUSE BYPASS: an explicit GPS request is never silently vetoed by an unrelated background-tracking pause flag', () => {
+  // The real root cause behind a "nothing happens, no dialog, no error"
+  // report: requestGPS() returned early on prefs.locationPaused BEFORE ever
+  // calling navigator.geolocation — with zero state change, so nothing
+  // downstream could ever notice or explain it. locationPaused is set by a
+  // completely unrelated feature (Emergency Hub's background breadcrumb
+  // logging) but lives in one shared localStorage key every useAutoLocation()
+  // caller reads — so a toggle tapped once on a different page could
+  // silently disable every future GPS request M-Care ever makes. Fixed with
+  // an explicit force parameter: an automatic/passive caller still respects
+  // the pause, a real explicit human request always bypasses it.
+  const hookSrc = read('src/hooks/useAutoLocation.js');
+  expect(hookSrc, 'requestGPS must accept a force parameter')
+    .toMatch(/const requestGPS = useCallback\(\(force = false\) => \{/);
+  expect(hookSrc, 'the pause check must be gated on !force, not unconditional')
+    .toMatch(/if \(prefs\.locationPaused && !force\) return;/);
+
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+  const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
+  expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const triggerBlock = orbSrc.slice(triggerIdx, orbSrc.indexOf('}, [requestGPS]);', triggerIdx));
+  expect(triggerBlock, 'triggerGpsUpgrade (the real M-Care GPS trigger) must force past a stale pause flag')
+    .toMatch(/requestGPS\(true\)/);
+
+  expect(orbSrc, 'the proactive LocationPermissionGate onAllow must also force past a stale pause flag')
+    .toMatch(/onAllow=\{\(\) => \{ setShowLocationGate\(false\); requestGPS\(true\); \}\}/);
+
+  // A passive/background caller must NOT force-bypass — a real footgun
+  // otherwise, since React always passes the click SyntheticEvent as an
+  // onClick handler's first argument, which requestGPS(force=false) would
+  // wrongly coerce as a truthy force value if passed directly.
+  const breadcrumbSrc = read('src/components/emergency/LocationBreadcrumbTracker.jsx');
+  expect(breadcrumbSrc, 'LocationBreadcrumbTracker must not pass requestGPS directly as an event handler')
+    .not.toMatch(/onClick=\{requestGPS\}/);
 });
