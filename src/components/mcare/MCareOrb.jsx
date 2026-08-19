@@ -1338,10 +1338,11 @@ export default function MCareOrb() {
     } else if (gpsStatus === 'denied' || gpsStatus === 'unavailable') {
       clearGpsRequestTimeout();
       pendingGpsRetryQueryRef.current = null;
-      setAgentMessages(prev => [...prev, {
-        role: 'assistant',
-        content: "I wasn't able to get your exact location, so I'll keep using your approximate area.",
-      }]);
+      const inIframe = (typeof window !== 'undefined' && window.self !== window.top);
+      const content = inIframe
+        ? "Your browser is blocking precise location in this view (common in the web preview). I'll keep using your approximate area for now — if you open the app on your phone or the published site, I can use your exact GPS."
+        : "I wasn't able to get your exact location, so I'll keep using your approximate area.";
+      setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
     }
   }, [gpsStatus, sendAgentMessage, agentSending]);
 
