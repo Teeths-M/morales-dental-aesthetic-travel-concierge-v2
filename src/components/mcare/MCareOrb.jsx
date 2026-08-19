@@ -59,6 +59,7 @@ import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 import { useJourneyEvents } from '@/hooks/useJourneyEvents';
 import { useAutoLocation } from '@/hooks/useAutoLocation';
 import { buildLocationContextBlock } from '@/lib/locationContext';
+import { detectLocationConsentIntent } from '@/lib/locationConsentIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 
 const GOLD = '#D4AF37';
@@ -539,22 +540,29 @@ export default function MCareOrb() {
     if (talkMode) speakAncillary(resultText, { rate: 0.9 });
   }, [talkMode]);
 
-  // Confirms M-Care's own narrated GPS-upgrade offer (LOCATION CONTEXT rule
-  // in m_care.jsonc) — a real precise-location request, never something the
-  // agent can trigger itself. On "Yes", stash the exact question this offer
-  // was replying to (lastUserMessageRef) and call requestGPS(); the
-  // gpsStatus effect below redoes that question automatically once
-  // permission resolves, so the traveler never has to ask twice.
-  const handleGpsUpgradeConfirm = useCallback((choice) => {
-    const confirmed = /^yes/i.test(choice);
-    if (!confirmed) {
-      setAgentMessages(prev => [...prev, { role: 'assistant', content: "No problem — I'll keep using your approximate area." }]);
-      return;
-    }
-    pendingGpsRetryQueryRef.current = lastUserMessageRef.current || null;
+  // Requests a real precise-location upgrade — never something the agent
+  // can trigger itself, only a real client-side action reachable from
+  // either a confirmed choice tap or a directly-typed request (both gated
+  // by detectLocationConsentIntent, see sendAgentMessage and the onChoice
+  // router below). Stashes the question to redo (retryQuery) and calls
+  // requestGPS(); the gpsStatus effect below redoes that question
+  // automatically once permission resolves, so the traveler never has to
+  // ask twice.
+  const triggerGpsUpgrade = useCallback((retryQuery) => {
+    pendingGpsRetryQueryRef.current = retryQuery || null;
     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
     requestGPS();
   }, [requestGPS]);
+
+  // Called only when the tapped choice text itself matched
+  // detectLocationConsentIntent (see the onChoice router below) — by
+  // construction this is always a real "yes, use my exact location" tap,
+  // never a decline. A decline ("No, that's fine") or an unrelated option
+  // never matches that intent check and falls through to sendAgentMessage
+  // instead, letting the agent continue the conversation naturally.
+  const handleGpsUpgradeConfirm = useCallback((choice) => {
+    triggerGpsUpgrade(lastUserMessageRef.current || choice);
+  }, [triggerGpsUpgrade]);
 
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
@@ -1148,6 +1156,22 @@ export default function MCareOrb() {
       }
     }
 
+    // A direct typed request for exact/precise device location ("can you
+    // pin my exact location on map") reaches the agent as plain text, but
+    // it can only explain what to do — it cannot trigger requestGPS()
+    // itself. Act on it immediately client-side instead of round-tripping
+    // through the agent for an honest-but-inert reply: echo the traveler's
+    // own message locally (same pattern as the voice/privacy command branch
+    // above), then trigger the real GPS request. The gpsStatus effect below
+    // resends this exact question, now carrying a real gps_precise block,
+    // once permission resolves.
+    if (!fileUrls?.length && detectLocationConsentIntent(q)) {
+      setInput('');
+      setAgentMessages(prev => [...prev, { role: 'user', content: q }]);
+      triggerGpsUpgrade(q);
+      return;
+    }
+
     let conversation = agentConversation;
     if (!conversation) {
       try {
@@ -1220,7 +1244,7 @@ export default function MCareOrb() {
         content: friendlyError(e, "I couldn't send your message just now — the connection dropped. Please try again in a moment.", 'MCareOrb'),
       }]);
     }
-  }, [input, agentConversation, agentSending, toast, handleDistressSignal, bestLocation]);
+  }, [input, agentConversation, agentSending, toast, handleDistressSignal, bestLocation, triggerGpsUpgrade]);
 
   // Keeps the continuous-recognition effect's callbacks able to reach the
   // latest sendAgentMessage without listing it as a dependency (which would
@@ -1604,13 +1628,16 @@ export default function MCareOrb() {
                           // client-synthesized.
                           : (m.role === 'assistant' && m.content?.includes('{{choices:Yes, watch my surroundings|No thanks}}'))
                             ? handleSurroundingAwarenessConfirm
-                            // Same literal-text-match shape as the surrounding-awareness
-                            // offer above — the agent's own narrated GPS-upgrade offer
-                            // (LOCATION CONTEXT rule, m_care.jsonc) always uses this exact
-                            // choices token.
-                            : (m.role === 'assistant' && m.content?.includes('{{choices:Yes, use my exact location|No, that\'s fine}}'))
-                              ? handleGpsUpgradeConfirm
-                              : sendAgentMessage
+                            // The agent's own narrated GPS-upgrade offer (LOCATION CONTEXT
+                            // rule, m_care.jsonc) is free text, not a fixed enum — a live
+                            // session showed it phrase the same underlying "grant GPS"
+                            // option differently across turns ("Yes, use my exact
+                            // location" one reply, "I'll share my GPS" the next), so this
+                            // checks the tapped choice's own text via
+                            // detectLocationConsentIntent rather than one hardcoded
+                            // message-level literal. An unrelated or declining option
+                            // never matches and falls through to sendAgentMessage as usual.
+                            : (c) => detectLocationConsentIntent(c) ? handleGpsUpgradeConfirm(c) : sendAgentMessage(c)
                       }
                       onRespond={sendAgentMessage}
                       revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}

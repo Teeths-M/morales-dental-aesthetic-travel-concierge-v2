@@ -3958,17 +3958,41 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
   expect(agentConfig, 'a poor-accuracy GPS fix must be disclosed honestly, never treated as pinpoint-precise')
     .toMatch(/accuracy_m/);
 
-  // handleGpsUpgradeConfirm must only ever call the real requestGPS() behind
-  // a confirmed "Yes" — never unconditionally, since a false positive would
-  // fire a real browser permission prompt with no consent behind it.
+  // A second live incident: the agent phrased the GPS-upgrade offer's
+  // choices differently across turns ("Yes, use my exact location" one
+  // reply, "I'll share my GPS" the next, for the same underlying intent) —
+  // a client-side check for one hardcoded literal silently misses any
+  // rephrasing, so the real requestGPS() never fires. The consent gate must
+  // live in a reusable intent detector, not one exact string match, and
+  // must be checked both for a tapped choice and for a directly-typed
+  // request — never unconditionally, since a false positive would fire a
+  // real browser permission prompt with no real consent behind it.
   const orbSrc = read('src/components/mcare/MCareOrb.jsx');
-  const handlerIdx = orbSrc.indexOf('const handleGpsUpgradeConfirm = useCallback');
-  expect(handlerIdx, 'handleGpsUpgradeConfirm must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
-  const handlerBlock = orbSrc.slice(handlerIdx, handlerIdx + 700);
-  const confirmedGuardIdx = handlerBlock.indexOf('if (!confirmed)');
-  const requestGpsIdx = handlerBlock.indexOf('requestGPS();');
-  expect(confirmedGuardIdx, 'handleGpsUpgradeConfirm must check a confirmed flag before acting').toBeGreaterThan(-1);
-  expect(requestGpsIdx, 'handleGpsUpgradeConfirm must call the real requestGPS()').toBeGreaterThan(-1);
-  expect(requestGpsIdx, 'requestGPS() must only be reached after the confirmed-guard check, never before it')
-    .toBeGreaterThan(confirmedGuardIdx);
+  expect(orbSrc, 'MCareOrb.jsx must import the reusable location-consent-intent detector')
+    .toMatch(/import\s*\{\s*detectLocationConsentIntent\s*\}\s*from\s*'@\/lib\/locationConsentIntent'/);
+
+  const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
+  expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 400);
+  expect(triggerBlock, 'triggerGpsUpgrade must call the real requestGPS()').toMatch(/requestGPS\(\);/);
+
+  // The choice-router: a tapped choice must be gated by the intent
+  // detector, not a per-message literal-token match, before ever reaching
+  // handleGpsUpgradeConfirm.
+  const onChoiceIdx = orbSrc.indexOf('onChoice={');
+  expect(onChoiceIdx, 'onChoice router must exist in MCareOrb.jsx').toBeGreaterThan(-1);
+  const onChoiceBlock = orbSrc.slice(onChoiceIdx, onChoiceIdx + 2000);
+  expect(onChoiceBlock, 'the choice router must gate handleGpsUpgradeConfirm on detectLocationConsentIntent, not a hardcoded literal')
+    .toMatch(/detectLocationConsentIntent\(c\)\s*\?\s*handleGpsUpgradeConfirm\(c\)/);
+
+  // The typed-message path: sendAgentMessage must independently gate its
+  // own direct-request branch on the same detector, never send a
+  // GPS-consent request through as an inert plain-text message to the agent.
+  const sendIdx = orbSrc.indexOf('const sendAgentMessage = useCallback');
+  expect(sendIdx, 'sendAgentMessage must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const sendBlock = orbSrc.slice(sendIdx, orbSrc.indexOf('let conversation = agentConversation', sendIdx));
+  expect(sendBlock, 'sendAgentMessage must gate a typed GPS-consent request on detectLocationConsentIntent(q)')
+    .toMatch(/detectLocationConsentIntent\(q\)/);
+  expect(sendBlock, 'a detected typed GPS-consent request must call triggerGpsUpgrade, not send the raw text to the agent')
+    .toMatch(/triggerGpsUpgrade\(q\)/);
 });
