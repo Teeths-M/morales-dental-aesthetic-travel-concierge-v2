@@ -16,6 +16,7 @@
 // the guaranteed-to-fire trigger for this too.
 import { linkOnlyEmail } from './notify.ts';
 import { buildInformedConsentHtml } from './informedConsentArchive.ts';
+import { createMedicationFromText } from './createMedicationFromText.ts';
 
 export async function createCaseFromConsultation(base44: any, consultation_id: string): Promise<any> {
   const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
@@ -70,6 +71,32 @@ export async function createCaseFromConsultation(base44: any, consultation_id: s
       details: 'Case created from consultation'
     }]
   });
+
+  // ── Structured medication seeding from intake ────────────────────────────
+  // consultation.medication_notes is the ONE intake field that can carry real
+  // drug names/doses (medication_types above is just checkbox categories) —
+  // it used to be silently dropped here entirely, meaning nothing a patient
+  // actually typed at intake ever reached a real medication record. Seeds via
+  // the exact same normalize/reconcile/create path reportMedication uses, so
+  // an intake-reported medication still requires the same patient-confirm
+  // step as any other source before it counts as active.
+  if (consultation.medication_notes && String(consultation.medication_notes).trim()) {
+    try {
+      await createMedicationFromText(base44, {
+        case_id: caseRecord.id,
+        patient_email: consultation.email,
+        doctor_email: '',
+        raw_text: String(consultation.medication_notes),
+        source_type: 'patient',
+        source_record_id: consultation.id,
+        reported_by_email: consultation.email,
+        reported_by_note: 'Reported at intake',
+        allergy_text: caseRecord.allergies,
+      });
+    } catch (e: any) {
+      console.error('[createCaseFromConsultation] Medication seeding failed (non-fatal):', e?.message);
+    }
+  }
 
   // ── Informed consent archive — only for consultations that actually went
   // through the signature step (Booking.jsx today; /intake has no equivalent

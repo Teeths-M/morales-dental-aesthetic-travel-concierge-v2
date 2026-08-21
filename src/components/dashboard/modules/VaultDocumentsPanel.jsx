@@ -3,6 +3,7 @@ import { Clock, ShieldAlert, ShieldCheck, FileText, XCircle, RefreshCw, Camera }
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
+import MedicationsPanel from './MedicationsPanel';
 
 // Replaces the old DocumentsModule mockup (a hardcoded requiredDocs array
 // wired to nothing real). Reads live VaultDocument rows created by the
@@ -57,6 +58,8 @@ export default function VaultDocumentsPanel() {
 
   return (
     <div className="space-y-6">
+      <MedicationsPanel />
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-800">Documents</h2>

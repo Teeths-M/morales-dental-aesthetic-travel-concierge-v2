@@ -27,6 +27,10 @@
     },
     "confirmed": { "type": "boolean", "default": false },
     "confirmed_at": { "type": "string", "format": "date-time" },
+    "medication_id": {
+      "type": "string",
+      "description": "Set only by postCaseMessage's reactive pipeline when a doctor's message contained a medication instruction — links this confirm bubble to the real Medication record confirmCareRoomMessage flips on confirm. Blank for every other message."
+    },
     "created_at": { "type": "string", "format": "date-time" }
   },
   "required": ["case_id", "message_type", "body"],

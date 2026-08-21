@@ -33,7 +33,10 @@
         "document_vaulted",
         "partner_search_widened",
         "proximity_help_detected",
-        "early_checkin_nudge"
+        "early_checkin_nudge",
+        "medication_confirmation_needed",
+        "medication_review_required",
+        "medication_confirmed"
       ]
     },
     "source": {

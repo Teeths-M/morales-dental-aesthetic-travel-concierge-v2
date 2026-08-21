@@ -42,6 +42,26 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     confirmed_at: now,
   });
 
+  // A medication-linked confirm bubble additionally resolves the linked
+  // Medication record's own confirmation flag for whichever party just
+  // confirmed — reusing the exact "addressed party only" check already
+  // enforced above, never a second, looser gate.
+  if (message.medication_id) {
+    const med = await base44.asServiceRole.entities.Medication.get(message.medication_id).catch(() => null);
+    if (med) {
+      const flagField = callerParty === 'doctor' ? 'doctor_confirmed' : 'patient_confirmed';
+      await base44.asServiceRole.entities.Medication.update(message.medication_id, {
+        [flagField]: true,
+        history: [...(med.history || []), {
+          change_type: `${callerParty}_confirmed`,
+          changed_by_email: callerEmail,
+          changed_at: now,
+          note: 'Confirmed via Care Room',
+        }],
+      }).catch(() => {});
+    }
+  }
+
   const otherParty = message.to_party === 'doctor' ? 'patient' : 'doctor';
   const confirmerLabel = callerParty === 'patient' ? 'Patient' : 'Doctor';
 

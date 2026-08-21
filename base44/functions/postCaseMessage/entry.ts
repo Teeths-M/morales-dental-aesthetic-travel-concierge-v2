@@ -3,6 +3,7 @@ import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { scrubContact } from '../../shared/contactScrub.ts';
 import { guardText } from '../../shared/blocker.ts';
 import { translateText } from '../../shared/translateText.ts';
+import { createMedicationFromText } from '../../shared/createMedicationFromText.ts';
 
 /**
  * postCaseMessage — the two-way clarification thread (doctor/partner ↔ patient).
@@ -25,9 +26,13 @@ import { translateText } from '../../shared/translateText.ts';
  *     fact (parseCareRoomMessage — parse-only, never writes) and, if found, post a
  *     follow-up m_care message asking the recipient to explicitly confirm it; and,
  *     for an appointment-shaped fact, a best-effort check against CaseRecord.procedure_date
- *     for a possible conflict. None of this can block or fail the human's own send —
- *     every step is wrapped and swallowed. M-Care only ever flags here; it never
- *     resolves, diagnoses, or silently rewrites anything.
+ *     for a possible conflict. A doctor's medication-shaped instruction additionally
+ *     creates a real, linked Medication record (status: 'planned', doctor_confirmed:
+ *     false) via the shared createMedicationFromText helper — never confirmed until
+ *     the addressed party taps confirm via confirmCareRoomMessage. None of this can
+ *     block or fail the human's own send — every step is wrapped and swallowed.
+ *     M-Care only ever flags here; it never resolves, diagnoses, or silently
+ *     rewrites anything.
  *
  * Requires: entity QuoteMessage (+ DoctorQuote / DoctorQuoteRequest for context).
  */
@@ -202,6 +207,40 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       const parsed = (parseRes && typeof parseRes === 'object' && 'data' in parseRes) ? (parseRes as any).data : parseRes;
 
       if (parsed?.is_confirmable && parsed?.fact_type) {
+        // 2a. A medication-shaped instruction additionally creates a real,
+        // linked Medication record (planned, doctor-sourced, unconfirmed)
+        // instead of just a generic confirm bubble — createMedicationFromText
+        // handles the normalize/reconcile/create path shared with
+        // reportMedication, so a Care Room instruction and a patient's own
+        // chat report go through the identical creation discipline.
+        let linkedMedicationId = '';
+        const md = parsed.medication_detail;
+        if (fromParty === 'doctor' && md?.name && caseRec) {
+          try {
+            const rawText = [md.name, md.dose, md.route, md.frequency, md.duration].filter(Boolean).join(' ');
+            const created = await createMedicationFromText(base44, {
+              case_id: caseId,
+              patient_email: patientEmail,
+              doctor_email: doctorEmail,
+              raw_text: rawText,
+              source_type: 'doctor',
+              source_record_id: message.id,
+              reported_by_email: doctorEmail || 'doctor',
+              reported_by_note: 'Doctor instruction from the Care Room',
+              allergy_text: caseRec.allergies,
+              notify: false, // the confirm bubble below already tells the patient
+            });
+            if (created) {
+              linkedMedicationId = created.medication.id;
+              await base44.asServiceRole.entities.Medication.update(created.medication.id, { status: 'planned' }).catch(() => {});
+            }
+          } catch (_) { /* never block the confirm bubble on this */ }
+        }
+
+        const confirmBody = linkedMedicationId
+          ? `Your doctor proposed starting ${md.name}${md.dose ? ' ' + md.dose : ''}${md.frequency ? ', ' + md.frequency : ''} — please confirm this is correct.`
+          : `${parsed.summary} Please confirm you understood.`;
+
         await base44.asServiceRole.entities.QuoteMessage.create({
           case_id: caseId,
           quote_id: '',
@@ -211,13 +250,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
           from_id: '',
           to_party: recipientParty,
           message_type: 'message',
-          body: `${parsed.summary} Please confirm you understood.`,
+          body: confirmBody,
           body_translated: '',
           recipient_language: '',
           contact_scrubbed: false,
           status: 'unread',
           requires_confirmation: true,
           confirmed: false,
+          medication_id: linkedMedicationId,
           created_at: new Date().toISOString(),
         }).catch(() => {});
 

@@ -47,6 +47,10 @@ const ALLOWED_EVENT_TYPES = new Set([
   'vault_document_verification_result',
   'vault_document_reviewed',
   'vault_document_accessed',
+  'medication_reported',
+  'medication_confirmed',
+  'medication_flagged',
+  'medication_discontinued',
 ]);
 
 async function sha256(text: string): Promise<string> {

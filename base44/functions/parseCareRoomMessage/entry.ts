@@ -31,6 +31,7 @@ Extract:
 - summary: a short, plain-language restatement of the fact (e.g. "Appointment confirmed for Tuesday at 9:00 AM" or "Fast for 8 hours before your procedure"), or empty string if not confirmable.
 - extracted_date: an ISO date (YYYY-MM-DD) if a specific calendar date is stated or clearly inferable, otherwise null. Never guess a date from a vague reference like "next week".
 - extracted_time: a plain time string (e.g. "9:00 AM") if stated, otherwise null.
+- medication_detail: if, and only if, this is a medication instruction (e.g. "Start amoxicillin 500mg three times daily for seven days") — an object {name, dose, frequency, route, duration}, using empty strings for any part not stated. Otherwise null. Never invent a detail not actually said.
 
 Return ONLY valid JSON, no markdown fences.`;
 
@@ -45,6 +46,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   let summary = '';
   let extracted_date: string | null = null;
   let extracted_time: string | null = null;
+  let medication_detail: { name: string; dose: string; frequency: string; route: string; duration: string } | null = null;
 
   try {
     const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
@@ -58,6 +60,13 @@ Deno.serve(createHandler(async ({ base44, body }) => {
           summary: { type: 'string' },
           extracted_date: { type: ['string', 'null'] },
           extracted_time: { type: ['string', 'null'] },
+          medication_detail: {
+            type: ['object', 'null'],
+            properties: {
+              name: { type: 'string' }, dose: { type: 'string' },
+              frequency: { type: 'string' }, route: { type: 'string' }, duration: { type: 'string' },
+            },
+          },
         },
         required: ['is_confirmable', 'fact_type', 'summary', 'extracted_date', 'extracted_time'],
       },
@@ -69,8 +78,18 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       summary = typeof r.summary === 'string' ? r.summary.slice(0, 300) : '';
       extracted_date = typeof r.extracted_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.extracted_date) ? r.extracted_date : null;
       extracted_time = typeof r.extracted_time === 'string' ? r.extracted_time.slice(0, 30) : null;
+      const md = r.medication_detail as Record<string, unknown> | null | undefined;
+      if (md && typeof md === 'object' && typeof md.name === 'string' && md.name.trim()) {
+        medication_detail = {
+          name: md.name.slice(0, 200),
+          dose: typeof md.dose === 'string' ? md.dose.slice(0, 100) : '',
+          frequency: typeof md.frequency === 'string' ? md.frequency.slice(0, 200) : '',
+          route: typeof md.route === 'string' ? md.route.slice(0, 100) : '',
+          duration: typeof md.duration === 'string' ? md.duration.slice(0, 100) : '',
+        };
+      }
       if (!is_confirmable || !fact_type || !summary) {
-        is_confirmable = false; fact_type = null; summary = ''; extracted_date = null; extracted_time = null;
+        is_confirmable = false; fact_type = null; summary = ''; extracted_date = null; extracted_time = null; medication_detail = null;
       }
     }
   } catch (_) {
@@ -78,5 +97,5 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     // real message send that's waiting on this.
   }
 
-  return ok({ is_confirmable, fact_type, summary, extracted_date, extracted_time });
+  return ok({ is_confirmable, fact_type, summary, extracted_date, extracted_time, medication_detail });
 }, { name: 'parseCareRoomMessage', requireAuth: false, rateLimit: { max: 30, windowSeconds: 300 }, bodySchema: BodySchema }));

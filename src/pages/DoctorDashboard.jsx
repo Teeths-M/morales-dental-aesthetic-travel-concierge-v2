@@ -18,6 +18,7 @@ import DoctorQuoteInbox from '@/components/quotes/DoctorQuoteInbox';
 import CaseThread from '@/components/quotes/CaseThread';
 import CareTimeline from '@/components/quotes/CareTimeline';
 import SignedConsentPanel from '@/components/doctor-dashboard/SignedConsentPanel';
+import MedicationSafetyPanel from '@/components/doctor/MedicationSafetyPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
@@ -433,6 +434,7 @@ export default function DoctorDashboard() {
                           <div className="mt-3">
                             <CareTimeline caseRecord={c} theme="light" />
                             <CaseThread caseId={c.id} viewer="doctor" theme="light" />
+                            <MedicationSafetyPanel caseRecord={c} />
                           </div>
                         )}
                         <SignedConsentPanel caseRecord={c} />

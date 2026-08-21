@@ -1,0 +1,118 @@
+{
+  "name": "Medication",
+  "type": "object",
+  "description": "A single structured medication record for one patient's journey — reported, extracted, or doctor-instructed, always with real provenance and never treated as verified/active until a real human (the patient for a self-report, a doctor for a clinical instruction or a flagged review) confirms it. All writes go through reportMedication (creation), confirmMedication (patient/doctor confirm-edit-reject-discontinue), or the Care Room's medication-linking step inside postCaseMessage/confirmCareRoomMessage — create/update RLS is admin-only so a client (or M-Care's own agent tool grant, which is read-only) can never directly write a fabricated confirmation or status. Detection (duplicates, a naive allergy-keyword match, missing details) is never diagnosis and never prescribing — flags only ever route to status='requires_review' for a real doctor to resolve.",
+  "properties": {
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized RLS anchor — the patient this medication belongs to."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this medication is part of."
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized from CaseRecord.doctor_email at creation time — the case's assigned doctor, for RLS and Doctor Dashboard scoping. Blank if no doctor is assigned yet."
+    },
+    "normalized_name": {
+      "type": "string",
+      "description": "The medication name as extracted/cleaned from the source text. Never a claim of pharmacological normalization — no RxNorm/RxCUI lookup exists in this app today."
+    },
+    "brand_name": { "type": "string" },
+    "generic_name": { "type": "string" },
+    "rxcui": {
+      "type": "string",
+      "description": "RxNorm concept ID. Always blank until a real RxNorm integration exists — never fabricated."
+    },
+    "strength": { "type": "string" },
+    "dosage": { "type": "string" },
+    "route": { "type": "string" },
+    "frequency": { "type": "string" },
+    "indication": {
+      "type": "string",
+      "description": "The stated reason/condition this medication is for, if mentioned."
+    },
+    "start_date": { "type": "string", "format": "date" },
+    "end_date": { "type": "string", "format": "date" },
+    "status": {
+      "type": "string",
+      "enum": ["reported", "active", "planned", "completed", "stopped", "discontinued", "unknown", "requires_review"],
+      "default": "reported",
+      "description": "requires_review means the reconciliation engine found a real flag (duplicate, possible allergy-name match, missing details, low-confidence extraction) — only a doctor's confirmMedication action can move it out of this state. A patient's own patient_confirm never clears a flag by itself."
+    },
+    "prescribing_doctor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "The real, linked Doctor who prescribed this, if known and on-platform."
+    },
+    "prescribing_provider_name": {
+      "type": "string",
+      "description": "Free-text fallback for a prescriber not in this system (e.g. a home-country doctor)."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["patient", "doctor", "document", "prescription", "hospital", "system_observation"],
+      "description": "Required provenance. 'hospital' and 'system_observation' are reserved for future integrations — no writer in this app uses them yet, and none will until a real one exists."
+    },
+    "source_record_id": {
+      "type": "string",
+      "description": "App-level reference to the originating record (e.g. a QuoteMessage id for a Care Room instruction, a Consultation id for an intake report) — informational, not a DB-enforced FK."
+    },
+    "confidence": {
+      "type": "number",
+      "description": "0-100. The extraction model's own reported confidence — never a claim of clinical verification. Only patient_confirmed/doctor_confirmed represent human verification."
+    },
+    "patient_confirmed": { "type": "boolean", "default": false },
+    "doctor_confirmed": { "type": "boolean", "default": false },
+    "last_reviewed_at": { "type": "string", "format": "date-time" },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Reconciliation engine output codes (e.g. duplicate_active_medication, possible_allergy_conflict, missing_dosage_details, ambiguous_extraction). Human-readable flag codes only — never a diagnosis or an interaction claim."
+    },
+    "history": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Append-only audit trail of every change — {change_type, changed_by_email, changed_at, previous_values, note}. change_type is one of created/edited/patient_confirmed/doctor_confirmed/discontinued/rejected/flagged. Never overwritten, only appended to."
+    },
+    "confirmation_nudge_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "JourneyEvent dedupe — the low-priority 'can you confirm this' nudge fires at most once per record."
+    },
+    "review_alert_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "JourneyEvent dedupe — the medium-priority 'this needs your doctor's review' nudge fires at most once per record."
+    }
+  },
+  "required": ["patient_email", "case_id", "normalized_name", "status", "source_type"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.patient_email": "{{user.email}}" },
+        { "data.doctor_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "admin" }
+    }
+  }
+}

@@ -3490,6 +3490,16 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(recoveryDispatchSrc, 'recoveryTransportDispatch must not create JourneyEvent directly')
     .not.toMatch(/entities\.JourneyEvent\.create/);
 
+  // createMedicationFromText lives in shared/ too — the single real creation
+  // path behind both reportMedication (a patient's own chat report) and the
+  // intake-seeding step in createCaseFromConsultation.ts, so wiring it here
+  // alone covers both real medication-reporting triggers.
+  const createMedSrc = strip(read('base44/shared/createMedicationFromText.ts'));
+  expect(createMedSrc, 'createMedicationFromText must log JourneyEvent via the shared helper, not a raw create call')
+    .toContain('logJourneyEvent(');
+  expect(createMedSrc, 'createMedicationFromText must not create JourneyEvent directly')
+    .not.toMatch(/entities\.JourneyEvent\.create/);
+
   // Never create an event merely because an LLM predicts something might
   // happen: aiAdditionalRisks only ever returns data in detectFallbackCrisis's
   // own JSON response — no CaseRecord write, no notification, no JourneyEvent.
@@ -3867,6 +3877,79 @@ test('VAULT DOCUMENT: VaultDocument RLS is owner-or-admin only, only scanVaultDo
     .toMatch(/verification_status\s*=\s*'verified'/);
   expect(approveBlock, "reviewVaultDocument's approve branch must always set a real, non-empty verification_source")
     .toMatch(/verification_source\s*=\s*'Manual admin review'/);
+});
+
+test('MEDICATION: Medication RLS is admin-only to write, the agent grant is read-only, reportMedication never itself confirms anything, confirmMedication is role-gated per action, and reconciliation only ever flags', () => {
+  // Same shape as VaultDocument: read patient-or-doctor-or-admin, create/
+  // update/delete admin-only — every real write goes through
+  // createMedicationFromText/confirmMedication via asServiceRole, so a
+  // client (or M-Care's own agent tool grant, which is read-only) can never
+  // directly write a fabricated confirmation or 'active' status.
+  const entity = read('base44/entities/Medication.jsonc');
+  expect(entity, 'read must be scoped to patient_email, doctor_email, or admin/platform_admin, not wide open')
+    .toMatch(/"read"\s*:\s*\{\s*"\$or"\s*:\s*\[\s*\{\s*"data\.patient_email"\s*:\s*"\{\{user\.email\}\}"/);
+  for (const op of ['create', 'update']) {
+    const opSlice = entity.slice(entity.indexOf(`"${op}"`), entity.indexOf(`"${op}"`) + 200);
+    expect(opSlice, `${op} must be admin/platform_admin only — all real writes go through createMedicationFromText/confirmMedication via asServiceRole`)
+      .toMatch(/"role"\s*:\s*"admin"/);
+    expect(opSlice, `${op} must never grant a plain authenticated user direct write access`)
+      .not.toMatch(/"authenticated"\s*:\s*true/);
+  }
+  expect(entity, 'delete must be admin-only')
+    .toMatch(/"delete"\s*:\s*\{\s*"user_condition"\s*:\s*\{\s*"role"\s*:\s*"admin"/);
+
+  // m_care.jsonc must grant Medication read-only — the agent can answer
+  // "what medications do I have on file" but has zero structural path to
+  // write doctor_confirmed/patient_confirmed/status:'active' itself.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const grantMatch = agentConfig.match(/\{\s*"entity_name"\s*:\s*"Medication"\s*,\s*"allowed_operations"\s*:\s*\[([^\]]*)\]\s*\}/);
+  expect(grantMatch, 'Medication must be granted to the M-Care agent to check its allowed_operations').toBeTruthy();
+  const grantedOps = grantMatch[1];
+  expect(grantedOps, 'the agent Medication grant must include read').toMatch(/"read"/);
+  expect(grantedOps, 'the agent Medication grant must never include create').not.toMatch(/"create"/);
+  expect(grantedOps, 'the agent Medication grant must never include update').not.toMatch(/"update"/);
+  expect(grantedOps, 'the agent Medication grant must never include delete').not.toMatch(/"delete"/);
+  expect(agentConfig, "RULE 29 must explicitly forbid M-Care from confirming, prescribing, or changing a medication itself")
+    .toMatch(/RULE 29[\s\S]{0,400}never confirm it, prescribe it, change a dose, start or stop a medication, or declare any combination safe/);
+
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  // reportMedication only ever creates via the shared helper — it must
+  // never itself set patient_confirmed/doctor_confirmed true or write
+  // status: 'active' directly.
+  const reportSrc = strip(read('base44/functions/reportMedication/entry.ts'));
+  expect(reportSrc, 'reportMedication must never itself set patient_confirmed: true').not.toMatch(/patient_confirmed:\s*true/);
+  expect(reportSrc, 'reportMedication must never itself set doctor_confirmed: true').not.toMatch(/doctor_confirmed:\s*true/);
+  expect(reportSrc, "reportMedication must never itself assign status: 'active'").not.toMatch(/status:\s*'active'/);
+
+  const createMedSrc = strip(read('base44/shared/createMedicationFromText.ts'));
+  expect(createMedSrc, 'createMedicationFromText must never itself set patient_confirmed: true — a new record is always unconfirmed')
+    .not.toMatch(/patient_confirmed:\s*true/);
+  expect(createMedSrc, 'createMedicationFromText must never itself set doctor_confirmed: true — a new record is always unconfirmed')
+    .not.toMatch(/doctor_confirmed:\s*true/);
+
+  // confirmMedication is the only place a confirmation/edit/reject/
+  // discontinue/request_info is ever recorded — patient-only and doctor-only
+  // actions must each be structurally gated before being applied.
+  const confirmMedSrc = strip(read('base44/functions/confirmMedication/entry.ts'));
+  expect(confirmMedSrc, 'confirmMedication must gate its patient-only actions on the caller being the patient (or admin)')
+    .toMatch(/PATIENT_ACTIONS\.has\(action\)\s*&&\s*!isAdmin\s*&&\s*!isPatient/);
+  expect(confirmMedSrc, "confirmMedication must gate its doctor-only actions on the caller matching Medication.doctor_email (or admin)")
+    .toMatch(/DOCTOR_ACTIONS\.has\(action\)\s*&&\s*!isAdmin\s*&&\s*!isDoctor/);
+  expect(confirmMedSrc, 'isDoctor must be derived from the record\'s own doctor_email, never a caller-supplied field')
+    .toMatch(/med\.doctor_email\s*===\s*user!\.email/);
+  expect(confirmMedSrc, "a flagged record must only be resolvable by doctor_confirm, not by the patient's own patient_confirm")
+    .toMatch(/status\s*===\s*'reported'\)\s*update\.status\s*=\s*'active'/);
+
+  // medicationReconciliation.ts must stay pure detection — no LLM, no
+  // network, no randomness, and its output must never be stronger than a
+  // flag list (no 'blocked'/'denied'-shaped decision anywhere in the file).
+  const reconSrc = strip(read('base44/shared/medicationReconciliation.ts'));
+  expect(reconSrc, 'medicationReconciliation.ts must never call an LLM').not.toMatch(/InvokeLLM/);
+  expect(reconSrc, 'medicationReconciliation.ts must never make a network call').not.toMatch(/\bfetch\(/);
+  expect(reconSrc, 'medicationReconciliation.ts must never itself write any entity').not.toMatch(/\.(create|update|delete)\(/);
+  expect(reconSrc, "medicationReconciliation.ts must never return a decision stronger than a flag list (no 'blocked'/'denied')")
+    .not.toMatch(/'blocked'|'denied'/);
 });
 
 test('CARE ROOM: QuoteMessage RLS is unchanged by the new fields, only the addressed party can confirm a message, and parseCareRoomMessage never writes', () => {
