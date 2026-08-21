@@ -1367,6 +1367,15 @@ test('CLAIMS: no invented usage numbers, and the checkpoint count matches the en
     expect(hit && hit[0], `${f} states a usage count with no data behind it: ${hit && hit[0]}`).toBeFalsy();
   }
 
+  // HowItWorksPage.jsx (the page the navbar's "How It Works" link actually
+  // opens) externalizes all its copy to i18n rather than hardcoding it in the
+  // component — so the real content to guard lives in the locale file, not
+  // the .jsx wrapper. Same discipline, applied where the content actually is.
+  const enLocale = JSON.parse(read('src/locales/en/translation.json'));
+  const howItWorksCopy = JSON.stringify(enLocale.how_it_works || {});
+  const howItWorksHit = howItWorksCopy.match(USAGE_CLAIM);
+  expect(howItWorksHit && howItWorksHit[0], `how_it_works locale copy states a usage count with no data behind it: ${howItWorksHit && howItWorksHit[0]}`).toBeFalsy();
+
   // ── The advertised checkpoint count must equal the real one ──
   // Source of truth is HandshakeButton: the labels array and the completion
   // threshold. If a checkpoint is ever added or removed, the marketing number

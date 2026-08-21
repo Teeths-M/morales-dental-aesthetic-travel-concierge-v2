@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, ClipboardList, CreditCard, Plane, Stethoscope, HeartPulse, CalendarCheck, ArrowRight } from 'lucide-react';
 import PageHeroBand from '@/components/layout/PageHeroBand';
 import { useTranslation } from '@/i18n';
+import { emitOpenMcare } from '@/lib/openMcareEvent';
+import McareAvatar from '@/components/mcare-agent/McareAvatar';
 
 export default function HowItWorksPage() {
   const { t } = useTranslation();
@@ -78,11 +80,18 @@ export default function HowItWorksPage() {
           <p className="text-white/55 text-[15px] mb-8 max-w-sm mx-auto leading-relaxed" style={{ fontWeight: 300 }}>
             {t('how_it_works.cta_sub')}
           </p>
-          <Link to="/intake">
-            <Button size="lg" className="bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] font-semibold px-10 hover:opacity-90 h-12 rounded-xl text-[15px]">
-              {t('home.cta_medical')} <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            onClick={emitOpenMcare}
+            className="bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] font-semibold px-10 hover:opacity-90 h-12 rounded-xl text-[15px] gap-2"
+          >
+            <McareAvatar size={18} /> {t('how_it_works.cta_button')} <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+          <p className="mt-5">
+            <Link to="/intake" className="text-white/35 text-[13px] hover:text-white/60 underline underline-offset-4 transition-colors">
+              {t('how_it_works.prefer_form')}
+            </Link>
+          </p>
           <p className="text-white/30 text-[11px] mt-5 flex items-center justify-center gap-3 flex-wrap">
             <span>{t('how_it_works.badge_secure')}</span>
             <span>·</span>

@@ -7,6 +7,8 @@ import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import ModeToggle from '@/components/home/ModeToggle';
 import { useTranslation, changeLanguage } from '@/i18n';
 import { CALM } from '@/lib/brandTokens';
+import { emitOpenMcare } from '@/lib/openMcareEvent';
+import McareAvatar from '@/components/mcare-agent/McareAvatar';
 
 export default function Header() {
   const [isMobileOpen,   setIsMobileOpen]   = useState(false);
@@ -189,6 +191,16 @@ export default function Header() {
           {user ? (
             /* Avatar dropdown */
             <>
+            <button
+              onClick={emitOpenMcare}
+              className="m-cta-breathe inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+              style={{
+                background: calm ? CALM.action : 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
+                color: calm ? '#fff' : '#060B16',
+              }}
+            >
+              <McareAvatar size={16} /> {t('nav.talk_to_mcare')}
+            </button>
             <span className="hidden xl:block text-[12px] font-medium" style={{ color: calm ? CALM.textFaint : 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}>
                 {timeGreeting}
               </span>
@@ -256,16 +268,16 @@ export default function Header() {
               >
                 {t('nav.sign_in')}
               </Link>
-              <Link
-                to="/intake"
-                className="m-cta-breathe inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+              <button
+                onClick={emitOpenMcare}
+                className="m-cta-breathe inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 style={{
                   background: calm ? CALM.action : 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
                   color: calm ? '#fff' : '#060B16',
                 }}
               >
-                {t('nav.book_now')}
-              </Link>
+                <McareAvatar size={16} /> {t('nav.talk_to_mcare')}
+              </button>
             </div>
           )}
 
@@ -334,6 +346,13 @@ export default function Header() {
 
           {/* Auth */}
           <div className="flex flex-col gap-3 pt-4 border-t border-white/[0.06]">
+            <button
+              onClick={() => { setIsMobileOpen(false); emitOpenMcare(); }}
+              className="w-full text-center min-h-[52px] flex items-center justify-center gap-2 rounded-full text-base font-bold"
+              style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
+            >
+              <McareAvatar size={20} /> {t('nav.talk_to_mcare')}
+            </button>
             {user ? (
               <>
                 {user.full_name && <p className="text-sm font-semibold text-white">{user.full_name}</p>}
@@ -355,13 +374,6 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link
-                  to="/intake" onClick={() => setIsMobileOpen(false)}
-                  className="w-full text-center min-h-[52px] flex items-center justify-center rounded-full text-base font-bold"
-                  style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
-                >
-                  {t('nav.book_now')}
-                </Link>
                 <Link
                   to="/dashboard" onClick={() => setIsMobileOpen(false)}
                   className="w-full text-center min-h-[48px] flex items-center justify-center rounded-full text-base font-medium"

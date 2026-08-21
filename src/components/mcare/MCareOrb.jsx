@@ -38,6 +38,7 @@ import { handleChatPaste } from '@/lib/chatPaste';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/i18n';
 import { STRUGGLE_HINT_EVENT } from '@/lib/struggleHint';
+import { MCARE_OPEN_EVENT } from '@/lib/openMcareEvent';
 import { extractSpeakableText, isSpeechSupported } from '@/lib/talkMode';
 import { speakTextNeural, stopAllSpeech, isNeuralSpeaking } from '@/lib/neuralSpeech';
 import {
@@ -766,6 +767,21 @@ export default function MCareOrb() {
       markJourneyEventsSeen();
     }
   }, [search, isQuietRoute]);
+
+  // A repeatable, click-anywhere way to open M-Care — the "Talk to M-Care"
+  // navbar button and the How It Works page CTA both dispatch this instead
+  // of the ?mcare=open deep-link, which only fires once per page load.
+  // Mirrors the exact same open sequence the floating orb button itself uses.
+  useEffect(() => {
+    const onOpenRequest = () => {
+      setOpen(true);
+      setDismissed(true);
+      setStruggleHint(null);
+      markJourneyEventsSeen();
+    };
+    window.addEventListener(MCARE_OPEN_EVENT, onOpenRequest);
+    return () => window.removeEventListener(MCARE_OPEN_EVENT, onOpenRequest);
+  }, []);
 
   useEffect(() => {
     if (!pastHero || isQuietRoute) return;
