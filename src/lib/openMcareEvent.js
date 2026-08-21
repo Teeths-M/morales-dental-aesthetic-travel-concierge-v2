@@ -20,5 +20,11 @@
 export const MCARE_OPEN_EVENT = 'morales-mcare-open';
 
 export function emitOpenMcare(starterMessage) {
-  window.dispatchEvent(new CustomEvent(MCARE_OPEN_EVENT, { detail: { starterMessage } }));
+  // Only ever forward a real string. Several callers wire this directly as
+  // `onClick={emitOpenMcare}` (Header navbar, How It Works CTA), which means
+  // React passes the click event as the first arg — a non-string that would
+  // later blow up `sendAgentMessage`'s `.trim()`. Ignore anything that isn't
+  // a string so those wiring accidents open M-Care cleanly instead of throwing.
+  const msg = typeof starterMessage === 'string' ? starterMessage : null;
+  window.dispatchEvent(new CustomEvent(MCARE_OPEN_EVENT, { detail: { starterMessage: msg } }));
 }
