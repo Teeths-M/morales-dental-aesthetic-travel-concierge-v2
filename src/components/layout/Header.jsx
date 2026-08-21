@@ -62,15 +62,26 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handler);
   }, [isUserMenuOpen]);
 
+  // Every tab below opens M-Care instead of navigating, with an honest starter
+  // message matching what it already means — M-Care already has real tool
+  // access for each (discoverProviderCandidates+verifyDiscoveredCandidate,
+  // getProcedureKnowledge, RULE 17 identity/origin, the 5 mcareCreate*Pending
+  // partner-signup tools). The pages themselves stay live, reachable from
+  // Home/Dashboard/Footer/etc. — only the nav tab's own action changes.
   const navLinks = [
-    { name: t('nav.find_doctors'),  path: '/providers', icon: Stethoscope },
-    { name: t('nav.procedures'),    path: '/procedures', icon: ClipboardList },
-    { name: t('nav.how_it_works'),  path: '/how-it-works', icon: HelpCircle },
-    // Supply-side door — one quiet link, no dropdown; /signup forks
-    // patient vs provider on a single clear landing.
-    { name: t('nav.for_partners'), path: '/signup', icon: Handshake },
+    { name: t('nav.find_doctors'),  path: '/providers', icon: Stethoscope,
+      starterMessage: "I'd like your help finding and verifying a doctor — I have a name and location in mind." },
+    { name: t('nav.procedures'),    path: '/procedures', icon: ClipboardList,
+      starterMessage: "I'd like to learn about a procedure — its risks, recovery, and what to expect." },
+    { name: t('nav.how_it_works'),  path: '/how-it-works', icon: HelpCircle,
+      starterMessage: "Can you explain how Morales and M-Care work?" },
+    // Supply-side door — one quiet tab, no dropdown; M-Care asks which
+    // partner type (doctor, travel agency, taxi, companion, security).
+    { name: t('nav.for_partners'), path: '/signup', icon: Handshake,
+      starterMessage: "I'm interested in becoming a Morales partner." },
     // Demo entry is for judges/internal use — never shown to patients unless
-    // explicitly enabled at build time (VITE_SHOW_DEMO_NAV=true).
+    // explicitly enabled at build time (VITE_SHOW_DEMO_NAV=true). No
+    // starterMessage — stays a normal link, untouched.
     ...(import.meta.env.VITE_SHOW_DEMO_NAV === 'true'
       ? [{ name: t('nav.live_demo'), path: '/demo', gold: true }]
       : []),
@@ -164,21 +175,30 @@ export default function Header() {
         <div className="hidden lg:flex items-center gap-8 text-[14px]">
           {navLinks.map(link => {
             const Icon = link.icon;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className="flex items-center gap-1.5"
-                style={{
-                  color:      link.gold ? '#D4AF37' : location.pathname === link.path ? (calm ? CALM.text : '#FFFFFF') : (calm ? CALM.textSoft : '#8A9099'),
-                  fontWeight: link.gold || location.pathname === link.path ? 600 : 400,
-                  transition: 'color 0.2s',
-                }}
-                onMouseEnter={e => { if (!link.gold && location.pathname !== link.path) e.currentTarget.style.color = calm ? CALM.text : '#FFFFFF'; }}
-                onMouseLeave={e => { if (!link.gold && location.pathname !== link.path) e.currentTarget.style.color = calm ? CALM.textSoft : '#8A9099'; }}
-              >
+            const isActive = location.pathname === link.path;
+            const sharedProps = {
+              className: 'flex items-center gap-1.5',
+              style: {
+                color:      link.gold ? '#D4AF37' : isActive ? (calm ? CALM.text : '#FFFFFF') : (calm ? CALM.textSoft : '#8A9099'),
+                fontWeight: link.gold || isActive ? 600 : 400,
+                transition: 'color 0.2s',
+              },
+              onMouseEnter: e => { if (!link.gold && !isActive) e.currentTarget.style.color = calm ? CALM.text : '#FFFFFF'; },
+              onMouseLeave: e => { if (!link.gold && !isActive) e.currentTarget.style.color = calm ? CALM.textSoft : '#8A9099'; },
+            };
+            const content = (
+              <>
                 {Icon && <Icon className="w-3.5 h-3.5" />}
                 {link.gold ? `▶ ${link.name}` : link.name}
+              </>
+            );
+            return link.starterMessage ? (
+              <button key={link.path} onClick={() => emitOpenMcare(link.starterMessage)} {...sharedProps}>
+                {content}
+              </button>
+            ) : (
+              <Link key={link.path} to={link.path} {...sharedProps}>
+                {content}
               </Link>
             );
           })}
@@ -336,8 +356,13 @@ export default function Header() {
             </Link>
             {navLinks.map(link => {
               const Icon = link.icon;
-              return (
-                <Link key={link.path} to={link.path} onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3 min-h-[52px] px-2 rounded-xl text-lg font-medium text-white/80 hover:text-white hover:bg-white/5">
+              const className = "flex items-center gap-3 min-h-[52px] px-2 rounded-xl text-lg font-medium text-white/80 hover:text-white hover:bg-white/5";
+              return link.starterMessage ? (
+                <button key={link.path} onClick={() => { setIsMobileOpen(false); emitOpenMcare(link.starterMessage); }} className={`text-left ${className}`}>
+                  {Icon && <Icon className="w-5 h-5" />} {link.name}
+                </button>
+              ) : (
+                <Link key={link.path} to={link.path} onClick={() => setIsMobileOpen(false)} className={className}>
                   {Icon && <Icon className="w-5 h-5" />} {link.name}
                 </Link>
               );
