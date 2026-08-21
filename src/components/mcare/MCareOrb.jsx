@@ -773,11 +773,17 @@ export default function MCareOrb() {
   // of the ?mcare=open deep-link, which only fires once per page load.
   // Mirrors the exact same open sequence the floating orb button itself uses.
   useEffect(() => {
-    const onOpenRequest = () => {
+    const onOpenRequest = (e) => {
       setOpen(true);
       setDismissed(true);
       setStruggleHint(null);
       markJourneyEventsSeen();
+      // Same "read the freshest handler via a ref, never list it as a
+      // dependency" pattern this file already uses for every other
+      // cross-cutting caller (handleResumeIntent, the distress-signal
+      // handler, the continuous-recognition callback).
+      const starterMessage = e?.detail?.starterMessage;
+      if (starterMessage) liveRef.current.sendAgentMessage?.(starterMessage);
     };
     window.addEventListener(MCARE_OPEN_EVENT, onOpenRequest);
     return () => window.removeEventListener(MCARE_OPEN_EVENT, onOpenRequest);

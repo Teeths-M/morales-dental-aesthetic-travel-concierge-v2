@@ -8,6 +8,19 @@ import { usePlatformMode } from '@/context/PlatformModeContext';
 import { Shield, CheckCircle, Heart, Play } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
 import { useTranslation } from '@/i18n';
+import { emitOpenMcare } from '@/lib/openMcareEvent';
+import McareAvatar from '@/components/mcare-agent/McareAvatar';
+
+// Honest, generic statements of what each hero CTA click already means —
+// auto-sent as the opening message so M-Care starts the right flow (or the
+// right mode) immediately, without making the user re-type what a specific
+// button already told it. Never a fabricated fact, only the click's own
+// intent restated in words.
+const STARTER_MESSAGE = {
+  medical:    "I'd like to start planning my medical trip.",
+  nonmedical: "I'd like to start planning my trip.",
+  byoj:       "I already booked a procedure elsewhere and I'd like to add Morales's safety protection.",
+};
 
 const GOLD       = BRAND.gold;
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
@@ -265,28 +278,28 @@ export default function LuxuryHero() {
               className="flex flex-col gap-3 mb-8"
             >
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <Link to={content.cta.path}>
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="group relative w-full sm:w-auto min-h-[56px] px-10 rounded-full text-base font-semibold overflow-hidden transition-shadow duration-300"
-                    style={{
-                      background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
-                      color:         '#060B16',
-                      boxShadow:     `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
-                      letterSpacing: '0.02em',
-                    }}
-                  >
-                    <span className="relative z-10 flex items-center gap-2.5">
-                      {isMedical ? t('home.cta_medical') : t('home.cta_nonmedical')}
-                      <span>→</span>
-                    </span>
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
-                      style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
-                    />
-                  </motion.button>
-                </Link>
+                <motion.button
+                  onClick={() => emitOpenMcare(isMedical ? STARTER_MESSAGE.medical : STARTER_MESSAGE.nonmedical)}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative w-full sm:w-auto min-h-[56px] px-10 rounded-full text-base font-semibold overflow-hidden transition-shadow duration-300"
+                  style={{
+                    background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
+                    color:         '#060B16',
+                    boxShadow:     `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  <span className="relative z-10 flex items-center gap-2.5">
+                    <McareAvatar size={18} />
+                    {isMedical ? t('home.cta_medical') : t('home.cta_nonmedical')}
+                    <span>→</span>
+                  </span>
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
+                    style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
+                  />
+                </motion.button>
 
                 {/* Secondary: glass demo pill — how judges/investors reach the full platform demo */}
                 <Link to="/demo">
@@ -310,26 +323,35 @@ export default function LuxuryHero() {
                 </Link>
 
                 {/* Tertiary: glass pill — for anyone who already booked elsewhere (BYOJ) */}
-                <Link to="/protect">
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full sm:w-auto min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
-                    style={{
-                      background:    'rgba(255,255,255,0.05)',
-                      backdropFilter: 'blur(16px)',
-                      WebkitBackdropFilter: 'blur(16px)',
-                      border:        `1px solid rgba(212,175,55,0.30)`,
-                      color:         `${GOLD}cc`,
-                      letterSpacing: '0.02em',
-                      boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <Shield style={{ width: 14, height: 14, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
-                    {t('home.cta_byoj')}
-                  </motion.button>
-                </Link>
+                <motion.button
+                  onClick={() => emitOpenMcare(STARTER_MESSAGE.byoj)}
+                  whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                  style={{
+                    background:    'rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border:        `1px solid rgba(212,175,55,0.30)`,
+                    color:         `${GOLD}cc`,
+                    letterSpacing: '0.02em',
+                    boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <Shield style={{ width: 14, height: 14, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
+                  {t('home.cta_byoj')}
+                </motion.button>
               </div>
+
+              {/* /protect's own manual form now has no other entry point in the
+                  app — this is its one remaining way in for anyone who'd
+                  rather enter it themselves than talk to M-Care. */}
+              <Link
+                to="/protect"
+                style={{ fontSize: '12px', color: 'rgba(255,255,255,0.28)', letterSpacing: '0.01em', textDecoration: 'underline', textUnderlineOffset: '3px', width: 'fit-content' }}
+              >
+                {t('home.byoj_prefer_form')}
+              </Link>
 
               {/* No-account signal — directly below the buttons */}
               {isMedical && (

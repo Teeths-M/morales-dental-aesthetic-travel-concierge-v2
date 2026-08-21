@@ -9,9 +9,16 @@
  * Unlike the `?mcare=open` deep-link (which only fires once per page load
  * via a ref guard), this is a plain event — safe to dispatch repeatedly, any
  * time, from any page.
+ *
+ * starterMessage (optional): an honest, generic statement of what the click
+ * already means (e.g. "I already booked a procedure elsewhere and I'd like
+ * to add Morales's safety protection") — auto-sent as the opening message so
+ * the user never has to re-type what a specific button already told M-Care.
+ * Never a fabricated fact, only a plain restatement of the click's own
+ * intent.
  */
 export const MCARE_OPEN_EVENT = 'morales-mcare-open';
 
-export function emitOpenMcare() {
-  window.dispatchEvent(new CustomEvent(MCARE_OPEN_EVENT));
+export function emitOpenMcare(starterMessage) {
+  window.dispatchEvent(new CustomEvent(MCARE_OPEN_EVENT, { detail: { starterMessage } }));
 }
