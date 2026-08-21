@@ -20,6 +20,7 @@
 
 import { PARTNER_TYPE_CONFIG, partnerDisplayName, type PartnerType } from './partnerTypeConfig.ts';
 import { extractContactInfo } from './extractContactInfo.ts';
+import { resolvePartnerLanguage, type LanguageCode } from './partnerLanguage.ts';
 
 const WEBSITE_FIELD: Partial<Record<PartnerType, string>> = {
   doctor: 'website_url',
@@ -27,6 +28,7 @@ const WEBSITE_FIELD: Partial<Record<PartnerType, string>> = {
 };
 
 const FETCH_TIMEOUT_MS = 8000;
+const FETCH_RETRY_DELAY_MS = 300;
 
 export interface PartnerResearchResult {
   found_partner: boolean;
@@ -40,7 +42,45 @@ export interface PartnerResearchResult {
   page_title: string | null;
   extracted: { emails: string[]; phones: string[]; whatsapp: string[]; addresses: string[] } | null;
   on_file_contact_matches: boolean | null; // null = nothing to compare
+  resolved_language: LanguageCode;
+  language_source: 'partner_preference' | 'country_inferred' | 'default';
   summary: string;
+}
+
+async function fetchPartnerSite(url: string): Promise<{ html: string; pageTitle: string | null; fetchError: string | null }> {
+  const attempt = async (): Promise<{ html: string; pageTitle: string | null }> => {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        redirect: 'follow',
+        signal: ctrl.signal,
+        headers: { 'User-Agent': 'Morales-MCare/1.0 (+https://morales.com)' },
+      });
+      const html = await res.text();
+      const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      return { html, pageTitle: m ? m[1].replace(/\s+/g, ' ').trim().slice(0, 200) : null };
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  try {
+    const result = await attempt();
+    return { ...result, fetchError: null };
+  } catch (_firstError) {
+    // One retry on a transient network/timeout failure -- matches
+    // weatherEngine.ts's established retry-once-on-transient-failure
+    // pattern. A second failure is treated as real, not silently masked.
+    await new Promise((r) => setTimeout(r, FETCH_RETRY_DELAY_MS));
+    try {
+      const result = await attempt();
+      return { ...result, fetchError: null };
+    } catch (e: any) {
+      const fetchError = e?.name === 'AbortError' ? 'The site took too long to respond.' : (e?.message || 'Could not reach that site.');
+      return { html: '', pageTitle: null, fetchError };
+    }
+  }
 }
 
 function normalizeDigits(s: string | null | undefined): string {
@@ -64,7 +104,7 @@ export async function researchPartnerWebsiteCore(
     return {
       found_partner: false, partner_name: '', partner_email: '', partner_phone: '', partner_whatsapp: '',
       website_url: null, fetched: false, fetch_error: null, page_title: null, extracted: null,
-      on_file_contact_matches: null,
+      on_file_contact_matches: null, resolved_language: 'en', language_source: 'default',
       summary: `No ${cfg.noun} record found for that id.`,
     };
   }
@@ -75,12 +115,14 @@ export async function researchPartnerWebsiteCore(
   const partnerWhatsapp = partner.whatsapp_number || '';
   const websiteField = WEBSITE_FIELD[partner_type];
   const websiteUrl: string | null = websiteField ? (partner[websiteField] || null) : null;
+  const { language: resolvedLanguage, source: languageSource } = resolvePartnerLanguage(partner_type, partner);
 
   if (!websiteUrl) {
     return {
       found_partner: true, partner_name: partnerName, partner_email: partnerEmail, partner_phone: partnerPhone,
       partner_whatsapp: partnerWhatsapp, website_url: null, fetched: false, fetch_error: null, page_title: null,
       extracted: null, on_file_contact_matches: null,
+      resolved_language: resolvedLanguage, language_source: languageSource,
       summary: `No website on file for ${partnerName} -- only the contact info Morales already has for them from onboarding.`,
     };
   }
@@ -88,31 +130,14 @@ export async function researchPartnerWebsiteCore(
   let url = websiteUrl.trim();
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
 
-  const ctrl = new AbortController();
-  const timeout = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-  let html = '';
-  let fetchError: string | null = null;
-  let pageTitle: string | null = null;
-
-  try {
-    const res = await fetch(url, {
-      redirect: 'follow',
-      signal: ctrl.signal,
-      headers: { 'User-Agent': 'Morales-MCare/1.0 (+https://morales.com)' },
-    });
-    html = await res.text();
-    const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-    pageTitle = m ? m[1].replace(/\s+/g, ' ').trim().slice(0, 200) : null;
-  } catch (e: any) {
-    fetchError = e?.name === 'AbortError' ? 'The site took too long to respond.' : (e?.message || 'Could not reach that site.');
-  }
-  clearTimeout(timeout);
+  const { html, pageTitle, fetchError } = await fetchPartnerSite(url);
 
   if (fetchError || !html) {
     return {
       found_partner: true, partner_name: partnerName, partner_email: partnerEmail, partner_phone: partnerPhone,
       partner_whatsapp: partnerWhatsapp, website_url: websiteUrl, fetched: false, fetch_error: fetchError || 'Empty response.',
       page_title: null, extracted: null, on_file_contact_matches: null,
+      resolved_language: resolvedLanguage, language_source: languageSource,
       summary: `Couldn't load ${partnerName}'s website (${fetchError || 'empty response'}) -- using the contact info already on file instead.`,
     };
   }
@@ -164,6 +189,8 @@ export async function researchPartnerWebsiteCore(
     page_title: pageTitle,
     extracted: likelyJsRendered ? null : extracted,
     on_file_contact_matches: onFileMatches,
+    resolved_language: resolvedLanguage,
+    language_source: languageSource,
     summary: summaryParts.join(' '),
   };
 }

@@ -2527,6 +2527,22 @@ test('PARTNER OUTREACH: sendPartnerOutreach is never a granted M-Care tool, and 
     .toContain('logProviderContactAttempt(');
   expect(sendFn, 'sendPartnerOutreach must require a real authenticated session')
     .toMatch(/requireAuth:\s*true/);
+
+  // Language selection stays fully deterministic — the agent is never asked
+  // to guess a partner's language, and a caller-supplied override must be
+  // validated against the exact supported set, not accepted as free text.
+  const langModule = strip(read('base44/shared/partnerLanguage.ts'));
+  const codesMatch = langModule.match(/SUPPORTED_LANGUAGE_CODES\s*=\s*\[([^\]]*)\]/);
+  expect(codesMatch, 'SUPPORTED_LANGUAGE_CODES must be defined as a literal array').toBeTruthy();
+  const codes = (codesMatch[1].match(/'[a-z]{2}'/g) || []).map((s) => s.replace(/'/g, ''));
+  expect(codes.sort(), 'the supported language set must be exactly these 9 codes, never Arabic or an arbitrary string')
+    .toEqual(['de', 'en', 'es', 'fr', 'it', 'pt', 'th', 'tr', 'zh']);
+
+  const draftFn = strip(read('base44/functions/draftPartnerOutreach/entry.ts'));
+  expect(draftFn, 'the language body field must be validated against the supported enum, not accepted as free text')
+    .toMatch(/language:\s*z\.enum\(SUPPORTED_LANGUAGE_CODES\)/);
+  expect(draftFn, 'the target language must come from resolvePartnerLanguage\'s real output (via research), not a bare default')
+    .toMatch(/research\.resolved_language/);
 });
 
 test('PROVIDER TRUST TIERS: matchDoctorsForProcedure can only ever return an already-approved doctor\'s real status', () => {

@@ -87,6 +87,16 @@ export default function OutreachDraftCard({ toolCall, onRespond }) {
       <div style={{ padding: 14 }}>
         {(mode === 'review' || mode === 'sending') && (
           <>
+            {ctx.drafted_in_language && (
+              <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
+                Drafted in {ctx.drafted_in_language}
+                {ctx.language_source === 'partner_preference' && ', per their profile'}
+                {ctx.language_source === 'country_inferred' && ", based on their country"}
+                {ctx.language_source === 'override' && ', as requested'}
+                {' — say the word if you\'d like it in a different language.'}
+              </p>
+            )}
+
             {ctx.contact_mismatch && (
               <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 10, padding: 8, borderRadius: 8, background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: GOLD }} />

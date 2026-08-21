@@ -3,6 +3,7 @@ import { strictObject, Fields, z } from '../../shared/validate.ts';
 import { researchPartnerWebsiteCore } from '../../shared/partnerWebsiteResearch.ts';
 import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
 import { PARTNER_TYPE_CONFIG, type PartnerType } from '../../shared/partnerTypeConfig.ts';
+import { SUPPORTED_LANGUAGE_CODES, LANGUAGE_LABELS, type LanguageCode } from '../../shared/partnerLanguage.ts';
 
 // ── draftPartnerOutreach ─────────────────────────────────────────────────────
 // Drafts a warm, specific message to an already-onboarded Morales partner on
@@ -20,13 +21,24 @@ import { PARTNER_TYPE_CONFIG, type PartnerType } from '../../shared/partnerTypeC
 // (and editing, if they want) this exact text before it can leave the
 // platform is what makes free-form drafting safe here -- see
 // sendPartnerOutreach/entry.ts's own header.
+//
+// The message is drafted directly in the partner's own language --
+// partnerLanguage.ts's resolvePartnerLanguage() deterministically senses it
+// from the partner's on-file preference, then their country, before this
+// function ever runs. The agent never picks the language itself; it may
+// only override the sensed default with an explicit, validated code.
 
 const bodySchema = strictObject({
   case_id: Fields.shortText(100),
   partner_type: z.enum(['doctor', 'travel_agency', 'taxi_service', 'companion', 'security_agency']),
   partner_id: Fields.shortText(100),
   intent: Fields.shortText(500),
-  language: Fields.optionalText(10),
+  // Optional explicit override -- when omitted, the language is sensed
+  // deterministically from the partner's own on-file preference/country
+  // (see research.resolved_language below), never left to an LLM guess.
+  // Validated against the exact supported set so an unchecked string can
+  // never reach the drafting prompt.
+  language: z.enum(SUPPORTED_LANGUAGE_CODES).optional(),
 });
 
 Deno.serve(createHandler(async ({ base44, body }) => {
@@ -63,26 +75,38 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   } catch (_) { /* draft still works without case context */ }
 
   const safeIntent = sanitizePromptInput(intent, 500).text;
-  const targetLanguage = language || 'en';
+  // Deterministic language: an explicit, validated caller override wins;
+  // otherwise use what researchPartnerWebsiteCore already sensed from the
+  // partner's own on-file preference/country (partnerLanguage.ts). The LLM
+  // is only ever told the final answer -- it never picks the language itself.
+  const targetLanguage: LanguageCode = (language as LanguageCode | undefined) ?? research.resolved_language;
+  const languageSource = language ? 'override' : research.language_source;
 
   const prompt = `Write a short, warm, professional outreach message from a medical travel concierge (Morales) to a partner ${cfg.noun} named "${research.partner_name}".
 The traveler's stated reason for reaching out: "${safeIntent}"
 ${caseContext ? `Relevant case context: ${caseContext}` : ''}
 ${research.summary ? `What we know about them from their own website: ${research.summary}` : ''}
-Write in ${targetLanguage === 'en' ? 'English' : `the language with code "${targetLanguage}"`}. 2-4 short sentences, no subject line, no signature block beyond "Warmly, The Morales Concierge Team" on its own line at the end. Do not invent any fact not given above. Return ONLY the message text, nothing else.`;
+Write in ${LANGUAGE_LABELS[targetLanguage]}. 2-4 short sentences, no subject line, no signature block beyond "Warmly, The Morales Concierge Team" on its own line at the end. Do not invent any fact not given above. Return ONLY the message text, nothing else.`;
 
-  let draftMessage = '';
-  try {
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt,
-      add_context_from_internet: false,
-    });
-    draftMessage = typeof result === 'string' ? result : (result?.data ?? result?.text ?? '');
-  } catch (_) {
-    draftMessage = '';
-  }
+  const invokeDraft = async (): Promise<string> => {
+    try {
+      const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        prompt,
+        add_context_from_internet: false,
+      });
+      const text = typeof result === 'string' ? result : (result?.data ?? result?.text ?? '');
+      return typeof text === 'string' ? text.trim() : '';
+    } catch (_) {
+      return '';
+    }
+  };
 
-  if (!draftMessage || !draftMessage.trim()) {
+  // One retry on an empty/failed first attempt -- same established
+  // retry-once-on-transient-failure pattern as weatherEngine.ts.
+  let draftMessage = await invokeDraft();
+  if (!draftMessage) draftMessage = await invokeDraft();
+
+  if (!draftMessage) {
     return ok({
       success: false,
       partner_name: research.partner_name,
@@ -103,6 +127,8 @@ Write in ${targetLanguage === 'en' ? 'English' : `the language with code "${targ
     suggested_channel: suggestedChannel,
     research_summary: research.website_url ? research.summary : null,
     contact_mismatch: research.on_file_contact_matches === false,
-    draft_message: draftMessage.trim(),
+    draft_message: draftMessage,
+    drafted_in_language: LANGUAGE_LABELS[targetLanguage],
+    language_source: languageSource,
   });
 }, { name: 'draftPartnerOutreach', requireAuth: false, bodySchema, rateLimit: { max: 8, windowSeconds: 300 } }));
