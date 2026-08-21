@@ -14,6 +14,16 @@
 import { createHandler, ok } from '../../shared/createHandler.ts';
 import { emergencyDispatch } from '../../shared/notify.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { reportIncident, generateIncidentCode } from '../../shared/incidentReporting.ts';
+
+// Config-gap visibility — same proven pattern getGeolocationAndCurrency/
+// triggerSOS use: a real ReliabilityIncident row (+ an INCIDENT_ALERT_EMAILS
+// alert email at high/critical) instead of a silent skip nobody sees.
+// Cooldown-gated so a standing misconfiguration doesn't spam a fresh row on
+// every covert trigger. Never affects the response either way — this is the
+// one function in the app that must always return a benign 200.
+let lastConfigIncidentAt = 0;
+const CONFIG_INCIDENT_COOLDOWN_MS = 60 * 60 * 1000;
 
 async function sendSms(to: string, message: string) {
   const sid   = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -64,6 +74,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const guardianName  = caseRec?.emergency_contact       || '';
   const destination   = caseRec?.procedure_country || 'unknown location';
   const adminEmail    = Deno.env.get('ADMIN_EMAIL') || '';
+  const twilioConfigured = !!(Deno.env.get('TWILIO_ACCOUNT_SID') && Deno.env.get('TWILIO_AUTH_TOKEN') && Deno.env.get('TWILIO_PHONE_NUMBER'));
 
   // GPS string for messages
   const gpsStr = (gps_lat && gps_lng)
@@ -102,7 +113,30 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     triggered_at:   now,
   }).catch(() => {});
 
-  // ── 3. SMS — guardian / emergency contact ─────────────────────────────────
+  // ── 3. LiveLocation — real-time position for the guardian view ───────────
+  // triggerSOS already does this; a covert trigger is the one path where the
+  // patient can't safely reach for the phone again, so a stale static Maps
+  // link in an SMS shouldn't be the only location signal a guardian gets.
+  if (gps_lat != null && gps_lng != null && resolvedCaseId) {
+    try {
+      const liveLocations = await base44.asServiceRole.entities.LiveLocation.filter({ case_id: resolvedCaseId });
+      const existingLive = liveLocations?.[0];
+      const liveData = {
+        case_id: resolvedCaseId, user_id: user?.email || '', user_email: user?.email || '',
+        latitude: gps_lat, longitude: gps_lng,
+        source: 'gps', updated_at: now, is_active: true, guardian_share_enabled: true,
+        stale_after: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        stale_alerted_15m: false, stale_alerted_30m: false,
+      };
+      if (existingLive) {
+        await base44.asServiceRole.entities.LiveLocation.update(existingLive.id, liveData);
+      } else {
+        await base44.asServiceRole.entities.LiveLocation.create(liveData);
+      }
+    } catch (_) {}
+  }
+
+  // ── 4. SMS — guardian / emergency contact ─────────────────────────────────
   // AUTHORISED EXEMPTION from the link-only comms policy (Portia, 2026-07-18).
   // Identity and last known location ARE the payload here: this person is being
   // asked to go find someone who may be in danger and cannot call for help.
@@ -119,7 +153,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     );
   }
 
-  // ── 4. SMS — patient's own phone (if known and different from guardian) ───
+  // ── 5. SMS — patient's own phone (if known and different from guardian) ───
   // This is a safety confirmation the patient can see later even if coerced now
   if (patientPhone && patientPhone !== guardianPhone) {
     await sendSms(
@@ -128,7 +162,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     );
   }
 
-  // ── 5. Admin email — immediate alert ──────────────────────────────────────
+  // ── 6. Admin email — immediate alert ──────────────────────────────────────
   if (adminEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: 'Morales — 🚨 COVERT SOS ALERT',
@@ -146,7 +180,17 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }).catch(() => {});
   }
 
-  // ── 6. Notify security agency if assigned ────────────────────────────────
+  // ── 7. Notify security agency — prefer the one already assigned to this
+  //       case; otherwise fall back to any other verified, available agency
+  //       in the same destination country. This file's own header says a
+  //       covert trigger should "jump straight to Strike 3 (immediate
+  //       security dispatch)" — until now that only happened when a case had
+  //       one pre-assigned. Query shape mirrors shared/dispatchSecurityForCheckIn.ts's
+  //       proven "find candidates by country + is_available" lookup — not the
+  //       function itself, which is bound to SoloCheckIn's own handshake/
+  //       timeout state machine and isn't safe to reuse for a one-shot covert
+  //       alert with no SoloCheckIn record to anchor state on. ──────────────
+  let securityNotified = false;
   if (caseRec?.security_agency_email) {
     await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: 'Morales — EMERGENCY DISPATCH',
@@ -154,6 +198,49 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       subject:   `🚨 IMMEDIATE DISPATCH — Covert SOS — ${patientName}`,
       body: `<p>Your client <strong>${patientName}</strong> has activated a covert emergency. They may be in immediate danger. Last known location: <a href="${gpsStr}">${gpsStr}</a>. Dispatch immediately.</p>`,
     }).catch(() => {});
+    securityNotified = true;
+  } else if (destination && destination !== 'unknown location') {
+    try {
+      const candidates = await base44.asServiceRole.entities.SecurityAgency.filter(
+        { country: destination, is_available: true }, '-created_date', 5
+      );
+      const fallbackAgency = (candidates || []).find((a: any) => a.email);
+      if (fallbackAgency) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: 'Morales — EMERGENCY DISPATCH',
+          to:        fallbackAgency.email,
+          subject:   `🚨 IMMEDIATE DISPATCH — Covert SOS — traveler in ${destination}`,
+          body: `<p>A Morales traveler, <strong>${patientName}</strong>, in <strong>${destination}</strong> has activated a covert emergency alert and may be in immediate danger. Last known location: <a href="${gpsStr}">${gpsStr}</a>. This case had no security agency pre-assigned — please dispatch and contact Morales admin to confirm.</p>`,
+        }).catch(() => {});
+        securityNotified = true;
+      }
+    } catch (_) {}
+  }
+
+  // Config-gap visibility, cooldown-gated (declared above). Never affects the
+  // response either way.
+  if (Date.now() - lastConfigIncidentAt > CONFIG_INCIDENT_COOLDOWN_MS) {
+    const guardianSmsIssue = !!guardianPhone && !twilioConfigured;
+    if (!adminEmail || guardianSmsIssue || !securityNotified) {
+      lastConfigIncidentAt = Date.now();
+      try {
+        await Promise.race([
+          reportIncident({
+            base44,
+            incidentCode: generateIncidentCode(),
+            severity: (!adminEmail || !securityNotified) ? 'critical' : 'high',
+            source: 'api',
+            feature: 'triggerCovertSOS',
+            errorMessage: !adminEmail
+              ? 'ADMIN_EMAIL not configured — covert SOS admin alert was not sent.'
+              : !securityNotified
+              ? 'No security agency assigned or available for covert SOS dispatch.'
+              : 'Twilio not configured — covert SOS guardian SMS was not sent.',
+          }),
+          new Promise((resolve) => setTimeout(resolve, 2000)),
+        ]);
+      } catch (_) { /* incident reporting must never affect the response */ }
+    }
   }
 
   // CRITICAL: Always return 200 with a benign-looking response.

@@ -134,6 +134,7 @@ export default function EmergencyHub() {
               { icon: Navigation, label: 'Private Location History', color: 'bg-emerald-900/40 text-emerald-300 border-emerald-800/50' },
               { icon: Smartphone, label: 'Emergency PIN — Any Device', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
               { icon: Mic, label: 'Walkie-Talkie', color: 'bg-cyan-900/40 text-cyan-300 border-cyan-800/50', link: '/walkie-talkie' },
+              { icon: MapPin, label: 'Nearby Places (Map)', color: 'bg-teal-900/40 text-teal-300 border-teal-800/50', link: '/nearby' },
               { icon: Moon, label: 'Nightlife Safety', color: 'bg-purple-900/40 text-purple-300 border-purple-800/50', link: '/nightlife-safety' },
               { icon: TreePine, label: 'Wilderness SOS', color: 'bg-green-900/40 text-green-300 border-green-800/50', link: '/wilderness-safety' },
             ].map(b => {

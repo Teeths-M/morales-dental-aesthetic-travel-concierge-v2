@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
 import { z, strictObject, validate } from '../../shared/validate.ts';
+import { reportIncident, generateIncidentCode } from '../../shared/incidentReporting.ts';
 
 // Deliberately permissive on types (z.any()) for everything but the two
 // fields already required by this function's own logic — this is a live
@@ -55,6 +56,13 @@ const SOS_ROUTES = {
   urgent_pickup: { label: 'Emergency Pickup', priority: 2 },
   silent_sos: { label: 'Silent SOS', priority: 1, silent: true },
 };
+
+// Config-gap visibility — same proven pattern getGeolocationAndCurrency uses:
+// a real ReliabilityIncident row (+ an INCIDENT_ALERT_EMAILS alert email at
+// high/critical) instead of a console.error nobody sees. Cooldown-gated so a
+// standing misconfiguration doesn't spam a fresh row on every SOS trigger.
+let lastConfigIncidentAt = 0;
+const CONFIG_INCIDENT_COOLDOWN_MS = 60 * 60 * 1000;
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -354,6 +362,30 @@ Deno.serve(createHandler(async ({ req }) => {
           notificationsSent.push('guardian_session_created');
         }
       } catch (_) {}
+    }
+
+    // Config-gap visibility, cooldown-gated (declared above). Never affects
+    // the response either way — the SOS event has already dispatched by now.
+    if (Date.now() - lastConfigIncidentAt > CONFIG_INCIDENT_COOLDOWN_MS) {
+      const smsIssue = notificationsSent.includes('patient_sms_not_configured') || notificationsSent.includes('patient_sms_failed');
+      if (!adminNotifyEmail || smsIssue) {
+        lastConfigIncidentAt = Date.now();
+        try {
+          await Promise.race([
+            reportIncident({
+              base44,
+              incidentCode: generateIncidentCode(),
+              severity: !adminNotifyEmail ? 'critical' : 'high',
+              source: 'api',
+              feature: 'triggerSOS',
+              errorMessage: !adminNotifyEmail
+                ? 'ADMIN_EMAIL not configured — SOS admin dispatch alert was not sent.'
+                : 'Twilio not configured or send failed — SOS patient confirmation SMS was not sent.',
+            }),
+            new Promise((resolve) => setTimeout(resolve, 2000)),
+          ]);
+        } catch (_) { /* incident reporting must never affect the response */ }
+      }
     }
 
     // Update event with notifications sent

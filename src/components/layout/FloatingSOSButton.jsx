@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, MapPin } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { emitOpenMcare } from '@/lib/openMcareEvent';
 
 const GOLD = '#D4AF37';
 
@@ -52,8 +53,15 @@ export default function FloatingSOSButton() {
           maxWidth:      'calc(100vw - 32px)',
         }}
       >
-        {/* ── M Nearby pill (top) — M-Care itself lives in the bottom-left orb now ── */}
-        <Link to="/nearby" aria-label="Find nearby help" style={{ textDecoration: 'none' }}>
+        {/* ── M Nearby pill (top) — opens M-Care, which already has real
+            searchNearbyPlaces tool access; /nearby's own map-deep-link page
+            stays reachable via a fallback pill on the Emergency Hub ── */}
+        <button
+          type="button"
+          onClick={() => emitOpenMcare("I need to find something nearby — like a pharmacy, hospital, clinic, or police station.")}
+          aria-label="Find nearby help"
+          style={{ textDecoration: 'none', background: 'none', border: 'none', padding: 0, margin: 0 }}
+        >
           <motion.div
             aria-label="Find Nearby — doctors, pharmacy, police and more"
             style={{ ...PILL_BASE, border: '1px solid rgba(0,229,255,0.28)' }}
@@ -73,7 +81,7 @@ export default function FloatingSOSButton() {
               {t('sos.find_nearby')}
             </span>
           </motion.div>
-        </Link>
+        </button>
 
         {/* ── SOS pill (bottom) ── */}
         <Link to="/emergency" aria-label="SOS Emergency" style={{ textDecoration: 'none' }}>
