@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { createHandler } from '../../shared/createHandler.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { checkRepeatProcedureHistory, type RepeatProcedureResult } from '../../shared/repeatProcedureHistory.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -168,7 +169,7 @@ function detectStackingRisk(procedures) {
   return null;
 }
 
-function computeRiskScore(caseRecord) {
+function computeRiskScore(caseRecord, repeatCheck?: RepeatProcedureResult) {
   // Build a single lowercase search string from every field that may contain medical data.
   // Covers both the legacy CaseRecord field names (medications, allergies, anesthesia_history)
   // AND the PatientIntakeTelemetry field names (medication_types, allergy_types, anesthesia_notes)
@@ -253,6 +254,25 @@ function computeRiskScore(caseRecord) {
       reason: `${procedureCount} procedures combined with age ${age} — critical stacking and recovery risk. Maximum 3-procedure sessions permitted for patients over 50.`,
       score: 100,
       flags: [`${procedureCount} procedures — stacking limit exceeded for age ${age}`],
+    };
+  }
+
+  // Repeat-procedure history: patient has had this SAME major procedure done
+  // before, on an earlier trip through Morales, at least REVIEW_THRESHOLD
+  // times. Guaranteed HIGH (never a score contribution that could get
+  // diluted by an otherwise-clean profile) — a patient repeating the same
+  // major surgery may show no other risk factor at all. Reuses the exact
+  // same HIGH-tier machinery below (mandatory waiver, e-sig, doctor review) —
+  // never an unconditional block. See repeatProcedureHistory.ts.
+  if (repeatCheck?.requiresReview) {
+    const detail = repeatCheck.repeats
+      .map((r) => `${r.procedure} (this would be visit #${r.priorCompletedCount + 1})`)
+      .join(', ');
+    return {
+      tier: 'HIGH',
+      reason: `Repeat procedure detected: ${detail}. A patient's own surgical history for the same procedure needs a licensed doctor's direct review before proceeding again.`,
+      score: 8,
+      flags: [`Repeat procedure history: ${detail} — mandatory doctor review required`],
     };
   }
 
@@ -424,7 +444,8 @@ Deno.serve(createHandler(async ({ req }) => {
 
     // ── MAIN SCAN — risk score computed entirely server-side ──
     // SECURITY: No risk_score, tier, or flag accepted from request body.
-    const result = computeRiskScore(cr);
+    const repeatCheck = await checkRepeatProcedureHistory(base44, cr.client_email, cr.procedures || []);
+    const result = computeRiskScore(cr, repeatCheck);
     // AI agentic layer: reads free-text notes the keyword rules cannot parse.
     // CRITICAL tier stays deterministic always — AI never overrides the hard block (M Principle).
     const aiNote = result.tier !== 'CRITICAL' ? await aiRiskNote(cr, result) : null;

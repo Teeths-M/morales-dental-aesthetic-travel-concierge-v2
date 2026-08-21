@@ -4269,3 +4269,55 @@ test('LOCATION PAUSE BYPASS: an explicit GPS request is never silently vetoed by
   expect(breadcrumbSrc, 'LocationBreadcrumbTracker must not pass requestGPS directly as an event handler')
     .not.toMatch(/onClick=\{requestGPS\}/);
 });
+
+test('SAFE-T4LIFE: repeat-procedure history can only ever escalate toward HIGH, a lookup failure fails open for just this new signal, and the chat tool never auto-creates a review task', () => {
+  // repeatProcedureHistory.ts must never itself decide a tier — it can only
+  // ever report requiresReview: true/false. Only safeT4LifeScan (the real
+  // deterministic engine) turns that into a real HIGH-tier gate. Strip
+  // comments first — explanatory prose is allowed to mention these words,
+  // only real code deciding an outcome is not.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const shared = strip(read('base44/shared/repeatProcedureHistory.ts'));
+  expect(shared, 'repeatProcedureHistory.ts must never itself assert a CRITICAL or BLOCKED outcome — only safeT4LifeScan decides a tier')
+    .not.toMatch(/CRITICAL|BLOCKED/);
+  expect(shared, 'a lookup failure must fail open to the empty/no-signal result, never re-throw — this must never be able to crash or weaken an existing safety check')
+    .toMatch(/catch\s*\([^)]*\)\s*\{[\s\S]{0,200}return EMPTY_RESULT/);
+
+  // safeT4LifeScan: the repeat-history check must run before computeRiskScore,
+  // and a requiresReview hit must force HIGH (never CRITICAL — a repeat
+  // procedure under real doctor review is legitimate; only a same-session
+  // dangerous combination gets a hard CRITICAL block).
+  const scanSrc = read('base44/functions/safeT4LifeScan/entry.ts');
+  const repeatCallIdx = scanSrc.indexOf('checkRepeatProcedureHistory(base44');
+  const computeCallIdx = scanSrc.indexOf('computeRiskScore(cr, repeatCheck)');
+  expect(repeatCallIdx, 'safeT4LifeScan must call checkRepeatProcedureHistory').toBeGreaterThan(-1);
+  expect(computeCallIdx, 'safeT4LifeScan must pass the repeat-check result into computeRiskScore').toBeGreaterThan(-1);
+  expect(repeatCallIdx, 'the repeat-history lookup must run before the score is computed')
+    .toBeLessThan(computeCallIdx);
+
+  const requiresReviewIdx = scanSrc.indexOf('repeatCheck?.requiresReview');
+  const nextBlock = scanSrc.slice(requiresReviewIdx, requiresReviewIdx + 500);
+  expect(nextBlock, 'a repeat-procedure hit must force the HIGH tier, never CRITICAL')
+    .toMatch(/tier:\s*'HIGH'/);
+  expect(nextBlock, 'a repeat-procedure hit must never force CRITICAL — that stays reserved for genuine same-session hard blocks')
+    .not.toMatch(/tier:\s*'CRITICAL'/);
+
+  // The chat-facing tool must derive identity from the session, never a body
+  // field (privacy/enumeration guard), and must never create a real
+  // DoctorReviewTask itself — that stays reserved for a real scan.
+  const toolSrc = read('base44/functions/checkRepeatProcedureHistory/entry.ts');
+  expect(toolSrc, 'checkRepeatProcedureHistory must derive the patient email from the authenticated session, never a request body field')
+    .toMatch(/checkRepeatProcedureHistory\(base44,\s*user!\.email/);
+  expect(toolSrc, 'the chat tool must never create a DoctorReviewTask directly — a hypothetical question must never queue a real review task')
+    .not.toMatch(/DoctorReviewTask\.create/);
+  expect(toolSrc, 'checkRepeatProcedureHistory must require a real authenticated session')
+    .toMatch(/requireAuth:\s*true/);
+
+  // m_care.jsonc must be granted the real tool and must no longer contain the
+  // old stopgap disclaimer that claimed nothing tracks this.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  expect(agentConfig, 'checkRepeatProcedureHistory must be granted as a real M-Care agent tool')
+    .toMatch(/"function_name"\s*:\s*"checkRepeatProcedureHistory"/);
+  expect(agentConfig, 'the old "not something the system tracks today" disclaimer must be replaced now that the real check exists')
+    .not.toContain('not something the system tracks today');
+});
