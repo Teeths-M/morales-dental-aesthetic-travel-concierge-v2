@@ -24,7 +24,7 @@ export type ContactAttemptFields = {
   partner_id?: string;
   partner_name?: string;
   channel: 'email' | 'sms' | 'whatsapp';
-  purpose: 'quote_request' | 'case_assignment' | 'verification_notification' | 'other';
+  purpose: 'quote_request' | 'case_assignment' | 'verification_notification' | 'mcare_outreach' | 'other';
   recipient?: string;
   initiated_by: string;
   result: 'sent' | 'failed' | 'skipped';

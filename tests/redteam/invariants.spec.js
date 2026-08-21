@@ -2488,6 +2488,47 @@ test('PARTNERS: discoverProviderCandidates never promotes a web search result in
     .toContain('logExternalSearch(');
 });
 
+test('PARTNER OUTREACH: sendPartnerOutreach is never a granted M-Care tool, and re-derives its recipient from the real record', () => {
+  // draftPartnerOutreach is deliberately the one place an LLM freely
+  // authors prose meant for a real external business — that's only safe
+  // because the actual send (sendPartnerOutreach) is not something the
+  // agent can call at all. It must never appear in m_care.jsonc's
+  // tool_configs, so a real button tap in OutreachDraftCard.jsx is
+  // structurally the only path to it (see sendPartnerOutreach/entry.ts's
+  // own header for the full reasoning).
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  expect(agentConfig, 'sendPartnerOutreach must never be granted as an M-Care agent tool')
+    .not.toMatch(/"function_name"\s*:\s*"sendPartnerOutreach"/);
+  expect(agentConfig, 'researchPartnerWebsite must be granted so M-Care can check a partner\'s real on-file site')
+    .toMatch(/"function_name"\s*:\s*"researchPartnerWebsite"/);
+  expect(agentConfig, 'draftPartnerOutreach must be granted so M-Care can draft (never send) outreach')
+    .toMatch(/"function_name"\s*:\s*"draftPartnerOutreach"/);
+
+  // The card only ever invokes sendPartnerOutreach directly from the client
+  // (never routes it back through the agent) — same pattern
+  // DocumentScannerCard.jsx already uses for scanVaultDocument.
+  const card = read('src/components/mcare/OutreachDraftCard.jsx');
+  expect(card, 'OutreachDraftCard must call sendPartnerOutreach directly via base44.functions.invoke')
+    .toMatch(/functions\.invoke\(\s*['"]sendPartnerOutreach['"]/);
+
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const sendFn = strip(read('base44/functions/sendPartnerOutreach/entry.ts'));
+
+  // Recipient is always re-derived from the real partner record fetched
+  // server-side — the caller's own supplied recipient/email is never
+  // trusted for who actually gets contacted.
+  expect(sendFn, 'sendPartnerOutreach must re-fetch the real partner record, not trust a caller-supplied one')
+    .toMatch(/entities\[cfg\.entity\]\.get\(partner_id\)/);
+  expect(sendFn, 'the send recipient must come from the re-fetched partner record, not the request body')
+    .toMatch(/partner\.email|partner\.whatsapp_number|partner\.phone/);
+  expect(sendFn, 'sendPartnerOutreach must verify the caller owns the case (or is admin) before sending')
+    .toMatch(/caseRecord\.client_email\s*!==\s*user\??\.email/);
+  expect(sendFn, 'every send outcome must be logged via logProviderContactAttempt')
+    .toContain('logProviderContactAttempt(');
+  expect(sendFn, 'sendPartnerOutreach must require a real authenticated session')
+    .toMatch(/requireAuth:\s*true/);
+});
+
 test('PROVIDER TRUST TIERS: matchDoctorsForProcedure can only ever return an already-approved doctor\'s real status', () => {
   // The ✓ APPROVED badge is only honest because matchDoctorsForProcedure's
   // own pre-filter already guarantees every doctor it returns cleared the

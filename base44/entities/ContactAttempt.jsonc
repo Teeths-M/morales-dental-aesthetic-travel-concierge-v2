@@ -1,7 +1,7 @@
 {
   "name": "ContactAttempt",
   "type": "object",
-  "description": "Audit log of every real outbound message Morales sends to a provider partner on a traveler's behalf (a travel-agency/driver quote request, a doctor case-assignment notice, a partner verification-outcome notice). Written by logProviderContactAttempt.ts, which every real dispatcher (assignTravelAgency, assignChauffeurServices, assignDoctorToCase, initiatePartnerVerification) calls right after its own real send. This is the honest, buildable version of the 'governed outreach' auditability the M-Care provider-intelligence spec asked for — it logs outreach that already happens today; it does not perform outreach and never contacts a provider Morales hasn't already onboarded. Provider-facing metadata only (recipient is the partner's own business email/phone) — never a patient name, medical detail, or other patient PHI.",
+  "description": "Audit log of every real outbound message Morales sends to a provider partner on a traveler's behalf (a travel-agency/driver quote request, a doctor case-assignment notice, a partner verification-outcome notice, an M-Care-drafted-and-human-confirmed outreach message). Written by logProviderContactAttempt.ts, which every real dispatcher (assignTravelAgency, assignChauffeurServices, assignDoctorToCase, initiatePartnerVerification, sendPartnerOutreach) calls right after its own real send. This is the honest, buildable version of the 'governed outreach' auditability the M-Care provider-intelligence spec asked for — it logs outreach that already happens today; it does not perform outreach and never contacts a provider Morales hasn't already onboarded. Provider-facing metadata only (recipient is the partner's own business email/phone) — never a patient name, medical detail, or other patient PHI.",
   "properties": {
     "case_id": {
       "type": "string",
@@ -40,6 +40,7 @@
         "quote_request",
         "case_assignment",
         "verification_notification",
+        "mcare_outreach",
         "other"
       ]
     },
