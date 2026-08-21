@@ -13,12 +13,16 @@
  *   2. For each: fire a pre-alert to admin + coordinator
  *      "Patient has not moved in 2 hours and has a check-in due in 38 minutes."
  *   3. Log as predictive_alert on the SoloCheckIn record
+ *   4. Log a calm, low-priority JourneyEvent so the traveler themselves sees
+ *      a friendly early nudge too -- the admin alert above never reached
+ *      them; this is the same real signals, narrated for the patient.
  *
  * This is a proactive intervention — the coordinator calls the patient BEFORE
  * the system marks them as missed. Catches health events 45 minutes earlier.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -109,6 +113,27 @@ Deno.serve(async (req) => {
           metadata:     { case_id: checkin.case_id, mins_until_due: minsUntilDue, signals },
           timestamp:    now.toISOString(),
         }).catch(() => {});
+
+        // The pre-alert above only ever reached admin/coordinator -- the
+        // traveler it's protecting never learned M-Care was already watching.
+        // A calm, low-priority chat bubble closes that gap: same real
+        // signals already computed, no new LLM call, never alarming (a
+        // 'critical'/'high' SOS-style escalation is a different, later tier
+        // -- this is a friendly early nudge, not a warning).
+        if (checkin.case_id && checkin.patient_email) {
+          await logJourneyEvent(base44, {
+            case_id: checkin.case_id,
+            client_email: checkin.patient_email,
+            event_type: 'early_checkin_nudge',
+            source: 'predictiveEscalation',
+            message_text: "I wanted to check in a little early -- I haven't seen recent activity from you. Everything okay?",
+            priority: 'low',
+            action_taken: `Pre-emptive nudge: check-in due in ${minsUntilDue} min, signals: ${signals.join(', ')}`,
+            tool_result: { mins_until_due: minsUntilDue, signals },
+            user_action_required: true,
+            escalation_occurred: false,
+          });
+        }
 
         alerted++;
       } catch (_) {}

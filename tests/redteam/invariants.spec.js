@@ -3463,7 +3463,7 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(helper, 'the helper writes only via asServiceRole').toContain('asServiceRole.entities.JourneyEvent.create');
   expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
 
-  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake', 'detectFallbackCrisis', 'runGuardianCheckInSweep', 'notifyGuardianNow']) {
+  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake', 'detectFallbackCrisis', 'runGuardianCheckInSweep', 'notifyGuardianNow', 'predictiveEscalation']) {
     const src = strip(read(`base44/functions/${fn}/entry.ts`));
     expect(src, `${fn} must log JourneyEvent via the shared helper, not a raw create call`).toContain('logJourneyEvent(');
     expect(src, `${fn} must not create JourneyEvent directly, bypassing the shared helper's fixed field set`)
@@ -3525,6 +3525,27 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
     .not.toMatch(/content:[^,}]*tool_result/);
   expect(orb, 'MCareOrb must never interpolate action_taken into a rendered message')
     .not.toMatch(/content:[^,}]*action_taken/);
+});
+
+test('PREDICTIVE ESCALATION: assignDoctorToCase is never granted to M-Care (it 403s for any non-admin caller), and predictiveEscalation narrates a calm early nudge to the traveler, not just admin', () => {
+  // assignDoctorToCase is hard-gated user.role !== 'admin' in its own code —
+  // a patient-facing M-Care conversation always runs under the patient's own
+  // session, so this tool could never succeed if the agent tried it. Granting
+  // it was dead weight, not a working capability — confirm it stays removed.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  expect(agentConfig, 'assignDoctorToCase must never be granted as an M-Care agent tool — it always 403s for a patient session')
+    .not.toMatch(/"function_name"\s*:\s*"assignDoctorToCase"/);
+
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const fn = strip(read('base44/functions/predictiveEscalation/entry.ts'));
+  expect(fn, 'predictiveEscalation must log JourneyEvent via the shared helper, not a raw create call')
+    .toContain('logJourneyEvent(');
+  expect(fn, 'predictiveEscalation must not create JourneyEvent directly')
+    .not.toMatch(/entities\.JourneyEvent\.create/);
+  expect(fn, 'the patient-facing nudge must stay a calm, non-alarming low priority — this is an early heads-up, not an SOS-tier escalation')
+    .toMatch(/priority:\s*'low'/);
+  expect(fn, 'the JourneyEvent call must be gated on having a real case_id and patient_email, never fired with placeholders')
+    .toMatch(/if\s*\(\s*checkin\.case_id\s*&&\s*checkin\.patient_email\s*\)/);
 });
 
 test('RIDE DISPATCH: requestOnDemandRide and notifyGuardianNow stay structurally distinct from their emergency-only siblings', () => {
