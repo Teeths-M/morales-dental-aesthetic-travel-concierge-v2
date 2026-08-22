@@ -634,13 +634,18 @@ export default function MCareOrb() {
       return;
     }
     const label = loc.resolved_place ? `My Location (${loc.resolved_place})` : 'My Location';
+    // liveRef.current.sendAgentMessage — sendAgentMessage is declared further
+    // down in this component, so referencing it directly here (or in the deps
+    // array) throws a TDZ "Cannot access 'sendAgentMessage' before
+    // initialization" at render. Same ref-indirection pattern
+    // handleResumeIntent / handleInterruptionSend already use.
     // Always pair the {{maps:...}} button row with a {{qr:...}} code — some
     // travelers (or whoever they hand navigation to) won't have a data
     // connection to tap the buttons; InlineQrBlock (MessageBubble.jsx)
     // encodes it as a real, offline-capable geo: URI since real coordinates
     // are always available here.
-    sendAgentMessage(`Here's my current location.\n{{maps:${label}|${loc.latitude},${loc.longitude}}}\n{{qr:${label}|${loc.latitude},${loc.longitude}}}`, []);
-  }, [sendAgentMessage]);
+    liveRef.current.sendAgentMessage?.(`Here's my current location.\n{{maps:${label}|${loc.latitude},${loc.longitude}}}\n{{qr:${label}|${loc.latitude},${loc.longitude}}}`, []);
+  }, []);
 
   // "Send my current location" — reuses triggerGpsUpgrade's exact
   // wait-for-GPS/15s-safety-net shape, but sends a location pin once granted
