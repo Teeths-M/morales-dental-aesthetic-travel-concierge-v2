@@ -247,6 +247,11 @@ export default function MCareOrb() {
   // "hide a location I just explicitly asked you to get").
   const gpsLocationRef = useRef(gpsLocation);
   useEffect(() => { gpsLocationRef.current = gpsLocation; }, [gpsLocation]);
+  // Mirrors gpsStatus for triggerGpsUpgrade's useCallback closure, which
+  // only lists requestGPS in its deps — without this ref, a stale gpsStatus
+  // would let the in-flight guard below miss a GPS request already running.
+  const gpsStatusRef = useRef(gpsStatus);
+  useEffect(() => { gpsStatusRef.current = gpsStatus; }, [gpsStatus]);
   // Holds the traveler's most recent real outgoing message text — the GPS
   // upgrade offer (see handleGpsUpgradeConfirm below) is always a direct
   // agent reply to that exact message, so this reliably identifies "the
@@ -595,8 +600,38 @@ export default function MCareOrb() {
   // automatically once permission resolves, so the traveler never has to
   // ask twice.
   const triggerGpsUpgrade = useCallback((retryQuery) => {
-    pendingGpsRetryQueryRef.current = retryQuery || null;
-    // A fresh typed-question GPS request supersedes any still-pending
+     // Guard against the infinite loop: if a GPS request is already in
+     // flight (gpsStatus is still 'requesting' from a prior call that
+     // hasn't resolved yet), don't add another "Getting your exact
+     // location now" bubble or restart the 15s safety-net timeout — both
+     // of which would otherwise fire on every repeated typed message,
+     // resetting the timeout so it never fires and leaving the traveler
+     // stuck in a loop of identical bubbles. requestGPS() is a no-op
+     // while gpsInFlight is true anyway. Just update the pending query
+     // (in case the user rephrased) and return early.
+     const gpsAlreadyRequesting = gpsStatusRef.current === 'requesting';
+     pendingGpsRetryQueryRef.current = retryQuery || null;
+     if (gpsAlreadyRequesting) {
+       // Same "newest request wins" mutual exclusion as the non-early-return
+       // path below — a fresh typed question is the real, current intent
+       // even when it happens to arrive while an earlier GPS request (a
+       // location pin, or an exact-map-view request) is still in flight.
+       // Without this, the OLDER pending flow would still win when GPS
+       // resolves, silently dropping what the traveler just asked for.
+       pendingLocationPinRef.current = false;
+       pendingExactMapViewRef.current = false;
+       // If the 15s safety net already fired (gpsRequestTimeoutRef is
+       // null), GPS is genuinely stuck — help the traveler move forward
+       // instead of looping silently.
+       if (!gpsRequestTimeoutRef.current) {
+         setAgentMessages(prev => [...prev, {
+           role: 'assistant',
+           content: "Your browser still hasn't responded to the location request — it may be blocked in this view. Try opening the app on your phone, or tell me a nearby street or landmark and I'll pin that instead.",
+         }]);
+       }
+       return;
+     }
+     // A fresh typed-question GPS request supersedes any still-pending
     // Location-menu "send my current location" flow (the newest tap is the
     // real, current intent) — without this, both a location pin AND the
     // stale retried question can fire once GPS resolves. Release the
@@ -679,7 +714,28 @@ export default function MCareOrb() {
   // location right now" request must never silently reuse a fix from
   // minutes ago, unlike the other two flows' fresh-fix fast paths.
   const triggerExactMapView = useCallback(() => {
+    // Same duplicate-bubble guard triggerGpsUpgrade uses: a GPS request
+    // already in flight makes requestGPS() itself a no-op, so don't also
+    // post a second "I'll get your..." bubble or restart the 15s timeout.
+    // Known, narrow edge case: if GPS was already in flight from a
+    // DIFFERENT flow (started with the default cached-fix window, not this
+    // flow's own maximumAge:0), the fix this request ends up using may not
+    // be a freshly-forced one — accepted rather than adding a second
+    // in-flight-request-priority system on top of the existing reentrancy
+    // guard for what should be a rare few-second overlap.
+    const gpsAlreadyRequesting = gpsStatusRef.current === 'requesting';
     pendingExactMapViewRef.current = true;
+    if (gpsAlreadyRequesting) {
+      pendingGpsRetryQueryRef.current = null;
+      pendingLocationPinRef.current = false;
+      if (!gpsRequestTimeoutRef.current) {
+        setAgentMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "Your browser still hasn't responded to the location request — it may be blocked in this view. Try opening the app on your phone, or tell me a nearby street or landmark instead.",
+        }]);
+      }
+      return;
+    }
     // Mutual exclusion against the other two GPS-triggered flows — the
     // newest request wins, matching triggerGpsUpgrade/shareCurrentLocationNow's
     // own established pattern.

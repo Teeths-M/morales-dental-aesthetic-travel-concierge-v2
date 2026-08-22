@@ -4413,7 +4413,7 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
 
   const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
   expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
-  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 1600);
+  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 3600);
   expect(triggerBlock, 'triggerGpsUpgrade must call the real requestGPS()').toMatch(/requestGPS\(true\);/);
 
   // The choice-router: a tapped choice must be gated by the intent
@@ -4678,19 +4678,23 @@ test('EXACT LOCATION SATELLITE MAP: a deterministic Google Maps satellite view, 
   expect(clearCountInGranted, 'exactly one clearGpsRequestTimeout() call must cover all three pending flows in the granted branch')
     .toBe(1);
 
-  // Never a fabricated capability the agent could claim on its own — the
-  // satmap token is client-emitted from real coordinates; the one place the
-  // agent itself may emit it (a plain-text fallback) is explicitly bound to
-  // real gps_precise coordinates and forbidden from claiming it opened
-  // anything itself.
+  // {{satmap:...}} is a CLIENT-ONLY token — MCareOrb.jsx's deterministic
+  // exact-location flow is the only thing that ever emits it, always from a
+  // real, freshly-obtained device fix, never the agent. m_care.jsonc's own
+  // agent-facing satellite mechanism is a separate, deliberately reused one
+  // (a |satellite suffix on the existing {{maps:...}} token, reconciled
+  // here with a concurrent live fix Portia shipped for the exact same
+  // reported bug — see the SHOW MY OWN LOCATION section) — the agent must
+  // never be told to emit {{satmap:...}} itself, which would let an LLM
+  // reply claim a "device fix" that was never actually obtained this turn.
   const mcareRaw = read('base44/agents/m_care.jsonc');
   const mcareData = JSON.parse(mcareRaw);
-  expect(mcareData.instructions, 'm_care.jsonc must document the satmap fallback token')
-    .toContain('{{satmap:LABEL|lat,lng}}');
-  expect(mcareData.instructions, 'the agent must be told never to claim it opened Google Maps itself')
-    .toMatch(/Never say you have opened\s*Google Maps yourself/);
-  expect(mcareData.instructions, 'the fallback must be bound to real gps_precise coordinates, never invented')
-    .toMatch(/source=gps_precise LOCATION_CONTEXT\s*block, you may emit \{\{satmap/);
+  expect(mcareData.instructions, 'the agent must never be told to emit the client-only satmap token itself')
+    .not.toContain('{{satmap:');
+  expect(mcareData.instructions, 'm_care.jsonc must document the real agent-facing satellite mechanism (SHOW MY OWN LOCATION)')
+    .toMatch(/SHOW MY OWN LOCATION[\s\S]{0,50}GPS already granted/);
+  expect(mcareData.instructions, 'the agent-facing satellite mechanism must reuse the existing maps token, real coordinates only')
+    .toMatch(/\{\{maps:My Location\|lat,lng\|satellite\}\}/);
 
   // MessageBubble must actually render the token as a real tappable link
   // (buildGoogleMapsLocationUrl), never rely on an async window.open that

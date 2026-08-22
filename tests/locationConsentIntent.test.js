@@ -28,6 +28,20 @@ describe('locationConsentIntent.detectLocationConsentIntent', () => {
     expect(detectLocationConsentIntent('Turn on GPS tracking')).toBe(true);
   });
 
+  it('matches the live-session phrasings that used to loop (the screenshot bug)', () => {
+    expect(detectLocationConsentIntent('m-care can you map out my exact my location and show my on google map')).toBe(true);
+    expect(detectLocationConsentIntent('map my location')).toBe(true);
+    expect(detectLocationConsentIntent('map out my location')).toBe(true);
+    expect(detectLocationConsentIntent('show me on the map')).toBe(true);
+    expect(detectLocationConsentIntent('show me on google map')).toBe(true);
+    expect(detectLocationConsentIntent('show my on google map')).toBe(true);
+    expect(detectLocationConsentIntent('show my location')).toBe(true);
+    expect(detectLocationConsentIntent('open my location on google map')).toBe(true);
+    expect(detectLocationConsentIntent('where am i')).toBe(true);
+    expect(detectLocationConsentIntent('what are my coordinates')).toBe(true);
+    expect(detectLocationConsentIntent('what are my exact coordinates')).toBe(true);
+  });
+
   it('does not match the other real, unrelated choices from the same live session', () => {
     expect(detectLocationConsentIntent('Let me type my address')).toBe(false);
     expect(detectLocationConsentIntent('Take me to Central Police Station')).toBe(false);

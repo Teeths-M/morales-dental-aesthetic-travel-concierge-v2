@@ -51,10 +51,12 @@ const extractChoices = (raw) => {
 // The UI strips the token and renders three tappable app buttons instead.
 const extractMaps = (raw) => {
   if (!raw) return { text: '', maps: null };
-  const match = raw.match(/\{\{maps:([^|]*)\|([\s\S]*?)\}\}/);
+  // Optional third field |satellite — when present, the rendered buttons open
+  // satellite/aerial view instead of the default map layer.
+  const match = raw.match(/\{\{maps:([^|]*)\|([^|}]*)(?:\|(satellite))?\}\}/);
   if (!match) return { text: raw.trim(), maps: null };
   const text = raw.replace(match[0], '').trim();
-  return { text, maps: { label: match[1].trim(), dest: match[2].trim() } };
+  return { text, maps: { label: match[1].trim(), dest: match[2].trim(), satellite: match[3] === 'satellite' } };
 };
 
 // Extract a {{qr:LABEL|DESTINATION}} token M-Care emits when the traveler
@@ -826,7 +828,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                     <button
                       key={app.id}
                       type="button"
-                      onClick={() => openInMapsApp(app.id, maps.dest)}
+                      onClick={() => openInMapsApp(app.id, maps.dest, maps.satellite)}
                       className={chipBase}
                       style={{ borderColor: '#16a34a', color: '#16a34a', background: 'transparent' }}
                       title={`Open ${maps.label} in ${app.label}`}

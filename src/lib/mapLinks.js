@@ -41,11 +41,31 @@ export function defaultMapsApp() {
 
 // Build the deep link for a given app + destination (address string or
 // "lat,lng"). Returns null if no destination.
-export function generateMapLink(destination, appType) {
+export function generateMapLink(destination, appType, satellite = false) {
   const dest = (destination || '').trim();
   if (!dest) return null;
   const coords = isCoords(dest);
   const enc = encodeURIComponent(dest);
+
+  if (satellite) {
+    switch (appType) {
+      case 'waze':
+        // Waze URL scheme has no satellite-layer toggle — use normal link
+        return coords ? `https://waze.com/ul?ll=${dest}&navigate=yes` : `https://waze.com/ul?q=${enc}`;
+      case 'apple_maps':
+        // t=h = hybrid (satellite + labels)
+        return coords ? `https://maps.apple.com/?ll=${dest}&z=16&t=h` : `https://maps.apple.com/?q=${enc}&t=h`;
+      case 'google_maps':
+      default:
+        // Satellite view centered on coordinates, or satellite search for an address
+        if (coords) {
+          const [lat, lng] = dest.split(',').map((s) => s.trim());
+          return `https://www.google.com/maps/@${lat},${lng},16z/data=!3m1!1e3`;
+        }
+        return `https://www.google.com/maps/search/?api=1&query=${enc}&t=k`;
+    }
+  }
+
   switch (appType) {
     case 'waze':
       return coords ? `https://waze.com/ul?ll=${dest}&navigate=yes` : `https://waze.com/ul?q=${enc}`;
@@ -77,13 +97,13 @@ export function orderedMapApps() {
 // Open a maps link in a new tab. The new tab triggers the native app if it's
 // installed, otherwise falls back to the web version of the maps app. Records
 // the preference and fires an analytics event as a lightweight audit trail.
-export function openInMapsApp(appId, destination) {
-  const url = generateMapLink(destination, appId);
+export function openInMapsApp(appId, destination, satellite = false) {
+  const url = generateMapLink(destination, appId, satellite);
   if (!url) return false;
   window.open(url, '_blank', 'noopener,noreferrer');
   storePreferredMapsApp(appId);
   try {
-    base44.analytics?.track?.({ eventName: 'mcare_open_maps', properties: { app: appId, destination } });
+    base44.analytics?.track?.({ eventName: 'mcare_open_maps', properties: { app: appId, destination, satellite } });
   } catch (_) {}
   return true;
 }
