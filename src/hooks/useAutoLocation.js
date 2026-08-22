@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { fetchClientIpGeo } from '@/lib/clientIpGeo';
 import { reverseGeocodePrecise } from '@/lib/reverseGeocode';
+import { isSandboxed } from '@/lib/isSandboxed';
 
 // v4: tries a direct-from-browser lookup (clientIpGeo.js) before falling
 // back to the Base44 edge function, and no longer caches a failed/Unknown
@@ -164,16 +165,28 @@ export function useAutoLocation() {
     // cache window is fine for every other call site.
     const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
 
+    // Sandbox detection — when the app runs inside the Base44 preview iframe
+    // (or any restricted cross-origin frame whose Permissions-Policy disallows
+    // geolocation), the browser never shows the native permission prompt and
+    // getCurrentPosition hangs with neither callback firing. There is no
+    // point making the traveler wait the full 14s on a prompt that will
+    // never appear — resolve to a dedicated 'sandbox_blocked' terminal state
+    // after a short 3.5s attempt instead, so MCareOrb's gpsStatus effect can
+    // surface the honest "open the live version" message fast. The real,
+    // non-sandboxed 14s ceiling stays in force everywhere else.
+    const sandboxed = isSandboxed();
+    const hardTimeoutMs = sandboxed ? 3500 : 14000;
+
     // Hard safety timeout — separate from the browser's own { timeout }
     // option, which only bounds acquisition time once the permission is
     // already decided, not the time spent waiting on an unanswered native
     // permission prompt (which can hang forever behind a Permissions-Policy
     // restriction on a preview iframe). If neither callback has fired after
-    // 14s, force a terminal state so gpsInFlightRef can never get
+    // hardTimeoutMs, force a terminal state so gpsInFlightRef can never get
     // permanently stuck true (which would silently block every future
     // requestGPS call) and the gpsStatus effect in MCareOrb can show an
-    // honest "timed out" message instead of leaving "Getting your exact
-    // location now" as the last thing the traveler ever sees.
+    // honest message instead of leaving "Getting your exact location now"
+    // as the last thing the traveler ever sees.
     let hardTimeoutFired = false;
     const hardTimeoutId = setTimeout(() => {
       if (hardTimeoutFired) return;
@@ -181,9 +194,9 @@ export function useAutoLocation() {
       gpsInFlightRef.current = false;
       if (!mountedRef.current) return;
       setGpsStatus('unavailable');
-      setGpsErrorCode(3);
+      setGpsErrorCode(sandboxed ? 'sandbox_blocked' : 3);
       updatePref('gpsGranted', false);
-    }, 14000);
+    }, hardTimeoutMs);
 
     const proceed = () => {
       navigator.geolocation.getCurrentPosition(
@@ -224,7 +237,11 @@ export function useAutoLocation() {
           gpsInFlightRef.current = false;
           if (!mountedRef.current) return;
           setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
-          setGpsErrorCode(err.code === 1 ? 1 : (err.code === 2 ? 2 : 3));
+          // In a sandbox the error code is still real, but the root cause is
+          // the blocked prompt, not the user/device — route every sandbox
+          // failure to the dedicated message so the traveler isn't told to
+          // fiddle with site permissions that wouldn't help here.
+          setGpsErrorCode(sandboxed ? 'sandbox_blocked' : (err.code === 1 ? 1 : (err.code === 2 ? 2 : 3)));
           updatePref('gpsGranted', false);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge }

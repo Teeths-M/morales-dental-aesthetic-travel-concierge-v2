@@ -1707,13 +1707,17 @@ export default function MCareOrb() {
       // intent) can proceed, while an exact duplicate of the just-failed
       // message is still caught by the synchronous guard in
       // triggerGpsUpgrade (the ref is only cleared after this render).
-      const inIframe = (typeof window !== 'undefined' && window.self !== window.top);
-      // Differentiated by the real GeolocationPositionError.code
-      // (1=denied, 2=position_unavailable, 3=timeout) / 'no_api' — each is a
-      // genuinely different, actionable situation, not one generic failure.
+      // Sandbox / restricted preview iframe — the browser blocks the native
+      // geolocation prompt here entirely, so getCurrentPosition can never
+      // succeed and no "Allow" popup will ever appear. useAutoLocation
+      // detects this (window.self !== window.top or known preview domains)
+      // and routes every failure to gpsErrorCode 'sandbox_blocked' after a
+      // short 3.5s attempt. Give the honest, actionable message first and
+      // confirm the approximate (IP) location is still in use — never pretend
+      // we're waiting on a prompt that will never come.
       let content;
-      if (inIframe) {
-        content = "Your browser is blocking precise location in this view (common in the web preview). I'll keep using your approximate area for now — if you open the app on your phone or the published site, I can use your exact GPS.";
+      if (gpsErrorCode === 'sandbox_blocked') {
+        content = "I can't request your precise GPS location while running in preview mode — the browser blocks the permission prompt here. Please open the live version of M-Safe to use exact location. I'll keep using your approximate area for now.";
       } else if (gpsStatus === 'denied') {
         content = "Your browser has location permanently blocked for this site, so it won't prompt again on its own. To fix it: tap the lock or site-info icon next to the web address, find Location, and set it to Allow — then just ask me again and I'll use it. I'll keep using your approximate area for now.";
       } else if (gpsErrorCode === 3) {
