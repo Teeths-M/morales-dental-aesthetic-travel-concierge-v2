@@ -60,7 +60,7 @@ import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguage
 import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 import { useJourneyEvents } from '@/hooks/useJourneyEvents';
 import { useAutoLocation } from '@/hooks/useAutoLocation';
-import { buildLocationContextBlock } from '@/lib/locationContext';
+import { buildLocationContextBlock, buildSandboxLocationMessage } from '@/lib/locationContext';
 import { detectLocationConsentIntent } from '@/lib/locationConsentIntent';
 import { detectExactMapViewIntent } from '@/lib/exactMapViewIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
@@ -71,7 +71,6 @@ const GOLD = '#D4AF37';
 const DARK = '#060B16';
 const PURPLE = '#6C47FF';
 const AGENT_NAME = 'm_care';
-const SANDBOX_BLOCKED_MSG = "I can't request your precise GPS location while running in preview mode — the browser blocks the permission prompt here. Please open the live version of M-Safe to use exact location. I'll keep using your approximate area for now.";
 const GREETING = "I'm M-Safe, your Morales Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 
 // Public pages where all users should see visitor-facing tips
@@ -642,7 +641,7 @@ export default function MCareOrb() {
      if (isSandboxed()) {
        setAgentMessages(prev => [...prev, {
          role: 'assistant',
-         content: SANDBOX_BLOCKED_MSG,
+         content: buildSandboxLocationMessage(bestLocationRef.current),
        }]);
        return;
      }
@@ -748,7 +747,7 @@ export default function MCareOrb() {
     if (isSandboxed()) {
       setAgentMessages(prev => [...prev, {
         role: 'assistant',
-        content: SANDBOX_BLOCKED_MSG,
+        content: buildSandboxLocationMessage(bestLocationRef.current),
       }]);
       return;
     }
@@ -849,7 +848,7 @@ export default function MCareOrb() {
     // DIRECT sandbox short-circuit — see triggerGpsUpgrade for rationale.
     if (isSandboxed()) {
       locationChoiceInFlightRef.current = false;
-      setAgentMessages(prev => [...prev, { role: 'assistant', content: SANDBOX_BLOCKED_MSG }]);
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: buildSandboxLocationMessage(bestLocationRef.current) }]);
       return;
     }
     // Synchronous, cross-flow deduplication gate — same as triggerGpsUpgrade
@@ -1750,7 +1749,7 @@ export default function MCareOrb() {
       // we're waiting on a prompt that will never come.
       let content;
       if (gpsErrorCode === 'sandbox_blocked') {
-        content = SANDBOX_BLOCKED_MSG;
+        content = buildSandboxLocationMessage(bestLocationRef.current);
       } else if (gpsStatus === 'denied') {
         content = "Your browser has location permanently blocked for this site, so it won't prompt again on its own. To fix it: tap the lock or site-info icon next to the web address, find Location, and set it to Allow — then just ask me again and I'll use it. I'll keep using your approximate area for now.";
       } else if (gpsErrorCode === 3) {

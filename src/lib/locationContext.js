@@ -40,3 +40,51 @@ export function buildLocationContextBlock(loc) {
 
   return `[[LOCATION_CONTEXT: ${parts.join(', ')}]]`;
 }
+
+/**
+ * Builds the human-facing message shown when a precise-GPS request is
+ * blocked because the app is running inside a restricted preview/sandbox
+ * iframe. Unlike a generic "location unavailable" error, this pivots
+ * immediately to the best approximate (IP-based) location M-Care already
+ * has, labels it honestly as approximate, and offers useful nearby-care
+ * actions the traveler can still take with that approximate area.
+ *
+ * Pure and testable: given a location object (or null), always returns a
+ * well-formed string, never throws.
+ */
+export function buildSandboxLocationMessage(loc) {
+  const base = "I can't request your precise GPS while running in preview mode — the browser blocks the permission prompt here.";
+
+  // Build the approximate-location line from whatever real data we have.
+  // city is the most specific, region adds context if different, country
+  // anchors it. Falls back to raw coordinates only if that's all we have.
+  const placeParts = [];
+  if (loc?.city) placeParts.push(loc.city);
+  if (loc?.region && loc.region !== loc?.city) placeParts.push(loc.region);
+  if (loc?.country) placeParts.push(loc.country);
+
+  const hasCoords = loc?.latitude != null && loc?.longitude != null;
+  const hasApprox = placeParts.length > 0 || hasCoords;
+
+  let approxLine;
+  if (hasApprox) {
+    const placeLabel = placeParts.length > 0
+      ? placeParts.join(', ')
+      : `near ${loc.latitude.toFixed(2)}, ${loc.longitude.toFixed(2)}`;
+    approxLine = `Right now I only have an approximate location based on your network: near ${placeLabel}. This can be off by several kilometers.`;
+  } else {
+    approxLine = "I don't have even an approximate location available right now, so I can't offer nearby-care search just yet.";
+  }
+
+  // Offer useful actions even with approximate location — these choices are
+  // rendered as tappable buttons by MessageBubble and routed to the agent,
+  // which already receives the approximate location context block on every
+  // outgoing message, so it can search nearby places with what it has.
+  const choices = hasApprox
+    ? "\n\nEven with approximate location, I can still help you find nearby care:\n\n{{choices:Find nearby hospitals|Find nearby pharmacies|Find nearby clinics}}"
+    : "";
+
+  const reminder = "\n\nFor exact GPS, open the live version of M-Safe on your phone or outside this preview — I'll use it automatically the moment you do.";
+
+  return `${base}\n\n${approxLine}${choices}${reminder}`;
+}
