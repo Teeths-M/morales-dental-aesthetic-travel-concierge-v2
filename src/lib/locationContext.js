@@ -52,9 +52,7 @@ export function buildLocationContextBlock(loc) {
  * Pure and testable: given a location object (or null), always returns a
  * well-formed string, never throws.
  */
-export function buildSandboxLocationMessage(loc) {
-  const base = "I can't request your precise GPS while running in preview mode — the browser blocks the permission prompt here.";
-
+function buildApproximateBody(loc) {
   // Build the approximate-location line from whatever real data we have.
   // city is the most specific, region adds context if different, country
   // anchors it. Falls back to raw coordinates only if that's all we have.
@@ -104,7 +102,52 @@ export function buildSandboxLocationMessage(loc) {
     ? "\n\nEven with approximate location, I can still help you find nearby care:\n\n{{choices:Find nearby hospitals|Find nearby pharmacies|Find nearby clinics}}"
     : "";
 
-  const reminder = "\n\nFor exact GPS, open the live version of M-Safe on your phone or outside this preview — I'll use it automatically the moment you do.";
+  return { approxLine, mapToken, choices, hasApprox };
+}
 
+export function buildSandboxLocationMessage(loc) {
+  const base = "I can't request your precise GPS while running in preview mode — the browser blocks the permission prompt here.";
+  const { approxLine, mapToken, choices } = buildApproximateBody(loc);
+  const reminder = "\n\nFor exact GPS, open the live version of M-Safe on your phone or outside this preview — I'll use it automatically the moment you do.";
   return `${base}\n\n${approxLine}${mapToken}${choices}${reminder}`;
+}
+
+/**
+ * Builds the human-facing message shown when a precise-GPS request fails in
+ * the LIVE (non-preview) app — denied, timed out, unavailable, or no API.
+ * Mirrors buildSandboxLocationMessage's structure: acknowledges the failure
+ * honestly, then immediately pivots to the best approximate (IP-based)
+ * location M-Care already has, with a one-tap Maps button and nearby-care
+ * chips. This is the safety-critical fallback for a traveler who is lost in
+ * a foreign country and can't get a precise fix — they still get something
+ * actionable instead of a dead-end "type your address."
+ *
+ * reason maps to GeolocationPositionError codes: 1=denied, 2=unavailable,
+ * 3=timeout, 'no_api', or null.
+ *
+ * Pure and testable: given a location object (or null) and a reason, always
+ * returns a well-formed string, never throws.
+ */
+export function buildGpsFallbackMessage(loc, reason = null) {
+  let base;
+  let fixHint;
+  if (reason === 1) {
+    base = "I couldn't access your precise GPS — the location permission was denied.";
+    fixHint = "To get your exact location: tap the lock or site-info icon next to the web address, find Location, and set it to Allow — then ask me again.";
+  } else if (reason === 3) {
+    base = "I couldn't get your precise GPS in time — that can happen with a weak signal indoors.";
+    fixHint = "Try asking again, especially near a window or outside with a clearer view of the sky.";
+  } else if (reason === 2) {
+    base = "Your device couldn't provide a precise location right now.";
+    fixHint = "Try again in a moment, or ask me to find nearby care using your approximate area below.";
+  } else if (reason === 'no_api') {
+    base = "Your device doesn't support precise GPS location.";
+    fixHint = "You can still search for nearby care using your approximate area below.";
+  } else {
+    base = "I wasn't able to get your precise GPS location.";
+    fixHint = "I'll keep using your approximate area for now — ask me again anytime to retry.";
+  }
+
+  const { approxLine, mapToken, choices } = buildApproximateBody(loc);
+  return `${base}\n\n${approxLine}${mapToken}${choices}\n\n${fixHint}`;
 }

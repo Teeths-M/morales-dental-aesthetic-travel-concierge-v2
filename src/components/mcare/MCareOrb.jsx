@@ -60,7 +60,7 @@ import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguage
 import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 import { useJourneyEvents } from '@/hooks/useJourneyEvents';
 import { useAutoLocation } from '@/hooks/useAutoLocation';
-import { buildLocationContextBlock, buildSandboxLocationMessage } from '@/lib/locationContext';
+import { buildLocationContextBlock, buildSandboxLocationMessage, buildGpsFallbackMessage } from '@/lib/locationContext';
 import { detectLocationConsentIntent } from '@/lib/locationConsentIntent';
 import { detectExactMapViewIntent } from '@/lib/exactMapViewIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
@@ -676,19 +676,11 @@ export default function MCareOrb() {
          );
        }
      } else {
-       // GPS failed or was denied — show an honest fallback message so the
-       // traveler knows to type their city or address instead.
-       const code = result?.errorCode;
-       let content;
-       if (code === 1) {
-         content = "I couldn't access your precise GPS — the permission was denied. You can type your city or address instead, or enable location for this site in your browser settings and ask me again.";
-       } else if (code === 3) {
-         content = "I couldn't get your precise GPS in time — that can happen with a weak signal. Please type your city or address, or try again somewhere with a clearer view of the sky.";
-       } else if (code === 'no_api') {
-         content = "Your device doesn't support precise location. Please type your city or address.";
-       } else {
-         content = "I couldn't access your precise GPS. Please type your city or address.";
-       }
+       // GPS failed or was denied — pivot to the approximate IP location
+       // with a Maps button + nearby-care chips instead of a dead-end
+       // "type your address." This is the safety-critical fallback for a
+       // traveler lost in a foreign country who can't get a precise fix.
+       const content = buildGpsFallbackMessage(bestLocationRef.current, result?.errorCode);
        setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
      }
   }, [requestGPS]);
@@ -1766,18 +1758,9 @@ export default function MCareOrb() {
       // short 3.5s attempt. Give the honest, actionable message first and
       // confirm the approximate (IP) location is still in use — never pretend
       // we're waiting on a prompt that will never come.
-      let content;
-      if (gpsErrorCode === 'sandbox_blocked') {
-        content = buildSandboxLocationMessage(bestLocationRef.current);
-      } else if (gpsStatus === 'denied') {
-        content = "Your browser has location permanently blocked for this site, so it won't prompt again on its own. To fix it: tap the lock or site-info icon next to the web address, find Location, and set it to Allow — then just ask me again and I'll use it. I'll keep using your approximate area for now.";
-      } else if (gpsErrorCode === 3) {
-        content = "Your device took too long to respond with a precise location — that can happen with a weak signal. Feel free to ask again, especially somewhere with a clearer view of the sky. I'll keep using your approximate area for now.";
-      } else if (gpsErrorCode === 2 || gpsErrorCode === 'no_api') {
-        content = "Your device isn't able to provide a precise location right now, so I'll keep using your approximate area.";
-      } else {
-        content = "I wasn't able to get your exact location, so I'll keep using your approximate area.";
-      }
+      const content = gpsErrorCode === 'sandbox_blocked'
+        ? buildSandboxLocationMessage(bestLocationRef.current)
+        : buildGpsFallbackMessage(bestLocationRef.current, gpsErrorCode === 'denied' ? 1 : gpsErrorCode);
       setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
       locationRequestPendingRef.current = false;
     }
