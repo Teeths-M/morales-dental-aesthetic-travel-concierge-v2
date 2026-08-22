@@ -634,8 +634,13 @@ export default function MCareOrb() {
       return;
     }
     const label = loc.resolved_place ? `My Location (${loc.resolved_place})` : 'My Location';
-    sendAgentMessage(`Here's my current location.\n{{maps:${label}|${loc.latitude},${loc.longitude}}}`, []);
-  }, [sendAgentMessage]);
+    // liveRef.current.sendAgentMessage — sendAgentMessage is declared further
+    // down in this component, so referencing it directly here (or in the deps
+    // array) throws a TDZ "Cannot access 'sendAgentMessage' before
+    // initialization" at render. Same ref-indirection pattern
+    // handleResumeIntent / handleInterruptionSend already use.
+    liveRef.current.sendAgentMessage?.(`Here's my current location.\n{{maps:${label}|${loc.latitude},${loc.longitude}}}`, []);
+  }, []);
 
   // "Send my current location" — reuses triggerGpsUpgrade's exact
   // wait-for-GPS/15s-safety-net shape, but sends a location pin once granted
