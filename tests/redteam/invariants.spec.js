@@ -3957,6 +3957,53 @@ test('VAULT DOCUMENT: VaultDocument RLS is owner-or-admin only, only scanVaultDo
     .toMatch(/verification_source\s*=\s*'Manual admin review'/);
 });
 
+test('GROUNDED EXPLANATIONS: JourneyEvent is granted read-only to M-Care, its RLS stays patient-or-admin scoped, and RULE 31 requires answering "why" from real records rather than inventing one', () => {
+  // JourneyEvent's own RLS predates this change (it's the standing proactive-
+  // communication layer, written only by trusted cron functions via
+  // asServiceRole) — pinned here as the safety precondition that makes a
+  // read-only agent grant harmless: the agent can only ever see a patient's
+  // own events (or an admin's), never another patient's.
+  const entity = read('base44/entities/JourneyEvent.jsonc');
+  expect(entity, 'read must be scoped to client_email or admin/platform_admin, not wide open')
+    .toMatch(/"read"\s*:\s*\{\s*"\$or"\s*:\s*\[\s*\{\s*"data\.client_email"\s*:\s*"\{\{user\.email\}\}"/);
+  for (const op of ['create', 'update']) {
+    const opSlice = entity.slice(entity.indexOf(`"${op}"`), entity.indexOf(`"${op}"`) + 200);
+    expect(opSlice, `${op} must be admin/platform_admin only — every real write happens via asServiceRole inside a trusted scheduled function`)
+      .toMatch(/"role"\s*:\s*"admin"/);
+    expect(opSlice, `${op} must never grant a plain authenticated user direct write access`)
+      .not.toMatch(/"authenticated"\s*:\s*true/);
+  }
+
+  // m_care.jsonc must grant JourneyEvent read-only — same Phase-8 discipline
+  // as every other sensitive entity the agent touches (Doctor/TravelAgency/
+  // VaultDocument/Medication): read what the frontend already shows the
+  // patient, never write it directly.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const grantMatch = agentConfig.match(/\{\s*"entity_name"\s*:\s*"JourneyEvent"\s*,\s*"allowed_operations"\s*:\s*\[([^\]]*)\]\s*\}/);
+  expect(grantMatch, 'JourneyEvent must be granted to the M-Care agent to check its allowed_operations').toBeTruthy();
+  const grantedOps = grantMatch[1];
+  expect(grantedOps, 'the agent JourneyEvent grant must include read').toMatch(/"read"/);
+  expect(grantedOps, 'the agent JourneyEvent grant must never include create').not.toMatch(/"create"/);
+  expect(grantedOps, 'the agent JourneyEvent grant must never include update').not.toMatch(/"update"/);
+  expect(grantedOps, 'the agent JourneyEvent grant must never include delete').not.toMatch(/"delete"/);
+
+  // RULE 31 itself: must instruct grounding a "why"/"what have you done"
+  // answer in real JourneyEvent records, forbid inventing an action that
+  // isn't in a real record, and state the grant is read-only.
+  const instructions = JSON.parse(agentConfig).instructions;
+  const ruleIdx = instructions.indexOf('RULE 31');
+  expect(ruleIdx, 'RULE 31 (GROUNDED EXPLANATIONS) must exist in the instructions').toBeGreaterThan(-1);
+  const ruleText = instructions.slice(ruleIdx, ruleIdx + 1200);
+  expect(ruleText, 'RULE 31 must instruct looking up real JourneyEvent records before answering a retrospective question')
+    .toMatch(/look up the real JourneyEvent records/);
+  expect(ruleText, 'RULE 31 must forbid inventing a reason or action not present in a real record')
+    .toMatch(/never invent a reason or an action that is not in a real record/);
+  expect(ruleText, 'RULE 31 must instruct an honest empty-result answer rather than a plausible guess')
+    .toMatch(/nothing relevant is on file, say so plainly/);
+  expect(ruleText, 'RULE 31 must state the grant is read-only')
+    .toMatch(/you never create, update, or delete a JourneyEvent yourself/);
+});
+
 test('MEDICATION: Medication RLS is admin-only to write, the agent grant is read-only, reportMedication never itself confirms anything, confirmMedication is role-gated per action, and reconciliation only ever flags', () => {
   // Same shape as VaultDocument: read patient-or-doctor-or-admin, create/
   // update/delete admin-only — every real write goes through
