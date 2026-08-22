@@ -51,6 +51,9 @@ const ALLOWED_EVENT_TYPES = new Set([
   'medication_confirmed',
   'medication_flagged',
   'medication_discontinued',
+  'journey_plan_created',
+  'journey_plan_step_updated',
+  'journey_plan_completed',
 ]);
 
 async function sha256(text: string): Promise<string> {

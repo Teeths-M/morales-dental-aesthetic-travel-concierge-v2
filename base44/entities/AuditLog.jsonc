@@ -54,7 +54,10 @@
         "vault_document_scanned",
         "vault_document_verification_result",
         "vault_document_reviewed",
-        "vault_document_accessed"
+        "vault_document_accessed",
+        "journey_plan_created",
+        "journey_plan_step_updated",
+        "journey_plan_completed"
       ]
     },
     "actor_id": {

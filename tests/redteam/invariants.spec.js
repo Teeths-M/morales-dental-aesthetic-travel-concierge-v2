@@ -4004,6 +4004,80 @@ test('GROUNDED EXPLANATIONS: JourneyEvent is granted read-only to M-Care, its RL
     .toMatch(/you never create, update, or delete a JourneyEvent yourself/);
 });
 
+test('JOURNEY PLAN: JourneyPlan RLS is admin-only to write, the agent grant is read-only, createJourneyPlan never trusts a caller-supplied status or email, updateJourneyPlanStep is ownership-checked, and RULE 32 forbids marking a step done that has not happened', () => {
+  // Same Phase-8 shape as every prior sensitive entity: read patient-or-
+  // admin, create/update/delete admin-only — every real write happens via
+  // asServiceRole inside createJourneyPlan/updateJourneyPlanStep, so a
+  // client (or M-Care's own agent tool grant, which is read-only) can never
+  // directly write a fabricated plan or a step that did not actually happen.
+  const entity = read('base44/entities/JourneyPlan.jsonc');
+  expect(entity, 'read must be scoped to client_email or admin/platform_admin, not wide open')
+    .toMatch(/"read"\s*:\s*\{\s*"\$or"\s*:\s*\[\s*\{\s*"data\.client_email"\s*:\s*"\{\{user\.email\}\}"/);
+  for (const op of ['create', 'update']) {
+    const opSlice = entity.slice(entity.indexOf(`"${op}"`), entity.indexOf(`"${op}"`) + 200);
+    expect(opSlice, `${op} must be admin/platform_admin only — every real write happens via asServiceRole inside a gated function`)
+      .toMatch(/"role"\s*:\s*"admin"/);
+    expect(opSlice, `${op} must never grant a plain authenticated user direct write access`)
+      .not.toMatch(/"authenticated"\s*:\s*true/);
+  }
+  expect(entity, 'delete must be admin-only')
+    .toMatch(/"delete"\s*:\s*\{\s*"user_condition"\s*:\s*\{\s*"role"\s*:\s*"admin"/);
+
+  // m_care.jsonc must grant JourneyPlan read-only, and both real write
+  // functions as tools — the same Phase-8 discipline applied to a new
+  // entity from day one instead of relearning it.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const grantMatch = agentConfig.match(/\{\s*"entity_name"\s*:\s*"JourneyPlan"\s*,\s*"allowed_operations"\s*:\s*\[([^\]]*)\]\s*\}/);
+  expect(grantMatch, 'JourneyPlan must be granted to the M-Care agent to check its allowed_operations').toBeTruthy();
+  const grantedOps = grantMatch[1];
+  expect(grantedOps, 'the agent JourneyPlan grant must include read').toMatch(/"read"/);
+  expect(grantedOps, 'the agent JourneyPlan grant must never include create').not.toMatch(/"create"/);
+  expect(grantedOps, 'the agent JourneyPlan grant must never include update').not.toMatch(/"update"/);
+  expect(grantedOps, 'the agent JourneyPlan grant must never include delete').not.toMatch(/"delete"/);
+  expect(agentConfig, 'createJourneyPlan must be granted as a function tool')
+    .toMatch(/"function_name"\s*:\s*"createJourneyPlan"/);
+  expect(agentConfig, 'updateJourneyPlanStep must be granted as a function tool')
+    .toMatch(/"function_name"\s*:\s*"updateJourneyPlanStep"/);
+
+  // createJourneyPlan: a step's initial status must always be server-set to
+  // 'pending', never accepted from the caller — its own input schema
+  // (StepInput) must not declare a status field at all.
+  const createSrc = read('base44/functions/createJourneyPlan/entry.ts');
+  const stepInputBlock = createSrc.slice(createSrc.indexOf('const StepInput'), createSrc.indexOf('const bodySchema'));
+  expect(stepInputBlock, "createJourneyPlan's StepInput schema must not accept a caller-supplied status")
+    .not.toMatch(/status\s*:/);
+  expect(createSrc, "every created step must be hardcoded to status: 'pending'")
+    .toMatch(/status:\s*'pending'/);
+  expect(createSrc, 'client_email must be derived from the real CaseRecord, never trusted from the request body')
+    .toMatch(/client_email:\s*caseRecord\.client_email/);
+  expect(createSrc, "createJourneyPlan's bodySchema must not itself declare a client_email field")
+    .not.toMatch(/client_email:\s*Fields\./);
+
+  // updateJourneyPlanStep: must never allow setting a step back to pending
+  // (that's create-time-only), and must check the caller owns the plan
+  // before writing anything.
+  const updateSrc = read('base44/functions/updateJourneyPlanStep/entry.ts');
+  expect(updateSrc, 'STEP_STATUSES must never include pending — only createJourneyPlan may set that')
+    .toMatch(/const STEP_STATUSES = \['in_progress', 'done', 'failed', 'skipped'\]/);
+  expect(updateSrc, 'updateJourneyPlanStep must reject a caller who does not own the plan')
+    .toMatch(/plan\.client_email\s*!==\s*user!\.email/);
+
+  // RULE 32 itself: must forbid marking a step done that has not actually
+  // happened, require honest failure notes, and cross-reference RULE 3.
+  const instructions = JSON.parse(agentConfig).instructions;
+  const ruleIdx = instructions.indexOf('RULE 32');
+  expect(ruleIdx, 'RULE 32 (JOURNEY PLANNING) must exist in the instructions').toBeGreaterThan(-1);
+  const ruleText = instructions.slice(ruleIdx, ruleIdx + 1400);
+  expect(ruleText, 'RULE 32 must forbid marking a step done that has not actually happened')
+    .toMatch(/Never mark a step done that has not actually happened/);
+  expect(ruleText, 'RULE 32 must require honest notes on a genuine failure, never a silent skip or a pretended success')
+    .toMatch(/mark it failed honestly with real notes/);
+  expect(ruleText, 'RULE 32 must cross-reference RULE 3 (NO INVENTED DATA)')
+    .toMatch(/RULE 3 \(NO INVENTED DATA/);
+  expect(ruleText, 'RULE 32 must state this is not a new execution engine')
+    .toMatch(/not a new execution engine/);
+});
+
 test('MEDICATION: Medication RLS is admin-only to write, the agent grant is read-only, reportMedication never itself confirms anything, confirmMedication is role-gated per action, and reconciliation only ever flags', () => {
   // Same shape as VaultDocument: read patient-or-doctor-or-admin, create/
   // update/delete admin-only — every real write goes through

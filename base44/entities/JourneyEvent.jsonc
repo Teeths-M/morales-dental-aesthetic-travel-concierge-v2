@@ -39,7 +39,9 @@
         "early_checkin_nudge",
         "medication_confirmation_needed",
         "medication_review_required",
-        "medication_confirmed"
+        "medication_confirmed",
+        "journey_plan_created",
+        "journey_plan_completed"
       ]
     },
     "source": {

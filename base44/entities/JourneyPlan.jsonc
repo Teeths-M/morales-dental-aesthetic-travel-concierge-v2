@@ -1,0 +1,60 @@
+{
+  "name": "JourneyPlan",
+  "type": "object",
+  "description": "M-Care's own real, persistent, auditable plan for a genuinely multi-step request on a case (e.g. 'dental implants in Cancun with travel coordination') — an explicit ordered list of steps M-Care itself authored, so a multi-step request is a real inspectable record instead of something decided silently turn by turn inside Base44's own agent runtime. This is scaffolding for M-Care's own reasoning and a record for later review, never a parallel execution engine — nothing here runs itself, and nothing here changes any existing safety/consent gate. All writes go through createJourneyPlan (creation) or updateJourneyPlanStep (marking a step's real progress) — create/update RLS is admin-only so a client (or M-Care's own agent tool grant, which is read-only) can never directly write a fabricated plan or a step that didn't actually happen.",
+  "properties": {
+    "client_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized RLS anchor — the patient this plan belongs to. Same pattern as JourneyEvent.client_email."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this plan is for. A plan always requires a real, already-existing case — pre-case (intake-time) planning is not supported yet."
+    },
+    "goal": {
+      "type": "string",
+      "description": "Plain-language description of what this plan accomplishes, in M-Care's own words at creation time."
+    },
+    "steps": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Ordered list of {step_number, description, tool_name, status, notes, updated_at}. status is one of pending/in_progress/done/failed/skipped — every step starts pending (server-set, never caller-supplied) and only updateJourneyPlanStep can change it, always by a real human/tool action, never marked done pre-emptively. tool_name is the real granted tool name this step maps to, if any, or blank for a step that isn't a single tool call (e.g. 'traveler confirms the date')."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "completed", "abandoned"],
+      "default": "active",
+      "description": "Plan-level convenience field. Set to completed only when every step has reached done (see updateJourneyPlanStep). 'abandoned' is reserved for a future admin/replanning action — nothing in this pass ever sets it."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["client_email", "case_id", "goal", "steps", "status"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.client_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "admin" }
+    }
+  }
+}
