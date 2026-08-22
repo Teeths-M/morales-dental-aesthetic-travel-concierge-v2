@@ -4198,7 +4198,7 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
 
   const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
   expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
-  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 800);
+  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 1300);
   expect(triggerBlock, 'triggerGpsUpgrade must call the real requestGPS()').toMatch(/requestGPS\(true\);/);
 
   // The choice-router: a tapped choice must be gated by the intent
@@ -4334,6 +4334,49 @@ test('LOCATION PAUSE BYPASS: an explicit GPS request is never silently vetoed by
     .not.toMatch(/onClick=\{requestGPS\}/);
 });
 
+test('LOCATION SHARE RACE: the two pending-GPS flows (a typed-question retry, a "send my current location" tap) mutually cancel rather than both firing', () => {
+  // A real race, found by audit: if a typed question sets
+  // pendingGpsRetryQueryRef and, before GPS resolves, a "Send my current
+  // location" tap also sets pendingLocationPinRef, the gpsStatus-resolving
+  // effect used to consume+clear only the location-pin ref on its first
+  // pass and re-run once agentSending cycled — resending the OLD, unrelated
+  // typed question as a second, surprising message right after the pin.
+  // Fixed by having whichever flow starts most recently cancel the other's
+  // still-pending flag, at the two setting sites.
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+
+  const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
+  expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const triggerBlock = orbSrc.slice(triggerIdx, orbSrc.indexOf('}, [requestGPS]);', triggerIdx));
+  expect(triggerBlock, 'a fresh typed-question retry must cancel any still-pending location-pin flow')
+    .toMatch(/pendingLocationPinRef\.current = false;/);
+
+  const shareIdx = orbSrc.indexOf('const shareCurrentLocationNow = useCallback');
+  expect(shareIdx, 'shareCurrentLocationNow must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const shareBlock = orbSrc.slice(shareIdx, orbSrc.indexOf('}, [requestGPS, sendLocationPin, agentSending]);', shareIdx));
+  expect(shareBlock, 'a fresh "send my current location" tap (still acquiring GPS) must cancel any still-pending typed-question retry')
+    .toMatch(/pendingLocationPinRef\.current = true;[\s\S]{0,120}pendingGpsRetryQueryRef\.current = null;/);
+
+  // The locationPaused-masking fix: sendLocationPin and shareCurrentLocationNow's
+  // fast path must read the raw, unfiltered GPS fix (gpsLocationRef), not the
+  // locationPaused-filtered bestLocationRef — otherwise a real, just-granted
+  // GPS fix reports as "I wasn't able to get your exact location" whenever an
+  // unrelated background-tracking pause preference happens to be set.
+  const pinIdx = orbSrc.indexOf('const sendLocationPin = useCallback');
+  expect(pinIdx, 'sendLocationPin must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const pinBlock = orbSrc.slice(pinIdx, orbSrc.indexOf('}, []);', pinIdx));
+  expect(pinBlock, 'sendLocationPin must read gpsLocationRef, not bestLocationRef')
+    .toMatch(/const loc = gpsLocationRef\.current;/);
+  expect(shareBlock, "shareCurrentLocationNow's fast path must check gpsLocationRef, not bestLocationRef's locationPaused-filtered value")
+    .toMatch(/gpsLocationRef\.current\?\.latitude/);
+
+  // requestGPS() itself must not allow two overlapping calls (the structural
+  // root cause enabling several caller-side races) — a reentrancy guard.
+  const hookSrc = read('src/hooks/useAutoLocation.js');
+  expect(hookSrc, 'requestGPS must guard against a second call while one is already in flight')
+    .toMatch(/if \(gpsInFlightRef\.current\) return;/);
+});
+
 test('SAFE-T4LIFE: repeat-procedure history can only ever escalate toward HIGH, a lookup failure fails open for just this new signal, and the chat tool never auto-creates a review task', () => {
   // repeatProcedureHistory.ts must never itself decide a tier — it can only
   // ever report requiresReview: true/false. Only safeT4LifeScan (the real
@@ -4423,7 +4466,7 @@ test('OFFLINE LOCATION QR: a maps token always pairs with a QR, the QR prefers a
   const orbSrc = read('src/components/mcare/MCareOrb.jsx');
   const pinIdx = orbSrc.indexOf('const sendLocationPin = useCallback');
   expect(pinIdx, 'sendLocationPin must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
-  const pinBlock = orbSrc.slice(pinIdx, pinIdx + 1300);
+  const pinBlock = orbSrc.slice(pinIdx, pinIdx + 2200);
   expect(pinBlock, 'sendLocationPin must emit a {{maps:...}} token')
     .toMatch(/\{\{maps:\$\{label\}\|/);
   expect(pinBlock, 'sendLocationPin must also emit a matching {{qr:...}} token, not just the maps buttons')

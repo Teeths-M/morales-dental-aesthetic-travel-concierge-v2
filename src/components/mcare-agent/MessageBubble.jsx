@@ -664,7 +664,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                   ))}
                 </div>
               )}
-              {maps && (
+              {maps?.dest && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {orderedMapApps().map(app => (
                     <button

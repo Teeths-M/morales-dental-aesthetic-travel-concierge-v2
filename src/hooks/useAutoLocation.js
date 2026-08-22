@@ -71,6 +71,15 @@ export function useAutoLocation() {
   const [isLoading, setIsLoading] = useState(true);
   const [prefs, setPrefsState] = useState(readPrefs);
   const mountedRef = useRef(true);
+  // Reentrancy guard — several independent callers (a typed-question GPS
+  // upgrade, "Send my current location", the proactive LocationPermissionGate)
+  // can each call requestGPS(true) around the same time. Without this, each
+  // spins up its own permissions.query/getCurrentPosition call, which is not
+  // just wasteful — it's the root cause of a real race where two overlapping
+  // "pending" flows in a caller can both resolve against the same eventual
+  // gpsStatus change. Cleared at every true terminal point below (never left
+  // permanently stuck true).
+  const gpsInFlightRef = useRef(false);
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
@@ -139,7 +148,13 @@ export function useAutoLocation() {
       return;
     }
     if (prefs.locationPaused && !force) return;
+    // A request is already resolving — let it finish rather than starting a
+    // second, redundant permissions/geolocation call. gpsStatus will change
+    // (or the caller's own safety-net timeout will fire) regardless of which
+    // caller asked first.
+    if (gpsInFlightRef.current) return;
 
+    gpsInFlightRef.current = true;
     setGpsStatus('requesting');
     setGpsErrorCode(null);
 
@@ -153,6 +168,7 @@ export function useAutoLocation() {
     const proceed = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          gpsInFlightRef.current = false;
           if (!mountedRef.current) return;
           const loc = {
             latitude: pos.coords.latitude,
@@ -179,6 +195,7 @@ export function useAutoLocation() {
           });
         },
         (err) => {
+          gpsInFlightRef.current = false;
           if (!mountedRef.current) return;
           setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
           setGpsErrorCode(err.code === 1 ? 1 : (err.code === 2 ? 2 : 3));
@@ -193,8 +210,9 @@ export function useAutoLocation() {
       navigator.permissions
         .query({ name: 'geolocation' })
         .then((result) => {
-          if (!mountedRef.current) return;
+          if (!mountedRef.current) { gpsInFlightRef.current = false; return; }
           if (result.state === 'denied') {
+            gpsInFlightRef.current = false;
             setGpsStatus('denied');
             setGpsErrorCode(1);
             updatePref('gpsGranted', false);

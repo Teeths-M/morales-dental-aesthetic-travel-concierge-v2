@@ -219,7 +219,7 @@ export default function MCareOrb() {
   // this is attached once per mount rather than on every message.
   // prefs aliased to locationPrefs — `prefs` is already bound to
   // useMcarePreferences()'s object elsewhere in this file.
-  const { bestLocation, isLoading: locationLoading, requestGPS, gpsStatus, gpsErrorCode, prefs: locationPrefs } = useAutoLocation();
+  const { bestLocation, gpsLocation, isLoading: locationLoading, requestGPS, gpsStatus, gpsErrorCode, prefs: locationPrefs } = useAutoLocation();
   const [showLocationGate, setShowLocationGate] = useState(false);
   // Session-lifetime only (not persisted) — a fresh page load always gets
   // one proactive ask, matching "M-Care should always know where the
@@ -237,6 +237,14 @@ export default function MCareOrb() {
   const locationLoadingRef = useRef(locationLoading);
   useEffect(() => { bestLocationRef.current = bestLocation; }, [bestLocation]);
   useEffect(() => { locationLoadingRef.current = locationLoading; }, [locationLoading]);
+  // Raw GPS fix, unfiltered by the locationPaused preference bestLocation
+  // applies — the Location-menu flow (below) reads this instead of
+  // bestLocationRef so an explicit "send my current location" tap always
+  // sees a just-obtained GPS fix, even when locationPaused is set (that
+  // preference means "don't passively track me in the background," not
+  // "hide a location I just explicitly asked you to get").
+  const gpsLocationRef = useRef(gpsLocation);
+  useEffect(() => { gpsLocationRef.current = gpsLocation; }, [gpsLocation]);
   // Holds the traveler's most recent real outgoing message text — the GPS
   // upgrade offer (see handleGpsUpgradeConfirm below) is always a direct
   // agent reply to that exact message, so this reliably identifies "the
@@ -249,6 +257,13 @@ export default function MCareOrb() {
   // consumed by the same gpsStatus effect once permission resolves, sending
   // the real location pin instead of redoing a text question.
   const pendingLocationPinRef = useRef(false);
+  // Guards against a double-tap on either Location-menu choice ("Send my
+  // current location" / "Share my live location") kicking off two
+  // overlapping flows — set the instant a choice is tapped, cleared at every
+  // real terminal point of whichever flow it dispatched to (sendLocationPin,
+  // shareLiveLocationNow's success/catch, the denied/unavailable resolution,
+  // or a superseding triggerGpsUpgrade call cancelling this flow outright).
+  const locationChoiceInFlightRef = useRef(false);
   // Safety net for requestGPS() never resolving at all — the browser's own
   // { timeout: 10000 } only bounds acquisition time once permission is
   // already decided, not time spent waiting on an unanswered native
@@ -574,6 +589,14 @@ export default function MCareOrb() {
   // ask twice.
   const triggerGpsUpgrade = useCallback((retryQuery) => {
     pendingGpsRetryQueryRef.current = retryQuery || null;
+    // A fresh typed-question GPS request supersedes any still-pending
+    // Location-menu "send my current location" flow (the newest tap is the
+    // real, current intent) — without this, both a location pin AND the
+    // stale retried question can fire once GPS resolves. Release the
+    // in-flight guard too so a superseded flow doesn't leave the Location
+    // menu's choices permanently unable to be retapped.
+    pendingLocationPinRef.current = false;
+    locationChoiceInFlightRef.current = false;
     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
     // force=true: this only ever fires from a real, explicit, freshly-given
     // request (a confirmed GPS-consent choice tap or a directly-typed
@@ -628,7 +651,15 @@ export default function MCareOrb() {
   // agent gets grounded coordinates for free, alongside a real tappable
   // {{maps:...}} button the traveler sees in their own bubble.
   const sendLocationPin = useCallback(() => {
-    const loc = bestLocationRef.current;
+    // This is the real terminal point for the Location-menu "send my current
+    // location" flow, whichever path reached it — release the double-tap
+    // guard here regardless of outcome.
+    locationChoiceInFlightRef.current = false;
+    // Reads the raw GPS fix, not bestLocationRef — bestLocation is filtered
+    // by locationPaused (a "don't passively track me" preference), which
+    // would otherwise make this show a false "I couldn't get your location"
+    // even when GPS was just explicitly granted and a fix was really obtained.
+    const loc = gpsLocationRef.current;
     if (!loc || loc.source !== 'gps' || loc.latitude == null || loc.longitude == null) {
       setAgentMessages(prev => [...prev, { role: 'assistant', content: "I wasn't able to get your exact location, so I couldn't share a pin. Feel free to try again." }]);
       return;
@@ -651,11 +682,32 @@ export default function MCareOrb() {
   // wait-for-GPS/15s-safety-net shape, but sends a location pin once granted
   // instead of redoing a text question.
   const shareCurrentLocationNow = useCallback(() => {
-    if (bestLocationRef.current?.source === 'gps') {
+    // gpsLocationRef, not bestLocationRef — bestLocation is filtered by
+    // locationPaused, which would otherwise make this fast path never fire
+    // (redundantly re-requesting GPS every time) whenever background
+    // tracking happens to be paused, even with a perfectly good fresh fix.
+    const hasFreshGps = gpsLocationRef.current?.latitude != null && gpsLocationRef.current?.longitude != null;
+    if (hasFreshGps) {
+      if (agentSending) {
+        // sendAgentMessage (inside sendLocationPin) silently drops a send
+        // while the agent is mid-reply — queue it via the same pending-ref
+        // mechanism the "still acquiring GPS" branch below uses instead of
+        // letting the tap silently do nothing. The gpsStatus effect already
+        // re-runs when agentSending flips back to false.
+        pendingLocationPinRef.current = true;
+        pendingGpsRetryQueryRef.current = null;
+        setAgentMessages(prev => [...prev, { role: 'assistant', content: "One moment — I'll send your location as soon as I'm done here." }]);
+        return;
+      }
       sendLocationPin();
       return;
     }
     pendingLocationPinRef.current = true;
+    // A fresh "send my current location" tap supersedes any still-pending
+    // typed-question GPS retry (see triggerGpsUpgrade's matching clear) —
+    // the newest tap is the real, current intent, so only one flow should
+    // ever resolve once GPS answers.
+    pendingGpsRetryQueryRef.current = null;
     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
     requestGPS(true);
     clearGpsRequestTimeout();
@@ -663,12 +715,13 @@ export default function MCareOrb() {
       gpsRequestTimeoutRef.current = null;
       if (!pendingLocationPinRef.current) return;
       pendingLocationPinRef.current = false;
+      locationChoiceInFlightRef.current = false;
       setAgentMessages(prev => [...prev, {
         role: 'assistant',
         content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow, then try sharing your location again.",
       }]);
     }, 15000);
-  }, [requestGPS, sendLocationPin]);
+  }, [requestGPS, sendLocationPin, agentSending]);
 
   // "Share my live location" — a real, revocable streaming link. Direct
   // client call to a real, already-built, already-agent-granted function,
@@ -676,9 +729,21 @@ export default function MCareOrb() {
   // precedent handleDistressConfirm already established for
   // requestOnDemandRide/notifyGuardianNow.
   const shareLiveLocationNow = useCallback(async () => {
+    // A live-location link is tied to a real case (that's who the stream is
+    // for) — check client-side before the round trip instead of relying
+    // solely on the backend, which would otherwise still succeed but create
+    // a real link attached to nothing a care team could ever see.
+    if (!activeCaseRecord?.id) {
+      locationChoiceInFlightRef.current = false;
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "You'll need an active journey for a live-location link — once your case is set up, I can create one anytime.",
+      }]);
+      return;
+    }
     try {
       const res = await base44.functions.invoke('generateLiveLocationRequestLink', {
-        case_id: activeCaseRecord?.id,
+        case_id: activeCaseRecord.id,
         reason: 'Traveler chose to share their live location from M-Care chat.',
       });
       const data = res?.data;
@@ -692,12 +757,23 @@ export default function MCareOrb() {
         role: 'assistant',
         content: friendlyError(e, "I couldn't set up a live-location link right now — please try again in a moment.", 'MCareOrb'),
       }]);
+    } finally {
+      locationChoiceInFlightRef.current = false;
     }
   }, [activeCaseRecord]);
 
   const handleLocationShareChoice = useCallback((choice) => {
+    // Blocks a double-tap on either choice from kicking off two overlapping
+    // flows (each would otherwise independently start its own GPS request or
+    // create its own live-location link). Released at whichever flow's real
+    // terminal point is reached (sendLocationPin, shareLiveLocationNow's
+    // finally, the denied/unavailable resolution, or a superseding
+    // triggerGpsUpgrade call).
+    if (locationChoiceInFlightRef.current) return;
+    locationChoiceInFlightRef.current = true;
     if (choice === 'Send my current location') shareCurrentLocationNow();
     else if (choice === 'Share my live location') shareLiveLocationNow();
+    else locationChoiceInFlightRef.current = false;
   }, [shareCurrentLocationNow, shareLiveLocationNow]);
 
   // Load the user's existing M-Care conversation when they first open the orb.
@@ -1466,6 +1542,10 @@ export default function MCareOrb() {
       clearGpsRequestTimeout();
       pendingGpsRetryQueryRef.current = null;
       pendingLocationPinRef.current = false;
+      // Harmless if a location-choice flow wasn't the one pending (a typed-
+      // question retry can also land here) — releases the Location-menu
+      // double-tap guard if it was.
+      locationChoiceInFlightRef.current = false;
       const inIframe = (typeof window !== 'undefined' && window.self !== window.top);
       // Differentiated by the real GeolocationPositionError.code
       // (1=denied, 2=position_unavailable, 3=timeout) / 'no_api' — each is a

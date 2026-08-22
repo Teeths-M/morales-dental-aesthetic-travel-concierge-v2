@@ -83,6 +83,13 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 1);
       resolvedCaseId = cases?.[0]?.id || '';
     } catch (_) { resolvedCaseId = ''; }
+    // Fail honestly rather than silently create an orphaned link — a live-
+    // location stream only means something once a real case/care team exists
+    // to watch it, same "don't ship a link that quietly doesn't work"
+    // reasoning as the missing-APP_URL check below.
+    if (!resolvedCaseId) {
+      return err('You need an active case before creating a live-location link. Book a procedure or start a journey first, then try again.', 400);
+    }
   } else {
     try {
       const cases = await base44.entities.CaseRecord.filter({ id: case_id });
