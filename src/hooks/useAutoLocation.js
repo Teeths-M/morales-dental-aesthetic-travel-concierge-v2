@@ -35,7 +35,13 @@ function readCache() {
 
 function writeCache(data) {
   try {
-    // Only cache country-level data, never precise coordinates
+    // Cache the full IP-geo result including lat/lng. IP coordinates are
+    // ISP-registered approximate points (easily tens of km off), NOT precise
+    // device GPS — they're safe to cache and needed by buildLocationContextBlock
+    // so the nearby-search handoff carries real coordinates even on a page
+    // reload within the TTL, not just the city name. GPS coordinates are
+    // never stored here — they live in gpsLocation state only, completely
+    // separate from this IP cache.
     const safeToCache = {
       country: data.country,
       country_code: data.country_code,
@@ -45,7 +51,8 @@ function writeCache(data) {
       currency: data.currency,
       source: data.source,
       precision: data.precision,
-      // DO NOT cache: latitude, longitude (precise coordinates)
+      latitude: data.latitude,
+      longitude: data.longitude,
     };
     sessionStorage.setItem(IP_CACHE_KEY, JSON.stringify({ data: safeToCache, ts: Date.now() }));
   } catch {}
