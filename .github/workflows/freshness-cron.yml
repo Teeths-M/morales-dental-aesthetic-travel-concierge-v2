@@ -109,6 +109,7 @@ jobs:
             call calculateDoctorTrustScore
             call calculateCompanionScore
             call calculateDriverTrustScore
+            call analyzeMcarePerformance  # aggregates real JourneyPlan replanning history into McareKnowledge — closes the LEARN node in M-Care's reasoning loop
             # Marketplace: chase doctors who were invited to quote but haven't yet (link-only).
             call remindPendingQuotes
             # All four below say "run daily" in their own header and are

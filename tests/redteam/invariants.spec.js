@@ -4116,6 +4116,48 @@ test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving u
     .toMatch(/treat it as the more cautious one/);
 });
 
+test('LEARN: analyzeMcarePerformance is cron-authorized, enforces a real minimum sample size before writing, never fabricates a pattern, and RULE 33 references checking recallMcareKnowledge for a self-observed pattern', () => {
+  // Closes the LEARN node in the reasoning-loop diagram — reuses
+  // McareKnowledge (already read+create granted to the agent, confirmed no
+  // new tool_configs entry was added) rather than a new entity/tool.
+  const src = read('base44/functions/analyzeMcarePerformance/entry.ts');
+  expect(src, 'must be cron-authorized, not open to any authenticated caller')
+    .toMatch(/if \(!\(await cronAuthorized\(req, base44\)\)\) return err\('Forbidden', 403\);/);
+  expect(src, 'must enforce a real minimum attempt count before writing a pattern')
+    .toMatch(/const MIN_ATTEMPTS = 3;/);
+  expect(src, 'must enforce a real minimum success rate before writing a pattern')
+    .toMatch(/const MIN_SUCCESS_RATE = 0\.5;/);
+  expect(src, 'the write gate must actually check both thresholds, not just declare them')
+    .toMatch(/stats\.attempts < MIN_ATTEMPTS \|\| successRate < MIN_SUCCESS_RATE/);
+
+  // The written question/answer must be built from the real aggregated
+  // variables (stats.attempts, successPct), never a hardcoded/fabricated
+  // string — and must be honestly labeled as self-observed, not researched,
+  // so it can never be confused with an mcareResearchAndLearn entry.
+  expect(src, 'the answer must interpolate the real attempt count')
+    .toMatch(/\$\{stats\.attempts\}/);
+  expect(src, 'the answer must interpolate the real success percentage')
+    .toMatch(/\$\{successPct\}/);
+  expect(src, 'must explicitly label this as computed from real execution history, not researched')
+    .toMatch(/accuracy_estimation: 'Computed from real JourneyPlan execution history, not researched'/);
+  expect(src, 'must self-identify as the writer, distinct from mcare_agent')
+    .toMatch(/created_by: 'analyzeMcarePerformance'/);
+
+  // Confidence must never reach or exceed the 80% floor mcareResearchAndLearn
+  // itself uses for a real researched fact — a self-observed pattern must
+  // always read as less certain than that.
+  const confFn = src.slice(src.indexOf('function computeConfidence'), src.indexOf('function computeConfidence') + 550);
+  expect(confFn, 'computeConfidence must cap at 80, never reaching researched-fact-level certainty')
+    .toMatch(/Math\.min\(80, raw\)/);
+
+  // Zero new tool_configs — this whole feature reuses McareKnowledge's
+  // existing read+create grant plus a text-only RULE 33 refinement.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  expect(JSON.parse(agentConfig).tool_configs.length, 'the LEARN slice must add zero new tool_configs grants').toBe(106);
+  expect(agentConfig, "RULE 33 must reference checking recallMcareKnowledge for a self-observed pattern before choosing an alternative")
+    .toMatch(/a quick recallMcareKnowledge check may surface a real, self-observed pattern/);
+});
+
 test('MEDICATION: Medication RLS is admin-only to write, the agent grant is read-only, reportMedication never itself confirms anything, confirmMedication is role-gated per action, and reconciliation only ever flags', () => {
   // Same shape as VaultDocument: read patient-or-doctor-or-admin, create/
   // update/delete admin-only — every real write goes through
