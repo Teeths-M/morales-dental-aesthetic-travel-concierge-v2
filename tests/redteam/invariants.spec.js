@@ -4078,6 +4078,44 @@ test('JOURNEY PLAN: JourneyPlan RLS is admin-only to write, the agent grant is r
     .toMatch(/not a new execution engine/);
 });
 
+test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving up and honest failure tracking, RULE 34 names the autonomy tiers, and tool_configs is unchanged (text-only rules, no new grants)', () => {
+  // No new entity, no new function, no new tool_configs grant this pass —
+  // both rules reuse only tools already granted (matching the audit's
+  // conclusion that native multi-tool chaining + already-real gated
+  // functions cover this, no new orchestrator/MCP needed). Count must stay
+  // exactly what it was after RULE 32 (JourneyPlan) landed.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const parsed = JSON.parse(agentConfig);
+  expect(parsed.tool_configs.length, 'RULE 33/34 are text-only — tool_configs must not have grown').toBe(106);
+
+  const instructions = parsed.instructions;
+
+  const rule33Idx = instructions.indexOf('RULE 33');
+  expect(rule33Idx, 'RULE 33 (REPLANNING) must exist in the instructions').toBeGreaterThan(-1);
+  const rule33Text = instructions.slice(rule33Idx, rule33Idx + 1400);
+  expect(rule33Text, 'RULE 33 must forbid stopping at the first failure')
+    .toMatch(/do not stop and simply report the failure/);
+  expect(rule33Text, 'RULE 33 must instruct trying a real, already-granted alternative')
+    .toMatch(/check whether a real, already-granted alternative exists and try/);
+  expect(rule33Text, 'RULE 33 must require a real, honest failed-step note via updateJourneyPlanStep, not silence')
+    .toMatch(/call updateJourneyPlanStep to mark it failed with real, honest notes/);
+  expect(rule33Text, 'RULE 33 must forbid marking a step done just to avoid recording a failure')
+    .toMatch(/never mark a step done to avoid recording the failure/);
+  expect(rule33Text, 'RULE 33 must route to flagIntakeHandoff once real alternatives are exhausted, not endless guessing')
+    .toMatch(/offer flagIntakeHandoff so a real person can take it from here/);
+  expect(rule33Text, 'RULE 33 must forbid trying an ungranted or unsafe shortcut, and must not weaken RULE 1/RULE 2')
+    .toMatch(/every alternative you try must still be a tool you actually have/);
+
+  const rule34Idx = instructions.indexOf('RULE 34');
+  expect(rule34Idx, 'RULE 34 (TOOL AUTONOMY TIERS) must exist in the instructions').toBeGreaterThan(-1);
+  const rule34Text = instructions.slice(rule34Idx, rule34Idx + 1300);
+  expect(rule34Text, 'RULE 34 must name the AUTO tier').toMatch(/AUTO:/);
+  expect(rule34Text, 'RULE 34 must name the NEEDS-CONSENT tier and reference RULE 2').toMatch(/NEEDS-CONSENT:[\s\S]*RULE 2/);
+  expect(rule34Text, 'RULE 34 must name the HUMAN-ONLY tier and reference RULE 1 and RULE 29').toMatch(/HUMAN-ONLY:[\s\S]*RULE 1[\s\S]*RULE 29/);
+  expect(rule34Text, 'RULE 34 must default to the more cautious tier when uncertain')
+    .toMatch(/treat it as the more cautious one/);
+});
+
 test('MEDICATION: Medication RLS is admin-only to write, the agent grant is read-only, reportMedication never itself confirms anything, confirmMedication is role-gated per action, and reconciliation only ever flags', () => {
   // Same shape as VaultDocument: read patient-or-doctor-or-admin, create/
   // update/delete admin-only — every real write goes through
