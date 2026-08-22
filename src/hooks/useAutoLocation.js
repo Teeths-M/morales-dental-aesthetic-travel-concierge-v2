@@ -149,72 +149,62 @@ export function useAutoLocation() {
   // explicit, freshly-consented request pass force=true to bypass the pause
   // check entirely; a passive/automatic caller (the silent on-mount refresh
   // below, or a background-tracking UI) omits it and still respects pause.
+  // Returns a Promise that ALWAYS resolves (never rejects) with either
+  // { success: true, location } or { success: false, error, errorCode }.
+  // Callers can await it directly instead of watching gpsStatus state changes.
   const requestGPS = useCallback((force = false, options = {}) => {
-    if (!('geolocation' in navigator)) {
-      setGpsStatus('unavailable');
-      setGpsErrorCode('no_api');
-      return;
-    }
-    if (prefs.locationPaused && !force) return;
-    // A request is already resolving — let it finish rather than starting a
-    // second, redundant permissions/geolocation call. gpsStatus will change
-    // (or the caller's own safety-net timeout will fire) regardless of which
-    // caller asked first.
-    if (gpsInFlightRef.current) return;
+    return new Promise((resolve) => {
+      if (!('geolocation' in navigator)) {
+        setGpsStatus('unavailable');
+        setGpsErrorCode('no_api');
+        resolve({ success: false, error: 'no_api', errorCode: 'no_api' });
+        return;
+      }
+      if (prefs.locationPaused && !force) {
+        resolve({ success: false, error: 'paused', errorCode: 'paused' });
+        return;
+      }
+      // A request is already resolving — return immediately so the caller
+      // can handle it instead of starting a second concurrent GPS call.
+      if (gpsInFlightRef.current) {
+        resolve({ success: false, error: 'already_in_flight', errorCode: 'already_in_flight' });
+        return;
+      }
 
-    gpsInFlightRef.current = true;
-    setGpsStatus('requesting');
-    setGpsErrorCode(null);
+      gpsInFlightRef.current = true;
+      setGpsStatus('requesting');
+      setGpsErrorCode(null);
 
-    // maximumAge: a caller that must never silently reuse a stale fix (e.g.
-    // "show my exact location on Google Maps right now") passes
-    // { maximumAge: 0 } to force a genuinely fresh reading. The default 60s
-    // cache window is fine for every other call site.
-    const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
+      const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
 
-    // Sandbox detection — when the app runs inside the Base44 preview iframe
-    // (or any restricted cross-origin frame whose Permissions-Policy disallows
-    // geolocation), the browser never shows the native permission prompt and
-    // getCurrentPosition hangs with neither callback firing. There is no
-    // point making the traveler wait the full 14s on a prompt that will
-    // never appear — resolve to a dedicated 'sandbox_blocked' terminal state
-    // after a short 3.5s attempt instead, so MCareOrb's gpsStatus effect can
-    // surface the honest "open the live version" message fast. The real,
-    // non-sandboxed 14s ceiling stays in force everywhere else.
-    const sandboxed = isSandboxed();
-    const hardTimeoutMs = sandboxed ? 2000 : 14000;
-    console.log('[useAutoLocation] requestGPS', { sandboxed, hardTimeoutMs, force, maximumAge });
+      const sandboxed = isSandboxed();
+      // Strict 5-second hard timeout — replaces the previous 14s ceiling so
+      // the traveler never stares at "Getting your exact location now..."
+      // for what feels like a hang. Covers both the unanswered permission
+      // prompt AND slow GPS acquisition. Sandbox gets an even shorter 2s
+      // since the prompt will never appear there.
+      const hardTimeoutMs = sandboxed ? 2000 : 5000;
+      console.log('[useAutoLocation] requestGPS', { sandboxed, hardTimeoutMs, force, maximumAge });
 
-    // Hard safety timeout — separate from the browser's own { timeout }
-    // option, which only bounds acquisition time once the permission is
-    // already decided, not the time spent waiting on an unanswered native
-    // permission prompt (which can hang forever behind a Permissions-Policy
-    // restriction on a preview iframe). If neither callback has fired after
-    // hardTimeoutMs, force a terminal state so gpsInFlightRef can never get
-    // permanently stuck true (which would silently block every future
-    // requestGPS call) and the gpsStatus effect in MCareOrb can show an
-    // honest message instead of leaving "Getting your exact location now"
-    // as the last thing the traveler ever sees.
-    let hardTimeoutFired = false;
-    const hardTimeoutId = setTimeout(() => {
-      if (hardTimeoutFired) return;
-      hardTimeoutFired = true;
-      gpsInFlightRef.current = false;
-      if (!mountedRef.current) return;
-      console.log('[useAutoLocation] hard timeout fired', { sandboxed });
-      setGpsStatus('unavailable');
-      setGpsErrorCode(sandboxed ? 'sandbox_blocked' : 3);
-      updatePref('gpsGranted', false);
-    }, hardTimeoutMs);
+      let hardTimeoutFired = false;
+      const hardTimeoutId = setTimeout(() => {
+        if (hardTimeoutFired) return;
+        hardTimeoutFired = true;
+        gpsInFlightRef.current = false;
+        if (mountedRef.current) {
+          setGpsStatus('unavailable');
+          setGpsErrorCode(sandboxed ? 'sandbox_blocked' : 3);
+          updatePref('gpsGranted', false);
+        }
+        resolve({ success: false, error: 'timeout', errorCode: sandboxed ? 'sandbox_blocked' : 3 });
+      }, hardTimeoutMs);
 
-    const proceed = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           if (hardTimeoutFired) return;
           hardTimeoutFired = true;
           clearTimeout(hardTimeoutId);
           gpsInFlightRef.current = false;
-          if (!mountedRef.current) return;
           const loc = {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
@@ -224,50 +214,36 @@ export function useAutoLocation() {
             logged_at: new Date().toISOString(),
             resolved_place: null,
           };
-          setGpsLocation(loc);
-          setGpsStatus('granted');
-          setGpsErrorCode(null);
-          updatePref('gpsGranted', true);
-
-          // Best-effort real place name for this GPS fix — never blocks the
-          // granted path itself. Guarded by logged_at so a slow reverse
-          // geocode can never clobber a newer GPS reading.
-          reverseGeocodePrecise(loc.latitude, loc.longitude).then((place) => {
-            if (!mountedRef.current || !place) return;
-            setGpsLocation((prev) => (prev && prev.logged_at === loc.logged_at)
-              ? { ...prev, resolved_place: place }
-              : prev);
-          });
+          if (mountedRef.current) {
+            setGpsLocation(loc);
+            setGpsStatus('granted');
+            setGpsErrorCode(null);
+            updatePref('gpsGranted', true);
+            reverseGeocodePrecise(loc.latitude, loc.longitude).then((place) => {
+              if (!mountedRef.current || !place) return;
+              setGpsLocation((prev) => (prev && prev.logged_at === loc.logged_at)
+                ? { ...prev, resolved_place: place }
+                : prev);
+            });
+          }
+          resolve({ success: true, location: loc });
         },
         (err) => {
           if (hardTimeoutFired) return;
           hardTimeoutFired = true;
           clearTimeout(hardTimeoutId);
           gpsInFlightRef.current = false;
-          if (!mountedRef.current) return;
-          console.log('[useAutoLocation] GPS error callback', { sandboxed, code: err.code, message: err.message });
-          setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
-          // In a sandbox the error code is still real, but the root cause is
-          // the blocked prompt, not the user/device — route every sandbox
-          // failure to the dedicated message so the traveler isn't told to
-          // fiddle with site permissions that wouldn't help here.
-          setGpsErrorCode(sandboxed ? 'sandbox_blocked' : (err.code === 1 ? 1 : (err.code === 2 ? 2 : 3)));
-          updatePref('gpsGranted', false);
+          const code = sandboxed ? 'sandbox_blocked' : (err.code === 1 ? 1 : (err.code === 2 ? 2 : 3));
+          if (mountedRef.current) {
+            setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
+            setGpsErrorCode(code);
+            updatePref('gpsGranted', false);
+          }
+          resolve({ success: false, error: err.message || String(err.code), errorCode: code });
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge }
       );
-    };
-
-    // Call getCurrentPosition directly — no permissions.query pre-check.
-    // The pre-check was the root cause of zero console output: in the preview
-    // iframe, navigator.permissions.query returns 'denied' (the iframe's
-    // Permissions-Policy blocks geolocation), and the old code returned early
-    // WITHOUT ever calling getCurrentPosition, so no geolocation activity was
-    // visible in the console at all. The error callback above already
-    // handles code 1 (denied), 2 (unavailable), and 3 (timeout) correctly —
-    // there is no need for a separate fast-fail path that silently bypasses
-    // the real API.
-    proceed();
+    });
   }, [prefs.locationPaused]);
 
   // If user previously granted GPS, silently refresh on mount

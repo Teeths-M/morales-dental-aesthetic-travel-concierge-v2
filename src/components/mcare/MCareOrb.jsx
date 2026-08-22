@@ -612,17 +612,9 @@ export default function MCareOrb() {
   // requestGPS(); the gpsStatus effect below redoes that question
   // automatically once permission resolves, so the traveler never has to
   // ask twice.
-  const triggerGpsUpgrade = useCallback((retryQuery) => {
+  const triggerGpsUpgrade = useCallback(async (retryQuery) => {
      // Synchronous, cross-flow deduplication gate — check this BEFORE any
-     // async call or state update. If a GPS request is already in flight
-     // (from this flow OR either of the other two — triggerExactMapView,
-     // shareCurrentLocationNow), don't add another "Getting your exact
-     // location now" bubble or restart the 15s safety-net timeout. Just
-     // return with a short "already getting it" message. This replaces the
-     // old gpsStatusRef === 'requesting' check, which failed when React 18
-     // batching skipped the 'requesting' state or when GPS already resolved
-     // to a terminal state ('denied'/'unavailable'/'granted'), causing the
-     // infinite loop of identical bubbles.
+     // async call or state update.
      if (locationRequestPendingRef.current) {
        setAgentMessages(prev => [...prev, {
          role: 'assistant',
@@ -632,12 +624,7 @@ export default function MCareOrb() {
      }
      // DIRECT sandbox short-circuit — if we're inside a restricted preview
      // iframe, the native geolocation prompt will never appear and
-     // getCurrentPosition will hang. Rather than posting "Getting your
-     // exact location now..." (which will never resolve) and relying on the
-     // 2s hard timeout to eventually surface the honest message, just post
-     // the message immediately. This is the single source of truth for the
-     // sandbox case — no "Getting..." bubble, no loop, no waiting.
-     console.log('[MCareOrb] triggerGpsUpgrade', { sandboxed: isSandboxed() });
+     // getCurrentPosition will hang.
      if (isSandboxed()) {
        setAgentMessages(prev => [...prev, {
          role: 'assistant',
@@ -646,42 +633,52 @@ export default function MCareOrb() {
        return;
      }
      locationRequestPendingRef.current = true;
-     pendingGpsRetryQueryRef.current = retryQuery || null;
-     // A fresh typed-question GPS request supersedes any still-pending
-    // Location-menu "send my current location" flow (the newest tap is the
-    // real, current intent) — without this, both a location pin AND the
-    // stale retried question can fire once GPS resolves. Release the
-    // in-flight guard too so a superseded flow doesn't leave the Location
-    // menu's choices permanently unable to be retapped.
-    pendingLocationPinRef.current = false;
-    // Same mutual-exclusion reasoning against the third GPS-triggered flow
-    // (a satellite-Google-Maps request) — the newest typed request wins.
-    pendingExactMapViewRef.current = false;
-    locationChoiceInFlightRef.current = false;
-    setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
-    // force=true: this only ever fires from a real, explicit, freshly-given
-    // request (a confirmed GPS-consent choice tap or a directly-typed
-    // request) — it must never be silently vetoed by locationPaused, a flag
-    // meant for passive background tracking on a completely different page
-    // (Emergency Hub), not for an explicit request the traveler just made.
-    requestGPS(true);
-    // Safety net: requestGPS()'s own { timeout: 10000 } doesn't cover an
-    // unanswered native permission prompt (that's not "acquisition" yet),
-    // so gpsStatus can sit at 'requesting' forever with nothing to resolve
-    // it. 15s gives the browser's own timeout room to fire first; if
-    // nothing has happened by then, give up honestly instead of leaving
-    // "Getting your exact location now" as the last thing anyone ever sees.
-    clearGpsRequestTimeout();
-    gpsRequestTimeoutRef.current = setTimeout(() => {
-      gpsRequestTimeoutRef.current = null;
-      if (!pendingGpsRetryQueryRef.current) return;
-      pendingGpsRetryQueryRef.current = null;
-      locationRequestPendingRef.current = false;
-      setAgentMessages(prev => [...prev, {
-        role: 'assistant',
-        content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow. I'll keep using your approximate area for now; just ask again anytime.",
-      }]);
-    }, 15000);
+     // Don't stash in pendingGpsRetryQueryRef — we handle the result inline
+     // via the awaited promise, so the gpsStatus effect should be a no-op
+     // for this flow (all three pending refs are null when it fires).
+     pendingGpsRetryQueryRef.current = null;
+     pendingLocationPinRef.current = false;
+     pendingExactMapViewRef.current = false;
+     locationChoiceInFlightRef.current = false;
+     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
+
+     // Await the GPS promise — requestGPS now returns a definitive result
+     // ({ success, location/error }) within 5 seconds, so this never hangs.
+     const result = await requestGPS(true);
+     locationRequestPendingRef.current = false;
+
+     if (result?.success && result.location) {
+       // GPS succeeded — redo the original question with the fresh precise
+       // location attached, or just show the location pin if there was no
+       // original question.
+       locationContextSentRef.current = false;
+       if (retryQuery) {
+         liveRef.current.sendAgentMessage?.(retryQuery);
+       } else {
+         const loc = result.location;
+         const label = loc.resolved_place ? `My Location (${loc.resolved_place})` : 'My Location';
+         const accuracyLine = describeAccuracy(loc.accuracy_meters);
+         liveRef.current.sendAgentMessage?.(
+           `Got your device location.\n${accuracyLine}\n{{maps:${label}|${loc.latitude},${loc.longitude}}}\n{{qr:${label}|${loc.latitude},${loc.longitude}}}`,
+           []
+         );
+       }
+     } else {
+       // GPS failed or was denied — show an honest fallback message so the
+       // traveler knows to type their city or address instead.
+       const code = result?.errorCode;
+       let content;
+       if (code === 1) {
+         content = "I couldn't access your precise GPS — the permission was denied. You can type your city or address instead, or enable location for this site in your browser settings and ask me again.";
+       } else if (code === 3) {
+         content = "I couldn't get your precise GPS in time — that can happen with a weak signal. Please type your city or address, or try again somewhere with a clearer view of the sky.";
+       } else if (code === 'no_api') {
+         content = "Your device doesn't support precise location. Please type your city or address.";
+       } else {
+         content = "I couldn't access your precise GPS. Please type your city or address.";
+       }
+       setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
+     }
   }, [requestGPS]);
 
   // Called only when the tapped choice text itself matched
