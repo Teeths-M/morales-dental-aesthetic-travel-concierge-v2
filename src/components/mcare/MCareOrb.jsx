@@ -296,6 +296,14 @@ export default function MCareOrb() {
   // no longer 'requesting' so the guard missed repeated messages, causing
   // the infinite "Getting your exact location now" loop.
   const locationRequestPendingRef = useRef(false);
+  // Set true just before triggerGpsUpgrade redoes the original question on
+  // success — sendAgentMessage reads and clears this to skip the
+  // detectLocationConsentIntent / detectExactMapViewIntent client-side
+  // intercepts for that one call. Without this, the retry text re-matches
+  // the same intent, re-calls triggerGpsUpgrade, and loops forever — GPS
+  // is already attached via buildLocationContextBlock, so the intercept has
+  // nothing to add and must not divert the retry away from the real agent.
+  const skipLocationIntentRef = useRef(false);
 
   const silenceTimerRef = useRef(null);
   const silenceNudgeCountRef = useRef(0);
@@ -653,6 +661,10 @@ export default function MCareOrb() {
        // original question.
        locationContextSentRef.current = false;
        if (retryQuery) {
+         // Skip the client-side intent intercepts for this one call — the
+         // retry text would otherwise re-match detectLocationConsentIntent
+         // and loop back into triggerGpsUpgrade forever.
+         skipLocationIntentRef.current = true;
          liveRef.current.sendAgentMessage?.(retryQuery);
        } else {
          const loc = result.location;
@@ -1578,7 +1590,14 @@ export default function MCareOrb() {
     // real satellite Google Maps display deterministically, since leaving
     // "satellite view" up to free-text LLM narration is exactly the
     // unreliable behavior this flow exists to replace.
-    if (!fileUrls?.length && detectExactMapViewIntent(q)) {
+    // A GPS-success retry from triggerGpsUpgrade (or triggerExactMapView's
+    // gpsStatus-effect path) already has location attached — skip the
+    // client-side intent intercepts for this one call so the retry text
+    // reaches the real agent instead of re-triggering GPS in a loop.
+    const skipLocationIntercept = skipLocationIntentRef.current;
+    skipLocationIntentRef.current = false;
+
+    if (!fileUrls?.length && !skipLocationIntercept && detectExactMapViewIntent(q)) {
       setInput('');
       setAgentMessages(prev => [...prev, { role: 'user', content: q }]);
       triggerExactMapView();
@@ -1594,7 +1613,7 @@ export default function MCareOrb() {
     // above), then trigger the real GPS request. The gpsStatus effect below
     // resends this exact question, now carrying a real gps_precise block,
     // once permission resolves.
-    if (!fileUrls?.length && detectLocationConsentIntent(q)) {
+    if (!fileUrls?.length && !skipLocationIntercept && detectLocationConsentIntent(q)) {
       setInput('');
       setAgentMessages(prev => [...prev, { role: 'user', content: q }]);
       triggerGpsUpgrade(q);
@@ -1719,6 +1738,9 @@ export default function MCareOrb() {
       pendingGpsRetryQueryRef.current = null;
       locationRequestPendingRef.current = false;
       locationContextSentRef.current = false;
+      // Skip the client-side intent intercepts for this one retry — the
+      // retry text would otherwise re-match and loop back into GPS.
+      skipLocationIntentRef.current = true;
       sendAgentMessage(retryText);
     } else if (gpsStatus === 'denied' || gpsStatus === 'unavailable') {
       console.log('[MCareOrb] gpsStatus effect: denied/unavailable', { gpsStatus, gpsErrorCode, hasRetry: !!pendingGpsRetryQueryRef.current, hasPin: !!pendingLocationPinRef.current, hasMap: !!pendingExactMapViewRef.current });
