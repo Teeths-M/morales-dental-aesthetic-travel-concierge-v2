@@ -261,6 +261,21 @@ function ShareLinkQrBlock({ label, url }) {
   );
 }
 
+// A query WORD must literally appear in the candidate's title or keywords for
+// the catalog match to count as real — rejects pure character-overlap false
+// positives (e.g. "spine surgery" vs Rhinoplasty's "nose surgery" keyword,
+// which shares most letters but no actual word). A genuine exact/typo match
+// like "rhinoplasty"→"Rhinoplasty" or "nose job"→"nose job" still passes,
+// because a whole query token is found inside the title or a keyword.
+const PROCEDURE_STOPWORDS = new Set(['surgery', 'procedure', 'operation', 'the', 'a', 'an', 'of', 'for']);
+function isGenuineCatalogMatch(query, candidate) {
+  if (!query || !candidate) return false;
+  const qTokens = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+    .filter((w) => w.length > 2 && !PROCEDURE_STOPWORDS.has(w));
+  const hay = `${candidate.title || ''} ${(candidate.keywords || []).join(' ')}`.toLowerCase();
+  return qTokens.some((tok) => hay.includes(tok));
+}
+
 // Renders a real, already-hosted illustrative image for the procedure M-Care
 // just named — two tiers, both real, never a fabricated or AI-generated-on-
 // the-fly image. Tier 1: ProcedureData.jsx's static searchProcedures (the
@@ -271,7 +286,19 @@ function ShareLinkQrBlock({ label, url }) {
 // batch-generated diagrams) — a brief loading state while that call is in
 // flight. Honest empty state if neither tier clears its own match threshold.
 function ProcedureMediaCard({ query }) {
-  const [staticMatch] = searchProcedures(query);
+  // searchProcedures (the shared /procedures fuzzy catalog) is deliberately
+  // loose — its character-overlap scorer is anagram-aware, so a non-catalog
+  // query like "spine surgery" shares enough letters with Rhinoplasty's
+  // "nose surgery" keyword to clear the threshold and render a WRONG image.
+  // For the chat image card we only accept a genuine match: a query WORD must
+  // actually appear in the title or a keyword (not just overlap as letters).
+  // This is scoped to image resolution only — /procedures keeps its own looser
+  // behavior, since that page shows the candidate's own title/keywords back to
+  // a user who typed them, so a loose guess there is harmless.
+  const staticCandidates = searchProcedures(query);
+  const staticMatch = staticCandidates.length > 0 && isGenuineCatalogMatch(query, staticCandidates[0])
+    ? staticCandidates[0]
+    : null;
   const [liveMatch, setLiveMatch] = useState(undefined); // undefined = not checked yet, null = checked, nothing found
   const [liveLoading, setLiveLoading] = useState(false);
 
