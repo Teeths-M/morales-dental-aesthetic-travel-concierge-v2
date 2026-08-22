@@ -65,11 +65,13 @@ import { detectLocationConsentIntent } from '@/lib/locationConsentIntent';
 import { detectExactMapViewIntent } from '@/lib/exactMapViewIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 import { describeAccuracy } from '@/lib/mapLinks';
+import { isSandboxed } from '@/lib/isSandboxed';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
 const PURPLE = '#6C47FF';
 const AGENT_NAME = 'm_care';
+const SANDBOX_BLOCKED_MSG = "I can't request your precise GPS location while running in preview mode — the browser blocks the permission prompt here. Please open the live version of M-Safe to use exact location. I'll keep using your approximate area for now.";
 const GREETING = "I'm M-Safe, your Morales Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 
 // Public pages where all users should see visitor-facing tips
@@ -629,6 +631,21 @@ export default function MCareOrb() {
        }]);
        return;
      }
+     // DIRECT sandbox short-circuit — if we're inside a restricted preview
+     // iframe, the native geolocation prompt will never appear and
+     // getCurrentPosition will hang. Rather than posting "Getting your
+     // exact location now..." (which will never resolve) and relying on the
+     // 2s hard timeout to eventually surface the honest message, just post
+     // the message immediately. This is the single source of truth for the
+     // sandbox case — no "Getting..." bubble, no loop, no waiting.
+     console.log('[MCareOrb] triggerGpsUpgrade', { sandboxed: isSandboxed() });
+     if (isSandboxed()) {
+       setAgentMessages(prev => [...prev, {
+         role: 'assistant',
+         content: SANDBOX_BLOCKED_MSG,
+       }]);
+       return;
+     }
      locationRequestPendingRef.current = true;
      pendingGpsRetryQueryRef.current = retryQuery || null;
      // A fresh typed-question GPS request supersedes any still-pending
@@ -726,6 +743,15 @@ export default function MCareOrb() {
       }]);
       return;
     }
+    // DIRECT sandbox short-circuit — see triggerGpsUpgrade for rationale.
+    console.log('[MCareOrb] triggerExactMapView', { sandboxed: isSandboxed() });
+    if (isSandboxed()) {
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: SANDBOX_BLOCKED_MSG,
+      }]);
+      return;
+    }
     locationRequestPendingRef.current = true;
     pendingExactMapViewRef.current = true;
     // Mutual exclusion against the other two GPS-triggered flows — the
@@ -818,6 +844,12 @@ export default function MCareOrb() {
         return;
       }
       sendLocationPin();
+      return;
+    }
+    // DIRECT sandbox short-circuit — see triggerGpsUpgrade for rationale.
+    if (isSandboxed()) {
+      locationChoiceInFlightRef.current = false;
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: SANDBOX_BLOCKED_MSG }]);
       return;
     }
     // Synchronous, cross-flow deduplication gate — same as triggerGpsUpgrade
@@ -1693,6 +1725,7 @@ export default function MCareOrb() {
       locationContextSentRef.current = false;
       sendAgentMessage(retryText);
     } else if (gpsStatus === 'denied' || gpsStatus === 'unavailable') {
+      console.log('[MCareOrb] gpsStatus effect: denied/unavailable', { gpsStatus, gpsErrorCode, hasRetry: !!pendingGpsRetryQueryRef.current, hasPin: !!pendingLocationPinRef.current, hasMap: !!pendingExactMapViewRef.current });
       clearGpsRequestTimeout();
       pendingGpsRetryQueryRef.current = null;
       pendingLocationPinRef.current = false;
@@ -1717,7 +1750,7 @@ export default function MCareOrb() {
       // we're waiting on a prompt that will never come.
       let content;
       if (gpsErrorCode === 'sandbox_blocked') {
-        content = "I can't request your precise GPS location while running in preview mode — the browser blocks the permission prompt here. Please open the live version of M-Safe to use exact location. I'll keep using your approximate area for now.";
+        content = SANDBOX_BLOCKED_MSG;
       } else if (gpsStatus === 'denied') {
         content = "Your browser has location permanently blocked for this site, so it won't prompt again on its own. To fix it: tap the lock or site-info icon next to the web address, find Location, and set it to Allow — then just ask me again and I'll use it. I'll keep using your approximate area for now.";
       } else if (gpsErrorCode === 3) {

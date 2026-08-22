@@ -175,7 +175,8 @@ export function useAutoLocation() {
     // surface the honest "open the live version" message fast. The real,
     // non-sandboxed 14s ceiling stays in force everywhere else.
     const sandboxed = isSandboxed();
-    const hardTimeoutMs = sandboxed ? 3500 : 14000;
+    const hardTimeoutMs = sandboxed ? 2000 : 14000;
+    console.log('[useAutoLocation] requestGPS', { sandboxed, hardTimeoutMs, force, maximumAge });
 
     // Hard safety timeout — separate from the browser's own { timeout }
     // option, which only bounds acquisition time once the permission is
@@ -193,6 +194,7 @@ export function useAutoLocation() {
       hardTimeoutFired = true;
       gpsInFlightRef.current = false;
       if (!mountedRef.current) return;
+      console.log('[useAutoLocation] hard timeout fired', { sandboxed });
       setGpsStatus('unavailable');
       setGpsErrorCode(sandboxed ? 'sandbox_blocked' : 3);
       updatePref('gpsGranted', false);
@@ -236,6 +238,7 @@ export function useAutoLocation() {
           clearTimeout(hardTimeoutId);
           gpsInFlightRef.current = false;
           if (!mountedRef.current) return;
+          console.log('[useAutoLocation] GPS error callback', { sandboxed, code: err.code, message: err.message });
           setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
           // In a sandbox the error code is still real, but the root cause is
           // the blocked prompt, not the user/device — route every sandbox
