@@ -8,7 +8,7 @@ import OutreachDraftCard from '@/components/mcare/OutreachDraftCard';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import ProviderStatusBadge from '@/components/mcare-agent/ProviderStatusBadge';
 import DriverMapWidget from '@/components/mcare-agent/DriverMapWidget';
-import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink } from '@/lib/mapLinks';
+import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink, buildOfflineGeoUri } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
 import { generateWaveformBars } from '@/lib/voiceMessageAudio';
@@ -194,12 +194,17 @@ const stripMd = (s) => {
 
 // Renders a real, scannable QR code inline in the chat bubble — the driver
 // or anyone else can scan it straight off the traveler's screen, or the
-// traveler can download it. Value is a Google Maps universal link (resolves
-// natively on iOS and Android) built the same way the {{maps:...}} buttons
-// already do, via generateMapLink.
+// traveler can download it. Prefers a real geo: URI (RFC 5870,
+// buildOfflineGeoUri) when DEST is real coordinates — this is what lets an
+// already-installed offline map app show the pin without any data
+// connection, unlike a Google Maps https:// link, which generally needs one.
+// Falls back to the same Google Maps universal link the {{maps:...}} buttons
+// use when only an address string is available (an address can never be
+// resolved offline by any client-side trick).
 export function InlineQrBlock({ label, dest }) {
   const containerRef = useRef(null);
-  const url = generateMapLink(dest, 'google_maps');
+  const geoUri = buildOfflineGeoUri(dest, label);
+  const url = geoUri || generateMapLink(dest, 'google_maps');
   if (!url) return null;
   const filename = `${(label || 'morales').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'morales'}-qr.png`;
   const handleDownload = () => {
@@ -211,6 +216,40 @@ export function InlineQrBlock({ label, dest }) {
         <QRCodeSVG value={url} size={120} bgColor="#ffffff" fgColor="#0f172a" level="M" />
       </div>
       {label && <p className="text-[11px] font-medium text-gray-600">{label}</p>}
+      {geoUri && <p className="text-[10px] text-emerald-600">📡 Works without a data connection</p>}
+      <button
+        type="button"
+        onClick={handleDownload}
+        className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2.5 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50"
+      >
+        <Download className="w-3 h-3" /> Save
+      </button>
+    </div>
+  );
+}
+
+// Renders a QR code for a real Morales share-link URL (e.g. a live-location
+// streaming link) — a convenience for handing the link to another device by
+// scanning instead of retyping, NOT an offline pin the way InlineQrBlock's
+// geo: URI is. Deliberately encodes the URL as-is rather than resolving it
+// through generateMapLink (this isn't a maps destination) and deliberately
+// carries no "works offline" claim — opening it still requires a real
+// network round-trip to Morales' own backend, since the whole point of a
+// live-location link is streaming GPS to a server, which can never work
+// without a data connection.
+function ShareLinkQrBlock({ label, url }) {
+  const containerRef = useRef(null);
+  if (!url) return null;
+  const filename = `${(label || 'morales').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'morales'}-qr.png`;
+  const handleDownload = () => {
+    downloadQrSvgAsPng(containerRef.current?.querySelector('svg'), filename);
+  };
+  return (
+    <div className="mt-2 inline-flex flex-col items-center gap-1.5 rounded-xl border border-border bg-white p-3">
+      <div ref={containerRef}>
+        <QRCodeSVG value={url} size={120} bgColor="#ffffff" fgColor="#0f172a" level="M" />
+      </div>
+      <p className="text-[10px] text-gray-500">Needs a data connection to open</p>
       <button
         type="button"
         onClick={handleDownload}
@@ -643,17 +682,20 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
               {shareLink && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <a
-                    href={shareLink.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={chipBase}
-                    style={{ borderColor: '#16a34a', color: '#16a34a', background: 'transparent' }}
-                  >
-                    <span>🔗</span> {shareLink.label || 'Open Link'}
-                  </a>
-                </div>
+                <>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <a
+                      href={shareLink.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={chipBase}
+                      style={{ borderColor: '#16a34a', color: '#16a34a', background: 'transparent' }}
+                    >
+                      <span>🔗</span> {shareLink.label || 'Open Link'}
+                    </a>
+                  </div>
+                  <ShareLinkQrBlock label={shareLink.label} url={shareLink.url} />
+                </>
               )}
               {media && <ProcedureMediaCard query={media} />}
               {doctorMedia && <DoctorMediaCard name={doctorMedia.name} type={doctorMedia.type} url={doctorMedia.url} />}

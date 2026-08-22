@@ -4385,3 +4385,47 @@ test('SAFE-T4LIFE: repeat-procedure history can only ever escalate toward HIGH, 
   expect(agentConfig, 'the old "not something the system tracks today" disclaimer must be replaced now that the real check exists')
     .not.toContain('not something the system tracks today');
 });
+
+test('OFFLINE LOCATION QR: a maps token always pairs with a QR, the QR prefers a real geo: URI, and address-only destinations are never claimed offline', () => {
+  // RULE 12 must instruct the agent to always pair {{maps:...}} with a
+  // matching {{qr:...}} — the old RULE 16 wording that restricted QR to
+  // "hand navigation to someone else... not for every address you mention"
+  // must be gone, since that's the exact opposite of the new requirement.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  expect(agentConfig, 'RULE 12 must instruct the agent to always follow a {{maps:...}} token with a matching {{qr:...}} token')
+    .toMatch(/immediately follow it on its own next line with a matching \{\{qr:LABEL\|DESTINATION\}\} token/);
+  expect(agentConfig, 'the old RULE 16 wording restricting QR to hand-off-only cases must be gone — a QR now always accompanies a maps token')
+    .not.toContain('not for every address you mention');
+
+  // geoUri.js must be a pure, network-free module — the whole safety of the
+  // "offline capable" claim depends on this never doing anything async or
+  // reaching out to a geocoding service. Only real coordinates ever produce
+  // a value; an address string always falls through to null.
+  const geoUriSrc = read('src/lib/geoUri.js');
+  expect(geoUriSrc, 'geoUri.js must never make a network call — its whole value is being resolvable with zero connectivity')
+    .not.toMatch(/fetch\(|XMLHttpRequest|axios/);
+  expect(geoUriSrc, 'geoUri.js must never be async — it can only be a pure, synchronous function')
+    .not.toMatch(/async\s+function|await\s/);
+
+  // InlineQrBlock (MessageBubble.jsx) must actually call buildOfflineGeoUri,
+  // not just import it — and must fall back to the existing Google Maps link
+  // only when no offline-capable geo: URI was possible (i.e. an address, not
+  // coordinates), preserving today's behavior for that case exactly.
+  const bubbleSrc = read('src/components/mcare-agent/MessageBubble.jsx');
+  const blockIdx = bubbleSrc.indexOf('export function InlineQrBlock');
+  expect(blockIdx, 'InlineQrBlock must be defined in MessageBubble.jsx').toBeGreaterThan(-1);
+  const blockSrc = bubbleSrc.slice(blockIdx, blockIdx + 800);
+  expect(blockSrc, 'InlineQrBlock must call buildOfflineGeoUri and prefer it over the Google Maps fallback')
+    .toMatch(/const geoUri = buildOfflineGeoUri\(dest, label\);\s*\n\s*const url = geoUri \|\| generateMapLink\(dest, 'google_maps'\);/);
+
+  // sendLocationPin (MCareOrb.jsx, the traveler's own "Send my current
+  // location" tap) must emit both tokens together, matching the new rule.
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+  const pinIdx = orbSrc.indexOf('const sendLocationPin = useCallback');
+  expect(pinIdx, 'sendLocationPin must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const pinBlock = orbSrc.slice(pinIdx, pinIdx + 1300);
+  expect(pinBlock, 'sendLocationPin must emit a {{maps:...}} token')
+    .toMatch(/\{\{maps:\$\{label\}\|/);
+  expect(pinBlock, 'sendLocationPin must also emit a matching {{qr:...}} token, not just the maps buttons')
+    .toMatch(/\{\{qr:\$\{label\}\|/);
+});

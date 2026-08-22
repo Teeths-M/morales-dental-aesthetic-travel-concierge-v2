@@ -634,7 +634,12 @@ export default function MCareOrb() {
       return;
     }
     const label = loc.resolved_place ? `My Location (${loc.resolved_place})` : 'My Location';
-    sendAgentMessage(`Here's my current location.\n{{maps:${label}|${loc.latitude},${loc.longitude}}}`, []);
+    // Always pair the {{maps:...}} button row with a {{qr:...}} code — some
+    // travelers (or whoever they hand navigation to) won't have a data
+    // connection to tap the buttons; InlineQrBlock (MessageBubble.jsx)
+    // encodes it as a real, offline-capable geo: URI since real coordinates
+    // are always available here.
+    sendAgentMessage(`Here's my current location.\n{{maps:${label}|${loc.latitude},${loc.longitude}}}\n{{qr:${label}|${loc.latitude},${loc.longitude}}}`, []);
   }, [sendAgentMessage]);
 
   // "Send my current location" — reuses triggerGpsUpgrade's exact

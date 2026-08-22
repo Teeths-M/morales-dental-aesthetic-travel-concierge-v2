@@ -22,6 +22,7 @@ import { MapPin, Download, Printer, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { CACHE } from '@/lib/constants';
 import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
+import { buildOfflineGeoUri } from '@/lib/mapLinks';
 
 const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 const GOLD = '#D4AF37';
@@ -41,6 +42,16 @@ function buildMapsUrl(destination) {
 function coordsToString(coords) {
   if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') return null;
   return `${coords.lat},${coords.lng}`;
+}
+
+// Prefer a real, offline-capable geo: URI (buildOfflineGeoUri, src/lib/
+// mapLinks.js) when real coordinates are on file — the whole point of this
+// printable pass is working for someone with no data plan. Falls back to the
+// same Google Maps universal link as before when only an address string is
+// available (an address can never be resolved offline by any client-side
+// trick — geocoding it always needs a live service somewhere).
+function buildOfflineFirstMapsUrl(destination, label) {
+  return buildOfflineGeoUri(destination, label) || buildMapsUrl(destination);
 }
 
 // Hand-built vCard — same "no library, plain text format" approach this repo
@@ -128,9 +139,11 @@ export default function TravelPassCard({ userEmail }) {
 
   const clinicDest = coordsToString(caseRec.clinic_coords) || caseRec.clinic_address || null;
   const hotelDest = coordsToString(caseRec.hotel_coords) || caseRec.hotel_address || null;
-  const clinicUrl = buildMapsUrl(clinicDest);
+  const clinicUrl = buildOfflineFirstMapsUrl(clinicDest, 'Clinic');
+  const clinicOffline = !!buildOfflineGeoUri(clinicDest, 'Clinic');
   // Skip a second identical QR if hotel and clinic addresses are the same.
-  const hotelUrl = hotelDest && hotelDest !== clinicDest ? buildMapsUrl(hotelDest) : null;
+  const hotelUrl = hotelDest && hotelDest !== clinicDest ? buildOfflineFirstMapsUrl(hotelDest, 'Hotel') : null;
+  const hotelOffline = !!buildOfflineGeoUri(hotelDest, 'Hotel');
 
   const doctorNote = doctor?.phone ? `Doctor: ${doctor.full_name || 'Care team'}, ${doctor.phone}` : undefined;
   const contactVCard = buildVCard({
@@ -181,8 +194,22 @@ export default function TravelPassCard({ userEmail }) {
             </div>
 
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {clinicUrl && <QRBlock label="Navigate: Clinic" value={clinicUrl} filename="morales-navigate-clinic.png" />}
-              {hotelUrl && <QRBlock label="Navigate: Hotel" value={hotelUrl} filename="morales-navigate-hotel.png" />}
+              {clinicUrl && (
+                <QRBlock
+                  label="Navigate: Clinic"
+                  sublabel={clinicOffline ? '📡 Works without a data connection' : null}
+                  value={clinicUrl}
+                  filename="morales-navigate-clinic.png"
+                />
+              )}
+              {hotelUrl && (
+                <QRBlock
+                  label="Navigate: Hotel"
+                  sublabel={hotelOffline ? '📡 Works without a data connection' : null}
+                  value={hotelUrl}
+                  filename="morales-navigate-hotel.png"
+                />
+              )}
               {contactVCard && (
                 <QRBlock
                   label="Emergency Contact"

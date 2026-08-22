@@ -9,6 +9,12 @@
  * (localStorage + server profile) and surfaced via analytics as an audit row.
  */
 import { base44 } from '@/api/base44Client';
+import { isCoords, buildOfflineGeoUri } from './geoUri';
+
+// Re-exported so existing callers (MessageBubble.jsx, TravelPassCard.jsx)
+// keep importing it from '@/lib/mapLinks' unchanged — see geoUri.js for why
+// the implementation itself lives in a separate, zero-dependency module.
+export { buildOfflineGeoUri };
 
 const PREF_KEY = 'morales_preferred_maps_app';
 
@@ -31,12 +37,6 @@ export function detectPlatform() {
 
 export function defaultMapsApp() {
   return detectPlatform() === 'ios' ? 'apple_maps' : 'google_maps';
-}
-
-// True if the destination looks like "lat,lng" — coordinate deep links are
-// more accurate than address queries, so we use them when available.
-function isCoords(s) {
-  return /^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/.test((s || '').trim());
 }
 
 // Build the deep link for a given app + destination (address string or
