@@ -19,7 +19,12 @@ export function buildLocationContextBlock(loc) {
   if (loc.source === 'gps') {
     if (loc.latitude == null || loc.longitude == null) return null;
     const accuracySegment = loc.accuracy_meters != null ? `, accuracy_m=${Math.round(loc.accuracy_meters)}` : '';
-    return `[[LOCATION_CONTEXT: lat=${loc.latitude}, lng=${loc.longitude}, source=gps_precise${accuracySegment}]]`;
+    // resolved_place is a real Nominatim reverse-geocode result (see
+    // reverseGeocode.js) — a real place name, not the LLM guessing one from
+    // the raw coordinates. Parens, not a comma, so it can't be misread as a
+    // second key=value pair once embedded in this comma-separated block.
+    const placeSegment = loc.resolved_place ? `, resolved_place=${loc.resolved_place}` : '';
+    return `[[LOCATION_CONTEXT: lat=${loc.latitude}, lng=${loc.longitude}, source=gps_precise${accuracySegment}${placeSegment}]]`;
   }
 
   if (loc.country === 'Unknown') return null;

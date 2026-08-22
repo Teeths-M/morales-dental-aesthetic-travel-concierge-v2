@@ -22,6 +22,21 @@ describe('locationContext.buildLocationContextBlock', () => {
     expect(block).toBe('[[LOCATION_CONTEXT: lat=10.65, lng=-61.51, source=gps_precise, accuracy_m=1835]]');
   });
 
+  it('includes resolved_place when a GPS reading has a real reverse-geocode result', () => {
+    const block = buildLocationContextBlock({
+      source: 'gps', latitude: 10.6, longitude: -61.34, accuracy_meters: 20,
+      resolved_place: 'Piarco (Trinidad and Tobago)',
+    });
+    expect(block).toBe(
+      '[[LOCATION_CONTEXT: lat=10.6, lng=-61.34, source=gps_precise, accuracy_m=20, resolved_place=Piarco (Trinidad and Tobago)]]'
+    );
+  });
+
+  it('omits resolved_place when a GPS reading has not been reverse-geocoded yet', () => {
+    const block = buildLocationContextBlock({ source: 'gps', latitude: 10.6, longitude: -61.34, resolved_place: null });
+    expect(block).toBe('[[LOCATION_CONTEXT: lat=10.6, lng=-61.34, source=gps_precise]]');
+  });
+
   it('builds an approximate block for a real IP hit', () => {
     const block = buildLocationContextBlock({
       source: 'ip_geo', city: 'Port of Spain', country: 'Trinidad and Tobago',

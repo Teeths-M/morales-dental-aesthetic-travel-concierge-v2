@@ -219,7 +219,7 @@ export default function MCareOrb() {
   // this is attached once per mount rather than on every message.
   // prefs aliased to locationPrefs — `prefs` is already bound to
   // useMcarePreferences()'s object elsewhere in this file.
-  const { bestLocation, isLoading: locationLoading, requestGPS, gpsStatus, prefs: locationPrefs } = useAutoLocation();
+  const { bestLocation, isLoading: locationLoading, requestGPS, gpsStatus, gpsErrorCode, prefs: locationPrefs } = useAutoLocation();
   const [showLocationGate, setShowLocationGate] = useState(false);
   // Session-lifetime only (not persisted) — a fresh page load always gets
   // one proactive ask, matching "M-Care should always know where the
@@ -1366,12 +1366,24 @@ export default function MCareOrb() {
       clearGpsRequestTimeout();
       pendingGpsRetryQueryRef.current = null;
       const inIframe = (typeof window !== 'undefined' && window.self !== window.top);
-      const content = inIframe
-        ? "Your browser is blocking precise location in this view (common in the web preview). I'll keep using your approximate area for now — if you open the app on your phone or the published site, I can use your exact GPS."
-        : "I wasn't able to get your exact location, so I'll keep using your approximate area.";
+      // Differentiated by the real GeolocationPositionError.code
+      // (1=denied, 2=position_unavailable, 3=timeout) / 'no_api' — each is a
+      // genuinely different, actionable situation, not one generic failure.
+      let content;
+      if (inIframe) {
+        content = "Your browser is blocking precise location in this view (common in the web preview). I'll keep using your approximate area for now — if you open the app on your phone or the published site, I can use your exact GPS.";
+      } else if (gpsStatus === 'denied') {
+        content = "Your browser has location permanently blocked for this site, so it won't prompt again on its own. To fix it: tap the lock or site-info icon next to the web address, find Location, and set it to Allow — then just ask me again and I'll use it. I'll keep using your approximate area for now.";
+      } else if (gpsErrorCode === 3) {
+        content = "Your device took too long to respond with a precise location — that can happen with a weak signal. Feel free to ask again, especially somewhere with a clearer view of the sky. I'll keep using your approximate area for now.";
+      } else if (gpsErrorCode === 2 || gpsErrorCode === 'no_api') {
+        content = "Your device isn't able to provide a precise location right now, so I'll keep using your approximate area.";
+      } else {
+        content = "I wasn't able to get your exact location, so I'll keep using your approximate area.";
+      }
       setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
     }
-  }, [gpsStatus, sendAgentMessage, agentSending]);
+  }, [gpsStatus, gpsErrorCode, sendAgentMessage, agentSending]);
 
   const startNewJourney = useCallback(async () => {
     // A fresh journey drops any live voice conversation and pending

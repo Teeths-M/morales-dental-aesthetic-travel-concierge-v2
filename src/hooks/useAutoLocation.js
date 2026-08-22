@@ -12,6 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { fetchClientIpGeo } from '@/lib/clientIpGeo';
+import { reverseGeocodePrecise } from '@/lib/reverseGeocode';
 
 // v4: tries a direct-from-browser lookup (clientIpGeo.js) before falling
 // back to the Base44 edge function, and no longer caches a failed/Unknown
@@ -61,6 +62,12 @@ export function useAutoLocation() {
   const [ipLocation, setIpLocation] = useState(null);
   const [gpsLocation, setGpsLocation] = useState(null);
   const [gpsStatus, setGpsStatus] = useState('idle'); // 'idle' | 'requesting' | 'granted' | 'denied' | 'unavailable'
+  // Companion to gpsStatus, purely additive — never changes gpsStatus's own
+  // enum/transitions (redteam-pinned). Lets a caller show a differentiated,
+  // actionable message instead of one generic "unavailable" for every real
+  // GeolocationPositionError.code (1=denied, 2=position_unavailable,
+  // 3=timeout) or the no-geolocation-API case.
+  const [gpsErrorCode, setGpsErrorCode] = useState(null); // null | 1 | 2 | 3 | 'no_api'
   const [isLoading, setIsLoading] = useState(true);
   const [prefs, setPrefsState] = useState(readPrefs);
   const mountedRef = useRef(true);
@@ -128,11 +135,13 @@ export function useAutoLocation() {
   const requestGPS = useCallback((force = false) => {
     if (!('geolocation' in navigator)) {
       setGpsStatus('unavailable');
+      setGpsErrorCode('no_api');
       return;
     }
     if (prefs.locationPaused && !force) return;
 
     setGpsStatus('requesting');
+    setGpsErrorCode(null);
 
     // Before calling getCurrentPosition, check the Permissions API. In a
     // preview iframe whose Permissions-Policy disallows geolocation, the
@@ -152,14 +161,27 @@ export function useAutoLocation() {
             source: 'gps',
             precision: 'precise',
             logged_at: new Date().toISOString(),
+            resolved_place: null,
           };
           setGpsLocation(loc);
           setGpsStatus('granted');
+          setGpsErrorCode(null);
           updatePref('gpsGranted', true);
+
+          // Best-effort real place name for this GPS fix — never blocks the
+          // granted path itself. Guarded by logged_at so a slow reverse
+          // geocode can never clobber a newer GPS reading.
+          reverseGeocodePrecise(loc.latitude, loc.longitude).then((place) => {
+            if (!mountedRef.current || !place) return;
+            setGpsLocation((prev) => (prev && prev.logged_at === loc.logged_at)
+              ? { ...prev, resolved_place: place }
+              : prev);
+          });
         },
         (err) => {
           if (!mountedRef.current) return;
           setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
+          setGpsErrorCode(err.code === 1 ? 1 : (err.code === 2 ? 2 : 3));
           updatePref('gpsGranted', false);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
@@ -174,6 +196,7 @@ export function useAutoLocation() {
           if (!mountedRef.current) return;
           if (result.state === 'denied') {
             setGpsStatus('denied');
+            setGpsErrorCode(1);
             updatePref('gpsGranted', false);
             return;
           }
@@ -208,6 +231,7 @@ export function useAutoLocation() {
     gpsLocation,
     bestLocation,
     gpsStatus,
+    gpsErrorCode,
     isLoading,
     prefs,
     requestGPS,

@@ -18,6 +18,7 @@ import { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { resolveLocaleFromCountry } from '@/lib/geoAutoAlign';
 import { changeLanguage } from '@/i18n';
+import { fetchClientIpGeo } from '@/lib/clientIpGeo';
 
 // Bump version to force a fresh lookup after the ipinfo.io → ipapi.co fix.
 // Old sessions that cached a wrong Venezuela result will be ignored.
@@ -38,10 +39,27 @@ export function useGeoAutoAlign() {
 
     // If both are already set from user preferences, still fetch for the
     // geoDetected event (so region-specific content can react) but don't override.
-    base44.functions.invoke('getGeolocationAndCurrency', {})
-      .then(res => {
+    //
+    // Tries a direct browser->provider call first (clientIpGeo.js), same as
+    // useAutoLocation.js — the Base44 edge function calling these same two
+    // providers server-side has been confirmed (CLAUDE.md's "M-Care
+    // auto-location" section) to reliably return its Unknown fallback from
+    // Base44's own runtime. This hook predates that fix and was still
+    // calling the broken server path directly with no fallback.
+    async function resolve() {
+      const clientGeo = await fetchClientIpGeo();
+      if (clientGeo) return clientGeo;
+      try {
+        const res = await base44.functions.invoke('getGeolocationAndCurrency', {});
         const d = res?.data;
-        if (!d || d.source === 'default_fallback') return;
+        if (d && d.source !== 'default_fallback') return d;
+      } catch { /* honest failure — no data, no override */ }
+      return null;
+    }
+
+    resolve()
+      .then(d => {
+        if (!d) return;
 
         const { language, currency } = resolveLocaleFromCountry(d.country_code, d.currency);
 
