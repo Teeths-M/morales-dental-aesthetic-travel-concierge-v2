@@ -4206,7 +4206,7 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
   // handleGpsUpgradeConfirm.
   const onChoiceIdx = orbSrc.indexOf('onChoice={');
   expect(onChoiceIdx, 'onChoice router must exist in MCareOrb.jsx').toBeGreaterThan(-1);
-  const onChoiceBlock = orbSrc.slice(onChoiceIdx, onChoiceIdx + 2000);
+  const onChoiceBlock = orbSrc.slice(onChoiceIdx, onChoiceIdx + 3000);
   expect(onChoiceBlock, 'the choice router must gate handleGpsUpgradeConfirm on detectLocationConsentIntent, not a hardcoded literal')
     .toMatch(/detectLocationConsentIntent\(c\)\s*\?\s*handleGpsUpgradeConfirm\(c\)/);
 

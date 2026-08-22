@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   FileText, Image as ImageIcon, Camera, Mic, Contact as ContactIcon,
-  BarChart3, CalendarDays, Upload, Shield,
+  BarChart3, CalendarDays, Upload, Shield, MapPin,
 } from 'lucide-react';
 
 // AddImageMenu — the attach affordance in the M-Care/M-Safe input bar.
@@ -20,13 +20,14 @@ const ITEMS = [
   { key: 'document', label: 'Document', icon: FileText, color: '#7b61ff', accept: '.pdf,.doc,.docx,.txt,.rtf' },
   { key: 'photos',   label: 'Photos & videos', icon: ImageIcon, color: '#2196f3', accept: 'image/*,video/*' },
   { key: 'camera',   label: 'Camera', icon: Camera, color: '#e91e63', accept: 'image/*', capture: 'environment' },
+  { key: 'location', label: 'Location', icon: MapPin, color: '#10b981', location: true },
   { key: 'audio',    label: 'Audio', icon: Mic, color: '#ff9800', accept: 'audio/*' },
   { key: 'contact',  label: 'Contact', icon: ContactIcon, color: '#03a9f4', vault: true },
   { key: 'poll',     label: 'Poll', icon: BarChart3, color: '#ffc107', unsupported: 'M-Care doesn’t support polls.' },
   { key: 'event',    label: 'Event', icon: CalendarDays, color: '#f44336', unsupported: 'M-Care doesn’t support events.' },
 ];
 
-export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, uploading, variant = 'default', onUnsupported }) {
+export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationClick = null, disabled, uploading, variant = 'default', onUnsupported }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const fileRef = useRef(null);
@@ -52,6 +53,11 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, disabled, upl
     if (item.vault) {
       setOpen(false);
       onVaultClick?.();
+      return;
+    }
+    if (item.location) {
+      setOpen(false);
+      onLocationClick?.();
       return;
     }
     acceptRef.current = item.accept;

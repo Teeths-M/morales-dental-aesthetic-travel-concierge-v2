@@ -245,6 +245,10 @@ export default function MCareOrb() {
   // Set on a confirmed GPS-upgrade "Yes" tap; consumed by the gpsStatus
   // effect below once permission resolves (granted or not).
   const pendingGpsRetryQueryRef = useRef(null);
+  // Set on a "Send my current location" tap when no GPS fix exists yet;
+  // consumed by the same gpsStatus effect once permission resolves, sending
+  // the real location pin instead of redoing a text question.
+  const pendingLocationPinRef = useRef(false);
   // Safety net for requestGPS() never resolving at all — the browser's own
   // { timeout: 10000 } only bounds acquisition time once permission is
   // already decided, not time spent waiting on an unanswered native
@@ -604,6 +608,87 @@ export default function MCareOrb() {
   const handleGpsUpgradeConfirm = useCallback((choice) => {
     triggerGpsUpgrade(lastUserMessageRef.current || choice);
   }, [triggerGpsUpgrade]);
+
+  // "Location" tap in the attachment menu — offers the two real, already-built
+  // location-share capabilities (a one-time pin vs. a real streaming link),
+  // matching the native share-sheet pattern Portia referenced. This is a
+  // locally-synthesized prompt, never routed through the real agent — same
+  // discipline as handleDistressSignal's own synthetic confirm chip.
+  const handleLocationMenuClick = useCallback(() => {
+    setAgentMessages(prev => [...prev, {
+      role: 'assistant',
+      content: "Sure — what would you like to do?\n\n{{choices:Send my current location|Share my live location}}",
+      __locationShareChoice: true,
+    }]);
+  }, []);
+
+  // Sends the real location-pin message once a real GPS fix exists. Reuses
+  // sendAgentMessage's own [[LOCATION_CONTEXT: ...]] auto-attach (it always
+  // attaches once GPS is granted, see the hasGps check inside it) so the
+  // agent gets grounded coordinates for free, alongside a real tappable
+  // {{maps:...}} button the traveler sees in their own bubble.
+  const sendLocationPin = useCallback(() => {
+    const loc = bestLocationRef.current;
+    if (!loc || loc.source !== 'gps' || loc.latitude == null || loc.longitude == null) {
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: "I wasn't able to get your exact location, so I couldn't share a pin. Feel free to try again." }]);
+      return;
+    }
+    const label = loc.resolved_place ? `My Location (${loc.resolved_place})` : 'My Location';
+    sendAgentMessage(`Here's my current location.\n{{maps:${label}|${loc.latitude},${loc.longitude}}}`, []);
+  }, [sendAgentMessage]);
+
+  // "Send my current location" — reuses triggerGpsUpgrade's exact
+  // wait-for-GPS/15s-safety-net shape, but sends a location pin once granted
+  // instead of redoing a text question.
+  const shareCurrentLocationNow = useCallback(() => {
+    if (bestLocationRef.current?.source === 'gps') {
+      sendLocationPin();
+      return;
+    }
+    pendingLocationPinRef.current = true;
+    setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
+    requestGPS(true);
+    clearGpsRequestTimeout();
+    gpsRequestTimeoutRef.current = setTimeout(() => {
+      gpsRequestTimeoutRef.current = null;
+      if (!pendingLocationPinRef.current) return;
+      pendingLocationPinRef.current = false;
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow, then try sharing your location again.",
+      }]);
+    }, 15000);
+  }, [requestGPS, sendLocationPin]);
+
+  // "Share my live location" — a real, revocable streaming link. Direct
+  // client call to a real, already-built, already-agent-granted function,
+  // bypassing the agent for this real-time user-initiated tap — the same
+  // precedent handleDistressConfirm already established for
+  // requestOnDemandRide/notifyGuardianNow.
+  const shareLiveLocationNow = useCallback(async () => {
+    try {
+      const res = await base44.functions.invoke('generateLiveLocationRequestLink', {
+        case_id: activeCaseRecord?.id,
+        reason: 'Traveler chose to share their live location from M-Care chat.',
+      });
+      const data = res?.data;
+      if (!data?.url) throw new Error('no url returned');
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `Here's your live-location link — open it to start sharing, and you can stop anytime from that same page.\n{{sharelink:Open Live-Location Link|${data.url}}}`,
+      }]);
+    } catch (e) {
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: friendlyError(e, "I couldn't set up a live-location link right now — please try again in a moment.", 'MCareOrb'),
+      }]);
+    }
+  }, [activeCaseRecord]);
+
+  const handleLocationShareChoice = useCallback((choice) => {
+    if (choice === 'Send my current location') shareCurrentLocationNow();
+    else if (choice === 'Share my live location') shareLiveLocationNow();
+  }, [shareCurrentLocationNow, shareLiveLocationNow]);
 
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
@@ -1349,7 +1434,7 @@ export default function MCareOrb() {
   // location-sensitive regex above, and bestLocation already prefers GPS
   // over IP once gpsLocation is set, so the redo carries the precise fix.
   useEffect(() => {
-    if (!pendingGpsRetryQueryRef.current) return;
+    if (!pendingGpsRetryQueryRef.current && !pendingLocationPinRef.current) return;
     if (gpsStatus === 'granted') {
       // If the agent is mid-response, defer the retry until it finishes —
       // sendAgentMessage bails on agentSending=true, which would silently
@@ -1358,6 +1443,11 @@ export default function MCareOrb() {
       // sendAgentMessage changes identity when agentSending flips back.
       if (agentSending) return;
       clearGpsRequestTimeout();
+      if (pendingLocationPinRef.current) {
+        pendingLocationPinRef.current = false;
+        sendLocationPin();
+        return;
+      }
       const retryText = pendingGpsRetryQueryRef.current;
       pendingGpsRetryQueryRef.current = null;
       locationContextSentRef.current = false;
@@ -1365,6 +1455,7 @@ export default function MCareOrb() {
     } else if (gpsStatus === 'denied' || gpsStatus === 'unavailable') {
       clearGpsRequestTimeout();
       pendingGpsRetryQueryRef.current = null;
+      pendingLocationPinRef.current = false;
       const inIframe = (typeof window !== 'undefined' && window.self !== window.top);
       // Differentiated by the real GeolocationPositionError.code
       // (1=denied, 2=position_unavailable, 3=timeout) / 'no_api' — each is a
@@ -1383,7 +1474,7 @@ export default function MCareOrb() {
       }
       setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
     }
-  }, [gpsStatus, gpsErrorCode, sendAgentMessage, agentSending]);
+  }, [gpsStatus, gpsErrorCode, sendAgentMessage, agentSending, sendLocationPin]);
 
   const startNewJourney = useCallback(async () => {
     // A fresh journey drops any live voice conversation and pending
@@ -1731,6 +1822,13 @@ export default function MCareOrb() {
                       onChoice={
                         m.__distressConfirm
                           ? (c) => handleDistressConfirm(c, m.__distressConfirm)
+                          // The "Location" attachment-menu prompt (handleLocationMenuClick,
+                          // this component) is client-synthesized too — routed by the same
+                          // marker-on-the-message-object pattern as __distressConfirm above,
+                          // never a text match, since the two chip labels are ones this
+                          // component itself just generated.
+                          : m.__locationShareChoice
+                            ? handleLocationShareChoice
                           // The agent's own narrated surrounding-awareness offer (RULE,
                           // m_care.jsonc) always uses this exact choices token — matched
                           // on the literal text rather than a flag set at creation time,
@@ -1823,6 +1921,7 @@ export default function MCareOrb() {
                   variant="icon"
                   onDeviceFile={handleFileSelect}
                   onVaultClick={() => vaultRef.current?.open()}
+                  onLocationClick={handleLocationMenuClick}
                   onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
                   disabled={agentSending || agentUploading}
                   uploading={agentUploading}

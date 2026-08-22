@@ -70,6 +70,20 @@ const extractQr = (raw) => {
   return { text, qr: { label: match[1].trim(), dest: match[2].trim() } };
 };
 
+// Extract a {{sharelink:LABEL|URL}} token — a real Morales URL (e.g. a live-
+// location share link) that needs to render as a tappable "open" button, not
+// inert plain text. Distinct from {{maps:...}}/{{qr:...}}, whose DESTINATION
+// is an address/coords pair fed into generateMapLink() — a share-location
+// link is a real app URL already, not a maps destination, so it gets its own
+// simple one-button token rather than being forced through that pipeline.
+const extractShareLink = (raw) => {
+  if (!raw) return { text: '', shareLink: null };
+  const match = raw.match(/\{\{sharelink:([^|]*)\|([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), shareLink: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, shareLink: { label: match[1].trim(), url: match[2].trim() } };
+};
+
 // Extract a {{media:PROCEDURE_NAME}} token M-Care emits after explaining a
 // procedure/risk in words and getting an explicit yes to see a diagram — the
 // UI resolves PROCEDURE_NAME against the real, already-existing procedure
@@ -561,7 +575,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t1, choices } = extractChoices(t0);
           const { text: t2, maps } = extractMaps(t1);
           const { text: t3, qr } = extractQr(t2);
-          const { text: t3b, media } = extractMedia(t3);
+          const { text: t3a, shareLink } = extractShareLink(t3);
+          const { text: t3b, media } = extractMedia(t3a);
           const { text: t3c, doctorMedia } = extractDoctorMedia(t3b);
           const { text: t3d, driverMap } = extractDriverMap(t3c);
           const { text: t4, providerStatuses } = extractProviderStatus(t3d);
@@ -627,6 +642,19 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                 </div>
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
+              {shareLink && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <a
+                    href={shareLink.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={chipBase}
+                    style={{ borderColor: '#16a34a', color: '#16a34a', background: 'transparent' }}
+                  >
+                    <span>🔗</span> {shareLink.label || 'Open Link'}
+                  </a>
+                </div>
+              )}
               {media && <ProcedureMediaCard query={media} />}
               {doctorMedia && <DoctorMediaCard name={doctorMedia.name} type={doctorMedia.type} url={doctorMedia.url} />}
               {driverMap && <DriverMapWidget transportId={driverMap} />}
