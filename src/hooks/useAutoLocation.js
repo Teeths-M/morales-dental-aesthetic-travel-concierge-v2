@@ -178,12 +178,15 @@ export function useAutoLocation() {
       const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
 
       const sandboxed = isSandboxed();
-      // Strict 5-second hard timeout — replaces the previous 14s ceiling so
-      // the traveler never stares at "Getting your exact location now..."
-      // for what feels like a hang. Covers both the unanswered permission
-      // prompt AND slow GPS acquisition. Sandbox gets an even shorter 2s
-      // since the prompt will never appear there.
-      const hardTimeoutMs = sandboxed ? 2000 : 5000;
+      // Two-phase budget: the hard timeout must cover BOTH the browser's
+      // native "Allow location?" permission prompt (which the user has to
+      // read and tap — easily 5–8s on its own) AND a cold GPS acquisition
+      // (another 2–10s, worse indoors). The previous 5s ceiling fired
+      // before either finished and silently killed every legitimate
+      // request, falling back to the wrong IP city. 25s gives a real
+      // permission+fix cycle room to complete; sandbox stays at 2s since
+      // the prompt never appears there.
+      const hardTimeoutMs = sandboxed ? 2000 : 25000;
       console.log('[useAutoLocation] requestGPS', { sandboxed, hardTimeoutMs, force, maximumAge });
 
       let hardTimeoutFired = false;
@@ -241,7 +244,7 @@ export function useAutoLocation() {
           }
           resolve({ success: false, error: err.message || String(err.code), errorCode: code });
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge }
+        { enableHighAccuracy: true, timeout: 20000, maximumAge }
       );
     });
   }, [prefs.locationPaused]);
