@@ -158,23 +158,39 @@ export function useAutoLocation() {
     setGpsStatus('requesting');
     setGpsErrorCode(null);
 
-    // Before calling getCurrentPosition, check the Permissions API. In a
-    // preview iframe whose Permissions-Policy disallows geolocation, the
-    // browser reports the permission as 'denied' AND never shows the native
-    // prompt — getCurrentPosition hangs with neither callback firing, so the
-    // 15s safety net is the only thing that ever resolves it. Catching
-    // 'denied' here fails fast and honestly instead. Any other state, or a
-    // throwing/unavailable Permissions API, falls through to the normal call.
-    // Additive, backward-compatible override — every existing call site
-    // (requestGPS(), requestGPS(true)) keeps the established 60s cache
-    // window unchanged. A caller that must never silently reuse a stale
-    // fix (e.g. "show my exact location on Google Maps right now") passes
-    // { maximumAge: 0 } to force a genuinely fresh reading.
+    // maximumAge: a caller that must never silently reuse a stale fix (e.g.
+    // "show my exact location on Google Maps right now") passes
+    // { maximumAge: 0 } to force a genuinely fresh reading. The default 60s
+    // cache window is fine for every other call site.
     const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
+
+    // Hard safety timeout — separate from the browser's own { timeout }
+    // option, which only bounds acquisition time once the permission is
+    // already decided, not the time spent waiting on an unanswered native
+    // permission prompt (which can hang forever behind a Permissions-Policy
+    // restriction on a preview iframe). If neither callback has fired after
+    // 14s, force a terminal state so gpsInFlightRef can never get
+    // permanently stuck true (which would silently block every future
+    // requestGPS call) and the gpsStatus effect in MCareOrb can show an
+    // honest "timed out" message instead of leaving "Getting your exact
+    // location now" as the last thing the traveler ever sees.
+    let hardTimeoutFired = false;
+    const hardTimeoutId = setTimeout(() => {
+      if (hardTimeoutFired) return;
+      hardTimeoutFired = true;
+      gpsInFlightRef.current = false;
+      if (!mountedRef.current) return;
+      setGpsStatus('unavailable');
+      setGpsErrorCode(3);
+      updatePref('gpsGranted', false);
+    }, 14000);
 
     const proceed = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          if (hardTimeoutFired) return;
+          hardTimeoutFired = true;
+          clearTimeout(hardTimeoutId);
           gpsInFlightRef.current = false;
           if (!mountedRef.current) return;
           const loc = {
@@ -202,6 +218,9 @@ export function useAutoLocation() {
           });
         },
         (err) => {
+          if (hardTimeoutFired) return;
+          hardTimeoutFired = true;
+          clearTimeout(hardTimeoutId);
           gpsInFlightRef.current = false;
           if (!mountedRef.current) return;
           setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
@@ -212,23 +231,16 @@ export function useAutoLocation() {
       );
     };
 
-    try {
-      if (!navigator.permissions || !navigator.permissions.query) { proceed(); return; }
-      navigator.permissions
-        .query({ name: 'geolocation' })
-        .then((result) => {
-          if (!mountedRef.current) { gpsInFlightRef.current = false; return; }
-          if (result.state === 'denied') {
-            gpsInFlightRef.current = false;
-            setGpsStatus('denied');
-            setGpsErrorCode(1);
-            updatePref('gpsGranted', false);
-            return;
-          }
-          proceed();
-        })
-        .catch(() => proceed());
-    } catch { proceed(); }
+    // Call getCurrentPosition directly — no permissions.query pre-check.
+    // The pre-check was the root cause of zero console output: in the preview
+    // iframe, navigator.permissions.query returns 'denied' (the iframe's
+    // Permissions-Policy blocks geolocation), and the old code returned early
+    // WITHOUT ever calling getCurrentPosition, so no geolocation activity was
+    // visible in the console at all. The error callback above already
+    // handles code 1 (denied), 2 (unavailable), and 3 (timeout) correctly —
+    // there is no need for a separate fast-fail path that silently bypasses
+    // the real API.
+    proceed();
   }, [prefs.locationPaused]);
 
   // If user previously granted GPS, silently refresh on mount

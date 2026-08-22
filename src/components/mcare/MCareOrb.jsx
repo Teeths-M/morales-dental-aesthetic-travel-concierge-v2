@@ -283,6 +283,18 @@ export default function MCareOrb() {
   // Policy restriction on a preview iframe). Cleared the moment the retry
   // effect below sees a real resolution.
   const gpsRequestTimeoutRef = useRef(null);
+  // Synchronous, cross-flow deduplication gate — set true the instant ANY of
+  // the three GPS-triggering flows (triggerGpsUpgrade, triggerExactMapView,
+  // shareCurrentLocationNow) starts a request, BEFORE any async call or
+  // React state update. Cleared only after a real terminal outcome has
+  // rendered (granted → message sent, denied/unavailable → error shown,
+  // 15s safety net fired). This replaces the old gpsStatusRef === 'requesting'
+  // check, which failed because (a) React 18 batching can skip the
+  // 'requesting' state entirely when permissions resolve quickly, and
+  // (b) after GPS resolves to 'denied'/'unavailable'/'granted', the ref is
+  // no longer 'requesting' so the guard missed repeated messages, causing
+  // the infinite "Getting your exact location now" loop.
+  const locationRequestPendingRef = useRef(false);
 
   const silenceTimerRef = useRef(null);
   const silenceNudgeCountRef = useRef(0);
@@ -600,37 +612,25 @@ export default function MCareOrb() {
   // automatically once permission resolves, so the traveler never has to
   // ask twice.
   const triggerGpsUpgrade = useCallback((retryQuery) => {
-     // Guard against the infinite loop: if a GPS request is already in
-     // flight (gpsStatus is still 'requesting' from a prior call that
-     // hasn't resolved yet), don't add another "Getting your exact
-     // location now" bubble or restart the 15s safety-net timeout — both
-     // of which would otherwise fire on every repeated typed message,
-     // resetting the timeout so it never fires and leaving the traveler
-     // stuck in a loop of identical bubbles. requestGPS() is a no-op
-     // while gpsInFlight is true anyway. Just update the pending query
-     // (in case the user rephrased) and return early.
-     const gpsAlreadyRequesting = gpsStatusRef.current === 'requesting';
-     pendingGpsRetryQueryRef.current = retryQuery || null;
-     if (gpsAlreadyRequesting) {
-       // Same "newest request wins" mutual exclusion as the non-early-return
-       // path below — a fresh typed question is the real, current intent
-       // even when it happens to arrive while an earlier GPS request (a
-       // location pin, or an exact-map-view request) is still in flight.
-       // Without this, the OLDER pending flow would still win when GPS
-       // resolves, silently dropping what the traveler just asked for.
-       pendingLocationPinRef.current = false;
-       pendingExactMapViewRef.current = false;
-       // If the 15s safety net already fired (gpsRequestTimeoutRef is
-       // null), GPS is genuinely stuck — help the traveler move forward
-       // instead of looping silently.
-       if (!gpsRequestTimeoutRef.current) {
-         setAgentMessages(prev => [...prev, {
-           role: 'assistant',
-           content: "Your browser still hasn't responded to the location request — it may be blocked in this view. Try opening the app on your phone, or tell me a nearby street or landmark and I'll pin that instead.",
-         }]);
-       }
+     // Synchronous, cross-flow deduplication gate — check this BEFORE any
+     // async call or state update. If a GPS request is already in flight
+     // (from this flow OR either of the other two — triggerExactMapView,
+     // shareCurrentLocationNow), don't add another "Getting your exact
+     // location now" bubble or restart the 15s safety-net timeout. Just
+     // return with a short "already getting it" message. This replaces the
+     // old gpsStatusRef === 'requesting' check, which failed when React 18
+     // batching skipped the 'requesting' state or when GPS already resolved
+     // to a terminal state ('denied'/'unavailable'/'granted'), causing the
+     // infinite loop of identical bubbles.
+     if (locationRequestPendingRef.current) {
+       setAgentMessages(prev => [...prev, {
+         role: 'assistant',
+         content: "I'm already getting your location — give me a moment.",
+       }]);
        return;
      }
+     locationRequestPendingRef.current = true;
+     pendingGpsRetryQueryRef.current = retryQuery || null;
      // A fresh typed-question GPS request supersedes any still-pending
     // Location-menu "send my current location" flow (the newest tap is the
     // real, current intent) — without this, both a location pin AND the
@@ -660,6 +660,7 @@ export default function MCareOrb() {
       gpsRequestTimeoutRef.current = null;
       if (!pendingGpsRetryQueryRef.current) return;
       pendingGpsRetryQueryRef.current = null;
+      locationRequestPendingRef.current = false;
       setAgentMessages(prev => [...prev, {
         role: 'assistant',
         content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow. I'll keep using your approximate area for now; just ask again anytime.",
@@ -714,28 +715,19 @@ export default function MCareOrb() {
   // location right now" request must never silently reuse a fix from
   // minutes ago, unlike the other two flows' fresh-fix fast paths.
   const triggerExactMapView = useCallback(() => {
-    // Same duplicate-bubble guard triggerGpsUpgrade uses: a GPS request
-    // already in flight makes requestGPS() itself a no-op, so don't also
-    // post a second "I'll get your..." bubble or restart the 15s timeout.
-    // Known, narrow edge case: if GPS was already in flight from a
-    // DIFFERENT flow (started with the default cached-fix window, not this
-    // flow's own maximumAge:0), the fix this request ends up using may not
-    // be a freshly-forced one — accepted rather than adding a second
-    // in-flight-request-priority system on top of the existing reentrancy
-    // guard for what should be a rare few-second overlap.
-    const gpsAlreadyRequesting = gpsStatusRef.current === 'requesting';
-    pendingExactMapViewRef.current = true;
-    if (gpsAlreadyRequesting) {
-      pendingGpsRetryQueryRef.current = null;
-      pendingLocationPinRef.current = false;
-      if (!gpsRequestTimeoutRef.current) {
-        setAgentMessages(prev => [...prev, {
-          role: 'assistant',
-          content: "Your browser still hasn't responded to the location request — it may be blocked in this view. Try opening the app on your phone, or tell me a nearby street or landmark instead.",
-        }]);
-      }
+    // Same synchronous, cross-flow deduplication gate as triggerGpsUpgrade —
+    // if ANY of the three GPS-triggering flows already has a request in
+    // flight, don't start a second one or post a duplicate "I'll get your..."
+    // bubble. Just tell the traveler it's already in progress.
+    if (locationRequestPendingRef.current) {
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm already getting your location — give me a moment.",
+      }]);
       return;
     }
+    locationRequestPendingRef.current = true;
+    pendingExactMapViewRef.current = true;
     // Mutual exclusion against the other two GPS-triggered flows — the
     // newest request wins, matching triggerGpsUpgrade/shareCurrentLocationNow's
     // own established pattern.
@@ -749,6 +741,7 @@ export default function MCareOrb() {
       gpsRequestTimeoutRef.current = null;
       if (!pendingExactMapViewRef.current) return;
       pendingExactMapViewRef.current = false;
+      locationRequestPendingRef.current = false;
       setAgentMessages(prev => [...prev, {
         role: 'assistant',
         content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow, then ask me again to show your location on Google Maps.",
@@ -827,6 +820,17 @@ export default function MCareOrb() {
       sendLocationPin();
       return;
     }
+    // Synchronous, cross-flow deduplication gate — same as triggerGpsUpgrade
+    // and triggerExactMapView. If a GPS request is already in flight from
+    // any of the three flows, don't start a second one.
+    if (locationRequestPendingRef.current) {
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm already getting your location — give me a moment.",
+      }]);
+      return;
+    }
+    locationRequestPendingRef.current = true;
     pendingLocationPinRef.current = true;
     // A fresh "send my current location" tap supersedes any still-pending
     // typed-question GPS retry (see triggerGpsUpgrade's matching clear) —
@@ -842,6 +846,7 @@ export default function MCareOrb() {
       if (!pendingLocationPinRef.current) return;
       pendingLocationPinRef.current = false;
       locationChoiceInFlightRef.current = false;
+      locationRequestPendingRef.current = false;
       setAgentMessages(prev => [...prev, {
         role: 'assistant',
         content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow, then try sharing your location again.",
@@ -1672,16 +1677,19 @@ export default function MCareOrb() {
       clearGpsRequestTimeout();
       if (pendingLocationPinRef.current) {
         pendingLocationPinRef.current = false;
+        locationRequestPendingRef.current = false;
         sendLocationPin();
         return;
       }
       if (pendingExactMapViewRef.current) {
         pendingExactMapViewRef.current = false;
+        locationRequestPendingRef.current = false;
         sendExactLocationMapMessage();
         return;
       }
       const retryText = pendingGpsRetryQueryRef.current;
       pendingGpsRetryQueryRef.current = null;
+      locationRequestPendingRef.current = false;
       locationContextSentRef.current = false;
       sendAgentMessage(retryText);
     } else if (gpsStatus === 'denied' || gpsStatus === 'unavailable') {
@@ -1693,6 +1701,12 @@ export default function MCareOrb() {
       // question retry can also land here) — releases the Location-menu
       // double-tap guard if it was.
       locationChoiceInFlightRef.current = false;
+      // Release the cross-flow dedup gate AFTER showing the error message
+      // below — setAgentMessages is called first, then the ref is cleared,
+      // so a genuinely NEW location request (different message, different
+      // intent) can proceed, while an exact duplicate of the just-failed
+      // message is still caught by the synchronous guard in
+      // triggerGpsUpgrade (the ref is only cleared after this render).
       const inIframe = (typeof window !== 'undefined' && window.self !== window.top);
       // Differentiated by the real GeolocationPositionError.code
       // (1=denied, 2=position_unavailable, 3=timeout) / 'no_api' — each is a
@@ -1710,6 +1724,7 @@ export default function MCareOrb() {
         content = "I wasn't able to get your exact location, so I'll keep using your approximate area.";
       }
       setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
+      locationRequestPendingRef.current = false;
     }
   }, [gpsStatus, gpsErrorCode, sendAgentMessage, agentSending, sendLocationPin, sendExactLocationMapMessage]);
 
