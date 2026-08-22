@@ -4413,7 +4413,7 @@ test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, neve
 
   const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
   expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
-  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 1300);
+  const triggerBlock = orbSrc.slice(triggerIdx, triggerIdx + 1600);
   expect(triggerBlock, 'triggerGpsUpgrade must call the real requestGPS()').toMatch(/requestGPS\(true\);/);
 
   // The choice-router: a tapped choice must be gated by the intent
@@ -4525,8 +4525,8 @@ test('LOCATION PAUSE BYPASS: an explicit GPS request is never silently vetoed by
   // an explicit force parameter: an automatic/passive caller still respects
   // the pause, a real explicit human request always bypasses it.
   const hookSrc = read('src/hooks/useAutoLocation.js');
-  expect(hookSrc, 'requestGPS must accept a force parameter')
-    .toMatch(/const requestGPS = useCallback\(\(force = false\) => \{/);
+  expect(hookSrc, 'requestGPS must accept a force parameter (plus an additive options param for a maximumAge override — see EXACT LOCATION SATELLITE MAP)')
+    .toMatch(/const requestGPS = useCallback\(\(force = false, options = \{\}\) => \{/);
   expect(hookSrc, 'the pause check must be gated on !force, not unconditional')
     .toMatch(/if \(prefs\.locationPaused && !force\) return;/);
 
@@ -4590,6 +4590,124 @@ test('LOCATION SHARE RACE: the two pending-GPS flows (a typed-question retry, a 
   const hookSrc = read('src/hooks/useAutoLocation.js');
   expect(hookSrc, 'requestGPS must guard against a second call while one is already in flight')
     .toMatch(/if \(gpsInFlightRef\.current\) return;/);
+
+  // A third GPS-triggered flow (a deterministic "show my exact location on
+  // Google Maps" request) joined the same race-prone territory — it must
+  // participate in the same mutual-exclusion discipline as the two above,
+  // not silently coexist as an unguarded fourth pending state.
+  expect(triggerBlock, 'triggerGpsUpgrade must also cancel any still-pending exact-map-view flow')
+    .toMatch(/pendingExactMapViewRef\.current = false;/);
+  expect(shareBlock, 'shareCurrentLocationNow must also cancel any still-pending exact-map-view flow')
+    .toMatch(/pendingExactMapViewRef\.current = false;/);
+
+  const triggerMapIdx = orbSrc.indexOf('const triggerExactMapView = useCallback');
+  expect(triggerMapIdx, 'triggerExactMapView must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const triggerMapBlock = orbSrc.slice(triggerMapIdx, orbSrc.indexOf('}, [requestGPS]);', triggerMapIdx));
+  expect(triggerMapBlock, 'triggerExactMapView must cancel any still-pending typed-question retry')
+    .toMatch(/pendingGpsRetryQueryRef\.current = null;/);
+  expect(triggerMapBlock, 'triggerExactMapView must cancel any still-pending location-pin flow')
+    .toMatch(/pendingLocationPinRef\.current = false;/);
+});
+
+test('EXACT LOCATION SATELLITE MAP: a deterministic Google Maps satellite view, always a fresh real device fix, honest about accuracy and offline state', () => {
+  // Portia's report: "map my exact location and show me on Google Maps"
+  // used to fall through to free-text LLM narration with no deterministic
+  // mechanism to actually open a satellite display map — this pins the
+  // fix's real, structural properties (never behavioral — this repo has no
+  // integration-test harness for React effects/Deno functions, only source
+  // structure checks).
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+  const geoUriSrc = read('src/lib/geoUri.js');
+  const intentSrc = read('src/lib/exactMapViewIntent.js');
+  const bubbleSrc = read('src/components/mcare-agent/MessageBubble.jsx');
+
+  // The narrower detector must be checked BEFORE the broader existing one —
+  // it is a strict AND against it, so this ordering is safe (mutually
+  // exclusive routing) and guarantees a satellite request never gets stuck
+  // behind the generic "resend to the agent" path.
+  const narrowIdx = orbSrc.indexOf('detectExactMapViewIntent(q)');
+  const broadIdx = orbSrc.indexOf('detectLocationConsentIntent(q)');
+  expect(narrowIdx, 'detectExactMapViewIntent(q) must be checked in sendAgentMessage').toBeGreaterThan(-1);
+  expect(broadIdx, 'detectLocationConsentIntent(q) must still be checked in sendAgentMessage').toBeGreaterThan(-1);
+  expect(narrowIdx, 'the satellite-map check must come before the general exact-location check')
+    .toBeLessThan(broadIdx);
+
+  // The narrow detector itself is a strict AND against the existing broader
+  // one — never a second, drifting phrase list.
+  expect(intentSrc, 'detectExactMapViewIntent must reuse detectLocationConsentIntent, not duplicate its phrase list')
+    .toMatch(/detectLocationConsentIntent\(text\)\s*&&/);
+
+  // A "map my exact location" request must never silently reuse a cached
+  // fix — always forces a genuinely fresh GeolocationPosition.
+  const triggerMapIdx = orbSrc.indexOf('const triggerExactMapView = useCallback');
+  expect(triggerMapIdx, 'triggerExactMapView must be defined').toBeGreaterThan(-1);
+  const triggerMapBlock = orbSrc.slice(triggerMapIdx, orbSrc.indexOf('}, [requestGPS]);', triggerMapIdx));
+  expect(triggerMapBlock, 'triggerExactMapView must force a brand-new fix, never the 60s-cache fast path the other two flows use')
+    .toMatch(/requestGPS\(true, \{ maximumAge: 0 \}\);/);
+
+  // sendExactLocationMapMessage must read the raw device fix, never the
+  // locationPaused-filtered or IP-derived value — "exact location" must
+  // always mean real device GPS.
+  const sendMapIdx = orbSrc.indexOf('const sendExactLocationMapMessage = useCallback');
+  expect(sendMapIdx, 'sendExactLocationMapMessage must be defined').toBeGreaterThan(-1);
+  const sendMapBlock = orbSrc.slice(sendMapIdx, orbSrc.indexOf('}, [isOnline]);', sendMapIdx));
+  expect(sendMapBlock, 'sendExactLocationMapMessage must read gpsLocationRef, not bestLocationRef')
+    .toMatch(/const loc = gpsLocationRef\.current;/);
+  expect(sendMapBlock, 'the message must include an honest accuracy line via describeAccuracy')
+    .toMatch(/describeAccuracy\(loc\.accuracy_meters\)/);
+  expect(sendMapBlock, 'the offline branch must never claim Google Maps opened')
+    .toMatch(/isOnline\s*\n?\s*\?\s*"I've opened it in Google Maps in satellite view\."/);
+  expect(sendMapBlock, "the offline message must say plainly Google Maps can't open right now")
+    .toMatch(/can't open Google Maps right now since you're offline/);
+  expect(sendMapBlock, 'the message must always pair {{satmap:...}} with an offline-capable {{qr:...}} token')
+    .toMatch(/\{\{satmap:\$\{label\}\|.*\}\}\\n\{\{qr:\$\{label\}\|/);
+
+  // The existing gpsStatus-resolution effect's own real invariant (GPS
+  // REQUEST TIMEOUT's clearGpsRequestTimeout() call count) must not have
+  // been disturbed by adding a third pending-ref branch — the granted
+  // branch's single top-of-block clearGpsRequestTimeout() call already
+  // covers all three flows; no second call was added for this one.
+  const effectIdx = orbSrc.indexOf("if (gpsStatus === 'granted') {");
+  expect(effectIdx, 'the gpsStatus resolution effect must exist').toBeGreaterThan(-1);
+  const grantedBranchEnd = orbSrc.indexOf("} else if (gpsStatus === 'denied'", effectIdx);
+  expect(grantedBranchEnd, "the granted branch's own boundary must exist").toBeGreaterThan(-1);
+  const grantedBranch = orbSrc.slice(effectIdx, grantedBranchEnd);
+  expect(grantedBranch, 'the granted branch must handle the new pending flow')
+    .toMatch(/if \(pendingExactMapViewRef\.current\) \{/);
+  const clearCountInGranted = (grantedBranch.match(/clearGpsRequestTimeout\(\);/g) || []).length;
+  expect(clearCountInGranted, 'exactly one clearGpsRequestTimeout() call must cover all three pending flows in the granted branch')
+    .toBe(1);
+
+  // Never a fabricated capability the agent could claim on its own — the
+  // satmap token is client-emitted from real coordinates; the one place the
+  // agent itself may emit it (a plain-text fallback) is explicitly bound to
+  // real gps_precise coordinates and forbidden from claiming it opened
+  // anything itself.
+  const mcareRaw = read('base44/agents/m_care.jsonc');
+  const mcareData = JSON.parse(mcareRaw);
+  expect(mcareData.instructions, 'm_care.jsonc must document the satmap fallback token')
+    .toContain('{{satmap:LABEL|lat,lng}}');
+  expect(mcareData.instructions, 'the agent must be told never to claim it opened Google Maps itself')
+    .toMatch(/Never say you have opened\s*Google Maps yourself/);
+  expect(mcareData.instructions, 'the fallback must be bound to real gps_precise coordinates, never invented')
+    .toMatch(/source=gps_precise LOCATION_CONTEXT\s*block, you may emit \{\{satmap/);
+
+  // MessageBubble must actually render the token as a real tappable link
+  // (buildGoogleMapsLocationUrl), never rely on an async window.open that
+  // risks silent popup-blocking.
+  expect(bubbleSrc, 'MessageBubble must extract the satmap token')
+    .toMatch(/const extractSatMap = /);
+  expect(bubbleSrc, 'MessageBubble must render it via a real anchor tag, not window.open')
+    .toMatch(/href=\{url\}[\s\S]{0,40}target="_blank"/);
+  expect(bubbleSrc, 'the satmap URL must come from the real Google Maps display-URL builder')
+    .toMatch(/buildGoogleMapsLocationUrl\(coordsFromDest\(dest\)\)/);
+
+  // buildGoogleMapsLocationUrl itself must build a display map (map_action),
+  // never a directions URL, and default to satellite.
+  expect(geoUriSrc, 'buildGoogleMapsLocationUrl must use the map_action=map display family')
+    .toMatch(/map_action:\s*'map'/);
+  expect(geoUriSrc, 'buildGoogleMapsLocationUrl must default to a satellite basemap')
+    .toMatch(/basemap = 'satellite'/);
 });
 
 test('SAFE-T4LIFE: repeat-procedure history can only ever escalate toward HIGH, a lookup failure fails open for just this new signal, and the chat tool never auto-creates a review task', () => {

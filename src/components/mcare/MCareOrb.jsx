@@ -62,7 +62,9 @@ import { useJourneyEvents } from '@/hooks/useJourneyEvents';
 import { useAutoLocation } from '@/hooks/useAutoLocation';
 import { buildLocationContextBlock } from '@/lib/locationContext';
 import { detectLocationConsentIntent } from '@/lib/locationConsentIntent';
+import { detectExactMapViewIntent } from '@/lib/exactMapViewIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
+import { describeAccuracy } from '@/lib/mapLinks';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -257,6 +259,11 @@ export default function MCareOrb() {
   // consumed by the same gpsStatus effect once permission resolves, sending
   // the real location pin instead of redoing a text question.
   const pendingLocationPinRef = useRef(false);
+  // Set on a confirmed "show my exact location on Google Maps satellite"
+  // request (detectExactMapViewIntent); consumed by the same gpsStatus
+  // effect once permission resolves, sending a real satellite-map message
+  // instead of redoing a text question or a plain location pin.
+  const pendingExactMapViewRef = useRef(false);
   // Guards against a double-tap on either Location-menu choice ("Send my
   // current location" / "Share my live location") kicking off two
   // overlapping flows — set the instant a choice is tapped, cleared at every
@@ -596,6 +603,9 @@ export default function MCareOrb() {
     // in-flight guard too so a superseded flow doesn't leave the Location
     // menu's choices permanently unable to be retapped.
     pendingLocationPinRef.current = false;
+    // Same mutual-exclusion reasoning against the third GPS-triggered flow
+    // (a satellite-Google-Maps request) — the newest typed request wins.
+    pendingExactMapViewRef.current = false;
     locationChoiceInFlightRef.current = false;
     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
     // force=true: this only ever fires from a real, explicit, freshly-given
@@ -631,6 +641,64 @@ export default function MCareOrb() {
   const handleGpsUpgradeConfirm = useCallback((choice) => {
     triggerGpsUpgrade(lastUserMessageRef.current || choice);
   }, [triggerGpsUpgrade]);
+
+  // Sends the real satellite-map message once a fresh GPS fix exists for a
+  // confirmed "show my exact location on Google Maps" request. Same
+  // liveRef.current.sendAgentMessage TDZ-avoidance as sendLocationPin.
+  // Reads the raw GPS fix (gpsLocationRef), never bestLocationRef or IP —
+  // "exact location" must always mean real device GPS, never an
+  // ISP-registered approximate point. Called only from the gpsStatus
+  // effect below, which already clears pendingExactMapViewRef first.
+  const sendExactLocationMapMessage = useCallback(() => {
+    const loc = gpsLocationRef.current;
+    if (!loc || loc.source !== 'gps' || loc.latitude == null || loc.longitude == null) {
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: "I wasn't able to get your exact location, so I couldn't open it on the map. Feel free to try again." }]);
+      return;
+    }
+    const label = loc.resolved_place ? `My Location (${loc.resolved_place})` : 'My Location';
+    const accuracyLine = describeAccuracy(loc.accuracy_meters);
+    // A real Google Maps display page needs a live network round-trip to
+    // actually open — never claim it opened while offline. The paired
+    // {{qr:...}} token still gives a real, offline-capable artifact
+    // (buildOfflineGeoUri) either way.
+    const openedLine = isOnline
+      ? "I've opened it in Google Maps in satellite view."
+      : "I can't open Google Maps right now since you're offline — here's a QR code that works without a connection instead.";
+    liveRef.current.sendAgentMessage?.(
+      `Got your device location.\n${accuracyLine}\n${openedLine}\n{{satmap:${label}|${loc.latitude},${loc.longitude}}}\n{{qr:${label}|${loc.latitude},${loc.longitude}}}`,
+      []
+    );
+  }, [isOnline]);
+
+  // Requests a fresh, deterministic satellite Google Maps view of the
+  // traveler's exact device location — the narrower sibling of
+  // triggerGpsUpgrade, gated by detectExactMapViewIntent so it only ever
+  // intercepts a request that specifically names Google Maps/satellite,
+  // never the broader "exact location" phrasing (see sendAgentMessage).
+  // Always forces a brand-new GPS fix (maximumAge: 0) — a "map my exact
+  // location right now" request must never silently reuse a fix from
+  // minutes ago, unlike the other two flows' fresh-fix fast paths.
+  const triggerExactMapView = useCallback(() => {
+    pendingExactMapViewRef.current = true;
+    // Mutual exclusion against the other two GPS-triggered flows — the
+    // newest request wins, matching triggerGpsUpgrade/shareCurrentLocationNow's
+    // own established pattern.
+    pendingGpsRetryQueryRef.current = null;
+    pendingLocationPinRef.current = false;
+    locationChoiceInFlightRef.current = false;
+    setAgentMessages(prev => [...prev, { role: 'assistant', content: "I'll get your current device location and open it in Google Maps." }]);
+    requestGPS(true, { maximumAge: 0 });
+    clearGpsRequestTimeout();
+    gpsRequestTimeoutRef.current = setTimeout(() => {
+      gpsRequestTimeoutRef.current = null;
+      if (!pendingExactMapViewRef.current) return;
+      pendingExactMapViewRef.current = false;
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm still waiting on your browser to respond to the location request — if you see a permission prompt, tap Allow, then ask me again to show your location on Google Maps.",
+      }]);
+    }, 15000);
+  }, [requestGPS]);
 
   // "Location" tap in the attachment menu — offers the two real, already-built
   // location-share capabilities (a one-time pin vs. a real streaming link),
@@ -696,6 +764,7 @@ export default function MCareOrb() {
         // re-runs when agentSending flips back to false.
         pendingLocationPinRef.current = true;
         pendingGpsRetryQueryRef.current = null;
+        pendingExactMapViewRef.current = false;
         setAgentMessages(prev => [...prev, { role: 'assistant', content: "One moment — I'll send your location as soon as I'm done here." }]);
         return;
       }
@@ -708,6 +777,7 @@ export default function MCareOrb() {
     // the newest tap is the real, current intent, so only one flow should
     // ever resolve once GPS answers.
     pendingGpsRetryQueryRef.current = null;
+    pendingExactMapViewRef.current = false;
     setAgentMessages(prev => [...prev, { role: 'assistant', content: "Getting your exact location now — one moment..." }]);
     requestGPS(true);
     clearGpsRequestTimeout();
@@ -1411,6 +1481,21 @@ export default function MCareOrb() {
       }
     }
 
+    // A direct typed request specifically for a Google Maps / satellite
+    // view of the exact device location ("map my exact location and show
+    // me on Google Maps") is a narrower, more specific case of the general
+    // exact-location request below — checked FIRST so it wins. Unlike the
+    // general case, this never resends the text to the agent: it opens a
+    // real satellite Google Maps display deterministically, since leaving
+    // "satellite view" up to free-text LLM narration is exactly the
+    // unreliable behavior this flow exists to replace.
+    if (!fileUrls?.length && detectExactMapViewIntent(q)) {
+      setInput('');
+      setAgentMessages(prev => [...prev, { role: 'user', content: q }]);
+      triggerExactMapView();
+      return;
+    }
+
     // A direct typed request for exact/precise device location ("can you
     // pin my exact location on map") reaches the agent as plain text, but
     // it can only explain what to do — it cannot trigger requestGPS()
@@ -1505,7 +1590,7 @@ export default function MCareOrb() {
         content: friendlyError(e, "I couldn't send your message just now — the connection dropped. Please try again in a moment.", 'MCareOrb'),
       }]);
     }
-  }, [input, agentConversation, agentSending, toast, handleDistressSignal, bestLocation, triggerGpsUpgrade]);
+  }, [input, agentConversation, agentSending, toast, handleDistressSignal, bestLocation, triggerGpsUpgrade, triggerExactMapView]);
 
   // Keeps the continuous-recognition effect's callbacks able to reach the
   // latest sendAgentMessage without listing it as a dependency (which would
@@ -1520,7 +1605,7 @@ export default function MCareOrb() {
   // location-sensitive regex above, and bestLocation already prefers GPS
   // over IP once gpsLocation is set, so the redo carries the precise fix.
   useEffect(() => {
-    if (!pendingGpsRetryQueryRef.current && !pendingLocationPinRef.current) return;
+    if (!pendingGpsRetryQueryRef.current && !pendingLocationPinRef.current && !pendingExactMapViewRef.current) return;
     if (gpsStatus === 'granted') {
       // If the agent is mid-response, defer the retry until it finishes —
       // sendAgentMessage bails on agentSending=true, which would silently
@@ -1534,6 +1619,11 @@ export default function MCareOrb() {
         sendLocationPin();
         return;
       }
+      if (pendingExactMapViewRef.current) {
+        pendingExactMapViewRef.current = false;
+        sendExactLocationMapMessage();
+        return;
+      }
       const retryText = pendingGpsRetryQueryRef.current;
       pendingGpsRetryQueryRef.current = null;
       locationContextSentRef.current = false;
@@ -1542,6 +1632,7 @@ export default function MCareOrb() {
       clearGpsRequestTimeout();
       pendingGpsRetryQueryRef.current = null;
       pendingLocationPinRef.current = false;
+      pendingExactMapViewRef.current = false;
       // Harmless if a location-choice flow wasn't the one pending (a typed-
       // question retry can also land here) — releases the Location-menu
       // double-tap guard if it was.
@@ -1564,7 +1655,7 @@ export default function MCareOrb() {
       }
       setAgentMessages(prev => [...prev, { role: 'assistant', content }]);
     }
-  }, [gpsStatus, gpsErrorCode, sendAgentMessage, agentSending, sendLocationPin]);
+  }, [gpsStatus, gpsErrorCode, sendAgentMessage, agentSending, sendLocationPin, sendExactLocationMapMessage]);
 
   const startNewJourney = useCallback(async () => {
     // A fresh journey drops any live voice conversation and pending

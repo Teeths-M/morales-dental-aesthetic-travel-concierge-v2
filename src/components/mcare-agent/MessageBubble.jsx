@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2, Play, Pause } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2, Play, Pause, MapPin, ClipboardCopy } from 'lucide-react';
 import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 import DocumentScannerCard from '@/components/mcare/DocumentScannerCard';
@@ -8,7 +8,7 @@ import OutreachDraftCard from '@/components/mcare/OutreachDraftCard';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import ProviderStatusBadge from '@/components/mcare-agent/ProviderStatusBadge';
 import DriverMapWidget from '@/components/mcare-agent/DriverMapWidget';
-import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink, buildOfflineGeoUri } from '@/lib/mapLinks';
+import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink, buildOfflineGeoUri, buildGoogleMapsLocationUrl } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
 import { generateWaveformBars } from '@/lib/voiceMessageAudio';
@@ -68,6 +68,21 @@ const extractQr = (raw) => {
   if (!match) return { text: raw.trim(), qr: null };
   const text = raw.replace(match[0], '').trim();
   return { text, qr: { label: match[1].trim(), dest: match[2].trim() } };
+};
+
+// Extract a {{satmap:LABEL|lat,lng}} token — a real Google Maps SATELLITE
+// display centered on real device coordinates, distinct from {{maps:...}}
+// (a directions link across three apps). Emitted deterministically by
+// MCareOrb.jsx's exact-location flow (see triggerExactMapView/
+// sendExactLocationMapMessage) for a "map my exact location and show me on
+// Google Maps" style request — never a placeholder, only ever real
+// coordinates from a just-obtained GPS fix.
+const extractSatMap = (raw) => {
+  if (!raw) return { text: '', satMap: null };
+  const match = raw.match(/\{\{satmap:([^|]*)\|([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), satMap: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, satMap: { label: match[1].trim(), dest: match[2].trim() } };
 };
 
 // Extract a {{sharelink:LABEL|URL}} token — a real Morales URL (e.g. a live-
@@ -226,6 +241,65 @@ export function InlineQrBlock({ label, dest }) {
       </button>
     </div>
   );
+}
+
+// Renders the real "open in Google Maps satellite view" action for a
+// {{satmap:LABEL|lat,lng}} token — a genuine display-map link
+// (buildGoogleMapsLocationUrl), not the async window.open a background
+// effect would risk having silently popup-blocked; a real <a> tap always
+// works. A MapPin icon, never an avatar/face. Raw coordinates stay out of
+// the visible message text (see MCareOrb.jsx's sendExactLocationMapMessage)
+// and are only available via the Copy Coordinates button, on demand.
+function SatelliteMapBlock({ label, dest }) {
+  const url = buildGoogleMapsLocationUrl(coordsFromDest(dest));
+  const [copied, setCopied] = useState(false);
+  if (!url) return null;
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(dest);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (_) { /* clipboard permission denied — no-op, non-critical */ }
+  };
+  return (
+    <div className="mt-2 inline-flex flex-col items-start gap-1.5 rounded-xl border border-border bg-white p-3">
+      <div className="flex items-center gap-1.5 text-gray-700">
+        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+        {label && <p className="text-[11px] font-medium">{label}</p>}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 rounded-full border border-emerald-300 px-2.5 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50"
+        >
+          🛰️ Open in Google Maps
+        </a>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-2.5 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50"
+        >
+          <ClipboardCopy className="w-3 h-3" /> {copied ? 'Copied' : 'Copy Coordinates'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// "lat,lng" -> {latitude, longitude} for buildGoogleMapsLocationUrl's named
+// argument shape — SatelliteMapBlock only ever renders for a real
+// {{satmap:...}} token, which is only ever emitted with real coordinates
+// (see MCareOrb.jsx/RULE 12), so a malformed dest simply yields null and
+// SatelliteMapBlock returns null rather than rendering a broken link.
+function coordsFromDest(dest) {
+  const parts = (dest || '').split(',');
+  if (parts.length !== 2) return {};
+  const latitude = Number(parts[0]);
+  const longitude = Number(parts[1]);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return {};
+  return { latitude, longitude };
 }
 
 // Renders a QR code for a real Morales share-link URL (e.g. a live-location
@@ -695,7 +769,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t1, choices } = extractChoices(t0);
           const { text: t2, maps } = extractMaps(t1);
           const { text: t3, qr } = extractQr(t2);
-          const { text: t3a, shareLink } = extractShareLink(t3);
+          const { text: t3z, satMap } = extractSatMap(t3);
+          const { text: t3a, shareLink } = extractShareLink(t3z);
           const { text: t3b, media } = extractMedia(t3a);
           const { text: t3c, doctorMedia } = extractDoctorMedia(t3b);
           const { text: t3d, driverMap } = extractDriverMap(t3c);
@@ -762,6 +837,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
                 </div>
               )}
               {qr && <InlineQrBlock label={qr.label} dest={qr.dest} />}
+              {satMap && <SatelliteMapBlock label={satMap.label} dest={satMap.dest} />}
               {shareLink && (
                 <>
                   <div className="mt-2 flex flex-wrap gap-1.5">

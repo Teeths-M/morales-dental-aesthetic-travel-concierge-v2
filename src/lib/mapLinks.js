@@ -9,12 +9,12 @@
  * (localStorage + server profile) and surfaced via analytics as an audit row.
  */
 import { base44 } from '@/api/base44Client';
-import { isCoords, buildOfflineGeoUri } from './geoUri';
+import { isCoords, buildOfflineGeoUri, buildGoogleMapsLocationUrl, describeAccuracy } from './geoUri';
 
 // Re-exported so existing callers (MessageBubble.jsx, TravelPassCard.jsx)
 // keep importing it from '@/lib/mapLinks' unchanged — see geoUri.js for why
 // the implementation itself lives in a separate, zero-dependency module.
-export { buildOfflineGeoUri };
+export { buildOfflineGeoUri, buildGoogleMapsLocationUrl, describeAccuracy };
 
 const PREF_KEY = 'morales_preferred_maps_app';
 

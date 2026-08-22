@@ -34,3 +34,33 @@ export function buildOfflineGeoUri(destination, label) {
   const labelPart = label ? `(${encodeURIComponent(label)})` : '';
   return `geo:${dest}?q=${dest}${labelPart}`;
 }
+
+// Build a real Google Maps DISPLAY-map URL (map_action=map) centered on real
+// device coordinates, defaulting to a satellite basemap at a close-in zoom —
+// deliberately distinct from mapLinks.js's generateMapLink(), which builds a
+// DIRECTIONS url (map_action implied 'dir'). "Show me my exact location on
+// Google Maps" wants a map centered on where the traveler is standing, not
+// turn-by-turn directions to it. Returns null without real coordinates —
+// never falls back to an address string, since this URL family is
+// coordinate-only by design.
+/**
+ * @param {{ latitude?: number, longitude?: number, zoom?: number, basemap?: string }} [opts]
+ */
+export function buildGoogleMapsLocationUrl(opts = {}) {
+  const { latitude, longitude, zoom = 19, basemap = 'satellite' } = opts;
+  if (latitude == null || longitude == null) return null;
+  const center = `${latitude},${longitude}`;
+  const params = new URLSearchParams({ api: '1', map_action: 'map', center, zoom: String(zoom), basemap });
+  return `https://www.google.com/maps/@?${params.toString()}`;
+}
+
+// Turns a real GeolocationPositionError-free accuracy reading (meters) into
+// honest, non-overclaiming language. Never calls a coordinate "exact" when
+// the browser reports a low-confidence fix — a large accuracy value is
+// disclosed plainly rather than silently upgraded to sound precise.
+export function describeAccuracy(meters) {
+  if (meters == null || !Number.isFinite(meters)) return 'Your device did not report an accuracy value.';
+  const rounded = Math.round(meters);
+  if (meters <= 100) return `Accuracy: approximately ${rounded} meters.`;
+  return `Your device returned a lower-confidence location (accuracy: approximately ${rounded} meters) — treat this as approximate, not exact.`;
+}

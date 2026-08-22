@@ -141,7 +141,7 @@ export function useAutoLocation() {
   // explicit, freshly-consented request pass force=true to bypass the pause
   // check entirely; a passive/automatic caller (the silent on-mount refresh
   // below, or a background-tracking UI) omits it and still respects pause.
-  const requestGPS = useCallback((force = false) => {
+  const requestGPS = useCallback((force = false, options = {}) => {
     if (!('geolocation' in navigator)) {
       setGpsStatus('unavailable');
       setGpsErrorCode('no_api');
@@ -165,6 +165,13 @@ export function useAutoLocation() {
     // 15s safety net is the only thing that ever resolves it. Catching
     // 'denied' here fails fast and honestly instead. Any other state, or a
     // throwing/unavailable Permissions API, falls through to the normal call.
+    // Additive, backward-compatible override — every existing call site
+    // (requestGPS(), requestGPS(true)) keeps the established 60s cache
+    // window unchanged. A caller that must never silently reuse a stale
+    // fix (e.g. "show my exact location on Google Maps right now") passes
+    // { maximumAge: 0 } to force a genuinely fresh reading.
+    const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
+
     const proceed = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -201,7 +208,7 @@ export function useAutoLocation() {
           setGpsErrorCode(err.code === 1 ? 1 : (err.code === 2 ? 2 : 3));
           updatePref('gpsGranted', false);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge }
       );
     };
 
