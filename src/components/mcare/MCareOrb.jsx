@@ -245,6 +245,11 @@ export default function MCareOrb() {
   // "hide a location I just explicitly asked you to get").
   const gpsLocationRef = useRef(gpsLocation);
   useEffect(() => { gpsLocationRef.current = gpsLocation; }, [gpsLocation]);
+  // Mirrors gpsStatus for triggerGpsUpgrade's useCallback closure, which
+  // only lists requestGPS in its deps — without this ref, a stale gpsStatus
+  // would let the in-flight guard below miss a GPS request already running.
+  const gpsStatusRef = useRef(gpsStatus);
+  useEffect(() => { gpsStatusRef.current = gpsStatus; }, [gpsStatus]);
   // Holds the traveler's most recent real outgoing message text — the GPS
   // upgrade offer (see handleGpsUpgradeConfirm below) is always a direct
   // agent reply to that exact message, so this reliably identifies "the
@@ -588,8 +593,30 @@ export default function MCareOrb() {
   // automatically once permission resolves, so the traveler never has to
   // ask twice.
   const triggerGpsUpgrade = useCallback((retryQuery) => {
-    pendingGpsRetryQueryRef.current = retryQuery || null;
-    // A fresh typed-question GPS request supersedes any still-pending
+     // Guard against the infinite loop: if a GPS request is already in
+     // flight (gpsStatus is still 'requesting' from a prior call that
+     // hasn't resolved yet), don't add another "Getting your exact
+     // location now" bubble or restart the 15s safety-net timeout — both
+     // of which would otherwise fire on every repeated typed message,
+     // resetting the timeout so it never fires and leaving the traveler
+     // stuck in a loop of identical bubbles. requestGPS() is a no-op
+     // while gpsInFlight is true anyway. Just update the pending query
+     // (in case the user rephrased) and return early.
+     const gpsAlreadyRequesting = gpsStatusRef.current === 'requesting';
+     pendingGpsRetryQueryRef.current = retryQuery || null;
+     if (gpsAlreadyRequesting) {
+       // If the 15s safety net already fired (gpsRequestTimeoutRef is
+       // null), GPS is genuinely stuck — help the traveler move forward
+       // instead of looping silently.
+       if (!gpsRequestTimeoutRef.current) {
+         setAgentMessages(prev => [...prev, {
+           role: 'assistant',
+           content: "Your browser still hasn't responded to the location request — it may be blocked in this view. Try opening the app on your phone, or tell me a nearby street or landmark and I'll pin that instead.",
+         }]);
+       }
+       return;
+     }
+     // A fresh typed-question GPS request supersedes any still-pending
     // Location-menu "send my current location" flow (the newest tap is the
     // real, current intent) — without this, both a location pin AND the
     // stale retried question can fire once GPS resolves. Release the
