@@ -276,15 +276,29 @@ function isGenuineCatalogMatch(query, candidate) {
   return qTokens.some((tok) => hay.includes(tok));
 }
 
+// Session-level memo for tier-3 web illustration lookups: a normalized
+// procedure name → { image, title } (a real web hit) or `false` (the web
+// search already ran and found nothing). Prevents re-hitting Tavily for the
+// same procedure asked again in the same conversation. Module-scoped so it
+// survives component re-renders but clears on page reload — session-level
+// only, never persisted to the database (third-party URLs are ephemeral and
+// re-hosting raises licensing issues; permanent images still come from admin
+// curation or generateProcedureIllustrations).
+const webIllustrationCache = new Map();
+const normProcedureKey = (q) => (q || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
 // Renders a real, already-hosted illustrative image for the procedure M-Care
-// just named — two tiers, both real, never a fabricated or AI-generated-on-
+// just named — three tiers, all real, never a fabricated or AI-generated-on-
 // the-fly image. Tier 1: ProcedureData.jsx's static searchProcedures (the
 // same fuzzy scorer this app already uses on /procedures) — instant, covers
 // the original curated 69. Tier 2, only if tier 1 finds nothing: the live
 // getProcedureIllustration function, which fuzzy-matches against
 // ProcedureKnowledge's expanded catalog (generateProcedureIllustrations'
-// batch-generated diagrams) — a brief loading state while that call is in
-// flight. Honest empty state if neither tier clears its own match threshold.
+// batch-generated diagrams). Tier 3, only if tier 2 also misses: a real image
+// fetched from the open web via fetchProcedureIllustrationFromWeb (Tavily
+// image search), shown with an honest "sourced from the web — not Morales-
+// curated" caption and memoized per chat session. Honest empty state only if
+// all three tiers come back empty.
 function ProcedureMediaCard({ query }) {
   // searchProcedures (the shared /procedures fuzzy catalog) is deliberately
   // loose — its character-overlap scorer is anagram-aware, so a non-catalog
@@ -301,7 +315,9 @@ function ProcedureMediaCard({ query }) {
     : null;
   const [liveMatch, setLiveMatch] = useState(undefined); // undefined = not checked yet, null = checked, nothing found
   const [liveLoading, setLiveLoading] = useState(false);
+  const [webMatch, setWebMatch] = useState(undefined); // undefined = not checked yet, null = checked/none, {image,title} = hit
 
+  // Tier 2: live ProcedureKnowledge lookup (curated + batch-generated diagrams).
   useEffect(() => {
     if (staticMatch) return; // tier 1 already has a real match, skip tier 2 entirely
     let cancelled = false;
@@ -320,10 +336,46 @@ function ProcedureMediaCard({ query }) {
     return () => { cancelled = true; };
   }, [staticMatch, query]);
 
-  const match = staticMatch || liveMatch;
+  // Tier 3: web fetch — only once tier 1 AND tier 2 have both missed (tier 2
+  // resolved to null, not still loading). Memoized per session so a repeat of
+  // the same procedure in this conversation loads instantly without re-hitting
+  // Tavily.
+  useEffect(() => {
+    if (staticMatch) return;
+    if (liveMatch !== null) return; // tier 2 still pending (undefined) or hit — wait
+    if (liveLoading) return;
+    const key = normProcedureKey(query);
+    const cached = webIllustrationCache.get(key);
+    if (cached === false) { setWebMatch(null); return; }
+    if (cached) { setWebMatch(cached); return; }
+    let cancelled = false;
+    setWebMatch(undefined);
+    base44.functions.invoke('fetchProcedureIllustrationFromWeb', { query })
+      .then((res) => {
+        if (cancelled) return;
+        const body = res?.data;
+        if (body?.found && body.image_url) {
+          const hit = { image: body.image_url, title: body.title || query };
+          webIllustrationCache.set(key, hit);
+          if (!cancelled) setWebMatch(hit);
+        } else {
+          webIllustrationCache.set(key, false);
+          if (!cancelled) setWebMatch(null);
+        }
+      })
+      .catch(() => {
+        webIllustrationCache.set(key, false);
+        if (!cancelled) setWebMatch(null);
+      });
+    return () => { cancelled = true; };
+  }, [staticMatch, liveMatch, liveLoading, query]);
+
+  const match = staticMatch || liveMatch || webMatch;
+  const isWebSourced = !staticMatch && !liveMatch && !!webMatch;
+  const searching = !match && (liveLoading || (!staticMatch && liveMatch === null && webMatch === undefined));
 
   if (!match) {
-    if (liveLoading) {
+    if (searching) {
       return (
         <div className="mt-2 flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" /> Looking for a diagram...
@@ -341,7 +393,9 @@ function ProcedureMediaCard({ query }) {
       <img src={match.image} alt={match.title} className="w-full h-32 object-cover" />
       <div className="p-2.5">
         <p className="text-xs font-semibold text-gray-800">{match.title}</p>
-        {match.desc && <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{match.desc}</p>}
+        {isWebSourced
+          ? <p className="mt-0.5 text-[11px] text-amber-600 leading-snug">Illustration sourced from the web — not Morales-curated</p>
+          : match.desc && <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{match.desc}</p>}
       </div>
     </div>
   );
