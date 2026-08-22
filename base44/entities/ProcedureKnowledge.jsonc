@@ -121,6 +121,134 @@
       "type": "string",
       "description": "A real, already-generated illustrative diagram for this procedure (never a before/after, never a specific patient) \u2014 surfaced to M-Care's chat via getProcedureIllustration/RULE 22. Populated either by an admin directly or by the generateProcedureIllustrations batch tool."
     },
+    "overview_what_it_is": {
+      "type": "string",
+      "description": "Plain-language explanation of what the procedure actually is, for the comprehensive M-Care education response (explainProcedure). General/population-level content, not a personalized risk claim."
+    },
+    "overview_recommended_for": {
+      "type": "string",
+      "description": "Who this procedure is typically recommended for, in general terms"
+    },
+    "overview_not_recommended_for": {
+      "type": "string",
+      "description": "Who this procedure is typically NOT recommended for, in general terms (this is separate from risk_level/red_flag_combinations \u2014 general population guidance, not a personalized flag)"
+    },
+    "what_happens_before": {
+      "type": "string",
+      "description": "What a patient typically experiences right before the procedure"
+    },
+    "what_happens_during": {
+      "type": "string",
+      "description": "What a patient typically experiences during the procedure"
+    },
+    "what_happens_after": {
+      "type": "string",
+      "description": "What a patient typically experiences immediately after the procedure"
+    },
+    "anesthesia_info": {
+      "type": "string",
+      "description": "Whether and what type of anesthesia/sedation is typically used, and what that generally feels like"
+    },
+    "room_time_typical": {
+      "type": "string",
+      "description": "Typical time spent in the procedure room / operating area, e.g. '45-90 minutes'"
+    },
+    "total_visit_time_typical": {
+      "type": "string",
+      "description": "Typical total visit duration including prep and recovery-room time, e.g. '3-4 hours'"
+    },
+    "success_satisfaction_range": {
+      "type": "string",
+      "description": "General, honestly-hedged success/satisfaction range, e.g. 'generally reported in the 85-95% range, varies by technique and provider'"
+    },
+    "side_effect_duration": {
+      "type": "string",
+      "description": "How long common side effects typically last"
+    },
+    "warning_signs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Warning signs during recovery that require immediate medical attention"
+    },
+    "activity_restrictions": {
+      "type": "string",
+      "description": "General activity restrictions during recovery (exercise, driving, work, etc.)"
+    },
+    "normal_life_resumes": {
+      "type": "string",
+      "description": "General guidance on when normal daily life typically resumes"
+    },
+    "pre_procedure_instructions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "General pre-procedure do's (distinct from pre_op_requirements, which are the curated safety/clearance requirements)"
+    },
+    "post_procedure_dos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "General post-procedure do's \u2014 medication, diet, wound care, activity"
+    },
+    "post_procedure_donts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "General post-procedure don'ts"
+    },
+    "common_patient_mistakes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "What patients commonly get wrong during recovery"
+    },
+    "main_benefits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Main general benefits of the procedure"
+    },
+    "common_alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Common alternative treatments"
+    },
+    "alternative_guidance": {
+      "type": "string",
+      "description": "General guidance on when an alternative might be a better fit"
+    },
+    "education_source": {
+      "type": "string",
+      "enum": [
+        "not_yet_generated",
+        "ai_researched",
+        "admin_curated"
+      ],
+      "default": "not_yet_generated",
+      "description": "Provenance of the education_* fields above (everything from overview_what_it_is through alternative_guidance, plus questions_to_ask when filled by explainProcedure). 'ai_researched' rows were confidence-gated (>=80%) by explainProcedure and must always be narratable as researched general information, never as this database's own curated clinical authority. This field, and every field it governs, is structurally separate from risk_level/complication_rate/red_flag_combinations/smoker_warning/common_complications, which remain permanently admin-write-only \u2014 explainProcedure must never write those fields."
+    },
+    "education_confidence_score": {
+      "type": "number",
+      "description": "Self-reported confidence (0-100) from the research pass that generated the education_* fields, when education_source is 'ai_researched'. Null/absent for admin_curated or not_yet_generated rows."
+    },
+    "education_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the education_* fields were last generated or curated"
+    },
+    "education_uncertainty_notes": {
+      "type": "string",
+      "description": "Honest notes on what varies significantly by region, clinic, or technique for this procedure's education content \u2014 never a substitute for hedging language in the fields themselves"
+    },
     "is_active": {
       "type": "boolean",
       "default": true,

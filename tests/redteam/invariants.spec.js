@@ -2630,6 +2630,61 @@ test('PROVIDER TRUST TIERS: verifyDiscoveredCandidate never promotes a candidate
     .toMatch(/eligibleForVerifiedBadge\s*=\s*found\s*&&\s*!routeToManual/);
 });
 
+test('PROCEDURE EDUCATION: explainProcedure never writes curated safety fields to ProcedureKnowledge', () => {
+  // ProcedureKnowledge's risk_level/complication_rate/red_flag_combinations/
+  // smoker_warning/common_complications are permanently admin-curated only —
+  // explainProcedure's job is the separate education_* narrative content, and
+  // must never be able to silently rewrite the safety-curated tier, no matter
+  // how confident its research pass was.
+  const src = read('base44/functions/explainProcedure/entry.ts');
+  const startIdx = src.indexOf('const writePayload');
+  const endIdx = src.indexOf('persisted = true');
+  expect(startIdx, 'writePayload construction must exist').toBeGreaterThan(-1);
+  expect(endIdx, 'persist path must exist').toBeGreaterThan(startIdx);
+  const persistBlock = src.slice(startIdx, endIdx);
+
+  for (const field of ['complication_rate', 'red_flag_combinations', 'smoker_warning', 'common_complications']) {
+    expect(persistBlock, `explainProcedure must never write ${field} to ProcedureKnowledge`)
+      .not.toMatch(new RegExp(`\\b${field}\\s*:`));
+  }
+  // risk_level is allowed ONLY as the honest 'Not Yet Assessed' sentinel on a
+  // brand-new row — the same established pattern generateProcedureIllustrations
+  // already uses — never any other value, never a guessed real level.
+  const riskLevelAssignments = persistBlock.match(/\brisk_level\s*:\s*[^,\n]+/g) || [];
+  expect(riskLevelAssignments.length, 'a new-row create path should set the honest sentinel').toBeGreaterThan(0);
+  for (const assignment of riskLevelAssignments) {
+    expect(assignment, 'the only allowed risk_level write is the honest Not Yet Assessed sentinel')
+      .toMatch(/risk_level\s*:\s*'Not Yet Assessed'/);
+  }
+});
+
+test('PROCEDURE EDUCATION: the research schema has no risk/approval-decision field', () => {
+  const src = read('base44/functions/explainProcedure/entry.ts');
+  const schemaStart = src.indexOf('EDUCATION_SCHEMA = {');
+  const schemaEnd = src.indexOf("required: ['overview'");
+  expect(schemaStart, 'EDUCATION_SCHEMA must exist').toBeGreaterThan(-1);
+  expect(schemaEnd, 'schema must have a required array').toBeGreaterThan(schemaStart);
+  const schemaBlock = src.slice(schemaStart, schemaEnd);
+  expect(schemaBlock, 'the schema must not let the model return a risk-tier or approval/clearance decision')
+    .not.toMatch(/risk_level|\bapproval\b|\bapproved\b|\bcleared\b|guaranteed/i);
+});
+
+test('PROCEDURE EDUCATION: persistence is gated on the confidence threshold', () => {
+  const src = read('base44/functions/explainProcedure/entry.ts');
+  expect(src, 'must declare a confidence threshold constant').toMatch(/EDUCATION_CONFIDENCE_THRESHOLD\s*=\s*80/);
+  expect(src, 'the persist branch must gate on that threshold')
+    .toMatch(/confidence\s*>=\s*EDUCATION_CONFIDENCE_THRESHOLD/);
+});
+
+test('PROCEDURE EDUCATION: m_care.jsonc grants explainProcedure and its description states the safety boundary', () => {
+  const mcare = read('base44/agents/m_care.jsonc');
+  const mcareData = JSON.parse(mcare);
+  const tool = mcareData.tool_configs.find((t) => t.function_name === 'explainProcedure');
+  expect(tool, 'explainProcedure must be granted as a tool').toBeTruthy();
+  expect(tool.description, 'the tool description must state it never writes the curated safety fields')
+    .toMatch(/NEVER writes risk_level, complication_rate, red_flag_combinations, smoker_warning, or common_complications/);
+});
+
 test('CLAIMS: the app does not advertise checks it does not perform', () => {
   // Nothing examines criminal history, and hotels have no verification path at
   // all. These three lines said otherwise on the two highest-traffic surfaces.
