@@ -30,10 +30,21 @@
 
 const PATTERNS = [
   /\bgps\b/i,
-  /\bexact location\b/i,
-  /\bprecise location\b/i,
+  // "exact" or "precise" + "location" with up to 3 words between (e.g. "exact my location")
+  /\b(?:exact|precise)\s+(?:\w+\s+){0,3}location\b/i,
   /\bpinpoint (?:my|our) location\b/i,
   /\bpin (?:my|our) (?:exact|precise) location\b/i,
+  // "map" + optional "out" + optional words + "location" (e.g. "map my location", "map out my location")
+  /\bmap\s+(?:out\s+)?(?:\w+\s+){0,3}location\b/i,
+  // "show me/my on ... map" (e.g. "show me on the map", "show me on google map", "show my on google map")
+  /\bshow\s+(?:me|my)\s+on\s+(?:\w+\s+)*map\b/i,
+  // "show my/our location" (e.g. "show my location")
+  /\bshow\s+(?:my|our)\s+location\b/i,
+  // "open my/our location" (e.g. "open my location on google map")
+  /\bopen\s+(?:my|our)\s+location\b/i,
+  // "where am i" / "what are my coordinates"
+  /\bwhere am i\b/i,
+  /\bwhat are my (?:exact )?coordinates\b/i,
 ];
 
 function matchesPattern(text, re) {
