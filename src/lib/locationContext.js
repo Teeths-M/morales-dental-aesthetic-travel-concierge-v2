@@ -67,24 +67,44 @@ export function buildSandboxLocationMessage(loc) {
   const hasApprox = placeParts.length > 0 || hasCoords;
 
   let approxLine;
+  let mapDest = null; // passed to {{maps:...}} so the traveler can SEE the area
   if (hasApprox) {
-    const placeLabel = placeParts.length > 0
-      ? placeParts.join(', ')
-      : `near ${loc.latitude.toFixed(2)}, ${loc.longitude.toFixed(2)}`;
-    approxLine = `Right now I only have an approximate location based on your network: near ${placeLabel}. This can be off by several kilometers.`;
+    if (placeParts.length > 0) {
+      const placeLabel = placeParts.join(', ');
+      approxLine = `Right now I only have an approximate location based on your network: near ${placeLabel}. This can be off by several kilometers.`;
+      // Prefer the place name as the map destination — for IP geo, a city
+      // name search is more reliable than the ISP's registered lat/lng point
+      // (which can be tens of km from the traveler's real position).
+      mapDest = placeLabel;
+    } else {
+      const coordLabel = `near ${loc.latitude.toFixed(2)}, ${loc.longitude.toFixed(2)}`;
+      approxLine = `Right now I only have an approximate location based on your network: ${coordLabel}. This can be off by several kilometers.`;
+      mapDest = `${loc.latitude},${loc.longitude}`;
+    }
   } else {
     approxLine = "I don't have even an approximate location available right now, so I can't offer nearby-care search just yet.";
   }
 
+  // Tappable map button — MessageBubble renders {{maps:LABEL|DEST}} as
+  // buttons for Waze / Google Maps / Apple Maps. Lets the traveler SEE
+  // the approximate area visually, which is reassuring when the text says
+  // "near [City]" and they want to confirm where that actually is.
+  const mapToken = mapDest
+    ? `\n\n{{maps:View My Approximate Area|${mapDest}}}`
+    : '';
+
   // Offer useful actions even with approximate location — these choices are
-  // rendered as tappable buttons by MessageBubble and routed to the agent,
-  // which already receives the approximate location context block on every
-  // outgoing message, so it can search nearby places with what it has.
+  // rendered as tappable buttons by MessageBubble and routed to the agent.
+  // sendAgentMessage (MCareOrb.jsx) re-attaches the machine-readable
+  // [[LOCATION_CONTEXT: ...]] block for any location-sensitive message
+  // (the "nearby" keyword matches its regex), so the agent receives the
+  // real coordinates/city and can pass them to searchNearbyPlaces — the
+  // location is never lost between the tap and the actual search.
   const choices = hasApprox
     ? "\n\nEven with approximate location, I can still help you find nearby care:\n\n{{choices:Find nearby hospitals|Find nearby pharmacies|Find nearby clinics}}"
     : "";
 
   const reminder = "\n\nFor exact GPS, open the live version of M-Safe on your phone or outside this preview — I'll use it automatically the moment you do.";
 
-  return `${base}\n\n${approxLine}${choices}${reminder}`;
+  return `${base}\n\n${approxLine}${mapToken}${choices}${reminder}`;
 }
