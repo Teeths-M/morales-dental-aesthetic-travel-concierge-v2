@@ -2033,8 +2033,12 @@ test('M-CARE PUSH: real trip-lifecycle notifications carry the M-Care icon end t
   expect(handshake, 'handshake checkpoint pushes must carry the M-Care icon')
     .toContain("icon:       '/mcare-logo.png'");
 
-  const recovery = read('base44/functions/schedulePostOpCheckIns/entry.ts');
-  expect(recovery, 'schedulePostOpCheckIns must actually push, not just email, the Day 3 check-in')
+  // The Day 3/7/14/30 sender now lives in the shared helper both
+  // schedulePostOpCheckIns (record creation) and sendDuePostOpCheckIns (the
+  // real cron sweep that actually sends, once scheduled_at arrives) are
+  // built from — schedulePostOpCheckIns itself no longer sends anything.
+  const recovery = read('base44/shared/sendPostOpCheckInNotification.ts');
+  expect(recovery, 'sendPostOpCheckInNotification must actually push, not just email, each day\'s check-in')
     .toContain("'sendPushNotification'");
   expect(recovery, 'the recovery check-in push must carry the M-Care icon')
     .toContain("icon:       '/mcare-logo.png'");
@@ -3527,7 +3531,7 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(helper, 'the helper writes only via asServiceRole').toContain('asServiceRole.entities.JourneyEvent.create');
   expect(helper, 'the helper must never throw on its own write failure').toMatch(/catch\s*\(/);
 
-  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'schedulePostOpCheckIns', 'escalateMissedDriverHandshake', 'detectFallbackCrisis', 'runGuardianCheckInSweep', 'notifyGuardianNow', 'predictiveEscalation']) {
+  for (const fn of ['sendTravelCountdownReminders', 'autoCompletePatientJourney', 'escalateMissedDriverHandshake', 'detectFallbackCrisis', 'runGuardianCheckInSweep', 'notifyGuardianNow', 'predictiveEscalation']) {
     const src = strip(read(`base44/functions/${fn}/entry.ts`));
     expect(src, `${fn} must log JourneyEvent via the shared helper, not a raw create call`).toContain('logJourneyEvent(');
     expect(src, `${fn} must not create JourneyEvent directly, bypassing the shared helper's fixed field set`)
@@ -3562,6 +3566,16 @@ test('JOURNEY EVENTS: JourneyEvent is patient-scoped to read, admin-only to writ
   expect(createMedSrc, 'createMedicationFromText must log JourneyEvent via the shared helper, not a raw create call')
     .toContain('logJourneyEvent(');
   expect(createMedSrc, 'createMedicationFromText must not create JourneyEvent directly')
+    .not.toMatch(/entities\.JourneyEvent\.create/);
+
+  // sendPostOpCheckInNotification lives in shared/ too — the single real
+  // sender behind both schedulePostOpCheckIns's own record-creation step (no
+  // longer a JourneyEvent writer itself) and sendDuePostOpCheckIns's daily
+  // sweep, so wiring it here alone covers the real Day 3/7/14/30 send.
+  const sendPostOpSrc = strip(read('base44/shared/sendPostOpCheckInNotification.ts'));
+  expect(sendPostOpSrc, 'sendPostOpCheckInNotification must log JourneyEvent via the shared helper, not a raw create call')
+    .toContain('logJourneyEvent(');
+  expect(sendPostOpSrc, 'sendPostOpCheckInNotification must not create JourneyEvent directly')
     .not.toMatch(/entities\.JourneyEvent\.create/);
 
   // Never create an event merely because an LLM predicts something might
@@ -4471,4 +4485,53 @@ test('OFFLINE LOCATION QR: a maps token always pairs with a QR, the QR prefers a
     .toMatch(/\{\{maps:\$\{label\}\|/);
   expect(pinBlock, 'sendLocationPin must also emit a matching {{qr:...}} token, not just the maps buttons')
     .toMatch(/\{\{qr:\$\{label\}\|/);
+});
+
+test('POST-OP CHECK-IN: sendDuePostOpCheckIns is cron-authorized, never double-sends, and reuses the one shared sender', () => {
+  // A real, confirmed bug: schedulePostOpCheckIns created Day 3/7/14/30
+  // PostOpCheckIn records with a correct scheduled_at, but nothing ever read
+  // that field back to decide when to send — the old code fired a Day-3-only
+  // notification inline, synchronously, at record-creation time (Handshake 9
+  // / home drop-off), so the "Day 3" email went out on day 0, and Days
+  // 7/14/30 never sent at all. Fixed with one shared sender
+  // (sendPostOpCheckInNotification.ts) and a real daily cron sweep
+  // (sendDuePostOpCheckIns) that only sends once a record's own scheduled_at
+  // has genuinely arrived.
+  const sweepSrc = read('base44/functions/sendDuePostOpCheckIns/entry.ts');
+
+  expect(sweepSrc, 'sendDuePostOpCheckIns must be cronAuthorized-gated — a scheduler has no user session')
+    .toMatch(/if \(!\(await cronAuthorized\(req, base44\)\)\) return err\('Forbidden', 403\);/);
+
+  expect(sweepSrc, 'the sweep must skip any record that already has a notification_sent_at — idempotent, never double-sends')
+    .toMatch(/!rec\.notification_sent_at/);
+  expect(sweepSrc, 'the sweep must compare scheduled_at against "now" in memory, not via a $lt/$lte filter operator this SDK does not support')
+    .toMatch(/rec\.scheduled_at <= nowIso/);
+
+  expect(sweepSrc, 'sendDuePostOpCheckIns must import the shared sender, not reimplement its own send logic')
+    .toMatch(/import \{ sendPostOpCheckInNotification \} from '\.\.\/\.\.\/shared\/sendPostOpCheckInNotification\.ts';/);
+  expect(sweepSrc, 'each record must be sent inside its own try/catch so one bad record cannot abort the rest of the batch')
+    .toMatch(/for \(const rec of due\) \{\s*\n\s*try \{/);
+
+  // schedulePostOpCheckIns itself must no longer contain the old, buggy
+  // inline immediate-send special case — it stays a pure record-creation
+  // function now that sendDuePostOpCheckIns is the one real sender.
+  const scheduleSrc = read('base44/functions/schedulePostOpCheckIns/entry.ts');
+  expect(scheduleSrc, 'schedulePostOpCheckIns must no longer send Day 3 inline at creation time — sending is now the sweep\'s job, once scheduled_at actually arrives')
+    .not.toMatch(/if \(day === 3 && patientEmail\)/);
+
+  // The shared sender must be the only place that stamps notification_sent_at
+  // for a real send, and must never claim a day this app doesn't schedule.
+  const senderSrc = read('base44/shared/sendPostOpCheckInNotification.ts');
+  expect(senderSrc, 'the shared sender must stamp notification_sent_at on the exact record it just sent')
+    .toMatch(/PostOpCheckIn\.update\(record_id, \{\s*\n\s*notification_sent_at: new Date\(\)\.toISOString\(\),/);
+  for (const day of [3, 7, 14, 30]) {
+    expect(senderSrc, `JourneyEvent.jsonc must have a real recovery_checkin_day${day} enum value for the shared sender to use`)
+      .toContain(`event_type: \`recovery_checkin_day\${day}\``);
+  }
+
+  const journeyEventSrc = read('base44/entities/JourneyEvent.jsonc');
+  for (const day of [3, 7, 14, 30]) {
+    expect(journeyEventSrc, `JourneyEvent.event_type enum must declare recovery_checkin_day${day}`)
+      .toContain(`"recovery_checkin_day${day}"`);
+  }
 });

@@ -171,6 +171,7 @@ jobs:
             call sendTravelCountdownReminders  # real, correct, was never scheduled until now — 14/7/3/1/0-day departure milestones
             call autoCompletePatientJourney    # real, correct, was never scheduled until now — Recovery -> Completed state transition
             call checkJourneyWeather           # M-Care Weather Guardian — daily destination briefing; severity doubles as a real-time severe-weather alert
+            call sendDuePostOpCheckIns         # real, correct sender for Day 3/7/14/30 recovery check-ins — schedulePostOpCheckIns created the records but nothing ever read scheduled_at back to send them; the old inline Day-3 send fired on day 0, not day 3, and Days 7/14/30 never sent at all
             call runGuardianCheckInSweep       # Silent Guardian am/pm check-in — real send, was never wired to anything, client or server, until now
             call retryDriverLocationSms        # driver-location-share reminder/care-team-alert — real, cronAuthorized-gated, was never wired to anything until now
           elif [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
@@ -200,6 +201,7 @@ jobs:
             call retryDriverLocationSms         # driver-location-share reminder/care-team-alert
             if [ "$MANUAL" = "true" ]; then
               call checkMissedRecoveryCheckins
+              call sendDuePostOpCheckIns
               # runSafetyMonitor is the ONLY job here that calls an LLM, so it
               # is the only one that costs integration credits per invocation.
               # It used to run on every manual dispatch, which meant testing the
