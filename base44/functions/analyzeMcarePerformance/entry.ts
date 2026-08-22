@@ -30,6 +30,8 @@
  */
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { reviseAndUpdate } from '../../shared/reviseAndUpdate.ts';
+import { TTL_MS } from '../../shared/freshness.ts';
 
 const MIN_ATTEMPTS = 3;
 const MIN_SUCCESS_RATE = 0.5;
@@ -111,10 +113,27 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
       source_summary: `${stats.attempts} real replanning attempts, ${stats.successes} succeeded`,
       search_keywords: [failedTool, altTool, 'alternative', 'retry', 'replanning'],
       journey_context: 'logistics',
+      // A replanning pattern is a deterministic, self-observed operational
+      // signal, not a researched fact — source_type/verification_status say
+      // so plainly, and freshness_tier:'volatile' matches how quickly an
+      // operational reality (a tool that used to fail, or now works) can
+      // change. This writer already re-runs and re-upserts every real
+      // pattern daily, so the short TTL mostly matters if a live recall of
+      // one of these rows happens between cron runs.
+      source_type: 'self_observed_pattern',
+      verification_status: 'researched',
+      freshness_tier: 'volatile',
+      last_verified_at: now,
+      next_review_at: new Date(Date.now() + TTL_MS.knowledge_volatile).toISOString(),
     };
 
     if (existing.length > 0) {
-      await base44.asServiceRole.entities.McareKnowledge.update(existing[0].id, payload).catch(() => {});
+      // Preserve the prior pattern (attempt counts/answer) before
+      // overwriting it, rather than a silent update-in-place.
+      await reviseAndUpdate(base44 as any, 'McareKnowledge', existing[0].id, payload, {
+        actor: 'analyzeMcarePerformance',
+        reason: 'Daily re-aggregation of replanning outcomes',
+      }).catch(() => {});
     } else {
       await base44.asServiceRole.entities.McareKnowledge.create({
         ...payload,

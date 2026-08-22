@@ -1,23 +1,20 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { scoreAllMcareKnowledgeMatches, isActiveMcareKnowledgeRecord, knowledgeFreshnessKind } from '../../shared/mcareKnowledgeMatch.ts';
+import { freshnessState } from '../../shared/freshness.ts';
 
 // ── recallMcareKnowledge ──────────────────────────────────────────────────────
 // Read-only lookup into M-Care's brain. Given a question, returns the best
 // matching memorized answer(s) (>=80% accurate when stored) so M-Care can
 // answer instantly from memory instead of re-researching. Increments
 // recalled_count on the top match used. No research happens here — pair with
-// mcareResearchAndLearn when no good memory exists.
-
-const STOPWORDS = new Set([
-  'the','a','an','and','or','but','if','then','of','to','in','on','for','with','is','are','am','i','you','he','she','it','we','they','my','your','his','her','its','our','their','me','him','us','them','this','that','these','those','do','does','did','can','could','would','should','will','what','when','where','why','who','how','which','be','been','being','have','has','had','not','no','so','at','by','from','as','about','into','than','was','were'
-]);
-
-function tokenize(text: string): string[] {
-  return (text || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length > 2 && !STOPWORDS.has(t));
-}
+// mcareResearchAndLearn when no good memory exists, or when a returned match
+// is stale/conflicted and the context calls for a fresh check.
+//
+// Every match now also carries its real verification_status/is_fresh/
+// last_verified_at/source_url/source_type so the caller can judge whether to
+// trust it as-is — including a verification_status: 'conflicted' match,
+// which is still surfaced (never hidden) so M-Care can present the
+// uncertainty honestly rather than silently pick a side.
 
 Deno.serve(createHandler(async ({ req, base44, body }) => {
     let payload = await body();
@@ -32,22 +29,30 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
     }
 
     const records: any[] = await base44.asServiceRole.entities.McareKnowledge.list('-created_date', 500);
-    const active = records.filter((r) => !r.flagged_for_review);
+    const active = records.filter(isActiveMcareKnowledgeRecord);
     if (active.length === 0) {
       return ok({ success: true, found: false, matches: [], message: 'M-Care brain is empty for this question.' });
     }
 
-    const qTokens = new Set(tokenize(question));
-    const scored = active.map((r) => {
-      const stored = new Set([
-        ...tokenize(r.normalized_question || r.question || ''),
-        ...((r.search_keywords || []).map((k: string) => k.toLowerCase())),
-      ]);
-      let overlap = 0;
-      for (const t of qTokens) if (stored.has(t)) overlap++;
-      const score = qTokens.size === 0 ? 0 : overlap / Math.max(qTokens.size, stored.size);
-      return { id: r.id, question: r.question, answer: r.answer, confidence_score: r.confidence_score, journey_context: r.journey_context, recalled_count: r.recalled_count || 0, score };
-    }).sort((a, b) => b.score - a.score);
+    const scored = scoreAllMcareKnowledgeMatches(question, active).map((r) => {
+      const fresh = freshnessState(knowledgeFreshnessKind(r.freshness_tier), r.last_verified_at || r.created_at);
+      return {
+        id: r.id,
+        question: r.question,
+        answer: r.answer,
+        confidence_score: r.confidence_score,
+        journey_context: r.journey_context,
+        recalled_count: r.recalled_count || 0,
+        score: r.score,
+        verification_status: r.verification_status || 'researched',
+        freshness_tier: r.freshness_tier || 'stable',
+        is_fresh: fresh.fresh,
+        last_verified_at: r.last_verified_at || r.created_at || null,
+        next_review_at: r.next_review_at || null,
+        source_url: r.source_url || '',
+        source_type: r.source_type || '',
+      };
+    });
 
     const matches = scored.filter((m) => m.score > 0.15).slice(0, limit);
 

@@ -4736,3 +4736,117 @@ test('POST-OP CHECK-IN: sendDuePostOpCheckIns is cron-authorized, never double-s
       .toContain(`"recovery_checkin_day${day}"`);
   }
 });
+
+test('KNOWLEDGE FRESHNESS: recall checks freshness/status before trusting a match, revalidation never silently overwrites or fabricates, and verification_status can never reach verified', () => {
+  const src = read('base44/functions/mcareResearchAndLearn/entry.ts');
+  const recallSrc = read('base44/functions/recallMcareKnowledge/entry.ts');
+  const matcherSrc = read('base44/shared/mcareKnowledgeMatch.ts');
+  const analyzeSrc = read('base44/functions/analyzeMcarePerformance/entry.ts');
+  const entitySrc = read('base44/entities/McareKnowledge.jsonc');
+
+  // 1 & 10: a fresh, trustworthy match must return before the Tavily/LLM
+  // research call ever runs — the recall fast path must structurally
+  // precede the research call, not just be reachable independently of it.
+  const trustworthyBranchIdx = src.indexOf('if (fresh.fresh && isTrustworthy(hit))');
+  const earlyReturnIdx = src.indexOf('return ok({', trustworthyBranchIdx);
+  const researchCallIdx = src.indexOf('searchForProviders(question)');
+  expect(trustworthyBranchIdx, 'the fresh+trustworthy gate must exist').toBeGreaterThan(-1);
+  expect(earlyReturnIdx, 'a fresh trustworthy match must return').toBeGreaterThan(trustworthyBranchIdx);
+  expect(earlyReturnIdx, 'the fresh-match return must come BEFORE any Tavily/LLM research call — never re-researches something already current')
+    .toBeLessThan(researchCallIdx);
+
+  // 2 & 3: a stale/conflicted match (or no match at all) must fall through
+  // to the same research code path — no separate/duplicated research logic.
+  expect(src, 'a match that is not fresh or not trustworthy must be carried forward as priorMatch, not discarded or trusted')
+    .toMatch(/priorMatch = hit;/);
+  expect(src.indexOf('let priorMatch: any = null;'), 'priorMatch must default to null so a brand-new question reaches research the same way')
+    .toBeGreaterThan(-1);
+
+  // 4: a persisted/refreshed record must carry real provenance fields —
+  // checked on the one shared baseFields object every persist path spreads.
+  const baseFieldsIdx = src.indexOf('const baseFields = {');
+  const baseFieldsBlock = src.slice(baseFieldsIdx, src.indexOf('};', baseFieldsIdx));
+  for (const field of ['source_url: topSourceUrl', 'source_type: sourceType', 'freshness_tier: freshnessTier', 'jurisdiction', 'country', 'last_verified_at: nowISO', 'next_review_at: nextReviewISO']) {
+    expect(baseFieldsBlock, `baseFields must include ${field}`).toContain(field);
+  }
+
+  // 5: confidence below the threshold must never be persisted as a new
+  // fact, and the response must not claim certainty.
+  expect(src, 'a brand-new low-confidence answer must report knowledge_id: null, never a saved id')
+    .toMatch(/knowledge_id: null,\s*\n\s*threshold: ACCURACY_THRESHOLD,\s*\n\s*verification_status: 'researched',\s*\n\s*freshness_tier: freshnessTier,\s*\n\s*is_fresh: false,/);
+  expect(src).toContain("below the ${ACCURACY_THRESHOLD}% threshold to save for reuse");
+
+  // 6 & 7: 'conflicted' is only ever SET inside the explicit
+  // consistent_with_prior_finding === false branch, and the schema itself
+  // structurally excludes 'verified' as a value anything could reach.
+  const conflictGateIdx = src.indexOf('research?.consistent_with_prior_finding === false');
+  const conflictSetIdx = src.indexOf("verification_status: 'conflicted'", conflictGateIdx);
+  expect(conflictGateIdx, 'the explicit disagreement check must exist').toBeGreaterThan(-1);
+  expect(conflictSetIdx, "verification_status: 'conflicted' must be set only after the disagreement check")
+    .toBeGreaterThan(conflictGateIdx);
+  expect(src.indexOf("verification_status: 'conflicted'"), "no earlier, ungated 'conflicted' write may exist")
+    .toBe(conflictSetIdx);
+  expect(entitySrc, "McareKnowledge.verification_status enum must never include 'verified' — no authoritative source exists for most of this cache")
+    .not.toMatch(/"verification_status"[\s\S]{0,50}"enum"[\s\S]{0,400}"verified"/);
+  for (const status of ['researched', 'corroborated', 'stale', 'conflicted', 'retracted']) {
+    expect(entitySrc, `verification_status enum must declare ${status}`).toContain(`"${status}"`);
+  }
+  expect(src, 'mcareResearchAndLearn must never itself write verification_status: "verified"')
+    .not.toMatch(/verification_status:\s*['"]verified['"]/);
+  expect(recallSrc, 'recallMcareKnowledge must never write verification_status: "verified"')
+    .not.toMatch(/verification_status:\s*['"]verified['"]/);
+  expect(analyzeSrc, 'analyzeMcarePerformance must never write verification_status: "verified"')
+    .not.toMatch(/verification_status:\s*['"]verified['"]/);
+
+  // 8: this cache is general knowledge, never a place for patient PHI.
+  for (const forbidden of ['client_email', 'patient_name', 'medical_history', 'CaseRecord']) {
+    expect(src, `mcareResearchAndLearn must never reference ${forbidden} — this is a general-knowledge cache, not patient memory`)
+      .not.toContain(forbidden);
+  }
+
+  // 9: regression guard — the real provider/doctor freshness system stays
+  // completely untouched by this pass (spec section 10's own guidance: use
+  // the existing, separate provider-intelligence system, don't touch it).
+  const scanSrc = read('base44/functions/runDoctorVerificationScan/entry.ts');
+  const reverifySrc = read('base44/functions/reVerifyDoctorCredentials/entry.ts');
+  expect(scanSrc).toContain('TTL_MS.doctor_license');
+  expect(reverifySrc).toContain('TTL_MS.doctor_license');
+
+  // 11: any content-changing update must go through reviseAndUpdate (so the
+  // prior value is preserved), never a raw .update() on the answer itself.
+  // The only raw McareKnowledge.update() calls allowed in this file are the
+  // recalled_count bump and the two pure status-label flips (stale/
+  // conflicted) — neither of which touches `answer`/`confidence_score`.
+  expect(src).toMatch(/reviseAndUpdate\(base44 as any, 'McareKnowledge', priorMatch\.id, \{/);
+  const rawUpdateMatches = [...src.matchAll(/McareKnowledge\.update\(([^,]+),\s*\{([\s\S]{0,120}?)\}\)/g)];
+  expect(rawUpdateMatches.length, 'expected exactly the recalled_count bump plus the two status-only updates').toBeGreaterThan(0);
+  for (const m of rawUpdateMatches) {
+    expect(m[2], 'a raw (non-revisioned) McareKnowledge.update() must never touch answer/confidence_score')
+      .not.toMatch(/answer:|confidence_score:/);
+  }
+  expect(analyzeSrc).toMatch(/reviseAndUpdate\(base44 as any, 'McareKnowledge', existing\[0\]\.id, payload,/);
+
+  // 12: a failed revalidation must return the OLD record's own content,
+  // honestly labeled — never the just-rejected fresh research, and never
+  // presented as fresh.
+  const failedRevalIdx = src.indexOf('if (priorMatch) {', src.indexOf('if (confidence < ACCURACY_THRESHOLD)'));
+  const failedRevalReturnIdx = src.indexOf('return ok({', failedRevalIdx);
+  const failedRevalBlock = src.slice(failedRevalIdx, src.indexOf('});', failedRevalReturnIdx) + 3);
+  expect(failedRevalBlock).toContain('answer: priorMatch.answer,');
+  expect(failedRevalBlock).toContain("verification_status: 'stale',");
+  expect(failedRevalBlock).toContain('is_fresh: false,');
+  expect(failedRevalBlock).toContain("didn't confirm it either");
+
+  // The shared matcher must actually be imported by both callers, not
+  // reimplemented — the exact drift this extraction exists to prevent.
+  expect(src).toMatch(/import \{ findBestMcareKnowledgeMatch, knowledgeFreshnessKind, tokenize \} from '\.\.\/\.\.\/shared\/mcareKnowledgeMatch\.ts';/);
+  expect(recallSrc).toMatch(/import \{ scoreAllMcareKnowledgeMatches, isActiveMcareKnowledgeRecord, knowledgeFreshnessKind \} from '\.\.\/\.\.\/shared\/mcareKnowledgeMatch\.ts';/);
+  expect(matcherSrc, 'the shared matcher must default a missing/unrecognized freshness_tier to the most lenient window, never the shortest')
+    .toMatch(/return 'knowledge_stable';/);
+
+  // A conflicted match returned by recallMcareKnowledge must still be
+  // surfaced, never silently hidden — M-Care needs to see it to present
+  // the uncertainty (spec's "present the uncertainty" option).
+  expect(recallSrc, 'recallMcareKnowledge must exclude only retracted records, not conflicted ones — a conflict must stay visible')
+    .not.toMatch(/verification_status !== 'conflicted'/);
+});

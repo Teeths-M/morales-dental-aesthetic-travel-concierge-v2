@@ -16,6 +16,12 @@ export const TTL_MS = {
   doctor_license: 7 * DAY, // scheduled daily (US) / weekly (scrape)
   visa_rule: 7 * DAY, // weekly + on destination×nationality selection
   regulatory_rule: 30 * DAY, // monthly + daily change-detection
+  // McareKnowledge's generic research-and-learn cache — see mcareResearchAndLearn.ts.
+  // Starting windows, not claimed-precise values; worth live tuning once real
+  // recall/revalidation volume exists.
+  knowledge_volatile: 24 * HOUR, // prices/availability/current-conditions-shaped facts
+  knowledge_regulatory: 30 * DAY, // visa/licensing/travel-restriction-shaped facts (matches regulatory_rule)
+  knowledge_stable: 180 * DAY, // general procedure/terminology/definition-shaped facts
 } as const;
 
 export type FreshnessKind = keyof typeof TTL_MS;
@@ -55,7 +61,7 @@ export function freshnessState(kind: FreshnessKind, timestamp: string | null | u
 // a user sees — a person confirms first (consistent with our safety-review pattern).
 
 export type ReviewFlag = {
-  subject_type: 'doctor_license' | 'clinic_status' | 'visa_rule' | 'regulatory_rule' | 'passport_renewal_link';
+  subject_type: 'doctor_license' | 'clinic_status' | 'visa_rule' | 'regulatory_rule' | 'passport_renewal_link' | 'mcare_knowledge_conflict';
   subject_id?: string;
   subject_label: string;
   change_type:

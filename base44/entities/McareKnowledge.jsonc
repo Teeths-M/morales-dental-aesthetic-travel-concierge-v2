@@ -70,6 +70,60 @@
     "created_by": {
       "type": "string",
       "description": "Email of the authenticated user whose session learned this, or 'mcare_agent' for an anonymous session"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "The real URL of the top web source used to research this answer, when one exists (e.g. the top Tavily result). Never fabricated or guessed — empty when no real source URL is available."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "tavily_web_search",
+        "llm_grounding",
+        "self_observed_pattern",
+        "admin_curated"
+      ],
+      "description": "How this fact was actually obtained: a real Tavily web search, Base44's black-box add_context_from_internet grounding flag, a deterministic pattern computed from real JourneyPlan execution history (analyzeMcarePerformance), or a human admin edit. Orthogonal to confidence_score — this says HOW, not HOW SURE."
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "researched",
+        "corroborated",
+        "stale",
+        "conflicted",
+        "retracted"
+      ],
+      "default": "researched",
+      "description": "Epistemic status of this fact. Deliberately has NO 'verified' value — there is no authoritative registry for most of what this cache holds, so nothing here may ever claim that. 'researched' = one research pass cleared the >=80% confidence bar. 'corroborated' = a second, independent research pass at a later time reached the same conclusion. 'stale' = due for review and a revalidation attempt did not confirm it. 'conflicted' = a later research pass disagreed with this answer; a human review is pending. 'retracted' = an admin flagged this entry (kept in sync with flagged_for_review)."
+    },
+    "freshness_tier": {
+      "type": "string",
+      "enum": [
+        "volatile",
+        "regulatory",
+        "stable"
+      ],
+      "default": "stable",
+      "description": "How quickly this kind of fact tends to change, driving which TTL_MS.knowledge_* window applies (see base44/shared/freshness.ts). 'volatile' = prices/availability/current-conditions-shaped facts. 'regulatory' = visa/licensing/travel-restriction-shaped facts. 'stable' = general procedure/terminology/definition-shaped facts. Provider-specific facts (a specific doctor's/driver's own status) do not belong in this generic cache at all — they live on that provider's own entity."
+    },
+    "last_verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this fact was last confirmed correct, either at initial research or by a later successful revalidation. Compared against freshness_tier's TTL via freshnessState() to decide whether a recall can be trusted as-is."
+    },
+    "next_review_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "last_verified_at plus this fact's freshness_tier TTL window — informational; the actual freshness check is always computed live from last_verified_at, this field is never itself the source of truth."
+    },
+    "jurisdiction": {
+      "type": "string",
+      "description": "The broader jurisdiction this fact applies to (e.g. 'Federal / United States', 'European Union'), when the fact is jurisdiction-specific. Left blank when not applicable — never guessed."
+    },
+    "country": {
+      "type": "string",
+      "description": "The specific country this fact applies to, when it is country-specific. Left blank when the fact is general/global — never guessed."
     }
   },
   "required": [

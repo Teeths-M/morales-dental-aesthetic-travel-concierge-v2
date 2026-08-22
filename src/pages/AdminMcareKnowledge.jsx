@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import ConfirmDialog from '@/components/ui-system/ConfirmDialog';
-import { Brain, Search, Trash2, Loader2, AlertCircle, CheckCircle2, Flag } from 'lucide-react';
+import { Brain, Search, Trash2, Loader2, AlertCircle, CheckCircle2, Flag, Clock, ExternalLink, AlertTriangle } from 'lucide-react';
 
 const DARK = '#060B16';
 const GOLD = '#D4AF37';
@@ -51,12 +51,22 @@ export default function AdminMcareKnowledge() {
   };
 
   const toggleFlag = async (rec) => {
+    // flagged_for_review and verification_status are kept in sync at this
+    // one write site — unflagging returns a record to 'researched' rather
+    // than leaving it stuck 'retracted' with the boolean now saying it's fine.
+    const nextFlagged = !rec.flagged_for_review;
+    const nextStatus = nextFlagged ? 'retracted' : 'researched';
     try {
-      await base44.entities.McareKnowledge.update(rec.id, { flagged_for_review: !rec.flagged_for_review });
-      setRecords((prev) => prev.map((r) => r.id === rec.id ? { ...r, flagged_for_review: !r.flagged_for_review } : r));
+      await base44.entities.McareKnowledge.update(rec.id, { flagged_for_review: nextFlagged, verification_status: nextStatus });
+      setRecords((prev) => prev.map((r) => r.id === rec.id ? { ...r, flagged_for_review: nextFlagged, verification_status: nextStatus } : r));
     } catch (e) {
       setError(e?.message || 'Failed to update');
     }
+  };
+
+  const isRecordFresh = (rec) => {
+    if (!rec.next_review_at) return null;
+    return new Date(rec.next_review_at).getTime() > Date.now();
   };
 
   return (
@@ -69,7 +79,7 @@ export default function AdminMcareKnowledge() {
           <div>
             <h1 className="text-2xl font-bold">M-Care Knowledge Brain</h1>
             <p className="text-sm text-muted-foreground">
-              Every answer M-Care researched to ≥80% confidence and memorized for reuse. Flag inaccurate entries so recall skips them until fixed.
+              Every answer M-Care researched to ≥80% confidence, saved with its source and a freshness check. Flag inaccurate entries so recall skips them until fixed.
             </p>
           </div>
         </div>
@@ -121,8 +131,29 @@ export default function AdminMcareKnowledge() {
                         </span>
                         {r.journey_context && <span className="rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground">{r.journey_context}</span>}
                         <span className="text-muted-foreground">Recalled {r.recalled_count || 0}×</span>
+                        {r.verification_status === 'conflicted' && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-red-700">
+                            <AlertTriangle className="h-3 w-3" /> Conflicted — needs review
+                          </span>
+                        )}
+                        {r.verification_status === 'corroborated' && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-blue-700">
+                            <CheckCircle2 className="h-3 w-3" /> Corroborated
+                          </span>
+                        )}
+                        {isRecordFresh(r) === false && r.verification_status !== 'conflicted' && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
+                            <Clock className="h-3 w-3" /> Due for review
+                          </span>
+                        )}
+                        {r.source_url && (
+                          <a href={r.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground hover:underline">
+                            <ExternalLink className="h-3 w-3" /> Source
+                          </a>
+                        )}
                         {r.flagged_for_review && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700"><Flag className="h-3 w-3" /> Flagged</span>}
                         {r.created_by && <span className="text-muted-foreground">· by {r.created_by}</span>}
+                        {r.last_verified_at && <span className="text-muted-foreground">· checked {new Date(r.last_verified_at).toLocaleDateString()}</span>}
                       </div>
                       {r.search_keywords?.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
