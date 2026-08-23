@@ -74,6 +74,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import RoboOrb3D from '@/components/mcare/RoboOrb3D';
 
 const GOLD = '#D4AF37';
 const AMBER = '#D97706';
@@ -282,6 +283,12 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
     window.addEventListener('deviceorientation', handler);
     return () => window.removeEventListener('deviceorientation', handler);
   }, [reducedMotion]);
+
+  // Hero-size instances render the real 4D Three.js robotic head — the small
+  // 28px/44px chat instances stay on the lightweight CSS orb below.
+  if (size >= 80) {
+    return <RoboOrb3D state={state} size={size} flashToken={flashToken} />;
+  }
 
   if (reducedMotion) {
     const cfgStatic = STATE_CONFIG[state] || STATE_CONFIG.idle;

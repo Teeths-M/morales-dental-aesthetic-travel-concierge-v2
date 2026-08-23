@@ -23,7 +23,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BRAND } from '@/lib/brandTokens';
-import { useBlinkState } from '@/lib/useBlinkState';
+import RoboOrb3D from '@/components/mcare/RoboOrb3D';
 
 const GOLD = BRAND.gold;
 
@@ -45,75 +45,20 @@ export default function LivingMOrb({ size = 64 }) {
     return () => clearTimeout(t);
   }, []);
 
-  const blinkState = useBlinkState(reducedMotion);
-  const eyeW = size * 0.16;
-  const eyeH = size * 0.09;
-  const leftShut = blinkState === 'blink' || blinkState === 'wink-left';
-  const rightShut = blinkState === 'blink' || blinkState === 'wink-right';
+  // The 4D robotic-head Three.js orb handles its own eyes, glow, rings,
+  // particles, and parallax tilt internally (including a reduced-motion
+  // static fallback) — no separate blink/eyes markup needed here anymore.
 
-  const eyes = (
-    <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: size * 0.14, zIndex: 2 }}>
-      <motion.span
-        style={{ width: eyeW, height: eyeH, borderRadius: 999, background: GOLD, boxShadow: `0 0 4px ${GOLD}aa`, display: 'block', transformOrigin: 'center' }}
-        animate={{ scaleY: leftShut ? 0.12 : 1 }}
-        transition={{ duration: 0.11, ease: 'easeInOut' }}
-      />
-      <motion.span
-        style={{ width: eyeW, height: eyeH, borderRadius: 999, background: GOLD, boxShadow: `0 0 4px ${GOLD}aa`, display: 'block', transformOrigin: 'center' }}
-        animate={{ scaleY: rightShut ? 0.12 : 1 }}
-        transition={{ duration: 0.11, ease: 'easeInOut' }}
-      />
-    </div>
-  );
-
-  if (reducedMotion) {
-    return (
-      <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div
-          style={{
-            position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 35% 32%, rgba(255,255,255,0.20), rgba(10,20,28,0.92))',
-            border: '1px solid rgba(255,255,255,0.14)',
-            boxShadow: `0 0 ${Math.round(size * 0.55)}px ${GOLD}4d, inset 0 1px 0 rgba(255,255,255,0.14)`,
-          }}
-        />
-        {eyes}
-      </div>
-    );
-  }
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.82 }}
       animate={awake ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.82 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: size, height: size, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       aria-hidden="true"
     >
-      {/* Breathing outer rings — same visual language as M-Care's LivingOrb */}
-      {[0, 1].map((i) => (
-        <motion.div
-          key={i}
-          style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1px solid ${GOLD}` }}
-          animate={{ scale: [1, 1.3, 1], opacity: [0.22, 0, 0.22] }}
-          transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut', delay: i * 1.3 }}
-        />
-      ))}
-
-      {/* Glass core */}
-      <motion.div
-        style={{
-          position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
-          background: 'radial-gradient(circle at 35% 32%, rgba(255,255,255,0.20), rgba(10,20,28,0.92))',
-          backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
-          border: '1px solid rgba(255,255,255,0.14)',
-          boxShadow: `0 0 ${Math.round(size * 0.55)}px ${GOLD}4d, inset 0 1px 0 rgba(255,255,255,0.14)`,
-        }}
-        animate={{ scale: [1, 1.035, 1] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      {eyes}
+      <RoboOrb3D state="idle" size={size} flashToken={0} />
     </motion.div>
   );
 }
