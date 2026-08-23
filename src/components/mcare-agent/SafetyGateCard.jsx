@@ -2,21 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldAlert, Loader2, CheckCircle2, ArrowRight, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-// Parses either safety tool's result into a tier, status, flags, and reason.
-// - computeSafeTScreening → { risk_level, score, confidence, flags, summary, ... }
-// - safeT4LifeScan        → { status, tier, score, flags, reason, message, ... }
-function parseResult(toolCall) {
-  let r = toolCall.results;
-  if (typeof r === 'string') { try { r = JSON.parse(r); } catch { /* keep raw */ } }
-  const data = r?.data || r || {};
-  const tier = String(data.risk_tier || data.risk_level || data.tier || data.risk || '').toLowerCase();
-  const status = String(data.status || '').toLowerCase();
-  let flags = data.flags || data.safe_t_flags || data.signals || data.concerns || (Array.isArray(data.factors) ? data.factors : []);
-  if (!Array.isArray(flags)) flags = flags ? [flags] : [];
-  const reason = data.reason || data.fail_closed_reason || data.message || '';
-  return { tier, status, flags, reason };
-}
+import { classifySafetyToolCall } from '@/lib/safetyGateStatus';
 
 // The Safety Gate — the moment M-Care proves it is not just a chatbot.
 // Renders inline in the chat when computeSafeTScreening OR safeT4LifeScan runs.
@@ -39,16 +25,7 @@ export default function SafetyGateCard({ toolCall, onRespond }) {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const pending = ['pending', 'running', 'in_progress'].includes(toolCall.status);
-  const failed = ['failed', 'error'].includes(toolCall.status);
-  const { tier, status, flags, reason } = parseResult(toolCall);
-
-  const blockRefusal = ['critical', 'high', 'extreme', 'unsafe', 'blocked', 'waiver_required', 'review'].includes(tier)
-    || ['blocked', 'waiver_required'].includes(status)
-    || tier === '' && status === 'blocked';
-  const cleared = ['low', 'minimal', 'passed', 'safe', 'none', 'pass'].includes(tier)
-    || status === 'passed';
-  const caution = !blockRefusal && !cleared && (['medium', 'review', 'elevated', 'moderate'].includes(tier) || flags.length > 0);
+  const { pending, failed, blockRefusal, cleared, caution, flags, reason } = classifySafetyToolCall(toolCall);
 
   if (pending) {
     return (

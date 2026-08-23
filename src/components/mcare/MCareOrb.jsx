@@ -69,6 +69,7 @@ import { detectExactMapViewIntent } from '@/lib/exactMapViewIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 import { describeAccuracy } from '@/lib/mapLinks';
 import { isSandboxed } from '@/lib/isSandboxed';
+import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -1503,26 +1504,48 @@ export default function MCareOrb() {
   const hasUnseenJourneyEvent = journeyEvents.some(e =>
     e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt);
 
-  // The orb's state. `acting` is the autonomous-work signal: when M-Care has
-  // done something on its own in the background (a JourneyEvent the user
-  // hasn't seen — e.g. the driver no-show reroute fired), the orb shows a
-  // deliberate, layered glow instead of going idle. It sits just above idle
-  // in priority, so an active conversation (listening/thinking/speaking)
-  // still wins — `acting` only surfaces when M-Care acted without the user
-  // prompting anything, which is exactly the "super-agent" moment to confirm.
+  // A tool call is genuinely running right now on the last assistant
+  // message — the same real signal the TTS-ack effect above derives
+  // (`runningTool`), recomputed here in render scope so it can also drive
+  // the orb's `tool_executing` state and surface the tool's own real
+  // display_projection.active_label text next to the typing indicator.
+  // Never shown unless a real tool call is actually in flight.
+  const lastAssistantMessage = agentMessages.length > 0 && agentMessages[agentMessages.length - 1]?.role === 'assistant'
+    ? agentMessages[agentMessages.length - 1]
+    : null;
+  const activeRunningTool = (lastAssistantMessage?.tool_calls || []).find(tc =>
+    ['pending', 'running', 'in_progress'].includes(String(tc.status || '').toLowerCase()));
+
+  // A real, currently-active Safe-T4life safety block exists in this
+  // conversation — reflects SafetyGateCard's own classification (see
+  // src/lib/safetyGateStatus.js), never a second, independently-computed
+  // safety decision. The orb only ever narrates what the deterministic
+  // engine already decided.
+  const hasActiveAlert = hasActiveSafetyAlert(agentMessages);
+
+  // The orb's state, highest priority first: offline overrides everything
+  // (nothing else is really "live"); an active safety block is the most
+  // attention-critical live-conversation fact; listening/tool-executing/
+  // thinking/speaking follow the natural real-time flow; `acting` (the
+  // autonomous-work signal — M-Care did something on its own in the
+  // background, e.g. a driver no-show reroute fired a JourneyEvent the
+  // user hasn't seen) is lowest since it's a background/idle-adjacent
+  // signal, not an active conversation.
   const orbState = !isOnline
-    ? 'error'
-    : listening
-      ? 'listening'
-      : agentSending
-        ? 'thinking'
-        : speaking
-          ? 'speaking'
-          : (conversationalMode && conversationalListening)
-            ? 'listening'
-            : hasUnseenJourneyEvent
-              ? 'acting'
-              : 'idle';
+    ? 'offline'
+    : hasActiveAlert
+      ? 'alert'
+      : (listening || (conversationalMode && conversationalListening))
+        ? 'listening'
+        : activeRunningTool
+          ? 'tool_executing'
+          : agentSending
+            ? 'thinking'
+            : speaking
+              ? 'speaking'
+              : hasUnseenJourneyEvent
+                ? 'acting'
+                : 'idle';
 
   // Offline-prep: while offline, no new tool call can succeed anyway (no
   // network), so re-surface the most recent QR/maps token M-Care already
@@ -2021,7 +2044,7 @@ export default function MCareOrb() {
   const statusPill = paused
     ? { text: 'PAUSED', bg: '#FEF3C7', fg: '#92400E', dot: '#F59E0B' }
     : isOnline
-      ? { text: 'LIVE SESSION', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
+      ? { text: 'LIVE AGENT', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
       : { text: 'OFFLINE', bg: '#F3F4F6', fg: '#4B5563', dot: '#9CA3AF' };
 
   return (
@@ -2073,9 +2096,7 @@ export default function MCareOrb() {
 
           {/* Header */}
           <div style={{ padding: '12px 14px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, background: '#fff' }}>
-            {conversationalMode
-              ? <LivingOrb state={orbState} size={36} flashToken={bargeInFlashToken} />
-              : <McareAvatar size={36} />}
+            <LivingOrb state={orbState} size={36} flashToken={bargeInFlashToken} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
               <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Morales Super Agent</p>
@@ -2132,7 +2153,12 @@ export default function MCareOrb() {
                   <>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
                       <McareAvatar size={32} />
-                      <p style={{ margin: 0, fontSize: 13, color: '#111827', lineHeight: 1.55, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>{GREETING}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#111827', lineHeight: 1.55, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>
+                        {(() => {
+                          const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
+                          return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
+                        })()}
+                      </p>
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
                       {quickChips.map(c => (
@@ -2147,7 +2173,7 @@ export default function MCareOrb() {
 
                 {agentLoading && agentMessages.length === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
-                    <McareAvatar size={28} glow />
+                    <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       {[0, 1, 2].map(i => (
                         <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4AF37', display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
@@ -2219,15 +2245,17 @@ export default function MCareOrb() {
                   </motion.div>
                 ))}
 
-                {agentSending && (
+                {(agentSending || activeRunningTool) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
-                    <McareAvatar size={28} glow />
+                    <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       {[0, 1, 2].map(i => (
                         <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4AF37', display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
                       ))}
                     </div>
-                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>M-Safe is coordinating…</span>
+                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>
+                      {activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…'}
+                    </span>
                   </div>
                 )}
 
