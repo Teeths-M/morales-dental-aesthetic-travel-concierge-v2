@@ -902,7 +902,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
             {extraAudioUrl && <VoiceNotePlayer key="voice-reply" url={extraAudioUrl} />}
           </div>
         )}
-        {message.tool_calls?.map((toolCall, idx) => (toolCall.name === 'computeSafeTScreening' || toolCall.name === 'safeT4LifeScan')
+        {message.tool_calls?.filter(tc => tc.name !== 'save_memory').map((toolCall, idx) => (toolCall.name === 'computeSafeTScreening' || toolCall.name === 'safeT4LifeScan')
           ? <SafetyGateCard key={idx} toolCall={toolCall} onRespond={onRespond} />
           : toolCall.name === 'openMcareScanner'
           ? <DocumentScannerCard key={idx} toolCall={toolCall} onRespond={onRespond} />
