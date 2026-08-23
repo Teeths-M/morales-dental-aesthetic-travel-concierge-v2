@@ -1,10 +1,12 @@
 // @ts-nocheck — pre-existing arithmetic/symbol type gaps, matches sibling mcare components
 /**
- * LivingOrb — M-Safe's visual presence. CSS + framer-motion, no new
- * dependency, no static "face" image — a pearl-metallic shell around a
- * dark glass core, a gold M emblem integrated into the core itself, and a
- * gold energy-ring halo that brightens per state. A `state` prop swaps
- * the animation config, never the DOM shape, across eight honest states:
+ * LivingOrb — M-Safe's visual presence. The robot itself is real inline SVG
+ * (`RobotAvatar.jsx`) — a pearl-metallic shell, a gold bezel framing a dark
+ * visor, two glowing gold "eye" capsules, and a small gold "M" badge on the
+ * shell. This file owns everything around that: state-driven halo rings,
+ * parallax tilt, the flash ring, the notify dot, and a size≥80-only
+ * atmosphere (base glow + a gold particle trail). A `state` prop swaps the
+ * animation config, never the DOM shape, across eight honest states:
  *
  * - idle:           very subtle breathing — nothing is happening.
  * - listening:      tight, fast pulse while the mic is actually recording
@@ -59,40 +61,35 @@
  *
  * At size >= 80 (the header's hero instance only — not the 44px launcher
  * or the 28-32px typing/greeting instances) the orb also gets a soft
- * state-tinted base glow beneath it and a handful of restrained,
- * independently-fading gold particles in the halo — both omitted under
+ * state-tinted base glow plus a couple of thin ring outlines beneath it (a
+ * glowing "landing pad"), and a short arc of restrained, independently-
+ * fading gold particles tracing a comet-trail sweep — both omitted under
  * reduced motion (the base glow stays, static; particles don't).
  *
- * 2026-08-23, four passes plus a same-day reconciliation: the face
- * (blink/wink gold eyes) shipped 2026-08-12 is removed for good — no eyes,
- * no mouth, no face anywhere on this orb. The M mark first came back as a
- * floating badge overlapping the shell; Portia's explicit correction —
- * "the logo belongs INSIDE the system," not a sticker — moved it to be
- * centered and backlit inside the dark core itself, the same asset, no new
- * image generated either time. Round 4 (a reference image asking for a
- * literal robot/visor look) first tried a glowing visor band across the
- * core — reverted the same day once a real Three.js hero orb
- * (RoboOrb3D.jsx, built concurrently in Base44 Builder) landed with an
- * explicit "FACELESS by design: no eyes, no visor, no mouth" — the more
- * authoritative, more recent answer to the exact same question, now kept
- * consistent across both the 3D primary and this CSS fallback. What
- * stayed: a static gold collar-ring accent near the shell's outer base
- * (harmless, non-face, matches RoboOrb3D's own "concentric energy rings"
- * language), and the `dots`-driven M sizing/three-pulse core indicator
- * RoboOrb3D's own author added to this file in the same push.
- *
- * This component only renders at size < 80 now — `LivingOrb` itself
- * delegates size >= 80 straight to RoboOrb3D, a real Three.js scene with
- * the same { state, size, flashToken } contract and the same 8 states.
- * This file (STATE_CONFIG, Shell, Atmosphere, tilt) is the lightweight
- * fallback for the 28px/44px chat instances only — the floating launcher
- * button and the small typing/greeting avatars.
+ * 2026-08-23, real history worth keeping honest: the face (blink/wink gold
+ * eyes) shipped 2026-08-12, was removed for a no-face design, came back as
+ * a floating M badge, moved inside the core, tried a visor band, reverted
+ * to faceless again once a real Three.js hero orb (RoboOrb3D.jsx) landed
+ * with an explicit "FACELESS by design" stance, then got real two-eye/
+ * side-badge geometry once Portia supplied the actual target reference
+ * image directly. That WebGL scene is now retired — three straight rounds
+ * of tuning it each produced a real, visible defect (a bare ring around a
+ * blank disc, a uniform amber wash-out, then "looks like the sun"), and
+ * this checkout has no way to render WebGL to catch any of that before
+ * Portia did. `RobotAvatar.jsx` (real inline SVG, deterministic markup, no
+ * rendering pipeline to get wrong unseen) now renders the robot at every
+ * size — 28px/44px/104px all show the same real design, just scaled; fine
+ * detail like the badge letter naturally recedes at 28px, which is
+ * expected. `Shell` below is a thin wrapper around it, keeping this file's
+ * own state-driven halo/tilt/atmosphere machinery unchanged.
  * useBlinkState.js itself is untouched — LivingMOrb.jsx (the homepage
- * hero orb, a deliberately separate component) still uses it.
+ * hero orb, a deliberately separate component) uses RobotAvatar too, but
+ * without this file's own ring/tilt system (matches its own narrower,
+ * presentational-only scope).
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import RoboOrb3D from '@/components/mcare/RoboOrb3D';
+import RobotAvatar from '@/components/mcare/RobotAvatar';
 
 const GOLD = '#D4AF37';
 const AMBER = '#D97706';
@@ -114,144 +111,35 @@ const STATE_CONFIG = {
   offline:        { ringCount: 1, duration: 2.8, ringScale: 1.12, ringOpacity: 0.12, coreScale: [1, 1.015, 1], glowAlpha: '22', color: GOLD },
 };
 
-// Fixed positions (percent of the orb's own box) scattered around the halo
-// zone, roughly ringing the shell — used only for the restrained particle
-// accent at size >= 80. A handful of static positions, not a particle
-// system: each dot independently fades in/out on its own slow timer.
+// Fixed positions (percent of the orb's own box) tracing a short arc around
+// the lower-left of the shell — a comet-trail sweep, matching the reference
+// image's visible gold trail region, not a full-halo scatter. Used only for
+// the restrained particle accent at size >= 80. A handful of static
+// positions, not a particle system: each dot independently fades in/out on
+// its own slow timer.
 const PARTICLE_POSITIONS = [
-  { top: '0%', left: '48%' },
-  { top: '22%', left: '96%' },
-  { top: '78%', left: '92%' },
-  { top: '96%', left: '58%' },
-  { top: '70%', left: '2%' },
-  { top: '14%', left: '6%' },
+  { top: '58%', left: '-6%' },
+  { top: '74%', left: '2%' },
+  { top: '88%', left: '16%' },
+  { top: '96%', left: '34%' },
+  { top: '98%', left: '54%' },
+  { top: '92%', left: '72%' },
 ];
 
-// Pearl-metallic shell + dark glass core with the M emblem integrated
-// into the core itself, shared by both the animated and
-// prefers-reduced-motion branches so the two never visually drift apart.
-//
-// 2026-08-23 fixes: (1) the shell's gradient used semi-transparent rgba()
-// stops fading toward 0 alpha at the edge — over this app's dark
-// backgrounds that blended into gray instead of reading as an opaque
-// pearl sphere (confirmed against a live screenshot). Opaque hex stops
-// fix that for good. (2) the M mark used to be a small badge floating at
-// the shell's bottom-left edge, its own circular background/border — per
-// Portia's explicit correction ("the logo belongs INSIDE the system, not
-// a sticker"), it's now centered inside the dark core, backlit by a soft
-// glow that tints with the orb's current state color.
-function Shell({ size, glowAlpha, color, dots = 0 }) {
-  return (
-    <>
-      {/* Outer pearl-metallic shell — fully opaque, never blends with the background */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
-          background: 'radial-gradient(circle at 30% 24%, #ffffff 0%, #f5f1e8 38%, #d9d3c4 68%, #b8b2a0 100%)',
-          boxShadow: `0 0 ${Math.round(size * 0.5)}px ${color}${glowAlpha}, inset 0 1px 1px rgba(255,255,255,0.9)`,
-        }}
-      />
-      {/* Thin rim-light ring — light catching the edge of the sphere */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
-          border: '1.5px solid rgba(255,255,255,0.85)', boxShadow: '0 0 6px rgba(255,255,255,0.55)',
-        }}
-      />
-      {/* Specular highlight — a distinct glossy pop, not baked into the base gradient */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '30%', height: '20%', top: '13%', left: '19%', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,255,255,0) 72%)',
-          filter: 'blur(1px)',
-        }}
-      />
-      {/* Gold collar ring — a static metallic accent band near the shell's
-          outer base, evoking "gold rings" from the reference without new
-          geometry. Always present, never pulsing — distinct from the
-          animated halo rings (STATE_CONFIG.ringCount) drawn outside Shell. */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '92%', height: '14%', bottom: '8%', left: '4%', borderRadius: '50%',
-          background: 'linear-gradient(90deg, transparent 2%, #D4AF37 14%, #F4E4A6 50%, #D4AF37 86%, transparent 98%)',
-          opacity: 0.55, mixBlendMode: 'overlay', pointerEvents: 'none',
-        }}
-      />
-      {/* Dark glass core — inset to 60%/20% so the pearl rim stays clearly
-          visible. A flex container so the M emblem below sits centered
-          inside it, not floating off to one side. */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '60%', height: '60%', top: '20%', left: '20%', borderRadius: '50%',
-          background: 'radial-gradient(circle at 32% 28%, rgba(56,64,82,0.95), rgba(6,10,16,0.98) 78%)',
-          backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.16), inset 0 -3px 8px rgba(0,0,0,0.45)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-        }}
-      >
-        {/* Soft backlight glow behind the M — tints with the current state
-            color (e.g. amber during `alert`), the same signal driving the
-            halo rings, so the emblem itself reads as part of the system's
-            live state, not a static sticker. */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute', width: '72%', height: '72%', borderRadius: '50%',
-            background: `radial-gradient(circle, ${color}55, transparent 70%)`,
-            filter: 'blur(2px)',
-          }}
-        />
-        {/* One small, asymmetric gloss highlight — deliberately a single
-            off-center shape, never a symmetric pair, so it reads as glossy
-            glass, not eyes. */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute', width: '28%', height: '13%', top: '18%', left: '20%', borderRadius: '50%',
-            background: 'rgba(255,255,255,0.20)', filter: 'blur(2px)',
-          }}
-        />
-        <img
-          src="/morales-m-mark.png"
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          style={{
-            position: 'relative', width: dots > 0 ? '34%' : '46%', height: dots > 0 ? '34%' : '46%', objectFit: 'contain',
-            filter: `drop-shadow(0 0 4px ${color}cc)`, opacity: dots > 0 ? 0.7 : 0.96,
-            transition: 'width 0.3s, height 0.3s, opacity 0.3s',
-          }}
-        />
-        {/* Three amber "intelligent activity" pulses inside the dark core —
-            shown only for thinking / tool_executing (cfg.dots > 0), positioned
-            in the lower third of the core beneath the M emblem. A row, not a
-            spinner — discrete sequential pulses communicating real processing. */}
-        {dots > 0 && (
-          <div aria-hidden="true" style={{ position: 'absolute', bottom: '16%', left: 0, width: '100%', display: 'flex', justifyContent: 'center', gap: '9%', pointerEvents: 'none' }}>
-            {Array.from({ length: dots }).map((_, i) => (
-              <motion.span
-                key={i}
-                style={{ width: '11%', aspectRatio: '1', borderRadius: '50%', background: color, boxShadow: `0 0 4px ${color}` }}
-                animate={{ opacity: [0.25, 1, 0.25], scale: [0.7, 1.1, 0.7] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
+// Thin wrapper around the real robot (RobotAvatar.jsx, inline SVG) — kept
+// as its own function so both call sites below (animated + reduced-motion)
+// stay simple, and so a future visual change only ever touches
+// RobotAvatar.jsx itself, never this file's state/tilt/atmosphere logic.
+function Shell({ size, glowAlpha, color, dots = 0, animated = true }) {
+  return <RobotAvatar size={size} color={color} glowAlpha={glowAlpha} dots={dots} animated={animated} />;
 }
 
 // Restrained atmosphere for the large (header) instance only — a soft
-// state-tinted glow beneath the orb and a handful of independently-fading
-// gold particles in the halo. Never rendered below size 80 so the small
-// launcher/typing instances stay clean.
+// state-tinted glow beneath the orb (a "landing pad," with two thin
+// concentric ring outlines echoing the reference image's visible rings),
+// plus a short comet-trail arc of independently-fading gold particles.
+// Never rendered below size 80 so the small launcher/typing instances stay
+// clean.
 function Atmosphere({ color, animated }) {
   return (
     <>
@@ -261,6 +149,20 @@ function Atmosphere({ color, animated }) {
           position: 'absolute', width: '130%', height: '34%', bottom: '-10%', left: '-15%',
           borderRadius: '50%', background: `radial-gradient(ellipse at center, ${color}33, transparent 72%)`,
           filter: 'blur(6px)', zIndex: -1, pointerEvents: 'none',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: '112%', height: '26%', bottom: '-6%', left: '-6%',
+          borderRadius: '50%', border: `1px solid ${color}55`, filter: 'blur(1.5px)', zIndex: -1, pointerEvents: 'none',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: '96%', height: '20%', bottom: '-2%', left: '2%',
+          borderRadius: '50%', border: `1px solid ${color}40`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
       {animated && PARTICLE_POSITIONS.map((p, i) => (
@@ -331,18 +233,12 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
     return () => window.removeEventListener('deviceorientation', handler);
   }, [reducedMotion]);
 
-  // Hero-size instances render the real 4D Three.js robotic head — the small
-  // 28px/44px chat instances stay on the lightweight CSS orb below.
-  if (size >= 80) {
-    return <RoboOrb3D state={state} size={size} flashToken={flashToken} />;
-  }
-
   if (reducedMotion) {
     const cfgStatic = STATE_CONFIG[state] || STATE_CONFIG.idle;
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {size >= 80 && <Atmosphere color={cfgStatic.color} animated={false} />}
-        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} />
+        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} animated={false} />
       </div>
     );
   }

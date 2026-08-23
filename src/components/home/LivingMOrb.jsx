@@ -1,29 +1,29 @@
 // LivingMOrb — the hero's "living agent" presence. A separate component
 // from M-Care's own src/components/mcare/LivingOrb.jsx on purpose: that one
-// is wired to real chat state (listening/thinking/speaking); this one is
-// the site's general brand mark living in the marketing hero, with no chat
-// state to reflect — genuinely different contexts, not worth merging into
-// one component. Both share the same face (blinking/winking gold eyes on a
-// dark glass orb, via src/lib/useBlinkState.js) so the two "living M"
-// surfaces read as one identity.
+// is wired to real chat state (listening/thinking/speaking) with its own
+// halo-ring/tilt/atmosphere system; this one is the site's general brand
+// mark living in the marketing hero, with no chat state to reflect — a
+// much narrower, presentational-only scope, not worth merging into one
+// component. Both render the same robot (RobotAvatar.jsx, real inline SVG)
+// so the two "living M" surfaces read as one identity.
 //
-// 2026-08-12, twice: first shipped with cursor-tracking eyes (removed same
-// day — read as unsettling). Then shipped emblem-only, no eyes at all
-// (matching LivingOrb.jsx's own reversal). Portia then explicitly asked for
-// the opposite of that second version too — a playful, friendly face (eyes
-// that blink/wink), no M glyph at all — so both orbs share that design now.
+// 2026-08-23: RobotAvatar.jsx replaced RoboOrb3D.jsx (a Three.js scene,
+// retired after three straight rounds of un-verifiable-from-this-checkout
+// WebGL tuning each produced a real visual defect) — deterministic SVG
+// markup instead of a lighting/bloom pipeline.
 //
 // Behavior (deliberately scoped to what's cheap and honest — no fabricated
-// "AI thinking" claims, this is presentational only): soft breathing glow,
-// occasional blink/wink via the shared hook, and wakes up ~300ms after
-// mount (fade + scale in) instead of appearing fully-formed.
+// "AI thinking" claims, this is presentational only): RobotAvatar's own
+// built-in eye-glow pulse (when not reduced-motion) is enough "alive" cue
+// for this component's narrow scope, and wakes up ~300ms after mount (fade
+// + scale in) instead of appearing fully-formed.
 //
-// Respects prefers-reduced-motion — falls back to a fully static orb with
-// open (non-blinking) eyes, same pattern as LivingOrb.jsx.
+// Respects prefers-reduced-motion — RobotAvatar's own `animated` prop
+// falls back to a fully static render, same pattern as LivingOrb.jsx.
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BRAND } from '@/lib/brandTokens';
-import RoboOrb3D from '@/components/mcare/RoboOrb3D';
+import RobotAvatar from '@/components/mcare/RobotAvatar';
 
 const GOLD = BRAND.gold;
 
@@ -45,11 +45,6 @@ export default function LivingMOrb({ size = 64 }) {
     return () => clearTimeout(t);
   }, []);
 
-  // The 4D robotic-head Three.js orb handles its own eyes, glow, rings,
-  // particles, and parallax tilt internally (including a reduced-motion
-  // static fallback) — no separate blink/eyes markup needed here anymore.
-
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.82 }}
@@ -58,7 +53,7 @@ export default function LivingMOrb({ size = 64 }) {
       style={{ width: size, height: size, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       aria-hidden="true"
     >
-      <RoboOrb3D state="idle" size={size} flashToken={0} />
+      <RobotAvatar size={size} color={GOLD} glowAlpha="45" animated={!reducedMotion} />
     </motion.div>
   );
 }
