@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { fetchClientIpGeo } from '@/lib/clientIpGeo';
 import { reverseGeocodePrecise } from '@/lib/reverseGeocode';
+import { isSandboxed } from '@/lib/isSandboxed';
 
 // v4: tries a direct-from-browser lookup (clientIpGeo.js) before falling
 // back to the Base44 edge function, and no longer caches a failed/Unknown
@@ -34,7 +35,13 @@ function readCache() {
 
 function writeCache(data) {
   try {
-    // Only cache country-level data, never precise coordinates
+    // Cache the full IP-geo result including lat/lng. IP coordinates are
+    // ISP-registered approximate points (easily tens of km off), NOT precise
+    // device GPS — they're safe to cache and needed by buildLocationContextBlock
+    // so the nearby-search handoff carries real coordinates even on a page
+    // reload within the TTL, not just the city name. GPS coordinates are
+    // never stored here — they live in gpsLocation state only, completely
+    // separate from this IP cache.
     const safeToCache = {
       country: data.country,
       country_code: data.country_code,
@@ -44,7 +51,8 @@ function writeCache(data) {
       currency: data.currency,
       source: data.source,
       precision: data.precision,
-      // DO NOT cache: latitude, longitude (precise coordinates)
+      latitude: data.latitude,
+      longitude: data.longitude,
     };
     sessionStorage.setItem(IP_CACHE_KEY, JSON.stringify({ data: safeToCache, ts: Date.now() }));
   } catch {}
@@ -141,42 +149,65 @@ export function useAutoLocation() {
   // explicit, freshly-consented request pass force=true to bypass the pause
   // check entirely; a passive/automatic caller (the silent on-mount refresh
   // below, or a background-tracking UI) omits it and still respects pause.
+  // Returns a Promise that ALWAYS resolves (never rejects) with either
+  // { success: true, location } or { success: false, error, errorCode }.
+  // Callers can await it directly instead of watching gpsStatus state changes.
   const requestGPS = useCallback((force = false, options = {}) => {
-    if (!('geolocation' in navigator)) {
-      setGpsStatus('unavailable');
-      setGpsErrorCode('no_api');
-      return;
-    }
-    if (prefs.locationPaused && !force) return;
-    // A request is already resolving — let it finish rather than starting a
-    // second, redundant permissions/geolocation call. gpsStatus will change
-    // (or the caller's own safety-net timeout will fire) regardless of which
-    // caller asked first.
-    if (gpsInFlightRef.current) return;
+    return new Promise((resolve) => {
+      if (!('geolocation' in navigator)) {
+        setGpsStatus('unavailable');
+        setGpsErrorCode('no_api');
+        resolve({ success: false, error: 'no_api', errorCode: 'no_api' });
+        return;
+      }
+      if (prefs.locationPaused && !force) {
+        resolve({ success: false, error: 'paused', errorCode: 'paused' });
+        return;
+      }
+      // A request is already resolving — return immediately so the caller
+      // can handle it instead of starting a second concurrent GPS call.
+      if (gpsInFlightRef.current) {
+        resolve({ success: false, error: 'already_in_flight', errorCode: 'already_in_flight' });
+        return;
+      }
 
-    gpsInFlightRef.current = true;
-    setGpsStatus('requesting');
-    setGpsErrorCode(null);
+      gpsInFlightRef.current = true;
+      setGpsStatus('requesting');
+      setGpsErrorCode(null);
 
-    // Before calling getCurrentPosition, check the Permissions API. In a
-    // preview iframe whose Permissions-Policy disallows geolocation, the
-    // browser reports the permission as 'denied' AND never shows the native
-    // prompt — getCurrentPosition hangs with neither callback firing, so the
-    // 15s safety net is the only thing that ever resolves it. Catching
-    // 'denied' here fails fast and honestly instead. Any other state, or a
-    // throwing/unavailable Permissions API, falls through to the normal call.
-    // Additive, backward-compatible override — every existing call site
-    // (requestGPS(), requestGPS(true)) keeps the established 60s cache
-    // window unchanged. A caller that must never silently reuse a stale
-    // fix (e.g. "show my exact location on Google Maps right now") passes
-    // { maximumAge: 0 } to force a genuinely fresh reading.
-    const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
+      const maximumAge = options.maximumAge != null ? options.maximumAge : 60000;
 
-    const proceed = () => {
+      const sandboxed = isSandboxed();
+      // Two-phase budget: the hard timeout must cover BOTH the browser's
+      // native "Allow location?" permission prompt (which the user has to
+      // read and tap — easily 5–8s on its own) AND a cold GPS acquisition
+      // (another 2–10s, worse indoors). The previous 5s ceiling fired
+      // before either finished and silently killed every legitimate
+      // request, falling back to the wrong IP city. 25s gives a real
+      // permission+fix cycle room to complete; sandbox stays at 2s since
+      // the prompt never appears there.
+      const hardTimeoutMs = sandboxed ? 2000 : 25000;
+      console.log('[useAutoLocation] requestGPS', { sandboxed, hardTimeoutMs, force, maximumAge });
+
+      let hardTimeoutFired = false;
+      const hardTimeoutId = setTimeout(() => {
+        if (hardTimeoutFired) return;
+        hardTimeoutFired = true;
+        gpsInFlightRef.current = false;
+        if (mountedRef.current) {
+          setGpsStatus('unavailable');
+          setGpsErrorCode(sandboxed ? 'sandbox_blocked' : 3);
+          updatePref('gpsGranted', false);
+        }
+        resolve({ success: false, error: 'timeout', errorCode: sandboxed ? 'sandbox_blocked' : 3 });
+      }, hardTimeoutMs);
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          if (hardTimeoutFired) return;
+          hardTimeoutFired = true;
+          clearTimeout(hardTimeoutId);
           gpsInFlightRef.current = false;
-          if (!mountedRef.current) return;
           const loc = {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
@@ -186,49 +217,36 @@ export function useAutoLocation() {
             logged_at: new Date().toISOString(),
             resolved_place: null,
           };
-          setGpsLocation(loc);
-          setGpsStatus('granted');
-          setGpsErrorCode(null);
-          updatePref('gpsGranted', true);
-
-          // Best-effort real place name for this GPS fix — never blocks the
-          // granted path itself. Guarded by logged_at so a slow reverse
-          // geocode can never clobber a newer GPS reading.
-          reverseGeocodePrecise(loc.latitude, loc.longitude).then((place) => {
-            if (!mountedRef.current || !place) return;
-            setGpsLocation((prev) => (prev && prev.logged_at === loc.logged_at)
-              ? { ...prev, resolved_place: place }
-              : prev);
-          });
+          if (mountedRef.current) {
+            setGpsLocation(loc);
+            setGpsStatus('granted');
+            setGpsErrorCode(null);
+            updatePref('gpsGranted', true);
+            reverseGeocodePrecise(loc.latitude, loc.longitude).then((place) => {
+              if (!mountedRef.current || !place) return;
+              setGpsLocation((prev) => (prev && prev.logged_at === loc.logged_at)
+                ? { ...prev, resolved_place: place }
+                : prev);
+            });
+          }
+          resolve({ success: true, location: loc });
         },
         (err) => {
+          if (hardTimeoutFired) return;
+          hardTimeoutFired = true;
+          clearTimeout(hardTimeoutId);
           gpsInFlightRef.current = false;
-          if (!mountedRef.current) return;
-          setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
-          setGpsErrorCode(err.code === 1 ? 1 : (err.code === 2 ? 2 : 3));
-          updatePref('gpsGranted', false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge }
-      );
-    };
-
-    try {
-      if (!navigator.permissions || !navigator.permissions.query) { proceed(); return; }
-      navigator.permissions
-        .query({ name: 'geolocation' })
-        .then((result) => {
-          if (!mountedRef.current) { gpsInFlightRef.current = false; return; }
-          if (result.state === 'denied') {
-            gpsInFlightRef.current = false;
-            setGpsStatus('denied');
-            setGpsErrorCode(1);
+          const code = sandboxed ? 'sandbox_blocked' : (err.code === 1 ? 1 : (err.code === 2 ? 2 : 3));
+          if (mountedRef.current) {
+            setGpsStatus(err.code === 1 ? 'denied' : 'unavailable');
+            setGpsErrorCode(code);
             updatePref('gpsGranted', false);
-            return;
           }
-          proceed();
-        })
-        .catch(() => proceed());
-    } catch { proceed(); }
+          resolve({ success: false, error: err.message || String(err.code), errorCode: code });
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge }
+      );
+    });
   }, [prefs.locationPaused]);
 
   // If user previously granted GPS, silently refresh on mount

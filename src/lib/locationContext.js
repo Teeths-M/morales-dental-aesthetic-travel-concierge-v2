@@ -40,3 +40,114 @@ export function buildLocationContextBlock(loc) {
 
   return `[[LOCATION_CONTEXT: ${parts.join(', ')}]]`;
 }
+
+/**
+ * Builds the human-facing message shown when a precise-GPS request is
+ * blocked because the app is running inside a restricted preview/sandbox
+ * iframe. Unlike a generic "location unavailable" error, this pivots
+ * immediately to the best approximate (IP-based) location M-Care already
+ * has, labels it honestly as approximate, and offers useful nearby-care
+ * actions the traveler can still take with that approximate area.
+ *
+ * Pure and testable: given a location object (or null), always returns a
+ * well-formed string, never throws.
+ */
+function buildApproximateBody(loc) {
+  // Build the approximate-location line from whatever real data we have.
+  // city is the most specific, region adds context if different, country
+  // anchors it. Falls back to raw coordinates only if that's all we have.
+  const placeParts = [];
+  if (loc?.city) placeParts.push(loc.city);
+  if (loc?.region && loc.region !== loc?.city) placeParts.push(loc.region);
+  if (loc?.country) placeParts.push(loc.country);
+
+  const hasCoords = loc?.latitude != null && loc?.longitude != null;
+  const hasApprox = placeParts.length > 0 || hasCoords;
+
+  let approxLine;
+  let mapDest = null; // passed to {{maps:...}} so the traveler can SEE the area
+  if (hasApprox) {
+    if (placeParts.length > 0) {
+      const placeLabel = placeParts.join(', ');
+      approxLine = `Right now I only have an approximate location based on your network: near ${placeLabel}. This can be off by several kilometers.`;
+      // Prefer the place name as the map destination — for IP geo, a city
+      // name search is more reliable than the ISP's registered lat/lng point
+      // (which can be tens of km from the traveler's real position).
+      mapDest = placeLabel;
+    } else {
+      const coordLabel = `near ${loc.latitude.toFixed(2)}, ${loc.longitude.toFixed(2)}`;
+      approxLine = `Right now I only have an approximate location based on your network: ${coordLabel}. This can be off by several kilometers.`;
+      mapDest = `${loc.latitude},${loc.longitude}`;
+    }
+  } else {
+    approxLine = "I don't have even an approximate location available right now, so I can't offer nearby-care search just yet.";
+  }
+
+  // Tappable map button — MessageBubble renders {{maps:LABEL|DEST}} as
+  // buttons for Waze / Google Maps / Apple Maps. Lets the traveler SEE
+  // the approximate area visually, which is reassuring when the text says
+  // "near [City]" and they want to confirm where that actually is.
+  const mapToken = mapDest
+    ? `\n\n{{maps:View My Approximate Area|${mapDest}}}`
+    : '';
+
+  // Offer useful actions even with approximate location — these choices are
+  // rendered as tappable buttons by MessageBubble and routed to the agent.
+  // sendAgentMessage (MCareOrb.jsx) re-attaches the machine-readable
+  // [[LOCATION_CONTEXT: ...]] block for any location-sensitive message
+  // (the "nearby" keyword matches its regex), so the agent receives the
+  // real coordinates/city and can pass them to searchNearbyPlaces — the
+  // location is never lost between the tap and the actual search.
+  const choices = hasApprox
+    ? "\n\nEven with approximate location, I can still help you find nearby care:\n\n{{choices:Find nearby hospitals|Find nearby pharmacies|Find nearby clinics}}"
+    : "";
+
+  return { approxLine, mapToken, choices, hasApprox };
+}
+
+export function buildSandboxLocationMessage(loc) {
+  const base = "I can't request your precise GPS while running in preview mode — the browser blocks the permission prompt here.";
+  const { approxLine, mapToken, choices } = buildApproximateBody(loc);
+  const reminder = "\n\nFor exact GPS, open the live version of M-Safe on your phone or outside this preview — I'll use it automatically the moment you do.";
+  return `${base}\n\n${approxLine}${mapToken}${choices}${reminder}`;
+}
+
+/**
+ * Builds the human-facing message shown when a precise-GPS request fails in
+ * the LIVE (non-preview) app — denied, timed out, unavailable, or no API.
+ * Mirrors buildSandboxLocationMessage's structure: acknowledges the failure
+ * honestly, then immediately pivots to the best approximate (IP-based)
+ * location M-Care already has, with a one-tap Maps button and nearby-care
+ * chips. This is the safety-critical fallback for a traveler who is lost in
+ * a foreign country and can't get a precise fix — they still get something
+ * actionable instead of a dead-end "type your address."
+ *
+ * reason maps to GeolocationPositionError codes: 1=denied, 2=unavailable,
+ * 3=timeout, 'no_api', or null.
+ *
+ * Pure and testable: given a location object (or null) and a reason, always
+ * returns a well-formed string, never throws.
+ */
+export function buildGpsFallbackMessage(loc, reason = null) {
+  let base;
+  let fixHint;
+  if (reason === 1) {
+    base = "I couldn't access your precise GPS — the location permission was denied.";
+    fixHint = "To get your exact location: tap the lock or site-info icon next to the web address, find Location, and set it to Allow — then ask me again.";
+  } else if (reason === 3) {
+    base = "I couldn't get your precise GPS in time — that can happen with a weak signal indoors.";
+    fixHint = "Try asking again, especially near a window or outside with a clearer view of the sky.";
+  } else if (reason === 2) {
+    base = "Your device couldn't provide a precise location right now.";
+    fixHint = "Try again in a moment, or ask me to find nearby care using your approximate area below.";
+  } else if (reason === 'no_api') {
+    base = "Your device doesn't support precise GPS location.";
+    fixHint = "You can still search for nearby care using your approximate area below.";
+  } else {
+    base = "I wasn't able to get your precise GPS location.";
+    fixHint = "I'll keep using your approximate area for now — ask me again anytime to retry.";
+  }
+
+  const { approxLine, mapToken, choices } = buildApproximateBody(loc);
+  return `${base}\n\n${approxLine}${mapToken}${choices}\n\n${fixHint}`;
+}
