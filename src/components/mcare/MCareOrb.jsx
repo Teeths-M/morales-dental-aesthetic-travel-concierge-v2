@@ -183,6 +183,11 @@ export default function MCareOrb() {
   // orbState/effect logic that's out of scope for this swap.
   const [listening] = useState(false);
   const [speaking,   setSpeaking]   = useState(false);
+  // Real DOM focus on the chat input — the one new "alive agent" trigger:
+  // focusing the input reads as the robot paying attention, but only when
+  // nothing more urgent (thinking/speaking/real mic listening) is already
+  // happening — see LivingOrb.jsx's activityState mapping.
+  const [inputFocused, setInputFocused] = useState(false);
   const [dismissed,  setDismissed]   = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [struggleHint, setStruggleHint] = useState(null);
@@ -2381,6 +2386,8 @@ export default function MCareOrb() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
           onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
           placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
           style={{ width: '100%', background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT, outline: 'none', position: 'relative' }}
@@ -2473,7 +2480,7 @@ export default function MCareOrb() {
                       not forced into a square box like the small chrome
                       instances elsewhere in this file. ~320px per the
                       "about 300px wide on desktop" ask. */}
-                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect />
+                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} />
                 </div>
 
                 <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px', textAlign: 'center' }}>
@@ -2504,7 +2511,7 @@ export default function MCareOrb() {
               <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${BORDER_DARK}`, flexShrink: 0, background: PANEL_BG }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                   <div style={{ flexShrink: 0 }}>
-                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} />
+                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} inputFocused={inputFocused} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>

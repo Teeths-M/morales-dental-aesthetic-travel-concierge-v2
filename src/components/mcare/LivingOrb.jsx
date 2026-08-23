@@ -88,6 +88,18 @@
  * hero orb, a deliberately separate component) uses RobotAvatarImage too,
  * but without this file's own ring/tilt system (matches its own narrower,
  * presentational-only scope).
+ *
+ * 2026-08-23, "alive AI agent" round: a new `activityState` — one of
+ * 'idle' / 'listening' / 'thinking' / 'speaking' — is derived here from
+ * the real `state` prop (still the full 8-value orbState above, untouched)
+ * plus a new `inputFocused` prop, and handed to `Shell`/RobotAvatarImage.jsx
+ * to drive its own live-activity overlays (blink, visor dots, waveform,
+ * head tilt — see that file's doc comment for the visual design). This is
+ * a pure mapping of already-real signals, not a second independent
+ * computation: speaking/thinking/tool_executing/listening map straight
+ * across, and a plain `idle` only reads as `listening` when the caller
+ * also reports the chat input has real DOM focus — "the user is about to
+ * type" is itself a real, honest signal, not a fabricated one.
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -99,14 +111,17 @@ const AMBER = '#D97706';
 const STATE_CONFIG = {
   idle:           { ringCount: 2, duration: 3.6, ringScale: 1.28, ringOpacity: 0.18, coreScale: [1, 1.025, 1], glowAlpha: '45', color: GOLD },
   listening:      { ringCount: 3, duration: 1.1, ringScale: 1.6,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],   glowAlpha: '55', color: GOLD },
-  // thinking / tool_executing: the same "small orbital points" motif at two
-  // speeds/intensities — thinking is the agent composing a reply, no tool
-  // call yet; tool_executing is a real, currently-running backend call
-  // (see MCareOrb.jsx's `runningTool`). Faster + brighter reads as "doing
+  // thinking / tool_executing: the same ring cadence at two speeds/
+  // intensities — thinking is the agent composing a reply, no tool call
+  // yet; tool_executing is a real, currently-running backend call (see
+  // MCareOrb.jsx's `runningTool`). Faster + brighter reads as "doing
   // something real right now" without needing a different icon shape —
   // the real active_label text next to the orb does the rest of the work.
-  thinking:       { ringCount: 2, duration: 2.4, ringScale: 1.4,  ringOpacity: 0.26, coreScale: [1, 1.04, 1],  glowAlpha: '55', color: GOLD, dots: 3, dotOrbitDuration: 2.6 },
-  tool_executing: { ringCount: 3, duration: 1.5, ringScale: 1.42, ringOpacity: 0.34, coreScale: [1, 1.06, 1],  glowAlpha: '65', color: GOLD, dots: 3, dotOrbitDuration: 1.5 },
+  // (The face-level "thinking" overlay — visor dots, tilt, orbit particles
+  // — is driven by `activityState` below, which collapses both of these
+  // into one look; only the ring speed/brightness still tells them apart.)
+  thinking:       { ringCount: 2, duration: 2.4, ringScale: 1.4,  ringOpacity: 0.26, coreScale: [1, 1.04, 1],  glowAlpha: '55', color: GOLD },
+  tool_executing: { ringCount: 3, duration: 1.5, ringScale: 1.42, ringOpacity: 0.34, coreScale: [1, 1.06, 1],  glowAlpha: '65', color: GOLD },
   speaking:       { ringCount: 3, duration: 0.9, ringScale: 1.5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1],  glowAlpha: '55', color: GOLD },
   acting:         { ringCount: 4, duration: 2.6, ringScale: 1.5,  ringOpacity: 0.32, coreScale: [1, 1.04, 1],  glowAlpha: '72', color: GOLD, notifyDot: true },
   alert:          { ringCount: 2, duration: 2.0, ringScale: 1.34, ringOpacity: 0.34, coreScale: [1, 1.035, 1], glowAlpha: '60', color: AMBER },
@@ -136,8 +151,8 @@ const PARTICLE_POSITIONS = [
 // src/assets/m-safe-robot-transparent.webp), falling back to the inline-SVG
 // RobotAvatar only if that file is ever missing. `naturalAspect` passes
 // through unchanged — see RobotAvatarImage's own doc comment.
-function Shell({ size, glowAlpha, color, dots = 0, animated = true, naturalAspect = false }) {
-  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} dots={dots} animated={animated} naturalAspect={naturalAspect} />;
+function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true, naturalAspect = false }) {
+  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} activityState={activityState} animated={animated} naturalAspect={naturalAspect} />;
 }
 
 // Restrained atmosphere for the large (header) instance only — a soft
@@ -161,19 +176,29 @@ function Atmosphere({ color, animated }) {
           filter: 'blur(7px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
-      <div
+      {/* Slow rotation on the two ring outlines — a real hologram-platform
+          spin, not tied to any particular activityState, deliberately
+          independent of the existing per-orbState ring pulse speed above
+          (e.g. `listening`'s fast 1.1s pulse for real active mic capture
+          stays exactly as tuned — slowing it down for this broader
+          ambient effect would blunt a real urgency signal). */}
+      <motion.div
         aria-hidden="true"
         style={{
           position: 'absolute', width: '124%', height: '30%', bottom: '-8%', left: '-12%',
           borderRadius: '50%', border: `1.5px solid ${color}80`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
         }}
+        animate={animated ? { rotate: 360 } : undefined}
+        transition={animated ? { duration: 26, repeat: Infinity, ease: 'linear' } : undefined}
       />
-      <div
+      <motion.div
         aria-hidden="true"
         style={{
           position: 'absolute', width: '104%', height: '23%', bottom: '-3%', left: '-2%',
           borderRadius: '50%', border: `1.5px solid ${color}60`, zIndex: -1, pointerEvents: 'none',
         }}
+        animate={animated ? { rotate: -360 } : undefined}
+        transition={animated ? { duration: 32, repeat: Infinity, ease: 'linear' } : undefined}
       />
       <div
         aria-hidden="true"
@@ -182,12 +207,14 @@ function Atmosphere({ color, animated }) {
           borderRadius: '50%', border: `1px solid ${color}45`, zIndex: -1, pointerEvents: 'none',
         }}
       />
+      {/* Gold particles — fading in/out as before, now also drifting
+          slightly upward on the same cycle ("rising" past the shell). */}
       {animated && PARTICLE_POSITIONS.map((p, i) => (
         <motion.span
           key={i}
           aria-hidden="true"
           style={{ position: 'absolute', top: p.top, left: p.left, width: 3, height: 3, borderRadius: '50%', background: GOLD, pointerEvents: 'none' }}
-          animate={{ opacity: [0.12, 0.55, 0.12] }}
+          animate={{ opacity: [0.12, 0.55, 0.12], y: [4, -8, 4] }}
           transition={{ duration: 2.4 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
         />
       ))}
@@ -195,7 +222,19 @@ function Atmosphere({ color, animated }) {
   );
 }
 
-export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false }) {
+export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false }) {
+  // Four-value face-activity state for RobotAvatarImage.jsx's own overlays
+  // (blink/visor-dots/waveform/tilt) — a pure mapping of the real 8-value
+  // `state` above, plus one additive real signal (`inputFocused`, only
+  // consulted when nothing more urgent is already happening). See this
+  // file's top doc comment for the full reasoning.
+  const activityState =
+    state === 'speaking' ? 'speaking'
+    : (state === 'thinking' || state === 'tool_executing') ? 'thinking'
+    : state === 'listening' ? 'listening'
+    : (inputFocused && state === 'idle') ? 'listening'
+    : 'idle';
+
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -255,7 +294,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {size >= 80 && <Atmosphere color={cfgStatic.color} animated={false} />}
-        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} animated={false} naturalAspect={naturalAspect} />
+        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} activityState={activityState} animated={false} naturalAspect={naturalAspect} />
       </div>
     );
   }
@@ -301,7 +340,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
         animate={{ scale: cfg.coreScale }}
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} dots={cfg.dots || 0} naturalAspect={naturalAspect} />
+        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} activityState={activityState} naturalAspect={naturalAspect} />
       </motion.div>
 
       {cfg.notifyDot && (
