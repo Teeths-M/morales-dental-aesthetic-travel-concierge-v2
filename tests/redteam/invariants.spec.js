@@ -5062,3 +5062,30 @@ test('DISTRESS ESCALATION: voice messages are scanned for distress signals too, 
   expect(confirmBlock, 'requestOnDemandRide must get a pickup_address fallback when no coordinates are available yet')
     .toMatch(/pickup_address: pickupAddress,/);
 });
+
+test('SAVE_MEMORY: Base44\'s hidden native memory tool_call never leaks into the chat UI as a raw badge', () => {
+  // Portia's live report: a red "save_memory — error" pill appeared inline
+  // in an assistant reply. save_memory is a Base44 platform-native tool
+  // (fired automatically by memory_config.enabled in m_care.jsonc, outside
+  // this repo's own tool_configs grants) — MessageBubble's generic
+  // ToolCallDisplay rendered it like any other tool call. It must stay
+  // filtered out before the badge list is ever rendered.
+  const bubbleSrc = read('src/components/mcare-agent/MessageBubble.jsx');
+  const filterIdx = bubbleSrc.indexOf("message.tool_calls?.filter(tc => tc.name !== 'save_memory')");
+  expect(filterIdx, 'MessageBubble must filter out save_memory before mapping tool_calls to a badge').toBeGreaterThan(-1);
+
+  // It must be the only tool_calls reference in this file — a second,
+  // unfiltered render path elsewhere would silently reopen the same leak.
+  const toolCallsRefCount = (bubbleSrc.match(/tool_calls/g) || []).length;
+  expect(toolCallsRefCount, 'tool_calls must be referenced exactly once in MessageBubble.jsx — the one filtered render path').toBe(1);
+
+  // Neither MCareOrb nor MCareAgent may independently render a tool_calls
+  // badge list that bypasses MessageBubble's filter.
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+  expect(orbSrc, 'MCareOrb must not render its own tool_calls badge list').not.toMatch(/tool_calls[\s\S]{0,40}\.map\(/);
+  const agentPagePath = 'src/pages/MCareAgent.jsx';
+  if (existsSync(join(ROOT, agentPagePath))) {
+    const agentSrc = read(agentPagePath);
+    expect(agentSrc, 'MCareAgent.jsx must not reference tool_calls at all (it renders via MessageBubble only)').not.toContain('tool_calls');
+  }
+});
