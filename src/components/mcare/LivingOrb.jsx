@@ -63,23 +63,36 @@
  * independently-fading gold particles in the halo — both omitted under
  * reduced motion (the base glow stays, static; particles don't).
  *
- * 2026-08-23, four passes: the face (blink/wink gold eyes) shipped
- * 2026-08-12 is removed for good — no eyes, no mouth, no face anywhere on
- * this orb. The M mark first came back as a floating badge overlapping
- * the shell; Portia's explicit correction — "the logo belongs INSIDE the
- * system," not a sticker — moved it to be centered and backlit inside the
- * dark core itself, the same asset, no new image generated either time.
- * Round 4 (a reference image asking for a literal robot/visor look) adds
- * a single continuous glowing visor band across the upper core — a
- * HUD/sensor-strip read, deliberately not two separate lit shapes, so it
- * stays "visor" rather than reopening the "eyes/face" question already
- * settled twice — plus a static gold collar-ring accent near the shell's
- * outer base. Both are additive to the existing core/M, not a rebuild.
+ * 2026-08-23, four passes plus a same-day reconciliation: the face
+ * (blink/wink gold eyes) shipped 2026-08-12 is removed for good — no eyes,
+ * no mouth, no face anywhere on this orb. The M mark first came back as a
+ * floating badge overlapping the shell; Portia's explicit correction —
+ * "the logo belongs INSIDE the system," not a sticker — moved it to be
+ * centered and backlit inside the dark core itself, the same asset, no new
+ * image generated either time. Round 4 (a reference image asking for a
+ * literal robot/visor look) first tried a glowing visor band across the
+ * core — reverted the same day once a real Three.js hero orb
+ * (RoboOrb3D.jsx, built concurrently in Base44 Builder) landed with an
+ * explicit "FACELESS by design: no eyes, no visor, no mouth" — the more
+ * authoritative, more recent answer to the exact same question, now kept
+ * consistent across both the 3D primary and this CSS fallback. What
+ * stayed: a static gold collar-ring accent near the shell's outer base
+ * (harmless, non-face, matches RoboOrb3D's own "concentric energy rings"
+ * language), and the `dots`-driven M sizing/three-pulse core indicator
+ * RoboOrb3D's own author added to this file in the same push.
+ *
+ * This component only renders at size < 80 now — `LivingOrb` itself
+ * delegates size >= 80 straight to RoboOrb3D, a real Three.js scene with
+ * the same { state, size, flashToken } contract and the same 8 states.
+ * This file (STATE_CONFIG, Shell, Atmosphere, tilt) is the lightweight
+ * fallback for the 28px/44px chat instances only — the floating launcher
+ * button and the small typing/greeting avatars.
  * useBlinkState.js itself is untouched — LivingMOrb.jsx (the homepage
  * hero orb, a deliberately separate component) still uses it.
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import RoboOrb3D from '@/components/mcare/RoboOrb3D';
 
 const GOLD = '#D4AF37';
 const AMBER = '#D97706';
@@ -127,12 +140,7 @@ const PARTICLE_POSITIONS = [
 // Portia's explicit correction ("the logo belongs INSIDE the system, not
 // a sticker"), it's now centered inside the dark core, backlit by a soft
 // glow that tints with the orb's current state color.
-function Shell({ size, glowAlpha, color }) {
-  // glowAlpha is the same real per-state hex-alpha value already driving the
-  // shell's own glow/halo intensity (STATE_CONFIG) — reused here to scale the
-  // visor line's brightness so it varies with real state, never a fabricated
-  // separate animation.
-  const visorIntensity = Math.min(1, parseInt(glowAlpha, 16) / 255 + 0.35);
+function Shell({ size, glowAlpha, color, dots = 0 }) {
   return (
     <>
       {/* Outer pearl-metallic shell — fully opaque, never blends with the background */}
@@ -198,25 +206,6 @@ function Shell({ size, glowAlpha, color }) {
             filter: 'blur(2px)',
           }}
         />
-        {/* Visor band — one continuous glowing strip across the upper core,
-            never two separate lit shapes, so it reads as a HUD/sensor visor
-            rather than eyes. Brightness is `visorIntensity`, derived from
-            the real per-state glowAlpha above, never a fabricated pulse. */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute', width: '56%', height: '11%', top: '24%', left: '22%', borderRadius: 5,
-            background: 'rgba(0,0,0,0.35)', overflow: 'hidden',
-          }}
-        >
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute', inset: '32% 8%', borderRadius: 3,
-              background: color, boxShadow: `0 0 5px 1px ${color}`, opacity: visorIntensity,
-            }}
-          />
-        </div>
         {/* One small, asymmetric gloss highlight — deliberately a single
             off-center shape, never a symmetric pair, so it reads as glossy
             glass, not eyes. */}
@@ -233,10 +222,27 @@ function Shell({ size, glowAlpha, color }) {
           aria-hidden="true"
           draggable={false}
           style={{
-            position: 'relative', width: '40%', height: '40%', objectFit: 'contain', marginTop: '16%',
-            filter: `drop-shadow(0 0 4px ${color}cc)`, opacity: 0.96,
+            position: 'relative', width: dots > 0 ? '34%' : '46%', height: dots > 0 ? '34%' : '46%', objectFit: 'contain',
+            filter: `drop-shadow(0 0 4px ${color}cc)`, opacity: dots > 0 ? 0.7 : 0.96,
+            transition: 'width 0.3s, height 0.3s, opacity 0.3s',
           }}
         />
+        {/* Three amber "intelligent activity" pulses inside the dark core —
+            shown only for thinking / tool_executing (cfg.dots > 0), positioned
+            in the lower third of the core beneath the M emblem. A row, not a
+            spinner — discrete sequential pulses communicating real processing. */}
+        {dots > 0 && (
+          <div aria-hidden="true" style={{ position: 'absolute', bottom: '16%', left: 0, width: '100%', display: 'flex', justifyContent: 'center', gap: '9%', pointerEvents: 'none' }}>
+            {Array.from({ length: dots }).map((_, i) => (
+              <motion.span
+                key={i}
+                style={{ width: '11%', aspectRatio: '1', borderRadius: '50%', background: color, boxShadow: `0 0 4px ${color}` }}
+                animate={{ opacity: [0.25, 1, 0.25], scale: [0.7, 1.1, 0.7] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );
@@ -325,6 +331,12 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
     return () => window.removeEventListener('deviceorientation', handler);
   }, [reducedMotion]);
 
+  // Hero-size instances render the real 4D Three.js robotic head — the small
+  // 28px/44px chat instances stay on the lightweight CSS orb below.
+  if (size >= 80) {
+    return <RoboOrb3D state={state} size={size} flashToken={flashToken} />;
+  }
+
   if (reducedMotion) {
     const cfgStatic = STATE_CONFIG[state] || STATE_CONFIG.idle;
     return (
@@ -370,39 +382,13 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
         />
       ))}
 
-      {cfg.dots > 0 && (
-        <motion.div
-          aria-hidden="true"
-          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: cfg.dotOrbitDuration, repeat: Infinity, ease: 'linear' }}
-        >
-          {Array.from({ length: cfg.dots }).map((_, i) => {
-            const angle = (360 / cfg.dots) * i;
-            return (
-              <motion.span
-                key={i}
-                style={{
-                  position: 'absolute', top: '50%', left: '50%', width: dotSize, height: dotSize,
-                  marginTop: -dotSize / 2, marginLeft: -dotSize / 2, borderRadius: '50%',
-                  background: cfg.color, boxShadow: `0 0 4px ${cfg.color}`,
-                  transform: `rotate(${angle}deg) translate(${dotRadius}px) rotate(-${angle}deg)`,
-                }}
-                animate={{ opacity: [0.35, 1, 0.35] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.15 }}
-              />
-            );
-          })}
-        </motion.div>
-      )}
-
       <motion.div
         aria-hidden="true"
         style={{ position: 'absolute', width: '100%', height: '100%' }}
         animate={{ scale: cfg.coreScale }}
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} />
+        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} dots={cfg.dots || 0} />
       </motion.div>
 
       {cfg.notifyDot && (

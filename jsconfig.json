@@ -2,7 +2,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "three": ["./src/types/three-stub.d.ts"]
     },
     "jsx": "react-jsx",
     "module": "esnext",

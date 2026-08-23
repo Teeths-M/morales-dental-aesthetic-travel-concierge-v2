@@ -2077,6 +2077,10 @@ export default function MCareOrb() {
   const statusPill = paused
     ? { text: 'PAUSED', bg: 'rgba(245,158,11,0.14)', fg: '#FBBF24', dot: '#F59E0B' }
     : isOnline
+      // "LIVE SESSION" (not "LIVE AGENT") per Portia's own explicit round-3
+      // correction and the reference image itself — a concurrent bot commit
+      // reverted this text to round 1's original wording; kept the correct,
+      // already-confirmed value here rather than the regression.
       ? { text: 'LIVE SESSION', bg: 'rgba(34,197,94,0.14)', fg: '#4ADE80', dot: '#22C55E' }
       : { text: 'OFFLINE', bg: 'rgba(156,163,175,0.14)', fg: '#D1D5DB', dot: '#9CA3AF' };
 
@@ -2270,7 +2274,9 @@ export default function MCareOrb() {
                 {agentLoading && agentMessages.length === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>Preparing your journey…</span>
+                    <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
+                      {(() => { const fn = user?.full_name?.trim()?.split(/\s+/)[0]; return fn ? `Welcome back, ${fn}.` : 'Ready when you are.'; })()}
+                    </span>
                   </div>
                 )}
 
@@ -2340,7 +2346,9 @@ export default function MCareOrb() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
                     <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
-                      {activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…'}
+                      {orbState === 'thinking'
+                        ? '● ● ●  Understanding your journey…'
+                        : (activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…')}
                     </span>
                   </div>
                 )}
