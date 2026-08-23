@@ -122,7 +122,7 @@ const PARTICLE_POSITIONS = [
 // Portia's explicit correction ("the logo belongs INSIDE the system, not
 // a sticker"), it's now centered inside the dark core, backlit by a soft
 // glow that tints with the orb's current state color.
-function Shell({ size, glowAlpha, color }) {
+function Shell({ size, glowAlpha, color, dots = 0 }) {
   return (
     <>
       {/* Outer pearl-metallic shell — fully opaque, never blends with the background */}
@@ -192,10 +192,27 @@ function Shell({ size, glowAlpha, color }) {
           aria-hidden="true"
           draggable={false}
           style={{
-            position: 'relative', width: '46%', height: '46%', objectFit: 'contain',
-            filter: `drop-shadow(0 0 4px ${color}cc)`, opacity: 0.96,
+            position: 'relative', width: dots > 0 ? '34%' : '46%', height: dots > 0 ? '34%' : '46%', objectFit: 'contain',
+            filter: `drop-shadow(0 0 4px ${color}cc)`, opacity: dots > 0 ? 0.7 : 0.96,
+            transition: 'width 0.3s, height 0.3s, opacity 0.3s',
           }}
         />
+        {/* Three amber "intelligent activity" pulses inside the dark core —
+            shown only for thinking / tool_executing (cfg.dots > 0), positioned
+            in the lower third of the core beneath the M emblem. A row, not a
+            spinner — discrete sequential pulses communicating real processing. */}
+        {dots > 0 && (
+          <div aria-hidden="true" style={{ position: 'absolute', bottom: '16%', left: 0, width: '100%', display: 'flex', justifyContent: 'center', gap: '9%', pointerEvents: 'none' }}>
+            {Array.from({ length: dots }).map((_, i) => (
+              <motion.span
+                key={i}
+                style={{ width: '11%', aspectRatio: '1', borderRadius: '50%', background: color, boxShadow: `0 0 4px ${color}` }}
+                animate={{ opacity: [0.25, 1, 0.25], scale: [0.7, 1.1, 0.7] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );
@@ -335,39 +352,13 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
         />
       ))}
 
-      {cfg.dots > 0 && (
-        <motion.div
-          aria-hidden="true"
-          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: cfg.dotOrbitDuration, repeat: Infinity, ease: 'linear' }}
-        >
-          {Array.from({ length: cfg.dots }).map((_, i) => {
-            const angle = (360 / cfg.dots) * i;
-            return (
-              <motion.span
-                key={i}
-                style={{
-                  position: 'absolute', top: '50%', left: '50%', width: dotSize, height: dotSize,
-                  marginTop: -dotSize / 2, marginLeft: -dotSize / 2, borderRadius: '50%',
-                  background: cfg.color, boxShadow: `0 0 4px ${cfg.color}`,
-                  transform: `rotate(${angle}deg) translate(${dotRadius}px) rotate(-${angle}deg)`,
-                }}
-                animate={{ opacity: [0.35, 1, 0.35] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.15 }}
-              />
-            );
-          })}
-        </motion.div>
-      )}
-
       <motion.div
         aria-hidden="true"
         style={{ position: 'absolute', width: '100%', height: '100%' }}
         animate={{ scale: cfg.coreScale }}
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} />
+        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} dots={cfg.dots || 0} />
       </motion.div>
 
       {cfg.notifyDot && (

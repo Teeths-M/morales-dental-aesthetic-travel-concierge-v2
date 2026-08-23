@@ -2061,7 +2061,7 @@ export default function MCareOrb() {
   const statusPill = paused
     ? { text: 'PAUSED', bg: '#FEF3C7', fg: '#92400E', dot: '#F59E0B' }
     : isOnline
-      ? { text: 'LIVE SESSION', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
+      ? { text: 'LIVE AGENT', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
       : { text: 'OFFLINE', bg: '#F3F4F6', fg: '#4B5563', dot: '#9CA3AF' };
 
   return (
@@ -2243,7 +2243,9 @@ export default function MCareOrb() {
                 {agentLoading && agentMessages.length === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>Preparing your journey…</span>
+                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>
+                      {(() => { const fn = user?.full_name?.trim()?.split(/\s+/)[0]; return fn ? `Welcome back, ${fn}.` : 'Ready when you are.'; })()}
+                    </span>
                   </div>
                 )}
 
@@ -2313,7 +2315,9 @@ export default function MCareOrb() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
                     <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>
-                      {activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…'}
+                      {orbState === 'thinking'
+                        ? '● ● ●  Understanding your journey…'
+                        : (activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…')}
                     </span>
                   </div>
                 )}
