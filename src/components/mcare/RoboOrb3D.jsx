@@ -22,9 +22,23 @@
  * Only mounted for hero-size instances (≥ 80px via LivingOrb, plus the
  * homepage hero via LivingMOrb) — the small 28/44px chat instances stay on
  * the CSS orb.
+ *
+ * 2026-08-23 fix: the pearl shell used to be a closed, un-cut sphere, which
+ * silently occluded the entire recessed core/bezel/M/glow assembly (a live
+ * render showed nothing but a bare gold ring around a plain pale disc — the
+ * bezel ring was the only thing whose radius/z happened to poke past the
+ * sphere's own front surface). The shell geometry now has a real cavity cut
+ * facing the camera (a rotated polar cap, sized to the bezel's own radius),
+ * plus a real procedural environment map (RoomEnvironment) so the
+ * metalness:1.0 gold surfaces actually reflect instead of rendering flat,
+ * and a real UnrealBloomPass instead of only additive-sprite "fake glow."
  */
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 const GOLD = 0xD4AF37;
 const GOLD_BRIGHT = 0xFFD700;
@@ -197,6 +211,27 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     renderer.toneMappingExposure = 1.15;
     mount.appendChild(renderer.domElement);
 
+    // Real environment map — without one, metalness:1.0 materials (the gold
+    // bezel/rim/rings) derive almost all their visible brightness from
+    // reflected environment light, not direct lighting, and render dull/flat
+    // under point/directional lights alone. RoomEnvironment is Three.js's own
+    // standard procedural studio env for exactly this (showcase-quality
+    // metal/clearcoat with no real HDRI asset available — no image-generation
+    // tool exists in this environment either).
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+
+    // Real bloom, replacing the additive-sprite-only "fake glow" every ring/
+    // core-glow/particle currently relies on. Threshold kept high-ish so only
+    // the genuinely emissive/additive elements bloom, not the matte pearl
+    // shell — a first-pass tuning, not a final answer; needs a real look on
+    // a real screen.
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.9, 0.5, 0.25);
+    composer.addPass(bloomPass);
+
     // ── dark gradient background (back plane) ──
     const bgTex = makeBackgroundTexture();
     const bgMat = new THREE.MeshBasicMaterial({ map: bgTex, depthWrite: false });
@@ -229,12 +264,27 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     const head = new THREE.Group();
     scene.add(head);
 
-    // Satin pearl-white shell (#F0F0F0)
+    // Satin pearl-white shell (#F0F0F0) — a REAL cavity is cut facing the
+    // camera, not a closed sphere. The camera looks down -z; a full sphere's
+    // own front surface at radius r sits at z = sqrt(1 - r^2), which is
+    // >=0.751 for every r <= 0.66 (the core disc's own radius) — in front of
+    // every "recessed" element below (all placed at flat z 0.74-0.9). A
+    // closed sphere there was silently hiding the entire core/bezel/M/glow
+    // assembly behind solid geometry — the bezel ring (radius 0.7, z=0.82)
+    // was the only thing that happened to poke past the sphere's local
+    // surface, which is exactly why a live render showed nothing but a gold
+    // ring around a plain pale disc. Cutting a real polar cap (capAngle =
+    // asin(0.7), matching the bezel's own radius) and rotating it to face +z
+    // instead of the sphere's default +y pole opens a genuine hole for the
+    // whole recessed assembly to actually be visible through.
+    const capAngle = Math.asin(0.7);
+    const pearlGeo = new THREE.SphereGeometry(1, 64, 64, 0, Math.PI * 2, capAngle, Math.PI - capAngle);
+    pearlGeo.rotateX(Math.PI / 2);
     const pearlMat = new THREE.MeshPhysicalMaterial({
       color: 0xEFEFEF, metalness: 0.0, roughness: 0.42,
       clearcoat: 0.5, clearcoatRoughness: 0.35, sheen: 0.5, sheenColor: 0xffffff,
     });
-    const pearl = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), pearlMat);
+    const pearl = new THREE.Mesh(pearlGeo, pearlMat);
     head.add(pearl);
 
     // Panel-line seams (thin rings suggesting modular construction)
@@ -458,13 +508,13 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
         flashMat.opacity = 0;
       }
 
-      renderer.render(scene, camera);
+      composer.render();
       raf = requestAnimationFrame(render3D);
     };
 
     if (reducedMotion) {
       coreGlowSpriteMat.opacity = 0.4;
-      renderer.render(scene, camera);
+      composer.render();
     } else {
       raf = requestAnimationFrame(render3D);
     }
@@ -472,6 +522,9 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     // ── cleanup ──
     return () => {
       cancelAnimationFrame(raf);
+      composer.dispose();
+      envRT.dispose();
+      pmrem.dispose();
       renderer.dispose();
       pGeo.dispose(); pMat.dispose(); pTex.dispose();
       glowTex.dispose(); coreGlowSpriteMat.dispose();
