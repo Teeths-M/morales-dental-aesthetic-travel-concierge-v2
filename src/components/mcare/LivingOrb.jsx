@@ -2,9 +2,9 @@
 /**
  * LivingOrb — M-Safe's visual presence. CSS + framer-motion, no new
  * dependency, no static "face" image — a pearl-metallic shell around a
- * dark glass core, a gold M badge, and a gold energy-ring halo that
- * brightens per state. A `state` prop swaps the animation config, never
- * the DOM shape, across eight honest states:
+ * dark glass core, a gold M emblem integrated into the core itself, and a
+ * gold energy-ring halo that brightens per state. A `state` prop swaps
+ * the animation config, never the DOM shape, across eight honest states:
  *
  * - idle:           very subtle breathing — nothing is happening.
  * - listening:      tight, fast pulse while the mic is actually recording
@@ -40,28 +40,39 @@
  *                    Same orb shape, never an error icon.
  *
  * Respects prefers-reduced-motion — falls back to a fully static version
- * of the same shell/badge/halo, no rings, no dots, no tilt.
+ * of the same shell/core/halo, no rings, no dots, no particles, no tilt.
  *
  * flashToken (Conversational Mode) is a one-shot addition on top of the
  * looping states above — a brief gold ring pulse confirming a real
  * barge-in just happened. An incrementing counter, not a boolean, so it
  * replays via a React key remount on every change.
  *
- * Desktop-only pointer-tilt parallax (a few restrained degrees of
- * rotateX/rotateY, springing back on mouse-leave) is gated behind
- * `(hover: hover) and (pointer: fine)` so it's inert on touch devices —
- * mobile device-motion/gyroscope parallax is a deliberate, separate,
- * device-tested follow-up, not built here.
+ * Parallax: desktop pointer-tilt (a few restrained degrees of
+ * rotateX/rotateY, springing back on mouse-leave), gated behind
+ * `(hover: hover) and (pointer: fine)`. A second, independent source
+ * feeds the same tilt state from `deviceorientation` — strictly
+ * best-effort: skipped entirely on iOS 13+ (which gates behind an
+ * explicit permission dialog we never proactively trigger just for
+ * opening a chat panel), calibrated from the first reading as a neutral
+ * baseline rather than a hardcoded angle, and clamped to the same small
+ * range as the pointer version.
  *
- * 2026-08-23: the face (blink/wink gold eyes) shipped 2026-08-12 is
- * removed again, this time for good — explicitly no eyes, no mouth, no
- * face anywhere on this orb. The dark glass-core/gold palette carries
- * over; the M mark is back, but as a small floating badge (not a
- * face-filling watermark, the approach already tried and reversed once).
+ * At size >= 80 (the header's hero instance only — not the 44px launcher
+ * or the 28-32px typing/greeting instances) the orb also gets a soft
+ * state-tinted base glow beneath it and a handful of restrained,
+ * independently-fading gold particles in the halo — both omitted under
+ * reduced motion (the base glow stays, static; particles don't).
+ *
+ * 2026-08-23, three passes: the face (blink/wink gold eyes) shipped
+ * 2026-08-12 is removed for good — no eyes, no mouth, no face anywhere on
+ * this orb. The M mark first came back as a floating badge overlapping
+ * the shell; Portia's explicit correction — "the logo belongs INSIDE the
+ * system," not a sticker — moved it to be centered and backlit inside the
+ * dark core itself, the same asset, no new image generated either time.
  * useBlinkState.js itself is untouched — LivingMOrb.jsx (the homepage
  * hero orb, a deliberately separate component) still uses it.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 const GOLD = '#D4AF37';
@@ -84,14 +95,32 @@ const STATE_CONFIG = {
   offline:        { ringCount: 1, duration: 2.8, ringScale: 1.12, ringOpacity: 0.12, coreScale: [1, 1.015, 1], glowAlpha: '22', color: GOLD },
 };
 
-// Pearl-metallic shell + dark glass core, shared by both the animated and
+// Fixed positions (percent of the orb's own box) scattered around the halo
+// zone, roughly ringing the shell — used only for the restrained particle
+// accent at size >= 80. A handful of static positions, not a particle
+// system: each dot independently fades in/out on its own slow timer.
+const PARTICLE_POSITIONS = [
+  { top: '0%', left: '48%' },
+  { top: '22%', left: '96%' },
+  { top: '78%', left: '92%' },
+  { top: '96%', left: '58%' },
+  { top: '70%', left: '2%' },
+  { top: '14%', left: '6%' },
+];
+
+// Pearl-metallic shell + dark glass core with the M emblem integrated
+// into the core itself, shared by both the animated and
 // prefers-reduced-motion branches so the two never visually drift apart.
 //
-// 2026-08-23 fix: the original shell used semi-transparent rgba() stops
-// fading toward 0 alpha at the edge — over this app's dark backgrounds
-// that blends into gray instead of reading as an opaque pearl sphere
-// (confirmed against a live screenshot). Opaque hex stops fix that for
-// good — the shell now reads pearl-white regardless of what's behind it.
+// 2026-08-23 fixes: (1) the shell's gradient used semi-transparent rgba()
+// stops fading toward 0 alpha at the edge — over this app's dark
+// backgrounds that blended into gray instead of reading as an opaque
+// pearl sphere (confirmed against a live screenshot). Opaque hex stops
+// fix that for good. (2) the M mark used to be a small badge floating at
+// the shell's bottom-left edge, its own circular background/border — per
+// Portia's explicit correction ("the logo belongs INSIDE the system, not
+// a sticker"), it's now centered inside the dark core, backlit by a soft
+// glow that tints with the orb's current state color.
 function Shell({ size, glowAlpha, color }) {
   return (
     <>
@@ -121,7 +150,9 @@ function Shell({ size, glowAlpha, color }) {
           filter: 'blur(1px)',
         }}
       />
-      {/* Dark glass core — inset to 60%/20% so the pearl rim stays clearly visible */}
+      {/* Dark glass core — inset to 60%/20% so the pearl rim stays clearly
+          visible. A flex container so the M emblem below sits centered
+          inside it, not floating off to one side. */}
       <div
         aria-hidden="true"
         style={{
@@ -129,31 +160,70 @@ function Shell({ size, glowAlpha, color }) {
           background: 'radial-gradient(circle at 32% 28%, rgba(56,64,82,0.95), rgba(6,10,16,0.98) 78%)',
           backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.16), inset 0 -3px 8px rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
         }}
-      />
-      {/* One small, asymmetric gloss highlight on the core — deliberately a single
-          off-center shape, never a symmetric pair, so it reads as glossy glass,
-          not eyes. */}
+      >
+        {/* Soft backlight glow behind the M — tints with the current state
+            color (e.g. amber during `alert`), the same signal driving the
+            halo rings, so the emblem itself reads as part of the system's
+            live state, not a static sticker. */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute', width: '72%', height: '72%', borderRadius: '50%',
+            background: `radial-gradient(circle, ${color}55, transparent 70%)`,
+            filter: 'blur(2px)',
+          }}
+        />
+        {/* One small, asymmetric gloss highlight — deliberately a single
+            off-center shape, never a symmetric pair, so it reads as glossy
+            glass, not eyes. */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute', width: '28%', height: '13%', top: '18%', left: '20%', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.20)', filter: 'blur(2px)',
+          }}
+        />
+        <img
+          src="/morales-m-mark.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          style={{
+            position: 'relative', width: '46%', height: '46%', objectFit: 'contain',
+            filter: `drop-shadow(0 0 4px ${color}cc)`, opacity: 0.96,
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
+// Restrained atmosphere for the large (header) instance only — a soft
+// state-tinted glow beneath the orb and a handful of independently-fading
+// gold particles in the halo. Never rendered below size 80 so the small
+// launcher/typing instances stay clean.
+function Atmosphere({ color, animated }) {
+  return (
+    <>
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', width: '17%', height: '8%', top: '30%', left: '30%', borderRadius: '50%',
-          background: 'rgba(255,255,255,0.20)', filter: 'blur(2px)',
+          position: 'absolute', width: '130%', height: '34%', bottom: '-10%', left: '-15%',
+          borderRadius: '50%', background: `radial-gradient(ellipse at center, ${color}33, transparent 72%)`,
+          filter: 'blur(6px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
-      <img
-        src="/morales-m-mark.png"
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-        style={{
-          position: 'absolute', width: '38%', height: '38%', bottom: '-4%', left: '-4%',
-          borderRadius: '50%', padding: '9%', boxSizing: 'border-box', objectFit: 'contain',
-          background: 'radial-gradient(circle at 35% 30%, #ffffff, #e9e0cb)',
-          border: `1px solid ${GOLD}88`,
-          boxShadow: '0 2px 5px rgba(0,0,0,0.4), 0 0 7px rgba(212,175,55,0.4)',
-        }}
-      />
+      {animated && PARTICLE_POSITIONS.map((p, i) => (
+        <motion.span
+          key={i}
+          aria-hidden="true"
+          style={{ position: 'absolute', top: p.top, left: p.left, width: 3, height: 3, borderRadius: '50%', background: GOLD, pointerEvents: 'none' }}
+          animate={{ opacity: [0.12, 0.55, 0.12] }}
+          transition={{ duration: 2.4 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+        />
+      ))}
     </>
   );
 }
@@ -183,10 +253,42 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
   };
   const handleMouseLeave = () => setTilt({ rx: 0, ry: 0 });
 
+  // Best-effort device-motion tilt — a second, independent source feeding
+  // the same `tilt` state as the pointer handler above. Deliberately
+  // skipped wherever a proactive permission prompt would be needed (iOS
+  // 13+'s DeviceOrientationEvent.requestPermission gate) — never adds an
+  // unprompted "Motion & Orientation Access" dialog just for opening a
+  // chat panel. Calibrates from the first reading as a neutral baseline
+  // (a phone's natural resting beta/gamma varies by how it's held) rather
+  // than assuming a fixed angle.
+  const baselineRef = useRef(null);
+  useEffect(() => {
+    if (reducedMotion || typeof window === 'undefined' || !window.DeviceOrientationEvent) return;
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') return;
+    const handler = (e) => {
+      const beta = typeof e.beta === 'number' ? e.beta : null;
+      const gamma = typeof e.gamma === 'number' ? e.gamma : null;
+      if (beta === null || gamma === null) return;
+      if (!baselineRef.current) {
+        baselineRef.current = { beta, gamma };
+        return;
+      }
+      const clamp = (v, max) => Math.max(-max, Math.min(max, v));
+      setTilt({
+        rx: clamp((beta - baselineRef.current.beta) * -0.4, 8),
+        ry: clamp((gamma - baselineRef.current.gamma) * 0.4, 8),
+      });
+    };
+    window.addEventListener('deviceorientation', handler);
+    return () => window.removeEventListener('deviceorientation', handler);
+  }, [reducedMotion]);
+
   if (reducedMotion) {
+    const cfgStatic = STATE_CONFIG[state] || STATE_CONFIG.idle;
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Shell size={size} glowAlpha={STATE_CONFIG[state]?.glowAlpha || STATE_CONFIG.idle.glowAlpha} color={STATE_CONFIG[state]?.color || GOLD} />
+        {size >= 80 && <Atmosphere color={cfgStatic.color} animated={false} />}
+        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} />
       </div>
     );
   }
@@ -203,6 +305,8 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
       animate={{ rotateX: tilt.rx, rotateY: tilt.ry }}
       transition={{ type: 'spring', stiffness: 160, damping: 16 }}
     >
+      {size >= 80 && <Atmosphere color={cfg.color} animated />}
+
       {flashToken > 0 && (
         <motion.div
           key={flashToken}

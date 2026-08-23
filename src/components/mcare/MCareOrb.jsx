@@ -1547,6 +1547,23 @@ export default function MCareOrb() {
                 ? 'acting'
                 : 'idle';
 
+  // Which capability-strip item (Analyze/Protect/Coordinate/Resolve) is
+  // currently "lit" — reuses orbState's own real signals only, never a
+  // fabricated one. Analyze = composing a reply, no tool call yet;
+  // Coordinate = a real backend tool call is in flight right now (the
+  // most literal "coordinating with a system" moment); Protect = the
+  // same active safety-block signal driving orbState's own `alert` ring;
+  // Resolve = delivering an answer (speaking) or having just completed
+  // something in the background (acting/proactive). idle/listening/
+  // offline light nothing — correctly, since nothing is actively being
+  // "done" in those states.
+  const activeCapability =
+    orbState === 'thinking' ? 'Analyze'
+    : orbState === 'tool_executing' ? 'Coordinate'
+    : orbState === 'alert' ? 'Protect'
+    : (orbState === 'speaking' || orbState === 'acting') ? 'Resolve'
+    : null;
+
   // Offline-prep: while offline, no new tool call can succeed anyway (no
   // network), so re-surface the most recent QR/maps token M-Care already
   // generated this session — a pure client-side re-render of real data the
@@ -2044,7 +2061,7 @@ export default function MCareOrb() {
   const statusPill = paused
     ? { text: 'PAUSED', bg: '#FEF3C7', fg: '#92400E', dot: '#F59E0B' }
     : isOnline
-      ? { text: 'LIVE AGENT', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
+      ? { text: 'LIVE SESSION', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
       : { text: 'OFFLINE', bg: '#F3F4F6', fg: '#4B5563', dot: '#9CA3AF' };
 
   return (
@@ -2158,22 +2175,36 @@ export default function MCareOrb() {
                   )}
                 </div>
 
-                {/* Capability row — decorative (matches the reference composition,
-                    no new interactive behavior invented). */}
+                {/* Capability row — each item lights up when it's the real,
+                    currently-active capability (see activeCapability above),
+                    never a fabricated highlight. No added "ACTIVE" text
+                    badge — a brighter fill/glow + bolder label is enough to
+                    read as a real state change without looking like a
+                    dashboard. */}
                 <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
                   {[
                     { icon: Sparkles, label: 'Analyze' },
                     { icon: Shield, label: 'Protect' },
                     { icon: Share2, label: 'Coordinate' },
                     { icon: CheckCircle2, label: 'Resolve' },
-                  ].map(({ icon: Icon, label }) => (
-                    <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <div style={{ width: 30, height: 30, borderRadius: '50%', border: '1px solid rgba(212,175,55,0.5)', background: 'rgba(212,175,55,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B8860B' }}>
-                        <Icon style={{ width: 15, height: 15 }} />
+                  ].map(({ icon: Icon, label }) => {
+                    const active = label === activeCapability;
+                    return (
+                      <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        <div style={{
+                          width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          border: active ? `1px solid ${GOLD}` : '1px solid rgba(212,175,55,0.5)',
+                          background: active ? 'rgba(212,175,55,0.22)' : 'rgba(212,175,55,0.08)',
+                          boxShadow: active ? `0 0 8px ${GOLD}88` : 'none',
+                          color: active ? '#8A6200' : '#B8860B',
+                          transition: 'all 0.25s ease',
+                        }}>
+                          <Icon style={{ width: 15, height: 15 }} />
+                        </div>
+                        <span style={{ fontSize: 10, color: active ? '#8A6200' : '#6B7280', fontWeight: active ? 700 : 500 }}>{label}</span>
                       </div>
-                      <span style={{ fontSize: 10, color: '#6B7280', fontWeight: 500 }}>{label}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -2212,12 +2243,7 @@ export default function MCareOrb() {
                 {agentLoading && agentMessages.length === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      {[0, 1, 2].map(i => (
-                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4AF37', display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
-                      ))}
-                    </div>
-                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>Opening your journey…</span>
+                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>Preparing your journey…</span>
                   </div>
                 )}
 
@@ -2286,11 +2312,6 @@ export default function MCareOrb() {
                 {(agentSending || activeRunningTool) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      {[0, 1, 2].map(i => (
-                        <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4AF37', display: 'inline-block', animation: `guideThink 1.2s ease-in-out ${i * 0.15}s infinite` }} />
-                      ))}
-                    </div>
                     <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>
                       {activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…'}
                     </span>
@@ -2375,7 +2396,6 @@ export default function MCareOrb() {
 
       <style>{`
         @keyframes orbBubbleIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-        @keyframes guideThink  { 0%,80%,100% { transform:scale(0.7); opacity:0.4; } 40% { transform:scale(1.2); opacity:1; } }
         @keyframes mcareBackdropIn { from { opacity:0; } to { opacity:1; } }
         @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
       `}</style>
