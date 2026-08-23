@@ -4,13 +4,18 @@
 // halo-ring/tilt/atmosphere system; this one is the site's general brand
 // mark living in the marketing hero, with no chat state to reflect — a
 // much narrower, presentational-only scope, not worth merging into one
-// component. Both render the same robot (RobotAvatar.jsx, real inline SVG)
-// so the two "living M" surfaces read as one identity.
+// component. Both render the same robot (RobotAvatarImage.jsx, Portia's
+// own real generated 3D-render photo) so the two "living M" surfaces read
+// as one identity.
 //
-// 2026-08-23: RobotAvatar.jsx replaced RoboOrb3D.jsx (a Three.js scene,
-// retired after three straight rounds of un-verifiable-from-this-checkout
-// WebGL tuning each produced a real visual defect) — deterministic SVG
-// markup instead of a lighting/bloom pipeline.
+// 2026-08-23, twice: first RobotAvatar.jsx (inline SVG) replaced
+// RoboOrb3D.jsx (a Three.js scene, retired after three straight rounds of
+// un-verifiable-from-this-checkout WebGL tuning each produced a real visual
+// defect) — deterministic SVG markup instead of a lighting/bloom pipeline.
+// Two rounds later, Portia supplied the actual generated image asset
+// (public/robot-avatar.png) and asked for the real render instead of a
+// drawn approximation — RobotAvatarImage.jsx renders that now, falling
+// back to the SVG only if the image file is ever missing.
 //
 // Behavior (deliberately scoped to what's cheap and honest — no fabricated
 // "AI thinking" claims, this is presentational only): RobotAvatar's own
@@ -23,7 +28,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BRAND } from '@/lib/brandTokens';
-import RobotAvatar from '@/components/mcare/RobotAvatar';
+import RobotAvatarImage from '@/components/mcare/RobotAvatarImage';
 
 const GOLD = BRAND.gold;
 
@@ -53,7 +58,7 @@ export default function LivingMOrb({ size = 64 }) {
       style={{ width: size, height: size, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       aria-hidden="true"
     >
-      <RobotAvatar size={size} color={GOLD} glowAlpha="45" animated={!reducedMotion} />
+      <RobotAvatarImage size={size} color={GOLD} glowAlpha="45" animated={!reducedMotion} />
     </motion.div>
   );
 }

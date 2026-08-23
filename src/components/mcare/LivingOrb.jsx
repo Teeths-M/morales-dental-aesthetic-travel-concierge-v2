@@ -1,9 +1,11 @@
 // @ts-nocheck — pre-existing arithmetic/symbol type gaps, matches sibling mcare components
 /**
- * LivingOrb — M-Safe's visual presence. The robot itself is real inline SVG
- * (`RobotAvatar.jsx`) — a pearl-metallic shell, a gold bezel framing a dark
- * visor, two glowing gold "eye" capsules, and a small gold "M" badge on the
- * shell. This file owns everything around that: state-driven halo rings,
+ * LivingOrb — M-Safe's visual presence. The robot itself is a real
+ * photorealistic 3D-render image (`RobotAvatarImage.jsx`, Portia's own
+ * generated asset — `public/robot-avatar.png`), not a drawing — a glossy
+ * white spherical shell, a black reflective visor, two glowing amber eyes,
+ * a gold visor rim, and a gold "M" earpiece badge. This file owns
+ * everything around that: state-driven halo rings,
  * parallax tilt, the flash ring, the notify dot, and a size≥80-only
  * atmosphere (base glow + a gold particle trail). A `state` prop swaps the
  * animation config, never the DOM shape, across eight honest states:
@@ -71,25 +73,25 @@
  * a floating M badge, moved inside the core, tried a visor band, reverted
  * to faceless again once a real Three.js hero orb (RoboOrb3D.jsx) landed
  * with an explicit "FACELESS by design" stance, then got real two-eye/
- * side-badge geometry once Portia supplied the actual target reference
- * image directly. That WebGL scene is now retired — three straight rounds
- * of tuning it each produced a real, visible defect (a bare ring around a
- * blank disc, a uniform amber wash-out, then "looks like the sun"), and
- * this checkout has no way to render WebGL to catch any of that before
- * Portia did. `RobotAvatar.jsx` (real inline SVG, deterministic markup, no
- * rendering pipeline to get wrong unseen) now renders the robot at every
- * size — 28px/44px/104px all show the same real design, just scaled; fine
- * detail like the badge letter naturally recedes at 28px, which is
- * expected. `Shell` below is a thin wrapper around it, keeping this file's
+ * side-badge geometry as an inline SVG (`RobotAvatar.jsx`) once Portia
+ * supplied a reference image directly — that WebGL scene was retired the
+ * same round for producing unverifiable, repeated defects. The SVG lasted
+ * two rounds before Portia supplied the actual generated image asset
+ * (`public/robot-avatar.png`) and asked for the real render, not a drawn
+ * approximation — `RobotAvatarImage.jsx` renders that now, at every size —
+ * 28px/44px/104px/220px all show the same real image, just scaled.
+ * `RobotAvatar.jsx` (the SVG) is kept only as a defensive fallback if the
+ * image file is ever missing, not as the primary design anymore. `Shell`
+ * below is a thin wrapper around `RobotAvatarImage`, keeping this file's
  * own state-driven halo/tilt/atmosphere machinery unchanged.
  * useBlinkState.js itself is untouched — LivingMOrb.jsx (the homepage
- * hero orb, a deliberately separate component) uses RobotAvatar too, but
- * without this file's own ring/tilt system (matches its own narrower,
+ * hero orb, a deliberately separate component) uses RobotAvatarImage too,
+ * but without this file's own ring/tilt system (matches its own narrower,
  * presentational-only scope).
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import RobotAvatar from '@/components/mcare/RobotAvatar';
+import RobotAvatarImage from '@/components/mcare/RobotAvatarImage';
 
 const GOLD = '#D4AF37';
 const AMBER = '#D97706';
@@ -126,12 +128,14 @@ const PARTICLE_POSITIONS = [
   { top: '92%', left: '72%' },
 ];
 
-// Thin wrapper around the real robot (RobotAvatar.jsx, inline SVG) — kept
-// as its own function so both call sites below (animated + reduced-motion)
-// stay simple, and so a future visual change only ever touches
-// RobotAvatar.jsx itself, never this file's state/tilt/atmosphere logic.
+// Thin wrapper around the real robot — kept as its own function so both
+// call sites below (animated + reduced-motion) stay simple, and so a future
+// visual change only ever touches RobotAvatarImage.jsx itself, never this
+// file's state/tilt/atmosphere logic. RobotAvatarImage.jsx renders Portia's
+// real photorealistic robot image (public/robot-avatar.png), falling back
+// to the inline-SVG RobotAvatar only if that file is ever missing.
 function Shell({ size, glowAlpha, color, dots = 0, animated = true }) {
-  return <RobotAvatar size={size} color={color} glowAlpha={glowAlpha} dots={dots} animated={animated} />;
+  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} dots={dots} animated={animated} />;
 }
 
 // Restrained atmosphere for the large (header) instance only — a soft
