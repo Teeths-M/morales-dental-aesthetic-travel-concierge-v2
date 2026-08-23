@@ -188,6 +188,12 @@ export default function MCareOrb() {
   // nothing more urgent (thinking/speaking/real mic listening) is already
   // happening — see LivingOrb.jsx's activityState mapping.
   const [inputFocused, setInputFocused] = useState(false);
+  // TEMPORARY, dev-only: forces the robot's activityState so each of the
+  // four states can be verified on demand instead of waiting for a narrow
+  // live-agent window. Rendered only under import.meta.env.DEV (compiled
+  // out of the production bundle entirely) — see the test-button row near
+  // the desktop robot column below.
+  const [testActivityOverride, setTestActivityOverride] = useState(null);
   const [dismissed,  setDismissed]   = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [struggleHint, setStruggleHint] = useState(null);
@@ -2480,7 +2486,42 @@ export default function MCareOrb() {
                       not forced into a square box like the small chrome
                       instances elsewhere in this file. ~320px per the
                       "about 300px wide on desktop" ask. */}
-                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} />
+                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} />
+                  {/* TEMPORARY, dev-only test panel — forces each robot
+                      activityState on demand so it can be visually
+                      verified without waiting for a narrow live-agent
+                      window (e.g. "speaking" only lasts a couple seconds).
+                      import.meta.env.DEV is Vite's own build-time flag —
+                      this entire block is compiled out of the production
+                      bundle, no separate flag/env var needed. Re-clicking
+                      the active button releases the override back to the
+                      real, computed state. */}
+                  {import.meta.env.DEV && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 14, width: '100%' }}>
+                      {[
+                        { key: 'idle', label: 'Idle' },
+                        { key: 'listening', label: 'Listen' },
+                        { key: 'thinking', label: 'Think' },
+                        { key: 'speaking', label: 'Speak' },
+                      ].map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          data-testid={`robot-test-${key}`}
+                          onClick={() => setTestActivityOverride(prev => (prev === key ? null : key))}
+                          style={{
+                            padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            border: `1px solid ${testActivityOverride === key ? GOLD : BORDER_DARK}`,
+                            background: testActivityOverride === key ? 'rgba(212,175,55,0.18)' : 'transparent',
+                            color: testActivityOverride === key ? GOLD : TEXT_MUTED_DARK,
+                            whiteSpace: 'nowrap', flexShrink: 0,
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px', textAlign: 'center' }}>
@@ -2511,7 +2552,7 @@ export default function MCareOrb() {
               <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${BORDER_DARK}`, flexShrink: 0, background: PANEL_BG }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                   <div style={{ flexShrink: 0 }}>
-                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} inputFocused={inputFocused} />
+                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>

@@ -89,16 +89,19 @@
  * but without this file's own ring/tilt system (matches its own narrower,
  * presentational-only scope).
  *
- * 2026-08-23, "alive AI agent" round: a new `activityState` — one of
- * 'idle' / 'listening' / 'thinking' / 'speaking' — is derived here from
- * the real `state` prop (still the full 8-value orbState above, untouched)
- * plus a new `inputFocused` prop, and handed to `Shell`/RobotAvatarImage.jsx
- * to drive its own live-activity overlays (blink, visor dots, waveform,
- * head tilt — see that file's doc comment for the visual design). This is
- * a pure mapping of already-real signals, not a second independent
- * computation: speaking/thinking/tool_executing/listening map straight
- * across, and a plain `idle` only reads as `listening` when the caller
- * also reports the chat input has real DOM focus — "the user is about to
+ * 2026-08-23, "alive AI agent" round (+ same-day hardening pass): a new
+ * `activityState` — one of 'idle' / 'listening' / 'thinking' / 'speaking'
+ * — is derived here from the real `state` prop (still the full 8-value
+ * orbState above, untouched) plus a new `inputFocused` prop, or forced by
+ * an `activityOverride` (MCareOrb.jsx's dev-only test buttons), and
+ * handed to `Shell`/RobotAvatarImage.jsx to drive its own live-activity
+ * overlays (visor dots, orbiting particles, an eye-glow pulse, a
+ * waveform, head tilt — see that file's doc comment for the visual
+ * design). This is a pure mapping of already-real signals, not a second
+ * independent computation: speaking/thinking/tool_executing/listening map
+ * straight across, and a plain `idle` only reads as `listening` when the
+ * caller also reports the chat input has real DOM focus — "the user is
+ * about to
  * type" is itself a real, honest signal, not a fabricated one.
  */
 import React, { useState, useEffect, useRef } from 'react';
@@ -161,7 +164,16 @@ function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true
 // plus a short comet-trail arc of independently-fading gold particles.
 // Never rendered below size 80 so the small launcher/typing instances stay
 // clean.
-function Atmosphere({ color, animated }) {
+function Atmosphere({ color, animated, activityState = 'idle' }) {
+  // The hologram spins noticeably faster while thinking — a real,
+  // visible "the system is working harder" signal, distinct from the
+  // face-level dots/orbit. Every other state keeps the normal slow spin.
+  // Still deliberately independent of the per-orbState ring PULSE speed
+  // in STATE_CONFIG above (e.g. `listening`'s fast 1.1s pulse for real
+  // active mic capture stays exactly as tuned).
+  const fast = activityState === 'thinking';
+  const ringADuration = fast ? 6 : 26;
+  const ringBDuration = fast ? 8 : 32;
   return (
     <>
       {/* Hologram platform — a wide soft base glow plus three concentric
@@ -176,12 +188,6 @@ function Atmosphere({ color, animated }) {
           filter: 'blur(7px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
-      {/* Slow rotation on the two ring outlines — a real hologram-platform
-          spin, not tied to any particular activityState, deliberately
-          independent of the existing per-orbState ring pulse speed above
-          (e.g. `listening`'s fast 1.1s pulse for real active mic capture
-          stays exactly as tuned — slowing it down for this broader
-          ambient effect would blunt a real urgency signal). */}
       <motion.div
         aria-hidden="true"
         style={{
@@ -189,7 +195,7 @@ function Atmosphere({ color, animated }) {
           borderRadius: '50%', border: `1.5px solid ${color}80`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
         }}
         animate={animated ? { rotate: 360 } : undefined}
-        transition={animated ? { duration: 26, repeat: Infinity, ease: 'linear' } : undefined}
+        transition={animated ? { duration: ringADuration, repeat: Infinity, ease: 'linear' } : undefined}
       />
       <motion.div
         aria-hidden="true"
@@ -198,7 +204,7 @@ function Atmosphere({ color, animated }) {
           borderRadius: '50%', border: `1.5px solid ${color}60`, zIndex: -1, pointerEvents: 'none',
         }}
         animate={animated ? { rotate: -360 } : undefined}
-        transition={animated ? { duration: 32, repeat: Infinity, ease: 'linear' } : undefined}
+        transition={animated ? { duration: ringBDuration, repeat: Infinity, ease: 'linear' } : undefined}
       />
       <div
         aria-hidden="true"
@@ -222,18 +228,26 @@ function Atmosphere({ color, animated }) {
   );
 }
 
-export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false }) {
+export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false, activityOverride = null }) {
   // Four-value face-activity state for RobotAvatarImage.jsx's own overlays
-  // (blink/visor-dots/waveform/tilt) — a pure mapping of the real 8-value
-  // `state` above, plus one additive real signal (`inputFocused`, only
-  // consulted when nothing more urgent is already happening). See this
-  // file's top doc comment for the full reasoning.
-  const activityState =
+  // (visor-dots/waveform/tilt/eye-glow) — a pure mapping of the real
+  // 8-value `state` above, plus one additive real signal (`inputFocused`,
+  // only consulted when nothing more urgent is already happening). See
+  // this file's top doc comment for the full reasoning.
+  //
+  // `activityOverride` (MCareOrb.jsx's dev-only Idle/Listen/Think/Speak
+  // test buttons) wins outright when set — a real, on-demand way to force
+  // and verify each state without needing to catch a narrow live-agent
+  // window (e.g. "speaking" only lasts a couple seconds after a reply
+  // lands). `null`/unset falls straight through to the real mapping below,
+  // completely unchanged.
+  const activityState = activityOverride || (
     state === 'speaking' ? 'speaking'
     : (state === 'thinking' || state === 'tool_executing') ? 'thinking'
     : state === 'listening' ? 'listening'
     : (inputFocused && state === 'idle') ? 'listening'
-    : 'idle';
+    : 'idle'
+  );
 
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -293,7 +307,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
     const cfgStatic = STATE_CONFIG[state] || STATE_CONFIG.idle;
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {size >= 80 && <Atmosphere color={cfgStatic.color} animated={false} />}
+        {size >= 80 && <Atmosphere color={cfgStatic.color} animated={false} activityState={activityState} />}
         <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} activityState={activityState} animated={false} naturalAspect={naturalAspect} />
       </div>
     );
@@ -311,7 +325,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
       animate={{ rotateX: tilt.rx, rotateY: tilt.ry }}
       transition={{ type: 'spring', stiffness: 160, damping: 16 }}
     >
-      {size >= 80 && <Atmosphere color={cfg.color} animated />}
+      {size >= 80 && <Atmosphere color={cfg.color} animated activityState={activityState} />}
 
       {flashToken > 0 && (
         <motion.div
