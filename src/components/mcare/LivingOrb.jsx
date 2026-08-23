@@ -143,26 +143,37 @@ function Shell({ size, glowAlpha, color, dots = 0, animated = true }) {
 function Atmosphere({ color, animated }) {
   return (
     <>
+      {/* Hologram platform — a wide soft base glow plus three concentric
+          ring outlines, brightened/thickened (widescreen-panel round) so it
+          reads as a real glowing dais under the robot, not a faint blur —
+          matching the reference image's own fairly prominent platform. */}
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', width: '130%', height: '34%', bottom: '-10%', left: '-15%',
-          borderRadius: '50%', background: `radial-gradient(ellipse at center, ${color}33, transparent 72%)`,
-          filter: 'blur(6px)', zIndex: -1, pointerEvents: 'none',
+          position: 'absolute', width: '150%', height: '38%', bottom: '-12%', left: '-25%',
+          borderRadius: '50%', background: `radial-gradient(ellipse at center, ${color}4a, transparent 74%)`,
+          filter: 'blur(7px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', width: '112%', height: '26%', bottom: '-6%', left: '-6%',
-          borderRadius: '50%', border: `1px solid ${color}55`, filter: 'blur(1.5px)', zIndex: -1, pointerEvents: 'none',
+          position: 'absolute', width: '124%', height: '30%', bottom: '-8%', left: '-12%',
+          borderRadius: '50%', border: `1.5px solid ${color}80`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', width: '96%', height: '20%', bottom: '-2%', left: '2%',
-          borderRadius: '50%', border: `1px solid ${color}40`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
+          position: 'absolute', width: '104%', height: '23%', bottom: '-3%', left: '-2%',
+          borderRadius: '50%', border: `1.5px solid ${color}60`, zIndex: -1, pointerEvents: 'none',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: '84%', height: '16%', bottom: '2%', left: '8%',
+          borderRadius: '50%', border: `1px solid ${color}45`, zIndex: -1, pointerEvents: 'none',
         }}
       />
       {animated && PARTICLE_POSITIONS.map((p, i) => (

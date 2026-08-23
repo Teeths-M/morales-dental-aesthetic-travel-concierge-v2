@@ -188,6 +188,18 @@ export default function MCareOrb() {
   const [struggleHint, setStruggleHint] = useState(null);
   const [expanded,   setExpanded]   = useState(false);
   const [agentUploading, setAgentUploading] = useState(false);
+  // Widescreen 3-column panel (>= 768px) vs. today's narrow stacked layout
+  // (< 768px) — same matchMedia + change-listener pattern already used
+  // throughout this app (LivingOrb.jsx's reducedMotion/canTilt).
+  const [isDesktopPanel, setIsDesktopPanel] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const onChange = () => setIsDesktopPanel(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   // Talk Mode — off by default, opt-in only. See the "Honest speaking pulse"
   // effect below: when off, behavior is byte-identical to before this was
   // added. { messageIndex, revealedWordCount, totalWordCount } while a
@@ -2084,6 +2096,311 @@ export default function MCareOrb() {
       ? { text: 'LIVE SESSION', bg: 'rgba(34,197,94,0.14)', fg: '#4ADE80', dot: '#22C55E' }
       : { text: 'OFFLINE', bg: 'rgba(156,163,175,0.14)', fg: '#D1D5DB', dot: '#9CA3AF' };
 
+  // ── Panel body pieces, shared verbatim between the desktop 3-column
+  // layout and the mobile stacked layout below (>= 768px vs. < 768px —
+  // see isDesktopPanel above). Each piece is the exact same JSX either
+  // layout already used before this split — extracted so the two arrangements
+  // can reuse it instead of drifting into two copies of the same logic. ──
+  const titleSubtitleBlock = (
+    <div style={{ minWidth: 0 }}>
+      <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT_LIGHT, lineHeight: 1.2 }}>
+        M-Safe<span style={{ color: GOLD, fontSize: 15, fontWeight: 800, marginLeft: 1 }}>+</span>
+      </p>
+      <p style={{ margin: 0, fontSize: 12, color: TEXT_MUTED_DARK }}>Morales Super Agent</p>
+    </div>
+  );
+
+  const headerControlsBlock = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+      {isConversationalModeSupported() && (
+        <button onClick={toggleConversationalMode}
+          title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
+          aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
+          style={{ background: conversationalMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+          {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
+        </button>
+      )}
+      {isSpeechSupported() && (
+        <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
+          style={{ background: talkMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+          {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
+        </button>
+      )}
+      {agentMessages.length > 0 && (
+        <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+          <RotateCcw style={{ width: 16, height: 16 }} />
+        </button>
+      )}
+      <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+        {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
+      </button>
+      <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+        <X style={{ width: 18, height: 18 }} />
+      </button>
+    </div>
+  );
+
+  const pillsRowBlock = (
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
+      </span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(108,71,255,0.16)', color: '#B4A2FF', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <Sparkles style={{ width: 12, height: 12 }} /> AI SUPER AGENTIC
+      </span>
+      {privateMode && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(99,102,241,0.16)', color: '#A5B4FC', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <Shield style={{ width: 12, height: 12 }} /> PRIVATE
+        </span>
+      )}
+      {responseLanguage && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(156,163,175,0.14)', color: '#D1D5DB', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+          {responseLanguage}
+        </span>
+      )}
+    </div>
+  );
+
+  // Capability row — each item lights up when it's the real, currently-active
+  // capability (see activeCapability above), never a fabricated highlight.
+  const capabilityRowBlock = (
+    <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+      {[
+        { icon: Sparkles, label: 'Analyze' },
+        { icon: Shield, label: 'Protect' },
+        { icon: Share2, label: 'Coordinate' },
+        { icon: CheckCircle2, label: 'Resolve' },
+      ].map(({ icon: Icon, label }) => {
+        const active = label === activeCapability;
+        return (
+          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: active ? `1px solid ${GOLD}` : '1px solid rgba(212,175,55,0.35)',
+              background: active ? 'rgba(212,175,55,0.24)' : 'rgba(212,175,55,0.08)',
+              boxShadow: active ? `0 0 8px ${GOLD}88` : 'none',
+              color: active ? '#F5D97A' : '#C9A227',
+              transition: 'all 0.25s ease',
+            }}>
+              <Icon style={{ width: 15, height: 15 }} />
+            </div>
+            <span style={{ fontSize: 10, color: active ? '#F5D97A' : TEXT_MUTED_DARK, fontWeight: active ? 700 : 500 }}>{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // The big scrolling area (journey tracker + greeting/messages/journey
+  // events/typing/offline banner) plus the interrupted-intent chip and smart
+  // suggestions — identical in both layouts. The input bar is deliberately
+  // NOT part of this block (see inputBarBlock below) so it can render as a
+  // single full-width row under the whole 3-column area on desktop.
+  const chatMain = (
+    <>
+      {agentMessages.length > 0 && (
+        <JourneyStageTracker messages={agentMessages} />
+      )}
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: DARK }}>
+        {agentMessages.length === 0 && !agentLoading && (
+          <>
+            {/* A small decorative "•••" accent above the greeting, echoing
+                the reference image's own mark — desktop-only so the mobile
+                layout stays byte-identical to before this split. Purely
+                visual, not a real carousel (nothing else here pages
+                through content). */}
+            {isDesktopPanel && (
+              <div style={{ display: 'flex', gap: 5, paddingLeft: 42, marginBottom: -2 }}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, opacity: 0.4 + i * 0.15 }} />
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
+              <McareAvatar size={32} />
+              <p style={{ margin: 0, fontSize: 13, color: TEXT_LIGHT, lineHeight: 1.55, background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>
+                {(() => {
+                  const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
+                  return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
+                })()}
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
+              {quickChips.map(c => (
+                <button key={c.label} onClick={c.run}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${BORDER_DARK}`, background: CARD_BG, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#D1D5DB', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <c.icon style={{ width: 14, height: 14 }} /> {c.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {agentLoading && agentMessages.length === 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
+            <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
+            <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
+              {(() => { const fn = user?.full_name?.trim()?.split(/\s+/)[0]; return fn ? `Welcome back, ${fn}.` : 'Ready when you are.'; })()}
+            </span>
+          </div>
+        )}
+
+        {agentMessages.map((m, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction
+              onChoice={
+                m.__distressConfirm
+                  ? (c) => handleDistressConfirm(c, m.__distressConfirm)
+                  // The "Location" attachment-menu prompt (handleLocationMenuClick,
+                  // this component) is client-synthesized too — routed by the same
+                  // marker-on-the-message-object pattern as __distressConfirm above,
+                  // never a text match, since the two chip labels are ones this
+                  // component itself just generated.
+                  : m.__locationShareChoice
+                    ? handleLocationShareChoice
+                  // The agent's own narrated surrounding-awareness offer (RULE,
+                  // m_care.jsonc) always uses this exact choices token — matched
+                  // on the literal text rather than a flag set at creation time,
+                  // since (unlike the distress prompt) this message is a real
+                  // agent reply arriving via subscribeToConversation, not
+                  // client-synthesized.
+                  : (m.role === 'assistant' && m.content?.includes('{{choices:Yes, watch my surroundings|No thanks}}'))
+                    ? handleSurroundingAwarenessConfirm
+                    // The agent's own narrated GPS-upgrade offer (LOCATION CONTEXT
+                    // rule, m_care.jsonc) is free text, not a fixed enum — a live
+                    // session showed it phrase the same underlying "grant GPS"
+                    // option differently across turns ("Yes, use my exact
+                    // location" one reply, "I'll share my GPS" the next), so this
+                    // checks the tapped choice's own text via
+                    // detectLocationConsentIntent rather than one hardcoded
+                    // message-level literal. An unrelated or declining option
+                    // never matches and falls through to sendAgentMessage as usual.
+                    : (c) => detectLocationConsentIntent(c) ? handleGpsUpgradeConfirm(c) : sendAgentMessage(c)
+              }
+              onRespond={sendAgentMessage}
+              revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
+              extraAudioUrl={voiceReplyAudioUrls[i]} />
+          </motion.div>
+        ))}
+
+        {/* Proactive M-Care updates — real JourneyEvent records, polled
+            every 20s, never spliced into agentMessages (see the hook
+            declarations above for why). Rendered in their own block
+            so real conversation indices (revealUpTo/extraAudioUrl,
+            both keyed by position in agentMessages) are never
+            disturbed. Oldest-first, matching normal chat reading order. */}
+        {[...journeyEvents].reverse().map((e) => (
+          <motion.div key={`je-${e.id}`}
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div style={{ fontSize: 10, color: TEXT_MUTED_DARK, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
+              M-Care checked in
+            </div>
+            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={PURPLE} showAvatar showMeta />
+          </motion.div>
+        ))}
+
+        {(agentSending || activeRunningTool) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
+            <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
+            <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
+              {orbState === 'thinking'
+                ? '● ● ●  Understanding your journey…'
+                : (activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…')}
+            </span>
+          </div>
+        )}
+
+        {/* Offline banner — kept as its own amber-on-dark warning treatment
+            (not re-themed to gold) so it stays distinct from the brand
+            accent and reads as "pay attention," matching this app's
+            established amber = warning convention elsewhere. */}
+        {!isOnline && (
+          <div style={{ borderRadius: 14, border: '1px solid rgba(253,230,138,0.35)', background: 'rgba(120,53,15,0.25)', padding: '10px 14px' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
+              {t('guide.offline_badge')}
+            </div>
+            {offlineArtifact ? (
+              <>
+                <p style={{ margin: '0 0 6px', fontSize: 12.5, color: '#FDE9C7' }}>
+                  Here's what I already prepared before the connection dropped:
+                </p>
+                <InlineQrBlock label={offlineArtifact.label} dest={offlineArtifact.dest} />
+              </>
+            ) : (
+              <p style={{ margin: 0, fontSize: 12.5, color: '#FDE9C7' }}>
+                I don't have anything saved for you yet this session. Ask me for directions or a QR code the next time you're connected, and I'll have it ready if you go offline again.
+              </p>
+            )}
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      <InterruptedIntentChip intents={interruptedIntents} onResume={handleResumeIntent} onDismiss={handleDismissIntent} />
+
+      <SmartInputSuggestions
+        text={input}
+        disabled={agentSending || agentUploading || !isOnline}
+        onApplyCorrection={(fixed) => setInput(fixed)}
+      />
+    </>
+  );
+
+  // Input — "clean, floating input bar," full-width across the very bottom
+  // of the panel on desktop (per the widescreen layout ask), and the last
+  // element of the single stacked column on mobile — same JSX either way.
+  const inputBarBlock = (
+    <div style={{ padding: '10px 14px', borderTop: `1px solid ${BORDER_DARK}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: PANEL_BG }}>
+      <AddImageMenu
+        variant="icon"
+        onDeviceFile={handleFileSelect}
+        onVaultClick={() => vaultRef.current?.open()}
+        onLocationClick={handleLocationMenuClick}
+        onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
+        disabled={agentSending || agentUploading}
+        uploading={agentUploading}
+      />
+      <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
+      <div style={{ position: 'relative', flex: 1 }}>
+        <GhostTextOverlay
+          typedText={input}
+          suggestion={ghostSuggestion}
+          matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT }}
+        />
+        <input
+          ref={chatInputRef}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
+          placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
+          style={{ width: '100%', background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT, outline: 'none', position: 'relative' }}
+        />
+      </div>
+      {isOnline && !conversationalMode && (
+        <VoiceMessageRecorder
+          disabled={agentSending || agentUploading}
+          onSend={handleVoiceMessage}
+          onError={handleVoiceMessageError}
+        />
+      )}
+      <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
+        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : BORDER_DARK, border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+      >
+        <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : TEXT_MUTED_DARK }} />
+      </button>
+    </div>
+  );
+
   return (
     <>
       {/* ── Floating orb + bubble ── */}
@@ -2127,310 +2444,78 @@ export default function MCareOrb() {
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
           style={{ transition: 'width 0.25s ease, height 0.25s ease',
-            width: expanded ? 'min(1160px, 96vw)' : 'min(440px, 94vw)',
+            // Widescreen 3-column layout at >= 768px (~1306px wide, a 16:5-ish
+            // ratio matching the reference image); the narrow stacked layout
+            // keeps its own pre-existing sizing below 768px, unchanged.
+            width: isDesktopPanel
+              ? (expanded ? 'min(1500px, 98vw)' : 'min(1306px, 96vw)')
+              : (expanded ? 'min(1160px, 96vw)' : 'min(440px, 94vw)'),
             background: PANEL_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 16,
             boxShadow: `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)`, display: 'flex', flexDirection: 'column',
-            height: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden' }}>
+            height: isDesktopPanel
+              ? (expanded ? '92vh' : 'min(80vh, 640px)')
+              : (expanded ? '94vh' : 'min(86vh, 720px)'),
+            overflow: 'hidden' }}>
 
-          {/* Header — the orb is now the dominant visual anchor (was 36px, buried
-              next to a thin row of text/buttons; now ~104px, a real hero element the
-              rest of the header is built around). Every control/pill from the prior
-              layout is preserved, just repositioned into a top-right cluster inside
-              the right column so nothing was dropped. Round 4: the whole panel
-              (this header included) went dark — see PANEL_BG/CARD_BG/BORDER_DARK
-              above and the `className="dark"` on the panel container, which also
-              re-themes MessageBubble/SafetyGateCard/JourneyStageTracker for free
-              via their existing Tailwind semantic tokens. */}
-          <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${BORDER_DARK}`, flexShrink: 0, background: PANEL_BG }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-              <div style={{ flexShrink: 0 }}>
-                <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT_LIGHT, lineHeight: 1.2 }}>
-                      M-Safe<span style={{ color: GOLD, fontSize: 15, fontWeight: 800, marginLeft: 1 }}>+</span>
-                    </p>
-                    <p style={{ margin: 0, fontSize: 12, color: TEXT_MUTED_DARK }}>Morales Super Agent</p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                    {isConversationalModeSupported() && (
-                      <button onClick={toggleConversationalMode}
-                        title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
-                        aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
-                        style={{ background: conversationalMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
-                        {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
-                      </button>
-                    )}
-                    {isSpeechSupported() && (
-                      <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
-                        style={{ background: talkMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
-                        {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
-                      </button>
-                    )}
-                    {agentMessages.length > 0 && (
-                      <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
-                        <RotateCcw style={{ width: 16, height: 16 }} />
-                      </button>
-                    )}
-                    <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
-                      {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
-                    </button>
-                    <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
-                      <X style={{ width: 18, height: 18 }} />
-                    </button>
-                  </div>
+          {isDesktopPanel ? (
+            <>
+              {/* Widescreen 3-column layout: robot | identity | chat/greeting,
+                  a full-width input bar along the bottom. Every piece here is
+                  the exact same JSX/logic the narrow mobile layout below
+                  uses too (titleSubtitleBlock/pillsRowBlock/
+                  capabilityRowBlock/headerControlsBlock/chatMain/
+                  inputBarBlock, all defined above, before this return) —
+                  only the arrangement differs. */}
+              <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+                  <LivingOrb state={orbState} size={220} flashToken={bargeInFlashToken} />
                 </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
-                  </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(108,71,255,0.16)', color: '#B4A2FF', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                    <Sparkles style={{ width: 12, height: 12 }} /> AI SUPER AGENTIC
-                  </span>
-                  {privateMode && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(99,102,241,0.16)', color: '#A5B4FC', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                      <Shield style={{ width: 12, height: 12 }} /> PRIVATE
-                    </span>
-                  )}
-                  {responseLanguage && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(156,163,175,0.14)', color: '#D1D5DB', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
-                      {responseLanguage}
-                    </span>
-                  )}
+                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px', textAlign: 'center' }}>
+                  {titleSubtitleBlock}
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>{pillsRowBlock}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>{capabilityRowBlock}</div>
                 </div>
 
-                {/* Capability row — each item lights up when it's the real,
-                    currently-active capability (see activeCapability above),
-                    never a fabricated highlight. No added "ACTIVE" text
-                    badge — a brighter fill/glow + bolder label is enough to
-                    read as a real state change without looking like a
-                    dashboard. Colors re-tuned (round 4) for the dark panel —
-                    the same active/inactive logic, just legible tones. */}
-                <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
-                  {[
-                    { icon: Sparkles, label: 'Analyze' },
-                    { icon: Shield, label: 'Protect' },
-                    { icon: Share2, label: 'Coordinate' },
-                    { icon: CheckCircle2, label: 'Resolve' },
-                  ].map(({ icon: Icon, label }) => {
-                    const active = label === activeCapability;
-                    return (
-                      <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                        <div style={{
-                          width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          border: active ? `1px solid ${GOLD}` : '1px solid rgba(212,175,55,0.35)',
-                          background: active ? 'rgba(212,175,55,0.24)' : 'rgba(212,175,55,0.08)',
-                          boxShadow: active ? `0 0 8px ${GOLD}88` : 'none',
-                          color: active ? '#F5D97A' : '#C9A227',
-                          transition: 'all 0.25s ease',
-                        }}>
-                          <Icon style={{ width: 15, height: 15 }} />
-                        </div>
-                        <span style={{ fontSize: 10, color: active ? '#F5D97A' : TEXT_MUTED_DARK, fontWeight: active ? 700 : 500 }}>{label}</span>
-                      </div>
-                    );
-                  })}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>{headerControlsBlock}</div>
+                  {chatMain}
                 </div>
               </div>
-            </div>
-          </div>
 
-          <>
-            {/* Journey stage tracker — reflects real case state from tool calls */}
-              {agentMessages.length > 0 && (
-                <JourneyStageTracker messages={agentMessages} />
-              )}
-
-              {/* Chat area — DARK (round 4). The message bubbles/safety cards/stage
-                  tracker below are unchanged files; they re-theme for free via the
-                  panel's own `className="dark"` and their existing Tailwind
-                  semantic tokens (bg-card/border-border/text-foreground etc.). */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: DARK }}>
-                {agentMessages.length === 0 && !agentLoading && (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
-                      <McareAvatar size={32} />
-                      <p style={{ margin: 0, fontSize: 13, color: TEXT_LIGHT, lineHeight: 1.55, background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>
-                        {(() => {
-                          const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
-                          return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
-                        })()}
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
-                      {quickChips.map(c => (
-                        <button key={c.label} onClick={c.run}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${BORDER_DARK}`, background: CARD_BG, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#D1D5DB', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                          <c.icon style={{ width: 14, height: 14 }} /> {c.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {agentLoading && agentMessages.length === 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
-                    <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
-                      {(() => { const fn = user?.full_name?.trim()?.split(/\s+/)[0]; return fn ? `Welcome back, ${fn}.` : 'Ready when you are.'; })()}
-                    </span>
+              {inputBarBlock}
+            </>
+          ) : (
+            <>
+              {/* Header — the orb is now the dominant visual anchor (was 36px, buried
+                  next to a thin row of text/buttons; now ~104px, a real hero element the
+                  rest of the header is built around). Every control/pill from the prior
+                  layout is preserved, just repositioned into a top-right cluster inside
+                  the right column so nothing was dropped. Round 4: the whole panel
+                  (this header included) went dark — see PANEL_BG/CARD_BG/BORDER_DARK
+                  above and the `className="dark"` on the panel container, which also
+                  re-themes MessageBubble/SafetyGateCard/JourneyStageTracker for free
+                  via their existing Tailwind semantic tokens. */}
+              <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${BORDER_DARK}`, flexShrink: 0, background: PANEL_BG }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                  <div style={{ flexShrink: 0 }}>
+                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} />
                   </div>
-                )}
-
-                {agentMessages.map((m, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction
-                      onChoice={
-                        m.__distressConfirm
-                          ? (c) => handleDistressConfirm(c, m.__distressConfirm)
-                          // The "Location" attachment-menu prompt (handleLocationMenuClick,
-                          // this component) is client-synthesized too — routed by the same
-                          // marker-on-the-message-object pattern as __distressConfirm above,
-                          // never a text match, since the two chip labels are ones this
-                          // component itself just generated.
-                          : m.__locationShareChoice
-                            ? handleLocationShareChoice
-                          // The agent's own narrated surrounding-awareness offer (RULE,
-                          // m_care.jsonc) always uses this exact choices token — matched
-                          // on the literal text rather than a flag set at creation time,
-                          // since (unlike the distress prompt) this message is a real
-                          // agent reply arriving via subscribeToConversation, not
-                          // client-synthesized.
-                          : (m.role === 'assistant' && m.content?.includes('{{choices:Yes, watch my surroundings|No thanks}}'))
-                            ? handleSurroundingAwarenessConfirm
-                            // The agent's own narrated GPS-upgrade offer (LOCATION CONTEXT
-                            // rule, m_care.jsonc) is free text, not a fixed enum — a live
-                            // session showed it phrase the same underlying "grant GPS"
-                            // option differently across turns ("Yes, use my exact
-                            // location" one reply, "I'll share my GPS" the next), so this
-                            // checks the tapped choice's own text via
-                            // detectLocationConsentIntent rather than one hardcoded
-                            // message-level literal. An unrelated or declining option
-                            // never matches and falls through to sendAgentMessage as usual.
-                            : (c) => detectLocationConsentIntent(c) ? handleGpsUpgradeConfirm(c) : sendAgentMessage(c)
-                      }
-                      onRespond={sendAgentMessage}
-                      revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
-                      extraAudioUrl={voiceReplyAudioUrls[i]} />
-                  </motion.div>
-                ))}
-
-                {/* Proactive M-Care updates — real JourneyEvent records, polled
-                    every 20s, never spliced into agentMessages (see the hook
-                    declarations above for why). Rendered in their own block
-                    so real conversation indices (revealUpTo/extraAudioUrl,
-                    both keyed by position in agentMessages) are never
-                    disturbed. Oldest-first, matching normal chat reading order. */}
-                {[...journeyEvents].reverse().map((e) => (
-                  <motion.div key={`je-${e.id}`}
-                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <div style={{ fontSize: 10, color: TEXT_MUTED_DARK, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
-                      M-Care checked in
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                      {titleSubtitleBlock}
+                      {headerControlsBlock}
                     </div>
-                    <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={PURPLE} showAvatar showMeta />
-                  </motion.div>
-                ))}
-
-                {(agentSending || activeRunningTool) && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
-                    <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
-                      {orbState === 'thinking'
-                        ? '● ● ●  Understanding your journey…'
-                        : (activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…')}
-                    </span>
+                    {pillsRowBlock}
+                    {capabilityRowBlock}
                   </div>
-                )}
-
-                {/* Offline banner — kept as its own amber-on-dark warning treatment
-                    (not re-themed to gold) so it stays distinct from the brand
-                    accent and reads as "pay attention," matching this app's
-                    established amber = warning convention elsewhere. */}
-                {!isOnline && (
-                  <div style={{ borderRadius: 14, border: '1px solid rgba(253,230,138,0.35)', background: 'rgba(120,53,15,0.25)', padding: '10px 14px' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
-                      {t('guide.offline_badge')}
-                    </div>
-                    {offlineArtifact ? (
-                      <>
-                        <p style={{ margin: '0 0 6px', fontSize: 12.5, color: '#FDE9C7' }}>
-                          Here's what I already prepared before the connection dropped:
-                        </p>
-                        <InlineQrBlock label={offlineArtifact.label} dest={offlineArtifact.dest} />
-                      </>
-                    ) : (
-                      <p style={{ margin: 0, fontSize: 12.5, color: '#FDE9C7' }}>
-                        I don't have anything saved for you yet this session. Ask me for directions or a QR code the next time you're connected, and I'll have it ready if you go offline again.
-                      </p>
-                    )}
-                  </div>
-                )}
-                <div ref={bottomRef} />
-              </div>
-
-              <InterruptedIntentChip intents={interruptedIntents} onResume={handleResumeIntent} onDismiss={handleDismissIntent} />
-
-              <SmartInputSuggestions
-                text={input}
-                disabled={agentSending || agentUploading || !isOnline}
-                onApplyCorrection={(fixed) => setInput(fixed)}
-              />
-              {/* Input — "clean, floating input bar," per the spec, now dark to match
-                  the rest of the panel. Send button stays gold when active (this
-                  app's one brand accent) rather than the prior purple, matching
-                  the dark-hardware read the rest of the panel now has. */}
-              <div style={{ padding: '10px 14px', borderTop: `1px solid ${BORDER_DARK}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: PANEL_BG }}>
-                <AddImageMenu
-                  variant="icon"
-                  onDeviceFile={handleFileSelect}
-                  onVaultClick={() => vaultRef.current?.open()}
-                  onLocationClick={handleLocationMenuClick}
-                  onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
-                  disabled={agentSending || agentUploading}
-                  uploading={agentUploading}
-                />
-                <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <GhostTextOverlay
-                    typedText={input}
-                    suggestion={ghostSuggestion}
-                    matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT }}
-                  />
-                  <input
-                    ref={chatInputRef}
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
-                    placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
-                    style={{ width: '100%', background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT, outline: 'none', position: 'relative' }}
-                  />
                 </div>
-                {isOnline && !conversationalMode && (
-                  <VoiceMessageRecorder
-                    disabled={agentSending || agentUploading}
-                    onSend={handleVoiceMessage}
-                    onError={handleVoiceMessageError}
-                  />
-                )}
-                <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
-                  style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : BORDER_DARK, border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
-                >
-                  <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : TEXT_MUTED_DARK }} />
-                </button>
               </div>
-          </>
+
+              {chatMain}
+              {inputBarBlock}
+            </>
+          )}
         </motion.div>
         </motion.div>
       )}
