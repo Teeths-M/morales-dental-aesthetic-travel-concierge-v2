@@ -4972,3 +4972,65 @@ test('KNOWLEDGE FRESHNESS: recall checks freshness/status before trusting a matc
   expect(recallSrc, 'recallMcareKnowledge must exclude only retracted records, not conflicted ones — a conflict must stay visible')
     .not.toMatch(/verification_status !== 'conflicted'/);
 });
+
+test('DISTRESS ESCALATION: voice messages are scanned for distress signals too, and a confirmed "Yes" always reaches a real emergency channel', () => {
+  // Portia's live report: a chest-pain message got ignored (unrelated
+  // tourism advice), and a later confirmed "Yes — send help now" tap
+  // produced a dead-end "trouble reaching help" message with no real
+  // escalation. Two real, independent bugs, both fixed here.
+  const orbSrc = read('src/components/mcare/MCareOrb.jsx');
+
+  // Bug 1: the distress check inside sendAgentMessage must run on every
+  // outgoing message, not just ones with no file attachment — a voice
+  // message's real transcript arrives with a non-empty fileUrls array and
+  // was silently skipping this check entirely before the fix.
+  const sendIdx = orbSrc.indexOf('const sendAgentMessage = useCallback');
+  expect(sendIdx, 'sendAgentMessage must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const distressCheckIdx = orbSrc.indexOf('const distressSignal = detectDistressSignal(q);', sendIdx);
+  expect(distressCheckIdx, 'the distress check must exist inside sendAgentMessage').toBeGreaterThan(-1);
+  expect(orbSrc, 'the old fileUrls-gated wrapper around the distress check must be gone')
+    .not.toMatch(/if \(!fileUrls\?\.length\) \{\s*\n\s*const distressSignal = detectDistressSignal\(q\);/);
+  const distressCheckWindow = orbSrc.slice(Math.max(sendIdx, distressCheckIdx - 900), distressCheckIdx);
+  expect(distressCheckWindow, 'the fix must be documented as deliberate, not an accidental removal')
+    .toMatch(/Deliberately NOT gated on `!fileUrls\?\.length`/);
+
+  const voiceIdx = orbSrc.indexOf('const handleVoiceMessage');
+  expect(voiceIdx, 'handleVoiceMessage must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const voiceBlock = orbSrc.slice(voiceIdx, orbSrc.indexOf('setAgentUploading(false)', voiceIdx) + 200);
+  expect(voiceBlock, 'handleVoiceMessage must still send the real transcript (not skip it) through sendAgentMessage')
+    .toMatch(/sendAgentMessage\(transcript \|\| '\[voice message\]', \[file_url\]\)/);
+
+  // Bug 2: a confirmed "Yes" whose two soft channels (ride + guardian) both
+  // fail must fall back to a real, universal, case-optional emergency
+  // channel — never leave the patient with only a suggestion to find a
+  // different button themselves.
+  const confirmIdx = orbSrc.indexOf('const handleDistressConfirm = useCallback');
+  expect(confirmIdx, 'handleDistressConfirm must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const confirmedGateIdx = orbSrc.indexOf('if (!confirmed) {', confirmIdx);
+  expect(confirmedGateIdx, 'the confirmed/declined gate must exist').toBeGreaterThan(-1);
+  const confirmEndIdx = orbSrc.indexOf("}, [bestLocation, activeCaseRecord, talkMode, user]);", confirmIdx);
+  expect(confirmEndIdx, 'handleDistressConfirm must end where expected, with user in its deps array').toBeGreaterThan(-1);
+  const confirmBlock = orbSrc.slice(confirmIdx, confirmEndIdx);
+
+  const sosCallIdx = confirmBlock.indexOf("base44.functions.invoke('triggerSOS',");
+  expect(sosCallIdx, 'a real triggerSOS fallback call must exist inside handleDistressConfirm')
+    .toBeGreaterThan(-1);
+  // Structural proof this can only ever fire after a real, deterministic
+  // traveler confirmation — never before the `if (!confirmed) { ...; return; }`
+  // early-exit, i.e. never on a decline or on the AI's own judgment.
+  expect(confirmedGateIdx)
+    .toBeLessThan(orbSrc.indexOf("base44.functions.invoke('triggerSOS',", confirmIdx));
+
+  expect(confirmBlock, 'trigger_type must be derived from the real signal category, never a hardcoded literal unrelated to it')
+    .toMatch(/trigger_type: ctx\?\.signal\?\.category === 'medical' \? 'ambulance' : 'police',/);
+  expect(confirmBlock, 'the SOS fallback must only ever run once both soft channels have genuinely failed')
+    .toMatch(/\} else \{[\s\S]{0,900}triggerSOS/);
+  expect(confirmBlock, 'the fallback response must be honest about which real channel was actually reached')
+    .toMatch(/I've sent an emergency alert straight to our safety team/);
+
+  // The location fallback for requestOnDemandRide: must supply a
+  // pickup_address when coordinates aren't available, rather than
+  // guaranteeing that call's own "pickup location is required" 400.
+  expect(confirmBlock, 'requestOnDemandRide must get a pickup_address fallback when no coordinates are available yet')
+    .toMatch(/pickup_address: pickupAddress,/);
+});

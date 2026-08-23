@@ -534,12 +534,20 @@ export default function MCareOrb() {
     const lat = bestLocation?.latitude ?? undefined;
     const lng = bestLocation?.longitude ?? undefined;
     const source = bestLocation?.source === 'gps' ? 'gps' : 'ip_geo';
+    // Real bug found live: requestOnDemandRide 400s (never dispatches) if
+    // neither coordinates NOR a manual pickup_address are present — GPS may
+    // not have resolved yet even though IP-geo already knows a city/country.
+    // Give it that fallback instead of guaranteeing a failure whenever
+    // precise location hasn't come in yet.
+    const locationLabel = [bestLocation?.city, bestLocation?.country].filter(Boolean).join(', ');
+    const pickupAddress = (lat == null && lng == null) ? (locationLabel || undefined) : undefined;
 
     const [rideOutcome, guardianOutcome] = await Promise.allSettled([
       base44.functions.invoke('requestOnDemandRide', {
         case_id: activeCaseRecord?.id,
         pickup_latitude: lat,
         pickup_longitude: lng,
+        pickup_address: pickupAddress,
         pickup_location_source: source,
         notes: `Distress signal (${ctx?.signal?.category || 'unknown'}): "${ctx?.text || ''}"`,
       }),
@@ -564,11 +572,37 @@ export default function MCareOrb() {
     } else if (guardianOk) {
       reply = "I've let your guardian know. I wasn't able to line up a driver right now, but I've flagged it for the team.";
     } else {
-      reply = "I'm having trouble reaching help right now. Please try again, or use the SOS option if this is urgent.";
+      // Real bug found live: both soft channels above genuinely require an
+      // existing CaseRecord (requestOnDemandRide 400s, notifyGuardianNow is
+      // skipped client-side entirely without one) — a patient still mid-
+      // intake who reports something urgent had NO real escalation path,
+      // only a suggestion to go find a different button themselves. Fall
+      // back automatically to the same universal, case-optional mechanism
+      // SOSDropdown.jsx already uses for triggerSOS — case_id/location are
+      // best-effort there too, only patient_email/trigger_type are required.
+      let sosOk = false;
+      try {
+        const sosRes = await base44.functions.invoke('triggerSOS', {
+          trigger_type: ctx?.signal?.category === 'medical' ? 'ambulance' : 'police',
+          case_id: activeCaseRecord?.id,
+          patient_email: user?.email,
+          patient_name: user?.full_name || activeCaseRecord?.client_name,
+          patient_phone: activeCaseRecord?.client_phone,
+          latitude: lat,
+          longitude: lng,
+          location_label: locationLabel || 'Unknown',
+          destination_country: activeCaseRecord?.procedure_country || bestLocation?.country,
+          is_silent: false,
+        });
+        sosOk = !sosRes?.data?.error;
+      } catch (_) { sosOk = false; }
+      reply = sosOk
+        ? "I couldn't line up a driver or reach your guardian, so I've sent an emergency alert straight to our safety team with your details — they've been notified and will act on this now."
+        : "I'm having real trouble reaching help through any channel right now. Please call your local emergency number directly if you can, or try the SOS button again.";
     }
     setAgentMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     if (talkMode) speakAncillary(reply, { rate: 0.9 });
-  }, [bestLocation, activeCaseRecord, talkMode]);
+  }, [bestLocation, activeCaseRecord, talkMode, user]);
 
   // A confirmed "Yes" on the agent's own narrated surrounding-awareness
   // offer ({{choices:...}} tap, matched on the exact literal choice text in
@@ -1489,13 +1523,19 @@ export default function MCareOrb() {
     // never reaches the real agent conversation, since sending a distress
     // cry to the booking/coordination agent as a normal question would be
     // the wrong response to it.
-    if (!fileUrls?.length) {
-      const distressSignal = detectDistressSignal(q);
-      if (distressSignal) {
-        setInput('');
-        handleDistressSignal(distressSignal, q);
-        return;
-      }
+    //
+    // Deliberately NOT gated on `!fileUrls?.length` — a real bug found live:
+    // a recorded voice message (handleVoiceMessage) calls this with its real
+    // transcript AND a non-empty fileUrls array, so a spoken "I have chest
+    // pain" was silently skipping this check entirely and reaching the real
+    // agent as ordinary text instead of triggering the welfare prompt.
+    // Scanning handleFileSelect's own fixed "I've uploaded: X" string here
+    // too is harmless — it never matches any distress phrase.
+    const distressSignal = detectDistressSignal(q);
+    if (distressSignal) {
+      setInput('');
+      handleDistressSignal(distressSignal, q);
+      return;
     }
 
     // Deterministic, client-side Voice & Privacy command layer — exact-phrase
