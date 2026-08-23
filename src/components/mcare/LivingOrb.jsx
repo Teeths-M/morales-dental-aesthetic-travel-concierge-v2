@@ -132,10 +132,12 @@ const PARTICLE_POSITIONS = [
 // call sites below (animated + reduced-motion) stay simple, and so a future
 // visual change only ever touches RobotAvatarImage.jsx itself, never this
 // file's state/tilt/atmosphere logic. RobotAvatarImage.jsx renders Portia's
-// real photorealistic robot image (public/robot-avatar.png), falling back
-// to the inline-SVG RobotAvatar only if that file is ever missing.
-function Shell({ size, glowAlpha, color, dots = 0, animated = true }) {
-  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} dots={dots} animated={animated} />;
+// real photorealistic robot image (a genuine alpha-transparent cutout at
+// src/assets/m-safe-robot-transparent.webp), falling back to the inline-SVG
+// RobotAvatar only if that file is ever missing. `naturalAspect` passes
+// through unchanged — see RobotAvatarImage's own doc comment.
+function Shell({ size, glowAlpha, color, dots = 0, animated = true, naturalAspect = false }) {
+  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} dots={dots} animated={animated} naturalAspect={naturalAspect} />;
 }
 
 // Restrained atmosphere for the large (header) instance only — a soft
@@ -193,7 +195,7 @@ function Atmosphere({ color, animated }) {
   );
 }
 
-export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 }) {
+export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false }) {
   const [reducedMotion, setReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -253,7 +255,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {size >= 80 && <Atmosphere color={cfgStatic.color} animated={false} />}
-        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} animated={false} />
+        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} animated={false} naturalAspect={naturalAspect} />
       </div>
     );
   }
@@ -299,7 +301,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0 })
         animate={{ scale: cfg.coreScale }}
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} dots={cfg.dots || 0} />
+        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} dots={cfg.dots || 0} naturalAspect={naturalAspect} />
       </motion.div>
 
       {cfg.notifyDot && (

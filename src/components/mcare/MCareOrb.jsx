@@ -2468,7 +2468,12 @@ export default function MCareOrb() {
                   only the arrangement differs. */}
               <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
                 <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-                  <LivingOrb state={orbState} size={220} flashToken={bargeInFlashToken} />
+                  {/* naturalAspect: the real robot photo isn't square
+                      (~1.16:1) — width-constrained with auto height here,
+                      not forced into a square box like the small chrome
+                      instances elsewhere in this file. ~320px per the
+                      "about 300px wide on desktop" ask. */}
+                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect />
                 </div>
 
                 <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px', textAlign: 'center' }}>
