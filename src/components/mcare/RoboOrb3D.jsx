@@ -1,16 +1,23 @@
 // @ts-nocheck
 /**
- * RoboOrb3D — the faceless 4D premium presence for M-Safe's hero instances.
+ * RoboOrb3D — the 4D premium robotic presence for M-Safe's hero instances.
  *
- * A real Three.js scene: a satin pearl-metallic spherical shell with subtle
- * segmented panel seams, a deep glossy black recessed inner core framed by
- * a specular gold bezel, an embossed Morales gold "M" emblem centered on
- * the core, five concentric glowing gold energy rings rippling outward at
- * the base, amber atmospheric particles, and cinematic studio lighting — all
- * on a deep charcoal-to-black gradient background.
+ * A real Three.js scene: a satin pearl-metallic spherical shell with a deep
+ * glossy black recessed visor framed by a specular gold bezel, two glowing
+ * gold "eye" light-bars on the visor, a Morales gold "M" badge on the shell
+ * itself (not inside the visor), five concentric glowing gold energy rings
+ * rippling outward at the base, ambient amber atmospheric particles plus a
+ * flowing comet-trail particle stream wrapping the lower shell, and
+ * cinematic studio lighting — all on a deep charcoal-to-black gradient
+ * background.
  *
- * FACELESS by design: no eyes, no visor, no mouth, no ears, no humanoid
- * face — an abstract premium AI instrument, not a robot head.
+ * 2026-08-23 fix, part 3: the two "eyes"/side "M" badge/comet trail above
+ * are a deliberate reversal of this file's earlier "FACELESS by design: no
+ * eyes, no visor, no mouth" stance. Portia supplied the actual target
+ * reference image directly this round (rather than a text description of
+ * one) — it unambiguously shows a two-eye visor face and a side M badge, so
+ * that concrete, current reference takes priority over the earlier
+ * text-only "faceless" interpretation of the same underlying design intent.
  *
  * Same { state, size, flashToken } props and 8-state model as LivingOrb:
  * idle / listening / thinking / tool_executing / speaking / acting / alert /
@@ -316,7 +323,7 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     // lighting/bloom brightened the scene they showed up as a distinct
     // crossing grid the reference image's clean, seamless shell doesn't have.
 
-    // ── recessed dark glass core (faceless — a single dark recess, no eyes) ──
+    // ── recessed dark glass visor (the eye capsules mount on this face below) ──
     const coreMat = new THREE.MeshPhysicalMaterial({
       color: 0x06070a, metalness: 0.35, roughness: 0.05,
       clearcoat: 1.0, clearcoatRoughness: 0.0,
@@ -356,24 +363,54 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     coreGlowSprite.position.set(0, 0.02, 0.9);
     head.add(coreGlowSprite);
 
-    // Morales gold "M" emblem on the core face
+    // Two glowing horizontal "eye" capsules on the visor — a friendly
+    // closed-eye/light-bar look, matching the reference image directly (see
+    // the top-of-file doc comment for the reversal note). Both eyes share
+    // one material (always identical), each gets its own backing glow
+    // sprite (reusing the same makeGlowTexture() billboard technique the
+    // core glow already uses) so bloom actually picks them up individually.
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0xFFC107, emissive: 0xFFB300, emissiveIntensity: 2.2, roughness: 0.25 });
+    const eyeGeo = new THREE.CapsuleGeometry(0.07, 0.22, 4, 12);
+    eyeGeo.rotateZ(Math.PI / 2);
+    const eyeGlowTex = makeGlowTexture();
+    const eyes = [-0.16, 0.16].map((x) => {
+      const eye = new THREE.Mesh(eyeGeo, eyeMat);
+      eye.position.set(x, -0.03, 0.78);
+      head.add(eye);
+      const glowMat = new THREE.SpriteMaterial({ map: eyeGlowTex, color: 0xffb300, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5 });
+      const glow = new THREE.Sprite(glowMat);
+      glow.scale.set(0.4, 0.28, 1);
+      glow.position.set(x, -0.03, 0.82);
+      head.add(glow);
+      return { glowMat };
+    });
+
+    // Side "M" badge on the pearl shell itself (not inside the visor) — a
+    // small gold-ringed disc, positioned and oriented flush against the
+    // shell's own curvature. PlaneGeometry/CircleGeometry face local +Z by
+    // default; Object3D.lookAt() points local -Z at its target, so aiming
+    // the badge back at the origin makes local +Z (the mesh-facing side)
+    // point outward along this point's own sphere normal — it reads as
+    // embedded in the shell rather than a decal floating in front of it.
     const mTex = makeMTexture();
     const mMat = new THREE.MeshBasicMaterial({ map: mTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-    const mEmblem = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.78), mMat);
-    mEmblem.position.set(0, 0.04, 0.77);
-    head.add(mEmblem);
-
-    // One small asymmetric gloss highlight on the core (glossy glass, NOT eyes)
-    const coreGloss = new THREE.Mesh(
-      new THREE.CircleGeometry(0.16, 24),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false })
-    );
-    coreGloss.position.set(-0.2, 0.22, 0.78);
-    head.add(coreGloss);
+    const badge = new THREE.Group();
+    const badgePos = new THREE.Vector3(-0.62, 0.05, 0.42);
+    badge.position.copy(badgePos);
+    badge.lookAt(0, 0, 0);
+    const badgeBackMat = new THREE.MeshPhysicalMaterial({ color: 0x0a0b0d, metalness: 0.3, roughness: 0.15, clearcoat: 1.0 });
+    const badgeBack = new THREE.Mesh(new THREE.CircleGeometry(0.16, 32), badgeBackMat);
+    badge.add(badgeBack);
+    const badgeRing = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.018, 12, 40), goldMat);
+    badge.add(badgeRing);
+    const mBadgePlane = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), mMat);
+    mBadgePlane.position.set(0, 0, 0.005);
+    badge.add(mBadgePlane);
+    head.add(badge);
 
     // Three amber "intelligent activity" pulses inside the core — shown only
     // for thinking / tool_executing (never faked). Positioned in the lower
-    // third of the core so they sit beneath the M emblem.
+    // third of the visor, beneath the eye capsules.
     const pulseMat = new THREE.MeshStandardMaterial({ color: 0xFFC107, emissive: 0xFFB300, emissiveIntensity: 3.0, roughness: 0.25 });
     const pulseGeo = new THREE.SphereGeometry(0.028, 16, 16);
     const pulses = [];
@@ -441,6 +478,43 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     const particles = new THREE.Points(pGeo, pMat);
     scene.add(particles);
 
+    // ── comet-trail particle stream (wraps the lower-left of the shell) ──
+    // A second, independent particle group riding a fixed arc — not the
+    // ambient upward drift above — matching the reference image's flowing
+    // gold streak. Freshness (near the "head" of the arc) reads brightest;
+    // the tail fades. PointsMaterial has no per-point opacity, so per-vertex
+    // color intensity stands in for it under additive blending (a dimmer
+    // color contributes less, reading as more transparent).
+    const TRAIL_COUNT = 30;
+    const trailPoint = (tt) => {
+      // Sweeps ~207° around the lower-left of the shell, dipping toward
+      // the base at the midpoint of the arc.
+      const ang = Math.PI * 0.55 + tt * Math.PI * 1.15;
+      const rx = 1.05, rz = 0.85;
+      return [Math.cos(ang) * rx, -0.35 - Math.sin(tt * Math.PI) * 0.75, Math.sin(ang) * rz];
+    };
+    const trailGeo = new THREE.BufferGeometry();
+    const trailPos = new Float32Array(TRAIL_COUNT * 3);
+    const trailCol = new Float32Array(TRAIL_COUNT * 3);
+    const trailT = new Float32Array(TRAIL_COUNT);
+    for (let i = 0; i < TRAIL_COUNT; i++) {
+      trailT[i] = i / TRAIL_COUNT;
+      const [x, y, z] = trailPoint(trailT[i]);
+      trailPos[i * 3] = x; trailPos[i * 3 + 1] = y; trailPos[i * 3 + 2] = z;
+      const fade = (1 - trailT[i]) * 0.9 + 0.05;
+      trailCol[i * 3] = fade; trailCol[i * 3 + 1] = fade * 0.76; trailCol[i * 3 + 2] = fade * 0.2;
+    }
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+    trailGeo.setAttribute('color', new THREE.BufferAttribute(trailCol, 3));
+    const trailTex = makeParticleTexture();
+    const trailMat = new THREE.PointsMaterial({
+      map: trailTex, size: 0.1, sizeAttenuation: true, transparent: true,
+      vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.9,
+    });
+    const trailParticles = new THREE.Points(trailGeo, trailMat);
+    scene.add(trailParticles);
+    let trailPhase = 0;
+
     // ── flash ring (barge-in) ──
     const flashMat = new THREE.MeshBasicMaterial({ color: 0xffc107, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
     const flashRing = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.03, 16, 64), flashMat);
@@ -474,7 +548,16 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
       const corePulse = 0.5 + Math.sin(t * (1.5 + cfg.core)) * 0.18;
       coreGlowSpriteMat.opacity = Math.min(0.55, 0.2 + cfg.core * 0.1) * corePulse;
       coreGlowSpriteMat.color = glowColor;
-      // M emblem brightness follows core glow gently
+      // eye glow follows core state color/intensity (shared material —
+      // both eyes always match; each glow sprite still gets its own tint/
+      // opacity so bloom picks up both individually)
+      eyeMat.emissiveIntensity = 1.6 + cfg.core * 0.5 + Math.sin(t * 2.2) * 0.4;
+      eyes.forEach(({ glowMat }) => {
+        glowMat.color = glowColor;
+        glowMat.opacity = Math.min(0.7, 0.3 + cfg.core * 0.12) * corePulse;
+      });
+      // side M badge brightness follows core glow gently (same formula the
+      // old centered emblem used, now applied to the side badge instead)
       mMat.opacity = 0.7 + Math.sin(t * 1.2) * 0.08 + (cfg.core > 2 ? 0.12 : 0);
       // bezel shimmer
       bezel.material.emissiveIntensity = 0.14 + Math.sin(t * 1.8) * 0.07;
@@ -522,6 +605,20 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
       pGeo.attributes.position.needsUpdate = true;
       pMat.opacity = 0.45 + Math.sin(t * 1.5) * 0.15 + 0.3;
 
+      // comet trail sweeps along its fixed arc
+      trailPhase = (trailPhase + dt * (0.12 + cfg.particle * 0.25)) % 1;
+      const trPosArr = trailGeo.attributes.position.array;
+      const trColArr = trailGeo.attributes.color.array;
+      for (let i = 0; i < TRAIL_COUNT; i++) {
+        const tt = (trailT[i] + trailPhase) % 1;
+        const [x, y, z] = trailPoint(tt);
+        trPosArr[i * 3] = x; trPosArr[i * 3 + 1] = y; trPosArr[i * 3 + 2] = z;
+        const fade = (1 - tt) * 0.9 + 0.05;
+        trColArr[i * 3] = fade; trColArr[i * 3 + 1] = fade * 0.76; trColArr[i * 3 + 2] = fade * 0.2;
+      }
+      trailGeo.attributes.position.needsUpdate = true;
+      trailGeo.attributes.color.needsUpdate = true;
+
       // flash pulse (barge-in)
       if (flashRef.current.active > 0) {
         flashRef.current.active = Math.max(0, flashRef.current.active - dt);
@@ -552,8 +649,12 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
       pmrem.dispose();
       renderer.dispose();
       pGeo.dispose(); pMat.dispose(); pTex.dispose();
+      trailGeo.dispose(); trailMat.dispose(); trailTex.dispose();
       glowTex.dispose(); coreGlowSpriteMat.dispose();
-      mMat.dispose(); mTex.dispose(); mEmblem.geometry.dispose();
+      mMat.dispose(); mTex.dispose(); mBadgePlane.geometry.dispose();
+      badgeBackMat.dispose(); badgeBack.geometry.dispose(); badgeRing.geometry.dispose();
+      eyeGeo.dispose(); eyeMat.dispose(); eyeGlowTex.dispose();
+      eyes.forEach(({ glowMat }) => glowMat.dispose());
       pulseGeo.dispose(); pulseMat.dispose();
       notifyMat.dispose(); notifyDot.geometry.dispose();
       pearlMat.dispose(); pearl.geometry.dispose();
@@ -561,7 +662,6 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
       coreTrough.geometry.dispose(); coreTrough.material.dispose();
       goldMat.dispose();
       bezel.geometry.dispose(); bezelInner.geometry.dispose();
-      coreGloss.geometry.dispose(); coreGloss.material.dispose();
       baseMat.dispose(); baseDisc.geometry.dispose(); baseRim.geometry.dispose();
       lightRings.forEach(r => { r.material.dispose(); r.geometry.dispose(); });
       flashMat.dispose(); flashRing.geometry.dispose();
