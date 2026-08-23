@@ -4488,29 +4488,56 @@ test('GPS REQUEST TIMEOUT: a hung requestGPS() call cannot leave "Getting your e
   // indefinitely (e.g. blocked by a Permissions-Policy restriction on a
   // preview iframe, the same class of gap that previously silently broke
   // mic/speech APIs in that exact context elsewhere in this project).
-  // triggerGpsUpgrade must arm its own client-side timeout so the pending
-  // state always resolves one way or another.
+  //
+  // The guarantee has since moved: requestGPS() itself is now a Promise
+  // that always resolves (never rejects, never hangs) via its own internal
+  // hard timeout — every caller gets the safety net for free instead of
+  // each one arming its own. triggerGpsUpgrade was converted to this new
+  // `await requestGPS()` pattern; triggerExactMapView/shareCurrentLocationNow
+  // haven't been converted yet and still rely on their own caller-side
+  // gpsRequestTimeoutRef/setTimeout — both real, both checked here.
+  const hookSrc = read('src/hooks/useAutoLocation.js');
+  const requestGpsIdx = hookSrc.indexOf('const requestGPS = useCallback');
+  expect(requestGpsIdx, 'requestGPS must be defined in useAutoLocation.js').toBeGreaterThan(-1);
+  const requestGpsEndIdx = hookSrc.indexOf('}, [prefs.locationPaused]);', requestGpsIdx);
+  expect(requestGpsEndIdx, 'requestGPS must end where expected').toBeGreaterThan(-1);
+  const requestGpsBlock = hookSrc.slice(requestGpsIdx, requestGpsEndIdx);
+  expect(requestGpsBlock, 'requestGPS must return a Promise so a caller can await a definitive result')
+    .toMatch(/return new Promise\(\(resolve\) => \{/);
+  expect(requestGpsBlock, 'requestGPS must arm its own internal hard timeout')
+    .toMatch(/const hardTimeoutId = setTimeout\(\(\) => \{/);
+  expect(requestGpsBlock, 'a fired hard timeout must still resolve the promise, never leave it hanging')
+    .toMatch(/resolve\(\{ success: false, error: 'timeout', errorCode: sandboxed \? 'sandbox_blocked' : 3 \}\);/);
+  // A hardTimeoutFired guard must exist so the timeout and the real
+  // getCurrentPosition callbacks can never both resolve the same promise.
+  const firedGuardCount = (requestGpsBlock.match(/if \(hardTimeoutFired\) return;/g) || []).length;
+  expect(firedGuardCount, 'the success callback, the error callback, and the timeout itself must each check hardTimeoutFired exactly once')
+    .toBe(3);
+
   const orbSrc = read('src/components/mcare/MCareOrb.jsx');
 
-  const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
-  expect(triggerIdx, 'triggerGpsUpgrade must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
-  const triggerEndIdx = orbSrc.indexOf('}, [requestGPS]);', triggerIdx);
-  expect(triggerEndIdx, 'triggerGpsUpgrade must end where expected').toBeGreaterThan(-1);
-  const triggerBlock = orbSrc.slice(triggerIdx, triggerEndIdx);
-  expect(triggerBlock, 'triggerGpsUpgrade must arm a real setTimeout safety net')
+  // triggerExactMapView still uses the old caller-side timeout pattern —
+  // real, unconverted, and still needs its own safety net.
+  const mapTriggerIdx = orbSrc.indexOf('const triggerExactMapView = useCallback');
+  expect(mapTriggerIdx, 'triggerExactMapView must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const mapTriggerEndIdx = orbSrc.indexOf('}, [requestGPS]);', mapTriggerIdx);
+  expect(mapTriggerEndIdx, 'triggerExactMapView must end where expected').toBeGreaterThan(-1);
+  const mapTriggerBlock = orbSrc.slice(mapTriggerIdx, mapTriggerEndIdx);
+  expect(mapTriggerBlock, 'triggerExactMapView must still arm its own caller-side timeout safety net')
     .toMatch(/gpsRequestTimeoutRef\.current\s*=\s*setTimeout\(/);
-  expect(triggerBlock, 'the timeout callback must only fire if the retry is still genuinely pending')
-    .toMatch(/if \(!pendingGpsRetryQueryRef\.current\) return;/);
-  expect(triggerBlock, 'a fired timeout must clear the pending ref so it cannot also double-fire later')
-    .toMatch(/pendingGpsRetryQueryRef\.current = null;/);
+  expect(mapTriggerBlock, 'the timeout callback must only fire if the exact-map-view request is still genuinely pending')
+    .toMatch(/if \(!pendingExactMapViewRef\.current\) return;/);
 
-  // The retry effect's real-resolution branches must clear the timeout so
-  // a normal grant/deny never ALSO triggers the stuck-state fallback.
-  const effectIdx = orbSrc.indexOf("if (gpsStatus === 'granted') {", triggerEndIdx);
-  expect(effectIdx, 'the retry effect must exist after triggerGpsUpgrade').toBeGreaterThan(-1);
-  const effectBlock = orbSrc.slice(effectIdx, orbSrc.indexOf('}, [gpsStatus, sendAgentMessage, agentSending]);', effectIdx));
-  const clearCount = (effectBlock.match(/clearGpsRequestTimeout\(\);/g) || []).length;
-  expect(clearCount, 'both the granted and denied/unavailable branches must clear the timeout').toBe(2);
+  // shareCurrentLocationNow — same still-unconverted caller-side pattern.
+  const shareTriggerIdx = orbSrc.indexOf('const shareCurrentLocationNow = useCallback');
+  expect(shareTriggerIdx, 'shareCurrentLocationNow must be defined in MCareOrb.jsx').toBeGreaterThan(-1);
+  const shareTriggerEndIdx = orbSrc.indexOf('}, [requestGPS, sendLocationPin, agentSending]);', shareTriggerIdx);
+  expect(shareTriggerEndIdx, 'shareCurrentLocationNow must end where expected').toBeGreaterThan(-1);
+  const shareTriggerBlock = orbSrc.slice(shareTriggerIdx, shareTriggerEndIdx);
+  expect(shareTriggerBlock, 'shareCurrentLocationNow must still arm its own caller-side timeout safety net')
+    .toMatch(/gpsRequestTimeoutRef\.current\s*=\s*setTimeout\(/);
+  expect(shareTriggerBlock, 'the timeout callback must only fire if the location-pin request is still genuinely pending')
+    .toMatch(/if \(!pendingLocationPinRef\.current\) return;/);
 });
 
 test('LOCATION PAUSE BYPASS: an explicit GPS request is never silently vetoed by an unrelated background-tracking pause flag', () => {
@@ -4527,8 +4554,8 @@ test('LOCATION PAUSE BYPASS: an explicit GPS request is never silently vetoed by
   const hookSrc = read('src/hooks/useAutoLocation.js');
   expect(hookSrc, 'requestGPS must accept a force parameter (plus an additive options param for a maximumAge override — see EXACT LOCATION SATELLITE MAP)')
     .toMatch(/const requestGPS = useCallback\(\(force = false, options = \{\}\) => \{/);
-  expect(hookSrc, 'the pause check must be gated on !force, not unconditional')
-    .toMatch(/if \(prefs\.locationPaused && !force\) return;/);
+  expect(hookSrc, 'the pause check must be gated on !force, not unconditional, and must still resolve the promise rather than hang')
+    .toMatch(/if \(prefs\.locationPaused && !force\) \{\s*resolve\(\{ success: false, error: 'paused', errorCode: 'paused' \}\);\s*return;\s*\}/);
 
   const orbSrc = read('src/components/mcare/MCareOrb.jsx');
   const triggerIdx = orbSrc.indexOf('const triggerGpsUpgrade = useCallback');
@@ -4586,10 +4613,11 @@ test('LOCATION SHARE RACE: the two pending-GPS flows (a typed-question retry, a 
     .toMatch(/gpsLocationRef\.current\?\.latitude/);
 
   // requestGPS() itself must not allow two overlapping calls (the structural
-  // root cause enabling several caller-side races) — a reentrancy guard.
+  // root cause enabling several caller-side races) — a reentrancy guard that
+  // still resolves the promise (never leaves an overlapping caller hanging).
   const hookSrc = read('src/hooks/useAutoLocation.js');
   expect(hookSrc, 'requestGPS must guard against a second call while one is already in flight')
-    .toMatch(/if \(gpsInFlightRef\.current\) return;/);
+    .toMatch(/if \(gpsInFlightRef\.current\) \{\s*resolve\(\{ success: false, error: 'already_in_flight', errorCode: 'already_in_flight' \}\);\s*return;\s*\}/);
 
   // A third GPS-triggered flow (a deterministic "show my exact location on
   // Google Maps" request) joined the same race-prone territory — it must
