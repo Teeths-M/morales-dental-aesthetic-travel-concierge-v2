@@ -86,25 +86,59 @@ const STATE_CONFIG = {
 
 // Pearl-metallic shell + dark glass core, shared by both the animated and
 // prefers-reduced-motion branches so the two never visually drift apart.
+//
+// 2026-08-23 fix: the original shell used semi-transparent rgba() stops
+// fading toward 0 alpha at the edge — over this app's dark backgrounds
+// that blends into gray instead of reading as an opaque pearl sphere
+// (confirmed against a live screenshot). Opaque hex stops fix that for
+// good — the shell now reads pearl-white regardless of what's behind it.
 function Shell({ size, glowAlpha, color }) {
   return (
     <>
+      {/* Outer pearl-metallic shell — fully opaque, never blends with the background */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
-          background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.96), rgba(232,227,217,0.55) 42%, rgba(198,193,183,0.32) 72%, rgba(176,171,161,0.22) 100%)',
-          border: '1px solid rgba(255,255,255,0.5)',
-          boxShadow: `0 0 ${Math.round(size * 0.5)}px ${color}${glowAlpha}, inset 0 1px 1px rgba(255,255,255,0.6)`,
+          background: 'radial-gradient(circle at 30% 24%, #ffffff 0%, #f5f1e8 38%, #d9d3c4 68%, #b8b2a0 100%)',
+          boxShadow: `0 0 ${Math.round(size * 0.5)}px ${color}${glowAlpha}, inset 0 1px 1px rgba(255,255,255,0.9)`,
         }}
       />
+      {/* Thin rim-light ring — light catching the edge of the sphere */}
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', width: '68%', height: '68%', top: '16%', left: '16%', borderRadius: '50%',
-          background: 'radial-gradient(circle at 35% 32%, rgba(48,56,70,0.92), rgba(8,12,18,0.97) 75%)',
+          position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
+          border: '1.5px solid rgba(255,255,255,0.85)', boxShadow: '0 0 6px rgba(255,255,255,0.55)',
+        }}
+      />
+      {/* Specular highlight — a distinct glossy pop, not baked into the base gradient */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: '30%', height: '20%', top: '13%', left: '19%', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,255,255,0) 72%)',
+          filter: 'blur(1px)',
+        }}
+      />
+      {/* Dark glass core — inset to 60%/20% so the pearl rim stays clearly visible */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: '60%', height: '60%', top: '20%', left: '20%', borderRadius: '50%',
+          background: 'radial-gradient(circle at 32% 28%, rgba(56,64,82,0.95), rgba(6,10,16,0.98) 78%)',
           backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.16), inset 0 -3px 8px rgba(0,0,0,0.45)',
+        }}
+      />
+      {/* One small, asymmetric gloss highlight on the core — deliberately a single
+          off-center shape, never a symmetric pair, so it reads as glossy glass,
+          not eyes. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: '17%', height: '8%', top: '30%', left: '30%', borderRadius: '50%',
+          background: 'rgba(255,255,255,0.20)', filter: 'blur(2px)',
         }}
       />
       <img
@@ -115,7 +149,7 @@ function Shell({ size, glowAlpha, color }) {
         style={{
           position: 'absolute', width: '38%', height: '38%', bottom: '-4%', left: '-4%',
           borderRadius: '50%', padding: '9%', boxSizing: 'border-box', objectFit: 'contain',
-          background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.97), rgba(233,224,203,0.9))',
+          background: 'radial-gradient(circle at 35% 30%, #ffffff, #e9e0cb)',
           border: `1px solid ${GOLD}88`,
           boxShadow: '0 2px 5px rgba(0,0,0,0.4), 0 0 7px rgba(212,175,55,0.4)',
         }}

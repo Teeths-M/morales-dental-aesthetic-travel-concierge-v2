@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LocationPermissionGate from './LocationPermissionGate';
@@ -2094,51 +2094,89 @@ export default function MCareOrb() {
             boxShadow: '0 24px 64px rgba(15,23,42,0.28)', display: 'flex', flexDirection: 'column',
             height: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden' }}>
 
-          {/* Header */}
-          <div style={{ padding: '12px 14px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, background: '#fff' }}>
-            <LivingOrb state={orbState} size={36} flashToken={bargeInFlashToken} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
-              <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Morales Super Agent</p>
+          {/* Header — the orb is now the dominant visual anchor (was 36px, buried
+              next to a thin row of text/buttons; now ~104px, a real hero element the
+              rest of the header is built around). Every control/pill from the prior
+              layout is preserved, just repositioned into a top-right cluster inside
+              the right column so nothing was dropped. */}
+          <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid #E5E7EB', flexShrink: 0, background: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div style={{ flexShrink: 0 }}>
+                <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
+                    <p style={{ margin: 0, fontSize: 12, color: '#6B7280' }}>Morales Super Agent</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                    {isConversationalModeSupported() && (
+                      <button onClick={toggleConversationalMode}
+                        title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
+                        aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
+                        style={{ background: conversationalMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
+                        {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
+                      </button>
+                    )}
+                    {isSpeechSupported() && (
+                      <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
+                        style={{ background: talkMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
+                        {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
+                      </button>
+                    )}
+                    {agentMessages.length > 0 && (
+                      <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+                        <RotateCcw style={{ width: 16, height: 16 }} />
+                      </button>
+                    )}
+                    <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+                      {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
+                    </button>
+                    <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+                      <X style={{ width: 18, height: 18 }} />
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(108,71,255,0.10)', color: PURPLE, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    <Sparkles style={{ width: 12, height: 12 }} /> AI SUPER AGENTIC
+                  </span>
+                  {privateMode && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EEF2FF', color: '#3730A3', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      <Shield style={{ width: 12, height: 12 }} /> PRIVATE
+                    </span>
+                  )}
+                  {responseLanguage && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', background: '#F3F4F6', color: '#4B5563', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                      {responseLanguage}
+                    </span>
+                  )}
+                </div>
+
+                {/* Capability row — decorative (matches the reference composition,
+                    no new interactive behavior invented). */}
+                <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+                  {[
+                    { icon: Sparkles, label: 'Analyze' },
+                    { icon: Shield, label: 'Protect' },
+                    { icon: Share2, label: 'Coordinate' },
+                    { icon: CheckCircle2, label: 'Resolve' },
+                  ].map(({ icon: Icon, label }) => (
+                    <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', border: '1px solid rgba(212,175,55,0.5)', background: 'rgba(212,175,55,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B8860B' }}>
+                        <Icon style={{ width: 15, height: 15 }} />
+                      </div>
+                      <span style={{ fontSize: 10, color: '#6B7280', fontWeight: 500 }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
-            </span>
-            {privateMode && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EEF2FF', color: '#3730A3', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                <Shield style={{ width: 12, height: 12 }} /> PRIVATE
-              </span>
-            )}
-            {responseLanguage && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', background: '#F3F4F6', color: '#4B5563', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
-                {responseLanguage}
-              </span>
-            )}
-            {isConversationalModeSupported() && (
-              <button onClick={toggleConversationalMode}
-                title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
-                aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
-                style={{ background: conversationalMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
-                {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
-              </button>
-            )}
-            {isSpeechSupported() && (
-              <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
-                style={{ background: talkMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
-                {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
-              </button>
-            )}
-            {agentMessages.length > 0 && (
-              <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
-                <RotateCcw style={{ width: 16, height: 16 }} />
-              </button>
-            )}
-            <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
-              {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
-            </button>
-            <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
-              <X style={{ width: 18, height: 18 }} />
-            </button>
           </div>
 
           <>
