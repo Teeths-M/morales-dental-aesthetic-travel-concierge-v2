@@ -2,11 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { Send } from 'lucide-react';
 import MessageBubble from '@/components/mcare-agent/MessageBubble';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
+import GhostTextOverlay from '@/components/mcare-agent/GhostTextOverlay';
+import { useGhostTextSuggestion } from '@/hooks/useGhostTextSuggestion';
+import { buildAcceptedText } from '@/lib/ghostTextSuggestion';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import { BackButton } from '@/components/nav/BackButton';
@@ -29,6 +33,7 @@ export default function MCareAgent() {
   const [loadingConvos, setLoadingConvos] = useState(true);
   const messagesEndRef = useRef(null);
   const vaultRef = useRef(null);
+  const chatInputRef = useRef(null);
 
   // Load existing conversations
   useEffect(() => {
@@ -159,7 +164,19 @@ export default function MCareAgent() {
       : "I need a little more time to think about this before we proceed.");
   };
 
+  const { suggestion: ghostSuggestion, clearSuggestion: clearGhostSuggestion } = useGhostTextSuggestion({
+    text: input,
+    disabled: isSending || isUploading,
+    inputRef: chatInputRef,
+  });
+
   const handleKeyDown = (e) => {
+    if (e.key === 'Tab' && ghostSuggestion) {
+      e.preventDefault();
+      setInput(buildAcceptedText(input, ghostSuggestion));
+      clearGhostSuggestion();
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -252,7 +269,6 @@ export default function MCareAgent() {
           <SmartInputSuggestions
             text={input}
             disabled={isSending || isUploading}
-            onPick={(p) => setInput(input + ' ' + p)}
             onApplyCorrection={(fixed) => setInput(fixed)}
           />
           <div className="max-w-3xl mx-auto w-full px-4 py-3 flex items-end gap-2">
@@ -264,15 +280,23 @@ export default function MCareAgent() {
               uploading={isUploading}
             />
             <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: isSending || isUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
-              placeholder={isUploading ? "Uploading document…" : "Tell M-Care what you're considering…"}
-              disabled={isSending || isUploading}
-              className="flex-1"
-            />
+            <div className="relative flex-1">
+              <GhostTextOverlay
+                typedText={input}
+                suggestion={ghostSuggestion}
+                matchClassName={cn('h-9 rounded-md px-3 py-1 text-base md:text-sm')}
+              />
+              <Input
+                ref={chatInputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: isSending || isUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
+                placeholder={isUploading ? "Uploading document…" : "Tell M-Care what you're considering…"}
+                disabled={isSending || isUploading}
+                className="w-full"
+              />
+            </div>
             <Button onClick={sendMessage} disabled={(!input.trim() && !isUploading) || isSending || isUploading} size="icon" className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
               <Send className="w-4 h-4" />
             </Button>

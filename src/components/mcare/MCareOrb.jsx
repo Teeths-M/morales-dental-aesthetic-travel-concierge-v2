@@ -30,6 +30,9 @@ import MessageBubble, { InlineQrBlock } from '@/components/mcare-agent/MessageBu
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
 import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
+import GhostTextOverlay from '@/components/mcare-agent/GhostTextOverlay';
+import { useGhostTextSuggestion } from '@/hooks/useGhostTextSuggestion';
+import { buildAcceptedText } from '@/lib/ghostTextSuggestion';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
 import { isSystemPaused } from '@/lib/systemPause';
@@ -204,6 +207,7 @@ export default function MCareOrb() {
   const bottomRef = useRef(null);
   const vaultRef = useRef(null);
   const responseLanguageRef = useRef(null);
+  const chatInputRef = useRef(null);
 
   // Refs mirroring frequently-changing state for use inside the continuous
   // recognition effect's callbacks, which must NOT restart the whole
@@ -1905,7 +1909,19 @@ export default function MCareOrb() {
     });
   };
 
+  const { suggestion: ghostSuggestion, clearSuggestion: clearGhostSuggestion } = useGhostTextSuggestion({
+    text: input,
+    disabled: agentSending || agentUploading || !isOnline,
+    inputRef: chatInputRef,
+  });
+
   const handleKeyDown = (e) => {
+    if (e.key === 'Tab' && ghostSuggestion) {
+      e.preventDefault();
+      setInput(buildAcceptedText(input, ghostSuggestion));
+      clearGhostSuggestion();
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(); }
   };
 
@@ -2242,7 +2258,6 @@ export default function MCareOrb() {
               <SmartInputSuggestions
                 text={input}
                 disabled={agentSending || agentUploading || !isOnline}
-                onPick={(p) => setInput(input + ' ' + p)}
                 onApplyCorrection={(fixed) => setInput(fixed)}
               />
               {/* Input */}
@@ -2257,14 +2272,22 @@ export default function MCareOrb() {
                   uploading={agentUploading}
                 />
                 <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
-                <input
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
-                  placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
-                  style={{ flex: 1, background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none' }}
-                />
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <GhostTextOverlay
+                    typedText={input}
+                    suggestion={ghostSuggestion}
+                    matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827' }}
+                  />
+                  <input
+                    ref={chatInputRef}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
+                    placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
+                    style={{ width: '100%', background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none', position: 'relative' }}
+                  />
+                </div>
                 {isOnline && !conversationalMode && (
                   <VoiceMessageRecorder
                     disabled={agentSending || agentUploading}
