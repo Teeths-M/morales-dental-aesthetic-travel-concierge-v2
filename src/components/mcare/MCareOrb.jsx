@@ -74,6 +74,19 @@ import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
 const PURPLE = '#6C47FF';
+// Round 4 (2026-08-23): the open panel itself went dark, not just the
+// floating button/header. These reuse this app's own established design
+// tokens (CLAUDE.md's Design Tokens section — background/card/border) so
+// the panel matches the rest of the product rather than inventing a new
+// palette. MessageBubble.jsx / SafetyGateCard.jsx / JourneyStageTracker.jsx
+// need none of these — they already source color from Tailwind's semantic
+// `.dark` CSS variables (confirmed in src/index.css), which the panel
+// container's `className="dark"` activates for free.
+const PANEL_BG = '#0C1A1D';
+const CARD_BG = '#111E27';
+const BORDER_DARK = '#2A3F4A';
+const TEXT_LIGHT = '#F3F4F6';
+const TEXT_MUTED_DARK = '#9CA3AF';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your Morales Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 
@@ -2057,12 +2070,15 @@ export default function MCareOrb() {
 
   const currentTip = struggleHint || tips[tipIdx];
 
-  // Header status pill reflects live / paused / offline (preserves prior state signaling)
+  // Header status pill reflects live / paused / offline (preserves prior state
+  // signaling) — colors switched to a translucent wash-on-dark, matching the
+  // AI SUPER AGENTIC purple pill's existing pattern, now that the panel itself
+  // is dark (round 4).
   const statusPill = paused
-    ? { text: 'PAUSED', bg: '#FEF3C7', fg: '#92400E', dot: '#F59E0B' }
+    ? { text: 'PAUSED', bg: 'rgba(245,158,11,0.14)', fg: '#FBBF24', dot: '#F59E0B' }
     : isOnline
-      ? { text: 'LIVE SESSION', bg: '#DCFCE7', fg: '#166534', dot: '#22C55E' }
-      : { text: 'OFFLINE', bg: '#F3F4F6', fg: '#4B5563', dot: '#9CA3AF' };
+      ? { text: 'LIVE SESSION', bg: 'rgba(34,197,94,0.14)', fg: '#4ADE80', dot: '#22C55E' }
+      : { text: 'OFFLINE', bg: 'rgba(156,163,175,0.14)', fg: '#D1D5DB', dot: '#9CA3AF' };
 
   return (
     <>
@@ -2100,6 +2116,7 @@ export default function MCareOrb() {
           style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
         >
         <motion.div
+          className="dark"
           onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.94, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -2107,16 +2124,20 @@ export default function MCareOrb() {
           transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
           style={{ transition: 'width 0.25s ease, height 0.25s ease',
             width: expanded ? 'min(1160px, 96vw)' : 'min(440px, 94vw)',
-            background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 16,
-            boxShadow: '0 24px 64px rgba(15,23,42,0.28)', display: 'flex', flexDirection: 'column',
+            background: PANEL_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 16,
+            boxShadow: `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)`, display: 'flex', flexDirection: 'column',
             height: expanded ? '94vh' : 'min(86vh, 720px)', overflow: 'hidden' }}>
 
           {/* Header — the orb is now the dominant visual anchor (was 36px, buried
               next to a thin row of text/buttons; now ~104px, a real hero element the
               rest of the header is built around). Every control/pill from the prior
               layout is preserved, just repositioned into a top-right cluster inside
-              the right column so nothing was dropped. */}
-          <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid #E5E7EB', flexShrink: 0, background: '#fff' }}>
+              the right column so nothing was dropped. Round 4: the whole panel
+              (this header included) went dark — see PANEL_BG/CARD_BG/BORDER_DARK
+              above and the `className="dark"` on the panel container, which also
+              re-themes MessageBubble/SafetyGateCard/JourneyStageTracker for free
+              via their existing Tailwind semantic tokens. */}
+          <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${BORDER_DARK}`, flexShrink: 0, background: PANEL_BG }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <div style={{ flexShrink: 0 }}>
                 <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} />
@@ -2124,33 +2145,35 @@ export default function MCareOrb() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: '#111827', lineHeight: 1.2 }}>M-Safe</p>
-                    <p style={{ margin: 0, fontSize: 12, color: '#6B7280' }}>Morales Super Agent</p>
+                    <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT_LIGHT, lineHeight: 1.2 }}>
+                      M-Safe<span style={{ color: GOLD, fontSize: 15, fontWeight: 800, marginLeft: 1 }}>+</span>
+                    </p>
+                    <p style={{ margin: 0, fontSize: 12, color: TEXT_MUTED_DARK }}>Morales Super Agent</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
                     {isConversationalModeSupported() && (
                       <button onClick={toggleConversationalMode}
                         title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
                         aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
-                        style={{ background: conversationalMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
+                        style={{ background: conversationalMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
                         {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
                       </button>
                     )}
                     {isSpeechSupported() && (
                       <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
-                        style={{ background: talkMode ? 'rgba(108,71,255,0.12)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? PURPLE : '#6B7280', display: 'flex', borderRadius: 8 }}>
+                        style={{ background: talkMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
                         {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
                       </button>
                     )}
                     {agentMessages.length > 0 && (
-                      <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+                      <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
                         <RotateCcw style={{ width: 16, height: 16 }} />
                       </button>
                     )}
-                    <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+                    <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
                       {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
                     </button>
-                    <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#6B7280', display: 'flex', borderRadius: 8 }}>
+                    <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
                       <X style={{ width: 18, height: 18 }} />
                     </button>
                   </div>
@@ -2160,16 +2183,16 @@ export default function MCareOrb() {
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(108,71,255,0.10)', color: PURPLE, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(108,71,255,0.16)', color: '#B4A2FF', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
                     <Sparkles style={{ width: 12, height: 12 }} /> AI SUPER AGENTIC
                   </span>
                   {privateMode && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EEF2FF', color: '#3730A3', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(99,102,241,0.16)', color: '#A5B4FC', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
                       <Shield style={{ width: 12, height: 12 }} /> PRIVATE
                     </span>
                   )}
                   {responseLanguage && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', background: '#F3F4F6', color: '#4B5563', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(156,163,175,0.14)', color: '#D1D5DB', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
                       {responseLanguage}
                     </span>
                   )}
@@ -2180,7 +2203,8 @@ export default function MCareOrb() {
                     never a fabricated highlight. No added "ACTIVE" text
                     badge — a brighter fill/glow + bolder label is enough to
                     read as a real state change without looking like a
-                    dashboard. */}
+                    dashboard. Colors re-tuned (round 4) for the dark panel —
+                    the same active/inactive logic, just legible tones. */}
                 <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
                   {[
                     { icon: Sparkles, label: 'Analyze' },
@@ -2193,15 +2217,15 @@ export default function MCareOrb() {
                       <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <div style={{
                           width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          border: active ? `1px solid ${GOLD}` : '1px solid rgba(212,175,55,0.5)',
-                          background: active ? 'rgba(212,175,55,0.22)' : 'rgba(212,175,55,0.08)',
+                          border: active ? `1px solid ${GOLD}` : '1px solid rgba(212,175,55,0.35)',
+                          background: active ? 'rgba(212,175,55,0.24)' : 'rgba(212,175,55,0.08)',
                           boxShadow: active ? `0 0 8px ${GOLD}88` : 'none',
-                          color: active ? '#8A6200' : '#B8860B',
+                          color: active ? '#F5D97A' : '#C9A227',
                           transition: 'all 0.25s ease',
                         }}>
                           <Icon style={{ width: 15, height: 15 }} />
                         </div>
-                        <span style={{ fontSize: 10, color: active ? '#8A6200' : '#6B7280', fontWeight: active ? 700 : 500 }}>{label}</span>
+                        <span style={{ fontSize: 10, color: active ? '#F5D97A' : TEXT_MUTED_DARK, fontWeight: active ? 700 : 500 }}>{label}</span>
                       </div>
                     );
                   })}
@@ -2216,13 +2240,16 @@ export default function MCareOrb() {
                 <JourneyStageTracker messages={agentMessages} />
               )}
 
-              {/* Chat area */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: '#F6F7FB' }}>
+              {/* Chat area — DARK (round 4). The message bubbles/safety cards/stage
+                  tracker below are unchanged files; they re-theme for free via the
+                  panel's own `className="dark"` and their existing Tailwind
+                  semantic tokens (bg-card/border-border/text-foreground etc.). */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: DARK }}>
                 {agentMessages.length === 0 && !agentLoading && (
                   <>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
                       <McareAvatar size={32} />
-                      <p style={{ margin: 0, fontSize: 13, color: '#111827', lineHeight: 1.55, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>
+                      <p style={{ margin: 0, fontSize: 13, color: TEXT_LIGHT, lineHeight: 1.55, background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>
                         {(() => {
                           const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
                           return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
@@ -2232,7 +2259,7 @@ export default function MCareOrb() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
                       {quickChips.map(c => (
                         <button key={c.label} onClick={c.run}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: '1px solid #E5E7EB', background: '#fff', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${BORDER_DARK}`, background: CARD_BG, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#D1D5DB', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                           <c.icon style={{ width: 14, height: 14 }} /> {c.label}
                         </button>
                       ))}
@@ -2243,7 +2270,7 @@ export default function MCareOrb() {
                 {agentLoading && agentMessages.length === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>Preparing your journey…</span>
+                    <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>Preparing your journey…</span>
                   </div>
                 )}
 
@@ -2302,7 +2329,7 @@ export default function MCareOrb() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <div style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
+                    <div style={{ fontSize: 10, color: TEXT_MUTED_DARK, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
                       M-Care checked in
                     </div>
                     <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={PURPLE} showAvatar showMeta />
@@ -2312,26 +2339,30 @@ export default function MCareOrb() {
                 {(agentSending || activeRunningTool) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
                     <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-                    <span style={{ fontSize: 12, color: '#6B7280', fontStyle: 'italic' }}>
+                    <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
                       {activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…'}
                     </span>
                   </div>
                 )}
 
+                {/* Offline banner — kept as its own amber-on-dark warning treatment
+                    (not re-themed to gold) so it stays distinct from the brand
+                    accent and reads as "pay attention," matching this app's
+                    established amber = warning convention elsewhere. */}
                 {!isOnline && (
-                  <div style={{ borderRadius: 14, border: '1px solid #FDE68A', background: '#FFFBEB', padding: '10px 14px' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#B45309', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  <div style={{ borderRadius: 14, border: '1px solid rgba(253,230,138,0.35)', background: 'rgba(120,53,15,0.25)', padding: '10px 14px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
                       {t('guide.offline_badge')}
                     </div>
                     {offlineArtifact ? (
                       <>
-                        <p style={{ margin: '0 0 6px', fontSize: 12.5, color: '#78350F' }}>
+                        <p style={{ margin: '0 0 6px', fontSize: 12.5, color: '#FDE9C7' }}>
                           Here's what I already prepared before the connection dropped:
                         </p>
                         <InlineQrBlock label={offlineArtifact.label} dest={offlineArtifact.dest} />
                       </>
                     ) : (
-                      <p style={{ margin: 0, fontSize: 12.5, color: '#78350F' }}>
+                      <p style={{ margin: 0, fontSize: 12.5, color: '#FDE9C7' }}>
                         I don't have anything saved for you yet this session. Ask me for directions or a QR code the next time you're connected, and I'll have it ready if you go offline again.
                       </p>
                     )}
@@ -2347,8 +2378,11 @@ export default function MCareOrb() {
                 disabled={agentSending || agentUploading || !isOnline}
                 onApplyCorrection={(fixed) => setInput(fixed)}
               />
-              {/* Input */}
-              <div style={{ padding: '10px 14px', borderTop: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: '#fff' }}>
+              {/* Input — "clean, floating input bar," per the spec, now dark to match
+                  the rest of the panel. Send button stays gold when active (this
+                  app's one brand accent) rather than the prior purple, matching
+                  the dark-hardware read the rest of the panel now has. */}
+              <div style={{ padding: '10px 14px', borderTop: `1px solid ${BORDER_DARK}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: PANEL_BG }}>
                 <AddImageMenu
                   variant="icon"
                   onDeviceFile={handleFileSelect}
@@ -2363,7 +2397,7 @@ export default function MCareOrb() {
                   <GhostTextOverlay
                     typedText={input}
                     suggestion={ghostSuggestion}
-                    matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827' }}
+                    matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT }}
                   />
                   <input
                     ref={chatInputRef}
@@ -2372,7 +2406,7 @@ export default function MCareOrb() {
                     onKeyDown={handleKeyDown}
                     onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
                     placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
-                    style={{ width: '100%', background: '#F6F7FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#111827', outline: 'none', position: 'relative' }}
+                    style={{ width: '100%', background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT, outline: 'none', position: 'relative' }}
                   />
                 </div>
                 {isOnline && !conversationalMode && (
@@ -2383,9 +2417,9 @@ export default function MCareOrb() {
                   />
                 )}
                 <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
-                  style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? PURPLE : '#E5E7EB', border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+                  style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : BORDER_DARK, border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
                 >
-                  <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#fff' : '#9CA3AF' }} />
+                  <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : TEXT_MUTED_DARK }} />
                 </button>
               </div>
           </>

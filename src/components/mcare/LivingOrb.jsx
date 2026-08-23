@@ -63,12 +63,18 @@
  * independently-fading gold particles in the halo — both omitted under
  * reduced motion (the base glow stays, static; particles don't).
  *
- * 2026-08-23, three passes: the face (blink/wink gold eyes) shipped
+ * 2026-08-23, four passes: the face (blink/wink gold eyes) shipped
  * 2026-08-12 is removed for good — no eyes, no mouth, no face anywhere on
  * this orb. The M mark first came back as a floating badge overlapping
  * the shell; Portia's explicit correction — "the logo belongs INSIDE the
  * system," not a sticker — moved it to be centered and backlit inside the
  * dark core itself, the same asset, no new image generated either time.
+ * Round 4 (a reference image asking for a literal robot/visor look) adds
+ * a single continuous glowing visor band across the upper core — a
+ * HUD/sensor-strip read, deliberately not two separate lit shapes, so it
+ * stays "visor" rather than reopening the "eyes/face" question already
+ * settled twice — plus a static gold collar-ring accent near the shell's
+ * outer base. Both are additive to the existing core/M, not a rebuild.
  * useBlinkState.js itself is untouched — LivingMOrb.jsx (the homepage
  * hero orb, a deliberately separate component) still uses it.
  */
@@ -122,6 +128,11 @@ const PARTICLE_POSITIONS = [
 // a sticker"), it's now centered inside the dark core, backlit by a soft
 // glow that tints with the orb's current state color.
 function Shell({ size, glowAlpha, color }) {
+  // glowAlpha is the same real per-state hex-alpha value already driving the
+  // shell's own glow/halo intensity (STATE_CONFIG) — reused here to scale the
+  // visor line's brightness so it varies with real state, never a fabricated
+  // separate animation.
+  const visorIntensity = Math.min(1, parseInt(glowAlpha, 16) / 255 + 0.35);
   return (
     <>
       {/* Outer pearl-metallic shell — fully opaque, never blends with the background */}
@@ -150,6 +161,18 @@ function Shell({ size, glowAlpha, color }) {
           filter: 'blur(1px)',
         }}
       />
+      {/* Gold collar ring — a static metallic accent band near the shell's
+          outer base, evoking "gold rings" from the reference without new
+          geometry. Always present, never pulsing — distinct from the
+          animated halo rings (STATE_CONFIG.ringCount) drawn outside Shell. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', width: '92%', height: '14%', bottom: '8%', left: '4%', borderRadius: '50%',
+          background: 'linear-gradient(90deg, transparent 2%, #D4AF37 14%, #F4E4A6 50%, #D4AF37 86%, transparent 98%)',
+          opacity: 0.55, mixBlendMode: 'overlay', pointerEvents: 'none',
+        }}
+      />
       {/* Dark glass core — inset to 60%/20% so the pearl rim stays clearly
           visible. A flex container so the M emblem below sits centered
           inside it, not floating off to one side. */}
@@ -175,6 +198,25 @@ function Shell({ size, glowAlpha, color }) {
             filter: 'blur(2px)',
           }}
         />
+        {/* Visor band — one continuous glowing strip across the upper core,
+            never two separate lit shapes, so it reads as a HUD/sensor visor
+            rather than eyes. Brightness is `visorIntensity`, derived from
+            the real per-state glowAlpha above, never a fabricated pulse. */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute', width: '56%', height: '11%', top: '24%', left: '22%', borderRadius: 5,
+            background: 'rgba(0,0,0,0.35)', overflow: 'hidden',
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute', inset: '32% 8%', borderRadius: 3,
+              background: color, boxShadow: `0 0 5px 1px ${color}`, opacity: visorIntensity,
+            }}
+          />
+        </div>
         {/* One small, asymmetric gloss highlight — deliberately a single
             off-center shape, never a symmetric pair, so it reads as glossy
             glass, not eyes. */}
@@ -191,7 +233,7 @@ function Shell({ size, glowAlpha, color }) {
           aria-hidden="true"
           draggable={false}
           style={{
-            position: 'relative', width: '46%', height: '46%', objectFit: 'contain',
+            position: 'relative', width: '40%', height: '40%', objectFit: 'contain', marginTop: '16%',
             filter: `drop-shadow(0 0 4px ${color}cc)`, opacity: 0.96,
           }}
         />
