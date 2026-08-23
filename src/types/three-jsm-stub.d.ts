@@ -1,7 +1,7 @@
 // Type-checking-only stub for the specific three/examples/jsm/* addon
 // imports RoboOrb3D.jsx uses (RoomEnvironment, EffectComposer, RenderPass,
-// UnrealBloomPass), pointed to via jsconfig.json's `paths` wildcard
-// ("three/examples/jsm/*": [...]).
+// UnrealBloomPass, OutputPass), pointed to via jsconfig.json's `paths`
+// wildcard ("three/examples/jsm/*": [...]).
 //
 // Redirecting the bare 'three' specifier alone (see three-stub.d.ts) isn't
 // enough: each addon .js file is its own real file on disk with its own
@@ -17,3 +17,4 @@ export const RoomEnvironment: any;
 export const EffectComposer: any;
 export const RenderPass: any;
 export const UnrealBloomPass: any;
+export const OutputPass: any;

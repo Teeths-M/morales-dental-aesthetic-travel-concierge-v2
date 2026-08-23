@@ -23,15 +23,26 @@
  * homepage hero via LivingMOrb) — the small 28/44px chat instances stay on
  * the CSS orb.
  *
- * 2026-08-23 fix: the pearl shell used to be a closed, un-cut sphere, which
- * silently occluded the entire recessed core/bezel/M/glow assembly (a live
- * render showed nothing but a bare gold ring around a plain pale disc — the
- * bezel ring was the only thing whose radius/z happened to poke past the
+ * 2026-08-23 fix, part 1: the pearl shell used to be a closed, un-cut sphere,
+ * which silently occluded the entire recessed core/bezel/M/glow assembly (a
+ * live render showed nothing but a bare gold ring around a plain pale disc —
+ * the bezel ring was the only thing whose radius/z happened to poke past the
  * sphere's own front surface). The shell geometry now has a real cavity cut
  * facing the camera (a rotated polar cap, sized to the bezel's own radius),
  * plus a real procedural environment map (RoomEnvironment) so the
- * metalness:1.0 gold surfaces actually reflect instead of rendering flat,
- * and a real UnrealBloomPass instead of only additive-sprite "fake glow."
+ * metalness:1.0 gold surfaces actually reflect instead of rendering flat.
+ *
+ * 2026-08-23 fix, part 2: the cavity fix immediately exposed a second,
+ * equally real problem — a live screenshot showed the whole sphere as a
+ * near-uniform glowing amber ball, four compounding causes: no OutputPass
+ * terminating the composer (bloom's raw output was going straight to the
+ * canvas with no final tonemap step — now added), a bloom threshold low
+ * enough to catch ordinarily-lit geometry, not just genuinely emissive bits
+ * (raised), the two core-area point lights illuminating the whole front
+ * hemisphere rather than just the cavity (pulled back in both intensity and
+ * falloff distance), and the panel-seam torus rings reading as a visible
+ * grid once everything got brighter (removed — no counterpart in the
+ * reference image's clean, seamless shell anyway).
  */
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
@@ -39,6 +50,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 const GOLD = 0xD4AF37;
 const GOLD_BRIGHT = 0xFFD700;
@@ -223,14 +235,23 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     scene.environment = envRT.texture;
 
     // Real bloom, replacing the additive-sprite-only "fake glow" every ring/
-    // core-glow/particle currently relies on. Threshold kept high-ish so only
-    // the genuinely emissive/additive elements bloom, not the matte pearl
-    // shell — a first-pass tuning, not a final answer; needs a real look on
-    // a real screen.
+    // core-glow/particle currently relies on. Threshold raised well past the
+    // first-pass 0.25 (which bloomed nearly the whole lit shell, not just the
+    // genuinely emissive bits — confirmed against a live screenshot showing
+    // the entire sphere as a uniform amber glow) so only real emissive/
+    // additive elements catch it, not ordinarily-lit pearl. Strength/radius
+    // pulled back to match. Still a tuning, not a final answer — needs
+    // another real look on a real screen.
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.9, 0.5, 0.25);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.55, 0.4, 0.75);
     composer.addPass(bloomPass);
+    // Terminates the composer chain with the renderer's own tonemapping/
+    // color-space conversion applied exactly once. Without this, bloom writes
+    // its raw (un-tonemapped) output straight to the canvas as the last step
+    // — the actual root cause of the whole-sphere amber wash-out: never
+    // properly tonemapped down before display.
+    composer.addPass(new OutputPass());
 
     // ── dark gradient background (back plane) ──
     const bgTex = makeBackgroundTexture();
@@ -253,10 +274,14 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     const topSpot = new THREE.DirectionalLight(0xffffff, 0.85);
     topSpot.position.set(0, 4, 2);
     scene.add(topSpot);
-    const coreGlow = new THREE.PointLight(0xffb300, 1.0, 6);
+    // Both point lights pulled back from lighting the whole front hemisphere
+    // (their old distance/intensity flooded the pearl shell around the
+    // cavity, not just the cavity itself — the actual reason the "dark"
+    // core material never read as dark) to a contained, local accent.
+    const coreGlow = new THREE.PointLight(0xffb300, 0.55, 2.5);
     coreGlow.position.set(0, 0.05, 1.5);
     scene.add(coreGlow);
-    const baseGlow = new THREE.PointLight(0xd4af37, 1.3, 5);
+    const baseGlow = new THREE.PointLight(0xd4af37, 0.65, 2.5);
     baseGlow.position.set(0, -1.25, 0.3);
     scene.add(baseGlow);
 
@@ -286,18 +311,10 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     });
     const pearl = new THREE.Mesh(pearlGeo, pearlMat);
     head.add(pearl);
-
-    // Panel-line seams (thin rings suggesting modular construction)
-    const seamMat = new THREE.MeshStandardMaterial({ color: 0xb0aa98, metalness: 0.4, roughness: 0.55, transparent: true, opacity: 0.5 });
-    const seamA = new THREE.Mesh(new THREE.TorusGeometry(1.001, 0.006, 8, 80), seamMat);
-    seamA.rotation.x = Math.PI / 2;
-    head.add(seamA);
-    const seamB = new THREE.Mesh(new THREE.TorusGeometry(1.001, 0.005, 8, 80), seamMat);
-    seamB.rotation.x = Math.PI / 2.4;
-    head.add(seamB);
-    const seamC = new THREE.Mesh(new THREE.TorusGeometry(1.001, 0.004, 8, 80), seamMat);
-    seamC.rotation.x = Math.PI / 1.7;
-    head.add(seamC);
+    // Panel-line seams (three thin torus rings wrapping the shell) removed —
+    // they read as a barely-visible accent in isolation, but once real
+    // lighting/bloom brightened the scene they showed up as a distinct
+    // crossing grid the reference image's clean, seamless shell doesn't have.
 
     // ── recessed dark glass core (faceless — a single dark recess, no eyes) ──
     const coreMat = new THREE.MeshPhysicalMaterial({
@@ -331,7 +348,11 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
     const glowTex = makeGlowTexture();
     const coreGlowSpriteMat = new THREE.SpriteMaterial({ map: glowTex, color: 0xffb300, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
     const coreGlowSprite = new THREE.Sprite(coreGlowSpriteMat);
-    coreGlowSprite.scale.set(1.5, 1.5, 1);
+    // Shrunk from 1.5x1.5 — it was tuned back when this sprite was the ONLY
+    // visible detail in the cavity; now that the cavity actually shows real
+    // recessed geometry (core disc, bezel, M), a sprite that large just
+    // floods the whole opening instead of reading as a subtle ambient glow.
+    coreGlowSprite.scale.set(0.9, 0.9, 1);
     coreGlowSprite.position.set(0, 0.02, 0.9);
     head.add(coreGlowSprite);
 
@@ -445,9 +466,13 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
       const glowColor = new THREE.Color(cfg.glow);
       coreGlow.color = glowColor;
       baseGlow.color = glowColor;
-      coreGlow.intensity = 0.5 + cfg.core * 0.3;
+      // Scaled down to match the contained constructor-time intensity above
+      // (this line overwrites it every frame — the old 0.5 + cfg.core*0.3
+      // formula alone was enough to flood the shell regardless of the
+      // constructor value).
+      coreGlow.intensity = 0.2 + cfg.core * 0.12;
       const corePulse = 0.5 + Math.sin(t * (1.5 + cfg.core)) * 0.18;
-      coreGlowSpriteMat.opacity = Math.min(1, 0.35 + cfg.core * 0.18) * corePulse;
+      coreGlowSpriteMat.opacity = Math.min(0.55, 0.2 + cfg.core * 0.1) * corePulse;
       coreGlowSpriteMat.color = glowColor;
       // M emblem brightness follows core glow gently
       mMat.opacity = 0.7 + Math.sin(t * 1.2) * 0.08 + (cfg.core > 2 ? 0.12 : 0);
@@ -536,7 +561,6 @@ export default function RoboOrb3D({ state = 'idle', size = 104, flashToken = 0 }
       coreTrough.geometry.dispose(); coreTrough.material.dispose();
       goldMat.dispose();
       bezel.geometry.dispose(); bezelInner.geometry.dispose();
-      seamMat.dispose(); seamA.geometry.dispose(); seamB.geometry.dispose(); seamC.geometry.dispose();
       coreGloss.geometry.dispose(); coreGloss.material.dispose();
       baseMat.dispose(); baseDisc.geometry.dispose(); baseRim.geometry.dispose();
       lightRings.forEach(r => { r.material.dispose(); r.geometry.dispose(); });
