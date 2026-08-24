@@ -172,6 +172,32 @@
  *   solid `#FF3347` on top of it. An honest, visually-checked overlay
  *   placement, not a claim of pixel-perfect alignment with the photo's
  *   own (differently-shaped) rendered M.
+ *
+ *   Second same-day correction: that morales-m-mark.png fix was itself
+ *   wrong in a different way — her next screenshot showed two distinct
+ *   overlapping "M" shapes, not one clean letter. Root cause: the brand
+ *   mark is an elegant, thin, cursive/calligraphic swoosh, stylistically
+ *   very different from whatever bolder badge-style letterform is
+ *   actually painted in the photo. With the gold badge now correctly
+ *   always visible underneath, a differently-SHAPED overlay can never
+ *   fully occlude it regardless of size/position tuning — both letterforms
+ *   show through at once. Spent real effort trying to pixel-extract the
+ *   photo's own exact M via connected-component analysis (isolating gold
+ *   letter pixels from the gold ring by finding the largest non-edge-
+ *   touching bright blob within the black disc interior) — converged on a
+ *   rough region but never a clean, confident silhouette; this exact kind
+ *   of sub-pixel extraction from a small, compressed photo had already
+ *   proven fragile multiple times this session on this same asset. Fixed
+ *   by abandoning image-based approaches entirely and rendering a real,
+ *   solid, bold `<span>M</span>` (HTML+CSS text, not literal `<svg>`
+ *   markup, but the same practical effect as the SVG-text fallback her own
+ *   instructions explicitly named) — `fontWeight:900`, a plain system
+ *   sans-serif stack, filled solid `M_LETTER_RED`, centered on the badge's
+ *   own geometric center (her literal "centered on the earpiece," not a
+ *   guess at wherever the photo's own letter happens to sit). Because it's
+ *   now a fully opaque glyph rather than a translucent mask of a mismatched
+ *   shape, it cleanly covers the middle of whatever's underneath — a small,
+ *   forgivable edge sliver at worst, not two competing outlines.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -237,24 +263,21 @@ const MBADGE_BOX = {
 // Thinking-state color for the letter ONLY (her exact spec) — distinct
 // from THINKING_RED, which stays reserved for the brain hologram above.
 const M_LETTER_RED = '#FF3347';
-// public/morales-m-mark.png's own real dimensions (confirmed via direct
-// pixel inspection) — used so the mask box below doesn't stretch the glyph.
-const M_MARK_ASPECT = 386 / 253;
 // Same raw px numbers MBADGE_BOX is built from, kept explicit here so both
 // boxes share one source of truth for the badge's real center point.
 const MBADGE_PX = { left: 70, top: 70, width: 58, height: 120 };
-const M_LETTER_W_PX = MBADGE_PX.width * 0.4; // ~40% of the earpiece's own
-// width — the midpoint of her "35-45% of the earpiece diameter" ask.
-const M_LETTER_H_PX = M_LETTER_W_PX / M_MARK_ASPECT;
+// A square-ish flex container, sized to ~40% of the earpiece's own width
+// (the midpoint of her "35-45% of the earpiece diameter" ask), centered on
+// the badge — just a positioning box; the actual glyph size comes from
+// fontSize below, not this box's own proportions.
+const M_LETTER_W_PX = MBADGE_PX.width * 0.4;
 const M_BADGE_CX_PX = MBADGE_PX.left + MBADGE_PX.width / 2;
 const M_BADGE_CY_PX = MBADGE_PX.top + MBADGE_PX.height / 2;
-// Where the real brand M-mark renders, thinking-state only — centered on
-// the badge, sized to just the letter, never the ring/disc around it.
 const M_LETTER_BOX = {
   left: ((M_BADGE_CX_PX - M_LETTER_W_PX / 2) / NATURAL_W) * 100,
-  top: ((M_BADGE_CY_PX - M_LETTER_H_PX / 2) / NATURAL_H) * 100,
+  top: ((M_BADGE_CY_PX - M_LETTER_W_PX / 2) / NATURAL_H) * 100,
   width: (M_LETTER_W_PX / NATURAL_W) * 100,
-  height: (M_LETTER_H_PX / NATURAL_H) * 100,
+  height: (M_LETTER_W_PX / NATURAL_H) * 100,
 };
 
 // Gaze offsets, in percent of an eye box's own width/height — small,
@@ -556,13 +579,15 @@ export default function RobotAvatarImage({
           {showActivityOverlays && (
             <>
               {/* Thinking: ONLY the letter "M" turns red — never the ring,
-                  disc, or any other part of the earpiece. Masked with
-                  public/morales-m-mark.png, this app's own real brand
-                  glyph (confirmed letter-only, no disc/background baked
-                  in — see the top-of-file history comment), sized to
-                  M_LETTER_BOX (~40% of the badge's own width, centered on
-                  it) rather than the full badge shape. A small backdrop
-                  glow sized to the letter itself, not the whole badge. */}
+                  disc, or any other part of the earpiece. A real, solid,
+                  bold text glyph (not a raster mask of a differently-
+                  styled asset — see the top-of-file history comment for
+                  why that approach showed two overlapping M shapes),
+                  sized/centered on M_LETTER_BOX (~40% of the badge's own
+                  width, centered on it). Fully opaque, so it cleanly
+                  covers whatever's underneath rather than risking a
+                  second visible outline. A small backdrop glow sized to
+                  the letter itself, not the whole badge. */}
               {activityState === 'thinking' && (
                 <>
                   <span
@@ -584,14 +609,17 @@ export default function RobotAvatarImage({
                       position: 'absolute',
                       left: `${M_LETTER_BOX.left}%`, top: `${M_LETTER_BOX.top}%`,
                       width: `${M_LETTER_BOX.width}%`, height: `${M_LETTER_BOX.height}%`,
-                      backgroundColor: M_LETTER_RED,
-                      WebkitMaskImage: 'url(/morales-m-mark.png)', maskImage: 'url(/morales-m-mark.png)',
-                      WebkitMaskSize: 'contain', maskSize: 'contain',
-                      WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-                      WebkitMaskPosition: 'center', maskPosition: 'center',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: `${Math.max(8, Math.round(size * (M_LETTER_W_PX / NATURAL_W)))}px`,
+                      fontWeight: 900, lineHeight: 1,
+                      fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
+                      color: M_LETTER_RED,
+                      textShadow: `0 0 6px ${M_LETTER_RED}, 0 0 12px ${M_LETTER_RED}99`,
                       pointerEvents: 'none', zIndex: 10,
                     }}
-                  />
+                  >
+                    M
+                  </span>
                 </>
               )}
 
