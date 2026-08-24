@@ -198,6 +198,16 @@
  *   now a fully opaque glyph rather than a translucent mask of a mismatched
  *   shape, it cleanly covers the middle of whatever's underneath — a small,
  *   forgivable edge sliver at worst, not two competing outlines.
+ *
+ *   Fourth same-day correction: even the clean single red M, live on her
+ *   own screen, wasn't what she wanted — she asked to drop the earpiece
+ *   effect entirely and the "ANALYZING" label too, leaving the brain
+ *   hologram as the one thinking-state signal. Removed the whole M-badge
+ *   red overlay (both the backdrop glow and the text glyph), its now-dead
+ *   `M_LETTER_RED`/`MBADGE_PX`/`M_LETTER_BOX` constants and CSS keyframes,
+ *   and the `robotBrainLabel` span/style. The gold `<img src={mBadgeSrc}>`
+ *   needed no change — it was already unconditionally `opacity:1`, so with
+ *   the overlay gone it's simply gold, always, in every state again.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -258,26 +268,6 @@ const EYE_BOX = {
 const MBADGE_BOX = {
   left: (70 / NATURAL_W) * 100, top: (70 / NATURAL_H) * 100,
   width: (58 / NATURAL_W) * 100, height: (120 / NATURAL_H) * 100,
-};
-
-// Thinking-state color for the letter ONLY (her exact spec) — distinct
-// from THINKING_RED, which stays reserved for the brain hologram above.
-const M_LETTER_RED = '#FF3347';
-// Same raw px numbers MBADGE_BOX is built from, kept explicit here so both
-// boxes share one source of truth for the badge's real center point.
-const MBADGE_PX = { left: 70, top: 70, width: 58, height: 120 };
-// A square-ish flex container, sized to ~40% of the earpiece's own width
-// (the midpoint of her "35-45% of the earpiece diameter" ask), centered on
-// the badge — just a positioning box; the actual glyph size comes from
-// fontSize below, not this box's own proportions.
-const M_LETTER_W_PX = MBADGE_PX.width * 0.4;
-const M_BADGE_CX_PX = MBADGE_PX.left + MBADGE_PX.width / 2;
-const M_BADGE_CY_PX = MBADGE_PX.top + MBADGE_PX.height / 2;
-const M_LETTER_BOX = {
-  left: ((M_BADGE_CX_PX - M_LETTER_W_PX / 2) / NATURAL_W) * 100,
-  top: ((M_BADGE_CY_PX - M_LETTER_W_PX / 2) / NATURAL_H) * 100,
-  width: (M_LETTER_W_PX / NATURAL_W) * 100,
-  height: (M_LETTER_W_PX / NATURAL_H) * 100,
 };
 
 // Gaze offsets, in percent of an eye box's own width/height — small,
@@ -503,10 +493,11 @@ export default function RobotAvatarImage({
   // ever cleared it. `showEyes` also now gates the gold M-badge cutout —
   // it's the same category as the eyes (a simple, always-shown structural
   // layer, not an "activity" indicator) since `bodySrc` no longer bakes
-  // the badge in at all. `showActivityOverlays` (the red M-badge mask +
-  // brain-icon hologram while thinking, speaking glow/waveform, listening
-  // equalizer, plus the head turn via data-activity-state below) stays at
-  // the original, unverified-at-small-sizes size>=80 bar, unchanged.
+  // the badge in at all — it never recolors, the brain hologram alone is
+  // the thinking signal now. `showActivityOverlays` (the brain-icon
+  // hologram while thinking, speaking glow/waveform, listening equalizer,
+  // plus the head turn via data-activity-state below) stays at the
+  // original, unverified-at-small-sizes size>=80 bar, unchanged.
   const showEyes = size >= 24;
   const showActivityOverlays = size >= 80;
   const cssActivityState = animated ? activityState : 'static';
@@ -556,12 +547,11 @@ export default function RobotAvatarImage({
               {/* M badge — a real cutout layer (like the eyes), gold,
                   always rendered here (not activity-gated) since bodySrc
                   no longer bakes the badge in at all — without this,
-                  every non-thinking state at 24-79px would show a blank
-                  hole where the badge used to be. Stays opacity:1 in
-                  EVERY state, thinking included — Portia's explicit
-                  correction: the earpiece image itself must render
-                  completely unchanged; only the letter (below, thinking-
-                  state only) may ever turn red on top of it. */}
+                  every state at 24-79px would show a blank hole where the
+                  badge used to be. Stays opacity:1 in EVERY state — the
+                  earpiece never recolors at all any more (see the
+                  top-of-file history comment: the thinking signal is the
+                  brain hologram alone now, not this badge). */}
               <img
                 src={mBadgeSrc}
                 alt=""
@@ -578,51 +568,6 @@ export default function RobotAvatarImage({
 
           {showActivityOverlays && (
             <>
-              {/* Thinking: ONLY the letter "M" turns red — never the ring,
-                  disc, or any other part of the earpiece. A real, solid,
-                  bold text glyph (not a raster mask of a differently-
-                  styled asset — see the top-of-file history comment for
-                  why that approach showed two overlapping M shapes),
-                  sized/centered on M_LETTER_BOX (~40% of the badge's own
-                  width, centered on it). Fully opaque, so it cleanly
-                  covers whatever's underneath rather than risking a
-                  second visible outline. A small backdrop glow sized to
-                  the letter itself, not the whole badge. */}
-              {activityState === 'thinking' && (
-                <>
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      position: 'absolute',
-                      left: `${M_LETTER_BOX.left + M_LETTER_BOX.width / 2}%`,
-                      top: `${M_LETTER_BOX.top + M_LETTER_BOX.height / 2}%`,
-                      width: `${M_LETTER_BOX.width * 2.2}%`, height: `${M_LETTER_BOX.height * 2.2}%`,
-                      transform: 'translate(-50%, -50%)',
-                      borderRadius: '50%', pointerEvents: 'none', zIndex: 9,
-                      background: `radial-gradient(circle, ${M_LETTER_RED}99 0%, ${M_LETTER_RED}00 72%)`,
-                    }}
-                  />
-                  <span
-                    className="robotMLetterRed"
-                    data-testid="robot-mletter-red"
-                    style={{
-                      position: 'absolute',
-                      left: `${M_LETTER_BOX.left}%`, top: `${M_LETTER_BOX.top}%`,
-                      width: `${M_LETTER_BOX.width}%`, height: `${M_LETTER_BOX.height}%`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: `${Math.max(8, Math.round(size * (M_LETTER_W_PX / NATURAL_W)))}px`,
-                      fontWeight: 900, lineHeight: 1,
-                      fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
-                      color: M_LETTER_RED,
-                      textShadow: `0 0 6px ${M_LETTER_RED}, 0 0 12px ${M_LETTER_RED}99`,
-                      pointerEvents: 'none', zIndex: 10,
-                    }}
-                  >
-                    M
-                  </span>
-                </>
-              )}
-
               {/* Speaking: eyes pulse brighter (additive glow, never a cover)
                   — real amplitude-scaled when a real TTS signal exists. */}
               {activityState === 'speaking' && (
@@ -696,13 +641,16 @@ export default function RobotAvatarImage({
         </div>
       </div>
 
-      {/* Thinking: a small floating "brain" hologram above the head — a
-          real animate-in/animate-out (framer-motion's AnimatePresence,
-          the one usage of it in this file — everything else here is
-          plain CSS, but a genuine "animate out cleanly, unmount after"
-          needs it). Deliberately a sibling of .robotAvatarFloat, not a
-          child of it — floats in a fixed spot regardless of the head-turn
-          angle, rather than turning along with the head. */}
+      {/* Thinking: a small floating "brain" hologram above the head — the
+          ONE thinking-state indicator now (Portia asked to drop the red
+          M-badge effect and the "ANALYZING" label entirely, leaving just
+          this). A real animate-in/animate-out (framer-motion's
+          AnimatePresence, the one usage of it in this file — everything
+          else here is plain CSS, but a genuine "animate out cleanly,
+          unmount after" needs it). Deliberately a sibling of
+          .robotAvatarFloat, not a child of it — floats in a fixed spot
+          regardless of the head-turn angle, rather than turning along
+          with the head. */}
       {showActivityOverlays && (
         <AnimatePresence>
           {activityState === 'thinking' && (
@@ -732,7 +680,6 @@ export default function RobotAvatarImage({
                   style={{ position: 'relative', zIndex: 2, filter: `drop-shadow(0 0 6px ${THINKING_RED}e6)` }}
                 />
               </div>
-              <span className="robotBrainLabel">ANALYZING</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -740,28 +687,6 @@ export default function RobotAvatarImage({
 
       <style>{`
         .robotAvatarFloat { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-
-        /* Thinking: the LETTER's solid red fill pulses like lit hardware,
-           plus a brief scan/flicker dip a couple of times per longer
-           cycle — two independent, stacked animations on the same
-           element. Scoped to [data-activity-state="thinking"] (which the
-           component forces to "static" when animated is false) rather
-           than an unconditional selector, so reduced-motion genuinely
-           turns this off instead of just being ignored. */
-        [data-activity-state="thinking"] .robotMLetterRed {
-          animation: robotMLetterPulse 1.1s ease-in-out infinite, robotMLetterFlicker 4.5s linear infinite;
-        }
-        @keyframes robotMLetterPulse {
-          0%, 100% { opacity: 0.82; }
-          50% { opacity: 1; }
-        }
-        @keyframes robotMLetterFlicker {
-          0%, 78%, 100% { filter: brightness(1); }
-          80% { filter: brightness(0.55); }
-          82% { filter: brightness(1.25); }
-          84% { filter: brightness(0.7); }
-          86% { filter: brightness(1); }
-        }
 
         /* Thinking: the floating brain hologram — a soft glow, a thin
            breathing "processing" ring, and 3 staggered fading sparks, all
@@ -801,10 +726,6 @@ export default function RobotAvatarImage({
         @keyframes robotBrainSparkFade {
           0%, 100% { opacity: 0; }
           50% { opacity: 1; }
-        }
-        .robotBrainLabel {
-          margin-top: 3px; font-size: 9px; font-weight: 600; letter-spacing: 0.09em;
-          color: #FF6B78; text-shadow: 0 0 6px ${THINKING_RED}b3; white-space: nowrap;
         }
 
         /* Speaking: an ADDITIVE glow over each real eye — never a cover */
