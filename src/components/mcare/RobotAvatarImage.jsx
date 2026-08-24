@@ -82,6 +82,20 @@
  *   launcher button, and header instance (all well under 80px) showed a
  *   bare glowing shell. Split into two independent thresholds — see
  *   `showEyes`/`showActivityOverlays` below.
+ *
+ *   2026-08-23, a third same-day round: even correctly placed inside the
+ *   visor, Portia found the 3 dots themselves "creepy" and asked for the
+ *   thinking signal moved somewhere else — the gold "M" earpiece badge on
+ *   the side of the head lighting up red instead. `robotDotRow`/
+ *   `.robotDot`/`robotDotWave` were removed outright (a repo-wide grep
+ *   confirmed nothing else referenced them). The badge's real position was
+ *   located the same evidence-based way as everything else in this file —
+ *   an ASCII luminance/hue classification map of the actual asset (see
+ *   `M_BADGE_BOX`'s own comment) found a real, compact dark+gold cluster
+ *   distinct from the visor's own bezel. The replacement uses the exact
+ *   same additive-glow technique already proven for the speaking eye-glow
+ *   pulse — a radial gradient, `mixBlendMode: 'screen'` — just red instead
+ *   of gold and centered on the badge instead of the eyes.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -124,6 +138,19 @@ const EYE_BOX = {
   left: { left: (170 / NATURAL_W) * 100, top: (108 / NATURAL_H) * 100, width: (53 / NATURAL_W) * 100, height: (38 / NATURAL_H) * 100 },
   right: { left: (241 / NATURAL_W) * 100, top: (108 / NATURAL_H) * 100, width: (43 / NATURAL_W) * 100, height: (40 / NATURAL_H) * 100 },
 };
+
+// Approximate glow box for the M badge on the left side of the head
+// (percent of the native frame) — not a tight pixel crop like EYE_BOX (the
+// badge isn't cut into a separate movable layer, only overlaid with a
+// glow). Measured 2026-08-23 from an ASCII luminance/hue classification
+// map of the real asset (ring/disc/letter cluster distinct from the
+// visor's own bezel, which only starts around x:32%): the visible badge
+// spans roughly x:18-31%, y:28-59%, center ~(24%,44%). This box is
+// deliberately a little larger than that measured cluster so the soft
+// radial-gradient glow reads as a halo around the badge, not a
+// hard-edged disc clipped exactly to it (same margin logic EYE_BOX's own
+// glow overlay uses — see the speaking eye-glow below).
+const M_BADGE_BOX = { left: 15, top: 26, width: 20, height: 24 };
 
 // Gaze offsets, in percent of an eye box's own width/height — small,
 // representative nudges (see doc comment above), not literal geometry.
@@ -327,13 +354,23 @@ export default function RobotAvatarImage({
 
           {showActivityOverlays && (
             <>
-              {/* Thinking: three large dots on the visor, below the eye line */}
+              {/* Thinking: the M badge glows red (additive, never a cover) —
+                  replaced the visor dot row entirely, see doc comment. */}
               {activityState === 'thinking' && (
-                <div className="robotDotRow" data-testid="robot-dots">
-                  {[0, 1, 2].map(i => (
-                    <span key={i} className="robotDot" style={{ animationDelay: `${i * 180}ms` }} />
-                  ))}
-                </div>
+                <span
+                  className="robotMBadgeGlow"
+                  data-testid="robot-mbadge-glow"
+                  style={{
+                    position: 'absolute',
+                    left: `${M_BADGE_BOX.left + M_BADGE_BOX.width / 2}%`,
+                    top: `${M_BADGE_BOX.top + M_BADGE_BOX.height / 2}%`,
+                    width: `${M_BADGE_BOX.width}%`, height: `${M_BADGE_BOX.height}%`,
+                    transform: 'translate(-50%, -50%)',
+                    borderRadius: '50%', pointerEvents: 'none', zIndex: 10,
+                    background: 'radial-gradient(circle, rgba(255,32,32,0.95) 0%, rgba(255,32,32,0) 70%)',
+                    mixBlendMode: 'screen',
+                  }}
+                />
               )}
 
               {/* Speaking: eyes pulse brighter (additive glow, never a cover)
@@ -435,21 +472,11 @@ export default function RobotAvatarImage({
           50% { transform: rotate(3deg) scale(1.015); }
         }
 
-        /* Thinking: three large, bright dots waving up/down on the visor */
-        .robotDotRow {
-          position: absolute; top: 51%; left: 50%; width: 24%; height: 7%;
-          display: flex; align-items: center; justify-content: space-between;
-          pointer-events: none; z-index: 10;
-        }
-        .robotDot {
-          height: 68%; aspect-ratio: 1; border-radius: 50%;
-          background: ${BRIGHT_GOLD}; opacity: 1;
-          box-shadow: 0 0 10px 3px rgba(255,210,74,0.95), 0 0 22px 8px rgba(255,210,74,0.55);
-        }
-        [data-activity-state="thinking"] .robotDot { animation: robotDotWave 1.1s ease-in-out infinite; }
-        @keyframes robotDotWave {
-          0%, 100% { transform: translateY(0); opacity: 0.85; }
-          50% { transform: translateY(-55%); opacity: 1; }
+        /* Thinking: the M badge glows red */
+        .robotMBadgeGlow { animation: robotMBadgePulse 0.9s ease-in-out infinite; }
+        @keyframes robotMBadgePulse {
+          0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
         }
 
         /* Speaking: an ADDITIVE glow over each real eye — never a cover */
