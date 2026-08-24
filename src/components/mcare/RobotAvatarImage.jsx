@@ -208,6 +208,16 @@
  *   and the `robotBrainLabel` span/style. The gold `<img src={mBadgeSrc}>`
  *   needed no change — it was already unconditionally `opacity:1`, so with
  *   the overlay gone it's simply gold, always, in every state again.
+ *
+ *   Fifth same-day correction: lucide's `BrainCircuit` renders on its side
+ *   by default — her screenshot showed it sideways above the head. Fixed
+ *   with a fixed `transform: rotate(90deg)` on the icon itself (never
+ *   animated, no continuous spin — the pulse/ring/spark keyframes around it
+ *   only ever touch `scale`/`opacity`), so the stem now points down toward
+ *   the head. Position (`top: -26`, within her 18-28px ask) was already
+ *   right, no change. `.robotBrainGlow`'s `inset` shrank from -8px to -4px
+ *   — a smaller, tighter blur radius so it reads as a clean hologram rather
+ *   than a large glowing shape.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -677,7 +687,17 @@ export default function RobotAvatarImage({
                   size={`${Math.max(16, Math.round(size * 0.14))}`}
                   color={THINKING_RED}
                   strokeWidth={2}
-                  style={{ position: 'relative', zIndex: 2, filter: `drop-shadow(0 0 6px ${THINKING_RED}e6)` }}
+                  style={{
+                    position: 'relative', zIndex: 2,
+                    filter: `drop-shadow(0 0 6px ${THINKING_RED}e6)`,
+                    // Lucide's BrainCircuit renders on its side by default —
+                    // a fixed 90deg clockwise correction (never animated, no
+                    // continuous spin) so the stem points down toward the
+                    // head, like an upright brain icon. The glow/ring/spark
+                    // elements around it are all symmetric circles/dots, so
+                    // this rotation only needs to apply to the icon itself.
+                    transform: 'rotate(90deg)',
+                  }}
                 />
               </div>
             </motion.div>
@@ -696,7 +716,7 @@ export default function RobotAvatarImage({
            with no animation. */
         .robotBrainGlowWrap { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
         .robotBrainGlow {
-          position: absolute; inset: -8px; border-radius: 50%; z-index: 0;
+          position: absolute; inset: -4px; border-radius: 50%; z-index: 0;
           background: radial-gradient(circle, ${THINKING_RED}66 0%, ${THINKING_RED}00 70%);
         }
         [data-activity-state="thinking"] .robotBrainGlow { animation: robotBrainGlowPulse 2.2s ease-in-out infinite; }
