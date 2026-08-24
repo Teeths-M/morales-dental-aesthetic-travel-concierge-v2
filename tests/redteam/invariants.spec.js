@@ -4096,7 +4096,7 @@ test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving u
   // regression in THIS pass's own text, not to freeze the count forever.
   const agentConfig = read('base44/agents/m_care.jsonc');
   const parsed = JSON.parse(agentConfig);
-  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(108);
+  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(109);
 
   const instructions = parsed.instructions;
 
@@ -4167,7 +4167,7 @@ test('LEARN: analyzeMcarePerformance is cron-authorized, enforces a real minimum
   // AGENTIC ORCHESTRATION test above for the same note) — this assertion
   // exists as a sanity check, not a claim that LEARN itself added anything.
   const agentConfig = read('base44/agents/m_care.jsonc');
-  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(108);
+  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(109);
   expect(agentConfig, "RULE 33 must reference checking recallMcareKnowledge for a self-observed pattern before choosing an alternative")
     .toMatch(/a quick recallMcareKnowledge check may surface a real, self-observed pattern/);
 });
@@ -5177,4 +5177,42 @@ test('TRAVEL INTELLIGENCE: visa data always carries the "rules can change" cavea
   const src = read('base44/shared/travelBriefing.ts');
   expect(src, 'the visa result must always include the official-source caveat')
     .toContain("Rules can change — always confirm with the destination's official immigration source before booking.");
+});
+
+test('CASE MANAGEMENT: m_care.jsonc grants checkCaseRequirements and RULE 37 exists', () => {
+  const mcare = read('base44/agents/m_care.jsonc');
+  const mcareData = JSON.parse(mcare);
+  const names = mcareData.tool_configs.map((t) => t.function_name || t.entity_name);
+  expect(names, 'checkCaseRequirements must be granted as a tool').toContain('checkCaseRequirements');
+  expect(mcareData.instructions, 'RULE 37 must exist').toContain('RULE 37 -- CASE MANAGEMENT: TWO LENSES, ONE LOOP');
+  expect(mcareData.instructions, 'RULE 37 must not claim this is two separate agents')
+    .toMatch(/two lenses, not two agents/);
+});
+
+test('CASE MANAGEMENT: checkCaseRequirements is deterministic, ownership-checked, and never fabricates a requirement', () => {
+  const src = read('base44/functions/checkCaseRequirements/entry.ts');
+
+  // No LLM/external research call of any kind — a pure read + comparison.
+  expect(src, 'checkCaseRequirements must never call InvokeLLM').not.toContain('InvokeLLM');
+  expect(src, 'checkCaseRequirements must never call GenerateText/Image/Speech').not.toMatch(/Generate(Text|Image|Speech)/);
+
+  // Real ownership check — the caller must own the case or be an admin,
+  // structurally before any case data is ever returned.
+  const ownerIdx = src.indexOf('const isOwner');
+  const forbidIdx = src.indexOf("return err('Forbidden', 403)");
+  const returnIdx = src.indexOf('return ok({');
+  expect(ownerIdx, 'an ownership check must exist').toBeGreaterThan(-1);
+  expect(forbidIdx, 'a Forbidden response must exist').toBeGreaterThan(-1);
+  expect(ownerIdx, 'the ownership check must come before the Forbidden response').toBeLessThan(forbidIdx);
+  expect(forbidIdx, 'the Forbidden response must come before any data is returned').toBeLessThan(returnIdx);
+
+  // The passport 180-day sentinel is ported from a real, already-shipped
+  // rule (src/lib/travelReadiness.js) — not a freshly invented threshold.
+  expect(src, 'must reuse the real 180-day sentinel, not an invented threshold').toContain('SENTINEL_DAYS = 180');
+
+  // Every status must come from a real field/document check, never a
+  // hardcoded 'present' with nothing behind it.
+  expect(src, 'passport document status must come from a real VaultDocument check').toMatch(/hasDoc\('passport'\)/);
+  expect(src, 'visa document status must come from a real VaultDocument check').toMatch(/hasDoc\('visa'\)/);
+  expect(src, 'consent status must read the real Consultation field, not assume true').toMatch(/consultation\?\.data_processing_consent \? 'present' : 'missing'/);
 });
