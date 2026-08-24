@@ -45,7 +45,8 @@
       "type": "string",
       "enum": [
         "on_selection",
-        "scheduled"
+        "scheduled",
+        "mcare_chat"
       ]
     }
   },

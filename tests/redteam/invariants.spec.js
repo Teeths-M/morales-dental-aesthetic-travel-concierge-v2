@@ -2802,9 +2802,15 @@ test('PERFORMANCE: the shared in-memory cache helper is used by the intended rea
   }
 });
 
-test('PERFORMANCE: getVisaRequirement only ever caches a confirmed-fresh snapshot, never a stale/missing one', () => {
+test('PERFORMANCE: getCachedVisaRequirement only ever caches a confirmed-fresh snapshot, never a stale/missing one', () => {
+  // Extracted (2026, Travel Intelligence pass) from getVisaRequirement/entry.ts
+  // into shared/visaRequirementLookup.ts so getTravelBriefing can reuse the
+  // exact same cache without a second implementation — the real property this
+  // test guards moved with it, unchanged.
   const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-  const src = strip(read('base44/functions/getVisaRequirement/entry.ts'));
+  const src = strip(read('base44/shared/visaRequirementLookup.ts'));
+  expect(read('base44/functions/getVisaRequirement/entry.ts'), 'getVisaRequirement must call the shared extraction, not reimplement caching inline')
+    .toContain('getCachedVisaRequirement(base44, nationality, destination_country');
   const freshCheckIdx = src.indexOf('isFresh(cached.last_confirmed_at');
   const cacheSetIdx = src.indexOf('freshSnapshotCache.set(');
   expect(freshCheckIdx, 'freshness check must exist').toBeGreaterThan(-1);
@@ -4079,14 +4085,18 @@ test('JOURNEY PLAN: JourneyPlan RLS is admin-only to write, the agent grant is r
 });
 
 test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving up and honest failure tracking, RULE 34 names the autonomy tiers, and tool_configs is unchanged (text-only rules, no new grants)', () => {
-  // No new entity, no new function, no new tool_configs grant this pass —
-  // both rules reuse only tools already granted (matching the audit's
-  // conclusion that native multi-tool chaining + already-real gated
-  // functions cover this, no new orchestrator/MCP needed). Count must stay
-  // exactly what it was after RULE 32 (JourneyPlan) landed.
+  // No new entity, no new function, no new tool_configs grant in the RULE
+  // 33/34 pass itself — both rules reuse only tools already granted
+  // (matching the audit's conclusion that native multi-tool chaining +
+  // already-real gated functions cover this, no new orchestrator/MCP
+  // needed). The exact count below is the CURRENT total, not a claim that
+  // RULE 33/34 themselves added anything — it has grown since (106 -> 108,
+  // getTravelBriefing/searchFlights, Travel Intelligence pass) for reasons
+  // unrelated to this test's own concern; this assertion exists to catch a
+  // regression in THIS pass's own text, not to freeze the count forever.
   const agentConfig = read('base44/agents/m_care.jsonc');
   const parsed = JSON.parse(agentConfig);
-  expect(parsed.tool_configs.length, 'RULE 33/34 are text-only — tool_configs must not have grown').toBe(106);
+  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(108);
 
   const instructions = parsed.instructions;
 
@@ -4150,10 +4160,14 @@ test('LEARN: analyzeMcarePerformance is cron-authorized, enforces a real minimum
   expect(confFn, 'computeConfidence must cap at 80, never reaching researched-fact-level certainty')
     .toMatch(/Math\.min\(80, raw\)/);
 
-  // Zero new tool_configs — this whole feature reuses McareKnowledge's
-  // existing read+create grant plus a text-only RULE 33 refinement.
+  // Zero new tool_configs from the LEARN slice itself — this whole feature
+  // reuses McareKnowledge's existing read+create grant plus a text-only
+  // RULE 33 refinement. The count below is the CURRENT total (grown since
+  // to 108 by the later, unrelated Travel Intelligence pass — see the
+  // AGENTIC ORCHESTRATION test above for the same note) — this assertion
+  // exists as a sanity check, not a claim that LEARN itself added anything.
   const agentConfig = read('base44/agents/m_care.jsonc');
-  expect(JSON.parse(agentConfig).tool_configs.length, 'the LEARN slice must add zero new tool_configs grants').toBe(106);
+  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(108);
   expect(agentConfig, "RULE 33 must reference checking recallMcareKnowledge for a self-observed pattern before choosing an alternative")
     .toMatch(/a quick recallMcareKnowledge check may surface a real, self-observed pattern/);
 });
@@ -5088,4 +5102,79 @@ test('SAVE_MEMORY: Base44\'s hidden native memory tool_call never leaks into the
     const agentSrc = read(agentPagePath);
     expect(agentSrc, 'MCareAgent.jsx must not reference tool_calls at all (it renders via MessageBubble only)').not.toContain('tool_calls');
   }
+});
+
+test('TRAVEL INTELLIGENCE: m_care.jsonc grants getTravelBriefing/searchFlights and RULE 36 exists', () => {
+  const mcare = read('base44/agents/m_care.jsonc');
+  const mcareData = JSON.parse(mcare);
+  const names = mcareData.tool_configs.map((t) => t.function_name || t.entity_name);
+  expect(names, 'getTravelBriefing must be granted as a tool').toContain('getTravelBriefing');
+  expect(names, 'searchFlights must be granted as a tool').toContain('searchFlights');
+  // Already-granted tools this pass reuses/rewrites in place, not re-granted.
+  expect(names, 'getVisaRequirement was already granted — must not be duplicated under a new name').toContain('getVisaRequirement');
+  expect(names, 'checkFlightStatus was already granted — must not be duplicated under a new name').toContain('checkFlightStatus');
+  expect(mcareData.instructions, 'RULE 36 must exist').toContain('RULE 36 -- TRAVEL INTELLIGENCE');
+});
+
+test('TRAVEL INTELLIGENCE: the flight adapter never returns supported:true without a real env var present', () => {
+  const src = read('base44/shared/flightSearchAdapter.ts');
+  const searchIdx = src.indexOf('export async function searchFlightOffers');
+  const statusIdx = src.indexOf('export async function getFlightStatus');
+  expect(searchIdx, 'searchFlightOffers must exist').toBeGreaterThan(-1);
+  expect(statusIdx, 'getFlightStatus must exist').toBeGreaterThan(-1);
+
+  const searchBody = src.slice(searchIdx, statusIdx);
+  const statusBody = src.slice(statusIdx);
+
+  // Each function's very first real check must be the env var — a
+  // structural guarantee no code path above it could accidentally reach
+  // a live call first.
+  expect(searchBody, "searchFlightOffers must gate on Deno.env.get('AMADEUS_API_KEY') before any real fetch")
+    .toMatch(/const clientId = Deno\.env\.get\('AMADEUS_API_KEY'\);[\s\S]{0,300}if \(!clientId \|\| !clientSecret\) \{[\s\S]{0,200}supported: false/);
+  expect(statusBody, "getFlightStatus must gate on Deno.env.get('AERODATABOX_API_KEY') before any real fetch")
+    .toMatch(/const apiKey = Deno\.env\.get\('AERODATABOX_API_KEY'\);[\s\S]{0,200}if \(!apiKey\) \{[\s\S]{0,200}supported: false/);
+
+  // Neither function may declare a hardcoded fallback key/secret anywhere.
+  expect(src, 'the adapter must never hardcode a fallback API key').not.toMatch(/AMADEUS_API_KEY['")\s]*\|\|\s*['"]\w/);
+  expect(src, 'the adapter must never hardcode a fallback API key').not.toMatch(/AERODATABOX_API_KEY['")\s]*\|\|\s*['"]\w/);
+});
+
+test('TRAVEL INTELLIGENCE: the briefing aggregator makes zero LLM calls of its own', () => {
+  // Per RULE 3 (NO INVENTED DATA) — the aggregator only ever assembles real
+  // tool results; the agent itself narrates them, never a second
+  // summarizing LLM pass that could drift from what the tools actually said.
+  const src = read('base44/shared/travelBriefing.ts');
+  expect(src, 'travelBriefing.ts must never call InvokeLLM directly').not.toContain('InvokeLLM');
+  expect(src, 'travelBriefing.ts must never call GenerateText/GenerateImage directly').not.toMatch(/Generate(Text|Image|Speech)/);
+});
+
+test('TRAVEL INTELLIGENCE: checkFlightStatus never overwrites a trip with a fabricated status', () => {
+  const src = read('base44/functions/checkFlightStatus/entry.ts');
+  const updateIdx = src.indexOf("if (action === 'update_trip')");
+  expect(updateIdx, 'update_trip branch must exist').toBeGreaterThan(-1);
+  const updateBlock = src.slice(updateIdx);
+
+  // The real TravelRequest.update call must be structurally inside an
+  // `if (result.supported)` gate — an unconfigured/failed check can never
+  // silently overwrite the trip's last real known status.
+  const gateIdx = updateBlock.indexOf('if (result.supported)');
+  const writeIdx = updateBlock.indexOf('TravelRequest.update(trip_id,');
+  expect(gateIdx, 'the supported gate must exist').toBeGreaterThan(-1);
+  expect(writeIdx, 'the real write call must exist').toBeGreaterThan(-1);
+  expect(gateIdx, 'the write must happen inside the supported gate, not before it').toBeLessThan(writeIdx);
+  expect(writeIdx - gateIdx, 'the write must be close to its own gate, not some unrelated later write').toBeLessThan(300);
+
+  // The read-only `check` action must have no role restriction (a real,
+  // live bug this pass fixes — the old gate 403'd an ordinary traveler
+  // asking about their own flight); `update_trip` keeps its real gate.
+  const checkIdx = src.indexOf("if (action === 'check')");
+  const checkBlock = src.slice(checkIdx, updateIdx);
+  expect(checkBlock, 'the check action must not contain a role check').not.toContain('UPDATE_TRIP_ROLES');
+  expect(updateBlock, 'update_trip must keep its real role gate').toContain('UPDATE_TRIP_ROLES.includes(user.role)');
+});
+
+test('TRAVEL INTELLIGENCE: visa data always carries the "rules can change" caveat', () => {
+  const src = read('base44/shared/travelBriefing.ts');
+  expect(src, 'the visa result must always include the official-source caveat')
+    .toContain("Rules can change — always confirm with the destination's official immigration source before booking.");
 });
