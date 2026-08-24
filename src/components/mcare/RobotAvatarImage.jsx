@@ -140,21 +140,38 @@
  *   `m-safe-robot-body-nombadge.webp`) instead of last round's glow-only
  *   overlay — her spec wanted the *entire* M symbol solid red, not a
  *   glow near it, which genuinely needs a real isolated layer to recolor
- *   cleanly. Recolored via a CSS `mask-image` using that same cutout as
- *   a stencil (a flat, saturated red fill reads as real lit hardware — an
- *   LED under a cover — more convincingly than pushing a color filter
- *   over already-bright gold pixels would), crossfaded against the gold
- *   `<img>` by a plain opacity transition, with a pulse plus a periodic
- *   brightness flicker layered on top. A new floating `BrainCircuit`
- *   (lucide-react, already a project dependency) hologram — glow, a
- *   breathing ring, staggered fading sparks, an "ANALYZING" label —
- *   animates in/out via framer-motion's `AnimatePresence` (the one
- *   framer-motion usage in this file; needed for a real exit transition
- *   before unmount, which plain conditional rendering can't do). Both are
- *   driven by the same `activityState === 'thinking'` the M-badge glow
- *   already used — no new state-timing logic needed, `MCareOrb.jsx`'s
- *   existing `orbState` derivation already makes "thinking starts
- *   immediately on submit, ends when speaking starts" true today.
+ *   cleanly. A new floating `BrainCircuit` (lucide-react, already a
+ *   project dependency) hologram — glow, a breathing ring, staggered
+ *   fading sparks, an "ANALYZING" label — animates in/out via
+ *   framer-motion's `AnimatePresence` (the one framer-motion usage in
+ *   this file; needed for a real exit transition before unmount, which
+ *   plain conditional rendering can't do). Both are driven by the same
+ *   `activityState === 'thinking'` the M-badge effect already used — no
+ *   new state-timing logic needed, `MCareOrb.jsx`'s existing `orbState`
+ *   derivation already makes "thinking starts immediately on submit, ends
+ *   when speaking starts" true today.
+ *
+ *   Same-day correction: the first version above masked the red fill with
+ *   `mBadgeSrc` — the real photo cutout of the WHOLE badge (gold ring +
+ *   black disc + letter, together) — so the entire earpiece went solid
+ *   red, not just the letter. Portia's own screenshot showed exactly
+ *   this. Her instruction was explicit: only the M-shaped pixels may ever
+ *   turn red, and the earpiece image itself must stay completely
+ *   unchanged in every state. Fixed with a genuinely letter-only mask
+ *   instead of a fresh pixel-extraction attempt (this exact technique had
+ *   already proven fragile earlier this session): `public/morales-m-mark.png`,
+ *   this app's own real brand M-mark, already referenced by plain URL in
+ *   ~30 other files, and confirmed via direct pixel inspection to be a
+ *   clean, transparent-background swoosh "M" with no ring/disc/background
+ *   baked in at all — exactly the "clean cut-out M asset" her own
+ *   instructions named as the goal, already sitting in this repo. The
+ *   gold `<img src={mBadgeSrc}>` no longer fades out while thinking (it's
+ *   now permanently `opacity:1`); a new, much smaller `M_LETTER_BOX`
+ *   (~40% of the earpiece's own width, her "35-45% of the earpiece
+ *   diameter," centered on the badge) masks only that brand glyph in
+ *   solid `#FF3347` on top of it. An honest, visually-checked overlay
+ *   placement, not a claim of pixel-perfect alignment with the photo's
+ *   own (differently-shaped) rendered M.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -215,6 +232,29 @@ const EYE_BOX = {
 const MBADGE_BOX = {
   left: (70 / NATURAL_W) * 100, top: (70 / NATURAL_H) * 100,
   width: (58 / NATURAL_W) * 100, height: (120 / NATURAL_H) * 100,
+};
+
+// Thinking-state color for the letter ONLY (her exact spec) — distinct
+// from THINKING_RED, which stays reserved for the brain hologram above.
+const M_LETTER_RED = '#FF3347';
+// public/morales-m-mark.png's own real dimensions (confirmed via direct
+// pixel inspection) — used so the mask box below doesn't stretch the glyph.
+const M_MARK_ASPECT = 386 / 253;
+// Same raw px numbers MBADGE_BOX is built from, kept explicit here so both
+// boxes share one source of truth for the badge's real center point.
+const MBADGE_PX = { left: 70, top: 70, width: 58, height: 120 };
+const M_LETTER_W_PX = MBADGE_PX.width * 0.4; // ~40% of the earpiece's own
+// width — the midpoint of her "35-45% of the earpiece diameter" ask.
+const M_LETTER_H_PX = M_LETTER_W_PX / M_MARK_ASPECT;
+const M_BADGE_CX_PX = MBADGE_PX.left + MBADGE_PX.width / 2;
+const M_BADGE_CY_PX = MBADGE_PX.top + MBADGE_PX.height / 2;
+// Where the real brand M-mark renders, thinking-state only — centered on
+// the badge, sized to just the letter, never the ring/disc around it.
+const M_LETTER_BOX = {
+  left: ((M_BADGE_CX_PX - M_LETTER_W_PX / 2) / NATURAL_W) * 100,
+  top: ((M_BADGE_CY_PX - M_LETTER_H_PX / 2) / NATURAL_H) * 100,
+  width: (M_LETTER_W_PX / NATURAL_W) * 100,
+  height: (M_LETTER_H_PX / NATURAL_H) * 100,
 };
 
 // Gaze offsets, in percent of an eye box's own width/height — small,
@@ -490,11 +530,15 @@ export default function RobotAvatarImage({
               <EyeLayer src={eyeLeftSrc} box={EYE_BOX.left} gaze={gaze} blinking={blinking} />
               <EyeLayer src={eyeRightSrc} box={EYE_BOX.right} gaze={gaze} blinking={blinking} />
 
-              {/* M badge — a real cutout layer (like the eyes), gold by
-                  default. Always rendered here (not activity-gated) since
-                  bodySrc no longer bakes the badge in at all — without
-                  this, every non-thinking state at 24-79px would show a
-                  blank hole where the badge used to be. */}
+              {/* M badge — a real cutout layer (like the eyes), gold,
+                  always rendered here (not activity-gated) since bodySrc
+                  no longer bakes the badge in at all — without this,
+                  every non-thinking state at 24-79px would show a blank
+                  hole where the badge used to be. Stays opacity:1 in
+                  EVERY state, thinking included — Portia's explicit
+                  correction: the earpiece image itself must render
+                  completely unchanged; only the letter (below, thinking-
+                  state only) may ever turn red on top of it. */}
               <img
                 src={mBadgeSrc}
                 alt=""
@@ -503,8 +547,6 @@ export default function RobotAvatarImage({
                   position: 'absolute',
                   left: `${MBADGE_BOX.left}%`, top: `${MBADGE_BOX.top}%`,
                   width: `${MBADGE_BOX.width}%`, height: `${MBADGE_BOX.height}%`,
-                  opacity: showActivityOverlays && activityState === 'thinking' ? 0 : 1,
-                  transition: 'opacity 260ms ease-in-out',
                   pointerEvents: 'none',
                 }}
               />
@@ -513,35 +555,38 @@ export default function RobotAvatarImage({
 
           {showActivityOverlays && (
             <>
-              {/* Thinking: the M badge recolors to vivid red — a real solid
-                  fill of the exact badge shape (not just a nearby glow),
-                  via a CSS mask using the same cutout as a stencil. Never
-                  tints the rest of the robot. Crossfades against the gold
-                  <img> above via a plain opacity transition. */}
+              {/* Thinking: ONLY the letter "M" turns red — never the ring,
+                  disc, or any other part of the earpiece. Masked with
+                  public/morales-m-mark.png, this app's own real brand
+                  glyph (confirmed letter-only, no disc/background baked
+                  in — see the top-of-file history comment), sized to
+                  M_LETTER_BOX (~40% of the badge's own width, centered on
+                  it) rather than the full badge shape. A small backdrop
+                  glow sized to the letter itself, not the whole badge. */}
               {activityState === 'thinking' && (
                 <>
                   <span
                     aria-hidden="true"
                     style={{
                       position: 'absolute',
-                      left: `${MBADGE_BOX.left + MBADGE_BOX.width / 2}%`,
-                      top: `${MBADGE_BOX.top + MBADGE_BOX.height / 2}%`,
-                      width: `${MBADGE_BOX.width * 1.8}%`, height: `${MBADGE_BOX.height * 1.35}%`,
+                      left: `${M_LETTER_BOX.left + M_LETTER_BOX.width / 2}%`,
+                      top: `${M_LETTER_BOX.top + M_LETTER_BOX.height / 2}%`,
+                      width: `${M_LETTER_BOX.width * 2.2}%`, height: `${M_LETTER_BOX.height * 2.2}%`,
                       transform: 'translate(-50%, -50%)',
                       borderRadius: '50%', pointerEvents: 'none', zIndex: 9,
-                      background: `radial-gradient(circle, ${THINKING_RED}99 0%, ${THINKING_RED}00 72%)`,
+                      background: `radial-gradient(circle, ${M_LETTER_RED}99 0%, ${M_LETTER_RED}00 72%)`,
                     }}
                   />
                   <span
-                    className="robotMBadgeRed"
-                    data-testid="robot-mbadge-red"
+                    className="robotMLetterRed"
+                    data-testid="robot-mletter-red"
                     style={{
                       position: 'absolute',
-                      left: `${MBADGE_BOX.left}%`, top: `${MBADGE_BOX.top}%`,
-                      width: `${MBADGE_BOX.width}%`, height: `${MBADGE_BOX.height}%`,
-                      backgroundColor: THINKING_RED,
-                      WebkitMaskImage: `url(${mBadgeSrc})`, maskImage: `url(${mBadgeSrc})`,
-                      WebkitMaskSize: '100% 100%', maskSize: '100% 100%',
+                      left: `${M_LETTER_BOX.left}%`, top: `${M_LETTER_BOX.top}%`,
+                      width: `${M_LETTER_BOX.width}%`, height: `${M_LETTER_BOX.height}%`,
+                      backgroundColor: M_LETTER_RED,
+                      WebkitMaskImage: 'url(/morales-m-mark.png)', maskImage: 'url(/morales-m-mark.png)',
+                      WebkitMaskSize: 'contain', maskSize: 'contain',
                       WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
                       WebkitMaskPosition: 'center', maskPosition: 'center',
                       pointerEvents: 'none', zIndex: 10,
@@ -668,21 +713,21 @@ export default function RobotAvatarImage({
       <style>{`
         .robotAvatarFloat { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
-        /* Thinking: the M badge's solid red fill pulses like lit hardware,
+        /* Thinking: the LETTER's solid red fill pulses like lit hardware,
            plus a brief scan/flicker dip a couple of times per longer
            cycle — two independent, stacked animations on the same
            element. Scoped to [data-activity-state="thinking"] (which the
            component forces to "static" when animated is false) rather
            than an unconditional selector, so reduced-motion genuinely
            turns this off instead of just being ignored. */
-        [data-activity-state="thinking"] .robotMBadgeRed {
-          animation: robotMBadgePulse 1.1s ease-in-out infinite, robotMBadgeFlicker 4.5s linear infinite;
+        [data-activity-state="thinking"] .robotMLetterRed {
+          animation: robotMLetterPulse 1.1s ease-in-out infinite, robotMLetterFlicker 4.5s linear infinite;
         }
-        @keyframes robotMBadgePulse {
+        @keyframes robotMLetterPulse {
           0%, 100% { opacity: 0.82; }
           50% { opacity: 1; }
         }
-        @keyframes robotMBadgeFlicker {
+        @keyframes robotMLetterFlicker {
           0%, 78%, 100% { filter: brightness(1); }
           80% { filter: brightness(0.55); }
           82% { filter: brightness(1.25); }
