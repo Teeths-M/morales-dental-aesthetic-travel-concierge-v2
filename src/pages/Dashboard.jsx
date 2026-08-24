@@ -38,6 +38,7 @@ import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
 import JourneyMap from '@/components/dashboard/JourneyMap';
 import TravelPassCard from '@/components/dashboard/TravelPassCard';
 import CareRoomPanel from '@/components/dashboard/CareRoomPanel';
+import CaseControlCenter from '@/components/dashboard/CaseControlCenter';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
 import PreDepartureBriefing from '@/components/dashboard/PreDepartureBriefing';
@@ -549,6 +550,12 @@ function DashboardHome({ user, consultations, language }) {
           that opens once the case's doctor_confirmation_status flips to
           CONFIRMED (Gate 2/3). Renders nothing before that. */}
       <CareRoomPanel userEmail={user?.email} />
+
+      {/* Case Control Center — a real Risk severity view (getCaseRiskSummary)
+          and an expandable Agent Run history (logAgentRun, RULE 38), so
+          "M-Care is working on this" is something a traveler can actually
+          see, not just something said once in a chat reply. */}
+      <CaseControlCenter userEmail={user?.email} />
 
       {/* Journey Status Timeline — Stripe/Apple order-status model */}
       {latestConsultation && (

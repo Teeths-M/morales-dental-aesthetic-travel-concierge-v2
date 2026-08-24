@@ -63,6 +63,12 @@ const STATUS_MAP = {
   resolved:           { color: 'gray',    label: 'Resolved' },
   cancelled:          { color: 'gray',    label: 'Cancelled' },
   draft:              { color: 'gray',    label: 'Draft' },
+
+  // ── Case Control Center risk severity (getCaseRiskSummary) ──
+  critical:           { color: 'red',     label: 'Critical' },
+  needs_attention:    { color: 'orange',  label: 'Needs Attention' },
+  monitor:            { color: 'amber',   label: 'Monitor' },
+  cleared:            { color: 'emerald', label: 'Cleared' },
 };
 
 const COLOR_STYLES = {

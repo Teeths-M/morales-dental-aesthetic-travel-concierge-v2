@@ -1,0 +1,92 @@
+{
+  "name": "AgentRun",
+  "type": "object",
+  "description": "One real record per completed M-Care autonomous pass on a case — the 'what M-Care checked, why, and what happened' record behind RULE 38 in m_care.jsonc. Written once, after the real work is done (not a start/in-progress row), so there's no orphaned 'started but never finished' state to clean up. Reuses JourneyPlan (the real ordered step list) and JourneyEvent (the real patient-facing notification log) rather than duplicating either — this is the connective record that lets a traveler ask 'what did you just do and why' and get a real, structured answer instead of a plausible-sounding guess. All writes go through logAgentRun — create/update RLS is admin-only so a client (or M-Care's own read-only agent tool grant) can never fabricate a run that didn't happen.",
+  "properties": {
+    "client_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized RLS anchor — the patient this run belongs to. Same pattern as JourneyEvent.client_email / JourneyPlan.client_email."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this run was for."
+    },
+    "trigger": {
+      "type": "string",
+      "enum": ["patient_message", "scheduled_check", "tool_retry", "replanning"],
+      "description": "What actually started this pass — a real patient message, a scheduled/proactive check (RULE 20), a RULE 33 retry after a tool failure, or a RULE 33 replanning pass."
+    },
+    "goal": {
+      "type": "string",
+      "description": "Plain-language description of what this pass was trying to accomplish, in M-Care's own words."
+    },
+    "journey_plan_id": {
+      "type": "string",
+      "description": "The JourneyPlan this run was advancing, if any. Optional — not every run is tied to a multi-step plan."
+    },
+    "records_checked": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Real records M-Care actually looked at this pass: {entity_type, record_id, purpose}. Never a record it didn't actually read."
+    },
+    "findings": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "What M-Care actually found: {summary, confidence, source_url, requires_human_review}. confidence and source_url are null when the finding didn't come from a sourced/confidence-scored lookup (e.g. a plain deterministic check) — never a fabricated number or link."
+    },
+    "actions_proposed": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Actions M-Care considered or suggested this pass: {tool_name, description, tier}. tier is RULE 34's real auto/needs_consent/human_only vocabulary."
+    },
+    "actions_taken": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "The subset of actions_proposed that were actually executed this pass, same {tool_name, description, tier} shape."
+    },
+    "actions_blocked": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Actions M-Care did NOT take because they need the traveler's consent or a human decision first: {tool_name, description, reason}."
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["completed", "partial", "blocked_on_approval", "blocked_on_safety", "failed"],
+      "description": "How this pass actually ended — completed in full, partially (some actions still blocked), blocked waiting on the traveler's consent, blocked by RULE 1's Safety Gate, or a genuine failure (see RULE 33 replanning)."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["client_email", "case_id", "trigger", "goal", "outcome", "started_at", "completed_at"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.client_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "admin" }
+    }
+  }
+}

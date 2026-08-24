@@ -3999,7 +3999,12 @@ test('GROUNDED EXPLANATIONS: JourneyEvent is granted read-only to M-Care, its RL
   const instructions = JSON.parse(agentConfig).instructions;
   const ruleIdx = instructions.indexOf('RULE 31');
   expect(ruleIdx, 'RULE 31 (GROUNDED EXPLANATIONS) must exist in the instructions').toBeGreaterThan(-1);
-  const ruleText = instructions.slice(ruleIdx, ruleIdx + 1200);
+  // Window widened 1200 -> 1500 (Case Control Center pass): RULE 31 gained
+  // one real, additive sentence about also reading AgentRun records, which
+  // pushed the rule's own closing "read-only" sentence further from its
+  // start — same "content grew, widen the slice" maintenance this file has
+  // needed before, not a claim RULE 31's substance changed.
+  const ruleText = instructions.slice(ruleIdx, ruleIdx + 1500);
   expect(ruleText, 'RULE 31 must instruct looking up real JourneyEvent records before answering a retrospective question')
     .toMatch(/look up the real JourneyEvent records/);
   expect(ruleText, 'RULE 31 must forbid inventing a reason or action not present in a real record')
@@ -4096,7 +4101,7 @@ test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving u
   // regression in THIS pass's own text, not to freeze the count forever.
   const agentConfig = read('base44/agents/m_care.jsonc');
   const parsed = JSON.parse(agentConfig);
-  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(109);
+  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(113);
 
   const instructions = parsed.instructions;
 
@@ -4167,7 +4172,7 @@ test('LEARN: analyzeMcarePerformance is cron-authorized, enforces a real minimum
   // AGENTIC ORCHESTRATION test above for the same note) — this assertion
   // exists as a sanity check, not a claim that LEARN itself added anything.
   const agentConfig = read('base44/agents/m_care.jsonc');
-  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(109);
+  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(113);
   expect(agentConfig, "RULE 33 must reference checking recallMcareKnowledge for a self-observed pattern before choosing an alternative")
     .toMatch(/a quick recallMcareKnowledge check may surface a real, self-observed pattern/);
 });
@@ -5215,4 +5220,138 @@ test('CASE MANAGEMENT: checkCaseRequirements is deterministic, ownership-checked
   expect(src, 'passport document status must come from a real VaultDocument check').toMatch(/hasDoc\('passport'\)/);
   expect(src, 'visa document status must come from a real VaultDocument check').toMatch(/hasDoc\('visa'\)/);
   expect(src, 'consent status must read the real Consultation field, not assume true').toMatch(/consultation\?\.data_processing_consent \? 'present' : 'missing'/);
+});
+
+test('CASE CONTROL CENTER: checkCaseRequirements no longer presents the universal 180-day passport guideline as a confirmed per-destination fact', () => {
+  const src = read('base44/functions/checkCaseRequirements/entry.ts');
+
+  // A real safety margin above the 180-day guideline before status ever
+  // reads 'present' — the old bug was treating exactly-180-and-up as
+  // settled fact regardless of destination.
+  expect(src, 'a genuine safety margin above SENTINEL_DAYS must exist').toContain('SAFE_MARGIN_DAYS = 210');
+  expect(src, "'present' must only ever be reached at or above SAFE_MARGIN_DAYS, not SENTINEL_DAYS")
+    .toMatch(/daysAtTravel\s*<\s*SAFE_MARGIN_DAYS/);
+
+  // The 'present' copy must stay honest — "comfortably clears," never
+  // "confirmed" or "valid for this destination." lastIndexOf, not
+  // indexOf — the earlier passport_document item also uses the literal
+  // contiguous "status: 'present'" text, and this must anchor on
+  // passport_validity's own (later) occurrence, not that one.
+  const presentIdx = src.lastIndexOf("status: 'present'");
+  const presentSlice = src.slice(presentIdx, presentIdx + 250);
+  expect(presentSlice, "'present' copy must say 'comfortably clears', not claim per-destination confirmation")
+    .toMatch(/comfortably clears/);
+
+  // Between SENTINEL_DAYS and SAFE_MARGIN_DAYS the item must stay
+  // 'attention' and its own copy must disclose the guideline is generic
+  // and unconfirmed for the specific destination, pointing at the real
+  // research tool rather than presenting a guess as settled.
+  const attentionIdx = src.indexOf('daysAtTravel < SAFE_MARGIN_DAYS');
+  const attentionSlice = src.slice(attentionIdx, attentionIdx + 900);
+  expect(attentionSlice, "must disclose the 180-day figure hasn't been confirmed for the specific destination")
+    .toMatch(/hasn't been confirmed for this specific destination/);
+  expect(attentionSlice, 'must point at the real destination-aware research tool')
+    .toContain('getPassportValidityRequirement');
+});
+
+test('CASE CONTROL CENTER: getPassportValidityRequirement never invents a per-country rule, is confidence-gated, and creates a real confirmation task when unverified', () => {
+  const src = read('base44/functions/getPassportValidityRequirement/entry.ts');
+
+  // No hardcoded per-country passport-validity matrix anywhere in this
+  // file — the whole point is that no such data source exists honestly,
+  // so this must lean entirely on the real recall/research brain.
+  expect(src, 'must never hardcode a per-country validity table').not.toMatch(/const\s+\w*VALIDITY\w*\s*[:=]\s*\{/i);
+  expect(src, 'must call recallMcareKnowledge before researching').toMatch(/'recallMcareKnowledge'/);
+  expect(src, 'must call mcareResearchAndLearn as the real research fallback').toMatch(/'mcareResearchAndLearn'/);
+
+  // A 'confirmed' status must always be gated on real confidence >= 80 —
+  // never returned just because research ran.
+  const confirmedBlocks = [...src.matchAll(/status:\s*'confirmed'/g)];
+  expect(confirmedBlocks.length, "'confirmed' must be returned from at least one branch").toBeGreaterThan(0);
+  for (const m of confirmedBlocks) {
+    const before = src.slice(Math.max(0, m.index - 400), m.index);
+    expect(before, "every 'confirmed' branch must be preceded by a real confidence >= 80 gate")
+      .toMatch(/confidence_score\)?\s*>=\s*80|score\s*>=\s*0\.6/);
+  }
+
+  // On low confidence, a real confirmation task lands in the existing
+  // admin-visible review queue — never silently discarded.
+  expect(src, 'an unconfirmed result must call the real human-review queue writer')
+    .toMatch(/flagForReview\(/);
+  expect(src, 'the review flag must use the new passport_validity_requirement subject_type')
+    .toContain("subject_type: 'passport_validity_requirement'");
+  expect(src, "the unverified branch must return status 'unverified', never a guessed number")
+    .toContain("status: 'unverified'");
+});
+
+test('CASE CONTROL CENTER: getCaseRiskSummary is a pure deterministic aggregator, never calls an LLM, and reuses checkCaseRequirements rather than duplicating it', () => {
+  const src = read('base44/functions/getCaseRiskSummary/entry.ts');
+
+  expect(src, 'getCaseRiskSummary must never call InvokeLLM').not.toContain('InvokeLLM');
+  expect(src, 'getCaseRiskSummary must never call GenerateText/Image/Speech').not.toMatch(/Generate(Text|Image|Speech)/);
+  expect(src, 'getCaseRiskSummary must never itself call a live/researching visa or passport lookup')
+    .not.toMatch(/'mcareResearchAndLearn'|'getPassportValidityRequirement'/);
+
+  // checkCaseRequirements is invoked directly, not re-implemented.
+  expect(src, "must call checkCaseRequirements rather than duplicating its logic")
+    .toMatch(/functions\.invoke\('checkCaseRequirements'/);
+
+  // Real ownership check before any data is computed/returned.
+  const ownerIdx = src.indexOf('const isOwner');
+  const forbidIdx = src.indexOf("return err('Forbidden', 403)");
+  expect(ownerIdx, 'an ownership check must exist').toBeGreaterThan(-1);
+  expect(ownerIdx, 'the ownership check must come before the Forbidden response').toBeLessThan(forbidIdx);
+
+  // The severity vocabulary must be exactly the requested 4 tiers.
+  expect(src, 'the severity type must be exactly the requested 4-tier vocabulary')
+    .toMatch(/'cleared'\s*\|\s*'monitor'\s*\|\s*'needs_attention'\s*\|\s*'critical'/);
+
+  // Every risk item must carry a real evidence reference, never a bare
+  // severity with nothing behind it.
+  expect(src, 'every risk item must carry an evidence field').toMatch(/evidence:\s*\{/);
+});
+
+test('CASE CONTROL CENTER: AgentRun RLS is admin-only to write, the agent grant is read-only, and logAgentRun derives client_email server-side, never from the caller', () => {
+  // Same Phase-8 shape as JourneyPlan/JourneyEvent: read patient-or-admin,
+  // create/update admin-only — every real write happens via asServiceRole
+  // inside logAgentRun, so a client (or the agent's own read-only grant)
+  // can never fabricate a run that did not actually happen.
+  const entity = read('base44/entities/AgentRun.jsonc');
+  expect(entity, 'read must be scoped to client_email or admin/platform_admin, not wide open')
+    .toMatch(/"read"\s*:\s*\{\s*"\$or"\s*:\s*\[\s*\{\s*"data\.client_email"\s*:\s*"\{\{user\.email\}\}"/);
+  for (const op of ['create', 'update']) {
+    const opSlice = entity.slice(entity.indexOf(`"${op}"`), entity.indexOf(`"${op}"`) + 200);
+    expect(opSlice, `${op} must be admin/platform_admin only`).toMatch(/"role"\s*:\s*"admin"/);
+    expect(opSlice, `${op} must never grant a plain authenticated user direct write access`)
+      .not.toMatch(/"authenticated"\s*:\s*true/);
+  }
+
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const grantMatch = agentConfig.match(/\{\s*"entity_name"\s*:\s*"AgentRun"\s*,\s*"allowed_operations"\s*:\s*\[([^\]]*)\]\s*\}/);
+  expect(grantMatch, 'AgentRun must be granted to the M-Care agent to check its allowed_operations').toBeTruthy();
+  expect(grantMatch[1], 'the agent AgentRun grant must include read').toMatch(/"read"/);
+  expect(grantMatch[1], 'the agent AgentRun grant must never include create').not.toMatch(/"create"/);
+  expect(grantMatch[1], 'the agent AgentRun grant must never include update').not.toMatch(/"update"/);
+  for (const fn of ['logAgentRun', 'getPassportValidityRequirement', 'getCaseRiskSummary']) {
+    expect(agentConfig, `${fn} must be granted as a function tool`)
+      .toMatch(new RegExp(`"function_name"\\s*:\\s*"${fn}"`));
+  }
+
+  const src = read('base44/functions/logAgentRun/entry.ts');
+  expect(src, 'client_email must be derived from the real CaseRecord, never trusted from the request body')
+    .toMatch(/client_email:\s*caseRecord\.client_email/);
+  expect(src, "logAgentRun's bodySchema must not itself declare a client_email field")
+    .not.toMatch(/client_email:\s*Fields\./);
+  expect(src, 'logAgentRun must reject a caller who does not own the case')
+    .toMatch(/caseRecord\.client_email\s*!==\s*user!\.email/);
+
+  // RULE 38 itself: must forbid fabricating a record/finding, and cross-
+  // reference RULE 31/RULE 32/RULE 34.
+  const instructions = JSON.parse(agentConfig).instructions;
+  const ruleIdx = instructions.indexOf('RULE 38 -- AGENT RUN LOG');
+  expect(ruleIdx, 'RULE 38 (AGENT RUN LOG) must exist in the instructions').toBeGreaterThan(-1);
+  const ruleText = instructions.slice(ruleIdx, ruleIdx + 1200);
+  expect(ruleText, 'RULE 38 must forbid fabricating a record or finding that did not happen')
+    .toMatch(/Never fabricate a record you did not actually check or a finding that did not happen/);
+  expect(ruleText, "RULE 38 must reference RULE 34's real autonomy tiers").toContain("RULE 34's real tiers");
 });

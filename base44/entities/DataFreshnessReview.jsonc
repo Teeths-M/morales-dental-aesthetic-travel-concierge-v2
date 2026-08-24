@@ -1,6 +1,6 @@
 {
   "name": "DataFreshnessReview",
-  "description": "Human review queue for any flagged change to safety-critical, time-sensitive data (doctor licence, clinic status, visa rule, regulatory rule), plus a genuine source conflict found while revalidating a McareKnowledge fact. Nothing auto-publishes — a person confirms first.",
+  "description": "Human review queue for any flagged change to safety-critical, time-sensitive data (doctor licence, clinic status, visa rule, regulatory rule), a genuine source conflict found while revalidating a McareKnowledge fact, or a passport-validity requirement that couldn't be confirmed for a specific destination. Nothing auto-publishes — a person confirms first.",
   "type": "object",
   "properties": {
     "subject_type": {
@@ -11,7 +11,8 @@
         "visa_rule",
         "regulatory_rule",
         "passport_renewal_link",
-        "mcare_knowledge_conflict"
+        "mcare_knowledge_conflict",
+        "passport_validity_requirement"
       ]
     },
     "subject_id": {

@@ -17,9 +17,22 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
  * distinct from a false 'present' — an unanswered question never renders
  * as a reassuring checkmark, matching travelReadiness.js's own stated
  * principle.
+ *
+ * The 180-day figure is a common worldwide guideline, not a confirmed
+ * per-destination rule — real minimum-validity requirements vary by
+ * country and this function has no way to know the specific destination's
+ * actual rule. So the 'present' bar sits a genuine margin above 180 days
+ * (SAFE_MARGIN_DAYS) and its own copy says "comfortably clears the common
+ * minimum," never "confirmed valid." Between 0 and that margin, the item
+ * stays 'attention' and its copy plainly says the 180-day figure is a
+ * general guideline that hasn't been confirmed for this specific
+ * destination, pointing at getPassportValidityRequirement — the real,
+ * destination-aware, confidence-gated check — instead of presenting a
+ * guess as settled fact.
  */
 
 const SENTINEL_DAYS = 180;
+const SAFE_MARGIN_DAYS = 210;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type RequirementStatus = 'present' | 'missing' | 'attention' | 'not_applicable';
@@ -77,13 +90,15 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
           ? 'The passport on file expires before the travel date — it will need to be renewed before flying.'
           : 'The passport on file has already expired.',
       });
-    } else if (daysAtTravel < SENTINEL_DAYS) {
+    } else if (daysAtTravel < SAFE_MARGIN_DAYS) {
       items.push({
         key: 'passport_validity', label: 'Passport validity', status: 'attention',
-        detail: `Only ${daysAtTravel} days of validity remain at the travel date — most countries require at least 6 months, so renewing first is the safe route.`,
+        detail: daysAtTravel < SENTINEL_DAYS
+          ? `Only ${daysAtTravel} days of validity remain at the travel date. Most countries commonly require at least 6 months, but that's a general guideline — it hasn't been confirmed for this specific destination. Renewing first is the safe route, or call getPassportValidityRequirement for a destination-specific answer.`
+          : `${daysAtTravel} days of validity remain — likely enough for most destinations' common 6-month guideline, but that guideline hasn't been confirmed for this specific destination yet. Call getPassportValidityRequirement before treating this as settled.`,
       });
     } else {
-      items.push({ key: 'passport_validity', label: 'Passport validity', status: 'present', detail: 'The passport on file has enough validity remaining.' });
+      items.push({ key: 'passport_validity', label: 'Passport validity', status: 'present', detail: `${daysAtTravel} days of validity remain — comfortably clears the common 6-month minimum most countries require.` });
     }
   }
 
