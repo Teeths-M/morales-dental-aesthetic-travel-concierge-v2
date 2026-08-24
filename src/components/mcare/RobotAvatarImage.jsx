@@ -1,106 +1,243 @@
 /**
- * RobotAvatarImage — the real photorealistic 3D robot render, replacing the
- * inline-SVG `RobotAvatar.jsx` this app used for the two rounds before this
- * one. Portia generated the source photo herself and supplied the file.
+ * RobotAvatarImage — the real robot avatar, rebuilt 2026-08-23 to move
+ * for real instead of bouncing one flat image. Portia's own explicit
+ * instruction: stop simulating life on a static PNG. Checked this repo's
+ * real state first (no Rive package/.riv file, no Three.js/GLB anywhere,
+ * no sprite-frame assets — see CLAUDE.md) — Rive needs a compiled .riv
+ * authored in Rive's own tool (can't be generated from code), and a true
+ * photographic sprite sequence needs image *generation*, which doesn't
+ * exist in this environment either. What's real and buildable: her own
+ * approved photo, cut into independently-movable layers via the same
+ * real image-editing technique already proven for the alpha cutout.
  *
- * This is the ONE place "which robot renders" is decided — LivingOrb.jsx's
- * `Shell` and the homepage's `LivingMOrb.jsx` both render through this
- * instead of `RobotAvatar` directly, so any future asset swap only ever
- * touches this file.
+ * `src/assets/m-safe-robot-body-patched.webp` is the same real photo with
+ * the original eye region *inpainted* (sampled + coarse-to-fine diffusion
+ * from the real surrounding visor pixels — no generative fill) so it reads
+ * as a blank visor once the eye layers are hidden or moved. The two eye
+ * layers (`m-safe-robot-eye-left.webp` / `-eye-right.webp`) are real,
+ * tightly-cropped, alpha-cut sprites of just the glowing eye capsules,
+ * isolated via the same flood-fill/connected-components technique as the
+ * body's own original cutout, scoped to each eye. All three assets are
+ * 349x301 — the same native frame — and their real positions were measured
+ * directly against the actual pixels (a programmatic bright+warm
+ * color-cluster search, refined by viewing the crops), not eyeballed from
+ * RobotAvatar.jsx's older, more abstract SVG geometry.
  *
- * 2026-08-23, real cutout round: `src/assets/m-safe-robot-transparent.webp`
- * is a genuine alpha-cutout of Portia's own source photo (flood-fill
- * background removal + feathered edge + connected-components cleanup — see
- * CLAUDE.md for the full technique). Real alpha extrema 0-255, not a flat
- * 255 like the raw screenshot. No CSS edge-mask needed — the transparency
- * is real.
+ * `EYE_BOX` below is real pixel geometry, in percent of that native frame.
+ * A caller-independent aspect-ratio box (`robotImageBox`, aspectRatio:
+ * 349/301) wraps the image + eye layers so those percentages line up
+ * correctly in BOTH render modes: `naturalAspect` (width 100%, height
+ * auto — no letterbox) and the small square UI-chrome mode (`size x size`,
+ * objectFit:contain). The square mode previously had no such box, so an
+ * `objectFit:contain` image inside it actually rendered letterboxed
+ * (vertically centered, not filling the full square) while the OLD
+ * overlays were positioned as if it filled the square — a real, previously
+ * unnoticed misalignment at the 104px header size specifically (the 320px
+ * hero was always `naturalAspect` and unaffected). Fixed as a side effect
+ * of this rebuild, not a separate pass.
  *
- * `naturalAspect` (default false): every existing small/UI-chrome instance
- * (the 56px floating button, 28px typing indicators, the old 104px header
- * slot) keeps the original square `size x size` box with `objectFit:
- * contain` — a tight circular UI slot, correct for those. The hero-scale
- * desktop robot column passes `naturalAspect` instead: width-constrained,
- * height auto, the image's real ~1.16:1 aspect ratio (349x301).
+ * Eyes move for real, not a second drawn shape: each is its own small
+ * `<img>`, transformed with `translate()` for gaze and `scaleY()` for
+ * blink — real pixels of the real photo, not a fabricated icon.
+ * `useGazeAndBlink` (below) is a small, self-contained state machine:
  *
- * `mix-blend-mode: screen` is deliberately NOT applied to the base image —
- * see the git history / CLAUDE.md for why (it's a fake-transparency
- * technique, and layering it on top of a real cutout would wash out the
- * white shell). It IS used below for the speaking-state eye-glow overlay
- * specifically, where the goal is to genuinely ADD light on top of the
- * real eyes, not fake transparency.
+ * - idle: a real randomized blink every ~3-7s (occasional double-blink),
+ *   plus an occasional brief look-around glance left or right and back.
+ * - listening: eyes settle toward a fixed "toward the input" offset — an
+ *   honest, representative direction, not a literal live-tracked position
+ *   (this component renders at several different sizes/layouts, and
+ *   precisely computing where the input field actually sits on screen in
+ *   every one of them isn't reliable, so a small, plausible downward
+ *   glance is what's actually built, not a claim of precision it doesn't
+ *   have).
+ * - thinking: a restless glance cycling up/left/right while the agent is
+ *   composing — the existing visor-dot/orbit/tilt overlay (unchanged from
+ *   the prior round) continues alongside it.
+ * - speaking: eyes settle to an attentive, forward, center look.
  *
- * `RobotAvatar` (the SVG) is kept as a real `onError` fallback only —
- * covers the asset being renamed/removed later, not "waiting for one."
+ * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
+ * direction or fire an immediate blink on demand, regardless of
+ * `activityState` — MCareOrb.jsx's dev-only test panel uses these so every
+ * behavior can be verified without needing to catch a narrow live window.
  *
- * 2026-08-23, "alive AI agent" round + same-day hardening pass: Portia's
- * first version of these overlays was real but too subtle to read as
- * "working" — the old thinking dots were opacity 0.4 with no glow at a
- * few px across, which at a glance looks like nothing/black smudges
- * against the dark visor, not broken logic (the color prop *was* gold).
- * Rebuilt bold per her explicit spec, with hard constraints applied
- * everywhere below: z-index 10 (overlays must sit above the image),
- * opacity never drops below 0.8 at any point in an animation cycle, and
- * no dark/black overlay of any kind — which is why the old idle-blink
- * effect (dark capsules covering each eye) is gone; blink wasn't part of
- * this ask either, and it can't be redone without a dark cover.
+ * `amplitude` (0-1, default null) drives real audio-reactive intensity on
+ * the speaking eye-glow/waveform and the listening equalizer WHEN a real
+ * signal is actually available (wired in MCareOrb.jsx from neuralSpeech.js
+ * during TTS playback, and voiceMessageAudio.js's real recorder level
+ * meter while actively recording a voice note) — `null` (every path with
+ * no real signal: the browser-speechSynthesis TTS fallback, Conversational
+ * Mode's continuous mic listening, plain input-focus "listening") keeps
+ * the exact same honest fixed-keyframe animation this file already had.
+ * Never a fabricated "real audio" claim where no real signal exists.
  *
- * `activityState` (one of 'idle' / 'listening' / 'thinking' / 'speaking',
- * computed by LivingOrb.jsx from its own real `orbState` signals, or
- * forced by MCareOrb.jsx's dev-only test buttons — see that file) drives:
- *
- * - idle: one combined float+tilt keyframe on the whole shell (8px over
- *   3s, ±2deg in the same cycle — CSS can only animate one `transform`
- *   per element, so both live in one keyframe, never two separate
- *   animations fighting over the same property).
- * - listening: a 3-bar gold/cyan equalizer near the left earpiece/M-badge,
- *   height-bouncing (opacity fixed at 1 — only height moves, so the
- *   "never below 0.8" rule is automatic here). Stated plainly: this is a
- *   stylized ambient cue, not a real microphone-amplitude visualizer —
- *   "listening" also fires from plain text-input focus with no mic
- *   involved at all (see MCareOrb.jsx), so a literal audio-reactive claim
- *   would be dishonest in that case. Matches the same principle "speaking"
- *   already follows.
- * - thinking: three large bright-gold dots centered on the visor, below
- *   the real eye line (so they never sit on top of the photo's own amber
- *   eyes), doing a genuine up/down wave (translateY, not just a scale
- *   pulse) with a real 180ms stagger per dot — plus a brighter 3-particle
- *   orbit and a visibly faster head-tilt. The hologram rings
- *   (LivingOrb.jsx's Atmosphere) also spin faster specifically for this
- *   state — a real, visible "the system is working harder" signal, not
- *   just a face-level change.
- * - speaking: two distinct things. A genuine "eyes pulse brighter" effect
- *   — an additive glow (mix-blend-mode: screen) positioned exactly over
- *   each real eye, pulsing scale/opacity — adds light on top of the real
- *   eye glow rather than covering anything, so it stays compliant with
- *   "no dark overlay." Plus a 5-bar waveform positioned genuinely beneath
- *   the visor (on the chin/lower shell, below the visor's own bottom
- *   edge), reading as clearly distinct from thinking's on-visor dots.
- *   Same "no real TTS signal to honestly react to" principle as before —
- *   this is an honest "a reply is being delivered" cue, not a fabricated
- *   audio waveform.
- *
- * Eye/visor/badge anchor percentages come from RobotAvatar.jsx's own real,
- * already-calibrated SVG geometry (built directly from this same photo),
- * not a fresh guess. Every animation lives in real CSS `@keyframes` in the
- * `<style>` block below, gated by a `data-activity-state` attribute — one
- * file, easy to retune. Float/tilt/orbit are pure decoration and are
- * fully skipped when `animated` is false (prefers-reduced-motion, or any
- * caller wanting a static frame); the visor-dot/waveform/listening-bar/
- * eye-glow shapes still render, just without motion.
+ * Overlay hard constraints, unchanged from the prior "loud rebuild" round:
+ * z-index 10, opacity never below 0.8 mid-animation, no dark/black overlay
+ * anywhere (a blink is real eyelid-closing via the eye layer's own
+ * scaleY — not a second dark shape covering anything).
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import RobotAvatar from './RobotAvatar';
-import robotSrc from '@/assets/m-safe-robot-transparent.webp';
+import bodySrc from '@/assets/m-safe-robot-body-patched.webp';
+import eyeLeftSrc from '@/assets/m-safe-robot-eye-left.webp';
+import eyeRightSrc from '@/assets/m-safe-robot-eye-right.webp';
 
-// Bold, literal colors for the activity overlays — deliberately not the
-// app's standard muted GOLD (#D4AF37, still used for the base drop-shadow
-// glow below), since that's very likely why the first pass read as too
-// dark to register as "gold" at a glance.
 const BRIGHT_GOLD = '#FFD24A';
 const CYAN = '#22D3EE';
 
-export default function RobotAvatarImage({ size = 104, color = '#D4AF37', glowAlpha = '45', activityState = 'idle', animated = true, naturalAspect = false }) {
+// The real, shared native frame every layered asset was cut from.
+const NATURAL_W = 349;
+const NATURAL_H = 301;
+
+// Real per-eye boxes (percent of the native frame), measured directly
+// against the source photo's own pixels (see extract script referenced in
+// CLAUDE.md): left eye px (170,108) 53x38, right eye px (241,108) 43x40.
+const EYE_BOX = {
+  left: { left: (170 / NATURAL_W) * 100, top: (108 / NATURAL_H) * 100, width: (53 / NATURAL_W) * 100, height: (38 / NATURAL_H) * 100 },
+  right: { left: (241 / NATURAL_W) * 100, top: (108 / NATURAL_H) * 100, width: (43 / NATURAL_W) * 100, height: (40 / NATURAL_H) * 100 },
+};
+
+// Gaze offsets, in percent of an eye box's own width/height — small,
+// representative nudges (see doc comment above), not literal geometry.
+const GAZE_OFFSET = {
+  center: { x: 0, y: 0 },
+  left: { x: -30, y: 0 },
+  right: { x: 30, y: 0 },
+  down: { x: 0, y: 32 },
+  up: { x: 0, y: -28 },
+};
+
+/**
+ * Self-contained gaze/blink state machine. Pure timers driving small React
+ * state — no DOM/canvas coupling, so this is straightforward to reason
+ * about and (unlike the AudioContext-dependent pieces elsewhere in this
+ * app) genuinely unit-testable if ever pulled out on its own; kept inline
+ * here since it's tightly coupled to the two props (activityState,
+ * animated) that already live on this component.
+ */
+function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }) {
+  const [blinking, setBlinking] = useState(false);
+  const [autoGaze, setAutoGaze] = useState('center');
+  const timersRef = useRef([]);
+
+  const clearTimers = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  };
+  const after = (fn, ms) => {
+    const id = setTimeout(fn, ms);
+    timersRef.current.push(id);
+    return id;
+  };
+
+  // Idle: a real randomized blink (3-7s), ~22% chance of a quick
+  // double-blink, plus an independent, rarer look-around glance.
+  useEffect(() => {
+    clearTimers();
+    if (!animated || activityState !== 'idle') {
+      setAutoGaze('center');
+      return () => clearTimers();
+    }
+    let cancelled = false;
+
+    const doBlink = () => {
+      setBlinking(true);
+      after(() => !cancelled && setBlinking(false), 160);
+    };
+    const scheduleBlink = () => {
+      after(() => {
+        if (cancelled) return;
+        doBlink();
+        if (Math.random() < 0.22) after(() => !cancelled && doBlink(), 260);
+        scheduleBlink();
+      }, 3000 + Math.random() * 4000);
+    };
+    const scheduleGlance = () => {
+      after(() => {
+        if (cancelled) return;
+        setAutoGaze(Math.random() < 0.5 ? 'left' : 'right');
+        after(() => !cancelled && setAutoGaze('center'), 850);
+        scheduleGlance();
+      }, 4500 + Math.random() * 5000);
+    };
+    scheduleBlink();
+    scheduleGlance();
+
+    return () => { cancelled = true; clearTimers(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animated, activityState]);
+
+  // Thinking: a restless glance cycling up / sideways — distinct cadence
+  // from idle's rarer look-around, reads as "actively considering."
+  useEffect(() => {
+    if (activityState !== 'thinking' || !animated) return undefined;
+    let cancelled = false;
+    const sequence = ['up', 'left', 'up', 'right'];
+    let i = 0;
+    const step = () => {
+      if (cancelled) return;
+      setAutoGaze(sequence[i % sequence.length]);
+      i += 1;
+      after(() => !cancelled && step(), 1200 + Math.random() * 500);
+    };
+    step();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activityState, animated]);
+
+  // A forced blink (dev-only test button) works in any state, at any time.
+  useEffect(() => {
+    if (!blinkTrigger) return;
+    setBlinking(true);
+    const id = setTimeout(() => setBlinking(false), 160);
+    return () => clearTimeout(id);
+  }, [blinkTrigger]);
+
+  const gaze = gazeOverride
+    || (activityState === 'listening' ? 'down'
+      : activityState === 'speaking' ? 'center'
+        : autoGaze);
+
+  return { blinking, gaze };
+}
+
+function EyeLayer({ src, box, gaze, blinking }) {
+  // CSS `translate(X%, Y%)` on an element is already relative to the
+  // element's OWN rendered size, so GAZE_OFFSET's values (already meant as
+  // "percent of the eye's own width/height") are used directly here — an
+  // earlier version multiplied by `box.width`/`box.height` too, which are
+  // themselves already percentages (of the parent image), silently
+  // shrinking every gaze nudge down to ~1/8th its intended size and making
+  // it visually imperceptible. Caught via a real screenshot (Look L/R
+  // showed no visible eye movement) during self-verification, not assumed.
+  const offset = GAZE_OFFSET[gaze] || GAZE_OFFSET.center;
+  const dx = offset.x;
+  const dy = offset.y;
+  return (
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      style={{
+        position: 'absolute',
+        left: `${box.left}%`,
+        top: `${box.top}%`,
+        width: `${box.width}%`,
+        height: `${box.height}%`,
+        transformOrigin: 'center',
+        transform: `translate(${dx}%, ${dy}%) scaleY(${blinking ? 0.08 : 1})`,
+        transition: 'transform 220ms ease-out',
+        pointerEvents: 'none',
+      }}
+    />
+  );
+}
+
+export default function RobotAvatarImage({
+  size = 104, color = '#D4AF37', glowAlpha = '45', activityState = 'idle', animated = true,
+  naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0,
+}) {
   const [imgFailed, setImgFailed] = useState(false);
+  const { blinking, gaze } = useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger });
 
   if (imgFailed) {
     return <RobotAvatar size={size} color={color} glowAlpha={glowAlpha} dots={activityState === 'thinking' ? 3 : 0} animated={animated} />;
@@ -110,77 +247,134 @@ export default function RobotAvatarImage({ size = 104, color = '#D4AF37', glowAl
   const showFaceOverlays = size >= 80;
   const cssActivityState = animated ? activityState : 'static';
 
+  // Real amplitude (0-1) drives these directly via inline style when
+  // provided; otherwise the CSS keyframes below own the animation exactly
+  // as before — see this file's doc comment on `amplitude`.
+  const ampScale = amplitude != null ? 0.5 + Math.min(1, amplitude) * 0.9 : null;
+  const ampOpacity = amplitude != null ? 0.55 + Math.min(1, amplitude) * 0.45 : null;
+
   return (
     <div
       aria-hidden="true"
       className="robotAvatarWrap robot-wrapper"
       data-activity-state={showFaceOverlays ? cssActivityState : 'static'}
+      data-testid="robot-avatar"
       style={naturalAspect
         ? { position: 'relative', width: `min(${size}px, 100%)`, flexShrink: 0 }
         : { width: size, height: size, position: 'relative', flexShrink: 0 }}
     >
       <div className="robotAvatarFloat">
-        <img
-          src={robotSrc}
-          alt=""
-          draggable={false}
-          onError={() => setImgFailed(true)}
-          style={naturalAspect
-            ? { width: '100%', height: 'auto', objectFit: 'contain', display: 'block', filter: glowFilter }
-            : { width: '100%', height: '100%', objectFit: 'contain', display: 'block', filter: glowFilter }}
-        />
+        {/* Real aspect-ratio box — keeps every overlay's percentage math
+            correct whether the outer wrapper is a natural-width column
+            (hero) or a square UI slot (header/launcher/typing), where an
+            objectFit:contain image would otherwise letterbox unnoticed. */}
+        <div className="robotImageBox" style={{ position: 'relative', width: '100%', aspectRatio: `${NATURAL_W} / ${NATURAL_H}` }}>
+          <img
+            src={bodySrc}
+            alt=""
+            draggable={false}
+            onError={() => setImgFailed(true)}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', filter: glowFilter }}
+          />
 
-        {showFaceOverlays && (
-          <>
-            {/* Thinking: three large dots on the visor, below the eye line */}
-            {activityState === 'thinking' && (
-              <div className="robotDotRow" data-testid="robot-dots">
-                {[0, 1, 2].map(i => (
-                  <span key={i} className="robotDot" style={{ animationDelay: `${i * 180}ms` }} />
-                ))}
-              </div>
-            )}
+          {showFaceOverlays && (
+            <>
+              <EyeLayer src={eyeLeftSrc} box={EYE_BOX.left} gaze={gaze} blinking={blinking} />
+              <EyeLayer src={eyeRightSrc} box={EYE_BOX.right} gaze={gaze} blinking={blinking} />
 
-            {/* Thinking: three particles orbiting the shell */}
-            {activityState === 'thinking' && (
-              <div className="robotOrbitWrap" data-testid="robot-orbit">
-                <span className="robotOrbitDot robotOrbitDotA" />
-                <span className="robotOrbitDot robotOrbitDotB" />
-                <span className="robotOrbitDot robotOrbitDotC" />
-              </div>
-            )}
+              {/* Thinking: three large dots on the visor, below the eye line */}
+              {activityState === 'thinking' && (
+                <div className="robotDotRow" data-testid="robot-dots">
+                  {[0, 1, 2].map(i => (
+                    <span key={i} className="robotDot" style={{ animationDelay: `${i * 180}ms` }} />
+                  ))}
+                </div>
+              )}
 
-            {/* Speaking: eyes pulse brighter (additive glow, never a cover) */}
-            {activityState === 'speaking' && (
-              <div data-testid="robot-eyeglow">
-                <span className="robotEyeGlow" style={{ left: '38%' }} />
-                <span className="robotEyeGlow" style={{ left: '53%' }} />
-              </div>
-            )}
+              {/* Thinking: three particles orbiting the shell */}
+              {activityState === 'thinking' && (
+                <div className="robotOrbitWrap" data-testid="robot-orbit">
+                  <span className="robotOrbitDot robotOrbitDotA" />
+                  <span className="robotOrbitDot robotOrbitDotB" />
+                  <span className="robotOrbitDot robotOrbitDotC" />
+                </div>
+              )}
 
-            {/* Speaking: a 5-bar waveform beneath the visor */}
-            {activityState === 'speaking' && (
-              <div className="robotWaveRow" data-testid="robot-wave">
-                {[0, 1, 2, 3, 4].map(i => (
-                  <span key={i} className="robotWaveBar" style={{ animationDelay: `${i * 90}ms` }} />
-                ))}
-              </div>
-            )}
+              {/* Speaking: eyes pulse brighter (additive glow, never a cover)
+                  — real amplitude-scaled when a real TTS signal exists. */}
+              {activityState === 'speaking' && (
+                <div data-testid="robot-eyeglow">
+                  {[EYE_BOX.left, EYE_BOX.right].map((box, i) => (
+                    <span
+                      key={i}
+                      className={amplitude == null ? 'robotEyeGlow' : ''}
+                      style={{
+                        position: 'absolute',
+                        left: `${box.left + box.width / 2}%`, top: `${box.top + box.height / 2}%`,
+                        width: `${box.width * 1.5}%`, height: `${box.height * 1.9}%`,
+                        transform: 'translate(-50%, -50%)',
+                        borderRadius: '50%', pointerEvents: 'none', zIndex: 10,
+                        background: 'radial-gradient(circle, rgba(255,210,74,0.95) 0%, rgba(255,210,74,0) 72%)',
+                        mixBlendMode: 'screen',
+                        ...(amplitude != null ? { opacity: ampOpacity, transform: `translate(-50%, -50%) scale(${ampScale})`, transition: 'opacity 80ms linear, transform 80ms linear' } : {}),
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
 
-            {/* Listening: a gold/cyan equalizer near the left earpiece/M-badge */}
-            {activityState === 'listening' && (
-              <div className="robotListenRow" data-testid="robot-listen">
-                {[0, 1, 2].map(i => (
-                  <span key={i} className={`robotListenBar ${i % 2 === 0 ? 'robotListenBarGold' : 'robotListenBarCyan'}`} style={{ animationDelay: `${i * 120}ms` }} />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+              {/* Speaking: a 5-bar waveform beneath the visor — real
+                  amplitude-scaled when available */}
+              {activityState === 'speaking' && (
+                <div className="robotWaveRow" data-testid="robot-wave">
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <span
+                      key={i}
+                      className={amplitude == null ? 'robotWaveBar' : ''}
+                      style={amplitude == null
+                        ? { animationDelay: `${i * 90}ms` }
+                        : {
+                          flex: 1, borderRadius: 2, opacity: 1, background: BRIGHT_GOLD,
+                          boxShadow: '0 0 8px 2px rgba(255,210,74,0.85)',
+                          height: `${18 + Math.min(1, amplitude) * 82 * (0.55 + 0.45 * Math.abs(Math.sin(i * 1.3)))}%`,
+                          transition: 'height 80ms linear',
+                        }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Listening: a gold/cyan equalizer near the left earpiece/
+                  M-badge — real amplitude-scaled during an active voice-
+                  message recording, honest fixed pulse everywhere else
+                  (Conversational Mode's mic and plain input-focus have no
+                  raw stream available to meter — see doc comment). */}
+              {activityState === 'listening' && (
+                <div className="robotListenRow" data-testid="robot-listen">
+                  {[0, 1, 2].map(i => (
+                    <span
+                      key={i}
+                      className={amplitude == null ? `robotListenBar ${i % 2 === 0 ? 'robotListenBarGold' : 'robotListenBarCyan'}` : ''}
+                      style={amplitude == null
+                        ? { animationDelay: `${i * 120}ms` }
+                        : {
+                          flex: 1, borderRadius: 2, opacity: 1,
+                          background: i % 2 === 0 ? BRIGHT_GOLD : CYAN,
+                          boxShadow: i % 2 === 0 ? '0 0 8px 2px rgba(255,210,74,0.85)' : '0 0 8px 2px rgba(34,211,238,0.85)',
+                          height: `${18 + Math.min(1, amplitude) * 82 * (0.55 + 0.45 * Math.abs(Math.sin(i * 1.7)))}%`,
+                          transition: 'height 80ms linear',
+                        }}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <style>{`
-        .robotAvatarFloat { position: relative; width: 100%; height: 100%; }
+        .robotAvatarFloat { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
         /* Idle: one combined keyframe — float + tilt share the same
            transform property, so they must live in one animation, not two. */
@@ -239,16 +433,10 @@ export default function RobotAvatarImage({ size = 104, color = '#D4AF37', glowAl
         }
 
         /* Speaking: an ADDITIVE glow over each real eye — never a cover */
-        .robotEyeGlow {
-          position: absolute; top: 44%; width: 15%; height: 9%;
-          border-radius: 50%; pointer-events: none; z-index: 10;
-          background: radial-gradient(circle, rgba(255,210,74,0.95) 0%, rgba(255,210,74,0) 72%);
-          mix-blend-mode: screen; opacity: 0.85;
-        }
-        [data-activity-state="speaking"] .robotEyeGlow { animation: robotEyePulse 0.9s ease-in-out infinite; }
+        .robotEyeGlow { animation: robotEyePulse 0.9s ease-in-out infinite; }
         @keyframes robotEyePulse {
-          0%, 100% { opacity: 0.8; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.35); }
+          0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.35); }
         }
 
         /* Speaking: a 5-bar waveform beneath the visor (on the chin/lower shell) */

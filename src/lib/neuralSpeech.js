@@ -21,6 +21,7 @@
  */
 import { base44 } from '@/api/base44Client';
 import { speakText, stopSpeaking, resumeFromInterruption } from './talkMode';
+import { attachAudioElementAmplitudeMeter } from './audioAmplitude';
 
 // 15s — neural TTS (Core.GenerateSpeech) generation for a full reply commonly
 // takes 5–10s. The old 4s timer fired too early and dropped M-Care onto the
@@ -74,11 +75,11 @@ export function stopAllSpeech() {
  * playback failure. Same return contract as speakText — a cancel function.
  *
  * @param {string} text
- * @param {{ rate?: number, language?: string, onWordBoundary?: (revealedWordCount: number) => void, onEnd?: () => void, onError?: () => void, onAudioUrl?: (url: string) => void }} [options]
+ * @param {{ rate?: number, language?: string, onWordBoundary?: (revealedWordCount: number) => void, onEnd?: () => void, onError?: () => void, onAudioUrl?: (url: string) => void, onAmplitude?: (level: number) => void }} [options]
  */
 export function speakTextNeural(text, options) {
   stopNeuralSpeech();
-  const { rate = 0.9, language = 'en', onWordBoundary, onEnd, onError, onAudioUrl } = options || {};
+  const { rate = 0.9, language = 'en', onWordBoundary, onEnd, onError, onAudioUrl, onAmplitude } = options || {};
   if (!text?.trim()) { onError?.(); return () => {}; }
 
   let cancelled = false;
@@ -87,6 +88,11 @@ export function speakTextNeural(text, options) {
   let revealInterval = null;
   let fallbackCancelFn = null;
   let timeoutId = null;
+  // Only ever set when a caller opts into onAmplitude — see audioAmplitude.js
+  // for why this is completely inert (no AudioContext touched at all) for
+  // every caller that doesn't pass it, which is most of them today.
+  let stopAmplitudeMeter = null;
+  const stopMeter = () => { if (stopAmplitudeMeter) { stopAmplitudeMeter(); stopAmplitudeMeter = null; } };
   // Lifted out of the onloadedmetadata closure so runFallback can see how
   // much was actually heard before a mid-playback failure, instead of
   // re-speaking the whole reply from the top on every fallback.
@@ -111,6 +117,7 @@ export function speakTextNeural(text, options) {
     neuralSpeaking = false;
     clearTimeout(timeoutId);
     clearReveal();
+    stopMeter();
     if (audio) { try { audio.pause(); } catch { /* no-op */ } }
     if (fallbackCancelFn) fallbackCancelFn();
   };
@@ -122,6 +129,7 @@ export function speakTextNeural(text, options) {
     fallbackTriggered = true;
     clearTimeout(timeoutId);
     clearReveal();
+    stopMeter();
     // talkMode.js's speakText now owns cancellation via stopSpeaking().
     if (activeCancel === cancelFn) activeCancel = null;
     // Resume from what was likely already heard rather than re-speaking the
@@ -174,6 +182,12 @@ export function speakTextNeural(text, options) {
     }
     audio.playbackRate = rate;
 
+    // Opt-in only — see audioAmplitude.js's own doc comment for why this is
+    // completely inert for every caller that doesn't pass onAmplitude, and
+    // why it always reconnects to audioContext.destination (skipping that
+    // would silently mute this exact audio element).
+    if (onAmplitude) stopAmplitudeMeter = attachAudioElementAmplitudeMeter(audio, onAmplitude);
+
     audio.onloadedmetadata = () => {
       if (cancelled) return;
       const durationMs = (audio.duration || 0) * 1000;
@@ -188,6 +202,7 @@ export function speakTextNeural(text, options) {
     };
     audio.onended = () => {
       clearReveal();
+      stopMeter();
       if (activeCancel === cancelFn) activeCancel = null;
       if (cancelled) return;
       // audio.currentTime/duration (not the word-reveal count) is the

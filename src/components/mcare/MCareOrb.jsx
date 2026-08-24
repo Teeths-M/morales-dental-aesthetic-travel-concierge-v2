@@ -183,6 +183,14 @@ export default function MCareOrb() {
   // orbState/effect logic that's out of scope for this swap.
   const [listening] = useState(false);
   const [speaking,   setSpeaking]   = useState(false);
+  // Real neural-TTS playback amplitude (0-1) for the robot's speaking-state
+  // eye-glow/waveform — see neuralSpeech.js's onAmplitude and
+  // audioAmplitude.js. null (the honest fixed-keyframe fallback) whenever
+  // no real signal exists: the browser-speechSynthesis fallback path, or
+  // any of M-Care's other speak call sites (tool-running ack, distress
+  // prompt, voice-message cue) that don't wire this — only the main
+  // Talk-Mode reply-speak effect below sets this to a real value.
+  const [speakingAmplitude, setSpeakingAmplitude] = useState(null);
   // Real DOM focus on the chat input — the one new "alive agent" trigger:
   // focusing the input reads as the robot paying attention, but only when
   // nothing more urgent (thinking/speaking/real mic listening) is already
@@ -194,6 +202,13 @@ export default function MCareOrb() {
   // out of the production bundle entirely) — see the test-button row near
   // the desktop robot column below.
   const [testActivityOverride, setTestActivityOverride] = useState(null);
+  // TEMPORARY, dev-only: forces a gaze direction and fires an on-demand
+  // blink — same import.meta.env.DEV gate as testActivityOverride, tests
+  // the real eye-layer movement (2026-08-23 layered-cutout round) without
+  // needing to catch idle's own randomized 3-7s blink timer live.
+  const [testGazeOverride, setTestGazeOverride] = useState(null);
+  const [testBlinkTrigger, setTestBlinkTrigger] = useState(0);
+  const [testAmplitude, setTestAmplitude] = useState(null);
   const [dismissed,  setDismissed]   = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [struggleHint, setStruggleHint] = useState(null);
@@ -435,6 +450,7 @@ export default function MCareOrb() {
   const handleBargeIn = () => {
     stopAllSpeech();
     setSpeaking(false);
+    setSpeakingAmplitude(null);
     const rs = revealStateRef.current;
     const msgs = agentMessagesRef.current;
     const interruptedMsg = rs ? msgs[rs.messageIndex] : null;
@@ -1284,8 +1300,10 @@ export default function MCareOrb() {
             onWordBoundary: (count) => setRevealState(prev =>
               (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
             onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
+            onAmplitude: (level) => setSpeakingAmplitude(level),
             onEnd: () => {
               setSpeaking(false);
+              setSpeakingAmplitude(null);
               setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
               armSilenceNudge();
             },
@@ -1293,6 +1311,7 @@ export default function MCareOrb() {
               // Fail open: never leave the demo stuck mid-reveal on a TTS
               // failure — snap straight to full text, no error surfaced.
               setSpeaking(false);
+              setSpeakingAmplitude(null);
               setRevealState(prev => (prev && prev.messageIndex === msgIndex) ? null : prev);
             },
           });
@@ -2486,7 +2505,7 @@ export default function MCareOrb() {
                       not forced into a square box like the small chrome
                       instances elsewhere in this file. ~320px per the
                       "about 300px wide on desktop" ask. */}
-                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} />
+                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                   {/* TEMPORARY, dev-only test panel — forces each robot
                       activityState on demand so it can be visually
                       verified without waiting for a narrow live-agent
@@ -2495,31 +2514,90 @@ export default function MCareOrb() {
                       this entire block is compiled out of the production
                       bundle, no separate flag/env var needed. Re-clicking
                       the active button releases the override back to the
-                      real, computed state. */}
+                      real, computed state. 2026-08-23 layered-cutout round:
+                      extended with a Blink trigger, a gaze-direction cycle,
+                      and a simulated-amplitude slider so the new real eye
+                      movement + amplitude-reactive overlays can be verified
+                      the same on-demand way, without a live mic/TTS call. */}
                   {import.meta.env.DEV && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 14, width: '100%' }}>
-                      {[
-                        { key: 'idle', label: 'Idle' },
-                        { key: 'listening', label: 'Listen' },
-                        { key: 'thinking', label: 'Think' },
-                        { key: 'speaking', label: 'Speak' },
-                      ].map(({ key, label }) => (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 14, width: '100%' }}>
+                        {[
+                          { key: 'idle', label: 'Idle' },
+                          { key: 'listening', label: 'Listen' },
+                          { key: 'thinking', label: 'Think' },
+                          { key: 'speaking', label: 'Speak' },
+                        ].map(({ key, label }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            data-testid={`robot-test-${key}`}
+                            onClick={() => setTestActivityOverride(prev => (prev === key ? null : key))}
+                            style={{
+                              padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                              border: `1px solid ${testActivityOverride === key ? GOLD : BORDER_DARK}`,
+                              background: testActivityOverride === key ? 'rgba(212,175,55,0.18)' : 'transparent',
+                              color: testActivityOverride === key ? GOLD : TEXT_MUTED_DARK,
+                              whiteSpace: 'nowrap', flexShrink: 0,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 6, width: '100%' }}>
                         <button
-                          key={key}
                           type="button"
-                          data-testid={`robot-test-${key}`}
-                          onClick={() => setTestActivityOverride(prev => (prev === key ? null : key))}
+                          data-testid="robot-test-blink"
+                          onClick={() => setTestBlinkTrigger(t => t + 1)}
+                          style={{ padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: `1px solid ${BORDER_DARK}`, background: 'transparent', color: TEXT_MUTED_DARK, whiteSpace: 'nowrap', flexShrink: 0 }}
+                        >
+                          Blink
+                        </button>
+                        {['left', 'right'].map(dir => (
+                          <button
+                            key={dir}
+                            type="button"
+                            data-testid={`robot-test-gaze-${dir}`}
+                            onClick={() => setTestGazeOverride(prev => (prev === dir ? null : dir))}
+                            style={{
+                              padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                              border: `1px solid ${testGazeOverride === dir ? GOLD : BORDER_DARK}`,
+                              background: testGazeOverride === dir ? 'rgba(212,175,55,0.18)' : 'transparent',
+                              color: testGazeOverride === dir ? GOLD : TEXT_MUTED_DARK,
+                              whiteSpace: 'nowrap', flexShrink: 0,
+                            }}
+                          >
+                            {dir === 'left' ? 'Look L' : 'Look R'}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          data-testid="robot-test-amp"
+                          onClick={() => setTestAmplitude(v => (v == null ? 0.15 : null))}
                           style={{
                             padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                            border: `1px solid ${testActivityOverride === key ? GOLD : BORDER_DARK}`,
-                            background: testActivityOverride === key ? 'rgba(212,175,55,0.18)' : 'transparent',
-                            color: testActivityOverride === key ? GOLD : TEXT_MUTED_DARK,
+                            border: `1px solid ${testAmplitude != null ? GOLD : BORDER_DARK}`,
+                            background: testAmplitude != null ? 'rgba(212,175,55,0.18)' : 'transparent',
+                            color: testAmplitude != null ? GOLD : TEXT_MUTED_DARK,
                             whiteSpace: 'nowrap', flexShrink: 0,
                           }}
                         >
-                          {label}
+                          Amp
                         </button>
-                      ))}
+                      </div>
+                      {testAmplitude != null && (
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.02}
+                          value={testAmplitude}
+                          data-testid="robot-test-amp-slider"
+                          onChange={e => setTestAmplitude(Number(e.target.value))}
+                          style={{ width: '80%', marginTop: 6 }}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -2552,7 +2630,7 @@ export default function MCareOrb() {
               <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${BORDER_DARK}`, flexShrink: 0, background: PANEL_BG }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                   <div style={{ flexShrink: 0 }}>
-                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} />
+                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
