@@ -51,8 +51,13 @@
  *   glance is what's actually built, not a claim of precision it doesn't
  *   have).
  * - thinking: a restless glance cycling up/left/right while the agent is
- *   composing — the existing visor-dot/orbit/tilt overlay (unchanged from
- *   the prior round) continues alongside it.
+ *   composing — the existing visor-dot/tilt overlay continues alongside it.
+ *   (An earlier version also had 3 particles "orbiting the shell" —
+ *   `inset: -10%`, genuinely circling outside the whole sphere. Portia
+ *   flagged this directly from a screenshot: those 3 dots read as floating
+ *   outside the head, not "inside the fish tank / bowl." Removed —
+ *   `robotDotRow` below was already correctly confined to the visor and is
+ *   now the one real "3 talking dots" indicator.)
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -291,15 +296,6 @@ export default function RobotAvatarImage({
                 </div>
               )}
 
-              {/* Thinking: three particles orbiting the shell */}
-              {activityState === 'thinking' && (
-                <div className="robotOrbitWrap" data-testid="robot-orbit">
-                  <span className="robotOrbitDot robotOrbitDotA" />
-                  <span className="robotOrbitDot robotOrbitDotB" />
-                  <span className="robotOrbitDot robotOrbitDotC" />
-                </div>
-              )}
-
               {/* Speaking: eyes pulse brighter (additive glow, never a cover)
                   — real amplitude-scaled when a real TTS signal exists. */}
               {activityState === 'speaking' && (
@@ -414,22 +410,6 @@ export default function RobotAvatarImage({
         @keyframes robotDotWave {
           0%, 100% { transform: translateY(0); opacity: 0.85; }
           50% { transform: translateY(-55%); opacity: 1; }
-        }
-
-        /* Thinking: three particles genuinely orbiting the shell */
-        .robotOrbitWrap { position: absolute; inset: -10%; pointer-events: none; z-index: 10; }
-        [data-activity-state="thinking"] .robotOrbitWrap { animation: robotOrbitSpin 3.2s linear infinite; }
-        .robotOrbitDot {
-          position: absolute; width: 5.5%; height: 5.5%; border-radius: 50%;
-          background: ${BRIGHT_GOLD}; opacity: 1;
-          box-shadow: 0 0 8px 3px rgba(255,210,74,0.9);
-        }
-        .robotOrbitDotA { top: 2%; left: 50%; transform: translateX(-50%); }
-        .robotOrbitDotB { top: 46%; left: 96%; }
-        .robotOrbitDotC { top: 82%; left: 14%; }
-        @keyframes robotOrbitSpin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
         }
 
         /* Speaking: an ADDITIVE glow over each real eye — never a cover */

@@ -14,16 +14,17 @@
  * - listening:      tight, fast pulse while the mic is actually recording
  *                    (Conversational Mode) — wired to the real listening
  *                    signal, not simulated.
- * - thinking:       a slightly brighter glow plus three small gold points
- *                    drifting around the ring — the agent is composing a
- *                    reply, no tool call yet. Deliberately not a spinning
- *                    sweep (reads as a generic loading spinner) — three
- *                    discrete pulsing points instead.
- * - tool_executing: the same three-point motif, faster and brighter — a
- *                    real backend tool call is in flight right now (wired
- *                    to MCareOrb's `runningTool`, the tool's own real
- *                    status field). Never shown without a real tool call
- *                    actually running.
+ * - thinking:       a slightly brighter, pulsing ring plus the real
+ *                    face-level "thinking" overlay (RobotAvatarImage.jsx —
+ *                    3 dots bouncing inside the visor bowl, a restless
+ *                    eye-glance, a faster head tilt) — the agent is
+ *                    composing a reply, no tool call yet. Deliberately not
+ *                    a spinning sweep (reads as a generic loading spinner).
+ * - tool_executing: the same ring motif, faster and brighter — a real
+ *                    backend tool call is in flight right now (wired to
+ *                    MCareOrb's `runningTool`, the tool's own real status
+ *                    field). Never shown without a real tool call actually
+ *                    running.
  * - speaking:       a brighter, quicker ripple for a short honest window
  *                    right after a new assistant message lands — tied to
  *                    a real state transition, never a fabricated
@@ -95,9 +96,11 @@
  * orbState above, untouched) plus a new `inputFocused` prop, or forced by
  * an `activityOverride` (MCareOrb.jsx's dev-only test buttons), and
  * handed to `Shell`/RobotAvatarImage.jsx to drive its own live-activity
- * overlays (visor dots, orbiting particles, an eye-glow pulse, a
- * waveform, head tilt — see that file's doc comment for the visual
- * design). This is a pure mapping of already-real signals, not a second
+ * overlays (visor dots, an eye-glow pulse, a waveform, head tilt — see
+ * that file's doc comment for the visual design, including a 2026-08-23
+ * fix where a separate set of 3 particles used to orbit OUTSIDE the whole
+ * shell and was removed after Portia flagged it directly). This is a pure
+ * mapping of already-real signals, not a second
  * independent computation: speaking/thinking/tool_executing/listening map
  * straight across, and a plain `idle` only reads as `listening` when the
  * caller also reports the chat input has real DOM focus — "the user is
@@ -120,9 +123,9 @@ const STATE_CONFIG = {
   // MCareOrb.jsx's `runningTool`). Faster + brighter reads as "doing
   // something real right now" without needing a different icon shape —
   // the real active_label text next to the orb does the rest of the work.
-  // (The face-level "thinking" overlay — visor dots, tilt, orbit particles
-  // — is driven by `activityState` below, which collapses both of these
-  // into one look; only the ring speed/brightness still tells them apart.)
+  // (The face-level "thinking" overlay — visor dots, tilt — is driven by
+  // `activityState` below, which collapses both of these into one look;
+  // only the ring speed/brightness still tells them apart.)
   thinking:       { ringCount: 2, duration: 2.4, ringScale: 1.4,  ringOpacity: 0.26, coreScale: [1, 1.04, 1],  glowAlpha: '55', color: GOLD },
   tool_executing: { ringCount: 3, duration: 1.5, ringScale: 1.42, ringOpacity: 0.34, coreScale: [1, 1.06, 1],  glowAlpha: '65', color: GOLD },
   speaking:       { ringCount: 3, duration: 0.9, ringScale: 1.5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1],  glowAlpha: '55', color: GOLD },
@@ -167,7 +170,7 @@ function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true
 function Atmosphere({ color, animated, activityState = 'idle' }) {
   // The hologram spins noticeably faster while thinking — a real,
   // visible "the system is working harder" signal, distinct from the
-  // face-level dots/orbit. Every other state keeps the normal slow spin.
+  // face-level visor dots. Every other state keeps the normal slow spin.
   // Still deliberately independent of the per-orbState ring PULSE speed
   // in STATE_CONFIG above (e.g. `listening`'s fast 1.1s pulse for real
   // active mic capture stays exactly as tuned).
