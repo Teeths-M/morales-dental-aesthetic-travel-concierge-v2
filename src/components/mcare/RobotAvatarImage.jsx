@@ -110,6 +110,51 @@
  *   sideways and upside-down orientations, reading as broken rather than
  *   alive; ±12° is a clearly bigger, more visible motion than the old
  *   wobble without ever inverting anything.
+ *
+ *   2026-08-24, a fifth round: two real asks together — a genuine
+ *   "thinking/deep analysis" hologram state, and a real R2-D2-style
+ *   `rotateY` head turn replacing the round-4 `rotateZ` roll entirely.
+ *
+ *   For the head turn: `robotHeadRoll`'s CSS `@keyframes` loop is gone —
+ *   Portia's spec was explicitly *not* a continuous loop (discrete,
+ *   randomly-timed single turns with real holds), so `headAngle` is now a
+ *   real JS state value (`useGazeAndBlink`, extended — one state machine
+ *   still owns "how the head+eyes move," now including the head-turn
+ *   angle) driving an inline `transform: perspective(...) rotateY(...)
+ *   translateX(...) scale(...)` on `.robotAvatarFloat`, `transform-origin:
+ *   50% 88%` (her own spec). Her fuller ask described a literal separate
+ *   `.robot-head` layer with the hologram platform AND a lower body both
+ *   staying still while only a head piece turns — this photo is one
+ *   continuous sphere with no natural seam between "head" and "body,"
+ *   and manufacturing one (even via a CSS clip-path split, no new asset
+ *   needed) risked a visible crack right at the cut once the head turned
+ *   and a cropped body didn't. Asked her directly rather than guessing;
+ *   she chose turning the whole sphere — the hologram platform (already
+ *   a separate, always-untouched layer, `LivingOrb.jsx`'s `Atmosphere`)
+ *   stays still regardless, and the core ask (rotateY motion instead of
+ *   rotateZ rocking) is satisfied exactly, with zero seam risk.
+ *
+ *   For the thinking hologram: the M badge is now a REAL separate cutout
+ *   layer (`m-safe-robot-mbadge.webp`, alpha-cut the same way the eyes
+ *   were, with the hole inpainted out of `bodySrc` — now
+ *   `m-safe-robot-body-nombadge.webp`) instead of last round's glow-only
+ *   overlay — her spec wanted the *entire* M symbol solid red, not a
+ *   glow near it, which genuinely needs a real isolated layer to recolor
+ *   cleanly. Recolored via a CSS `mask-image` using that same cutout as
+ *   a stencil (a flat, saturated red fill reads as real lit hardware — an
+ *   LED under a cover — more convincingly than pushing a color filter
+ *   over already-bright gold pixels would), crossfaded against the gold
+ *   `<img>` by a plain opacity transition, with a pulse plus a periodic
+ *   brightness flicker layered on top. A new floating `BrainCircuit`
+ *   (lucide-react, already a project dependency) hologram — glow, a
+ *   breathing ring, staggered fading sparks, an "ANALYZING" label —
+ *   animates in/out via framer-motion's `AnimatePresence` (the one
+ *   framer-motion usage in this file; needed for a real exit transition
+ *   before unmount, which plain conditional rendering can't do). Both are
+ *   driven by the same `activityState === 'thinking'` the M-badge glow
+ *   already used — no new state-timing logic needed, `MCareOrb.jsx`'s
+ *   existing `orbState` derivation already makes "thinking starts
+ *   immediately on submit, ends when speaking starts" true today.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -133,13 +178,17 @@
  * scaleY — not a second dark shape covering anything).
  */
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BrainCircuit } from 'lucide-react';
 import RobotAvatar from './RobotAvatar';
-import bodySrc from '@/assets/m-safe-robot-body-patched.webp';
+import bodySrc from '@/assets/m-safe-robot-body-nombadge.webp';
 import eyeLeftSrc from '@/assets/m-safe-robot-eye-left.webp';
 import eyeRightSrc from '@/assets/m-safe-robot-eye-right.webp';
+import mBadgeSrc from '@/assets/m-safe-robot-mbadge.webp';
 
 const BRIGHT_GOLD = '#FFD24A';
 const CYAN = '#22D3EE';
+const THINKING_RED = '#FF2D3D';
 
 // The real, shared native frame every layered asset was cut from.
 const NATURAL_W = 349;
@@ -153,18 +202,20 @@ const EYE_BOX = {
   right: { left: (241 / NATURAL_W) * 100, top: (108 / NATURAL_H) * 100, width: (43 / NATURAL_W) * 100, height: (40 / NATURAL_H) * 100 },
 };
 
-// Approximate glow box for the M badge on the left side of the head
-// (percent of the native frame) — not a tight pixel crop like EYE_BOX (the
-// badge isn't cut into a separate movable layer, only overlaid with a
-// glow). Measured 2026-08-23 from an ASCII luminance/hue classification
-// map of the real asset (ring/disc/letter cluster distinct from the
-// visor's own bezel, which only starts around x:32%): the visible badge
-// spans roughly x:18-31%, y:28-59%, center ~(24%,44%). This box is
-// deliberately a little larger than that measured cluster so the soft
-// radial-gradient glow reads as a halo around the badge, not a
-// hard-edged disc clipped exactly to it (same margin logic EYE_BOX's own
-// glow overlay uses — see the speaking eye-glow below).
-const M_BADGE_BOX = { left: 15, top: 26, width: 20, height: 24 };
+// The M badge, now a REAL separate cutout layer (m-safe-robot-mbadge.webp,
+// alpha-cut from the same source photo, with the hole inpainted out of
+// bodySrc — same technique as the eyes) rather than the earlier
+// approximate glow-only overlay. Real pixel crop box, measured this round
+// via three independent techniques (an ASCII luminance/hue map, a BFS
+// connected-component pass, and a per-column vertical gold scan) that all
+// converged on the same real, genuinely vertically-elongated "earpiece"
+// shape — px x[70-128] y[70-190] of the 349x301 frame, not a simple
+// circle. Positions the cutout <img> (gold, default) and its red
+// (thinking-state) mask counterpart at the exact same real spot.
+const MBADGE_BOX = {
+  left: (70 / NATURAL_W) * 100, top: (70 / NATURAL_H) * 100,
+  width: (58 / NATURAL_W) * 100, height: (120 / NATURAL_H) * 100,
+};
 
 // Gaze offsets, in percent of an eye box's own width/height — small,
 // representative nudges (see doc comment above), not literal geometry.
@@ -187,7 +238,9 @@ const GAZE_OFFSET = {
 function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }) {
   const [blinking, setBlinking] = useState(false);
   const [autoGaze, setAutoGaze] = useState('center');
+  const [headAngle, setHeadAngle] = useState(0);
   const timersRef = useRef([]);
+  const headTimersRef = useRef([]);
 
   const clearTimers = () => {
     timersRef.current.forEach(clearTimeout);
@@ -196,6 +249,15 @@ function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }
   const after = (fn, ms) => {
     const id = setTimeout(fn, ms);
     timersRef.current.push(id);
+    return id;
+  };
+  const clearHeadTimers = () => {
+    headTimersRef.current.forEach(clearTimeout);
+    headTimersRef.current = [];
+  };
+  const afterHead = (fn, ms) => {
+    const id = setTimeout(fn, ms);
+    headTimersRef.current.push(id);
     return id;
   };
 
@@ -262,12 +324,67 @@ function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }
     return () => clearTimeout(id);
   }, [blinkTrigger]);
 
+  // R2-D2-style head turn — a real angle (degrees, signed), not a CSS
+  // keyframe loop. One consolidated effect (not four independent ones) so
+  // there's a single source of truth writing `headAngle`, since her spec
+  // is explicitly a discrete, per-state behavior, not a continuous cycle:
+  // - idle: waits a random 6-12s, turns 8-12° to a random side, holds
+  //   ~1.6-2.2s, returns to center, reschedules with a fresh random wait.
+  //   Not a fixed-period loop — each cycle re-rolls its own timing.
+  // - thinking: turns 10-15° to a random side the moment thinking starts
+  //   and HOLDS there for as long as it continues — tied to the real
+  //   `activityState`, not a fixed timer, same discipline as every other
+  //   thinking-visual in this file. Returns to center via this effect's
+  //   own cleanup once thinking actually ends (not before).
+  // - listening: a small fixed lean — same honesty caveat as the existing
+  //   gaze `'listening'` → `'down'` case (a representative direction
+  //   toward "the input," not literal tracking).
+  // - speaking: small, slow random micro-turns (±2.5°) — "natural
+  //   adjustments," not stillness.
+  useEffect(() => {
+    clearHeadTimers();
+    if (!animated) { setHeadAngle(0); return () => clearHeadTimers(); }
+    let cancelled = false;
+
+    if (activityState === 'idle') {
+      const scheduleTurn = () => {
+        afterHead(() => {
+          if (cancelled) return;
+          const dir = Math.random() < 0.5 ? -1 : 1;
+          setHeadAngle(dir * (8 + Math.random() * 4));
+          afterHead(() => !cancelled && setHeadAngle(0), 1600 + Math.random() * 600);
+          scheduleTurn();
+        }, 6000 + Math.random() * 6000);
+      };
+      scheduleTurn();
+    } else if (activityState === 'thinking') {
+      const dir = Math.random() < 0.5 ? -1 : 1;
+      setHeadAngle(dir * (10 + Math.random() * 5));
+    } else if (activityState === 'listening') {
+      setHeadAngle(-7);
+    } else if (activityState === 'speaking') {
+      const microTurn = () => {
+        afterHead(() => {
+          if (cancelled) return;
+          setHeadAngle((Math.random() - 0.5) * 5);
+          microTurn();
+        }, 1500 + Math.random() * 1200);
+      };
+      microTurn();
+    } else {
+      setHeadAngle(0);
+    }
+
+    return () => { cancelled = true; clearHeadTimers(); setHeadAngle(0); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animated, activityState]);
+
   const gaze = gazeOverride
     || (activityState === 'listening' ? 'down'
       : activityState === 'speaking' ? 'center'
         : autoGaze);
 
-  return { blinking, gaze };
+  return { blinking, gaze, headAngle };
 }
 
 function EyeLayer({ src, box, gaze, blinking }) {
@@ -307,7 +424,7 @@ export default function RobotAvatarImage({
   naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0,
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const { blinking, gaze } = useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger });
+  const { blinking, gaze, headAngle } = useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger });
 
   if (imgFailed) {
     return <RobotAvatar size={size} color={color} glowAlpha={glowAlpha} dots={activityState === 'thinking' ? 3 : 0} animated={animated} />;
@@ -320,12 +437,13 @@ export default function RobotAvatarImage({
   // render in the app (message bubbles, the launcher button, headers —
   // McareAvatar's own default size is 28) showed a bare glowing shell with
   // no eyes at all; only the two size>=80 hero instances in MCareOrb.jsx
-  // ever cleared it. Eyes are simple, already-proven-robust image-layer
-  // transforms — safe at any real avatar size. `showActivityOverlays`
-  // (the thinking M-badge glow, speaking glow/waveform, listening
-  // equalizer, plus the idle/thinking head roll via data-activity-state
-  // below) stays at the original, unverified-at-small-sizes size>=80 bar,
-  // unchanged.
+  // ever cleared it. `showEyes` also now gates the gold M-badge cutout —
+  // it's the same category as the eyes (a simple, always-shown structural
+  // layer, not an "activity" indicator) since `bodySrc` no longer bakes
+  // the badge in at all. `showActivityOverlays` (the red M-badge mask +
+  // brain-icon hologram while thinking, speaking glow/waveform, listening
+  // equalizer, plus the head turn via data-activity-state below) stays at
+  // the original, unverified-at-small-sizes size>=80 bar, unchanged.
   const showEyes = size >= 24;
   const showActivityOverlays = size >= 80;
   const cssActivityState = animated ? activityState : 'static';
@@ -346,7 +464,14 @@ export default function RobotAvatarImage({
         ? { position: 'relative', width: `min(${size}px, 100%)`, flexShrink: 0 }
         : { width: size, height: size, position: 'relative', flexShrink: 0 }}
     >
-      <div className="robotAvatarFloat">
+      <div
+        className="robotAvatarFloat"
+        style={{
+          transform: `perspective(800px) rotateY(${headAngle}deg) translateX(${(headAngle * 0.3).toFixed(2)}px) scale(${(1 - Math.abs(headAngle) * 0.001).toFixed(4)})`,
+          transformOrigin: '50% 88%',
+          transition: 'transform 900ms ease-in-out',
+        }}
+      >
         {/* Real aspect-ratio box — keeps every overlay's percentage math
             correct whether the outer wrapper is a natural-width column
             (hero) or a square UI slot (header/launcher/typing), where an
@@ -364,28 +489,65 @@ export default function RobotAvatarImage({
             <>
               <EyeLayer src={eyeLeftSrc} box={EYE_BOX.left} gaze={gaze} blinking={blinking} />
               <EyeLayer src={eyeRightSrc} box={EYE_BOX.right} gaze={gaze} blinking={blinking} />
+
+              {/* M badge — a real cutout layer (like the eyes), gold by
+                  default. Always rendered here (not activity-gated) since
+                  bodySrc no longer bakes the badge in at all — without
+                  this, every non-thinking state at 24-79px would show a
+                  blank hole where the badge used to be. */}
+              <img
+                src={mBadgeSrc}
+                alt=""
+                draggable={false}
+                style={{
+                  position: 'absolute',
+                  left: `${MBADGE_BOX.left}%`, top: `${MBADGE_BOX.top}%`,
+                  width: `${MBADGE_BOX.width}%`, height: `${MBADGE_BOX.height}%`,
+                  opacity: showActivityOverlays && activityState === 'thinking' ? 0 : 1,
+                  transition: 'opacity 260ms ease-in-out',
+                  pointerEvents: 'none',
+                }}
+              />
             </>
           )}
 
           {showActivityOverlays && (
             <>
-              {/* Thinking: the M badge glows red (additive, never a cover) —
-                  replaced the visor dot row entirely, see doc comment. */}
+              {/* Thinking: the M badge recolors to vivid red — a real solid
+                  fill of the exact badge shape (not just a nearby glow),
+                  via a CSS mask using the same cutout as a stencil. Never
+                  tints the rest of the robot. Crossfades against the gold
+                  <img> above via a plain opacity transition. */}
               {activityState === 'thinking' && (
-                <span
-                  className="robotMBadgeGlow"
-                  data-testid="robot-mbadge-glow"
-                  style={{
-                    position: 'absolute',
-                    left: `${M_BADGE_BOX.left + M_BADGE_BOX.width / 2}%`,
-                    top: `${M_BADGE_BOX.top + M_BADGE_BOX.height / 2}%`,
-                    width: `${M_BADGE_BOX.width}%`, height: `${M_BADGE_BOX.height}%`,
-                    transform: 'translate(-50%, -50%)',
-                    borderRadius: '50%', pointerEvents: 'none', zIndex: 10,
-                    background: 'radial-gradient(circle, rgba(255,32,32,0.95) 0%, rgba(255,32,32,0) 70%)',
-                    mixBlendMode: 'screen',
-                  }}
-                />
+                <>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: 'absolute',
+                      left: `${MBADGE_BOX.left + MBADGE_BOX.width / 2}%`,
+                      top: `${MBADGE_BOX.top + MBADGE_BOX.height / 2}%`,
+                      width: `${MBADGE_BOX.width * 1.8}%`, height: `${MBADGE_BOX.height * 1.35}%`,
+                      transform: 'translate(-50%, -50%)',
+                      borderRadius: '50%', pointerEvents: 'none', zIndex: 9,
+                      background: `radial-gradient(circle, ${THINKING_RED}99 0%, ${THINKING_RED}00 72%)`,
+                    }}
+                  />
+                  <span
+                    className="robotMBadgeRed"
+                    data-testid="robot-mbadge-red"
+                    style={{
+                      position: 'absolute',
+                      left: `${MBADGE_BOX.left}%`, top: `${MBADGE_BOX.top}%`,
+                      width: `${MBADGE_BOX.width}%`, height: `${MBADGE_BOX.height}%`,
+                      backgroundColor: THINKING_RED,
+                      WebkitMaskImage: `url(${mBadgeSrc})`, maskImage: `url(${mBadgeSrc})`,
+                      WebkitMaskSize: '100% 100%', maskSize: '100% 100%',
+                      WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                      WebkitMaskPosition: 'center', maskPosition: 'center',
+                      pointerEvents: 'none', zIndex: 10,
+                    }}
+                  />
+                </>
               )}
 
               {/* Speaking: eyes pulse brighter (additive glow, never a cover)
@@ -461,31 +623,115 @@ export default function RobotAvatarImage({
         </div>
       </div>
 
+      {/* Thinking: a small floating "brain" hologram above the head — a
+          real animate-in/animate-out (framer-motion's AnimatePresence,
+          the one usage of it in this file — everything else here is
+          plain CSS, but a genuine "animate out cleanly, unmount after"
+          needs it). Deliberately a sibling of .robotAvatarFloat, not a
+          child of it — floats in a fixed spot regardless of the head-turn
+          angle, rather than turning along with the head. */}
+      {showActivityOverlays && (
+        <AnimatePresence>
+          {activityState === 'thinking' && (
+            <motion.div
+              key="brain"
+              data-testid="robot-brain-icon"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ duration: animated ? 0.35 : 0, ease: 'easeOut' }}
+              style={{
+                position: 'absolute', top: -26, left: '50%', x: '-50%',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                zIndex: 15, pointerEvents: 'none',
+              }}
+            >
+              <div className="robotBrainGlowWrap" data-activity-state={cssActivityState}>
+                <span className="robotBrainGlow" />
+                <span className="robotBrainRing" />
+                <span className="robotBrainSpark robotBrainSpark0" />
+                <span className="robotBrainSpark robotBrainSpark1" />
+                <span className="robotBrainSpark robotBrainSpark2" />
+                <BrainCircuit
+                  size={`${Math.max(16, Math.round(size * 0.14))}`}
+                  color={THINKING_RED}
+                  strokeWidth={2}
+                  style={{ position: 'relative', zIndex: 2, filter: `drop-shadow(0 0 6px ${THINKING_RED}e6)` }}
+                />
+              </div>
+              <span className="robotBrainLabel">ANALYZING</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+
       <style>{`
         .robotAvatarFloat { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
-        /* A real head roll, replacing the old small idle-float/thinking-tilt
-           wobbles — one shared keyframe, idle and thinking just run it at
-           different speeds (thinking faster, still the same motion shape). */
-        [data-activity-state="idle"] .robotAvatarFloat {
-          animation: robotHeadRoll 6s ease-in-out infinite;
+        /* Thinking: the M badge's solid red fill pulses like lit hardware,
+           plus a brief scan/flicker dip a couple of times per longer
+           cycle — two independent, stacked animations on the same
+           element. Scoped to [data-activity-state="thinking"] (which the
+           component forces to "static" when animated is false) rather
+           than an unconditional selector, so reduced-motion genuinely
+           turns this off instead of just being ignored. */
+        [data-activity-state="thinking"] .robotMBadgeRed {
+          animation: robotMBadgePulse 1.1s ease-in-out infinite, robotMBadgeFlicker 4.5s linear infinite;
         }
-        [data-activity-state="thinking"] .robotAvatarFloat {
-          animation: robotHeadRoll 3.2s ease-in-out infinite;
+        @keyframes robotMBadgePulse {
+          0%, 100% { opacity: 0.82; }
+          50% { opacity: 1; }
         }
-        @keyframes robotHeadRoll {
-          0%   { transform: rotate(0deg) translateY(0px); }
-          25%  { transform: rotate(12deg) translateY(-3px); }
-          50%  { transform: rotate(0deg) translateY(-6px); }
-          75%  { transform: rotate(-12deg) translateY(-3px); }
-          100% { transform: rotate(0deg) translateY(0px); }
+        @keyframes robotMBadgeFlicker {
+          0%, 78%, 100% { filter: brightness(1); }
+          80% { filter: brightness(0.55); }
+          82% { filter: brightness(1.25); }
+          84% { filter: brightness(0.7); }
+          86% { filter: brightness(1); }
         }
 
-        /* Thinking: the M badge glows red */
-        .robotMBadgeGlow { animation: robotMBadgePulse 0.9s ease-in-out infinite; }
-        @keyframes robotMBadgePulse {
-          0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+        /* Thinking: the floating brain hologram — a soft glow, a thin
+           breathing "processing" ring, and 3 staggered fading sparks, all
+           behind the real lucide BrainCircuit icon. Scoped to
+           [data-activity-state="thinking"] the same way as the M-badge
+           pulse above, so reduced-motion renders the icon+label statically
+           with no animation. */
+        .robotBrainGlowWrap { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+        .robotBrainGlow {
+          position: absolute; inset: -8px; border-radius: 50%; z-index: 0;
+          background: radial-gradient(circle, ${THINKING_RED}66 0%, ${THINKING_RED}00 70%);
+        }
+        [data-activity-state="thinking"] .robotBrainGlow { animation: robotBrainGlowPulse 2.2s ease-in-out infinite; }
+        @keyframes robotBrainGlowPulse {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.15); }
+        }
+        .robotBrainRing {
+          position: absolute; inset: 3px; border-radius: 50%; z-index: 1;
+          border: 1px solid ${THINKING_RED}99;
+        }
+        [data-activity-state="thinking"] .robotBrainRing { animation: robotBrainRingPulse 2.2s ease-in-out infinite; }
+        @keyframes robotBrainRingPulse {
+          0%, 100% { opacity: 0.35; transform: scale(0.9); }
+          50% { opacity: 0.85; transform: scale(1.2); }
+        }
+        .robotBrainSpark {
+          position: absolute; width: 3px; height: 3px; border-radius: 50%; z-index: 1;
+          background: #FF6B78; box-shadow: 0 0 4px 1px ${THINKING_RED}cc; opacity: 0;
+        }
+        .robotBrainSpark0 { top: 0; left: 8px; }
+        .robotBrainSpark1 { top: 14px; right: -4px; }
+        .robotBrainSpark2 { bottom: 2px; left: 0; }
+        [data-activity-state="thinking"] .robotBrainSpark0 { animation: robotBrainSparkFade 1.8s ease-in-out infinite; }
+        [data-activity-state="thinking"] .robotBrainSpark1 { animation: robotBrainSparkFade 1.8s ease-in-out infinite 0.5s; }
+        [data-activity-state="thinking"] .robotBrainSpark2 { animation: robotBrainSparkFade 1.8s ease-in-out infinite 1s; }
+        @keyframes robotBrainSparkFade {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 1; }
+        }
+        .robotBrainLabel {
+          margin-top: 3px; font-size: 9px; font-weight: 600; letter-spacing: 0.09em;
+          color: #FF6B78; text-shadow: 0 0 6px ${THINKING_RED}b3; white-space: nowrap;
         }
 
         /* Speaking: an ADDITIVE glow over each real eye — never a cover */
