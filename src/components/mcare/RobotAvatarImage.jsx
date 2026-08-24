@@ -96,6 +96,20 @@
  *   same additive-glow technique already proven for the speaking eye-glow
  *   pulse — a radial gradient, `mixBlendMode: 'screen'` — just red instead
  *   of gold and centered on the badge instead of the eyes.
+ *
+ *   2026-08-23, a fourth same-day round: Portia asked to stop the ring
+ *   halo's pulse (LivingOrb.jsx's `STATE_CONFIG` rings — grow+fade in
+ *   place) in favor of them genuinely orbiting around him, and to replace
+ *   the small idle/thinking head wobble with a real roll. The ring-orbit
+ *   change lives in LivingOrb.jsx (see its own history comment). Here:
+ *   `robotIdleFloatTilt`/`robotThinkTilt` (a small vertical bob + ±2-3°
+ *   rotate) were replaced with one shared `robotHeadRoll` keyframe
+ *   (±12° rotate + a gentle vertical bob), idle and thinking just running
+ *   it at different speeds. Deliberately ±12°, not a full continuous
+ *   spin — a literal 360° roll would carry the eyes/visor/M badge through
+ *   sideways and upside-down orientations, reading as broken rather than
+ *   alive; ±12° is a clearly bigger, more visible motion than the old
+ *   wobble without ever inverting anything.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -308,9 +322,10 @@ export default function RobotAvatarImage({
   // no eyes at all; only the two size>=80 hero instances in MCareOrb.jsx
   // ever cleared it. Eyes are simple, already-proven-robust image-layer
   // transforms — safe at any real avatar size. `showActivityOverlays`
-  // (thinking dots, speaking glow/waveform, listening equalizer, plus the
-  // idle/thinking float+tilt via data-activity-state below) stays at the
-  // original, unverified-at-small-sizes size>=80 bar, unchanged.
+  // (the thinking M-badge glow, speaking glow/waveform, listening
+  // equalizer, plus the idle/thinking head roll via data-activity-state
+  // below) stays at the original, unverified-at-small-sizes size>=80 bar,
+  // unchanged.
   const showEyes = size >= 24;
   const showActivityOverlays = size >= 80;
   const cssActivityState = animated ? activityState : 'static';
@@ -449,27 +464,21 @@ export default function RobotAvatarImage({
       <style>{`
         .robotAvatarFloat { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
-        /* Idle: one combined keyframe — float + tilt share the same
-           transform property, so they must live in one animation, not two. */
+        /* A real head roll, replacing the old small idle-float/thinking-tilt
+           wobbles — one shared keyframe, idle and thinking just run it at
+           different speeds (thinking faster, still the same motion shape). */
         [data-activity-state="idle"] .robotAvatarFloat {
-          animation: robotIdleFloatTilt 3s ease-in-out infinite;
+          animation: robotHeadRoll 6s ease-in-out infinite;
         }
-        @keyframes robotIdleFloatTilt {
-          0%   { transform: translateY(0px) rotate(0deg); }
-          25%  { transform: translateY(-4px) rotate(-2deg); }
-          50%  { transform: translateY(-8px) rotate(0deg); }
-          75%  { transform: translateY(-4px) rotate(2deg); }
-          100% { transform: translateY(0px) rotate(0deg); }
-        }
-
-        /* Thinking: a faster, more pronounced tilt than idle's float */
         [data-activity-state="thinking"] .robotAvatarFloat {
-          animation: robotThinkTilt 1.8s ease-in-out infinite;
-          transform-origin: 50% 88%;
+          animation: robotHeadRoll 3.2s ease-in-out infinite;
         }
-        @keyframes robotThinkTilt {
-          0%, 100% { transform: rotate(0deg) scale(1); }
-          50% { transform: rotate(3deg) scale(1.015); }
+        @keyframes robotHeadRoll {
+          0%   { transform: rotate(0deg) translateY(0px); }
+          25%  { transform: rotate(12deg) translateY(-3px); }
+          50%  { transform: rotate(0deg) translateY(-6px); }
+          75%  { transform: rotate(-12deg) translateY(-3px); }
+          100% { transform: rotate(0deg) translateY(0px); }
         }
 
         /* Thinking: the M badge glows red */

@@ -5,44 +5,58 @@
  * generated asset — `public/robot-avatar.png`), not a drawing — a glossy
  * white spherical shell, a black reflective visor, two glowing amber eyes,
  * a gold visor rim, and a gold "M" earpiece badge. This file owns
- * everything around that: state-driven halo rings,
+ * everything around that: a state-driven concentric ring halo (orbits
+ * continuously, see the 2026-08-23 note below — never pulses in place),
  * parallax tilt, the flash ring, the notify dot, and a size≥80-only
  * atmosphere (base glow + a gold particle trail). A `state` prop swaps the
  * animation config, never the DOM shape, across eight honest states:
  *
- * - idle:           very subtle breathing — nothing is happening.
- * - listening:      tight, fast pulse while the mic is actually recording
+ * - idle:           very subtle breathing (the core) plus a slow head
+ *                    roll and a slow ring orbit — nothing is happening.
+ * - listening:      a fast ring orbit while the mic is actually recording
  *                    (Conversational Mode) — wired to the real listening
  *                    signal, not simulated.
- * - thinking:       a slightly brighter, pulsing ring plus the real
- *                    face-level "thinking" overlay (RobotAvatarImage.jsx —
- *                    3 dots bouncing inside the visor bowl, a restless
- *                    eye-glance, a faster head tilt) — the agent is
- *                    composing a reply, no tool call yet. Deliberately not
- *                    a spinning sweep (reads as a generic loading spinner).
+ * - thinking:       a faster ring orbit plus the real face-level
+ *                    "thinking" overlay (RobotAvatarImage.jsx — the M
+ *                    badge glowing red, a restless eye-glance, a faster
+ *                    head roll) — the agent is composing a reply, no tool
+ *                    call yet.
  * - tool_executing: the same ring motif, faster and brighter — a real
  *                    backend tool call is in flight right now (wired to
  *                    MCareOrb's `runningTool`, the tool's own real status
  *                    field). Never shown without a real tool call actually
  *                    running.
- * - speaking:       a brighter, quicker ripple for a short honest window
- *                    right after a new assistant message lands — tied to
- *                    a real state transition, never a fabricated
+ * - speaking:       a brighter, faster ring orbit for a short honest
+ *                    window right after a new assistant message lands —
+ *                    tied to a real state transition, never a fabricated
  *                    audio-reactive claim (no real TTS signal exists to
  *                    honestly react to).
  * - acting:         deliberate, layered background work — more rings,
- *                    slower cadence, brighter glow, plus a small
+ *                    slower orbit cadence, brighter glow, plus a small
  *                    persistent gold notification point. Wired to
  *                    hasUnseenJourneyEvent in MCareOrb — a real
  *                    JourneyEvent a backend function just wrote — never a
  *                    fabricated animation.
- * - alert:          a controlled amber ring around the same shell shape —
- *                    an active Safe-T4life safety block exists in the
- *                    current conversation. Never a different icon, never
- *                    fast/panicked pulsing.
- * - offline:        a deliberately muted, restrained ring — wired to
+ * - alert:          a controlled amber ring orbit around the same shell
+ *                    shape — an active Safe-T4life safety block exists in
+ *                    the current conversation. Never a different icon,
+ *                    never fast/panicked spinning.
+ * - offline:        a deliberately muted, slow ring orbit — wired to
  *                    MCareOrb's real `isOnline` (navigator.onLine) signal.
  *                    Same orb shape, never an error icon.
+ *
+ * 2026-08-23: the ring halo used to pulse (grow + fade in place, scale/
+ * opacity keyframed). Portia found it read as a generic "loading"
+ * pulse and asked for the rings to genuinely move around him instead,
+ * with the head itself rolling rather than the small idle wobble it had.
+ * The ring block below now orbits continuously (reusing `Atmosphere`'s
+ * own already-proven rotate-forever technique) — flattened into ellipses
+ * (a perfect circle at a fixed size looks identical at any rotation
+ * angle, so rotating one would be invisible), alternating spin direction
+ * per ring, sized concentrically outward per index. `RobotAvatarImage.jsx`
+ * gained a matching `robotHeadRoll` keyframe (±12°, deliberately short of
+ * a full 360° — see that file's own comment for why) replacing the old
+ * small idle/thinking wobbles.
  *
  * Respects prefers-reduced-motion — falls back to a fully static version
  * of the same shell/core/halo, no rings, no dots, no particles, no tilt.
@@ -114,24 +128,34 @@ import RobotAvatarImage from '@/components/mcare/RobotAvatarImage';
 const GOLD = '#D4AF37';
 const AMBER = '#D97706';
 
+// ringOrbitDuration: seconds for one full 360° orbit of the ring halo
+// below (see the render block) — added 2026-08-23 when the rings stopped
+// pulsing (grow+fade in place) and started continuously orbiting instead,
+// per Portia's own direct request. Deliberately NOT reusing `duration`
+// for this — that field was hand-tuned for pulse *cadence* (0.9-3.6s),
+// and a full 360° every 0.9s would look like a spinning fan blade, not a
+// calm orbit. These values preserve the same relative "calmer states
+// move slower" ordering `duration` already implied, rescaled to a speed
+// that actually reads as an orbit.
 const STATE_CONFIG = {
-  idle:           { ringCount: 2, duration: 3.6, ringScale: 1.28, ringOpacity: 0.18, coreScale: [1, 1.025, 1], glowAlpha: '45', color: GOLD },
-  listening:      { ringCount: 3, duration: 1.1, ringScale: 1.6,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],   glowAlpha: '55', color: GOLD },
+  idle:           { ringCount: 2, duration: 3.6, ringOrbitDuration: 16, ringOpacity: 0.18, coreScale: [1, 1.025, 1], glowAlpha: '45', color: GOLD },
+  listening:      { ringCount: 3, duration: 1.1, ringOrbitDuration: 8,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],   glowAlpha: '55', color: GOLD },
   // thinking / tool_executing: the same ring cadence at two speeds/
   // intensities — thinking is the agent composing a reply, no tool call
   // yet; tool_executing is a real, currently-running backend call (see
   // MCareOrb.jsx's `runningTool`). Faster + brighter reads as "doing
   // something real right now" without needing a different icon shape —
   // the real active_label text next to the orb does the rest of the work.
-  // (The face-level "thinking" overlay — visor dots, tilt — is driven by
-  // `activityState` below, which collapses both of these into one look;
-  // only the ring speed/brightness still tells them apart.)
-  thinking:       { ringCount: 2, duration: 2.4, ringScale: 1.4,  ringOpacity: 0.26, coreScale: [1, 1.04, 1],  glowAlpha: '55', color: GOLD },
-  tool_executing: { ringCount: 3, duration: 1.5, ringScale: 1.42, ringOpacity: 0.34, coreScale: [1, 1.06, 1],  glowAlpha: '65', color: GOLD },
-  speaking:       { ringCount: 3, duration: 0.9, ringScale: 1.5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1],  glowAlpha: '55', color: GOLD },
-  acting:         { ringCount: 4, duration: 2.6, ringScale: 1.5,  ringOpacity: 0.32, coreScale: [1, 1.04, 1],  glowAlpha: '72', color: GOLD, notifyDot: true },
-  alert:          { ringCount: 2, duration: 2.0, ringScale: 1.34, ringOpacity: 0.34, coreScale: [1, 1.035, 1], glowAlpha: '60', color: AMBER },
-  offline:        { ringCount: 1, duration: 2.8, ringScale: 1.12, ringOpacity: 0.12, coreScale: [1, 1.015, 1], glowAlpha: '22', color: GOLD },
+  // (The face-level "thinking" overlay — the M badge's red glow, and the
+  // head roll's own faster duration — is driven by `activityState`
+  // below, which collapses both of these into one look; only the ring
+  // orbit speed/brightness still tells them apart.)
+  thinking:       { ringCount: 2, duration: 2.4, ringOrbitDuration: 9,  ringOpacity: 0.26, coreScale: [1, 1.04, 1],  glowAlpha: '55', color: GOLD },
+  tool_executing: { ringCount: 3, duration: 1.5, ringOrbitDuration: 6,  ringOpacity: 0.34, coreScale: [1, 1.06, 1],  glowAlpha: '65', color: GOLD },
+  speaking:       { ringCount: 3, duration: 0.9, ringOrbitDuration: 5,  ringOpacity: 0.38, coreScale: [1, 1.12, 1],  glowAlpha: '55', color: GOLD },
+  acting:         { ringCount: 4, duration: 2.6, ringOrbitDuration: 11, ringOpacity: 0.32, coreScale: [1, 1.04, 1],  glowAlpha: '72', color: GOLD, notifyDot: true },
+  alert:          { ringCount: 2, duration: 2.0, ringOrbitDuration: 10, ringOpacity: 0.34, coreScale: [1, 1.035, 1], glowAlpha: '60', color: AMBER },
+  offline:        { ringCount: 1, duration: 2.8, ringOrbitDuration: 24, ringOpacity: 0.12, coreScale: [1, 1.015, 1], glowAlpha: '22', color: GOLD },
 };
 
 // Fixed positions (percent of the orb's own box) tracing a short arc around
@@ -170,10 +194,11 @@ function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true
 function Atmosphere({ color, animated, activityState = 'idle' }) {
   // The hologram spins noticeably faster while thinking — a real,
   // visible "the system is working harder" signal, distinct from the
-  // face-level visor dots. Every other state keeps the normal slow spin.
-  // Still deliberately independent of the per-orbState ring PULSE speed
-  // in STATE_CONFIG above (e.g. `listening`'s fast 1.1s pulse for real
-  // active mic capture stays exactly as tuned).
+  // face-level M-badge glow. Every other state keeps the normal slow
+  // spin. Still deliberately independent of the per-orbState ring ORBIT
+  // speed (`ringOrbitDuration`) in STATE_CONFIG above (e.g. `listening`'s
+  // own fast 8s orbit for real active mic capture stays exactly as
+  // tuned).
   const fast = activityState === 'thinking';
   const ringADuration = fast ? 6 : 26;
   const ringBDuration = fast ? 8 : 32;
@@ -341,15 +366,32 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
         />
       )}
 
-      {Array.from({ length: cfg.ringCount }).map((_, i) => (
-        <motion.div
-          key={i}
-          aria-hidden="true"
-          style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1px solid ${cfg.color}` }}
-          animate={{ scale: [1, cfg.ringScale, 1], opacity: [cfg.ringOpacity, 0, cfg.ringOpacity] }}
-          transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut', delay: i * (cfg.duration / cfg.ringCount / 1.4) }}
-        />
-      ))}
+      {/* Concentric ring halo — orbits continuously instead of pulsing
+          (grow+fade in place). Flattened into ellipses (a perfect circle
+          at a fixed size looks identical at any rotation angle, so a
+          circle would never visibly move) — same technique Atmosphere's
+          own rings already use below. Alternating spin direction per
+          index and a per-index size/duration stagger, matching
+          Atmosphere's own "rings move differently, not in lockstep"
+          choice. Real opacity, no more animating toward 0. */}
+      {Array.from({ length: cfg.ringCount }).map((_, i) => {
+        const w = 100 + i * 14;
+        const h = 42 + i * 6;
+        return (
+          <motion.div
+            key={i}
+            aria-hidden="true"
+            data-testid="ring-orbit"
+            style={{
+              position: 'absolute', top: '50%', left: '50%',
+              width: `${w}%`, height: `${h}%`, marginLeft: `-${w / 2}%`, marginTop: `-${h / 2}%`,
+              borderRadius: '50%', border: `1px solid ${cfg.color}`, opacity: cfg.ringOpacity,
+            }}
+            animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
+            transition={{ duration: cfg.ringOrbitDuration + i * 2, repeat: Infinity, ease: 'linear' }}
+          />
+        );
+      })}
 
       <motion.div
         aria-hidden="true"
