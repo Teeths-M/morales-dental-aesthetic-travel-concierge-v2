@@ -57,7 +57,31 @@
  *   flagged this directly from a screenshot: those 3 dots read as floating
  *   outside the head, not "inside the fish tank / bowl." Removed —
  *   `robotDotRow` below was already correctly confined to the visor and is
- *   now the one real "3 talking dots" indicator.)
+ *   now the one real "3 talking dots" indicator.
+ *
+ *   2026-08-23, same-day follow-up: her NEXT screenshot showed `robotDotRow`
+ *   itself still reading as outside the visor — because its position
+ *   (`top:57%, left:34%, width:32%, height:11%`) was an eyeballed guess, not
+ *   measured against the real photo. Pixel-sampled the actual asset
+ *   (`m-safe-robot-body-patched.webp`) directly: a luminance scan plus a
+ *   manual BFS connected-components pass (no scipy available) found the
+ *   visor's real dark-glass region is roughly x:43-78%, y:22-62% — its real
+ *   lower edge (~60-62%) is well above where the old box's bottom (68%)
+ *   reached, and its horizontal center sits further right than the old
+ *   box's. Replaced with a pixel-verified box, `top:51%, left:50%,
+ *   width:24%, height:7%` — sampled a dense grid inside it and got mean
+ *   luminance 6.9/255 (the visor reads ~5-15 throughout; the pearl shell
+ *   reads 100+), with clean clearance below the real eye boxes (bottom
+ *   ≈48.5-49.2%) and above the real shell edge.
+ *
+ *   Same round: her separate "some of the bots are missing eyes" report
+ *   was real and much bigger than one dot row — a repo-wide grep of every
+ *   `<LivingOrb>`/`<McareAvatar>` call site found only 2 of ~15 real
+ *   renders ever cleared the old single `size >= 80` gate that hid BOTH the
+ *   eyes and the busy overlays together; every message-bubble avatar,
+ *   launcher button, and header instance (all well under 80px) showed a
+ *   bare glowing shell. Split into two independent thresholds — see
+ *   `showEyes`/`showActivityOverlays` below.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -249,7 +273,19 @@ export default function RobotAvatarImage({
   }
 
   const glowFilter = `drop-shadow(0 0 ${Math.round(size * 0.22)}px ${color}${glowAlpha}) drop-shadow(0 8px 16px rgba(0,0,0,0.45))`;
-  const showFaceOverlays = size >= 80;
+  // Two independent thresholds, not one — a real gap found 2026-08-23: the
+  // old single `size >= 80` flag gated the eyes themselves behind the same
+  // bar as the busy multi-element overlays, so every real avatar-context
+  // render in the app (message bubbles, the launcher button, headers —
+  // McareAvatar's own default size is 28) showed a bare glowing shell with
+  // no eyes at all; only the two size>=80 hero instances in MCareOrb.jsx
+  // ever cleared it. Eyes are simple, already-proven-robust image-layer
+  // transforms — safe at any real avatar size. `showActivityOverlays`
+  // (thinking dots, speaking glow/waveform, listening equalizer, plus the
+  // idle/thinking float+tilt via data-activity-state below) stays at the
+  // original, unverified-at-small-sizes size>=80 bar, unchanged.
+  const showEyes = size >= 24;
+  const showActivityOverlays = size >= 80;
   const cssActivityState = animated ? activityState : 'static';
 
   // Real amplitude (0-1) drives these directly via inline style when
@@ -262,7 +298,7 @@ export default function RobotAvatarImage({
     <div
       aria-hidden="true"
       className="robotAvatarWrap robot-wrapper"
-      data-activity-state={showFaceOverlays ? cssActivityState : 'static'}
+      data-activity-state={showActivityOverlays ? cssActivityState : 'static'}
       data-testid="robot-avatar"
       style={naturalAspect
         ? { position: 'relative', width: `min(${size}px, 100%)`, flexShrink: 0 }
@@ -282,11 +318,15 @@ export default function RobotAvatarImage({
             style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', filter: glowFilter }}
           />
 
-          {showFaceOverlays && (
+          {showEyes && (
             <>
               <EyeLayer src={eyeLeftSrc} box={EYE_BOX.left} gaze={gaze} blinking={blinking} />
               <EyeLayer src={eyeRightSrc} box={EYE_BOX.right} gaze={gaze} blinking={blinking} />
+            </>
+          )}
 
+          {showActivityOverlays && (
+            <>
               {/* Thinking: three large dots on the visor, below the eye line */}
               {activityState === 'thinking' && (
                 <div className="robotDotRow" data-testid="robot-dots">
@@ -397,7 +437,7 @@ export default function RobotAvatarImage({
 
         /* Thinking: three large, bright dots waving up/down on the visor */
         .robotDotRow {
-          position: absolute; top: 57%; left: 34%; width: 32%; height: 11%;
+          position: absolute; top: 51%; left: 50%; width: 24%; height: 7%;
           display: flex; align-items: center; justify-content: space-between;
           pointer-events: none; z-index: 10;
         }

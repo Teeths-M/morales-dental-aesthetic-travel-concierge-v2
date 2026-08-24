@@ -9,10 +9,17 @@ import LivingOrb from '@/components/mcare/LivingOrb';
 // vest, circle-cropped (a base44-builder[bot] "mascot-style" addition).
 // Portia flagged it live as reading like an unsettling, face-like image at
 // chat-avatar size — replaced with the same dark orb + embossed Morales M
-// emblem every other M-Care surface uses (src/components/mcare/LivingOrb.jsx),
-// so there is exactly one visual definition of "M-Care's presence" in this
-// app, not two. Per her explicit design principle: an AI presence, never a
-// face — no eyes, no mouth, no photo, ever, on this component or LivingOrb.
+// emblem every other M-Care surface uses, so there is exactly one visual
+// definition of "M-Care's presence" in this app, not two.
+//
+// That "no eyes, no photo, ever" stance was itself reversed several rounds
+// later (see LivingOrb.jsx's own history comment) once Portia supplied a
+// real generated robot-avatar photo and asked for the genuine render, eyes
+// included — src/components/mcare/LivingOrb.jsx (via RobotAvatarImage.jsx)
+// now renders that real photo, with real independently-blinking/gazing
+// eyes, at every real avatar size including this component's own default
+// (28) — a 2026-08-23 fix specifically closed the gap where eyes only
+// showed at size>=80, leaving every call site here invisible-eyed.
 //
 // Props (unchanged — every existing call site needed zero changes):
 //   size      — px dimension (default 28, matches every existing call site)
