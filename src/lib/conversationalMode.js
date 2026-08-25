@@ -26,6 +26,7 @@
  */
 
 import { isSpeechSupported } from './talkMode';
+import { fuzzyScore } from './fuzzyMatch';
 
 export function isRecognitionSupported() {
   return typeof window !== 'undefined'
@@ -109,6 +110,121 @@ export function shortTopicLabel(text, maxWords = 8) {
   if (words.length === 0) return '';
   if (words.length <= maxWords) return words.join(' ');
   return `${words.slice(0, maxWords).join(' ')}…`;
+}
+
+// ── Named task tracking ─────────────────────────────────────────────────
+// A named task is the same interrupted-intent shape pushInterruptedIntent
+// already produces, with one additive field: status. Callers (MCareOrb.jsx)
+// decide when a task is paused/active/completed; this file only provides
+// the shared vocabulary and the pure matching logic below, so a typo can't
+// silently desync "what was pushed" from "what's filtered for."
+export const TASK_STATUS = Object.freeze({
+  ACTIVE: 'active',
+  PAUSED: 'paused',
+  COMPLETED: 'completed',
+});
+
+// A bare "yes"/"no" only ever maps onto a real yes/no-shaped choice set —
+// one option's own label literally starts with "yes", another with "no" —
+// never guessed onto an unrelated pair of options that just happens to
+// have two items (e.g. "Send my current location" / "Share my live
+// location", neither of which is a yes/no answer).
+const AFFIRM_WORDS = new Set([
+  'yes', 'yeah', 'yep', 'yup', 'confirm', 'confirmed', 'correct', 'sure',
+  'okay', 'ok', "that's right", 'do it', "let's do it", 'go ahead',
+]);
+const NEGATE_WORDS = new Set([
+  'no', 'nope', 'nah', 'cancel', 'stop', "don't", 'negative', 'not now',
+]);
+
+/**
+ * Deterministic mapping from a spoken utterance onto one of the real,
+ * currently-offered {{choices:...}} labels on the last assistant message —
+ * so a spoken "yes" during an active booking/payment/consent prompt does
+ * exactly what tapping the chip does, nothing more. Tries a direct fuzzy
+ * match against the real labels first (so "pay in full" matches "Pay in
+ * Full" directly); only falls back to bare yes/no recognition for an
+ * actual yes/no-shaped pair. Returns the matched label's exact text, or
+ * null if nothing matches.
+ *
+ * @param {string} spokenText
+ * @param {string[]} choiceLabels
+ * @returns {string | null}
+ */
+export function matchSpokenChoice(spokenText, choiceLabels) {
+  const text = normalize(spokenText);
+  if (!text || !Array.isArray(choiceLabels) || choiceLabels.length === 0) return null;
+  // A bare, exact yes/no-shaped word is checked FIRST against a real
+  // yes/no-labeled option — before general fuzzy scoring, which can
+  // otherwise be thrown off by an unrelated label that happens to contain
+  // "no" as a substring (e.g. fuzzyScore treats "no" as a substring hit
+  // inside "...send help now").
+  const yesLabel = choiceLabels.find((l) => /^yes\b/i.test((l || '').trim()));
+  const noLabel = choiceLabels.find((l) => /^no\b/i.test((l || '').trim()));
+  if (yesLabel && AFFIRM_WORDS.has(text)) return yesLabel;
+  if (noLabel && NEGATE_WORDS.has(text)) return noLabel;
+  const best = choiceLabels
+    .map((label) => ({ label, score: fuzzyScore(text, label) }))
+    .sort((a, b) => b.score - a.score)[0];
+  if (best && best.score >= 70) return best.label;
+  return null;
+}
+
+// Specific, anchored phrasings only — deliberately not a loose keyword
+// match, so an ordinary sentence that happens to mention "back" or "last"
+// is never mistaken for a resume request.
+const RESUME_LAST_PHRASES = [
+  /\bcontinue (?:with )?(?:the )?last (?:task|thing|topic)\b/i,
+  /\bwhat was i (?:working on|doing|asking about)\b/i,
+  /\bback to what i was (?:doing|saying|asking)\b/i,
+  /\bwhere were we\b/i,
+  /\bpick (?:back )?up where (?:we|i) left off\b/i,
+];
+const RESUME_NAMED_PATTERN = /\b(?:go back to|back to|return to|resume) (?:the )?(.+?)(?:\s+(?:task|thing|topic))?[.!?]*$/i;
+
+/**
+ * Detects a resume request in a finalized utterance — "go back to the
+ * flight thing" / "continue the last task" / "what was I working on".
+ * Returns { type: 'named', target } for a named request (target is the raw
+ * phrase to fuzzy-match against paused task labels), { type: 'last' } for a
+ * generic "the last/previous thing" request, or null if this isn't a
+ * resume request at all.
+ *
+ * @param {string} text
+ * @returns {{ type: 'named', target: string } | { type: 'last' } | null}
+ */
+export function detectResumeIntent(text) {
+  const trimmed = (text || '').trim();
+  if (!trimmed) return null;
+  if (RESUME_LAST_PHRASES.some((re) => re.test(trimmed))) return { type: 'last' };
+  const named = trimmed.match(RESUME_NAMED_PATTERN);
+  if (named && named[1] && named[1].trim()) return { type: 'named', target: named[1].trim() };
+  return null;
+}
+
+/**
+ * Resolves a detected resume intent against the real paused-task stack.
+ * 'last' pops the most recently paused task (tasks is expected in push
+ * order, oldest first, matching pushInterruptedIntent's own append
+ * convention); 'named' fuzzy-matches the target phrase against each paused
+ * task's own real label (fullText) via the shared fuzzyMatch.js scorer —
+ * never a second, local scorer. Returns the matched task object, or null.
+ *
+ * @param {Array<{status?: string, fullText?: string, label?: string}>} tasks
+ * @param {{ type: 'named', target: string } | { type: 'last' } | null} resumeIntent
+ */
+export function resumeTaskFromLabel(tasks, resumeIntent) {
+  if (!resumeIntent) return null;
+  const paused = (tasks || []).filter((t) => t.status === TASK_STATUS.PAUSED);
+  if (paused.length === 0) return null;
+  if (resumeIntent.type === 'last') return paused[paused.length - 1];
+  if (resumeIntent.type === 'named') {
+    const best = paused
+      .map((t) => ({ t, score: fuzzyScore(resumeIntent.target, t.fullText || t.label || '') }))
+      .sort((a, b) => b.score - a.score)[0];
+    return best && best.score >= 45 ? best.t : null;
+  }
+  return null;
 }
 
 // ── Barge-in debounce ────────────────────────────────────────────────────

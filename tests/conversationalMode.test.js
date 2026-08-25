@@ -9,6 +9,10 @@ import {
   shortTopicLabel,
   createBargeInDetector,
   createNetworkErrorTracker,
+  matchSpokenChoice,
+  detectResumeIntent,
+  resumeTaskFromLabel,
+  TASK_STATUS,
   MAX_INTERRUPTED_INTENTS,
 } from '../src/lib/conversationalMode.js';
 
@@ -164,5 +168,85 @@ describe('conversationalMode.createNetworkErrorTracker', () => {
   it('defaults to NETWORK_ERROR_MAX_RETRIES when called with no argument', () => {
     const tracker = createNetworkErrorTracker();
     expect(tracker.onError('network')).toBe(true);
+  });
+});
+
+describe('conversationalMode.matchSpokenChoice', () => {
+  it('matches a direct fuzzy hit against a real label', () => {
+    expect(matchSpokenChoice('pay in full', ['Pay in Full', '25% Deposit', '50% Deposit'])).toBe('Pay in Full');
+  });
+
+  it('matches a bare "yes" only against a real yes-labeled option', () => {
+    expect(matchSpokenChoice('yes', ['Yes — send help now', "No, I'm okay"])).toBe('Yes — send help now');
+    expect(matchSpokenChoice('yeah', ['Yes, use my exact location', "No, that's fine"])).toBe('Yes, use my exact location');
+  });
+
+  it('matches a bare "no" only against a real no-labeled option', () => {
+    expect(matchSpokenChoice('no', ['Yes — send help now', "No, I'm okay"])).toBe("No, I'm okay");
+    expect(matchSpokenChoice('cancel', ['Yes, watch my surroundings', 'No thanks'])).toBe('No thanks');
+  });
+
+  it('does NOT guess a bare "yes"/"no" onto an unrelated 2-option pair with no yes/no label', () => {
+    expect(matchSpokenChoice('yes', ['Send my current location', 'Share my live location'])).toBe(null);
+  });
+
+  it('returns null when nothing matches', () => {
+    expect(matchSpokenChoice('what time is it', ['Pay in Full', '25% Deposit'])).toBe(null);
+  });
+
+  it('returns null for empty input or an empty choice list', () => {
+    expect(matchSpokenChoice('', ['Yes', 'No'])).toBe(null);
+    expect(matchSpokenChoice('yes', [])).toBe(null);
+    expect(matchSpokenChoice('yes', null)).toBe(null);
+  });
+});
+
+describe('conversationalMode.detectResumeIntent', () => {
+  it('detects a generic "last task" resume phrase', () => {
+    expect(detectResumeIntent('continue the last task')).toEqual({ type: 'last' });
+    expect(detectResumeIntent('what was I working on')).toEqual({ type: 'last' });
+    expect(detectResumeIntent('where were we')).toEqual({ type: 'last' });
+    expect(detectResumeIntent('pick up where I left off')).toEqual({ type: 'last' });
+  });
+
+  it('detects a named resume phrase and extracts the target', () => {
+    expect(detectResumeIntent('go back to the flight thing')).toEqual({ type: 'named', target: 'flight' });
+    expect(detectResumeIntent('return to the hotel booking')).toEqual({ type: 'named', target: 'hotel booking' });
+  });
+
+  it('returns null for an ordinary message that is not a resume request', () => {
+    expect(detectResumeIntent('find me a dentist in Cancun')).toBe(null);
+    expect(detectResumeIntent('')).toBe(null);
+    expect(detectResumeIntent(undefined)).toBe(null);
+  });
+});
+
+describe('conversationalMode.resumeTaskFromLabel', () => {
+  const tasks = [
+    { id: 'a', fullText: 'let me look into flight options for you', status: TASK_STATUS.PAUSED },
+    { id: 'b', fullText: 'checking hotel availability near the clinic', status: TASK_STATUS.PAUSED },
+    { id: 'c', fullText: 'a task that already finished', status: TASK_STATUS.COMPLETED },
+  ];
+
+  it('resolves a "last" resume intent to the most recently paused task', () => {
+    expect(resumeTaskFromLabel(tasks, { type: 'last' })?.id).toBe('b');
+  });
+
+  it('resolves a "named" resume intent via fuzzy match against real paused labels', () => {
+    expect(resumeTaskFromLabel(tasks, { type: 'named', target: 'flight' })?.id).toBe('a');
+    expect(resumeTaskFromLabel(tasks, { type: 'named', target: 'hotel' })?.id).toBe('b');
+  });
+
+  it('never matches a completed or active task, only paused ones', () => {
+    expect(resumeTaskFromLabel(tasks, { type: 'named', target: 'already finished' })).toBe(null);
+  });
+
+  it('returns null when there are no paused tasks, or no resume intent', () => {
+    expect(resumeTaskFromLabel([], { type: 'last' })).toBe(null);
+    expect(resumeTaskFromLabel(tasks, null)).toBe(null);
+  });
+
+  it('returns null for a named target with no plausible match', () => {
+    expect(resumeTaskFromLabel(tasks, { type: 'named', target: 'zzz nothing like this exists' })).toBe(null);
   });
 });

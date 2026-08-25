@@ -51,10 +51,21 @@ import {
   clearInterruptedIntents,
   shortTopicLabel,
   startContinuousRecognition,
+  createBargeInDetector,
+  matchSpokenChoice,
+  detectResumeIntent,
+  resumeTaskFromLabel,
+  TASK_STATUS,
   SILENCE_NUDGE_MS,
   MAX_SILENCE_NUDGES,
   SILENCE_NUDGE_TEXT,
 } from '@/lib/conversationalMode';
+import {
+  deriveVoiceState,
+  voiceStateLabel,
+  shouldInterruptOnSpeech,
+  createGenerationGuard,
+} from '@/lib/conversationStateMachine';
 import { parseMcareCommand } from '@/lib/voiceCommands';
 import { armSurroundingAwareness, disarmSurroundingAwareness } from '@/lib/surroundingAwareness';
 import { useMcarePreferences } from '@/hooks/useMcarePreferences';
@@ -272,6 +283,18 @@ export default function MCareOrb() {
   useEffect(() => { speakingRef.current = speaking; }, [speaking]);
   useEffect(() => { revealStateRef.current = revealState; }, [revealState]);
   useEffect(() => { conversationalModeRef.current = conversationalMode; }, [conversationalMode]);
+  // Mirrors agentSending for the continuous-recognition effect's closures
+  // (see handleBargeIn / the recognition effect below) — same "read via a
+  // ref, never list as a dependency" reason as speakingRef/revealStateRef.
+  const agentSendingRef = useRef(false);
+  // Real barge-in / stale-work suppression (src/lib/conversationStateMachine.js).
+  // bump()'d the instant a real barge-in is confirmed; suppressNextAssistantSpeechRef
+  // additionally marks that the very next assistant message to arrive belongs
+  // to a turn the traveler already interrupted mid-THINKING (no bubble existed
+  // yet to snapshot) and must never be spoken or treated as the active reply —
+  // see handleBargeIn and the growth-effect's suppression check below.
+  const generationGuardRef = useRef(createGenerationGuard());
+  const suppressNextAssistantSpeechRef = useRef(false);
 
   // Auto-detected approximate location (IP-based by default, GPS only if the
   // traveler already granted it) — see src/lib/locationContext.js for why
@@ -427,13 +450,26 @@ export default function MCareOrb() {
   // speaking effects below) — fires a short spoken nudge if the mic then
   // hears nothing for SILENCE_NUDGE_MS, capped at MAX_SILENCE_NUDGES per gap
   // so it never nags indefinitely. Only ever reset by real recognized
-  // speech, never by the recognition engine's own routine restarts.
+  // speech, never by the recognition engine's own routine restarts. Once
+  // the nudge budget is already spent and yet another silence period
+  // elapses with no response, ends the voice session with a real spoken +
+  // toast warning — never leaves the mic silently "on" with a dead
+  // conversation forever.
   const armSilenceNudge = () => {
     clearSilenceNudge();
     if (!conversationalModeRef.current) return;
-    if (silenceNudgeCountRef.current >= MAX_SILENCE_NUDGES) return;
     silenceTimerRef.current = setTimeout(() => {
       if (!conversationalModeRef.current || speakingRef.current) return;
+      if (silenceNudgeCountRef.current >= MAX_SILENCE_NUDGES) {
+        const endText = "Ending voice mode since I haven't heard anything — tap the mic to start again.";
+        setAgentMessages(prev => [...prev, { role: 'assistant', content: endText }]);
+        speakAncillary(endText, { rate: 0.9 });
+        toast({ title: 'Voice conversation ended', description: 'No response for a while — tap the phone icon to start again.' });
+        autoResumeConversationalRef.current = false;
+        setConversationalMode(false);
+        silenceNudgeCountRef.current = 0;
+        return;
+      }
       silenceNudgeCountRef.current += 1;
       // Appended like any other assistant turn — the existing speaking
       // effect below picks it up and speaks it (same pattern the Talk Mode
@@ -443,14 +479,30 @@ export default function MCareOrb() {
     }, SILENCE_NUDGE_MS);
   };
 
-  // Snapshot what M-Care was cut off saying into interruptedIntents, stop
-  // its audio, and flash the orb — called the moment a real barge-in is
-  // confirmed (see the recognition effect below), before the interrupting
-  // utterance has even finished being recognized.
+  // Called the moment a real barge-in is confirmed (see the recognition
+  // effect below), before the interrupting utterance has even finished
+  // being recognized. Two cases: M-Care was already SPEAKING an existing
+  // reply (a real bubble exists — snapshot what it was cut off saying into
+  // interruptedIntents, as a real, named paused task); or M-Care was still
+  // THINKING (agentSending — no reply exists yet). In the THINKING case
+  // there's no bubble to snapshot, but the eventual reply, whenever it
+  // arrives, belongs to a turn the traveler has already moved on from — the
+  // "sending" lock is released so their new message can go out immediately,
+  // and suppressNextAssistantSpeechRef marks that reply to never be spoken
+  // or treated as active once it lands (see the growth effect below). This
+  // is the honest, platform-correct version of "cancel stale work": Base44
+  // can't actually abort an in-flight generation, so a stale reply may
+  // still land in history later — this only stops it from being surfaced
+  // as the current turn.
   const handleBargeIn = () => {
     stopAllSpeech();
     setSpeaking(false);
     setSpeakingAmplitude(null);
+    generationGuardRef.current.bump();
+    if (agentSendingRef.current) {
+      setAgentSending(false);
+      suppressNextAssistantSpeechRef.current = true;
+    }
     const rs = revealStateRef.current;
     const msgs = agentMessagesRef.current;
     const interruptedMsg = rs ? msgs[rs.messageIndex] : null;
@@ -463,29 +515,12 @@ export default function MCareOrb() {
           fullText,
           spokenWordCount: rs.revealedWordCount,
           totalWordCount: rs.totalWordCount,
+          status: TASK_STATUS.PAUSED,
         }));
       }
     }
     setRevealState(null);
     setBargeInFlashToken(t => t + 1);
-  };
-
-  // Sends the utterance that actually interrupted M-Care. "never_mind"
-  // drops every pending topic; "correction" ("no wait, I meant...") drops
-  // only the topic this exact barge-in just pushed — the user is
-  // correcting themselves, not asking to revisit what M-Care was saying, so
-  // there's nothing meaningful to hold onto (an older, unrelated pending
-  // topic from an earlier interruption is untouched). "new_topic" (the
-  // default) leaves the stack exactly as handleBargeIn() already left it.
-  const handleInterruptionSend = (text) => {
-    const classification = classifyInterruptionUtterance(text);
-    if (classification === 'never_mind') {
-      setInterruptedIntents(clearInterruptedIntents());
-    } else if (classification === 'correction') {
-      setInterruptedIntents(prev => prev.slice(0, -1));
-    }
-    setInput('');
-    liveRef.current.sendAgentMessage?.(text);
   };
 
   const handleResumeIntent = (intent) => {
@@ -504,6 +539,7 @@ export default function MCareOrb() {
 
   useEffect(() => { agentMessagesRef.current = agentMessages; }, [agentMessages]);
   useEffect(() => { responseLanguageRef.current = responseLanguage; }, [responseLanguage]);
+  useEffect(() => { agentSendingRef.current = agentSending; }, [agentSending]);
 
   // Hydrate persisted preferences once per session so a returning user keeps
   // their Talk Mode, Private Mode, and language choices.
@@ -1272,6 +1308,20 @@ export default function MCareOrb() {
         // whichever path sees it first "claims" it via this shared ref.
         if (isClaimed(spokenAssistantIdsRef, msgIndex, last)) return;
 
+        // A real barge-in during THINKING (handleBargeIn) marked the next
+        // assistant reply to arrive as belonging to an abandoned turn —
+        // claim it in BOTH dedup refs (spokenAssistantIdsRef so this effect
+        // and the id-replace effect below never speak it later once more
+        // content fills in; ackedMessageIdsRef so the id-replace effect's
+        // own tool-running-ack speech can't fire for it either) and render
+        // it as plain text only, never spoken or treated as the active reply.
+        if (suppressNextAssistantSpeechRef.current) {
+          suppressNextAssistantSpeechRef.current = false;
+          claim(spokenAssistantIdsRef, msgIndex, last);
+          claim(ackedMessageIdsRef, msgIndex, last);
+          return;
+        }
+
         if (talkMode || forceSpeakNextReplyRef.current) {
           const speakable = extractSpeakableText(last.content);
           if (!speakable) {
@@ -1294,11 +1344,19 @@ export default function MCareOrb() {
           claim(spokenAssistantIdsRef, msgIndex, last);
           setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
           setSpeaking(true);
+          const speakGen = generationGuardRef.current.current();
           speakTextNeural(speakable, {
             rate: 0.9,
             language: i18n.language,
-            onWordBoundary: (count) => setRevealState(prev =>
-              (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
+            onWordBoundary: (count) => {
+              // A barge-in that fired while this exact utterance was mid-
+              // playback bumps the generation — a late-arriving word-
+              // boundary callback from the now-cancelled audio must never
+              // resurrect this bubble's reveal after the interruption.
+              if (generationGuardRef.current.isStale(speakGen)) return;
+              setRevealState(prev =>
+                (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev);
+            },
             onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
             onAmplitude: (level) => setSpeakingAmplitude(level),
             onEnd: () => {
@@ -1421,11 +1479,15 @@ export default function MCareOrb() {
       const totalWords = speakable.split(/\s+/).filter(Boolean).length;
       setRevealState({ messageIndex: msgIndex, revealedWordCount: 0, totalWordCount: totalWords });
       setSpeaking(true);
+      const speakGen = generationGuardRef.current.current();
       speakTextNeural(speakable, {
         rate: 0.9,
         language: i18n.language,
-        onWordBoundary: (count) => setRevealState(prev =>
-          (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev),
+        onWordBoundary: (count) => {
+          if (generationGuardRef.current.isStale(speakGen)) return;
+          setRevealState(prev =>
+            (prev && prev.messageIndex === msgIndex) ? { ...prev, revealedWordCount: count } : prev);
+        },
         onAudioUrl: (url) => setVoiceReplyAudioUrls(prev => ({ ...prev, [msgIndex]: url })),
         onEnd: () => {
           setSpeaking(false);
@@ -1452,40 +1514,68 @@ export default function MCareOrb() {
     // Fresh activation — allow one error toast again.
     conversationalErrorShownRef.current = false;
 
-    // Tracks whether the mic picked up M-Care's own voice during the current
-    // recognition segment. SpeechRecognition finalizes a transcript AFTER
-    // the speaker goes silent — so by the time onFinal fires, speakingRef is
-    // already false and the half-duplex guard below would let M-Care's own
-    // reply through as a "user" message (M ends up talking to itself, the
-    // exact loop in the screenshot). Marking the segment contaminated the
-    // moment the mic hears M-Care, then dropping that final, closes the gap.
+    // Tracks whether the mic picked up M-Care's own voice (or M-Care was
+    // still composing a reply) during the current recognition segment.
+    // SpeechRecognition finalizes a transcript AFTER the speaker goes
+    // silent — so by the time onFinal fires, speakingRef/agentSendingRef
+    // may already have changed, which is why this is latched the moment it
+    // happens rather than re-checked only at the end. bargeInDetector
+    // requires several consecutive, non-shrinking interim results before
+    // confirming a REAL interruption (see createBargeInDetector) — a
+    // single stray syllable bleeding through the speaker doesn't count.
+    // bargeInConfirmedThisSegment latches once that happens, so onFinal
+    // knows to route this utterance through the interruption-understanding
+    // path instead of dropping it as echo/noise.
     let heardMcareDuringSegment = false;
+    let bargeInConfirmedThisSegment = false;
+    const bargeInDetector = createBargeInDetector();
 
     const stopRecognition = startContinuousRecognition({
       lang: recognitionLocaleFor(responseLanguageRef.current),
       onInterim: (text) => {
-        // Half-duplex: while M-Care is speaking, ignore the mic entirely.
-        // Without this, M's own voice is picked up by the always-on mic,
-        // transcribed, and sent back as a user message — M ends up replying
-        // to itself in a loop. isNeuralSpeaking() is a synchronous module
-        // flag set the instant ANY of M-Care's audio paths start (auto-speak
-        // reply, the running-tool ack, the voice-message cue, the distress
-        // check) — the React `speaking` state alone is one render behind and
-        // several paths never set it, which is how M-Care's own reply was
-        // still leaking into the input field. The user simply waits for M
-        // to finish, then speaks. Headphones would let us keep barge-in,
-        // but on a phone speaker this is the only reliable choice.
-        if (speakingRef.current || isNeuralSpeaking()) { heardMcareDuringSegment = true; return; }
+        const mCareActive = speakingRef.current || isNeuralSpeaking();
+        const thinking = agentSendingRef.current;
+        if (mCareActive || thinking) {
+          heardMcareDuringSegment = true;
+          // Real barge-in: while M-Care is genuinely THINKING or SPEAKING
+          // (shouldInterruptOnSpeech), feed interim results into the
+          // detector instead of silently discarding them — headphones make
+          // this reliable; on a phone speaker, echo bleed is the real risk
+          // the detector's multi-event threshold exists to filter out.
+          if (!bargeInConfirmedThisSegment
+            && shouldInterruptOnSpeech(deriveVoiceState({ agentSending: thinking, speaking: mCareActive }))) {
+            const confirmed = bargeInDetector.observe(text);
+            if (confirmed) {
+              bargeInConfirmedThisSegment = true;
+              bargeInDetector.reset();
+              handleBargeIn();
+            }
+          }
+          if (bargeInConfirmedThisSegment) {
+            // Confirmed — reflect what's being said live, same as ordinary
+            // listening, now that M-Care has actually stopped.
+            clearSilenceNudge();
+            setInput(text);
+          }
+          // Not yet confirmed: stay silent rather than leaking a partial,
+          // possibly-echoed transcript into the input.
+          return;
+        }
+        bargeInDetector.reset();
         clearSilenceNudge();
         setInput(text);
       },
       onFinal: (text) => {
-        // Drop any transcript the recognizer built up while M-Care was
-        // speaking — onFinal lands AFTER M-Care goes silent, so the
-        // speakingRef guard alone can't catch it. isNeuralSpeaking() closes
-        // the gap for every audio path, not just the React-state-tracked one.
-        const contaminated = heardMcareDuringSegment || speakingRef.current || isNeuralSpeaking();
+        // Drop this final only if M-Care's voice/thinking was ever active
+        // during the segment AND no real barge-in was confirmed (a blip,
+        // not a genuine interruption) — onFinal lands after M-Care goes
+        // silent, so the live speakingRef/agentSendingRef checks alone
+        // can't catch this; the latched flags can.
+        const wasBargeIn = bargeInConfirmedThisSegment;
+        const contaminated = heardMcareDuringSegment && !wasBargeIn;
         heardMcareDuringSegment = false;
+        bargeInConfirmedThisSegment = false;
+        bargeInDetector.reset();
         if (contaminated) return;
         clearSilenceNudge();
         setInput('');
@@ -1507,7 +1597,19 @@ export default function MCareOrb() {
           liveRef.current.handleDistressSignal?.(signal, text);
           return;
         }
-        liveRef.current.sendAgentMessage?.(text);
+        // A resume phrase ("go back to the flight thing," "continue the
+        // last task") can be said at any time, not only right after
+        // interrupting M-Care — checked before both the barge-in-
+        // understanding path and the ordinary send path.
+        if (liveRef.current.tryResumeTask?.(text)) {
+          resetSilenceNudge();
+          return;
+        }
+        if (wasBargeIn) {
+          liveRef.current.handleInterruptionSend?.(text);
+        } else {
+          liveRef.current.handleVoiceTurn?.(text);
+        }
         resetSilenceNudge();
       },
       onListeningChange: setConversationalListening,
@@ -1601,6 +1703,16 @@ export default function MCareOrb() {
               : hasUnseenJourneyEvent
                 ? 'acting'
                 : 'idle';
+
+  // The explicit conversation-turn state machine (src/lib/conversationStateMachine.js),
+  // computed purely for the "Listening / Understanding / Thinking / Speaking"
+  // status text — orbState above (the orb's own visuals) is untouched.
+  const currentVoiceState = deriveVoiceState({
+    conversationalListening: conversationalMode && conversationalListening,
+    agentSending,
+    speaking,
+  });
+  const voiceStatusText = conversationalMode ? voiceStateLabel(currentVoiceState) : null;
 
   // Which capability-strip item (Analyze/Protect/Coordinate/Resolve) is
   // currently "lit" — reuses orbState's own real signals only, never a
@@ -1835,6 +1947,90 @@ export default function MCareOrb() {
   // latest sendAgentMessage without listing it as a dependency (which would
   // restart the whole SpeechRecognition session every time it's recreated).
   useEffect(() => { liveRef.current.sendAgentMessage = sendAgentMessage; });
+
+  // ── Voice turn-taking dispatch (reached only via liveRef from the
+  // continuous-recognition effect above — see that effect's onFinal). Each
+  // of these is a plain function, recreated fresh every render like
+  // handleBargeIn/handleResumeIntent above, so the liveRef exposure below
+  // always reflects the latest interruptedIntents/talkMode/sendAgentMessage
+  // without needing to be listed in the recognition effect's own minimal
+  // dependency array. ──
+
+  // If the last assistant message has a live {{choices:...}} prompt and the
+  // spoken text matches one of its real options, route through the exact
+  // same onChoice logic a tap on that chip would use — never a separate,
+  // parallel confirmation path. This is what makes a spoken "yes" during an
+  // active booking/payment/consent-style prompt do exactly what tapping the
+  // chip does, nothing more. Returns true if it fully handled the reply.
+  const dispatchSpokenReply = (text) => {
+    const lastMsg = agentMessagesRef.current[agentMessagesRef.current.length - 1];
+    const choicesMatch = lastMsg?.role === 'assistant' && lastMsg.content?.match(/\{\{choices:([\s\S]*?)\}\}/);
+    if (!choicesMatch) return false;
+    const labels = choicesMatch[1].split('|').map((s) => s.trim()).filter(Boolean);
+    const matched = matchSpokenChoice(text, labels);
+    if (!matched) return false;
+    if (lastMsg.__distressConfirm) { handleDistressConfirm(matched, lastMsg.__distressConfirm); return true; }
+    if (lastMsg.__locationShareChoice) { handleLocationShareChoice(matched); return true; }
+    if (lastMsg.content?.includes('{{choices:Yes, watch my surroundings|No thanks}}')) { handleSurroundingAwarenessConfirm(matched); return true; }
+    if (detectLocationConsentIntent(matched)) { handleGpsUpgradeConfirm(matched); return true; }
+    sendAgentMessage(matched);
+    return true;
+  };
+  useEffect(() => { liveRef.current.dispatchSpokenReply = dispatchSpokenReply; });
+
+  // An ordinary voice turn (M-Care was idle/listening — nothing to
+  // interrupt): check for a live choice-prompt answer first, else send as a
+  // normal message.
+  const handleVoiceTurn = (text) => {
+    if (dispatchSpokenReply(text)) return;
+    sendAgentMessage(text);
+  };
+  useEffect(() => { liveRef.current.handleVoiceTurn = handleVoiceTurn; });
+
+  // The utterance that actually confirmed a barge-in. Checks first whether
+  // it answers a live choices prompt (same as handleVoiceTurn); otherwise
+  // classifies it: "never_mind" drops every pending topic; "correction"
+  // ("no wait, I meant...") drops only the topic this exact barge-in just
+  // pushed — the user is correcting themselves, not asking to revisit what
+  // M-Care was saying, so there's nothing meaningful to hold onto (an
+  // older, unrelated pending topic from an earlier interruption is
+  // untouched); "new_topic" (the default) leaves the stack exactly as
+  // handleBargeIn() already left it, and speaks the real, requested
+  // "I've paused X and am switching to Y" confirmation, built from real
+  // labels only, before sending the new utterance.
+  const handleInterruptionSend = (text) => {
+    if (dispatchSpokenReply(text)) return;
+    const classification = classifyInterruptionUtterance(text);
+    const pausedTask = interruptedIntents.length > 0 ? interruptedIntents[interruptedIntents.length - 1] : null;
+    if (classification === 'never_mind') {
+      setInterruptedIntents(clearInterruptedIntents());
+    } else if (classification === 'correction') {
+      setInterruptedIntents(prev => prev.slice(0, -1));
+    } else if (pausedTask) {
+      const announcement = `Got it — I've paused ${shortTopicLabel(pausedTask.fullText)} and am switching to ${shortTopicLabel(text)}.`;
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: announcement }]);
+      if (talkMode) speakAncillary(announcement, { rate: 0.9 });
+    }
+    sendAgentMessage(text);
+  };
+  useEffect(() => { liveRef.current.handleInterruptionSend = handleInterruptionSend; });
+
+  // Checks a finalized utterance for a resume phrase against the real
+  // paused-task stack, before it's routed anywhere else. Returns true (and
+  // re-sends a "finish explaining X" continuation for the matched task,
+  // same mechanism the InterruptedIntentChip's tap-driven "Finish it"
+  // button already uses) only on a real match — never guesses on an
+  // ordinary message that just happens to mention going back to something.
+  const tryResumeTask = (text) => {
+    if (interruptedIntents.length === 0) return false;
+    const resumeIntent = detectResumeIntent(text);
+    if (!resumeIntent) return false;
+    const task = resumeTaskFromLabel(interruptedIntents, resumeIntent);
+    if (!task) return false;
+    handleResumeIntent(task);
+    return true;
+  };
+  useEffect(() => { liveRef.current.tryResumeTask = tryResumeTask; });
 
   // Resolves a pending GPS-upgrade request (see handleGpsUpgradeConfirm).
   // Once permission actually resolves, redo the exact question that
@@ -2181,6 +2377,11 @@ export default function MCareOrb() {
       {privateMode && (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(99,102,241,0.16)', color: '#A5B4FC', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
           <Shield style={{ width: 12, height: 12 }} /> PRIVATE
+        </span>
+      )}
+      {voiceStatusText && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(212,175,55,0.14)', color: GOLD, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+          {voiceStatusText}
         </span>
       )}
       {responseLanguage && (
