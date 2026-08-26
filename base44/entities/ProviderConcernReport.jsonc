@@ -1,0 +1,45 @@
+{
+  "name": "ProviderConcernReport",
+  "type": "object",
+  "description": "A patient- or M-Care-authored complaint about a doctor, filed via reportConsultationConcern. Checked against 3 existing candidates before adding this entity: DataFreshnessReview's subject_type enum is closed and scoped to time-sensitive verified-status data (license/clinic/visa), not a conduct complaint; ReliabilityIncident is for system/technical incidents auto-reported on an unhandled exception, not human-authored; DoctorReviewTask is real but already independently named as its own deferred/unformalized item elsewhere in this repo. None fit. Filing a report here NEVER synchronously suspends a doctor's booking eligibility — only sweepProviderBookingEligibility's deterministic threshold check (base44/shared/providerBookingEligibility.ts) can do that, so one bad-faith report can't be weaponized into an instant suspension.",
+  "properties": {
+    "doctor_id": { "type": "string" },
+    "doctor_email": { "type": "string", "format": "email" },
+    "reported_by_email": { "type": "string", "format": "email" },
+    "case_id": { "type": "string" },
+    "virtual_consultation_id": { "type": "string" },
+    "category": {
+      "type": "string",
+      "enum": ["conduct", "safety", "billing", "identity_mismatch", "no_show", "technical", "other"]
+    },
+    "description": { "type": "string" },
+    "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"], "default": "low" },
+    "status": { "type": "string", "enum": ["submitted", "under_review", "actioned", "dismissed"], "default": "submitted" },
+    "admin_notes": { "type": "string" },
+    "resolved_by": { "type": "string" },
+    "resolved_at": { "type": "string", "format": "date-time" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["doctor_id", "doctor_email", "reported_by_email", "category", "description", "created_at"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.reported_by_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "user_condition": { "id": "{{user.id}}" }
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "platform_admin" }
+    }
+  }
+}

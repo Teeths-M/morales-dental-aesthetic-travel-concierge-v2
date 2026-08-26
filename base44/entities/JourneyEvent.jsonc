@@ -41,7 +41,10 @@
         "medication_review_required",
         "medication_confirmed",
         "journey_plan_created",
-        "journey_plan_completed"
+        "journey_plan_completed",
+        "virtual_consultation_confirmed",
+        "virtual_consultation_reminder",
+        "virtual_consultation_decision_recorded"
       ]
     },
     "source": {

@@ -39,6 +39,19 @@
     "locked_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "consultation_slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "time": { "type": "string", "description": "HH:MM, doctor's local clinic time." },
+          "duration_minutes": { "type": "number", "default": 30 },
+          "booked_by_virtual_consultation_id": { "type": "string" },
+          "locked_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Slot-level lock for virtual consultations, written by bookVirtualConsultation via a read-then-compare-and-swap write (the same pattern confirmProcedureDate already uses on this entity). Deliberately SEPARATE from time_slots (free-text, unstructured, still used only for display) and from locked_case_id/is_available (the existing DAY-level lock confirmProcedureDate uses for the actual procedure date) — the two locking systems must never cross-reference."
     }
   },
   "required": [

@@ -54,6 +54,13 @@ const ALLOWED_EVENT_TYPES = new Set([
   'journey_plan_created',
   'journey_plan_step_updated',
   'journey_plan_completed',
+  'virtual_consultation_booked',
+  'virtual_consultation_consent_recorded',
+  'virtual_consultation_joined',
+  'virtual_consultation_plan_submitted',
+  'provider_concern_reported',
+  'provider_booking_suspended',
+  'provider_booking_suspension_cleared',
 ]);
 
 async function sha256(text: string): Promise<string> {

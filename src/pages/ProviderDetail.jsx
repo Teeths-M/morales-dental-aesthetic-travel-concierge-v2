@@ -70,7 +70,17 @@ export default function ProviderDetail() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <h1 className="font-display text-2xl lg:text-3xl text-foreground">{provider.full_name}</h1>
-                  <BadgeCheck className="w-5 h-5 text-accent" />
+                  {/* This used to render unconditionally regardless of real
+                      verification status — mirrors providerTrustStatus.ts's
+                      mapDoctorTrustStatus logic (duplicated inline since
+                      base44/shared/*.ts isn't importable into this Vite/React
+                      bundle) rather than always showing a green checkmark. */}
+                  {provider.status === 'active' &&
+                    provider.license_verified === true &&
+                    ['verified', 'auto_verified', 'manually_approved'].includes(provider.verification_status) &&
+                    !provider.booking_suspended && (
+                      <BadgeCheck className="w-5 h-5 text-accent" title="Verified" />
+                    )}
                 </div>
                 <p className="text-muted-foreground">{provider.clinic_name}</p>
 
@@ -90,13 +100,24 @@ export default function ProviderDetail() {
                   )}
                 </div>
 
-                <div className="flex gap-3 mt-5">
+                <div className="flex gap-3 mt-5 flex-wrap">
                   <Link to={`/intake?doctor_id=${encodeURIComponent(provider.id)}&doctor=${encodeURIComponent(provider.full_name || '')}${provider.clinic_country ? `&country=${encodeURIComponent(provider.clinic_country)}` : ''}`}>
                     <Button className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
                       Book Consultation
                     </Button>
                   </Link>
+                  {/* "Meet Your Care Team" — a second, distinct path: a real
+                      virtual consultation to build trust before booking,
+                      never a replacement for the intake flow above. */}
+                  <Link to={`/consult/${encodeURIComponent(provider.id)}`}>
+                    <Button variant="outline" className="font-semibold">
+                      Meet this doctor first
+                    </Button>
+                  </Link>
                 </div>
+                <p className="text-xs text-muted-foreground mt-2 italic">
+                  Meet the real care team. Understand every step. Proceed only when you are confident.
+                </p>
               </div>
             </div>
 

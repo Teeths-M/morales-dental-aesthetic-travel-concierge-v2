@@ -5355,3 +5355,172 @@ test('CASE CONTROL CENTER: AgentRun RLS is admin-only to write, the agent grant 
     .toMatch(/Never fabricate a record you did not actually check or a finding that did not happen/);
   expect(ruleText, "RULE 38 must reference RULE 34's real autonomy tiers").toContain("RULE 34's real tiers");
 });
+
+// ── "Meet Your Care Team" — virtual consultation feature ──────────────────────
+
+test('VIRTUAL CONSULTATION: VirtualConsultation RLS is patient-or-doctor read, admin-write-only', () => {
+  const entity = JSON.parse(read('base44/entities/VirtualConsultation.jsonc'));
+  const readOr = JSON.stringify(entity.rls.read);
+  expect(readOr, 'read must be scoped to the patient').toContain('"data.client_email":"{{user.email}}"');
+  expect(readOr, 'read must be scoped to the doctor').toContain('"data.doctor_email":"{{user.email}}"');
+  expect(readOr, 'read must allow admin').toContain('"role":"admin"');
+
+  for (const op of ['create', 'update']) {
+    const rule = JSON.stringify(entity.rls[op]);
+    expect(rule, `${op} must be admin/platform_admin-only`).toMatch(/"role":"admin"/);
+    expect(rule, `${op} must not allow a patient or doctor to write directly`)
+      .not.toMatch(/client_email|doctor_email/);
+  }
+  expect(entity.properties.recording_consent.default, 'recording_consent must default false')
+    .toBe(false);
+});
+
+test('VIRTUAL CONSULTATION: bookVirtualConsultation is eligibility-gated before any record is created, and never accepts a caller-supplied client_email or status', () => {
+  const src = read('base44/functions/bookVirtualConsultation/entry.ts');
+
+  const eligibilityIdx = src.indexOf('checkProviderBookingEligibility(doctor');
+  const createIdx = src.indexOf('VirtualConsultation.create(');
+  expect(eligibilityIdx, 'the eligibility check must exist').toBeGreaterThan(-1);
+  expect(createIdx, 'the create call must exist').toBeGreaterThan(-1);
+  expect(eligibilityIdx, 'eligibility must be checked BEFORE the record is created')
+    .toBeLessThan(createIdx);
+  expect(src, 'an ineligible provider must be refused before booking')
+    .toMatch(/if \(!eligibility\.eligible\)/);
+
+  // The bodySchema (strictObject) structurally cannot accept an unexpected
+  // field — client_email/status are never declared in it, so a caller
+  // cannot pass them at all, let alone have them trusted.
+  const schemaBlock = src.slice(src.indexOf('const bodySchema'), src.indexOf('Deno.serve'));
+  expect(schemaBlock, 'bodySchema must not declare a caller-suppliable client_email field')
+    .not.toMatch(/client_email:/);
+  expect(schemaBlock, 'bodySchema must not declare a caller-suppliable status field')
+    .not.toMatch(/\bstatus:/);
+  expect(src, 'client_email must be derived from the real Consultation record')
+    .toMatch(/client_email:\s*consultation\.email/);
+  expect(src, 'status must be hardcoded server-side, never from the body')
+    .toMatch(/status:\s*'confirmed'/);
+});
+
+test('VIRTUAL CONSULTATION: Doctor.booking_suspended is only ever set by sweepProviderBookingEligibility and only ever cleared by clearProviderBookingSuspension', () => {
+  const sweepSrc = read('base44/functions/sweepProviderBookingEligibility/entry.ts');
+  expect(sweepSrc, 'the sweep must be cron-authorized').toMatch(/cronAuthorized\(req, base44\)/);
+  expect(sweepSrc, 'the sweep must only ever SET booking_suspended to true')
+    .toMatch(/booking_suspended:\s*true/);
+  expect(sweepSrc, 'the sweep must never clear a suspension itself')
+    .not.toMatch(/booking_suspended:\s*false/);
+
+  const clearSrc = read('base44/functions/clearProviderBookingSuspension/entry.ts');
+  expect(clearSrc, 'clearing must be admin/platform_admin-only')
+    .toMatch(/allowedRoles:\s*\['admin',\s*'platform_admin'\]/);
+  expect(clearSrc, 'clearing must require a real override_reason field')
+    .toMatch(/override_reason:\s*Fields\.shortText/);
+  expect(clearSrc, 'clearing must set booking_suspended to false')
+    .toMatch(/booking_suspended:\s*false/);
+
+  // Every OTHER new function in this feature must never itself write
+  // booking_suspended — the two files above are the only legitimate writers.
+  const otherFns = [
+    'getProviderTrustProfile', 'getProviderTrustTimeline', 'joinVirtualConsultation',
+    'recordVirtualConsultationConsent', 'updateDeviceTestStatus', 'flagInterpreterMoment',
+    'submitConsultationPlan', 'getDecisionRoomSummary', 'recordDecisionRoomNextStep',
+    'reportConsultationConcern', 'sweepVirtualConsultationReminders',
+  ];
+  for (const fn of otherFns) {
+    const s = read(`base44/functions/${fn}/entry.ts`);
+    expect(s, `${fn} must never write Doctor.booking_suspended`).not.toMatch(/booking_suspended:/);
+  }
+});
+
+test('VIRTUAL CONSULTATION: the Daily video adapter is honestly {supported:false} with no hardcoded fallback key, matching the flightSearchAdapter dormant-gate pattern', () => {
+  const src = read('base44/shared/dailyVideoAdapter.ts');
+  // The env lookup is centralized in one apiKey() helper (a real, single
+  // source of truth) rather than repeated per-function — check that every
+  // exported function actually calls it and independently guards on it,
+  // not that the literal env-var name is repeated 3 times.
+  expect(src, 'DAILY_API_KEY must be read from a single, real helper function')
+    .toMatch(/function apiKey\(\): string \| undefined \{\s*\n?\s*return Deno\.env\.get\('DAILY_API_KEY'\);/);
+  const guardChecks = (src.match(/const key = apiKey\(\);\s*\n\s*if \(!key\)/g) || []).length;
+  expect(guardChecks, 'every exported function must independently guard on a missing key')
+    .toBeGreaterThanOrEqual(3);
+  expect(src, 'must never hardcode a fallback API key').not.toMatch(/DAILY_API_KEY['"]?\s*\|\|\s*['"][A-Za-z0-9]/);
+  expect(src, 'an unconfigured call must return supported:false')
+    .toMatch(/return \{\s*\n?\s*supported:\s*false/);
+});
+
+test('VIRTUAL CONSULTATION: recordVirtualConsultationConsent never cross-writes another consent type — recording_consent is only ever settable by the recording branch', () => {
+  const src = read('base44/functions/recordVirtualConsultationConsent/entry.ts');
+  expect(src, 'must use one hardcoded FIELD_MAP, not a caller-suppliable field name')
+    .toMatch(/const FIELD_MAP: Record<string, /);
+  expect(src, 'the consent_type must be validated against a fixed enum')
+    .toMatch(/z\.enum\(\['telehealth', 'ai_notes', 'translation_captions', 'recording'\]\)/);
+  expect(src, 'the actual field written must come from the FIELD_MAP lookup, never a raw body field')
+    .toMatch(/\[mapping\.flag\]:\s*granted/);
+  expect(src, 'must never directly reference the recording_consent field name outside the map')
+    .not.toMatch(/\brecording_consent:\s*granted/);
+});
+
+test('VIRTUAL CONSULTATION: the DoctorAvailability.consultation_slots lock never touches time_slots or locked_case_id — the two locking systems stay separate', () => {
+  const bookSrc = read('base44/functions/bookVirtualConsultation/entry.ts');
+  expect(bookSrc, 'bookVirtualConsultation must never write locked_case_id')
+    .not.toMatch(/locked_case_id/);
+  expect(bookSrc, 'bookVirtualConsultation must never write time_slots')
+    .not.toMatch(/\btime_slots:/);
+  expect(bookSrc, 'must read/write the real consultation_slots field')
+    .toMatch(/consultation_slots/);
+
+  const entity = JSON.parse(read('base44/entities/DoctorAvailability.jsonc'));
+  expect(entity.properties.consultation_slots, 'consultation_slots must exist on the entity').toBeTruthy();
+  expect(entity.properties.time_slots, 'the original time_slots field must be untouched').toBeTruthy();
+  expect(entity.properties.locked_case_id, 'the original locked_case_id field must be untouched').toBeTruthy();
+});
+
+test('VIRTUAL CONSULTATION: getProviderTrustProfile and getProviderTrustTimeline never return reviewer identity or admin notes', () => {
+  for (const fn of ['getProviderTrustProfile', 'getProviderTrustTimeline']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must be publicly readable (patient-facing before any session exists)`)
+      .toMatch(/requireAuth:\s*false/);
+    expect(src, `${fn} must never return manual_reviewer_id`).not.toMatch(/manual_reviewer_id/);
+    expect(src, `${fn} must never return manual_review_notes or admin_notes`)
+      .not.toMatch(/manual_review_notes|admin_notes/);
+  }
+  const timelineSrc = read('base44/functions/getProviderTrustTimeline/entry.ts');
+  expect(timelineSrc, 'concern detail must only ever surface as an aggregate count, never individual report text')
+    .not.toMatch(/report\.description/);
+  expect(timelineSrc, 'a PatientDataRevision change must be redacted to a generic actor label')
+    .toMatch(/Updated by the Morales team/);
+});
+
+test('VIRTUAL CONSULTATION: matchDoctorsForProcedure and providerTrustStatus.mapDoctorTrustStatus share one VERIFIED_STATUSES constant', () => {
+  const sharedSrc = read('base44/shared/providerTrustStatus.ts');
+  expect(sharedSrc, 'VERIFIED_STATUSES must be defined once, here')
+    .toMatch(/export const VERIFIED_STATUSES = new Set\(\['verified', 'auto_verified', 'manually_approved'\]\)/);
+
+  const matchSrc = read('base44/functions/matchDoctorsForProcedure/entry.ts');
+  expect(matchSrc, 'matchDoctorsForProcedure must import VERIFIED_STATUSES from the shared module')
+    .toMatch(/import \{ VERIFIED_STATUSES \} from '\.\.\/\.\.\/shared\/providerTrustStatus\.ts'/);
+  expect(matchSrc, 'matchDoctorsForProcedure must no longer declare its own local VERIFIED_STATUSES Set')
+    .not.toMatch(/const VERIFIED_STATUSES = new Set/);
+});
+
+test('VIRTUAL CONSULTATION: reminder and confirmation emails/SMS are link-only', () => {
+  for (const fn of ['bookVirtualConsultation', 'sweepVirtualConsultationReminders']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must import the link-only helpers, never call SendEmail with raw content`)
+      .toMatch(/from '\.\.\/\.\.\/shared\/notify\.ts'/);
+    expect(src, `${fn} must use linkOnlyEmail for outbound email`).toMatch(/linkOnlyEmail\(/);
+  }
+});
+
+test('VIRTUAL CONSULTATION: the interpreter-mismatch banner copy never claims AI translation replaces a human interpreter', () => {
+  const src = read('src/components/care-team/InterpreterManager.jsx');
+  expect(src, 'must explicitly say a qualified human interpreter is required for consent/diagnosis/treatment/risk discussion')
+    .toMatch(/qualified human interpreter is required/);
+  expect(src, 'must explicitly say Morales does not yet offer one to book in-app — an honest, disclosed gap')
+    .toMatch(/doesn't yet offer one to book in-app/);
+  expect(src, 'must never phrase machine translation as a substitute for a human interpreter')
+    .not.toMatch(/(AI translation|machine.translat\w+) (is|as) a (substitute|replacement)/i);
+
+  const consentSrc = read('src/components/consent/TranslationCaptionsConsent.jsx');
+  expect(consentSrc, 'the translation consent copy must also carry the same "not a substitute I should rely on" disclosure')
+    .toMatch(/not a substitute I should rely on/);
+});

@@ -1938,6 +1938,242 @@ Text-only addition, zero `tool_configs` change (confirmed 113 before and after v
 
 **Verification**: `json.load()` clean before and after, `tool_configs` count unchanged at 113. Lint clean, typecheck at the same 5-error pre-existing baseline (unrelated), `npm run build` exit 0, 788/788 vitest, 273/273 redteam — all unchanged, as expected for a text-only instructions addition touching no entity/tool/permission surface. Needs a **Publish** naming `m_care.jsonc`. Live-only, can't be confirmed from this checkout: whether M-Care actually cites sources and flags low-confidence results naturally in a real conversation, without turning into a hedge-laden wall of caveats — Portia verifies live after publishing.
 
+## Meet Your Care Team — a real pre-booking virtual consultation flow (2026-08-25)
+
+Portia asked for a full pre-booking trust-building flow: pre-visit intake -> a "Consultation Brief"
+-> a Provider Trust Profile showing real verification facts (not a vague badge) -> booking a
+virtual consultation with a real video room, calendar invite, reminders, and a device test -> live
+call controls (mute/camera/captions/interpreter/leave/report-concern) -> a post-call "Decision
+Room" with the clinician's plan, cost, risks, alternatives, and a no-pressure next-steps menu --
+plus a real provider-verification-evidence system with an internal review queue and a "report
+concern" workflow. 8 named reusable modules: ProviderVerification, ConsultationBrief,
+ConsentManager, SecureVideoRoom, InterpreterManager, ConsultationSummary, DecisionRoom,
+TrustTimeline.
+
+A 3-agent codebase audit found the provider-verification and consent/booking backbone mostly real
+and reusable, but **live video calling, human-interpreter booking, real time-slot+timezone
+scheduling, and a scheduled-consultation session record were all 100% greenfield** -- confirmed by
+grep, no SDK/package/entity/UI for any of them existed anywhere. Confirmed with Portia
+(AskUserQuestion) before designing further, since two of these are real new vendor/scope decisions
+this project always confirms first (Tavily, Amadeus/flights, ExchangeRate-API were all decided the
+same way): (1) **Video** -- build real **Daily.co dormant scaffolding**, the same "honest
+`{supported:false}` until a key exists" pattern already proven for `currencyConvert.ts`/
+`flightSearchAdapter.ts`/`providerDiscovery.ts`; real pricing verified live via WebSearch (free
+tier, 10K participant-minutes, $0.004/min after), not assumed. (2) **Interpreters** -- an honest
+v1 gap: AI translation stays available for convenience, but a consent/diagnosis/treatment/risk
+moment where languages differ says plainly a qualified human interpreter is required and isn't
+bookable in-app yet; a real interpreter marketplace is a named future phase. (3) **Scope** --
+everything else (Provider Trust Profile, Consultation Brief, typed Consent Manager, real
+time-slot+timezone booking with calendar invite/reminders, Decision Room, patient-visible Trust
+Timeline) in one pass, but **wiring any of this into M-Care's chat agent
+(`m_care.jsonc`/`tool_configs`) is explicitly out of scope this pass** -- avoids stacking a new
+agent tool grant's Publish-order risk (the "Phase 10" undeployed-tool-silence incident) on top of
+this much new schema/entity work at once.
+
+Portia then grounded the design in real regulatory sources, checked live (WebSearch) rather than
+taken on faith: **HHS OCR telehealth guidance** requires encryption in transit/at rest, access
+controls, audit logging, and a **signed Business Associate Agreement (BAA) with every vendor
+touching PHI** -- surfacing a real prerequisite the original design hadn't named (Daily.co needs a
+BAA before real PHI flows through a live call, a business/legal step separate from adding an API
+key -- flagged, not built, since it's not a code concern). **HHS Section 1557** confirms machine
+translation is an accepted path only for lower-stakes communication carrying a visible "may
+contain errors" disclosure; for anything affecting a patient's rights/meaningful access --
+consent, diagnosis, treatment -- a real interpreter is required, and a self-identified bilingual
+staff member or informal translation explicitly does not meet that bar. She also gave the
+feature's real trust tagline, used verbatim throughout the UI, never paraphrased: *"Meet the real
+care team. Understand every step. Proceed only when you are confident."*
+
+**A load-bearing design finding, not obvious from the spec text alone**: `CaseRecord` (the entity
+`getCaseRiskSummary`/`checkCaseRequirements`/`postCaseMessage`/`createJourneyPlan` all require)
+only gets created *after* a consultation fee is paid -- but this feature is explicitly a
+*before-you-book* trust step. So `VirtualConsultation` anchors on `Consultation` + `Doctor`
+(`case_id` optional, resolved the same way `createCaseFromConsultation.ts` already does), and
+every reused case-dependent feature degrades honestly (shows what's real, says plainly a full case
+review happens once the patient proceeds to booking) rather than being blocked on a `CaseRecord`
+that doesn't exist yet.
+
+**Shipped — entities**: `VirtualConsultation.jsonc` (new) -- one row per booked call, status
+governed by `virtualConsultationState.ts` (mirrors `bookingState.ts`'s `canTransition`/
+`guardedStatusUpdate` shape exactly), price/cancellation/timezone snapshotted at booking time
+(never a live join -- a later doctor-profile edit must never retroactively change what was already
+booked), the embedded Consultation Brief (`brief_shared_fields[]` is an explicit allowlist, never
+"everything"), 4 typed consents (flat boolean+timestamp(+version) fields mirroring
+`Consultation.data_processing_consent`'s own proven pattern -- `recording_consent` **must default
+false**), video-room fields (**Daily meeting tokens are never persisted** -- Base44 RLS is
+row-level not field-level, and a token needs different rights per participant, so
+`joinVirtualConsultation` mints one fresh per request instead), read = patient-or-doctor-or-admin,
+**create/update = admin-only** -- every real write goes through a gated function, the one thing
+structurally stopping a patient from bundling `recording_consent:true` into an unrelated update or
+a doctor self-marking `status:'completed'`. `ProviderConcernReport.jsonc` (new) -- checked against
+`DataFreshnessReview` (closed enum, wrong subject shape), `ReliabilityIncident` (system/technical,
+not human-authored), and `DoctorReviewTask` (already independently named as its own deferred item
+elsewhere in this file) before adding a new entity; none fit. `Doctor.jsonc` gained additive-only
+Provider Trust Profile fields (`legal_business_name`, `license_authority`, `accreditation[]`,
+`consultation_price_amount/currency`, `cancellation_policy`, `escalation_contact_*`,
+`evidence_links[]`, `clinic_timezone`, and `booking_suspended`/`_reason`/`_at` -- set only by the
+deterministic sweep below, matching "AI/automated code may raise caution, never clear it," cleared
+only by an admin-only function requiring `override_reason`). `DoctorAvailability.jsonc` gained one
+additive field, `consultation_slots[]` -- deliberately **separate** from the existing `time_slots`
+(still free-text/display-only) and `locked_case_id`/`is_available` (the existing day-level lock
+`confirmProcedureDate` uses for the actual procedure date); the two locking systems never
+cross-reference. `AuditLog`/`logAuditEvent` and `JourneyEvent` gained additive `event_type` enum
+values, kept in sync across both files exactly like the `JourneyPlan` pass did.
+`Consultation.jsonc` was deliberately **not** touched -- a booking is a distinct, repeatable event;
+bolting budget/questions/consents onto the patient's one global intake record would let a second
+booking with a different doctor silently overwrite the first one's answers.
+
+**Shipped — shared modules**: `dailyVideoAdapter.ts` (the dormant Daily.co adapter --
+`createConsultationRoom`/`createMeetingToken`/`deleteRoom`, `enable_knocking:true` so a real
+identity check happens at entry once live, the env-key check centralized in one `apiKey()` helper
+each function independently guards on). `providerTrustStatus.ts` -- `mapDoctorTrustStatus()`
+(`verified`/`pending_verification`/`not_available`) plus `VERIFIED_STATUSES`, extracted from
+`matchDoctorsForProcedure`'s previously-inline `Set` so there's exactly one definition, not two
+that can drift; documented (not code-coupled) relationship to `ProviderStatusBadge.jsx`'s separate
+3-tier chat vocabulary (discovered/verified/approved) -- same underlying facts, two display
+granularities, that component itself untouched. `providerBookingEligibility.ts` --
+`checkProviderBookingEligibility()`, fully deterministic, no LLM: blocks on `booking_suspended`, a
+failed/rejected/suspended verification status, a stale `license_last_checked_at` (reuses
+`freshness.ts`'s real TTL mechanism), an identity-change-shaped inconsistency, or a real
+concern-count threshold (>=1 critical actioned or >=3 high in 90 days, named constants). This
+function can only ever produce a reason to *block* -- nothing here ever clears
+`booking_suspended`. `interpreterGate.ts` -- pure, unit-tested `assessInterpreterNeed()`, no LLM,
+no network; a language mismatch is detected once at booking and snapshotted, never a live join.
+`icsBuilder.ts` -- `buildICS`/`icsDate`/`addHours`/`googleCalUrl` extracted verbatim
+(behavior-preserving) from `generateItineraryCalendar/entry.ts`, which now imports from here
+instead of declaring locally -- one real ICS writer in this repo, not two.
+
+**Shipped — 14 new edge functions** (all `createHandler`, ownership always server-derived):
+`getProviderTrustProfile`/`getProviderTrustTimeline` (public, matching `Doctor`'s own established
+public-read philosophy; the timeline redacts reviewer identity/admin notes to a generic "Updated
+by the Morales team" label and a `ProviderConcernReport` aggregate count only, never individual
+report text). `bookVirtualConsultation` (patient, eligibility-gated *before* any record is
+created; slot-locks `DoctorAvailability.consultation_slots` via the same read-then-compare-and-swap
+pattern `confirmProcedureDate` already uses on this entity, 409 on a lost race; creates a real
+`.ics` + Google Calendar link via `icsBuilder.ts`, link-only email, and -- only when a real
+`case_id` already exists, since `logJourneyEvent` requires one -- a `JourneyEvent`; the Daily room
+call is best-effort and honest, never blocks the booking if unconfigured).
+`joinVirtualConsultation` (mints a fresh, never-persisted token scoped to the caller's real role).
+`recordVirtualConsultationConsent` (one function, 4 hardcoded field-name branches, never
+caller-supplied, so a request for one consent type can never cross-write
+`recording_consent`; routes through `reviseAndUpdate.ts` for a real prior-value snapshot).
+`updateDeviceTestStatus`, `flagInterpreterMoment` (a real user tap, not automated inference --
+there's no live transcript to infer from while Daily is dormant; posts a durable Care Room message
+via `postCaseMessage`'s existing create path when a case exists). `submitConsultationPlan`
+(doctor/admin, the clinician's real written plan). `getDecisionRoomSummary` (real risk data via
+`getCaseRiskSummary` when a case exists, an honest Consultation-only subset otherwise; a real
+comparison against other verified doctors via `matchDoctorsForProcedure`, current doctor excluded;
+real unanswered questions from the Care Room thread if one exists; zero LLM calls in this file).
+`recordDecisionRoomNextStep` (the no-pressure 4-choice menu, routed to real existing functions --
+"ask a question" -> `postCaseMessage` or `flagIntakeHandoff` depending on whether a case exists;
+"proceed to planning" -> `createJourneyPlan` or the existing fee-payment step). `reportConsultation
+Concern` (creates a `ProviderConcernReport`; **never synchronously suspends** -- only the sweep
+below can suspend, so one report can't be weaponized). `sweepProviderBookingEligibility` (daily
+cron, the *only* path that may **set** `booking_suspended:true`; per-doctor failures isolated in
+their own try/catch, the same fix already applied to `escalateSoloCheckIn`/
+`checkPartnerSLABreaches`). `clearProviderBookingSuspension` (admin-only, requires a real
+`override_reason`, the *only* path that may **clear** it -- mirrors `bookingState.ts`'s
+`clearHold`/`activateVerifiedDoctor`'s override discipline). `sweepVirtualConsultationReminders`
+(hourly -- not daily like `sendTravelCountdownReminders`, since a consultation is time-of-day
+scheduled, not just date-scheduled -- 24h/1h/device-test-nudge ladder, each gated on its own
+idempotent flag, link-only throughout). Two small, behavior-preserving import changes:
+`matchDoctorsForProcedure` now imports `VERIFIED_STATUSES` from `providerTrustStatus.ts` instead
+of its own local `Set`; `generateItineraryCalendar` imports from `icsBuilder.ts`.
+
+**Cron wiring**: `sweepVirtualConsultationReminders` added to `freshness-cron.yml`'s hourly tier
+(alongside the other real-but-previously-unscheduled functions already documented there);
+`sweepProviderBookingEligibility` added to the daily tier, right after the doctor/companion/driver
+trust-score refresh. Both also added to the `workflow_dispatch` manual-run block.
+
+**Shipped — frontend, the 8 modules mapped to files**: `ProviderVerification.jsx` (replaces
+`ProviderDetail.jsx`'s **unconditional** `<BadgeCheck>` -- a real, confirmed pre-existing honesty
+bug: the icon rendered next to every doctor's name regardless of actual verification status --
+with a real status-aware display; also adds a second, honestly-labeled "Meet this doctor first" CTA
+next to the existing intake-flow button, both staying real, distinct paths). `ConsultationBrief.jsx`,
+4 new `ConsentManager`-composed consent components in `src/components/consent/` (co-located with
+the 2 existing ones, same controlled/versioned/plain-language pattern --
+`RecordingConsent.jsx` defaults unchecked and uses a visually distinct "danger" variant, never
+blending with the other three). `SecureVideoRoom.jsx` (a plain `<iframe>` embed of Daily's
+prebuilt UI -- no `@daily-co/daily-js`, no new npm dependency for v1) + `DeviceTestPanel.jsx` (pure
+`getUserMedia` + a canvas level-meter, no vendor). `InterpreterManager.jsx` (the persistent
+mismatch banner + "Flag this moment" control, copy grounded in the real HHS Section 1557 standard
+-- every AI-translated message carries a "Machine-translated -- may contain errors" label, and the
+consent/diagnosis-moment banner explicitly states informal/bilingual-staff translation doesn't meet
+the bar). `ConsultationSummary.jsx` (the doctor's real written plan, an honest "not available yet"
+state for AI notes -- no real transcript source exists even as a dormant scaffold, so nothing was
+built to consume one -- and the real `CaseThread.jsx` reused unmodified when a case exists).
+`DecisionRoom.jsx` (new page, `StatusBadge.jsx`'s existing severity vocabulary already had
+`critical`/`needs_attention`/`monitor`/`cleared` entries from the Case Control Center pass -- zero
+changes needed there). `TrustTimeline.jsx`. Plus `BookVirtualConsultation.jsx` (new page,
+`/consult/:doctorId` -- Brief -> Consent -> a real timezone-converted slot picker using a
+well-known no-dependency `zonedTimeToUtc()` approximation, disclosed as imprecise across a real
+DST-transition edge case -> price/cancellation confirm) and `UpcomingConsultationsCard.jsx`
+(mounted in `Dashboard.jsx` right after `CaseControlCenter`, matching its established mount-order
+convention). 3 new routes registered in `clientRoutes.jsx` under the existing `CLIENT_PORTAL_ROLES`
+guard: `/consult/:doctorId`, `/consultation/:id/room`, `/consultation/:id/decision`.
+
+**Redteam**: 11 new invariants in `tests/redteam/invariants.spec.js` -- `VirtualConsultation` RLS
+shape; `bookVirtualConsultation` is eligibility-gated before any record is created and never
+accepts a caller-supplied `client_email`/`status`; `booking_suspended` is only ever set by the
+sweep and only ever cleared by the admin-only function (checked across all *other* new functions
+too, confirming none of them writes it); the Daily adapter is honestly `{supported:false}` with no
+hardcoded fallback key; the 4 consent branches never cross-write each other; the
+`consultation_slots` lock never touches `time_slots`/`locked_case_id`; the trust-profile/timeline
+functions never return reviewer identity or admin notes; `matchDoctorsForProcedure` and
+`mapDoctorTrustStatus` share one `VERIFIED_STATUSES` constant; reminder/confirmation emails are
+link-only; the interpreter-mismatch banner copy never claims AI translation replaces a human
+interpreter. New vitest files: `interpreterGate.test.js`, `providerBookingEligibility.test.js`,
+`virtualConsultationState.test.js` (24 tests total, all pure logic, no network).
+
+**Deliberately deferred out of this pass, named, not silently dropped**: a signed BAA with
+Daily.co (real HIPAA prerequisite, a business/legal step for Portia, not a code concern); wiring
+any of this into M-Care's chat agent; a real human-interpreter marketplace/booking path; live
+spoken-audio ASR captioning (this pass's "AI captions" = the Care Room's existing real
+auto-translated text chat, not real-time speech captioning); a live private AI note-taking call
+summary (no real transcript source exists even as a dormant scaffold -- scaffolding a consumer of
+a producer that doesn't exist would be speculation on speculation); recorded-video storage
+(recording stays consent-gated and off by default; no upload pipeline built since Daily itself is
+dormant -- `VaultDocument`'s existing pattern is the real reuse target whenever this is actually
+built); a fully custom (non-iframe) call UI; exact Stripe wiring for a paid consultation fee
+(`PaymentCheckout.jsx`/`stripePaymentWebhook.ts` are the real reuse target per this repo's own
+"never a new charge call" standing rule, but weren't read in full this pass -- flagged for
+whoever wires `payment_status: 'pending' -> 'paid'`); formalizing `DoctorReviewTask` (already
+independently named as deferred elsewhere in this file).
+
+**Verification**: touches `VirtualConsultation.jsonc`, `ProviderConcernReport.jsonc` (new),
+`Doctor.jsonc`/`DoctorAvailability.jsonc`/`AuditLog.jsonc`/`JourneyEvent.jsonc` (additive
+fields/enum values), 14 new functions, and 2 modified functions (`matchDoctorsForProcedure`,
+`generateItineraryCalendar`) -- needs a **Publish** naming all of these, then each new function
+should be pinged directly (expect 400/401, never 404) before trusting it live, per this repo's own
+documented Phase 10 lesson -- this pass adds zero `m_care.jsonc` tool grants, so that specific
+silent-agent failure mode doesn't apply, but "code in the repo" still isn't "live" until Published.
+Lint clean, typecheck at the same 5-error pre-existing baseline (`MCareVaultUpload.jsx`/
+`MCareAgent.jsx`, unrelated -- confirmed zero new errors after fixing several real ones introduced
+by this pass: lucide-react's `size` prop needing a string literal rather than a numeric one in
+this file's `--allowJs` context, matching the same documented "unresolved typing mystery" this
+project already hit once for `BrainCircuit`'s `size` prop; a shared inline-style object's
+`boxSizing` needing an explicit `/** @type {React.CSSProperties} */` annotation; `window.
+webkitAudioContext` needing the same `/** @type {any} */(window)` cast `VoiceMode.jsx` already
+established; and 3 components whose prop shape gets unified across all call sites under
+`--allowJs`, needing explicit default values on the optional props, the same class of issue
+CLAUDE.md already documents for `matchStyle`/`matchClassName`). `npm run build` exit 0 (only the
+two pre-existing, documented warnings). 823/823 vitest (24 new). 283/283 redteam (11 new, all
+passed on first write against the real source). Live-only, can't be confirmed from this checkout:
+whether the real Daily API calls actually work once a key is added (response shapes are written
+from documentation, disclosed in the adapter's own header); whether the timezone-converted slot
+picker holds up across a real DST boundary in a live browser; whether the interpreter-mismatch
+banner and the rest of the flow read naturally in a real conversation -- Portia verifies all of
+this live after publishing and (separately) arranging the Daily.co BAA.
+
+**Same-day correction**: re-reading `dailyVideoAdapter.ts` to answer Portia's own question about
+what `DAILY_API_KEY` alone actually activates surfaced a real, disclosed gap in the original
+build -- `createConsultationRoom`'s `room_url` silently fell back to guessing
+`https://morales.daily.co/...` whenever Daily's response happened to omit a real `url`. Daily's
+REST API is documented to always return one, so this was a low-probability path, but a guessed
+subdomain would almost certainly have been wrong. Fixed to never guess: a missing `url` now
+returns an honest `supported:false` with a clear message instead of fabricating a link. Re-verified
+green: lint clean, typecheck at the same baseline, all 10 `VIRTUAL CONSULTATION` redteam tests
+still pass unchanged.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.

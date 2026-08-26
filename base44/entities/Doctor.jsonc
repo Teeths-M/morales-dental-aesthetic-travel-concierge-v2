@@ -255,7 +255,61 @@
       "type": "string",
       "format": "date-time",
       "description": "When the internet intelligence scan was last run"
-    }
+    },
+    "legal_business_name": {
+      "type": "string",
+      "description": "The doctor's real legal business/clinic entity name, for the Provider Trust Profile — distinct from the display clinic_name."
+    },
+    "legal_business_country": {
+      "type": "string",
+      "description": "Country of legal business registration. May differ from clinic_country for a multi-location group."
+    },
+    "license_authority": {
+      "type": "string",
+      "description": "The real issuing regulatory body's name (e.g. 'Consejo Superior de Salud, Colombia') — distinct from country, which is issuance country only."
+    },
+    "accreditation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "issuing_body": { "type": "string" },
+          "certificate_url": { "type": "string" },
+          "verified": { "type": "boolean", "default": false }
+        }
+      },
+      "description": "Self-reported at signup. verified flips true only through the same admin review path as license/identity verification — never set automatically."
+    },
+    "consultation_price_amount": { "type": "number" },
+    "consultation_price_currency": { "type": "string", "default": "USD" },
+    "cancellation_policy": { "type": "string" },
+    "escalation_contact_name": { "type": "string" },
+    "escalation_contact_email": { "type": "string", "format": "email" },
+    "escalation_contact_phone": { "type": "string" },
+    "evidence_links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "url": { "type": "string" },
+          "added_by": { "type": "string" },
+          "added_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "clinic_timezone": {
+      "type": "string",
+      "description": "IANA zone, e.g. 'America/Bogota'. Optional — the booking UI falls back to a hand-curated country-to-timezone hint (same non-authoritative-constant pattern as visaMatrix.js) and says so plainly when unset."
+    },
+    "booking_suspended": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set true ONLY by the deterministic sweepProviderBookingEligibility sweep (block direction only, matching 'AI/automated code may raise caution, never clear it'). Cleared ONLY by clearProviderBookingSuspension (admin-only, requires override_reason, mirrors bookingState.ts's clearHold discipline)."
+    },
+    "booking_suspended_reason": { "type": "string" },
+    "booking_suspended_at": { "type": "string", "format": "date-time" }
   },
   "required": [
     "full_name",

@@ -39,6 +39,7 @@ import JourneyMap from '@/components/dashboard/JourneyMap';
 import TravelPassCard from '@/components/dashboard/TravelPassCard';
 import CareRoomPanel from '@/components/dashboard/CareRoomPanel';
 import CaseControlCenter from '@/components/dashboard/CaseControlCenter';
+import UpcomingConsultationsCard from '@/components/dashboard/UpcomingConsultationsCard';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
 import PreDepartureBriefing from '@/components/dashboard/PreDepartureBriefing';
@@ -556,6 +557,9 @@ function DashboardHome({ user, consultations, language }) {
           "M-Care is working on this" is something a traveler can actually
           see, not just something said once in a chat reply. */}
       <CaseControlCenter userEmail={user?.email} />
+
+      {/* Meet Your Care Team — real virtual-consultation bookings, if any exist. */}
+      <UpcomingConsultationsCard userEmail={user?.email} />
 
       {/* Journey Status Timeline — Stripe/Apple order-status model */}
       {latestConsultation && (

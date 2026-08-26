@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
 import { createMemoCache } from '../../shared/memoCache.ts';
+import { VERIFIED_STATUSES } from '../../shared/providerTrustStatus.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -23,7 +24,8 @@ async function buildDoctorRoster(base44: ReturnType<typeof createClientFromReque
   // A doctor can have status='active' with verification_status='failed' if a bug or
   // admin override set them active without completing all checks.
   // Only doctors in a definitively approved terminal state reach patients.
-  const VERIFIED_STATUSES = new Set(['verified', 'auto_verified', 'manually_approved']);
+  // VERIFIED_STATUSES now lives in providerTrustStatus.ts (single source of
+  // truth, shared with mapDoctorTrustStatus for the Provider Trust Profile).
   const allDoctors = activeDoctors.filter((doc: any) =>
     doc.license_verified === true &&
     VERIFIED_STATUSES.has(doc.verification_status)

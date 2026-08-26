@@ -1,0 +1,125 @@
+{
+  "name": "VirtualConsultation",
+  "type": "object",
+  "description": "One row per booked 'Meet Your Care Team' virtual consultation. Anchored on Consultation + Doctor, NOT CaseRecord — a virtual consultation is explicitly a before-you-book trust step, and CaseRecord only gets created after a consultation fee is paid (see createCaseFromConsultation.ts). case_id is set the moment one exists but a null case_id is a normal, expected state. Every real write goes through a gated function (bookVirtualConsultation, joinVirtualConsultation, recordVirtualConsultationConsent, updateDeviceTestStatus, flagInterpreterMoment, submitConsultationPlan, recordDecisionRoomNextStep, sweepProviderBookingEligibility's sibling functions) — create/update RLS is admin-only so a patient can never bundle recording_consent:true into an unrelated update or a doctor can never self-mark status:'completed'. Daily.co meeting tokens are NEVER persisted here — Base44 RLS is row-level, not field-level, and a token needs different rights per participant (host vs guest), so tokens are minted fresh per join request by joinVirtualConsultation instead.",
+  "properties": {
+    "consultation_id": { "type": "string", "description": "The patient's Consultation (intake) record this booking was made from." },
+    "case_id": { "type": "string", "description": "Set only if/when a real CaseRecord exists for this patient (resolved via CaseRecord.filter({consultation_id})). Null is a normal, expected state for most bookings, which happen before a case exists." },
+    "client_email": { "type": "string", "format": "email" },
+    "client_name": { "type": "string" },
+    "doctor_id": { "type": "string" },
+    "doctor_email": { "type": "string", "format": "email" },
+    "doctor_name": { "type": "string" },
+
+    "status": {
+      "type": "string",
+      "enum": ["requested", "confirmed", "device_check_complete", "in_progress", "completed", "cancelled", "no_show", "suspended"],
+      "default": "requested",
+      "description": "Governed by base44/shared/virtualConsultationState.ts's canTransition/guardedStatusUpdate — never written directly outside that module."
+    },
+    "status_reason": { "type": "string" },
+
+    "scheduled_at": { "type": "string", "format": "date-time", "description": "UTC instant of the call." },
+    "scheduled_duration_minutes": { "type": "number", "default": 30 },
+    "patient_timezone": { "type": "string", "description": "IANA zone captured client-side (Intl.DateTimeFormat().resolvedOptions().timeZone) at booking time." },
+    "doctor_timezone": { "type": "string", "description": "Snapshot of Doctor.clinic_timezone at booking time — deliberately NOT a live join, so a later doctor profile edit never silently reflows an already-booked time." },
+    "availability_slot_key": { "type": "string", "description": "doctor_id + date + time the DoctorAvailability.consultation_slots lock was taken against — lets a cancellation release the exact slot." },
+
+    "price_amount": { "type": "number", "description": "Snapshot of Doctor.consultation_price_amount at booking time — never a live join." },
+    "price_currency": { "type": "string", "default": "USD" },
+    "cancellation_policy_snapshot": { "type": "string", "description": "Snapshot of Doctor.cancellation_policy at booking time." },
+    "payment_status": { "type": "string", "enum": ["not_required", "pending", "paid", "refunded"], "default": "not_required" },
+
+    "brief_goals": { "type": "string" },
+    "brief_budget_range": { "type": "string", "enum": ["under_5k", "5k_10k", "10k_20k", "20k_plus", "prefer_not_to_say"] },
+    "brief_questions_for_doctor": { "type": "string" },
+    "brief_accessibility_companion_needs": { "type": "string" },
+    "brief_shared_fields": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Explicit allowlist of Consultation/CaseRecord field names the patient checked to share with THIS doctor for THIS booking, e.g. ['medical_conditions','allergies']. Never defaults to 'everything'."
+    },
+    "brief_generated_at": { "type": "string", "format": "date-time" },
+    "brief_reviewed_by_patient_at": { "type": "string", "format": "date-time", "description": "Must be set before a doctor-facing read may return any brief_shared_fields value — mirrors medical_history_share_consent's own gate on assignDoctorToCase." },
+
+    "telehealth_consent": { "type": "boolean", "default": false },
+    "telehealth_consent_at": { "type": "string", "format": "date-time" },
+    "telehealth_consent_version": { "type": "string" },
+    "ai_notes_consent": { "type": "boolean", "default": false },
+    "ai_notes_consent_at": { "type": "string", "format": "date-time" },
+    "translation_captions_consent": { "type": "boolean", "default": false },
+    "translation_captions_consent_at": { "type": "string", "format": "date-time" },
+    "recording_consent": { "type": "boolean", "default": false, "description": "MUST default false. recordVirtualConsultationConsent's four hardcoded branches never cross-write another consent field — this one is never set true by a branch requesting a different consent_type." },
+    "recording_consent_at": { "type": "string", "format": "date-time" },
+
+    "interpreter_languages_differ": { "type": "boolean", "default": false },
+    "interpreter_patient_language": { "type": "string" },
+    "interpreter_doctor_language": { "type": "string" },
+    "interpreter_notice_acknowledged_at": { "type": "string", "format": "date-time" },
+    "interpreter_flag_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "flagged_by": { "type": "string", "enum": ["patient", "doctor", "m_care"] },
+          "note": { "type": "string" }
+        }
+      },
+      "description": "Bounded to 20 entries by flagInterpreterMoment."
+    },
+
+    "video_provider": { "type": "string", "enum": ["daily"] },
+    "video_configured": { "type": "boolean", "default": false, "description": "True only if DAILY_API_KEY existed at room-creation time. The UI reads this field directly — it never infers readiness from URL presence." },
+    "video_room_name": { "type": "string" },
+    "video_room_url": { "type": "string" },
+    "video_room_created_at": { "type": "string", "format": "date-time" },
+    "video_room_expires_at": { "type": "string", "format": "date-time" },
+
+    "device_test_completed_by_patient_at": { "type": "string", "format": "date-time" },
+    "device_test_completed_by_doctor_at": { "type": "string", "format": "date-time" },
+
+    "calendar_invite_sent_at": { "type": "string", "format": "date-time" },
+    "reminder_24h_sent": { "type": "boolean", "default": false },
+    "reminder_1h_sent": { "type": "boolean", "default": false },
+    "device_test_nudge_sent": { "type": "boolean", "default": false },
+
+    "doctor_plan_summary": { "type": "string" },
+    "doctor_plan_included": { "type": "array", "items": { "type": "string" } },
+    "doctor_plan_excluded": { "type": "array", "items": { "type": "string" } },
+    "doctor_plan_submitted_at": { "type": "string", "format": "date-time" },
+
+    "decision_next_step": { "type": "string", "enum": ["request_another_consult", "ask_a_question", "proceed_to_planning", "not_now"] },
+    "decision_next_step_at": { "type": "string", "format": "date-time" },
+    "decision_next_step_note": { "type": "string" },
+
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["consultation_id", "client_email", "doctor_id", "doctor_email", "scheduled_at"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.client_email": "{{user.email}}" },
+        { "data.doctor_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "admin" }
+    }
+  }
+}

@@ -35,6 +35,9 @@ const NominateDoctor         = lazy(() => import('@/pages/NominateDoctor'));
 const InviteProvider         = lazy(() => import('@/pages/InviteProvider'));
 const MCareAgent             = lazy(() => import('@/pages/MCareAgent'));
 const TravelerGuardian       = lazy(() => import('@/pages/TravelerGuardian'));
+const BookVirtualConsultation = lazy(() => import('@/pages/BookVirtualConsultation'));
+const VirtualConsultationRoom = lazy(() => import('@/pages/VirtualConsultationRoom'));
+const DecisionRoom            = lazy(() => import('@/pages/DecisionRoom'));
 
 const CHECKOUT_ROLES = [
   ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
@@ -76,6 +79,9 @@ export const clientRoutes = (
       <Route path="/invite-provider"             element={<ErrorBoundary><InviteProvider /></ErrorBoundary>} />
       <Route path="/m-care"                      element={<ErrorBoundary><MCareAgent /></ErrorBoundary>} />
       <Route path="/traveler-guardian"           element={<ErrorBoundary><TravelerGuardian /></ErrorBoundary>} />
+      <Route path="/consult/:doctorId"                        element={<ErrorBoundary><BookVirtualConsultation /></ErrorBoundary>} />
+      <Route path="/consultation/:consultationId/room"         element={<ErrorBoundary><VirtualConsultationRoom /></ErrorBoundary>} />
+      <Route path="/consultation/:consultationId/decision"     element={<ErrorBoundary><DecisionRoom /></ErrorBoundary>} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>

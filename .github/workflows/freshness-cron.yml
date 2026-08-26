@@ -94,6 +94,11 @@ jobs:
             # (see checkAbandonedBookings' own header), so hourly just checks
             # the 2h/24h/48h thresholds sooner, it cannot double-send.
             call checkAbandonedBookings          # was never scheduled — real, correct, 3-stage abandoned-payment recovery
+            # Virtual consultations are time-of-day scheduled, unlike travel-date
+            # milestones, so this needs hourly granularity rather than daily —
+            # its own 24h/1h/device-test windows are each gated on their own
+            # idempotent flag.
+            call sweepVirtualConsultationReminders
           elif [ "$IS_SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # 6-hourly slot: rate-limit bucket cleanup (pure DB hygiene, per its own header comment).
             call purgeRateLimitBuckets
@@ -109,6 +114,7 @@ jobs:
             call calculateDoctorTrustScore
             call calculateCompanionScore
             call calculateDriverTrustScore
+            call sweepProviderBookingEligibility  # the only path that may SET Doctor.booking_suspended:true — deterministic, never clears
             call analyzeMcarePerformance  # aggregates real JourneyPlan replanning history into McareKnowledge — closes the LEARN node in M-Care's reasoning loop
             # Marketplace: chase doctors who were invited to quote but haven't yet (link-only).
             call remindPendingQuotes
@@ -130,6 +136,7 @@ jobs:
               call autoTriggerDoctorVerification
               call checkStalledSignups
               call checkAbandonedBookings
+              call sweepVirtualConsultationReminders
             fi
           fi
 
