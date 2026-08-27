@@ -1,0 +1,209 @@
+{
+  "name": "TrustProfile",
+  "type": "object",
+  "description": "The explainable, public-facing trust profile for a verified user or partner \u2014 NOT a generic checkmark. Shows identity-verified yes/no + date, professional license verified yes/no + official source, facility/business verified yes/no + date, documents current/expiring-soon/expired, M-Care partner-since date, honest verification limitations, and a 'Report a concern' action. NEVER displays passport numbers, selfies, raw ID images, or unnecessary PII. Computed from IdentityVerification + PartnerVerification + VerificationEvidence + CredentialRecheck by the getTrustProfile function. Publicly readable only when is_publicly_bookable is true (so patients can verify a provider before booking); otherwise owner + admin only.",
+  "properties": {
+    "subject_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "partner"
+      ]
+    },
+    "subject_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the subject owns their own profile."
+    },
+    "subject_user_id": {
+      "type": "string"
+    },
+    "subject_partner_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "security_agency",
+        "hotel",
+        "interpreter"
+      ]
+    },
+    "subject_partner_id": {
+      "type": "string"
+    },
+    "subject_name": {
+      "type": "string"
+    },
+    "verification_level": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "identity_verified",
+        "partner_verified",
+        "medical_provider_approved"
+      ],
+      "default": "basic",
+      "description": "The highest trust tier reached. basic=email/phone; identity_verified=document+liveness; partner_verified=business verification; medical_provider_approved=license verified by primary source + human review."
+    },
+    "identity_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "identity_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "license_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "license_source": {
+      "type": "string",
+      "description": "Official registry name + URL, when applicable."
+    },
+    "license_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "facility_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "facility_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "documents_status": {
+      "type": "string",
+      "enum": [
+        "current",
+        "expiring_soon",
+        "expired",
+        "none"
+      ],
+      "default": "none"
+    },
+    "partner_since": {
+      "type": "string",
+      "format": "date"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Honest caveats \u2014 e.g. 'Identity verified against a single government document', 'License recheck due in 90 days'. Never 'scam-proof' or 'guaranteed real'."
+    },
+    "evidence_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Sanitized list of checks performed \u2014 what was checked, the source, the result, the date."
+    },
+    "is_publicly_bookable": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only after human review approves a medical provider. Gates public read access (RLS) and booking eligibility."
+    },
+    "suspended": {
+      "type": "boolean",
+      "default": false
+    },
+    "suspended_reason": {
+      "type": "string"
+    },
+    "suspended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "report_count": {
+      "type": "number",
+      "default": 0
+    },
+    "sandbox": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "subject_type",
+    "subject_email",
+    "verification_level"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "data.is_publicly_bookable": true
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "name": "VerificationEvidence",
+  "type": "object",
+  "description": "One piece of sanitized evidence backing a verification outcome \u2014 a document-capture result, an MRZ/OCR read, an expiry check, a tamper-detection signal, a document-liveness result, an NFC chip read, an active selfie-liveness challenge result, a face-match score, a presentation-attack signal, a license-registry lookup, a sanctions screening, a business-registration check, an address-consistency check, a payout-account ownership check, an insurance/accreditation check, or a live video verification. NEVER stores raw PII \u2014 only the check name, result, source name, source URL, checked date, confidence, and sanitized metadata. Raw identity documents stay with the verification provider (Persona) wherever possible; this record only references them by vendor reference. Written by the Persona webhook handler and partner-verification functions via asServiceRole.",
+  "properties": {
+    "verification_id": {
+      "type": "string",
+      "description": "The IdentityVerification or PartnerVerification id this evidence backs."
+    },
+    "verification_kind": {
+      "type": "string",
+      "enum": [
+        "identity",
+        "partner"
+      ],
+      "description": "Whether this evidence backs a person-identity run or a partner/business run."
+    },
+    "subject_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the subject owns their own evidence (read-only)."
+    },
+    "evidence_type": {
+      "type": "string",
+      "enum": [
+        "document_capture",
+        "mrz_ocr",
+        "expiry_check",
+        "tamper_detection",
+        "document_liveness",
+        "nfc_chip",
+        "selfie_liveness",
+        "face_match",
+        "presentation_attack",
+        "license_registry",
+        "sanctions_screening",
+        "adverse_media",
+        "business_registration",
+        "address_consistency",
+        "payout_ownership",
+        "insurance_accreditation",
+        "video_verification",
+        "identity_document"
+      ]
+    },
+    "check_name": {
+      "type": "string",
+      "description": "Human label, e.g. 'Document liveness', 'GMC license lookup'."
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "inconclusive",
+        "not_checked"
+      ],
+      "default": "not_checked"
+    },
+    "source_name": {
+      "type": "string",
+      "description": "e.g. 'Persona', 'GMC registry', 'Checkr', 'Admin manual review'."
+    },
+    "source_url": {
+      "type": "string",
+      "description": "The official primary-source URL the check was made against, when applicable \u2014 never fabricated."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "vendor",
+        "primary_registry",
+        "third_party",
+        "admin_manual",
+        "video_session"
+      ]
+    },
+    "confidence_score": {
+      "type": "number"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recheck_due_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "vendor_reference": {
+      "type": "string",
+      "description": "The vendor's opaque reference id for the underlying artifact (Persona inquiry/field id, registry case id) \u2014 never a raw document."
+    },
+    "raw_pii_stored": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only if raw PII had to be stored in M-Care (fallback). False when the raw artifact stays with the vendor."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Sanitized, non-PII metadata about the check (e.g. { match_score: 96 }, { registry_status: 'active' }). Never passport numbers, selfies, or raw ID images."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "verification_id",
+    "verification_kind",
+    "subject_email",
+    "evidence_type",
+    "check_name",
+    "result"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
