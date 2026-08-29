@@ -60,8 +60,9 @@ export function isNonTraveler(user = null) {
  * What each choice actually gets. Every line here is a claim made to a person
  * about their safety, so each one must be true in code today:
  *
- *  - SOS            → `triggerSOS` takes `case_id` as OPTIONAL; FloatingSOSButton
- *                     references no case at all. Works with no journey.
+ *  - SOS            → `triggerSOS` takes `case_id` as OPTIONAL; the /emergency
+ *                     page and M-Care chat both call it with no case at all.
+ *                     Works with no journey.
  *  - Emergency PIN  → EmergencyPIN is keyed by user email, not by case.
  *  - Location share → gated on consent per case; travellers only. NOT listed
  *                     for non-travellers, because there is no case to attach it to.

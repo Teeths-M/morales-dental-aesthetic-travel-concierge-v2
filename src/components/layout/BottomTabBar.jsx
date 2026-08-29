@@ -8,12 +8,11 @@ const LG_BREAKPOINT_PX = 1024;
 const BAR_HEIGHT_PX = 62;
 
 /**
- * Other fixed-position elements (FloatingSOSButton, GuardianTicker,
- * MCareOrb) already read `var(--sticky-cta-height, 0px)` in their own
- * `bottom` calc — the same pattern StickyBookCTA.jsx uses to announce its own
- * height. This does the same for this bar so those elements move up above it
- * on mobile without editing their positioning logic — critical since one of
- * them is the SOS button.
+ * Other fixed-position elements (GuardianTicker, MCareOrb's floating launcher)
+ * already read `var(--sticky-cta-height, 0px)` in their own `bottom` calc —
+ * the same pattern StickyBookCTA.jsx uses to announce its own height. This
+ * does the same for this bar so those elements move up above it on mobile
+ * without editing their positioning logic.
  */
 function useBottomTabBarHeightVar() {
   useEffect(() => {

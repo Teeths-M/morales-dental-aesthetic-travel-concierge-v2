@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import Footer from './Footer';
-import FloatingSOSButton from './FloatingSOSButton';
 import Header from './Header';
 import BottomTabBar from './BottomTabBar';
 import PullToRefreshIndicator from './PullToRefreshIndicator';
@@ -160,14 +159,15 @@ export default function AppLayout() {
         {/* Patient-facing floating elements — hidden on admin pages */}
         {!isAdmin && (
           <>
-            {/* WhatsApp is now inside FloatingSOSButton stack (bottom-right) */}
+            {/* Standalone SOS/Find-Nearby quick-access pills were removed
+                2026-08-29 — both are now just a normal M-Care chat request
+                (M-Care already has real triggerSOS/searchNearbyPlaces tool
+                access), so a redundant floating shortcut duplicating chat
+                capability no longer earns its own screen space. */}
             <HeartNotificationCenter user={user} />
             {user && <GuardianTicker />}
             {user && <FloatingCheckInAlert user={user} />}
             {user && <GlobalEventBroadcaster user={user} />}
-
-            {/* Premium floating SOS — authenticated users only */}
-            {user && <FloatingSOSButton />}
 
             {/* Mobile primary nav — hidden at lg:+ where DashboardSidebar's desktop rail takes over */}
             {user && <BottomTabBar />}
