@@ -17,6 +17,7 @@ import { BackButton } from '@/components/nav/BackButton';
 import { useToast } from '@/components/ui/use-toast';
 import { friendlyError } from '@/lib/friendlyError';
 import { handleChatPaste } from '@/lib/chatPaste';
+import MSafeHero from '@/components/mcare/msafe-plus/MSafeHero';
 
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
@@ -184,6 +185,29 @@ export default function MCareAgent() {
   };
 
   const hasConversation = conversations.length > 0 || activeConversationId;
+
+  // M-Safe+ luxury landing — the calm welcome state shown before the
+  // conversation begins. A capability pill seeds the chat with that intent;
+  // "begin/continue" enters the existing or a new conversation.
+  const [showHero, setShowHero] = useState(true);
+  const handleHeroIntent = (intent) => {
+    setShowHero(false);
+    sendText(intent);
+  };
+  const handleHeroBegin = () => {
+    setShowHero(false);
+    if (!hasConversation && !isStarting) startNewConversation();
+  };
+
+  if (showHero && !loadingConvos) {
+    return (
+      <MSafeHero
+        onSelectIntent={handleHeroIntent}
+        onBegin={handleHeroBegin}
+        hasConversation={hasConversation}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

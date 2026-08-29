@@ -8,6 +8,7 @@ module.exports = {
         display: ['var(--font-display)', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
         body: ['var(--font-body)', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
         sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        serif: ['var(--font-serif)', '"Cormorant Garamond"', '"Playfair Display"', 'Georgia', 'serif'],
       },
   		borderRadius: {
   			lg: 'var(--radius)',
