@@ -27,7 +27,7 @@ const ITEMS = [
   { key: 'event',    label: 'Event', icon: CalendarDays, color: '#f44336', unsupported: 'M-Care doesn’t support events.' },
 ];
 
-export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationClick = null, disabled, uploading, variant = 'default', onUnsupported, menuTheme = 'dark' }) {
+export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationClick = null, disabled, uploading, variant = 'default', onUnsupported, menuTheme = 'dark', shape = 'square' }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const fileRef = useRef(null);
@@ -73,10 +73,14 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationCli
     requestAnimationFrame(() => fileRef.current?.click());
   };
 
+  // shape='circle' (desktop reference-match, 2026-08-29): rounds the icon
+  // trigger to a full circle instead of the default rounded-square, only for
+  // the variant==='icon' case MCareOrb.jsx uses. Default 'square' keeps every
+  // other caller/variant byte-identical to before this prop existed.
   const triggerClass = glass
     ? "flex items-center justify-center w-9 h-9 rounded-[10px] border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
     : variant === 'icon'
-      ? "flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors disabled:opacity-50"
+      ? `flex items-center justify-center w-9 h-9 ${shape === 'circle' ? 'rounded-full' : 'rounded-md'} text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors disabled:opacity-50`
       : "flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-dashed border-border text-muted-foreground hover:bg-secondary/50 hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-50";
 
   return (

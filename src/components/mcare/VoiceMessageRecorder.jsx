@@ -78,7 +78,7 @@ function explainMicError(e) {
   return 'Could not access the microphone. ' + (e?.message || 'Please check your device settings.');
 }
 
-export default function VoiceMessageRecorder({ onSend, onError, disabled = false, theme = 'dark' }) {
+export default function VoiceMessageRecorder({ onSend, onError, disabled = false, theme = 'dark', idleShape = 'square' }) {
   // theme='light' (mobile M-Safe redesign, 2026-08-28): swaps only the
   // "recording" active-state pill's hardcoded dark CARD/BORDER/text colors
   // for light equivalents — the idle mic button is already gold-on-light
@@ -327,7 +327,7 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
           title="Record a voice message"
           aria-label="Record a voice message"
           style={{
-            width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+            width: 36, height: 36, borderRadius: idleShape === 'circle' ? '50%' : 12, flexShrink: 0,
             background: '#F6F7FB',
             border: '1px solid #E5E7EB',
             cursor: disabled ? 'default' : 'pointer',

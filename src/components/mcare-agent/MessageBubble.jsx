@@ -736,12 +736,15 @@ function ToolCallDisplay({ toolCall }) {
 // checkmark, since that's a delivery receipt meaningful only for the user's own
 // sent message. Kept as its own flag rather than folded into showMeta so every
 // existing caller (desktop MCareOrb, MCareAgent.jsx) keeps its exact current
-// rendering by default; only MCareOrb's mobile branch opts in. showReaction adds
+// rendering by default; only MCareOrb's mobile branch opts in. assistantMetaLabel
+// (desktop reference-match, 2026-08-29) optionally appends "• {label}" after that
+// timestamp (e.g. "09:13 • M-Safe") — undefined by default, so every existing
+// caller renders the bare timestamp exactly as before. showReaction adds
 // a small emoji tapback on the patient's own message when pickMessageReaction()
 // finds a signal worth reacting to (deterministic, client-side only — see
 // src/lib/mcareReactionHeuristic.js, the agent itself never decides this). All
 // optional → default rendering is unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showAssistantMeta = false, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
+export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
   // extraAudioUrl is a real, playable TTS audio URL attached client-side to
@@ -945,7 +948,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           </div>
         )}
         {!isUser && showAssistantMeta && time && (
-          <div className="mt-1 text-[10px] text-muted-foreground opacity-80">{time}</div>
+          <div className="mt-1 text-[10px] text-muted-foreground opacity-80">{assistantMetaLabel ? `${time} • ${assistantMetaLabel}` : time}</div>
         )}
         {reaction && (
           <motion.span

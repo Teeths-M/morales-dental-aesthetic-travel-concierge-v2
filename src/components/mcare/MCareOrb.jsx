@@ -88,7 +88,6 @@ import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
-const PURPLE = '#6C47FF';
 // Round 4 (2026-08-23): the open panel itself went dark, not just the
 // floating button/header. These reuse this app's own established design
 // tokens (CLAUDE.md's Design Tokens section — background/card/border) so
@@ -2561,6 +2560,18 @@ export default function MCareOrb() {
     </div>
   );
 
+  // Standalone LIVE SESSION / PAUSED / OFFLINE pill — used alone (no AI SUPER
+  // AGENTIC / PRIVATE / voice / language pills alongside it) in the desktop
+  // left panel and the desktop chat-column header, matching the reference
+  // image, which shows only this one pill in both spots. pillsRowBlock
+  // (above) is kept unchanged for mobile's hero row, which still bundles
+  // every pill.
+  const standaloneStatusPill = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: useDarkTheme ? statusPill.bg : statusPill.bgLight, color: useDarkTheme ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+      <span style={{ width: pillDotSize, height: pillDotSize, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
+    </span>
+  );
+
   // Capability row — each item lights up when it's the real, currently-active
   // capability (see activeCapability above), never a fabricated highlight.
   // Mobile (2026-08-28): wrapped in a white card with subtitles, matching the
@@ -2601,6 +2612,34 @@ export default function MCareOrb() {
   const capabilityRowBlock = isDesktopPanel ? capabilityItemsRow : (
     <div style={{ marginTop: 8, width: '100%', background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.06)', padding: '10px 8px' }}>
       {capabilityItemsRow}
+    </div>
+  );
+
+  // Desktop-only reference-match variant (2026-08-29): the same
+  // CAPABILITY_ITEMS + active/ringColor highlighting logic as
+  // capabilityItemsRow above, just laid out as icon+label pills side by side
+  // instead of an icon-in-a-circle with the label below — matching the
+  // reference image's left-panel capability row. capabilityItemsRow itself is
+  // untouched so mobile's card-wrapped circle version keeps rendering exactly
+  // as before.
+  const desktopCapabilityPillsRow = (
+    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+      {CAPABILITY_ITEMS.map(({ icon: Icon, label, accent }) => {
+        const active = label === activeCapability;
+        const ringColor = useDarkTheme ? GOLD : accent;
+        return (
+          <div key={label} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999,
+            border: active ? `1px solid ${ringColor}` : `1px solid ${ringColor}59`,
+            background: active ? `${ringColor}3D` : `${ringColor}14`,
+            boxShadow: active ? `0 0 8px ${ringColor}88` : 'none',
+            transition: 'all 0.25s ease',
+          }}>
+            <Icon style={{ width: 13, height: 13, color: useDarkTheme ? (active ? '#F5D97A' : '#C9A227') : (active ? ringColor : `${ringColor}CC`) }} />
+            <span style={{ fontSize: 12, fontWeight: active ? 700 : 600, color: useDarkTheme ? (active ? '#F5D97A' : TEXT_MUTED_DARK) : LIGHT_TEXT, whiteSpace: 'nowrap' }}>{label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -2673,7 +2712,7 @@ export default function MCareOrb() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <MessageBubble message={m} accent={isDesktopPanel ? PURPLE : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta={!isDesktopPanel} showReaction
+            <MessageBubble message={m} accent={GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" showReaction
               onChoice={
                 m.__distressConfirm
                   ? (c) => handleDistressConfirm(c, m.__distressConfirm)
@@ -2724,7 +2763,7 @@ export default function MCareOrb() {
             <div style={{ fontSize: 10, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
               M-Care checked in
             </div>
-            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={isDesktopPanel ? PURPLE : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta={!isDesktopPanel} />
+            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
           </motion.div>
         ))}
 
@@ -2825,6 +2864,7 @@ export default function MCareOrb() {
       <AddImageMenu
         variant="icon"
         menuTheme={useDarkTheme ? 'dark' : 'light'}
+        shape={isDesktopPanel ? 'circle' : 'square'}
         onDeviceFile={handleFileSelect}
         onVaultClick={() => vaultRef.current?.open()}
         onLocationClick={handleLocationMenuClick}
@@ -2857,6 +2897,7 @@ export default function MCareOrb() {
           onSend={handleVoiceMessage}
           onError={handleVoiceMessageError}
           theme={useDarkTheme ? 'dark' : 'light'}
+          idleShape={isDesktopPanel ? 'circle' : 'square'}
         />
       )}
       <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
@@ -2930,21 +2971,32 @@ export default function MCareOrb() {
 
           {isDesktopPanel ? (
             <>
-              {/* Widescreen 3-column layout: robot | identity | chat/greeting,
-                  a full-width input bar along the bottom. Every piece here is
-                  the exact same JSX/logic the narrow mobile layout below
-                  uses too (titleSubtitleBlock/pillsRowBlock/
-                  capabilityRowBlock/headerControlsBlock/chatMain/
+              {/* Widescreen 2-column layout (2026-08-29, matching the
+                  reference image): a merged left panel (title, robot,
+                  capability pills, status) + a wider chat column with a
+                  real in-flow header row — replaces the previous 3-column
+                  robot | identity | chat split. Every piece here is the
+                  exact same JSX/logic the narrow mobile layout below uses
+                  too (titleSubtitleBlock/capabilityItemsRow/
+                  standaloneStatusPill/headerControlsBlock/chatMain/
                   inputBarBlock, all defined above, before this return) —
-                  only the arrangement differs. */}
+                  only the arrangement differs. pillsRowBlock (AI SUPER
+                  AGENTIC / PRIVATE / voice / language pills) is
+                  deliberately not rendered here — the reference shows only
+                  the one status pill; mobile keeps pillsRowBlock
+                  unchanged. */}
               <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)' : 'linear-gradient(180deg, rgba(212,175,55,0.06), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+                <div style={{ width: '38%', flexShrink: 0, borderRight: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)' : 'linear-gradient(180deg, rgba(212,175,55,0.06), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 18px', overflowY: 'auto' }}>
+                  <div style={{ alignSelf: 'flex-start', textAlign: 'left', width: '100%' }}>
+                    {titleSubtitleBlock}
+                  </div>
                   {/* naturalAspect: the real robot photo isn't square
                       (~1.16:1) — width-constrained with auto height here,
                       not forced into a square box like the small chrome
-                      instances elsewhere in this file. ~320px per the
-                      "about 300px wide on desktop" ask. */}
-                  <LivingOrb state={orbState} size={320} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
+                      instances elsewhere in this file. */}
+                  <div style={{ marginTop: 20 }}>
+                    <LivingOrb state={orbState} size={280} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
+                  </div>
                   {/* TEMPORARY, dev-only test panel — forces each robot
                       activityState on demand so it can be visually
                       verified without waiting for a narrow live-agent
@@ -3039,16 +3091,19 @@ export default function MCareOrb() {
                       )}
                     </div>
                   )}
+                  <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>{desktopCapabilityPillsRow}</div>
+                  <div style={{ marginTop: 16 }}>{standaloneStatusPill}</div>
                 </div>
 
-                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)' : 'linear-gradient(180deg, rgba(212,175,55,0.06), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px', textAlign: 'center' }}>
-                  {titleSubtitleBlock}
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>{pillsRowBlock}</div>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>{capabilityRowBlock}</div>
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>{headerControlsBlock}</div>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, flexShrink: 0 }}>
+                    <McareAvatar size={28} />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, whiteSpace: 'nowrap' }}>
+                      M-Safe <span style={{ fontWeight: 400, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>• Morales Super Agent</span>
+                    </span>
+                    {standaloneStatusPill}
+                    <div style={{ marginLeft: 'auto' }}>{headerControlsBlock}</div>
+                  </div>
                   {chatMain}
                 </div>
               </div>
