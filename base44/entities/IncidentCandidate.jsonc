@@ -1,0 +1,63 @@
+{
+  "name": "IncidentCandidate",
+  "type": "object",
+  "description": "One row per publicly-reported medical-tourism safety incident discovered by scanIncidentEvidence (a Tavily web search, run monthly). This is a staging/evidence record, never a verdict: it is not a diagnosis, not a clinic strike, not a public statement about anyone. A single row here is, at most, 'a public article said this' — the status/corroboration_status enums deliberately have no 'confirmed'/'verified' value. Fields are populated in stages by the pipeline (scan -> analyze -> evaluate -> propose), tracked by `status`. Never stores images, names, social handles, or passport data -- only title/URL/snippet-level text about a public news event, never patient data of any kind.",
+  "properties": {
+    "url": { "type": "string", "description": "The article URL. Deduplication key for the scan stage." },
+    "title": { "type": "string", "description": "The raw search result title, as returned by the search provider." },
+    "snippet": { "type": "string", "description": "A short excerpt/summary only -- never the full article body. Length is bounded by the writer function, not just this schema." },
+    "publisher_domain": { "type": "string", "description": "The domain the article was published on, e.g. 'reuters.com'. Drives source_reliability_tier." },
+    "published_at": { "type": "string", "format": "date-time", "description": "The article's own publication date, when known. Often absent from a raw search result." },
+    "retrieved_at": { "type": "string", "format": "date-time" },
+    "language": { "type": "string", "default": "en" },
+    "source_query": { "type": "string", "description": "The discovery query that surfaced this article." },
+    "content_hash": { "type": "string", "description": "SHA-256 of the normalized title+snippet -- used for near-duplicate detection across repeat queries/months, never a security hash." },
+
+    "source_reliability_tier": {
+      "type": "string",
+      "enum": ["authoritative_primary", "established_reporting", "professional_publication", "user_generated", "unknown"],
+      "default": "unknown",
+      "description": "A fully deterministic classification of publisher_domain, computed by evaluateIncidentEvidence (incidentSourceQuality.ts) -- NEVER self-assessed by the LLM. A social-media/forum domain is always user_generated regardless of what the article claims about itself."
+    },
+
+    "incident_type": { "type": "string", "enum": ["death", "complication", "legal_action", "other", "unknown"], "default": "unknown" },
+    "procedure_type": { "type": "string", "description": "'unknown' when the article does not state it -- never inferred." },
+    "destination_country": { "type": "string", "description": "'unknown' when the article does not state it -- never inferred." },
+    "provider_or_clinic_mentioned": { "type": "string", "description": "The clinic/provider name as reported in the article, verbatim -- 'unknown' if none is named. This is free text, not a foreign key; see matched_partner_id for a careful, capped entity-resolution attempt." },
+    "matched_partner_type": { "type": "string", "enum": ["doctor", "travel_agency", "taxi_service", "companion", "security_agency"], "description": "Set only if provider_or_clinic_mentioned scored a real match against an existing Morales partner via providerCandidateMatch.ts -- capped, never treated as certain." },
+    "matched_partner_id": { "type": "string" },
+    "match_confidence": { "type": "number", "minimum": 0, "maximum": 100, "description": "From providerCandidateMatch.ts's computeCandidateConfidence -- name-similarity alone is structurally capped well below anything resembling certainty." },
+
+    "reported_outcome": { "type": "string", "description": "What the article says happened, in its own words -- 'unknown' if unclear. Never a clinical interpretation." },
+    "risk_factors_mentioned": { "type": "array", "items": { "type": "string" } },
+    "evidence_quotes": { "type": "array", "items": { "type": "string" }, "description": "Short direct quotes from the article, each truncated to <=25 words by code (truncateToWords), never trusted to the LLM's own self-restraint." },
+    "is_allegation": { "type": "boolean", "default": true, "description": "True unless the article reports a fully adjudicated/settled outcome (e.g. a completed court judgment) -- defaults true because almost everything discoverable this way is, at most, a reported claim." },
+    "missing_information": { "type": "array", "items": { "type": "string" }, "description": "What the analyzer could not determine from the article -- an honest gaps list, never filled in by inference." },
+    "analysis_confidence": { "type": "number", "minimum": 0, "maximum": 100 },
+    "analysis_method": { "type": "string", "enum": ["llm", "fallback"], "description": "'fallback' means the LLM call failed and a small, deterministic keyword extractor ran instead (incidentTextAnalysis.ts) -- always paired with a low analysis_confidence." },
+
+    "corroboration_status": {
+      "type": "string",
+      "enum": ["single_source_unverified", "corroborated", "conflicting"],
+      "default": "single_source_unverified",
+      "description": "Deliberately has no 'confirmed'/'verified' value. 'corroborated' requires >=2 independent non-social-media domains agreeing, or one authoritative_primary source alone (computeCorroborationEligibility). 'conflicting' means two sources reporting the same apparent event disagree on a key fact -- never silently resolved."
+    },
+    "corroborating_candidate_ids": { "type": "array", "items": { "type": "string" }, "description": "Other IncidentCandidate ids evaluateIncidentEvidence determined describe the same real-world event." },
+
+    "status": {
+      "type": "string",
+      "enum": ["new", "analyzed", "evaluated", "proposed_rule_created", "dismissed"],
+      "default": "new",
+      "description": "The pipeline's own progress marker for this row -- new (just scanned) -> analyzed (LLM/fallback extraction done) -> evaluated (source-quality + corroboration done) -> proposed_rule_created (fed a ProposedSafetyRule or ProviderSafetyReviewTask) or dismissed (an admin decided this isn't actionable)."
+    },
+    "created_by_run_id": { "type": "string", "description": "The IncidentScanRun this row was discovered in." },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["url", "title", "retrieved_at", "status"],
+  "rls": {
+    "read": { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

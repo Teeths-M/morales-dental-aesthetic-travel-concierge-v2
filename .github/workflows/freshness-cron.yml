@@ -29,6 +29,7 @@ on:
     - cron: '0 */6 * * *' # every 6h — rate-limit bucket cleanup (hygiene)
     - cron: '0 6 * * *'   # daily 06:00 UTC — clinic/doctor/regulatory/trust-score
     - cron: '0 7 * * 1'   # weekly Monday 07:00 UTC — visa
+    - cron: '0 6 1 * *'   # monthly, 1st @ 06:00 UTC — Evidence Monitoring (public incident scan/analyze/evaluate/propose)
   workflow_dispatch:       # manual "Run workflow" button runs everything
 
 concurrency:
@@ -73,6 +74,7 @@ jobs:
           IS_HOURLY="${{ github.event.schedule == '0 * * * *' }}"
           IS_SIX_HOURLY="${{ github.event.schedule == '0 */6 * * *' }}"
           IS_WEEKLY="${{ github.event.schedule == '0 7 * * 1' }}"
+          IS_MONTHLY="${{ github.event.schedule == '0 6 1 * *' }}"
           MANUAL="${{ github.event_name == 'workflow_dispatch' }}"
 
           if [ "$IS_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
@@ -105,6 +107,12 @@ jobs:
           elif [ "$IS_WEEKLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Weekly slot: visa only.
             call recheckVisaRequirements
+          elif [ "$IS_MONTHLY" = "true" ] && [ "$MANUAL" != "true" ]; then
+            # Monthly slot: Evidence Monitoring — a periodic public-incident
+            # sweep, not near-real-time monitoring (a real Tavily/LLM-cost
+            # tradeoff, made deliberately). workflow_dispatch can still run
+            # it on demand any time in between (see the daily/manual block).
+            call runIncidentEvidenceOrchestrator
           else
             # Daily slot (and manual runs): clinic + doctor + regulatory + partner trust scores.
             call backfillClinicsFromDoctors
@@ -137,6 +145,7 @@ jobs:
               call checkStalledSignups
               call checkAbandonedBookings
               call sweepVirtualConsultationReminders
+              call runIncidentEvidenceOrchestrator
             fi
           fi
 

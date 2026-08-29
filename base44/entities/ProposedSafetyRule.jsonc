@@ -1,0 +1,32 @@
+{
+  "name": "ProposedSafetyRule",
+  "type": "object",
+  "description": "A draft, plain-language safety observation proposed by proposeSafetyLearning off corroborated public-incident evidence -- a clinician-review PROMPT, never a rule the system applies to itself. review_status can only ever be set to 'approved' by a human admin's own manual update in the review queue; no function in this codebase writes that value. Nothing in the pipeline reads an approved row and feeds it into computeSafeT, getViolations, or ProcedureKnowledge.risk_level -- wiring an approved rule into live M-Care behavior is a separate, deliberately deferred decision. This entity never blocks a booking, never names a specific age/clinic verdict, and never activates itself.",
+  "properties": {
+    "rule_text": { "type": "string", "description": "A plain-language observation for a qualified clinician to review, e.g. 'Consider flagging combined liposuction + tummy tuck bookings for a patient over 60 for extra pre-op review' -- never a numeric threshold the system enforces automatically, and never phrased as an already-active policy." },
+    "rule_category": { "type": "string", "enum": ["procedure_combination_risk", "destination_risk", "provider_risk", "general_advisory"] },
+    "evidence_incident_ids": { "type": "array", "items": { "type": "string" }, "description": "The IncidentCandidate rows this observation was drafted from." },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 100, "description": "The drafting LLM's own self-estimated confidence -- informational for the reviewer, never a threshold that auto-approves anything." },
+    "source_count": { "type": "number", "description": "How many independent sources back the evidence this was drafted from." },
+    "review_status": {
+      "type": "string",
+      "enum": ["pending_review", "approved", "rejected", "needs_more_evidence"],
+      "default": "pending_review",
+      "description": "Only a human admin's own manual update (in the review-queue UI) may ever set this to 'approved' -- no backend function writes this field to 'approved'."
+    },
+    "reviewer_id": { "type": "string" },
+    "reviewer_name": { "type": "string" },
+    "reviewed_at": { "type": "string", "format": "date-time" },
+    "reviewer_notes": { "type": "string" },
+    "version": { "type": "number", "default": 1 },
+    "expiry_review_date": { "type": "string", "format": "date-time", "description": "Mandatory periodic re-review date -- even an approved rule is never treated as permanently settled." },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["rule_text", "rule_category", "review_status", "created_at"],
+  "rls": {
+    "read": { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

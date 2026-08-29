@@ -1,0 +1,38 @@
+{
+  "name": "IncidentScanRun",
+  "type": "object",
+  "description": "One row per Evidence Monitoring pipeline run (runIncidentEvidenceOrchestrator) -- a structured audit trail of what a run searched, discovered, analyzed, evaluated, and proposed, plus any per-item failures. Same 'small, standalone, admin-only operational log' shape as ExternalSearchLog/CrisisReroute/ContactAttempt -- never folded into the hash-chained AuditLog, which is reserved for real safety decisions. failures[] holds error messages only, never article bodies or PHI.",
+  "properties": {
+    "run_id": { "type": "string" },
+    "trigger": { "type": "string", "enum": ["scheduled", "manual", "dry_run"] },
+    "started_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "queries_run": { "type": "array", "items": { "type": "string" } },
+    "counts": {
+      "type": "object",
+      "description": "{ discovered, deduped, analyzed, analysis_failures, evaluated, rules_proposed, review_tasks_created }"
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": { "type": "string" },
+          "url_or_query": { "type": "string" },
+          "error_message": { "type": "string" }
+        }
+      },
+      "description": "Error text only -- never article bodies or patient data."
+    },
+    "model_version": { "type": "string" },
+    "dry_run": { "type": "boolean", "default": false },
+    "status": { "type": "string", "enum": ["running", "completed", "completed_with_errors", "failed"], "default": "running" }
+  },
+  "required": ["run_id", "trigger", "started_at", "status"],
+  "rls": {
+    "read": { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "ProviderSafetyReviewTask",
+  "type": "object",
+  "description": "A human review task created by proposeSafetyLearning ONLY when >=2 corroborated public-incident reports (IncidentCandidate) resolve to the SAME already-onboarded Morales partner with real confidence. This is never a public warning and never a suspension by itself -- it is a private, admin-only task asking a person to look into it, matching VerificationReview's own shape and discipline. A single, uncorroborated incident can never create one of these.",
+  "properties": {
+    "matched_partner_type": { "type": "string", "enum": ["doctor", "travel_agency", "taxi_service", "companion", "security_agency"] },
+    "matched_partner_id": { "type": "string" },
+    "matched_partner_name_as_reported": { "type": "string", "description": "The clinic/provider name exactly as the evidence reported it -- kept alongside matched_partner_id since entity resolution is a best-effort score, not a certainty." },
+    "match_confidence": { "type": "number", "minimum": 0, "maximum": 100 },
+    "incident_ids": { "type": "array", "items": { "type": "string" }, "description": "The >=2 corroborated IncidentCandidate rows that triggered this task." },
+    "status": {
+      "type": "string",
+      "enum": ["open", "in_review", "resolved_no_action", "resolved_action_taken", "dismissed"],
+      "default": "open"
+    },
+    "priority": { "type": "string", "enum": ["low", "medium", "high", "critical"], "default": "medium" },
+    "evidence_summary": { "type": "object", "description": "Sanitized summary of what the evidence shows -- incident types, dates, reliability tiers. Never raw article bodies." },
+    "admin_notes": { "type": "string" },
+    "sla_due_at": { "type": "string", "format": "date-time" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["matched_partner_type", "incident_ids", "status", "created_at"],
+  "rls": {
+    "read": { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

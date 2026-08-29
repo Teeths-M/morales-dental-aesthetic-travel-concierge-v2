@@ -5567,3 +5567,142 @@ test('VIRTUAL CONSULTATION: the interpreter-mismatch banner copy never claims AI
   expect(consentSrc, 'the translation consent copy must also carry the same "not a substitute I should rely on" disclosure')
     .toMatch(/not a substitute I should rely on/);
 });
+
+// ── Evidence Monitoring pipeline ─────────────────────────────────────────────
+// A monthly, admin-only pipeline that discovers public medical-tourism safety
+// incidents (Tavily search), extracts structured facts (Core.InvokeLLM, with a
+// deterministic keyword fallback), scores source reliability and corroboration
+// deterministically, and proposes human-reviewable observations — never an
+// automatic diagnosis, public statement, or clinic block. These invariants
+// guard the same discipline this app already applies to DiscoveredProviderCandidate/
+// McareKnowledge, plus the one hard boundary unique to this feature: it must
+// never touch the deterministic SAFE-T safety-decision engine.
+
+test('EVIDENCE MONITORING: IncidentCandidate / ProposedSafetyRule / ProviderSafetyReviewTask / IncidentScanRun are admin-only and carry no patient PHI field', () => {
+  const rlsAdminOnly = (op) => new RegExp(
+    `"${op}"\\s*:\\s*\\{\\s*"user_condition"\\s*:\\s*\\{\\s*"role"\\s*:\\s*"admin"\\s*\\}\\s*\\}`
+  );
+  const forbiddenFieldKey = /"(client_name|client_email|client_phone|patient_name|patient_email|medical_\w*|diagnosis|condition)"\s*:\s*\{/i;
+
+  for (const entityFile of [
+    'base44/entities/IncidentCandidate.jsonc',
+    'base44/entities/ProposedSafetyRule.jsonc',
+    'base44/entities/ProviderSafetyReviewTask.jsonc',
+    'base44/entities/IncidentScanRun.jsonc',
+  ]) {
+    const entity = read(entityFile);
+    for (const op of ['read', 'create', 'update', 'delete']) {
+      expect(entity, `${entityFile}.${op} must be admin-gated`).toMatch(rlsAdminOnly(op));
+    }
+    expect(entity, `${entityFile} must never declare a patient-identity or clinical field`).not.toMatch(forbiddenFieldKey);
+  }
+
+  // IncidentCandidate's own lifecycle/corroboration enums must never contain
+  // a 'confirmed'/'verified' value — a public article is evidence, never a
+  // verdict, no matter how many sources agree.
+  const candidateEntity = read('base44/entities/IncidentCandidate.jsonc');
+  expect(candidateEntity, "IncidentCandidate's status/corroboration_status enums must never include a 'confirmed' or 'verified' value")
+    .not.toMatch(/"(status|corroboration_status|source_reliability_tier)"\s*:\s*\{[^}]*"(confirmed|verified)"/);
+});
+
+test('EVIDENCE MONITORING: ProposedSafetyRule.review_status can only ever be set to approved by a human admin\'s own manual update', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const stages = strip(read('base44/shared/incidentPipelineStages.ts'));
+
+  expect(stages, 'the pipeline must only ever create a rule pending_review, never approved')
+    .toMatch(/review_status:\s*['"]pending_review['"]/);
+  expect(stages, 'no pipeline function may ever write review_status: approved')
+    .not.toMatch(/review_status:\s*['"]approved['"]/);
+
+  // Only the admin review-queue UI may write 'approved' — confirmed as the
+  // one real writer of that literal anywhere in this feature. The UI passes
+  // 'approved' into a shorthand-property update call, so the check is in
+  // two parts: the Approve button actually calls act('approved'), and the
+  // act() function's own body writes review_status (shorthand) onto the
+  // entity — i.e. this is the one real path that value can ever reach.
+  const adminPage = read('src/pages/AdminIncidentEvidence.jsx');
+  expect(adminPage, "the Approve button must call act('approved')")
+    .toMatch(/onClick=\{\(\) => act\('approved'\)\}/);
+  expect(adminPage, 'act() must write review_status onto ProposedSafetyRule.update')
+    .toMatch(/ProposedSafetyRule\.update\(rule\.id,\s*\{\s*review_status,/);
+});
+
+test('EVIDENCE MONITORING: nothing in this pipeline touches the deterministic SAFE-T safety-decision engine', () => {
+  // The single hardest boundary this feature must never cross — "do not
+  // diagnose patients... do not automatically block a clinic based on
+  // allegations." Checked across every real source file this feature adds.
+  const forbidden = /safeTEngine|computeSafeT\b|SafeTScreening|risk_level\s*:/;
+  const files = [
+    'base44/shared/incidentPipelineStages.ts',
+    'base44/shared/incidentSourceQuality.ts',
+    'base44/shared/incidentTextAnalysis.ts',
+    'base44/functions/scanIncidentEvidence/entry.ts',
+    'base44/functions/analyzeIncidentEvidence/entry.ts',
+    'base44/functions/evaluateIncidentEvidence/entry.ts',
+    'base44/functions/proposeSafetyLearning/entry.ts',
+    'base44/functions/runIncidentEvidenceOrchestrator/entry.ts',
+  ];
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const file of files) {
+    const src = strip(read(file));
+    expect(src, `${file} must never reference the deterministic SAFE-T engine or write a risk_level`).not.toMatch(forbidden);
+  }
+});
+
+test('EVIDENCE MONITORING: a ProviderSafetyReviewTask is only ever created from >=2 corroborated incidents sharing a matched partner', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const stages = strip(read('base44/shared/incidentPipelineStages.ts'));
+
+  expect(stages, "grouping for a review task must exclude anything other than 'corroborated' evidence")
+    .toMatch(/corroboration_status\s*!==\s*['"]corroborated['"]\)\s*continue/);
+  expect(stages, 'a review task must never be created from fewer than 2 grouped incidents')
+    .toMatch(/rows\.length\s*<\s*2\)\s*continue/);
+});
+
+test('EVIDENCE MONITORING: evaluateIncidentEvidence never marks corroborated off a single source alone', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const stages = strip(read('base44/shared/incidentPipelineStages.ts'));
+
+  // The default is single_source_unverified, and any escalation away from
+  // it is structurally gated on at least one real match existing first.
+  expect(stages, 'corroboration_status must default to single_source_unverified')
+    .toMatch(/let corroboration_status:[^=]*=\s*'single_source_unverified'/);
+  expect(stages, 'escalating past single_source_unverified must be gated on matches.length > 0')
+    .toMatch(/if\s*\(matches\.length\s*>\s*0\)\s*\{/);
+});
+
+test('EVIDENCE MONITORING: all 5 pipeline functions are cronAuthorized-gated', () => {
+  for (const fn of [
+    'scanIncidentEvidence', 'analyzeIncidentEvidence', 'evaluateIncidentEvidence',
+    'proposeSafetyLearning', 'runIncidentEvidenceOrchestrator',
+  ]) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must import cronAuthorized`).toMatch(/from '\.\.\/\.\.\/shared\/cronAuth\.ts'/);
+    expect(src, `${fn} must actually call cronAuthorized before doing work`).toMatch(/cronAuthorized\(req, base44\)/);
+  }
+});
+
+test('EVIDENCE MONITORING: a discovered article snippet is always bounded, never the full article body', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const stages = strip(read('base44/shared/incidentPipelineStages.ts'));
+  expect(stages, 'the scan stage must truncate the snippet before persisting it')
+    .toMatch(/snippet:\s*truncateToWords\(item\.snippet/);
+});
+
+test('EVIDENCE MONITORING: this feature grants zero new M-Care agent tools — no Publish-order risk on the agent side', () => {
+  const raw = read('base44/agents/m_care.jsonc');
+  const agentConfig = JSON.parse(raw);
+
+  for (const fn of [
+    'scanIncidentEvidence', 'analyzeIncidentEvidence', 'evaluateIncidentEvidence',
+    'proposeSafetyLearning', 'runIncidentEvidenceOrchestrator',
+  ]) {
+    expect(raw, `${fn} must never be granted as an M-Care agent tool`)
+      .not.toMatch(new RegExp(`"function_name"\\s*:\\s*"${fn}"`));
+  }
+  for (const entityName of ['IncidentCandidate', 'ProposedSafetyRule', 'ProviderSafetyReviewTask', 'IncidentScanRun']) {
+    expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
+      .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
+  }
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(113);
+});
