@@ -228,6 +228,14 @@
  *   right, no change. `.robotBrainGlow`'s `inset` shrank from -8px to -4px
  *   — a smaller, tighter blur radius so it reads as a clean hologram rather
  *   than a large glowing shape.
+ *
+ *   2026-08-29, removed entirely: Portia decided she no longer wanted the
+ *   red brain hologram at all. Removed the whole `BrainCircuit`/glow/ring/
+ *   spark render block, its now-unused `motion`/`AnimatePresence`
+ *   (framer-motion) and `BrainCircuit` (lucide-react) imports, and the
+ *   `THINKING_RED` constant. `activityState === 'thinking'` currently has no
+ *   special face-level indicator of its own — the restless eye-glance
+ *   (`scheduleGlance`'s sibling effect above) is the only visible change.
  * - speaking: eyes settle to an attentive, forward, center look.
  *
  * `gazeOverride`/`blinkTrigger` (both optional) let a caller force a gaze
@@ -251,8 +259,6 @@
  * scaleY — not a second dark shape covering anything).
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BrainCircuit } from 'lucide-react';
 import RobotAvatar from './RobotAvatar';
 import bodySrc from '@/assets/m-safe-robot-body-nombadge.webp';
 import eyeLeftSrc from '@/assets/m-safe-robot-eye-left.webp';
@@ -261,7 +267,6 @@ import mBadgeSrc from '@/assets/m-safe-robot-mbadge.webp';
 
 const BRIGHT_GOLD = '#FFD24A';
 const CYAN = '#22D3EE';
-const THINKING_RED = '#FF2D3D';
 
 // The real, shared native frame every layered asset was cut from.
 const NATURAL_W = 349;
@@ -681,102 +686,14 @@ export default function RobotAvatarImage({
         </div>
       </div>
 
-      {/* Thinking: a small floating "brain" hologram above the head — the
-          ONE thinking-state indicator now (Portia asked to drop the red
-          M-badge effect and the "ANALYZING" label entirely, leaving just
-          this). A real animate-in/animate-out (framer-motion's
-          AnimatePresence, the one usage of it in this file — everything
-          else here is plain CSS, but a genuine "animate out cleanly,
-          unmount after" needs it). Deliberately a sibling of
-          .robotAvatarFloat, not a child of it — floats in a fixed spot
-          regardless of the head-turn angle, rather than turning along
-          with the head. */}
-      {showActivityOverlays && (
-        <AnimatePresence>
-          {activityState === 'thinking' && (
-            <motion.div
-              key="brain"
-              data-testid="robot-brain-icon"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ duration: animated ? 0.35 : 0, ease: 'easeOut' }}
-              style={{
-                position: 'absolute', top: -26, left: '50%', x: '-50%',
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                zIndex: 15, pointerEvents: 'none',
-              }}
-            >
-              <div className="robotBrainGlowWrap" data-activity-state={cssActivityState}>
-                <span className="robotBrainGlow" />
-                <span className="robotBrainRing" />
-                <span className="robotBrainSpark robotBrainSpark0" />
-                <span className="robotBrainSpark robotBrainSpark1" />
-                <span className="robotBrainSpark robotBrainSpark2" />
-                <BrainCircuit
-                  size={`${Math.max(16, Math.round(size * 0.14))}`}
-                  color={THINKING_RED}
-                  strokeWidth={2}
-                  style={{
-                    position: 'relative', zIndex: 2,
-                    filter: `drop-shadow(0 0 6px ${THINKING_RED}e6)`,
-                    // Lucide's BrainCircuit renders on its side by default —
-                    // a fixed 90deg clockwise correction (never animated, no
-                    // continuous spin) so the stem points down toward the
-                    // head, like an upright brain icon. The glow/ring/spark
-                    // elements around it are all symmetric circles/dots, so
-                    // this rotation only needs to apply to the icon itself.
-                    transform: 'rotate(90deg)',
-                  }}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
+      {/* 2026-08-29: the red brain hologram that used to render here while
+          thinking was removed outright — Portia no longer wanted it. See
+          this file's top doc comment ("2026-08-29, removed entirely") for
+          the full history. `activityState === 'thinking'` currently has no
+          special face-level indicator of its own. */}
 
       <style>{`
         .robotAvatarFloat { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-
-        /* Thinking: the floating brain hologram — a soft glow, a thin
-           breathing "processing" ring, and 3 staggered fading sparks, all
-           behind the real lucide BrainCircuit icon. Scoped to
-           [data-activity-state="thinking"] the same way as the M-badge
-           pulse above, so reduced-motion renders the icon+label statically
-           with no animation. */
-        .robotBrainGlowWrap { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-        .robotBrainGlow {
-          position: absolute; inset: -4px; border-radius: 50%; z-index: 0;
-          background: radial-gradient(circle, ${THINKING_RED}66 0%, ${THINKING_RED}00 70%);
-        }
-        [data-activity-state="thinking"] .robotBrainGlow { animation: robotBrainGlowPulse 2.2s ease-in-out infinite; }
-        @keyframes robotBrainGlowPulse {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.15); }
-        }
-        .robotBrainRing {
-          position: absolute; inset: 3px; border-radius: 50%; z-index: 1;
-          border: 1px solid ${THINKING_RED}99;
-        }
-        [data-activity-state="thinking"] .robotBrainRing { animation: robotBrainRingPulse 2.2s ease-in-out infinite; }
-        @keyframes robotBrainRingPulse {
-          0%, 100% { opacity: 0.35; transform: scale(0.9); }
-          50% { opacity: 0.85; transform: scale(1.2); }
-        }
-        .robotBrainSpark {
-          position: absolute; width: 3px; height: 3px; border-radius: 50%; z-index: 1;
-          background: #FF6B78; box-shadow: 0 0 4px 1px ${THINKING_RED}cc; opacity: 0;
-        }
-        .robotBrainSpark0 { top: 0; left: 8px; }
-        .robotBrainSpark1 { top: 14px; right: -4px; }
-        .robotBrainSpark2 { bottom: 2px; left: 0; }
-        [data-activity-state="thinking"] .robotBrainSpark0 { animation: robotBrainSparkFade 1.8s ease-in-out infinite; }
-        [data-activity-state="thinking"] .robotBrainSpark1 { animation: robotBrainSparkFade 1.8s ease-in-out infinite 0.5s; }
-        [data-activity-state="thinking"] .robotBrainSpark2 { animation: robotBrainSparkFade 1.8s ease-in-out infinite 1s; }
-        @keyframes robotBrainSparkFade {
-          0%, 100% { opacity: 0; }
-          50% { opacity: 1; }
-        }
 
         /* Speaking: an ADDITIVE glow over each real eye — never a cover */
         .robotEyeGlow { animation: robotEyePulse 0.9s ease-in-out infinite; }
