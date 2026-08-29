@@ -1,4 +1,4 @@
-const CACHE_NAME      = 'morales-vault-v5'; // v5: fetch handler now bypasses Vite dev-server module requests (see below) — bumped so a device with a stale v4 worker picks up the fix
+const CACHE_NAME      = 'morales-vault-v6'; // v6: 2026-08-29 — a published, verified-correct M-Care hero change wasn't showing up for a real user even after a hard refresh; every .js/.css/image asset is cache-first here (see below), and this version string is what forces a stale device's worker through a fresh install→activate cycle (which deletes every non-matching cache) rather than continuing to serve whatever it already cached under v5
 const TILE_CACHE_NAME = 'morales-map-tiles-v2';
 // Esri World Imagery + labels overlay (primary) + OSM fallback
 const TILE_RE = /^https:\/\/(server\.arcgisonline\.com|[abc]\.tile\.openstreetmap\.org)\//;
