@@ -85,7 +85,6 @@ import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 import { describeAccuracy } from '@/lib/mapLinks';
 import { isSandboxed } from '@/lib/isSandboxed';
 import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
-import HologramPlatform from './msafe-plus/HologramPlatform';
 import CapabilityPill from './msafe-plus/CapabilityPill';
 import LiveSessionBadge from './msafe-plus/LiveSessionBadge';
 import { CAPABILITIES } from './msafePlusConfig';
@@ -3031,49 +3030,39 @@ export default function MCareOrb() {
                   <div style={{ alignSelf: 'flex-start', textAlign: 'left', width: '100%' }}>
                     {titleSubtitleBlock}
                   </div>
-                  {/* Robot + hologram: light mode reuses the polished
-                      HologramPlatform ring/bloom visual already built for
-                      /m-care's own "M-Safe+" page (same relative-wrapper +
-                      platform-underneath + robot-in-normal-flow-on-top
-                      composition that page uses), with the REAL <LivingOrb>
-                      (not bare RobotAvatarImage) so every existing dev-test
-                      override/gaze/blink/amplitude/flashToken wire-up keeps
-                      working exactly as before. Dark mode keeps the original
-                      bare orb, naturalAspect: the real robot photo isn't
-                      square (~1.16:1) — width-constrained with auto height.
-                      2026-08-29 follow-up: Portia found even the reduced
-                      head-turn from the prior round still read as "rocking
-                      back and forth" on a real screen, and asked for the
-                      rings/shadow/dust to hold still too — "eyes animation
-                      only." HologramPlatform's `motionless` freezes its
-                      rotation/pulse/drift (visuals unchanged), LivingOrb's
-                      `eyesOnly` zeroes its own tilt/breathing pulse plus
-                      RobotAvatarImage's head-turn, and the ambient float
-                      wrapper this column used to add (`.mcare-desktop-float`)
-                      is gone outright — blink + gaze are the only motion
-                      left for this composition. */}
+                  {/* Robot: dark mode keeps the original bare orb,
+                      naturalAspect: the real robot photo isn't square
+                      (~1.16:1) — width-constrained with auto height.
+                      2026-08-29 follow-up history: this column briefly wore
+                      the msafe-plus HologramPlatform ring/bloom visual
+                      underneath the robot, then had its motion reduced to
+                      "eyes animation only," then Portia asked for the rings
+                      and the glowing shadow/base lines to be removed
+                      outright, just the robot — HologramPlatform is no
+                      longer rendered here at all (still used unmodified by
+                      /m-care's own MSafeIdentityColumn.jsx). LivingOrb's
+                      `eyesOnly` still zeroes its own tilt/breathing pulse
+                      plus RobotAvatarImage's head-turn — blink + gaze are
+                      the only motion left for this composition. */}
                   {useDarkTheme ? (
                     <div style={{ marginTop: 20 }}>
                       <LivingOrb state={orbState} size={280} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                     </div>
                   ) : (
-                    <div className="relative" style={{ width: 240, height: 240, marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <HologramPlatform size={240} motionless />
-                      <div style={{ position: 'relative', zIndex: 2 }}>
-                        <LivingOrb
-                          state={orbState}
-                          size={190}
-                          flashToken={bargeInFlashToken}
-                          naturalAspect
-                          inputFocused={inputFocused}
-                          activityOverride={testActivityOverride}
-                          gazeOverride={testGazeOverride}
-                          blinkTrigger={testBlinkTrigger}
-                          amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude}
-                          eyesOnly
-                          suppressAtmosphere
-                        />
-                      </div>
+                    <div style={{ marginTop: 20 }}>
+                      <LivingOrb
+                        state={orbState}
+                        size={190}
+                        flashToken={bargeInFlashToken}
+                        naturalAspect
+                        inputFocused={inputFocused}
+                        activityOverride={testActivityOverride}
+                        gazeOverride={testGazeOverride}
+                        blinkTrigger={testBlinkTrigger}
+                        amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude}
+                        eyesOnly
+                        suppressAtmosphere
+                      />
                     </div>
                   )}
                   {/* TEMPORARY, dev-only test panel — forces each robot
