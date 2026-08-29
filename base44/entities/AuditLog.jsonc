@@ -1,6 +1,7 @@
 {
   "name": "AuditLog",
   "type": "object",
+  "description": "The platform-wide, tamper-evident hash-chained event ledger. Each entry stores a SHA-256 prev_hash pointing at the previous entry (GENESIS for the first). Used by TrustScan to audit every verification access \u2014 consent recorded, inquiry created/completed, evidence accessed, profile viewed, review created/decided, credential recheck failed, booking suspended/cleared, consent revoked, manual review requested. VerificationAuditLog is consolidated INTO this entity rather than duplicated as a parallel chain.",
   "properties": {
     "event_type": {
       "type": "string",
@@ -64,7 +65,21 @@
         "virtual_consultation_plan_submitted",
         "provider_concern_reported",
         "provider_booking_suspended",
-        "provider_booking_suspension_cleared"
+        "provider_booking_suspension_cleared",
+        "trustscan_consent_recorded",
+        "trustscan_consent_revoked",
+        "trustscan_inquiry_created",
+        "trustscan_inquiry_completed",
+        "trustscan_evidence_accessed",
+        "trustscan_profile_viewed",
+        "trustscan_review_created",
+        "trustscan_review_decided",
+        "trustscan_manual_review_requested",
+        "trustscan_credential_recheck_failed",
+        "trustscan_credential_recheck_scheduled",
+        "trustscan_booking_suspended",
+        "trustscan_booking_suspension_cleared",
+        "trustscan_fraud_signal_recorded"
       ]
     },
     "actor_id": {

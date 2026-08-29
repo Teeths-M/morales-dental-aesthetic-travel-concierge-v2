@@ -1,0 +1,147 @@
+{
+  "name": "FraudSignal",
+  "type": "object",
+  "description": "A single fraud signal recorded during a verification run \u2014 presentation-attack/deepfake detection, document tamper, face mismatch, sanctions hit, adverse media, velocity, duplicate identity, or inconsistent business data. Each signal is ONE input among many: an uncertain AI-image detector must NEVER be the sole basis for rejecting a person. A signal's is_sole_basis is always false by design. The subject never sees raw signals \u2014 only the final status (Verified / Needs review / Unable to verify). Distinct from FraudIndicator (the shared threat-intel table for cross-matching NEW applicants by email/phone/domain) \u2014 this is a per-verification-run signal tied to one IdentityVerification or PartnerVerification.",
+  "properties": {
+    "verification_id": {
+      "type": "string",
+      "description": "The IdentityVerification or PartnerVerification id this signal came from."
+    },
+    "verification_kind": {
+      "type": "string",
+      "enum": [
+        "identity",
+        "partner"
+      ]
+    },
+    "subject_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for cross-reference \u2014 NOT exposed to the subject (admin-only read)."
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "presentation_attack",
+        "deepfake_detected",
+        "document_tamper",
+        "face_mismatch",
+        "sanctions_hit",
+        "adverse_media",
+        "velocity",
+        "duplicate_identity",
+        "inconsistent_business",
+        "expired_credential",
+        "registry_mismatch"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "confidence_score": {
+      "type": "number",
+      "description": "0-100 confidence in the signal itself."
+    },
+    "detected_by": {
+      "type": "string",
+      "enum": [
+        "vendor",
+        "system",
+        "admin",
+        "registry"
+      ]
+    },
+    "source_name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "description": "Plain-English explanation of what was detected and why it's a signal."
+    },
+    "is_sole_basis": {
+      "type": "boolean",
+      "default": false,
+      "description": "Always false \u2014 a signal is never the sole basis for a denial. Structural guard rail."
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false
+    },
+    "resolved_by": {
+      "type": "string"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolution_note": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "verification_id",
+    "verification_kind",
+    "signal_type",
+    "severity"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "name": "IdentityVerification",
+  "type": "object",
+  "description": "A person's NIST-aligned identity proofing run through the Persona KYC adapter: live document capture, document-liveness, MRZ/OCR, expiry, tamper detection, an active selfie liveness challenge ('Turn left', 'Turn right', 'Blink', 'Look at the dot'), and face-match against the document portrait. presentation_attack/deepfake detection is recorded as ONE fraud signal (FraudSignal), never the sole basis for a rejection. The user only ever sees a status: Verified / Needs review / Unable to verify / Expired document. Raw document images and selfies stay with Persona; M-Care stores only the result, vendor inquiry reference, evidence metadata, consent reference, and retention schedule. Distinct from PartnerVerification (the business/license/sanctions side of partner onboarding) \u2014 this is the person-identity side, used for both patients (subject_type=user) and partner principals (subject_type=partner).",
+  "properties": {
+    "subject_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "partner"
+      ],
+      "description": "Who is being identity-proofed: a patient (user) or a partner principal (doctor/driver/etc. before business verification)."
+    },
+    "subject_user_id": {
+      "type": "string",
+      "description": "For subject_type=user, the patient's user id. For subject_type=partner, the partner's user id (partners are users too)."
+    },
+    "subject_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the person owns their own identity verification records."
+    },
+    "subject_name": {
+      "type": "string"
+    },
+    "subject_partner_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "security_agency",
+        "hotel",
+        "interpreter"
+      ],
+      "description": "For subject_type=partner, the kind of partner principal being identity-proofed."
+    },
+    "subject_partner_id": {
+      "type": "string",
+      "description": "For subject_type=partner, the partner entity record id."
+    },
+    "country": {
+      "type": "string",
+      "description": "Country of the identity document \u2014 drives which document types are offered."
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "passport",
+        "drivers_license",
+        "national_id",
+        "residence_permit"
+      ],
+      "description": "The country-supported document type the subject chose and presented."
+    },
+    "verification_level": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "identity_verified",
+        "partner_verified",
+        "medical_provider_approved"
+      ],
+      "description": "The trust tier this run is attempting. basic=email/phone only; identity_verified=document+liveness; partner_verified=business verification; medical_provider_approved=license verified by primary source + human review. Never one generic 'Verified' badge."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "verified",
+        "needs_review",
+        "unable_to_verify",
+        "expired_document",
+        "failed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "The only user-facing outcome. 'needs_review' and 'unable_to_verify' never auto-deny \u2014 they route to a human VerificationReview. 'expired_document' is its own honest status."
+    },
+    "persona_inquiry_id": {
+      "type": "string",
+      "description": "Persona Inquiry id backing this run (the vendor reference)."
+    },
+    "persona_inquiry_status": {
+      "type": "string"
+    },
+    "persona_template_id": {
+      "type": "string",
+      "description": "The Persona Inquiry Template id used \u2014 sandbox vs production."
+    },
+    "document_checks": {
+      "type": "object",
+      "properties": {
+        "mrz_extracted": {
+          "type": "boolean"
+        },
+        "expiry_valid": {
+          "type": "boolean"
+        },
+        "expiry_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "tamper_detected": {
+          "type": "boolean"
+        },
+        "document_liveness": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "not_checked",
+            "inconclusive"
+          ]
+        },
+        "nfc_chip_read": {
+          "type": "string",
+          "enum": [
+            "supported_passed",
+            "supported_failed",
+            "not_supported",
+            "not_checked"
+          ]
+        },
+        "front_captured": {
+          "type": "boolean"
+        },
+        "back_captured": {
+          "type": "boolean"
+        }
+      },
+      "description": "Sanitized document-authenticity check results. No raw document data \u2014 only pass/fail booleans and the expiry date (needed for the 6-month sentinel rule)."
+    },
+    "selfie_liveness": {
+      "type": "object",
+      "properties": {
+        "challenge_completed": {
+          "type": "boolean"
+        },
+        "challenges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "e.g. ['turn_left','turn_right','blink','look_at_dot']"
+        },
+        "face_match_score": {
+          "type": "number",
+          "description": "0-100 similarity to the document portrait"
+        },
+        "face_match_passed": {
+          "type": "boolean"
+        }
+      },
+      "description": "Active selfie liveness challenge outcome + face-match result."
+    },
+    "presentation_attack_signal": {
+      "type": "object",
+      "properties": {
+        "detected": {
+          "type": "boolean"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "description": "Presentation-attack / deepfake detection result. Recorded as ONE fraud signal \u2014 never the sole basis for rejection. An uncertain AI-image detector must never reject a person alone."
+    },
+    "confidence_score": {
+      "type": "number",
+      "description": "Overall 0-100 confidence in the verification outcome, computed by the adapter from the sub-checks."
+    },
+    "result_summary": {
+      "type": "string",
+      "description": "Plain-English summary of what was checked and the outcome \u2014 shown to the subject and reviewers. Never raw PII."
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "VerificationEvidence record ids backing each sub-check."
+    },
+    "consent_id": {
+      "type": "string",
+      "description": "The ConsentRecord id capturing explicit consent before this verification ran."
+    },
+    "review_id": {
+      "type": "string",
+      "description": "If routed to manual review, the VerificationReview task id."
+    },
+    "retention_policy_key": {
+      "type": "string",
+      "description": "Key into the retention schedule (per document type, country, role) \u2014 drives when M-Care auto-deletes its metadata copy."
+    },
+    "retention_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When M-Care's metadata copy of this verification is scheduled for deletion (unless a legal hold or explicit consent requires otherwise)."
+    },
+    "sandbox": {
+      "type": "boolean",
+      "default": true,
+      "description": "True while the Persona adapter runs against sandbox \u2014 results are not authoritative until production keys are confirmed."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "subject_type",
+    "subject_email",
+    "document_type",
+    "verification_level",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "name": "ConsentRecord",
+  "type": "object",
+  "description": "Explicit, timestamped consent captured BEFORE each verification runs and BEFORE any document is shared \u2014 a separate record per consent act, never a blanket one. Covers identity_verification (document + liveness + face-match), biometric_processing (active selfie liveness), document_share (sharing a vaulted document with a clinic/partner), partner_verification (business/license/sanctions checks), and data_processing (sharing limited data with subprocessors to coordinate care). Includes the consent text version, the subject's explicit-tap/signed/verbal method, IP, user agent, validity window, and revocation state. Required before createTrustScanInquiry proceeds and before any passport/ID is released to a partner.",
+  "properties": {
+    "subject_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the subject owns their own consent records."
+    },
+    "subject_user_id": {
+      "type": "string"
+    },
+    "subject_name": {
+      "type": "string"
+    },
+    "consent_type": {
+      "type": "string",
+      "enum": [
+        "identity_verification",
+        "biometric_processing",
+        "document_share",
+        "partner_verification",
+        "data_processing"
+      ]
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Plain-English description of what the subject is consenting to."
+    },
+    "consent_given": {
+      "type": "boolean",
+      "default": false
+    },
+    "consent_method": {
+      "type": "string",
+      "enum": [
+        "explicit_tap",
+        "signed",
+        "verbal"
+      ],
+      "default": "explicit_tap"
+    },
+    "consent_text_version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "recipient": {
+      "type": "string",
+      "description": "For document_share, the partner/clinic the document would be shared with."
+    },
+    "related_verification_id": {
+      "type": "string",
+      "description": "The IdentityVerification or PartnerVerification id this consent gates."
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "user_agent": {
+      "type": "string"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "retention_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "subject_email",
+    "consent_type",
+    "purpose",
+    "consent_given"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

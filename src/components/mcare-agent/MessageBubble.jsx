@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2, Play, Pause, MapPin, ClipboardCopy } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, Clock, Paperclip, CheckCheck, Download, Volume2, Play, Pause, MapPin, ClipboardCopy, ShieldCheck } from 'lucide-react';
 import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
 import SafetyGateCard from '@/components/mcare-agent/SafetyGateCard';
 import DocumentScannerCard from '@/components/mcare/DocumentScannerCard';
@@ -144,6 +144,18 @@ const extractDriverMap = (raw) => {
   if (!match) return { text: raw.trim(), driverMap: null };
   const text = raw.replace(match[0], '').trim();
   return { text, driverMap: match[1].trim() };
+};
+
+// Extract a {{trustscan:LABEL}} token M-Care emits to launch the TrustScan
+// identity verification flow chat-driven. The UI strips the token and
+// renders a tappable button that opens the full-screen /trustscan capture
+// flow (consent + Persona document capture + active selfie liveness).
+const extractTrustScan = (raw) => {
+  if (!raw) return { text: '', trustScan: null };
+  const match = raw.match(/\{\{trustscan:([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), trustScan: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, trustScan: match[1].trim() || 'Verify my identity' };
 };
 
 // Extract every {{providerstatus:TIER|Name}} token M-Care emits — a single
@@ -776,7 +788,8 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
           const { text: t3b, media } = extractMedia(t3a);
           const { text: t3c, doctorMedia } = extractDoctorMedia(t3b);
           const { text: t3d, driverMap } = extractDriverMap(t3c);
-          const { text: t4, providerStatuses } = extractProviderStatus(t3d);
+          const { text: t3e, trustScan } = extractTrustScan(t3d);
+          const { text: t4, providerStatuses } = extractProviderStatus(t3e);
           // Final safety net: anything {{...}}-shaped that survived every
           // known extractor above (an unrecognized token, a format drift the
           // hardened regexes above still don't cover) must never reach the
@@ -859,6 +872,17 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
               {media && <ProcedureMediaCard query={media} />}
               {doctorMedia && <DoctorMediaCard name={doctorMedia.name} type={doctorMedia.type} url={doctorMedia.url} />}
               {driverMap && <DriverMapWidget transportId={driverMap} />}
+              {trustScan && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <a
+                    href="/trustscan"
+                    className={chipBase}
+                    style={{ borderColor: '#D4AF37', color: '#D4AF37', background: 'transparent' }}
+                  >
+                    <ShieldCheck className="w-3 h-3" /> {trustScan}
+                  </a>
+                </div>
+              )}
               {!isUser && text && typeof revealUpTo !== 'number' && !hasAudioAttachment && <SpeakButton text={text} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">

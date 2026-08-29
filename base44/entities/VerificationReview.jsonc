@@ -1,0 +1,167 @@
+{
+  "name": "VerificationReview",
+  "type": "object",
+  "description": "A human-review task created when an identity verification returns 'Needs review' or 'Unable to verify', when a subject appeals a false match, when a subject cannot complete facial verification (accessibility), or when M-Care flags a mismatch it observed during autonomous monitoring. Carries the sanitized evidence summary (never raw PII), the user's appeal note, assignment, priority, decision, and decision reason. M-Care may CREATE these tasks automatically but must never auto-decide them \u2014 a human reviews and records the outcome. The reviewer sees only what they need: the status, the evidence summary, and the appeal reason, never the raw document images.",
+  "properties": {
+    "verification_id": {
+      "type": "string",
+      "description": "The IdentityVerification or PartnerVerification id under review."
+    },
+    "verification_kind": {
+      "type": "string",
+      "enum": [
+        "identity",
+        "partner"
+      ]
+    },
+    "subject_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the subject owns their own review tasks (read + create appeal)."
+    },
+    "subject_name": {
+      "type": "string"
+    },
+    "review_type": {
+      "type": "string",
+      "enum": [
+        "manual_review",
+        "appeal",
+        "accessibility",
+        "false_match",
+        "expired_document",
+        "mismatch_flagged"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why the review was created \u2014 auto-detected trigger or user-submitted."
+    },
+    "user_note": {
+      "type": "string",
+      "description": "The subject's own appeal explanation (false match, accessibility need, etc.)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "decided",
+        "escalated",
+        "closed"
+      ],
+      "default": "open"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "assigned_reviewer_id": {
+      "type": "string"
+    },
+    "assigned_reviewer_name": {
+      "type": "string"
+    },
+    "evidence_summary": {
+      "type": "object",
+      "description": "Sanitized summary of the evidence the reviewer needs to decide \u2014 check names, results, sources, confidence. Never raw PII."
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "rejected",
+        "needs_more_info",
+        "escalated",
+        "pending"
+      ]
+    },
+    "decision_reason": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sla_due_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "verification_id",
+    "verification_kind",
+    "subject_email",
+    "review_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.subject_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

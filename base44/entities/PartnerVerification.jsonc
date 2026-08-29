@@ -1,10 +1,11 @@
 {
   "name": "PartnerVerification",
   "type": "object",
+  "description": "The higher-assurance onboarding verification record for clinics, doctors, drivers, hotels, interpreters, and travel partners \u2014 the business/license/sanctions side, distinct from IdentityVerification (the person-identity side). Extended for M-Care TrustScan to carry the Persona inquiry reference for the partner principal's identity proofing, the verification level reached, consent reference, evidence ids, license-registry lookup (source URL + checked date + expiry/recheck date + reviewer), sanctions/adverse-media screening, payout-account ownership, live video verification for high-risk partners, and the public-bookable + suspension flags. No medical provider becomes publicly bookable until a human reviewer approves (VerificationReview). Recurring CredentialRecheck records drive expiry sweeps; expiry/failure suspends NEW bookings, never auto-cancels existing patient travel/appointments (those escalate to a human).",
   "properties": {
     "partner_id": {
       "type": "string",
-      "description": "Reference to partner entity (Doctor/TravelAgency/TaxiService/Companion)"
+      "description": "Reference to partner entity (Doctor/TravelAgency/TaxiService/Companion/SecurityAgency)."
     },
     "partner_type": {
       "type": "string",
@@ -13,17 +14,30 @@
         "travel_agency",
         "taxi_service",
         "companion",
-        "security_agency"
+        "security_agency",
+        "hotel",
+        "interpreter"
       ],
-      "description": "Type of partner being verified. Was 'companion_agency' — a bug: every real caller (initiatePartnerVerification, providerCandidateMatch.ts's KnownProviderSignature union, DiscoveredProviderCandidate.matched_existing_partner_type) has always written 'companion', so verification records for companion partners were very likely failing this enum check. Do not confuse with ROLES.COMPANION_AGENCY in src/lib/constants.js — that's an unrelated user-role string, not this field."
+      "description": "Type of partner being verified. Was 'companion_agency' historically \u2014 every real caller writes 'companion'."
     },
     "partner_name": {
       "type": "string",
-      "description": "Partner or agency name for display"
+      "description": "Partner or agency name for display."
     },
     "partner_email": {
       "type": "string",
       "format": "email"
+    },
+    "verification_level": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "identity_verified",
+        "partner_verified",
+        "medical_provider_approved"
+      ],
+      "default": "basic",
+      "description": "The trust tier reached. Never one generic 'Verified' badge for all partner types."
     },
     "verification_status": {
       "type": "string",
@@ -37,7 +51,26 @@
         "suspended"
       ],
       "default": "pending",
-      "description": "Current verification stage"
+      "description": "Current verification stage."
+    },
+    "persona_inquiry_id": {
+      "type": "string",
+      "description": "Persona Inquiry id backing the partner principal's own identity proofing (document + liveness), when run."
+    },
+    "consent_id": {
+      "type": "string",
+      "description": "The ConsentRecord id capturing explicit consent before this partner verification ran."
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "VerificationEvidence record ids backing each business/license/sanctions check."
+    },
+    "trust_profile_id": {
+      "type": "string",
+      "description": "The TrustProfile id computed from this verification."
     },
     "documents_uploaded": {
       "type": "array",
@@ -89,9 +122,163 @@
         }
       }
     },
+    "business_identity": {
+      "type": "object",
+      "properties": {
+        "verified": {
+          "type": "boolean"
+        },
+        "verified_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "registration_number": {
+          "type": "string"
+        },
+        "registration_country": {
+          "type": "string"
+        },
+        "beneficial_contact_verified": {
+          "type": "boolean"
+        }
+      },
+      "description": "Legal business identity and beneficial-contact verification."
+    },
+    "license_registry": {
+      "type": "object",
+      "properties": {
+        "verified": {
+          "type": "boolean"
+        },
+        "registry_name": {
+          "type": "string"
+        },
+        "registry_url": {
+          "type": "string",
+          "description": "Official primary-source URL \u2014 never fabricated."
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiry_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "recheck_due_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "reviewer_id": {
+          "type": "string"
+        },
+        "reviewer_name": {
+          "type": "string"
+        }
+      },
+      "description": "Clinician/facility license verification against the relevant official primary registry \u2014 source URL, checked date, expiry/recheck date, reviewer."
+    },
+    "facility_consistency": {
+      "type": "object",
+      "properties": {
+        "address_phone_domain_consistent": {
+          "type": "boolean"
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "description": "Facility address/phone/domain consistency checks."
+    },
+    "payout_ownership": {
+      "type": "object",
+      "properties": {
+        "verified": {
+          "type": "boolean"
+        },
+        "verified_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payout_method": {
+          "type": "string"
+        }
+      },
+      "description": "Business payout-account ownership verification."
+    },
+    "insurance_accreditation": {
+      "type": "object",
+      "properties": {
+        "verified": {
+          "type": "boolean"
+        },
+        "evidence_uri": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Professional insurance/accreditation evidence where applicable."
+    },
+    "sanctions_screening": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "clear",
+            "flagged",
+            "manual_review"
+          ]
+        },
+        "provider": {
+          "type": "string",
+          "description": "Licensed approved screening provider."
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "adverse_media_flagged": {
+          "type": "boolean"
+        }
+      },
+      "description": "Sanctions, adverse-media, and fraud-risk screening through licensed approved providers, subject to applicable law."
+    },
+    "video_verification": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "True for high-risk partners."
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Daily.co room id."
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reviewer_id": {
+          "type": "string"
+        }
+      },
+      "description": "Live video verification for high-risk partners (Daily.co)."
+    },
     "ai_fraud_score": {
       "type": "number",
-      "description": "AI-generated fraud risk score (0-100, higher = riskier)",
+      "description": "AI-generated fraud risk score (0-100, higher = riskier).",
       "minimum": 0,
       "maximum": 100
     },
@@ -100,7 +287,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Specific fraud indicators detected by AI"
+      "description": "Specific fraud indicators detected by AI."
     },
     "ai_analysis_completed_at": {
       "type": "string",
@@ -108,15 +295,14 @@
     },
     "regulatory_context": {
       "type": "string",
-      "description": "Advisory note on the applicant's country's real regulatory/licensing body, researched via M-Care's mcareResearchAndLearn brain (live web research, self-caching). Shown to the human reviewer and folded into the document fraud-scan prompt — never used to auto-decide a verification outcome."
+      "description": "Advisory note on the applicant's country's real regulatory/licensing body. Never auto-decides the outcome."
     },
     "manual_review_notes": {
       "type": "string",
-      "description": "Notes from human reviewer"
+      "description": "Notes from human reviewer."
     },
     "manual_reviewer_id": {
-      "type": "string",
-      "description": "Admin user ID who performed manual review"
+      "type": "string"
     },
     "manual_reviewer_name": {
       "type": "string"
@@ -124,6 +310,28 @@
     "manual_review_completed_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "is_publicly_bookable": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only after human review approves. No medical provider becomes publicly bookable until then."
+    },
+    "suspended": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when a credential expired/failed \u2014 suspends NEW bookings, escalates existing cases to a human."
+    },
+    "suspended_reason": {
+      "type": "string"
+    },
+    "suspended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sandbox": {
+      "type": "boolean",
+      "default": true,
+      "description": "True while Persona runs in sandbox."
     },
     "verified_at": {
       "type": "string",
@@ -140,7 +348,7 @@
     "expires_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Verification expiry (re-verification required after)"
+      "description": "Verification expiry (re-verification required after)."
     },
     "denial_reason": {
       "type": "string"
@@ -155,7 +363,7 @@
     "auto_verified": {
       "type": "boolean",
       "default": false,
-      "description": "True if auto-verified by AI (fraud_score < 30)"
+      "description": "True if auto-verified by AI (fraud_score < 30)."
     },
     "requires_reverification": {
       "type": "boolean",
@@ -182,6 +390,9 @@
   "rls": {
     "read": {
       "$or": [
+        {
+          "data.partner_email": "{{user.email}}"
+        },
         {
           "user_condition": {
             "role": "admin"
@@ -211,6 +422,9 @@
     "update": {
       "$or": [
         {
+          "data.partner_email": "{{user.email}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
@@ -223,18 +437,9 @@
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

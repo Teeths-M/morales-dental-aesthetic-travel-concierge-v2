@@ -38,6 +38,8 @@ const TravelerGuardian       = lazy(() => import('@/pages/TravelerGuardian'));
 const BookVirtualConsultation = lazy(() => import('@/pages/BookVirtualConsultation'));
 const VirtualConsultationRoom = lazy(() => import('@/pages/VirtualConsultationRoom'));
 const DecisionRoom            = lazy(() => import('@/pages/DecisionRoom'));
+const TrustScan               = lazy(() => import('@/pages/TrustScan'));
+const TrustProfile            = lazy(() => import('@/pages/TrustProfile'));
 
 const CHECKOUT_ROLES = [
   ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
@@ -82,6 +84,8 @@ export const clientRoutes = (
       <Route path="/consult/:doctorId"                        element={<ErrorBoundary><BookVirtualConsultation /></ErrorBoundary>} />
       <Route path="/consultation/:consultationId/room"         element={<ErrorBoundary><VirtualConsultationRoom /></ErrorBoundary>} />
       <Route path="/consultation/:consultationId/decision"     element={<ErrorBoundary><DecisionRoom /></ErrorBoundary>} />
+      <Route path="/trustscan"                     element={<ErrorBoundary><TrustScan /></ErrorBoundary>} />
+      <Route path="/trust-profile"                 element={<ErrorBoundary><TrustProfile /></ErrorBoundary>} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>
