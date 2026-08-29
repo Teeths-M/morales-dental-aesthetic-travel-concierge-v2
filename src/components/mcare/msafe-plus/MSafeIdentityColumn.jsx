@@ -46,13 +46,13 @@ export default function MSafeIdentityColumn({ onSelectIntent, hasConversation })
         <div className="flex items-start gap-1">
           <h1
             className="font-serif font-semibold leading-none"
-            style={{ color: C.charcoal, fontSize: 'clamp(1.7rem, 3vw, 2.6rem)', letterSpacing: '-0.02em' }}
+            style={{ fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', color: C.charcoal, fontSize: 'clamp(1.9rem, 3vw, 2.8rem)', letterSpacing: '-0.02em' }}
           >
             {MSAFE_BRAND.title}
           </h1>
           <span
             className="font-serif font-semibold"
-            style={{ color: C.goldPlus, fontSize: '1rem', lineHeight: 1.1, marginTop: '0.2em' }}
+            style={{ fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', color: C.goldPlus, fontSize: '1.1rem', lineHeight: 1.1, marginTop: '0.2em' }}
           >
             {MSAFE_BRAND.plus}
           </span>
