@@ -731,12 +731,17 @@ function ToolCallDisplay({ toolCall }) {
 
 // accent (hex) overrides the user bubble color (M-Safe purple). showAvatar adds
 // the purple "M" avatar to agent messages; showMeta adds a time + delivery check
-// under user messages. showReaction adds a small emoji tapback on the patient's
-// own message when pickMessageReaction() finds a signal worth reacting to
-// (deterministic, client-side only — see src/lib/mcareReactionHeuristic.js,
-// the agent itself never decides this). All optional → default rendering is
-// unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
+// under user messages. showAssistantMeta (mobile M-Safe redesign, 2026-08-28)
+// separately adds a plain muted-gray timestamp under an ASSISTANT message — no
+// checkmark, since that's a delivery receipt meaningful only for the user's own
+// sent message. Kept as its own flag rather than folded into showMeta so every
+// existing caller (desktop MCareOrb, MCareAgent.jsx) keeps its exact current
+// rendering by default; only MCareOrb's mobile branch opts in. showReaction adds
+// a small emoji tapback on the patient's own message when pickMessageReaction()
+// finds a signal worth reacting to (deterministic, client-side only — see
+// src/lib/mcareReactionHeuristic.js, the agent itself never decides this). All
+// optional → default rendering is unchanged.
+export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showAssistantMeta = false, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
   // extraAudioUrl is a real, playable TTS audio URL attached client-side to
@@ -938,6 +943,9 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
             <span>{time}</span>
             <CheckCheck className="w-3 h-3" style={{ color: '#5EEAD4' }} />
           </div>
+        )}
+        {!isUser && showAssistantMeta && time && (
+          <div className="mt-1 text-[10px] text-muted-foreground opacity-80">{time}</div>
         )}
         {reaction && (
           <motion.span

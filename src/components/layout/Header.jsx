@@ -8,6 +8,7 @@ import ModeToggle from '@/components/home/ModeToggle';
 import { useTranslation, changeLanguage } from '@/i18n';
 import { CALM } from '@/lib/brandTokens';
 import { emitOpenMcare } from '@/lib/openMcareEvent';
+import { SITE_MENU_OPEN_EVENT } from '@/lib/openSiteMenuEvent';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 
 export default function Header() {
@@ -41,6 +42,16 @@ export default function Header() {
   const timeGreeting = hour < 12 ? t('dashboard.good_morning') : hour < 17 ? t('dashboard.good_afternoon') : t('dashboard.good_evening');
 
   useEffect(() => { setIsMobileOpen(false); }, [location.pathname]);
+
+  // Reverse direction of emitOpenMcare (openMcareEvent.js) — M-Care's own
+  // mobile header hamburger (MCareOrb.jsx) dispatches this to open the
+  // site's real nav tray, mirroring exactly what this hamburger button
+  // already does when tapped directly, rather than duplicating a second menu.
+  useEffect(() => {
+    const onOpenSiteMenu = () => setIsMobileOpen(true);
+    window.addEventListener(SITE_MENU_OPEN_EVENT, onOpenSiteMenu);
+    return () => window.removeEventListener(SITE_MENU_OPEN_EVENT, onOpenSiteMenu);
+  }, []);
 
   useEffect(() => {
     if (!hasHero) { setScrolled(true); return; }

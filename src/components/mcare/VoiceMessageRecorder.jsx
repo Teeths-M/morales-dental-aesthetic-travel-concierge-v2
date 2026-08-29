@@ -78,7 +78,16 @@ function explainMicError(e) {
   return 'Could not access the microphone. ' + (e?.message || 'Please check your device settings.');
 }
 
-export default function VoiceMessageRecorder({ onSend, onError, disabled = false }) {
+export default function VoiceMessageRecorder({ onSend, onError, disabled = false, theme = 'dark' }) {
+  // theme='light' (mobile M-Safe redesign, 2026-08-28): swaps only the
+  // "recording" active-state pill's hardcoded dark CARD/BORDER/text colors
+  // for light equivalents — the idle mic button is already gold-on-light
+  // (#F6F7FB/#E5E7EB) and needs no change. Default 'dark' keeps every
+  // existing caller byte-identical to before this prop existed.
+  const light = theme === 'light';
+  const pillBg = light ? '#F6F7FB' : CARD;
+  const pillBorder = light ? '#E5E7EB' : BORDER;
+  const timerColor = light ? '#0F172A' : '#E5E7EB';
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
@@ -333,7 +342,7 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
         <div
           style={{
             flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8,
-            background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12,
+            background: pillBg, border: `1px solid ${pillBorder}`, borderRadius: 12,
             padding: '6px 10px', height: 40, boxSizing: 'border-box',
           }}
         >
@@ -361,7 +370,7 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
           />
           <span
             style={{
-              fontSize: 12, fontWeight: 600, color: '#E5E7EB', minWidth: 34,
+              fontSize: 12, fontWeight: 600, color: timerColor, minWidth: 34,
               fontVariantNumeric: 'tabular-nums', flexShrink: 0,
             }}
           >
@@ -394,7 +403,7 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
               aria-label={paused ? 'Resume recording' : 'Pause recording'}
               style={{
                 width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-                background: 'rgba(212,175,55,0.14)', border: `1px solid ${BORDER}`,
+                background: 'rgba(212,175,55,0.14)', border: `1px solid ${pillBorder}`,
                 cursor: disabled || finalizing ? 'default' : 'pointer',
                 opacity: disabled || finalizing ? 0.5 : 1,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',

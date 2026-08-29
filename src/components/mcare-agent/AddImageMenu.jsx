@@ -27,13 +27,19 @@ const ITEMS = [
   { key: 'event',    label: 'Event', icon: CalendarDays, color: '#f44336', unsupported: 'M-Care doesn’t support events.' },
 ];
 
-export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationClick = null, disabled, uploading, variant = 'default', onUnsupported }) {
+export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationClick = null, disabled, uploading, variant = 'default', onUnsupported, menuTheme = 'dark' }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const fileRef = useRef(null);
   const acceptRef = useRef('image/*,application/pdf');
   const captureRef = useRef(undefined);
   const glass = variant === 'glass';
+  // menuTheme='light' (mobile M-Safe redesign, 2026-08-28): the popup itself
+  // was always hardcoded dark charcoal regardless of `variant` — this swaps
+  // just its 3 hardcoded colors for a white panel, and recolors the trigger
+  // icon gold. Default 'dark' keeps every existing caller (desktop MCareOrb,
+  // any other consumer) byte-identical to before this prop existed.
+  const light = menuTheme === 'light';
 
   useEffect(() => {
     if (!open) return;
@@ -95,9 +101,10 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationCli
         className={triggerClass}
         title="Attach a file"
         aria-label="Attach a file"
+        style={light ? { color: '#D4AF37' } : undefined}
       >
         {uploading ? (
-          <div className={`w-4 h-4 border-2 rounded-full animate-spin ${glass ? 'border-white/25 border-t-white' : 'border-primary/30 border-t-primary'}`} />
+          <div className={`w-4 h-4 border-2 rounded-full animate-spin ${glass ? 'border-white/25 border-t-white' : light ? 'border-[#D4AF37]/30 border-t-[#D4AF37]' : 'border-primary/30 border-t-primary'}`} />
         ) : (
           <Upload className="w-4 h-4" />
         )}
@@ -107,7 +114,7 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationCli
       {open && (
         <div
           className="absolute bottom-full mb-2 left-0 z-20 w-64 rounded-2xl shadow-2xl overflow-hidden"
-          style={{ background: '#1c1c1c', border: '1px solid #2a2a2a' }}
+          style={light ? { background: '#FFFFFF', border: '1px solid #E5E7EB' } : { background: '#1c1c1c', border: '1px solid #2a2a2a' }}
           role="menu"
         >
           {ITEMS.map((item, idx) => {
@@ -118,12 +125,12 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationCli
                 type="button"
                 role="menuitem"
                 onClick={() => chooseItem(item)}
-                className="flex items-center gap-3 w-full px-4 py-3 text-left transition-colors hover:bg-[#2d2d2d]"
+                className={`flex items-center gap-3 w-full px-4 py-3 text-left transition-colors ${light ? 'hover:bg-[#F8FAFC]' : 'hover:bg-[#2d2d2d]'}`}
               >
                 <span className="flex-shrink-0 flex items-center justify-center" style={{ color: item.color }}>
                   <Icon className="w-5 h-5" />
                 </span>
-                <span className="text-sm font-medium text-white">{item.label}</span>
+                <span className={`text-sm font-medium ${light ? 'text-[#0F172A]' : 'text-white'}`}>{item.label}</span>
                 {idx === 0 && <Shield className="w-3.5 h-3.5 ml-auto text-emerald-400/70" />}
               </button>
             );

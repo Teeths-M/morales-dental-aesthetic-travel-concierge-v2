@@ -20,12 +20,15 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2 } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2, Menu, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LocationPermissionGate from './LocationPermissionGate';
 import LivingOrb from './LivingOrb';
 import InterruptedIntentChip from './InterruptedIntentChip';
+import LiveActivityCard from './LiveActivityCard';
+import MSafeBottomNav from './MSafeBottomNav';
+import { emitOpenSiteMenu } from '@/lib/openSiteMenuEvent';
 import MessageBubble, { InlineQrBlock } from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
@@ -99,8 +102,26 @@ const CARD_BG = '#111E27';
 const BORDER_DARK = '#2A3F4A';
 const TEXT_LIGHT = '#F3F4F6';
 const TEXT_MUTED_DARK = '#9CA3AF';
+// Mobile "M-Safe" light redesign (2026-08-28) — Portia's reference screenshot.
+// GOLD stays #D4AF37 (reused, not replaced): visually indistinguishable from
+// the screenshot's requested #D6A72E, and reusing it keeps LivingOrb's rings,
+// the launcher button, and every other gold accent in this file consistent
+// with the newly-lightened mobile panel rather than a second, subtly
+// different "gold." Mint/lavender are genuinely new accents, scoped locally
+// to this file (matching this file's own established convention of local hex
+// consts rather than global brandTokens.js) since they're specific to this
+// one redesigned surface.
+const LIGHT_BG = '#F8FAFC';
+const LIGHT_CARD = '#FFFFFF';
+const LIGHT_BORDER = '#E5E7EB';
+const LIGHT_TEXT = '#0F172A';
+const LIGHT_TEXT_MUTED = '#64748B';
+const MINT = '#36DDB2';
+const LAVENDER = '#A78BFA';
+const GOLD_GRADIENT = 'linear-gradient(135deg, #E8C85C, #D4AF37)';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your Morales Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
+const TAGLINE = "I analyze. I protect. I coordinate. I resolve. I've got you.";
 
 // Public pages where all users should see visitor-facing tips
 const PUBLIC_PATHS = new Set(['/', '/discover', '/providers', '/about', '/procedures', '/how-it-works', '/partners']);
@@ -231,6 +252,9 @@ export default function MCareOrb() {
   const [struggleHint, setStruggleHint] = useState(null);
   const [expanded,   setExpanded]   = useState(false);
   const [agentUploading, setAgentUploading] = useState(false);
+  // "More" overflow popover for the mobile quick-actions row (2026-08-28) —
+  // purely local UI state, closed whenever the panel closes.
+  const [moreChipsOpen, setMoreChipsOpen] = useState(false);
   // Widescreen 3-column panel (>= 768px) vs. today's narrow stacked layout
   // (< 768px) — same matchMedia + change-listener pattern already used
   // throughout this app (LivingOrb.jsx's reducedMotion/canTilt).
@@ -2367,13 +2391,24 @@ export default function MCareOrb() {
   // M-Safe-style quick action chips (functional shortcuts). "Become a partner"
   // is role-gated and navigates rather than messaging the agent.
   const quickChips = [
-    { label: 'My Trips', icon: Luggage, run: () => sendAgentMessage('Show me my trips') },
+    { label: 'Find Doctors', icon: Stethoscope, run: () => sendAgentMessage('Help me find a verified doctor') },
+    { label: 'Safety Check', icon: Shield, run: () => sendAgentMessage('Run a safety check for my procedure') },
+    { label: 'My Journey', icon: Luggage, run: () => sendAgentMessage('Show me my trips') },
+  ];
+  // The remaining chips (below) still exist and still work exactly as
+  // before — the mobile redesign (2026-08-28) just groups them behind a
+  // "More" button instead of showing all 4-6 chips in one row, matching the
+  // reference screenshot's 4-pill layout (Find Doctors / Safety Check / My
+  // Journey / More). Desktop's empty-state row is untouched and still shows
+  // every chip inline, so nothing here changes desktop's own quickChips.push
+  // usage below.
+  const moreChips = [
     { label: 'Emergency Help', icon: Siren, run: () => sendAgentMessage('I need emergency help') },
-    { label: 'Find Doctor', icon: Stethoscope, run: () => sendAgentMessage('Help me find a verified doctor') },
     { label: 'Visa Help', icon: FileText, run: () => sendAgentMessage('I need help with a visa') },
   ];
-  if (canBecomePartner) quickChips.push({ label: 'Become a partner', icon: Briefcase, run: () => { setOpen(false); navigate('/partner-signup'); } });
-  if (!isAuthenticated) quickChips.push({ label: 'Sign in to book', icon: LogIn, run: () => base44.auth.redirectToLogin(window.location.pathname) });
+  quickChips.push(...moreChips);
+  if (canBecomePartner) { quickChips.push({ label: 'Become a partner', icon: Briefcase, run: () => { setOpen(false); navigate('/partner-signup'); } }); moreChips.push(quickChips[quickChips.length - 1]); }
+  if (!isAuthenticated) { quickChips.push({ label: 'Sign in to book', icon: LogIn, run: () => base44.auth.redirectToLogin(window.location.pathname) }); moreChips.push(quickChips[quickChips.length - 1]); }
 
   const currentTip = struggleHint || tips[tipIdx];
 
@@ -2381,15 +2416,17 @@ export default function MCareOrb() {
   // signaling) — colors switched to a translucent wash-on-dark, matching the
   // AI SUPER AGENTIC purple pill's existing pattern, now that the panel itself
   // is dark (round 4).
+  // bgLight/fgLight (2026-08-28): the same 3 states, tuned for the new white
+  // mobile panel — read via pillsRowBlock below when !isDesktopPanel.
   const statusPill = paused
-    ? { text: 'PAUSED', bg: 'rgba(245,158,11,0.14)', fg: '#FBBF24', dot: '#F59E0B' }
+    ? { text: 'PAUSED', bg: 'rgba(245,158,11,0.14)', fg: '#FBBF24', dot: '#F59E0B', bgLight: 'rgba(245,158,11,0.14)', fgLight: '#B45309' }
     : isOnline
       // "LIVE SESSION" (not "LIVE AGENT") per Portia's own explicit round-3
       // correction and the reference image itself — a concurrent bot commit
       // reverted this text to round 1's original wording; kept the correct,
       // already-confirmed value here rather than the regression.
-      ? { text: 'LIVE SESSION', bg: 'rgba(34,197,94,0.14)', fg: '#4ADE80', dot: '#22C55E' }
-      : { text: 'OFFLINE', bg: 'rgba(156,163,175,0.14)', fg: '#D1D5DB', dot: '#9CA3AF' };
+      ? { text: 'LIVE SESSION', bg: 'rgba(34,197,94,0.14)', fg: '#4ADE80', dot: '#22C55E', bgLight: 'rgba(34,197,94,0.16)', fgLight: '#15803D' }
+      : { text: 'OFFLINE', bg: 'rgba(156,163,175,0.14)', fg: '#D1D5DB', dot: '#9CA3AF', bgLight: 'rgba(148,163,184,0.16)', fgLight: '#475569' };
 
   // ── Panel body pieces, shared verbatim between the desktop 3-column
   // layout and the mobile stacked layout below (>= 768px vs. < 768px —
@@ -2398,53 +2435,63 @@ export default function MCareOrb() {
   // can reuse it instead of drifting into two copies of the same logic. ──
   const titleSubtitleBlock = (
     <div style={{ minWidth: 0 }}>
-      <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: TEXT_LIGHT, lineHeight: 1.2 }}>
+      <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
         M-Safe<span style={{ color: GOLD, fontSize: 15, fontWeight: 800, marginLeft: 1 }}>+</span>
       </p>
-      <p style={{ margin: 0, fontSize: 12, color: TEXT_MUTED_DARK }}>Morales Super Agent</p>
+      <p style={{ margin: 0, fontSize: 12, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>Morales Super Agent</p>
     </div>
   );
 
+  const mutedIconColor = isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED;
   const headerControlsBlock = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
       {isConversationalModeSupported() && (
         <button onClick={toggleConversationalMode}
           title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
           aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
-          style={{ background: conversationalMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+          style={{ background: conversationalMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? GOLD : mutedIconColor, display: 'flex', borderRadius: 8 }}>
           {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
         </button>
       )}
       {isSpeechSupported() && (
         <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
-          style={{ background: talkMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? GOLD : TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+          style={{ background: talkMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? GOLD : mutedIconColor, display: 'flex', borderRadius: 8 }}>
           {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
         </button>
       )}
       {agentMessages.length > 0 && (
-        <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+        <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
           <RotateCcw style={{ width: 16, height: 16 }} />
         </button>
       )}
-      <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
-        {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
-      </button>
-      <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: TEXT_MUTED_DARK, display: 'flex', borderRadius: 8 }}>
+      {/* Expand/collapse is meaningless once mobile is always full-bleed
+          (see the panel sizing below) — shown on desktop only, where the
+          centered-card vs. wider-card distinction still applies. */}
+      {isDesktopPanel && (
+        <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
+          {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
+        </button>
+      )}
+      <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
         <X style={{ width: 18, height: 18 }} />
       </button>
     </div>
   );
 
+  // Round 4's translucent-wash pills were tuned against a dark panel — their
+  // light foreground text (e.g. #B4A2FF purple) is illegible on the new
+  // white mobile panel. isDesktopPanel keeps the exact original values;
+  // mobile gets a stronger wash + a darker foreground for the same hue.
   const pillsRowBlock = (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: statusPill.bg, color: statusPill.fg, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: isDesktopPanel ? statusPill.bg : statusPill.bgLight, color: isDesktopPanel ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
       </span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(108,71,255,0.16)', color: '#B4A2FF', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(108,71,255,0.16)' : `${LAVENDER}26`, color: isDesktopPanel ? '#B4A2FF' : '#6D28D9', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
         <Sparkles style={{ width: 12, height: 12 }} /> AI SUPER AGENTIC
       </span>
       {privateMode && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(99,102,241,0.16)', color: '#A5B4FC', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.14)', color: isDesktopPanel ? '#A5B4FC' : '#4338CA', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
           <Shield style={{ width: 12, height: 12 }} /> PRIVATE
         </span>
       )}
@@ -2463,31 +2510,44 @@ export default function MCareOrb() {
 
   // Capability row — each item lights up when it's the real, currently-active
   // capability (see activeCapability above), never a fabricated highlight.
-  const capabilityRowBlock = (
-    <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
-      {[
-        { icon: Sparkles, label: 'Analyze' },
-        { icon: Shield, label: 'Protect' },
-        { icon: Share2, label: 'Coordinate' },
-        { icon: CheckCircle2, label: 'Resolve' },
-      ].map(({ icon: Icon, label }) => {
+  // Mobile (2026-08-28): wrapped in a white card with subtitles, matching the
+  // reference screenshot's "floating capability card." Desktop's own inline
+  // row (no card, no subtitles) is completely unchanged.
+  const CAPABILITY_ITEMS = [
+    { icon: Sparkles, label: 'Analyze', subtitle: 'Intelligence', accent: GOLD },
+    { icon: Shield, label: 'Protect', subtitle: 'Safety First', accent: MINT },
+    { icon: Share2, label: 'Coordinate', subtitle: 'Everything', accent: MINT },
+    { icon: CheckCircle2, label: 'Resolve', subtitle: 'Peace of Mind', accent: GOLD },
+  ];
+  const capabilityItemsRow = (
+    <div style={{ display: 'flex', gap: isDesktopPanel ? 16 : 10, marginTop: isDesktopPanel ? 10 : 0, flexWrap: 'wrap', justifyContent: isDesktopPanel ? 'flex-start' : 'space-between' }}>
+      {CAPABILITY_ITEMS.map(({ icon: Icon, label, subtitle, accent }) => {
         const active = label === activeCapability;
+        const ringColor = isDesktopPanel ? GOLD : accent;
         return (
-          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: isDesktopPanel ? 'none' : 1, minWidth: 0 }}>
             <div style={{
               width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: active ? `1px solid ${GOLD}` : '1px solid rgba(212,175,55,0.35)',
-              background: active ? 'rgba(212,175,55,0.24)' : 'rgba(212,175,55,0.08)',
-              boxShadow: active ? `0 0 8px ${GOLD}88` : 'none',
-              color: active ? '#F5D97A' : '#C9A227',
+              border: active ? `1px solid ${ringColor}` : `1px solid ${ringColor}59`,
+              background: active ? `${ringColor}3D` : `${ringColor}14`,
+              boxShadow: active ? `0 0 8px ${ringColor}88` : 'none',
+              color: isDesktopPanel ? (active ? '#F5D97A' : '#C9A227') : (active ? ringColor : `${ringColor}CC`),
               transition: 'all 0.25s ease',
             }}>
               <Icon style={{ width: 15, height: 15 }} />
             </div>
-            <span style={{ fontSize: 10, color: active ? '#F5D97A' : TEXT_MUTED_DARK, fontWeight: active ? 700 : 500 }}>{label}</span>
+            <span style={{ fontSize: 10, color: isDesktopPanel ? (active ? '#F5D97A' : TEXT_MUTED_DARK) : LIGHT_TEXT, fontWeight: active ? 700 : 600, textAlign: 'center' }}>{label}</span>
+            {!isDesktopPanel && (
+              <span style={{ fontSize: 9, color: LIGHT_TEXT_MUTED, textAlign: 'center', lineHeight: 1.1 }}>{subtitle}</span>
+            )}
           </div>
         );
       })}
+    </div>
+  );
+  const capabilityRowBlock = isDesktopPanel ? capabilityItemsRow : (
+    <div style={{ marginTop: 12, width: '100%', background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.06)', padding: '12px 10px' }}>
+      {capabilityItemsRow}
     </div>
   );
 
@@ -2502,7 +2562,7 @@ export default function MCareOrb() {
         <JourneyStageTracker messages={agentMessages} />
       )}
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: DARK }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: isDesktopPanel ? DARK : LIGHT_BG }}>
         {agentMessages.length === 0 && !agentLoading && (
           <>
             {/* A small decorative "•••" accent above the greeting, echoing
@@ -2519,28 +2579,35 @@ export default function MCareOrb() {
             )}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
               <McareAvatar size={32} />
-              <p style={{ margin: 0, fontSize: 13, color: TEXT_LIGHT, lineHeight: 1.55, background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%' }}>
+              <p style={{ margin: 0, fontSize: 13, color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: isDesktopPanel ? CARD_BG : LIGHT_CARD, border: `1px solid ${isDesktopPanel ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%', boxShadow: isDesktopPanel ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
                 {(() => {
                   const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
                   return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
                 })()}
               </p>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
-              {quickChips.map(c => (
-                <button key={c.label} onClick={c.run}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${BORDER_DARK}`, background: CARD_BG, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#D1D5DB', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  <c.icon style={{ width: 14, height: 14 }} /> {c.label}
-                </button>
-              ))}
-            </div>
+            {/* Desktop keeps its original empty-state chip row (all chips,
+                inline). Mobile (2026-08-28) shows its persistent 3-chip +
+                "More" row instead — always visible above the composer, not
+                gated to the empty state — see quickChipsRowBlock below the
+                input bar, so nothing renders twice here on mobile. */}
+            {isDesktopPanel && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
+                {quickChips.map(c => (
+                  <button key={c.label} onClick={c.run}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${BORDER_DARK}`, background: CARD_BG, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#D1D5DB', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <c.icon style={{ width: 14, height: 14 }} /> {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         )}
 
         {agentLoading && agentMessages.length === 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
             <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-            <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
+            <span style={{ fontSize: 12, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontStyle: 'italic' }}>
               {(() => { const fn = user?.full_name?.trim()?.split(/\s+/)[0]; return fn ? `Welcome back, ${fn}.` : 'Ready when you are.'; })()}
             </span>
           </div>
@@ -2553,7 +2620,7 @@ export default function MCareOrb() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <MessageBubble message={m} accent={PURPLE} showAvatar showMeta showReaction
+            <MessageBubble message={m} accent={isDesktopPanel ? PURPLE : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta={!isDesktopPanel} showReaction
               onChoice={
                 m.__distressConfirm
                   ? (c) => handleDistressConfirm(c, m.__distressConfirm)
@@ -2601,14 +2668,24 @@ export default function MCareOrb() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div style={{ fontSize: 10, color: TEXT_MUTED_DARK, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
+            <div style={{ fontSize: 10, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
               M-Care checked in
             </div>
-            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={PURPLE} showAvatar showMeta />
+            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={isDesktopPanel ? PURPLE : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta={!isDesktopPanel} />
           </motion.div>
         ))}
 
-        {(agentSending || activeRunningTool) && (
+        {/* Mobile (2026-08-28): the fuller LiveActivityCard, matching the
+            reference screenshot's "Searching & Verifying" card — but title/
+            subtitle are always derived from the same real orbState/
+            activeRunningTool data the desktop row below already uses, never
+            a hardcoded claim about what's specifically being checked (see
+            LiveActivityCard.jsx's own header comment). Desktop keeps its
+            existing minimal row, completely unchanged. */}
+        {!isDesktopPanel && (
+          <LiveActivityCard visible={!!(agentSending || activeRunningTool)} orbState={orbState} activeRunningTool={activeRunningTool} />
+        )}
+        {isDesktopPanel && (agentSending || activeRunningTool) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
             <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
             <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
@@ -2652,6 +2729,38 @@ export default function MCareOrb() {
         disabled={agentSending || agentUploading || !isOnline}
         onApplyCorrection={(fixed) => setInput(fixed)}
       />
+
+      {/* Persistent quick-actions row (2026-08-28) — mobile only, always
+          visible just above the composer (not gated to the empty state,
+          unlike desktop's own inline row rendered above). Same real
+          quickChips array/handlers, just the first 3 plus a "More" reveal
+          for the rest — matches the reference screenshot's 4-pill layout. */}
+      {!isDesktopPanel && (
+        <div style={{ position: 'relative', flexShrink: 0, padding: '8px 14px 0', background: LIGHT_BG }}>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+            {quickChips.slice(0, 3).map(c => (
+              <button key={c.label} onClick={c.run}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${LIGHT_BORDER}`, background: LIGHT_CARD, borderRadius: 999, padding: '7px 13px', fontSize: 12, fontWeight: 600, color: LIGHT_TEXT, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(15,23,42,0.05)' }}>
+                <c.icon style={{ width: 14, height: 14, color: GOLD }} /> {c.label}
+              </button>
+            ))}
+            <button onClick={() => setMoreChipsOpen(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, border: `1px solid ${LIGHT_BORDER}`, background: LIGHT_CARD, borderRadius: 999, padding: '7px 13px', fontSize: 12, fontWeight: 600, color: LIGHT_TEXT_MUTED, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(15,23,42,0.05)' }}>
+              More {moreChipsOpen ? <ChevronUp style={{ width: 13, height: 13 }} /> : <ChevronDown style={{ width: 13, height: 13 }} />}
+            </button>
+          </div>
+          {moreChipsOpen && (
+            <div style={{ marginTop: 8, background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 14, boxShadow: '0 4px 16px rgba(15,23,42,0.08)', overflow: 'hidden' }}>
+              {moreChips.map(c => (
+                <button key={c.label} onClick={() => { setMoreChipsOpen(false); c.run(); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', border: 'none', borderBottom: `1px solid ${LIGHT_BORDER}`, background: 'none', padding: '10px 14px', fontSize: 13, color: LIGHT_TEXT, cursor: 'pointer' }}>
+                  <c.icon style={{ width: 15, height: 15, color: GOLD, flexShrink: 0 }} /> {c.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 
@@ -2659,9 +2768,10 @@ export default function MCareOrb() {
   // of the panel on desktop (per the widescreen layout ask), and the last
   // element of the single stacked column on mobile — same JSX either way.
   const inputBarBlock = (
-    <div style={{ padding: '10px 14px', borderTop: `1px solid ${BORDER_DARK}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: PANEL_BG }}>
+    <div style={{ padding: '10px 14px', borderTop: `1px solid ${isDesktopPanel ? BORDER_DARK : LIGHT_BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: isDesktopPanel ? PANEL_BG : LIGHT_CARD }}>
       <AddImageMenu
         variant="icon"
+        menuTheme={isDesktopPanel ? 'dark' : 'light'}
         onDeviceFile={handleFileSelect}
         onVaultClick={() => vaultRef.current?.open()}
         onLocationClick={handleLocationMenuClick}
@@ -2674,7 +2784,7 @@ export default function MCareOrb() {
         <GhostTextOverlay
           typedText={input}
           suggestion={ghostSuggestion}
-          matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT }}
+          matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT }}
         />
         <input
           ref={chatInputRef}
@@ -2685,7 +2795,7 @@ export default function MCareOrb() {
           onBlur={() => setInputFocused(false)}
           onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
           placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
-          style={{ width: '100%', background: CARD_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: TEXT_LIGHT, outline: 'none', position: 'relative' }}
+          style={{ width: '100%', background: isDesktopPanel ? CARD_BG : LIGHT_BG, border: `1px solid ${isDesktopPanel ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
         />
       </div>
       {isOnline && !conversationalMode && (
@@ -2693,12 +2803,13 @@ export default function MCareOrb() {
           disabled={agentSending || agentUploading}
           onSend={handleVoiceMessage}
           onError={handleVoiceMessageError}
+          theme={isDesktopPanel ? 'dark' : 'light'}
         />
       )}
       <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
-        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : BORDER_DARK, border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : (isDesktopPanel ? BORDER_DARK : LIGHT_BORDER), border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
       >
-        <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : TEXT_MUTED_DARK }} />
+        <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : (isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED) }} />
       </button>
     </div>
   );
@@ -2736,10 +2847,10 @@ export default function MCareOrb() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isDesktopPanel ? 16 : 0 }}
         >
         <motion.div
-          className="dark"
+          className={isDesktopPanel ? 'dark' : ''}
           onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.94, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -2747,16 +2858,21 @@ export default function MCareOrb() {
           transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
           style={{ transition: 'width 0.25s ease, height 0.25s ease',
             // Widescreen 3-column layout at >= 768px (~1306px wide, a 16:5-ish
-            // ratio matching the reference image); the narrow stacked layout
-            // keeps its own pre-existing sizing below 768px, unchanged.
+            // ratio matching the reference image). Mobile (2026-08-28) goes
+            // full-bleed edge-to-edge, matching the reference screenshot's
+            // true full-screen framing — no card margin, no rounded corners,
+            // `expanded` becomes a no-op there (nothing left to expand into).
             width: isDesktopPanel
               ? (expanded ? 'min(1500px, 98vw)' : 'min(1306px, 96vw)')
-              : (expanded ? 'min(1160px, 96vw)' : 'min(440px, 94vw)'),
-            background: PANEL_BG, border: `1px solid ${BORDER_DARK}`, borderRadius: 16,
-            boxShadow: `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)`, display: 'flex', flexDirection: 'column',
+              : '100vw',
+            background: isDesktopPanel ? PANEL_BG : LIGHT_BG,
+            border: isDesktopPanel ? `1px solid ${BORDER_DARK}` : 'none',
+            borderRadius: isDesktopPanel ? 16 : 0,
+            boxShadow: isDesktopPanel ? `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)` : 'none',
+            display: 'flex', flexDirection: 'column',
             height: isDesktopPanel
               ? (expanded ? '92vh' : 'min(80vh, 640px)')
-              : (expanded ? '94vh' : 'min(86vh, 720px)'),
+              : '100dvh',
             overflow: 'hidden' }}>
 
           {isDesktopPanel ? (
@@ -2888,16 +3004,33 @@ export default function MCareOrb() {
             </>
           ) : (
             <>
-              {/* Header — the orb is now the dominant visual anchor (was 36px, buried
-                  next to a thin row of text/buttons; now ~104px, a real hero element the
-                  rest of the header is built around). Every control/pill from the prior
-                  layout is preserved, just repositioned into a top-right cluster inside
-                  the right column so nothing was dropped. Round 4: the whole panel
-                  (this header included) went dark — see PANEL_BG/CARD_BG/BORDER_DARK
-                  above and the `className="dark"` on the panel container, which also
-                  re-themes MessageBubble/SafetyGateCard/JourneyStageTracker for free
-                  via their existing Tailwind semantic tokens. */}
-              <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${BORDER_DARK}`, flexShrink: 0, background: PANEL_BG }}>
+              {/* Mobile M-Safe redesign (2026-08-28), matching Portia's reference
+                  screenshot as the source of truth for the mobile experience.
+                  Section 1 — a new top header row: hamburger (dispatches the real
+                  site nav's open event, see openSiteMenuEvent.js/Header.jsx),
+                  centered wordmark (reusing the app's own real
+                  /morales-m-mark.png asset, relabeled — no new image), and a
+                  bell reusing the exact real hasUnseenJourneyEvent signal the
+                  floating launcher button's own dot already uses. Respects the
+                  iPhone notch since the panel is now full-bleed. */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', paddingTop: 'calc(10px + env(safe-area-inset-top, 0px))', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD }}>
+                <button onClick={emitOpenSiteMenu} aria-label="Open menu" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', color: LIGHT_TEXT }}>
+                  <Menu style={{ width: 22, height: 22 }} />
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="/morales-m-mark.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', color: LIGHT_TEXT }}>M-CARE</span>
+                    <span style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.08em', color: LIGHT_TEXT_MUTED, textTransform: 'uppercase' }}>AI Medical Travel Concierge</span>
+                  </div>
+                </div>
+                <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); markJourneyEventsSeen(); }} aria-label="Notifications" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', color: LIGHT_TEXT }}>
+                  <Bell style={{ width: 20, height: 20 }} />
+                  {hasUnseenJourneyEvent && <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', background: GOLD, border: '1.5px solid #FFFFFF' }} />}
+                </button>
+              </div>
+
+              <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                   <div style={{ flexShrink: 0 }}>
                     <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
@@ -2908,13 +3041,21 @@ export default function MCareOrb() {
                       {headerControlsBlock}
                     </div>
                     {pillsRowBlock}
-                    {capabilityRowBlock}
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
                   </div>
                 </div>
+                {capabilityRowBlock}
               </div>
 
               {chatMain}
               {inputBarBlock}
+              <MSafeBottomNav
+                orbState={orbState}
+                onHome={() => setOpen(false)}
+                onJourney={() => { navigate('/dashboard/journey'); setOpen(false); }}
+                onServices={() => quickChips.find(c => c.label === 'Find Doctors')?.run()}
+                onProfile={() => { navigate('/dashboard'); setOpen(false); }}
+              />
             </>
           )}
         </motion.div>
