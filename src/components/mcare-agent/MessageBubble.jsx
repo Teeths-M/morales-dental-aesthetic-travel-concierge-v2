@@ -786,6 +786,9 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
         <McareAvatar size={28} />
       )}
       <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
+        {/* Gold L-shaped corner bracket — premium accent at the top corner */}
+        <span aria-hidden="true" style={{ position: 'absolute', top: 0, [isUser ? 'right' : 'left']: 0, width: 15, height: 2, background: isUser ? '#B0851E' : '#C9A43B' }} />
+        <span aria-hidden="true" style={{ position: 'absolute', top: 0, [isUser ? 'right' : 'left']: 0, width: 2, height: 15, background: isUser ? '#B0851E' : '#C9A43B' }} />
         {(() => {
           const { text: t0 } = extractLocationContext(message.content);
           const { text: t1, choices } = extractChoices(t0);

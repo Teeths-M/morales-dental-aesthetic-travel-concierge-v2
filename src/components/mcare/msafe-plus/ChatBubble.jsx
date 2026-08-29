@@ -22,18 +22,8 @@ export default function ChatBubble({ role, children, time }) {
           ? { background: MSAFE_CHAT.userAccent, boxShadow: '0 2px 8px rgba(210,169,61,0.15)' }
           : { background: '#FFFFFF', border: '1px solid rgba(210,169,61,0.18)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
       >
-        <span
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: -4,
-            [isUser ? 'right' : 'left']: 6,
-            width: 9, height: 9,
-            background: isUser ? '#EAD08C' : '#FFFFFF',
-            border: '1px solid rgba(210,169,61,0.3)',
-            transform: 'rotate(45deg)',
-          }}
-        />
+        <span aria-hidden="true" style={{ position: 'absolute', top: 0, [isUser ? 'right' : 'left']: 0, width: 15, height: 2, background: isUser ? '#B0851E' : '#C9A43B' }} />
+        <span aria-hidden="true" style={{ position: 'absolute', top: 0, [isUser ? 'right' : 'left']: 0, width: 2, height: 15, background: isUser ? '#B0851E' : '#C9A43B' }} />
         <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: C.charcoal }}>{children}</p>
         {time && <p className="text-[10px] mt-1 opacity-50" style={{ color: C.charcoalSoft }}>{time}</p>}
       </div>
