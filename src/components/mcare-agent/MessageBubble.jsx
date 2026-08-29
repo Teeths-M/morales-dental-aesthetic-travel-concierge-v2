@@ -786,17 +786,33 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
         <McareAvatar size={28} />
       )}
       <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
-        {/* Gold L-shaped corner bracket — a small viewfinder-style accent
-            sitting just OUTSIDE the bubble's rounded corner (negative
-            offset), not flush at 0,0. The bubble is rounded-2xl (16px) with
-            no overflow:hidden, so a flush bar there crosses straight
-            through the curve instead of framing it — a real, confirmed
-            visual bug (a live screenshot showed it reading as a stray,
-            disconnected gold mark, not a clean accent). Thinner (10x1.5
-            vs. the old 15x2) with rounded caps for a refined "corner mark"
-            look, matching the reference mockup's own subtler bracket. */}
-        <span aria-hidden="true" style={{ position: 'absolute', top: -2, [isUser ? 'right' : 'left']: -2, width: 10, height: 1.5, borderRadius: 1, background: isUser ? '#B0851E' : '#C9A43B' }} />
-        <span aria-hidden="true" style={{ position: 'absolute', top: -2, [isUser ? 'right' : 'left']: -2, width: 1.5, height: 10, borderRadius: 1, background: isUser ? '#B0851E' : '#C9A43B' }} />
+        {/* Gold viewfinder-style corner bracket — ONE span using two border
+            segments that trace the bubble's own rounded corner (radius set
+            close to the bubble's real rounded-2xl/16px curve), not two
+            disconnected floating bars. The earlier two-bar version read fine
+            on the assistant's white bubble but, on the user's warm-gold
+            bubble, a similarly-toned gold bar sitting just outside a
+            similarly-toned gold corner visually fused into a solid filled
+            wedge instead of a clean line (a real, confirmed visual bug from
+            a live screenshot). Fixed two ways: one continuous traced border
+            reads as a single mark regardless of background, and the user
+            side uses a deeper bronze than the assistant's lighter gold so it
+            still contrasts clearly against its own bubble color. */}
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: -1,
+            [isUser ? 'right' : 'left']: -1,
+            width: 16,
+            height: 16,
+            pointerEvents: 'none',
+            borderTop: `2px solid ${isUser ? '#8A6412' : '#C9A43B'}`,
+            ...(isUser
+              ? { borderRight: '2px solid #8A6412', borderTopRightRadius: 13 }
+              : { borderLeft: '2px solid #C9A43B', borderTopLeftRadius: 13 }),
+          }}
+        />
         {(() => {
           const { text: t0 } = extractLocationContext(message.content);
           const { text: t1, choices } = extractChoices(t0);
