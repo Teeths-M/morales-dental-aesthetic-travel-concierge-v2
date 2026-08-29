@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2, Menu, Bell, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2, Menu, Bell, ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LocationPermissionGate from './LocationPermissionGate';
@@ -267,6 +267,25 @@ export default function MCareOrb() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+  // Light-mode option for the desktop panel (2026-08-29, mentor feedback:
+  // "a bit dark, should have a light mode too"). Desktop was hardcoded to
+  // the app's dark tokens (`className="dark"`); mobile already has a real
+  // light theme (2026-08-28). This is a real toggle, not a mockup — it
+  // reuses the exact same light color constants the mobile layout already
+  // uses (LIGHT_BG/LIGHT_CARD/LIGHT_BORDER/LIGHT_TEXT/LIGHT_TEXT_MUTED,
+  // declared further down this file), it does not invent a new palette.
+  // Persisted per-browser so the choice survives a reopen. `isDesktopPanel`
+  // itself stays untouched everywhere it drives LAYOUT (column structure,
+  // sizing, which mobile-vs-desktop UI piece renders) — only the separate
+  // `useDarkTheme` flag below is read wherever a color/background/border
+  // decision is being made, so toggling this can never affect layout.
+  const [desktopLightMode, setDesktopLightMode] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('morales_mcare_desktop_light') === '1'
+  );
+  useEffect(() => {
+    try { localStorage.setItem('morales_mcare_desktop_light', desktopLightMode ? '1' : '0'); } catch { /* best-effort */ }
+  }, [desktopLightMode]);
+  const useDarkTheme = isDesktopPanel && !desktopLightMode;
   // Talk Mode — off by default, opt-in only. See the "Honest speaking pulse"
   // effect below: when off, behavior is byte-identical to before this was
   // added. { messageIndex, revealedWordCount, totalWordCount } while a
@@ -2448,14 +2467,14 @@ export default function MCareOrb() {
   // can reuse it instead of drifting into two copies of the same logic. ──
   const titleSubtitleBlock = (
     <div style={{ minWidth: 0 }}>
-      <p style={{ margin: 0, fontSize: isDesktopPanel ? 19 : 17, fontWeight: 700, letterSpacing: '-0.01em', color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
+      <p style={{ margin: 0, fontSize: isDesktopPanel ? 19 : 17, fontWeight: 700, letterSpacing: '-0.01em', color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
         M-Safe<span style={{ color: GOLD, fontSize: isDesktopPanel ? 15 : 13, fontWeight: 800, marginLeft: 1 }}>+</span>
       </p>
-      <p style={{ margin: 0, fontSize: isDesktopPanel ? 12 : 11, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>Morales Super Agent</p>
+      <p style={{ margin: 0, fontSize: isDesktopPanel ? 12 : 11, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>Morales Super Agent</p>
     </div>
   );
 
-  const mutedIconColor = isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED;
+  const mutedIconColor = useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED;
   const headerControlsBlock = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
       {isConversationalModeSupported() && (
@@ -2475,6 +2494,15 @@ export default function MCareOrb() {
       {agentMessages.length > 0 && (
         <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
           <RotateCcw style={{ width: 16, height: 16 }} />
+        </button>
+      )}
+      {/* Light/dark toggle — desktop only. Mobile already has its own
+          fixed light theme (see useDarkTheme above), so this is meaningless
+          there. Persisted (see desktopLightMode above), not a per-session
+          reset. */}
+      {isDesktopPanel && (
+        <button onClick={() => setDesktopLightMode(v => !v)} title={desktopLightMode ? 'Switch to dark' : 'Switch to light'} aria-label={desktopLightMode ? 'Switch to dark mode' : 'Switch to light mode'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
+          {desktopLightMode ? <Moon style={{ width: 16, height: 16 }} /> : <Sun style={{ width: 16, height: 16 }} />}
         </button>
       )}
       {/* Expand/collapse is meaningless once mobile is always full-bleed
@@ -2509,14 +2537,14 @@ export default function MCareOrb() {
   const pillDotSize = isDesktopPanel ? 7 : 6;
   const pillsRowBlock = (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: isDesktopPanel ? 6 : 5, marginTop: 8 }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: isDesktopPanel ? statusPill.bg : statusPill.bgLight, color: isDesktopPanel ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: useDarkTheme ? statusPill.bg : statusPill.bgLight, color: useDarkTheme ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
         <span style={{ width: pillDotSize, height: pillDotSize, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
       </span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(108,71,255,0.16)' : `${LAVENDER}26`, color: isDesktopPanel ? '#B4A2FF' : '#6D28D9', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: useDarkTheme ? 'rgba(108,71,255,0.16)' : `${LAVENDER}26`, color: useDarkTheme ? '#B4A2FF' : '#6D28D9', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
         <Sparkles style={{ width: pillIconSize, height: pillIconSize }} /> AI SUPER AGENTIC
       </span>
       {privateMode && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.14)', color: isDesktopPanel ? '#A5B4FC' : '#4338CA', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: useDarkTheme ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.14)', color: useDarkTheme ? '#A5B4FC' : '#4338CA', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
           <Shield style={{ width: pillIconSize, height: pillIconSize }} /> PRIVATE
         </span>
       )}
@@ -2548,7 +2576,7 @@ export default function MCareOrb() {
     <div style={{ display: 'flex', gap: isDesktopPanel ? 16 : 10, marginTop: isDesktopPanel ? 10 : 0, flexWrap: 'wrap', justifyContent: isDesktopPanel ? 'flex-start' : 'space-between' }}>
       {CAPABILITY_ITEMS.map(({ icon: Icon, label, subtitle, accent }) => {
         const active = label === activeCapability;
-        const ringColor = isDesktopPanel ? GOLD : accent;
+        const ringColor = useDarkTheme ? GOLD : accent;
         return (
           <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: isDesktopPanel ? 'none' : 1, minWidth: 0 }}>
             <div style={{
@@ -2556,12 +2584,12 @@ export default function MCareOrb() {
               border: active ? `1px solid ${ringColor}` : `1px solid ${ringColor}59`,
               background: active ? `${ringColor}3D` : `${ringColor}14`,
               boxShadow: active ? `0 0 8px ${ringColor}88` : 'none',
-              color: isDesktopPanel ? (active ? '#F5D97A' : '#C9A227') : (active ? ringColor : `${ringColor}CC`),
+              color: useDarkTheme ? (active ? '#F5D97A' : '#C9A227') : (active ? ringColor : `${ringColor}CC`),
               transition: 'all 0.25s ease',
             }}>
               <Icon style={{ width: 15, height: 15 }} />
             </div>
-            <span style={{ fontSize: 10, color: isDesktopPanel ? (active ? '#F5D97A' : TEXT_MUTED_DARK) : LIGHT_TEXT, fontWeight: active ? 700 : 600, textAlign: 'center' }}>{label}</span>
+            <span style={{ fontSize: 10, color: useDarkTheme ? (active ? '#F5D97A' : TEXT_MUTED_DARK) : LIGHT_TEXT, fontWeight: active ? 700 : 600, textAlign: 'center' }}>{label}</span>
             {!isDesktopPanel && (
               <span style={{ fontSize: 9, color: LIGHT_TEXT_MUTED, textAlign: 'center', lineHeight: 1.1 }}>{subtitle}</span>
             )}
@@ -2587,7 +2615,7 @@ export default function MCareOrb() {
         <JourneyStageTracker messages={agentMessages} />
       )}
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: isDesktopPanel ? DARK : LIGHT_BG }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: useDarkTheme ? DARK : LIGHT_BG }}>
         {agentMessages.length === 0 && !agentLoading && (
           <>
             {/* A small decorative "•••" accent above the greeting, echoing
@@ -2604,7 +2632,7 @@ export default function MCareOrb() {
             )}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
               <McareAvatar size={32} />
-              <p style={{ margin: 0, fontSize: 13, color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: isDesktopPanel ? CARD_BG : LIGHT_CARD, border: `1px solid ${isDesktopPanel ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%', boxShadow: isDesktopPanel ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
+              <p style={{ margin: 0, fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: useDarkTheme ? CARD_BG : LIGHT_CARD, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%', boxShadow: useDarkTheme ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
                 {(() => {
                   const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
                   return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
@@ -2620,7 +2648,7 @@ export default function MCareOrb() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
                 {quickChips.map(c => (
                   <button key={c.label} onClick={c.run}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${BORDER_DARK}`, background: CARD_BG, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: '#D1D5DB', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? CARD_BG : LIGHT_CARD, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: useDarkTheme ? '#D1D5DB' : LIGHT_TEXT, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     <c.icon style={{ width: 14, height: 14 }} /> {c.label}
                   </button>
                 ))}
@@ -2632,7 +2660,7 @@ export default function MCareOrb() {
         {agentLoading && agentMessages.length === 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
             <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-            <span style={{ fontSize: 12, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontStyle: 'italic' }}>
+            <span style={{ fontSize: 12, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontStyle: 'italic' }}>
               {(() => { const fn = user?.full_name?.trim()?.split(/\s+/)[0]; return fn ? `Welcome back, ${fn}.` : 'Ready when you are.'; })()}
             </span>
           </div>
@@ -2693,7 +2721,7 @@ export default function MCareOrb() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div style={{ fontSize: 10, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
+            <div style={{ fontSize: 10, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
               M-Care checked in
             </div>
             <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={isDesktopPanel ? PURPLE : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta={!isDesktopPanel} />
@@ -2713,7 +2741,7 @@ export default function MCareOrb() {
         {isDesktopPanel && (agentSending || activeRunningTool) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
             <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
-            <span style={{ fontSize: 12, color: TEXT_MUTED_DARK, fontStyle: 'italic' }}>
+            <span style={{ fontSize: 12, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontStyle: 'italic' }}>
               {orbState === 'thinking'
                 ? '● ● ●  Understanding your journey…'
                 : (activeRunningTool?.display_projection?.active_label || 'M-Safe is coordinating…')}
@@ -2793,10 +2821,10 @@ export default function MCareOrb() {
   // of the panel on desktop (per the widescreen layout ask), and the last
   // element of the single stacked column on mobile — same JSX either way.
   const inputBarBlock = (
-    <div style={{ padding: '10px 14px', borderTop: `1px solid ${isDesktopPanel ? BORDER_DARK : LIGHT_BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: isDesktopPanel ? PANEL_BG : LIGHT_CARD }}>
+    <div style={{ padding: '10px 14px', borderTop: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: useDarkTheme ? PANEL_BG : LIGHT_CARD }}>
       <AddImageMenu
         variant="icon"
-        menuTheme={isDesktopPanel ? 'dark' : 'light'}
+        menuTheme={useDarkTheme ? 'dark' : 'light'}
         onDeviceFile={handleFileSelect}
         onVaultClick={() => vaultRef.current?.open()}
         onLocationClick={handleLocationMenuClick}
@@ -2809,7 +2837,7 @@ export default function MCareOrb() {
         <GhostTextOverlay
           typedText={input}
           suggestion={ghostSuggestion}
-          matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT }}
+          matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT }}
         />
         <input
           ref={chatInputRef}
@@ -2820,7 +2848,7 @@ export default function MCareOrb() {
           onBlur={() => setInputFocused(false)}
           onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
           placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
-          style={{ width: '100%', background: isDesktopPanel ? CARD_BG : LIGHT_BG, border: `1px solid ${isDesktopPanel ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
+          style={{ width: '100%', background: useDarkTheme ? CARD_BG : LIGHT_BG, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
         />
       </div>
       {isOnline && !conversationalMode && (
@@ -2828,13 +2856,13 @@ export default function MCareOrb() {
           disabled={agentSending || agentUploading}
           onSend={handleVoiceMessage}
           onError={handleVoiceMessageError}
-          theme={isDesktopPanel ? 'dark' : 'light'}
+          theme={useDarkTheme ? 'dark' : 'light'}
         />
       )}
       <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
-        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : (isDesktopPanel ? BORDER_DARK : LIGHT_BORDER), border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : (useDarkTheme ? BORDER_DARK : LIGHT_BORDER), border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
       >
-        <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : (isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED) }} />
+        <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : (useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED) }} />
       </button>
     </div>
   );
@@ -2875,7 +2903,7 @@ export default function MCareOrb() {
           style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isDesktopPanel ? 16 : 0 }}
         >
         <motion.div
-          className={isDesktopPanel ? 'dark' : ''}
+          className={useDarkTheme ? 'dark' : ''}
           onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.94, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -2890,10 +2918,10 @@ export default function MCareOrb() {
             width: isDesktopPanel
               ? (expanded ? 'min(1500px, 98vw)' : 'min(1306px, 96vw)')
               : '100vw',
-            background: isDesktopPanel ? PANEL_BG : LIGHT_BG,
-            border: isDesktopPanel ? `1px solid ${BORDER_DARK}` : 'none',
+            background: useDarkTheme ? PANEL_BG : LIGHT_BG,
+            border: !isDesktopPanel ? 'none' : `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`,
             borderRadius: isDesktopPanel ? 16 : 0,
-            boxShadow: isDesktopPanel ? `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)` : 'none',
+            boxShadow: !isDesktopPanel ? 'none' : (useDarkTheme ? `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)` : `0 24px 64px rgba(15,23,42,0.16), 0 0 0 1px rgba(212,175,55,0.10)`),
             display: 'flex', flexDirection: 'column',
             height: isDesktopPanel
               ? (expanded ? '92vh' : 'min(80vh, 640px)')
@@ -2910,7 +2938,7 @@ export default function MCareOrb() {
                   inputBarBlock, all defined above, before this return) —
                   only the arrangement differs. */}
               <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)' : 'linear-gradient(180deg, rgba(212,175,55,0.06), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
                   {/* naturalAspect: the real robot photo isn't square
                       (~1.16:1) — width-constrained with auto height here,
                       not forced into a square box like the small chrome
@@ -3013,7 +3041,7 @@ export default function MCareOrb() {
                   )}
                 </div>
 
-                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${BORDER_DARK}`, background: 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px', textAlign: 'center' }}>
+                <div style={{ width: '26%', flexShrink: 0, borderRight: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)' : 'linear-gradient(180deg, rgba(212,175,55,0.06), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px', textAlign: 'center' }}>
                   {titleSubtitleBlock}
                   <div style={{ display: 'flex', justifyContent: 'center' }}>{pillsRowBlock}</div>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>{capabilityRowBlock}</div>
