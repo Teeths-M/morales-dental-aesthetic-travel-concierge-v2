@@ -134,6 +134,16 @@
  *   stays still regardless, and the core ask (rotateY motion instead of
  *   rotateZ rocking) is satisfied exactly, with zero seam risk.
  *
+ *   2026-08-29, a follow-up round: the desktop "M-Safe+" identity column
+ *   (see MCareOrb.jsx) first asked for a `subtleMotion` prop shrinking this
+ *   turn to +/-1.5-2 degrees instead of +/-8-15 — but on a real screen even
+ *   that small residual turn still read as "rocking back and forth."
+ *   Renamed to `eyesOnly` and the magnitudes collapse to a literal 0
+ *   instead of a smaller nonzero value: same scheduling/timer structure,
+ *   `headAngle` just never leaves 0. Blink and gaze (the two effects right
+ *   above, `scheduleBlink`/`scheduleGlance`) are completely separate and
+ *   keep running exactly as before — "eyes animation only" is what's left.
+ *
  *   For the thinking hologram: the M badge is now a REAL separate cutout
  *   layer (`m-safe-robot-mbadge.webp`, alpha-cut the same way the eyes
  *   were, with the hole inpainted out of `bodySrc` — now
@@ -298,7 +308,7 @@ const GAZE_OFFSET = {
  * here since it's tightly coupled to the two props (activityState,
  * animated) that already live on this component.
  */
-function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, subtleMotion = false }) {
+function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, eyesOnly = false }) {
   const [blinking, setBlinking] = useState(false);
   const [autoGaze, setAutoGaze] = useState('center');
   const [headAngle, setHeadAngle] = useState(0);
@@ -408,19 +418,22 @@ function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, 
     clearHeadTimers();
     if (!animated) { setHeadAngle(0); return () => clearHeadTimers(); }
     let cancelled = false;
-    // subtleMotion: same mechanism, much smaller amplitude — for a context
-    // (e.g. the desktop "M-Safe+" identity column, floating over its own
-    // hologram platform) that explicitly asked for "tiny float only, no
-    // whole-body rocking." Every timing/hold/schedule below is identical;
-    // only the target angle magnitudes shrink. Default false leaves every
-    // other caller (message-bubble avatar, mobile hero, /m-care's own
-    // robot, launcher orb) byte-identical to before this prop existed.
-    const idleMag = subtleMotion ? 1.5 : 8;
-    const idleSpread = subtleMotion ? 1 : 4;
-    const thinkMag = subtleMotion ? 2 : 10;
-    const thinkSpread = subtleMotion ? 1 : 5;
-    const listenAngle = subtleMotion ? -1.5 : -7;
-    const speakSpread = subtleMotion ? 1.2 : 5;
+    // eyesOnly: for a context (the desktop "M-Safe+" identity column,
+    // floating over its own hologram platform) where Portia asked first for
+    // "tiny float only, no whole-body rocking," then — once even that
+    // reduced turn still read as rocking on a real screen — for the
+    // head-turn to stop completely, leaving only blink/gaze (a fully
+    // separate mechanism, untouched by this flag) as visible motion. Same
+    // timing/hold/schedule structure runs either way; the target angle
+    // magnitudes below just collapse to 0. Default false leaves every other
+    // caller (message-bubble avatar, mobile hero, /m-care's own robot,
+    // launcher orb) byte-identical to before this prop existed.
+    const idleMag = eyesOnly ? 0 : 8;
+    const idleSpread = eyesOnly ? 0 : 4;
+    const thinkMag = eyesOnly ? 0 : 10;
+    const thinkSpread = eyesOnly ? 0 : 5;
+    const listenAngle = eyesOnly ? 0 : -7;
+    const speakSpread = eyesOnly ? 0 : 5;
 
     if (activityState === 'idle') {
       const scheduleTurn = () => {
@@ -453,7 +466,7 @@ function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, 
 
     return () => { cancelled = true; clearHeadTimers(); setHeadAngle(0); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [animated, activityState, subtleMotion]);
+  }, [animated, activityState, eyesOnly]);
 
   const gaze = gazeOverride
     || (activityState === 'listening' ? 'down'
@@ -498,10 +511,10 @@ function EyeLayer({ src, box, gaze, blinking }) {
 export default function RobotAvatarImage({
   size = 104, color = '#D4AF37', glowAlpha = '45', activityState = 'idle', animated = true,
   naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0,
-  subtleMotion = false,
+  eyesOnly = false,
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const { blinking, gaze, headAngle } = useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, subtleMotion });
+  const { blinking, gaze, headAngle } = useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, eyesOnly });
 
   if (imgFailed) {
     return <RobotAvatar size={size} color={color} glowAlpha={glowAlpha} dots={activityState === 'thinking' ? 3 : 0} animated={animated} />;
@@ -545,12 +558,10 @@ export default function RobotAvatarImage({
       <div
         className="robotAvatarFloat"
         style={{
-          // subtleMotion shrinks the translateX/scale side-effect terms
-          // toward zero too, not just the angle — at a 2-3deg turn the old
-          // 0.3x/0.001x coupling was already imperceptible, but zeroing it
-          // explicitly keeps the residual motion reading as a tiny drift
-          // rather than any hint of a turn.
-          transform: `perspective(800px) rotateY(${headAngle}deg) translateX(${(headAngle * (subtleMotion ? 0.08 : 0.3)).toFixed(2)}px)${subtleMotion ? '' : ` scale(${(1 - Math.abs(headAngle) * 0.001).toFixed(4)})`}`,
+          // eyesOnly means headAngle is always 0 (see useGazeAndBlink above),
+          // so this transform naturally reduces to a no-op — the multiplier
+          // choice below is inert either way, kept for the non-eyesOnly path.
+          transform: `perspective(800px) rotateY(${headAngle}deg) translateX(${(headAngle * (eyesOnly ? 0.08 : 0.3)).toFixed(2)}px)${eyesOnly ? '' : ` scale(${(1 - Math.abs(headAngle) * 0.001).toFixed(4)})`}`,
           transformOrigin: '50% 88%',
           transition: 'transform 900ms ease-in-out',
         }}

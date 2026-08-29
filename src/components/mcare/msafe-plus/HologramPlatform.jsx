@@ -6,6 +6,15 @@ import { MSAFE_PALETTE as C } from '../msafePlusConfig';
 // translucent gold rings (slow counter-rotating), a soft white/gold bloom,
 // a faint reflection, sparse slow gold dust, and a very subtle ambient pulse.
 // Respects prefers-reduced-motion (static fallback, no motion).
+//
+// 2026-08-29: added an opt-in `motionless` prop — Portia's desktop "M-Safe+"
+// identity column (MCareOrb.jsx) asked for the rings and the glowing
+// "shadow" beneath the robot to hold still, keeping only the robot's own
+// eye blink/gaze as visible motion. Every visual element still renders
+// (rings, bloom, reflection, dust) — only their rotate/pulse/drift
+// animations are skipped. Default false leaves the only other caller,
+// /m-care's own MSafeIdentityColumn.jsx, exactly as it was before this prop
+// existed.
 const PARTICLES = [
   { top: '12%', left: '18%', d: 0, s: 2.5 },
   { top: '8%', left: '68%', d: 0.8, s: 2 },
@@ -17,7 +26,7 @@ const PARTICLES = [
   { top: '20%', left: '46%', d: 1.2, s: 1.4 },
 ];
 
-export default function HologramPlatform({ size = 280 }) {
+export default function HologramPlatform({ size = 280, motionless = false }) {
   const [reduced, setReduced] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -61,9 +70,9 @@ export default function HologramPlatform({ size = 280 }) {
           borderRadius: '50%',
           background: `radial-gradient(circle, ${C.goldLight}cc 0%, ${C.goldMid}55 35%, transparent 72%)`,
           filter: 'blur(14px)',
-          opacity: reduced ? 0.5 : undefined,
+          opacity: (reduced || motionless) ? 0.5 : undefined,
         }}
-        className={!reduced ? 'msafe-bloom' : undefined}
+        className={(!reduced && !motionless) ? 'msafe-bloom' : undefined}
       />
 
       {/* Faint reflection of the robot */}
@@ -110,7 +119,7 @@ export default function HologramPlatform({ size = 280 }) {
               boxShadow: `0 0 18px ${r.color}55, inset 0 0 12px ${r.color}33`,
             }}
           >
-            {!reduced && (
+            {!reduced && !motionless && (
               <motion.div
                 style={{ position: 'absolute', inset: 0, borderRadius: '50%' }}
                 animate={{ rotate: 360 * r.dir }}
@@ -138,7 +147,7 @@ export default function HologramPlatform({ size = 280 }) {
       </div>
 
       {/* Sparse slow gold dust */}
-      {!reduced && PARTICLES.map((p, i) => (
+      {!reduced && !motionless && PARTICLES.map((p, i) => (
         <motion.span
           key={i}
           style={{

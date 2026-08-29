@@ -120,6 +120,18 @@
  * caller also reports the chat input has real DOM focus — "the user is
  * about to
  * type" is itself a real, honest signal, not a fabricated one.
+ *
+ * 2026-08-29, "eyes animation only" round: the desktop "M-Safe+" identity
+ * column asked for a `subtleMotion` prop (a smaller head-turn only) last
+ * round, then, once even that still read as "rocking back and forth" on a
+ * real screen, for all whole-body motion to stop, leaving only
+ * RobotAvatarImage.jsx's own blink/gaze running. Renamed `subtleMotion` to
+ * `eyesOnly` and, when set, this file's own pointer/device tilt and
+ * breathing-scale pulse both collapse to a fixed rest value (see the render
+ * below) on top of RobotAvatarImage.jsx zeroing its head-turn. `flashToken`'s
+ * one-shot barge-in ring and `notifyDot`'s pulse are untouched — both are
+ * real event signals, not ambient aliveness. Default false leaves every
+ * other caller unchanged.
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -191,8 +203,8 @@ const PARTICLE_POSITIONS = [
 // src/assets/m-safe-robot-transparent.webp), falling back to the inline-SVG
 // RobotAvatar only if that file is ever missing. `naturalAspect` passes
 // through unchanged — see RobotAvatarImage's own doc comment.
-function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true, naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0, subtleMotion = false }) {
-  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} activityState={activityState} animated={animated} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} subtleMotion={subtleMotion} />;
+function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true, naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0, eyesOnly = false }) {
+  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} activityState={activityState} animated={animated} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} eyesOnly={eyesOnly} />;
 }
 
 // Restrained atmosphere for the large (header) instance only — a soft
@@ -234,7 +246,7 @@ function Atmosphere({ color, animated, activityState = 'idle' }) {
   );
 }
 
-export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false, activityOverride = null, amplitude = null, gazeOverride = null, blinkTrigger = 0, subtleMotion = false, suppressAtmosphere = false }) {
+export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false, activityOverride = null, amplitude = null, gazeOverride = null, blinkTrigger = 0, eyesOnly = false, suppressAtmosphere = false }) {
   // Four-value face-activity state for RobotAvatarImage.jsx's own overlays
   // (visor-dots/waveform/tilt/eye-glow) — a pure mapping of the real
   // 8-value `state` above, plus one additive real signal (`inputFocused`,
@@ -314,7 +326,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {size >= 80 && !suppressAtmosphere && <Atmosphere color={cfgStatic.color} animated={false} activityState={activityState} />}
-        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} activityState={activityState} animated={false} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} subtleMotion={subtleMotion} />
+        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} activityState={activityState} animated={false} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} eyesOnly={eyesOnly} />
       </div>
     );
   }
@@ -326,9 +338,9 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
   return (
     <motion.div
       style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: 500 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      animate={{ rotateX: tilt.rx, rotateY: tilt.ry }}
+      onMouseMove={eyesOnly ? undefined : handleMouseMove}
+      onMouseLeave={eyesOnly ? undefined : handleMouseLeave}
+      animate={{ rotateX: eyesOnly ? 0 : tilt.rx, rotateY: eyesOnly ? 0 : tilt.ry }}
       transition={{ type: 'spring', stiffness: 160, damping: 16 }}
     >
       {size >= 80 && !suppressAtmosphere && <Atmosphere color={cfg.color} animated activityState={activityState} />}
@@ -365,10 +377,10 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
       <motion.div
         aria-hidden="true"
         style={{ position: 'absolute', width: '100%', height: '100%' }}
-        animate={{ scale: cfg.coreScale }}
+        animate={{ scale: eyesOnly ? 1 : cfg.coreScale }}
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} activityState={activityState} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} subtleMotion={subtleMotion} />
+        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} activityState={activityState} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} eyesOnly={eyesOnly} />
       </motion.div>
 
       {cfg.notifyDot && (

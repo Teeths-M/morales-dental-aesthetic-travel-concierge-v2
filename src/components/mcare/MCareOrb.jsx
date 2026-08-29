@@ -3040,15 +3040,26 @@ export default function MCareOrb() {
                       override/gaze/blink/amplitude/flashToken wire-up keeps
                       working exactly as before. Dark mode keeps the original
                       bare orb, naturalAspect: the real robot photo isn't
-                      square (~1.16:1) — width-constrained with auto height. */}
+                      square (~1.16:1) — width-constrained with auto height.
+                      2026-08-29 follow-up: Portia found even the reduced
+                      head-turn from the prior round still read as "rocking
+                      back and forth" on a real screen, and asked for the
+                      rings/shadow/dust to hold still too — "eyes animation
+                      only." HologramPlatform's `motionless` freezes its
+                      rotation/pulse/drift (visuals unchanged), LivingOrb's
+                      `eyesOnly` zeroes its own tilt/breathing pulse plus
+                      RobotAvatarImage's head-turn, and the ambient float
+                      wrapper this column used to add (`.mcare-desktop-float`)
+                      is gone outright — blink + gaze are the only motion
+                      left for this composition. */}
                   {useDarkTheme ? (
                     <div style={{ marginTop: 20 }}>
                       <LivingOrb state={orbState} size={280} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                     </div>
                   ) : (
                     <div className="relative" style={{ width: 240, height: 240, marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <HologramPlatform size={240} />
-                      <div className="mcare-desktop-float" style={{ position: 'relative', zIndex: 2 }}>
+                      <HologramPlatform size={240} motionless />
+                      <div style={{ position: 'relative', zIndex: 2 }}>
                         <LivingOrb
                           state={orbState}
                           size={190}
@@ -3059,7 +3070,7 @@ export default function MCareOrb() {
                           gazeOverride={testGazeOverride}
                           blinkTrigger={testBlinkTrigger}
                           amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude}
-                          subtleMotion
+                          eyesOnly
                           suppressAtmosphere
                         />
                       </div>
@@ -3270,18 +3281,6 @@ export default function MCareOrb() {
         @keyframes orbBubbleIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
         @keyframes mcareBackdropIn { from { opacity:0; } to { opacity:1; } }
         @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
-        /* Desktop-light "M-Safe+" redesign (2026-08-29) — the robot+platform
-           group's own tiny ambient float. A deliberately distinct class/
-           keyframe name (not "msafe-float") since that one is defined only
-           inside MSafeIdentityColumn.jsx's own component-scoped <style>
-           tag, which isn't present in the DOM unless /m-care happens to
-           also be mounted — this file needs its own copy, not a dependency
-           on that. */
-        .mcare-desktop-float { animation: mcare-desktop-ambient-float 6s ease-in-out infinite; }
-        @keyframes mcare-desktop-ambient-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        @media (prefers-reduced-motion: reduce) {
-          .mcare-desktop-float { animation: none; }
-        }
       `}</style>
 
       <LocationPermissionGate
