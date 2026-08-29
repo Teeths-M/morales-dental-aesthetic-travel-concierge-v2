@@ -229,63 +229,7 @@ function Atmosphere({ color, animated, activityState = 'idle' }) {
           filter: 'blur(5px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
-      {/* 2026-08-29 clip fix (same mechanism as the ring halo above): these
-          two rings rotate a flattened ellipse, whose true bounding box can
-          reach far past its own resting footprint at ~90/270deg — unclipped,
-          that swept straight down past the shell into whatever renders
-          right after LivingOrb in normal flow (the capability pills/status
-          pill below it), reading as a detached gold "trailing line." Each
-          ring now lives inside its own fixed, non-rotating clip box sized
-          to its resting width/height/position; the ring still rotates
-          freely inside it, just can't escape past that footprint anymore. */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '124%', height: '30%', bottom: '-8%', left: '-12%',
-          overflow: 'hidden', zIndex: -1, pointerEvents: 'none',
-        }}
-      >
-        <motion.div
-          style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1.5px solid ${color}9e`, filter: 'blur(1px)' }}
-          animate={animated ? { rotate: 360 } : undefined}
-          transition={animated ? { duration: ringADuration, repeat: Infinity, ease: 'linear' } : undefined}
-        />
-      </div>
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '104%', height: '23%', bottom: '-3%', left: '-2%',
-          overflow: 'hidden', zIndex: -1, pointerEvents: 'none',
-        }}
-      >
-        <motion.div
-          style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1.5px solid ${color}80` }}
-          animate={animated ? { rotate: -360 } : undefined}
-          transition={animated ? { duration: ringBDuration, repeat: Infinity, ease: 'linear' } : undefined}
-        />
-      </div>
-      {/* The innermost, static ring — the one that reads most literally as
-          "a stand he's resting on," since it sits closest to the robot's
-          own base and never moves. Flattened slightly wider/shorter and
-          given real weight (was a barely-visible 1px/27%-alpha hairline). */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', width: '88%', height: '14%', bottom: '3%', left: '6%',
-          borderRadius: '50%', border: `1.5px solid ${color}75`, zIndex: -1, pointerEvents: 'none',
-        }}
-      />
-      {/* Gold particles — fading in/out as before, now also drifting
-          slightly upward on the same cycle ("rising" past the shell). */}
-      {animated && PARTICLE_POSITIONS.map((p, i) => (
-        <motion.span
-          key={i}
-          aria-hidden="true"
-          style={{ position: 'absolute', top: p.top, left: p.left, width: 3, height: 3, borderRadius: '50%', background: GOLD, pointerEvents: 'none' }}
-          animate={{ opacity: [0.12, 0.55, 0.12], y: [4, -8, 4] }}
-          transition={{ duration: 2.4 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
-        />
-      ))}
+
     </>
   );
 }
@@ -417,33 +361,6 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
           footprint — the ring below still rotates freely, but anything
           that would have swept outside that footprint is cleanly clipped
           instead of escaping into neighboring UI. */}
-      {Array.from({ length: cfg.ringCount }).map((_, i) => {
-        // 2026-08-29: tightened from 100+i*14 / 42+i*6 — the reference
-        // image's own rings trace close around the sphere's actual
-        // silhouette, not a wide sprawl well outside it. Smaller base +
-        // slower per-ring growth keeps even 3 rings (idle, above) hugging
-        // the robot rather than fanning outward.
-        const w = 92 + i * 10;
-        const h = 40 + i * 5;
-        return (
-          <div
-            key={i}
-            aria-hidden="true"
-            style={{
-              position: 'absolute', top: '50%', left: '50%',
-              width: `${w}%`, height: `${h}%`, marginLeft: `-${w / 2}%`, marginTop: `-${h / 2}%`,
-              overflow: 'hidden', pointerEvents: 'none',
-            }}
-          >
-            <motion.div
-              data-testid="ring-orbit"
-              style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1px solid ${cfg.color}`, opacity: cfg.ringOpacity }}
-              animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-              transition={{ duration: cfg.ringOrbitDuration + i * 2, repeat: Infinity, ease: 'linear' }}
-            />
-          </div>
-        );
-      })}
 
       <motion.div
         aria-hidden="true"

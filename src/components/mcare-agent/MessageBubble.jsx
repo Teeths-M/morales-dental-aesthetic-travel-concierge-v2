@@ -744,7 +744,7 @@ function ToolCallDisplay({ toolCall }) {
 // finds a signal worth reacting to (deterministic, client-side only — see
 // src/lib/mcareReactionHeuristic.js, the agent itself never decides this). All
 // optional → default rendering is unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
+export default function MessageBubble({ message, onRespond, accent = null, accentTextColor = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
   // extraAudioUrl is a real, playable TTS audio URL attached client-side to
@@ -779,13 +779,16 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
   const userBubbleClass = isUser
     ? (accent ? 'text-white' : 'bg-primary text-primary-foreground')
     : 'bg-card border border-border text-card-foreground';
-  const userBubbleStyle = isUser && accent ? { background: accent } : undefined;
+  const userBubbleStyle = isUser && accent ? { background: accent, ...(accentTextColor ? { color: accentTextColor } : {}) } : undefined;
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'}>
       {!isUser && showAvatar && (
         <McareAvatar size={28} />
       )}
       <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
+        {/* Gold L-shaped corner bracket — premium accent at the top corner */}
+        <span aria-hidden="true" style={{ position: 'absolute', top: 0, [isUser ? 'right' : 'left']: 0, width: 15, height: 2, background: isUser ? '#B0851E' : '#C9A43B' }} />
+        <span aria-hidden="true" style={{ position: 'absolute', top: 0, [isUser ? 'right' : 'left']: 0, width: 2, height: 15, background: isUser ? '#B0851E' : '#C9A43B' }} />
         {(() => {
           const { text: t0 } = extractLocationContext(message.content);
           const { text: t1, choices } = extractChoices(t0);
