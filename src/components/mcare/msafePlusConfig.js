@@ -12,9 +12,13 @@ export const MSAFE_PALETTE = {
   goldMid: '#D8B85A',
   goldLight: '#F1DE9B',
   goldPlus: '#D4AF37',
-  mintBg: 'rgba(214, 238, 226, 0.75)',
-  mintDot: '#3FB47F',
-  mintText: '#1F6B4F',
+  // Nudged 2026-08-29 to the exact "LIVE SESSION" mint from the desktop
+  // "M-Safe+" light redesign reference (#27B86C) — zero other consumers of
+  // these three values exist besides LiveSessionBadge.jsx, confirmed via
+  // grep, so this is a contained value change, not a shared-risk edit.
+  mintBg: 'rgba(39, 184, 108, 0.14)',
+  mintDot: '#27B86C',
+  mintText: '#166A3E',
 };
 
 export const MSAFE_BRAND = {

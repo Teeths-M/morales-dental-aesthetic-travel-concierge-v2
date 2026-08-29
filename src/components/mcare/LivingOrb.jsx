@@ -191,8 +191,8 @@ const PARTICLE_POSITIONS = [
 // src/assets/m-safe-robot-transparent.webp), falling back to the inline-SVG
 // RobotAvatar only if that file is ever missing. `naturalAspect` passes
 // through unchanged — see RobotAvatarImage's own doc comment.
-function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true, naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0 }) {
-  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} activityState={activityState} animated={animated} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} />;
+function Shell({ size, glowAlpha, color, activityState = 'idle', animated = true, naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0, subtleMotion = false }) {
+  return <RobotAvatarImage size={size} color={color} glowAlpha={glowAlpha} activityState={activityState} animated={animated} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} subtleMotion={subtleMotion} />;
 }
 
 // Restrained atmosphere for the large (header) instance only — a soft
@@ -234,7 +234,7 @@ function Atmosphere({ color, animated, activityState = 'idle' }) {
   );
 }
 
-export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false, activityOverride = null, amplitude = null, gazeOverride = null, blinkTrigger = 0 }) {
+export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false, activityOverride = null, amplitude = null, gazeOverride = null, blinkTrigger = 0, subtleMotion = false, suppressAtmosphere = false }) {
   // Four-value face-activity state for RobotAvatarImage.jsx's own overlays
   // (visor-dots/waveform/tilt/eye-glow) — a pure mapping of the real
   // 8-value `state` above, plus one additive real signal (`inputFocused`,
@@ -313,8 +313,8 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
     const cfgStatic = STATE_CONFIG[state] || STATE_CONFIG.idle;
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {size >= 80 && <Atmosphere color={cfgStatic.color} animated={false} activityState={activityState} />}
-        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} activityState={activityState} animated={false} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} />
+        {size >= 80 && !suppressAtmosphere && <Atmosphere color={cfgStatic.color} animated={false} activityState={activityState} />}
+        <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} activityState={activityState} animated={false} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} subtleMotion={subtleMotion} />
       </div>
     );
   }
@@ -331,7 +331,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
       animate={{ rotateX: tilt.rx, rotateY: tilt.ry }}
       transition={{ type: 'spring', stiffness: 160, damping: 16 }}
     >
-      {size >= 80 && <Atmosphere color={cfg.color} animated activityState={activityState} />}
+      {size >= 80 && !suppressAtmosphere && <Atmosphere color={cfg.color} animated activityState={activityState} />}
 
       {flashToken > 0 && (
         <motion.div
@@ -368,7 +368,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
         animate={{ scale: cfg.coreScale }}
         transition={{ duration: cfg.duration, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} activityState={activityState} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} />
+        <Shell size={size} glowAlpha={cfg.glowAlpha} color={cfg.color} activityState={activityState} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} subtleMotion={subtleMotion} />
       </motion.div>
 
       {cfg.notifyDot && (

@@ -298,7 +298,7 @@ const GAZE_OFFSET = {
  * here since it's tightly coupled to the two props (activityState,
  * animated) that already live on this component.
  */
-function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }) {
+function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, subtleMotion = false }) {
   const [blinking, setBlinking] = useState(false);
   const [autoGaze, setAutoGaze] = useState('center');
   const [headAngle, setHeadAngle] = useState(0);
@@ -408,13 +408,26 @@ function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }
     clearHeadTimers();
     if (!animated) { setHeadAngle(0); return () => clearHeadTimers(); }
     let cancelled = false;
+    // subtleMotion: same mechanism, much smaller amplitude — for a context
+    // (e.g. the desktop "M-Safe+" identity column, floating over its own
+    // hologram platform) that explicitly asked for "tiny float only, no
+    // whole-body rocking." Every timing/hold/schedule below is identical;
+    // only the target angle magnitudes shrink. Default false leaves every
+    // other caller (message-bubble avatar, mobile hero, /m-care's own
+    // robot, launcher orb) byte-identical to before this prop existed.
+    const idleMag = subtleMotion ? 1.5 : 8;
+    const idleSpread = subtleMotion ? 1 : 4;
+    const thinkMag = subtleMotion ? 2 : 10;
+    const thinkSpread = subtleMotion ? 1 : 5;
+    const listenAngle = subtleMotion ? -1.5 : -7;
+    const speakSpread = subtleMotion ? 1.2 : 5;
 
     if (activityState === 'idle') {
       const scheduleTurn = () => {
         afterHead(() => {
           if (cancelled) return;
           const dir = Math.random() < 0.5 ? -1 : 1;
-          setHeadAngle(dir * (8 + Math.random() * 4));
+          setHeadAngle(dir * (idleMag + Math.random() * idleSpread));
           afterHead(() => !cancelled && setHeadAngle(0), 1600 + Math.random() * 600);
           scheduleTurn();
         }, 6000 + Math.random() * 6000);
@@ -422,14 +435,14 @@ function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }
       scheduleTurn();
     } else if (activityState === 'thinking') {
       const dir = Math.random() < 0.5 ? -1 : 1;
-      setHeadAngle(dir * (10 + Math.random() * 5));
+      setHeadAngle(dir * (thinkMag + Math.random() * thinkSpread));
     } else if (activityState === 'listening') {
-      setHeadAngle(-7);
+      setHeadAngle(listenAngle);
     } else if (activityState === 'speaking') {
       const microTurn = () => {
         afterHead(() => {
           if (cancelled) return;
-          setHeadAngle((Math.random() - 0.5) * 5);
+          setHeadAngle((Math.random() - 0.5) * speakSpread);
           microTurn();
         }, 1500 + Math.random() * 1200);
       };
@@ -440,7 +453,7 @@ function useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger }
 
     return () => { cancelled = true; clearHeadTimers(); setHeadAngle(0); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [animated, activityState]);
+  }, [animated, activityState, subtleMotion]);
 
   const gaze = gazeOverride
     || (activityState === 'listening' ? 'down'
@@ -485,9 +498,10 @@ function EyeLayer({ src, box, gaze, blinking }) {
 export default function RobotAvatarImage({
   size = 104, color = '#D4AF37', glowAlpha = '45', activityState = 'idle', animated = true,
   naturalAspect = false, amplitude = null, gazeOverride = null, blinkTrigger = 0,
+  subtleMotion = false,
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const { blinking, gaze, headAngle } = useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger });
+  const { blinking, gaze, headAngle } = useGazeAndBlink({ activityState, animated, gazeOverride, blinkTrigger, subtleMotion });
 
   if (imgFailed) {
     return <RobotAvatar size={size} color={color} glowAlpha={glowAlpha} dots={activityState === 'thinking' ? 3 : 0} animated={animated} />;
@@ -531,7 +545,12 @@ export default function RobotAvatarImage({
       <div
         className="robotAvatarFloat"
         style={{
-          transform: `perspective(800px) rotateY(${headAngle}deg) translateX(${(headAngle * 0.3).toFixed(2)}px) scale(${(1 - Math.abs(headAngle) * 0.001).toFixed(4)})`,
+          // subtleMotion shrinks the translateX/scale side-effect terms
+          // toward zero too, not just the angle — at a 2-3deg turn the old
+          // 0.3x/0.001x coupling was already imperceptible, but zeroing it
+          // explicitly keeps the residual motion reading as a tiny drift
+          // rather than any hint of a turn.
+          transform: `perspective(800px) rotateY(${headAngle}deg) translateX(${(headAngle * (subtleMotion ? 0.08 : 0.3)).toFixed(2)}px)${subtleMotion ? '' : ` scale(${(1 - Math.abs(headAngle) * 0.001).toFixed(4)})`}`,
           transformOrigin: '50% 88%',
           transition: 'transform 900ms ease-in-out',
         }}

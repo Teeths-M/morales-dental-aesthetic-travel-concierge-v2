@@ -85,6 +85,10 @@ import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 import { describeAccuracy } from '@/lib/mapLinks';
 import { isSandboxed } from '@/lib/isSandboxed';
 import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
+import HologramPlatform from './msafe-plus/HologramPlatform';
+import CapabilityPill from './msafe-plus/CapabilityPill';
+import LiveSessionBadge from './msafe-plus/LiveSessionBadge';
+import { CAPABILITIES } from './msafePlusConfig';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -118,6 +122,15 @@ const LIGHT_TEXT_MUTED = '#64748B';
 const MINT = '#36DDB2';
 const LAVENDER = '#A78BFA';
 const GOLD_GRADIENT = 'linear-gradient(135deg, #E8C85C, #D4AF37)';
+// Desktop-light "M-Safe+" luxury redesign (2026-08-29) — Portia's reference
+// mockup. Scoped additions used ONLY when `isDesktopPanel && !useDarkTheme`,
+// so dark mode and mobile stay byte-identical to before. Kept file-local
+// (not imported from msafePlusConfig.js's MSAFE_PALETTE) because the exact
+// hex values differ slightly and this avoids that unrelated file's own
+// future edits silently changing this file's colors.
+const DESKTOP_LUXURY_BG = '#F8F7F2';
+const DESKTOP_LUXURY_GOLD = '#D2A93D';
+const DESKTOP_LUXURY_USER_GRADIENT = 'linear-gradient(135deg, #F6E6BE 0%, #EAD08C 100%)';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your Morales Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 const TAGLINE = "I analyze. I protect. I coordinate. I resolve. I've got you.";
@@ -278,9 +291,15 @@ export default function MCareOrb() {
   // sizing, which mobile-vs-desktop UI piece renders) — only the separate
   // `useDarkTheme` flag below is read wherever a color/background/border
   // decision is being made, so toggling this can never affect layout.
-  const [desktopLightMode, setDesktopLightMode] = useState(
-    () => typeof window !== 'undefined' && localStorage.getItem('morales_mcare_desktop_light') === '1'
-  );
+  // Default flipped to light (2026-08-29) — the desktop "M-Safe+" light
+  // redesign is now the real experience, not a hidden opt-in toggle. Only
+  // changes behavior for a session/browser with no saved preference yet;
+  // anyone who already explicitly chose '0' (dark) keeps that choice.
+  const [desktopLightMode, setDesktopLightMode] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('morales_mcare_desktop_light');
+    return saved === null ? true : saved === '1';
+  });
   useEffect(() => {
     try { localStorage.setItem('morales_mcare_desktop_light', desktopLightMode ? '1' : '0'); } catch { /* best-effort */ }
   }, [desktopLightMode]);
@@ -2464,12 +2483,19 @@ export default function MCareOrb() {
   // see isDesktopPanel above). Each piece is the exact same JSX either
   // layout already used before this split — extracted so the two arrangements
   // can reuse it instead of drifting into two copies of the same logic. ──
+  // Desktop-light gets a real serif treatment ("elegant serif title" per
+  // Portia's spec) via the app's own global --font-serif token (already
+  // loads Cormorant Garamond, src/index.css) plus the fuller subtitle
+  // string — both gated on isDesktopPanel so mobile's copy/font stay
+  // byte-identical to before.
   const titleSubtitleBlock = (
     <div style={{ minWidth: 0 }}>
-      <p style={{ margin: 0, fontSize: isDesktopPanel ? 19 : 17, fontWeight: 700, letterSpacing: '-0.01em', color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
-        M-Safe<span style={{ color: GOLD, fontSize: isDesktopPanel ? 15 : 13, fontWeight: 800, marginLeft: 1 }}>+</span>
+      <p style={{ margin: 0, fontFamily: isDesktopPanel ? 'var(--font-serif)' : undefined, fontSize: isDesktopPanel ? 26 : 17, fontWeight: 700, letterSpacing: '-0.01em', color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
+        M-Safe<span style={{ color: (isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_GOLD : GOLD, fontSize: isDesktopPanel ? 20 : 13, fontWeight: 800, marginLeft: 1 }}>+</span>
       </p>
-      <p style={{ margin: 0, fontSize: isDesktopPanel ? 12 : 11, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>Morales Super Agent</p>
+      <p style={{ margin: 0, fontSize: isDesktopPanel ? 13 : 11, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>
+        {isDesktopPanel ? 'Morales Super Agent • Medical + Travel Concierge' : 'Morales Super Agent'}
+      </p>
     </div>
   );
 
@@ -2712,7 +2738,7 @@ export default function MCareOrb() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <MessageBubble message={m} accent={GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" showReaction
+            <MessageBubble message={m} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" showReaction
               onChoice={
                 m.__distressConfirm
                   ? (c) => handleDistressConfirm(c, m.__distressConfirm)
@@ -2763,7 +2789,7 @@ export default function MCareOrb() {
             <div style={{ fontSize: 10, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
               M-Care checked in
             </div>
-            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
+            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
           </motion.div>
         ))}
 
@@ -2860,7 +2886,7 @@ export default function MCareOrb() {
   // of the panel on desktop (per the widescreen layout ask), and the last
   // element of the single stacked column on mobile — same JSX either way.
   const inputBarBlock = (
-    <div style={{ padding: '10px 14px', borderTop: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: useDarkTheme ? PANEL_BG : LIGHT_CARD }}>
+    <div style={{ padding: '10px 14px', borderTop: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}33` : LIGHT_BORDER)}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: useDarkTheme ? PANEL_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_CARD) }}>
       <AddImageMenu
         variant="icon"
         menuTheme={useDarkTheme ? 'dark' : 'light'}
@@ -2888,7 +2914,7 @@ export default function MCareOrb() {
           onBlur={() => setInputFocused(false)}
           onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
           placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
-          style={{ width: '100%', background: useDarkTheme ? CARD_BG : LIGHT_BG, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
+          style={{ width: '100%', background: useDarkTheme ? CARD_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG), border: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}40` : LIGHT_BORDER)}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
         />
       </div>
       {isOnline && !conversationalMode && (
@@ -2901,7 +2927,7 @@ export default function MCareOrb() {
         />
       )}
       <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
-        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? GOLD : (useDarkTheme ? BORDER_DARK : LIGHT_BORDER), border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? ((isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_GOLD : GOLD) : (useDarkTheme ? BORDER_DARK : LIGHT_BORDER), border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
       >
         <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : (useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED) }} />
       </button>
@@ -2941,7 +2967,22 @@ export default function MCareOrb() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          style={{ position: 'fixed', inset: 0, zIndex: 9001, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isDesktopPanel ? 16 : 0 }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9001,
+            // Desktop-light: a soft ivory/gold wash instead of the plain
+            // dark scrim, per the "full-screen softly blurred luxury
+            // interior background" spec — a zero-dependency CSS gradient,
+            // not a new external image asset (no local clinic/interior
+            // photo exists under public/, confirmed via Glob before this
+            // edit; deliberately not a hardcoded external URL either, to
+            // avoid the exact risk already flagged for /m-care's own
+            // MSafeWorkspace.jsx background). Dark mode and mobile keep the
+            // original plain scrim exactly as before.
+            background: (isDesktopPanel && !useDarkTheme)
+              ? 'radial-gradient(circle at 50% 30%, rgba(248,247,242,0.55), rgba(210,169,61,0.20) 55%, rgba(15,23,42,0.45) 100%)'
+              : 'rgba(15,23,42,0.45)',
+            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isDesktopPanel ? 16 : 0,
+          }}
         >
         <motion.div
           className={useDarkTheme ? 'dark' : ''}
@@ -2959,10 +3000,10 @@ export default function MCareOrb() {
             width: isDesktopPanel
               ? (expanded ? 'min(1500px, 98vw)' : 'min(1306px, 96vw)')
               : '100vw',
-            background: useDarkTheme ? PANEL_BG : LIGHT_BG,
-            border: !isDesktopPanel ? 'none' : `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`,
+            background: useDarkTheme ? PANEL_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG),
+            border: !isDesktopPanel ? 'none' : `1px solid ${useDarkTheme ? BORDER_DARK : `${DESKTOP_LUXURY_GOLD}33`}`,
             borderRadius: isDesktopPanel ? 16 : 0,
-            boxShadow: !isDesktopPanel ? 'none' : (useDarkTheme ? `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)` : `0 24px 64px rgba(15,23,42,0.16), 0 0 0 1px rgba(212,175,55,0.10)`),
+            boxShadow: !isDesktopPanel ? 'none' : (useDarkTheme ? `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)` : `0 24px 64px rgba(15,23,42,0.10), 0 0 0 1px rgba(210,169,61,0.14)`),
             display: 'flex', flexDirection: 'column',
             height: isDesktopPanel
               ? (expanded ? '92vh' : 'min(80vh, 640px)')
@@ -2986,17 +3027,44 @@ export default function MCareOrb() {
                   the one status pill; mobile keeps pillsRowBlock
                   unchanged. */}
               <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-                <div style={{ width: '38%', flexShrink: 0, borderRight: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)' : 'linear-gradient(180deg, rgba(212,175,55,0.06), transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 18px', overflowY: 'auto' }}>
+                <div style={{ width: '38%', flexShrink: 0, borderRight: `1px solid ${useDarkTheme ? BORDER_DARK : `${DESKTOP_LUXURY_GOLD}33`}`, background: useDarkTheme ? 'linear-gradient(180deg, rgba(42,63,74,0.14), transparent)' : DESKTOP_LUXURY_BG, backgroundImage: useDarkTheme ? undefined : 'radial-gradient(rgba(210,169,61,0.10) 1px, transparent 1px)', backgroundSize: useDarkTheme ? undefined : '18px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 18px', overflowY: 'auto' }}>
                   <div style={{ alignSelf: 'flex-start', textAlign: 'left', width: '100%' }}>
                     {titleSubtitleBlock}
                   </div>
-                  {/* naturalAspect: the real robot photo isn't square
-                      (~1.16:1) — width-constrained with auto height here,
-                      not forced into a square box like the small chrome
-                      instances elsewhere in this file. */}
-                  <div style={{ marginTop: 20 }}>
-                    <LivingOrb state={orbState} size={280} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
-                  </div>
+                  {/* Robot + hologram: light mode reuses the polished
+                      HologramPlatform ring/bloom visual already built for
+                      /m-care's own "M-Safe+" page (same relative-wrapper +
+                      platform-underneath + robot-in-normal-flow-on-top
+                      composition that page uses), with the REAL <LivingOrb>
+                      (not bare RobotAvatarImage) so every existing dev-test
+                      override/gaze/blink/amplitude/flashToken wire-up keeps
+                      working exactly as before. Dark mode keeps the original
+                      bare orb, naturalAspect: the real robot photo isn't
+                      square (~1.16:1) — width-constrained with auto height. */}
+                  {useDarkTheme ? (
+                    <div style={{ marginTop: 20 }}>
+                      <LivingOrb state={orbState} size={280} flashToken={bargeInFlashToken} naturalAspect inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
+                    </div>
+                  ) : (
+                    <div className="relative" style={{ width: 240, height: 240, marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <HologramPlatform size={240} />
+                      <div className="mcare-desktop-float" style={{ position: 'relative', zIndex: 2 }}>
+                        <LivingOrb
+                          state={orbState}
+                          size={190}
+                          flashToken={bargeInFlashToken}
+                          naturalAspect
+                          inputFocused={inputFocused}
+                          activityOverride={testActivityOverride}
+                          gazeOverride={testGazeOverride}
+                          blinkTrigger={testBlinkTrigger}
+                          amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude}
+                          subtleMotion
+                          suppressAtmosphere
+                        />
+                      </div>
+                    </div>
+                  )}
                   {/* TEMPORARY, dev-only test panel — forces each robot
                       activityState on demand so it can be visually
                       verified without waiting for a narrow live-agent
@@ -3009,8 +3077,15 @@ export default function MCareOrb() {
                       extended with a Blink trigger, a gaze-direction cycle,
                       and a simulated-amplitude slider so the new real eye
                       movement + amplitude-reactive overlays can be verified
-                      the same on-demand way, without a live mic/TTS call. */}
+                      the same on-demand way, without a live mic/TTS call.
+                      2026-08-29: collapsed behind a <details> disclosure so
+                      it no longer visually competes with the real capability
+                      pills below — still fully DEV-gated, never deleted. */}
                   {import.meta.env.DEV && (
+                    <details style={{ width: '100%', marginTop: 10 }}>
+                      <summary style={{ fontSize: 10, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, cursor: 'pointer', textAlign: 'center', listStyle: 'none', userSelect: 'none' }}>
+                        Dev robot controls
+                      </summary>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 14, width: '100%' }}>
                         {[
@@ -3090,18 +3165,29 @@ export default function MCareOrb() {
                         />
                       )}
                     </div>
+                    </details>
                   )}
-                  <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>{desktopCapabilityPillsRow}</div>
-                  <div style={{ marginTop: 16 }}>{standaloneStatusPill}</div>
+                  <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>
+                    {useDarkTheme ? desktopCapabilityPillsRow : (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+                        {CAPABILITIES.map(cap => (
+                          <CapabilityPill key={cap.id} label={cap.label} icon={cap.icon} onClick={() => sendAgentMessage(cap.intent)} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ marginTop: 16 }}>
+                    {useDarkTheme ? standaloneStatusPill : <LiveSessionBadge />}
+                  </div>
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${useDarkTheme ? BORDER_DARK : `${DESKTOP_LUXURY_GOLD}33`}`, flexShrink: 0 }}>
                     <McareAvatar size={28} />
                     <span style={{ fontSize: 14, fontWeight: 700, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, whiteSpace: 'nowrap' }}>
                       M-Safe <span style={{ fontWeight: 400, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>• Morales Super Agent</span>
                     </span>
-                    {standaloneStatusPill}
+                    {useDarkTheme ? standaloneStatusPill : <LiveSessionBadge />}
                     <div style={{ marginLeft: 'auto' }}>{headerControlsBlock}</div>
                   </div>
                   {chatMain}
@@ -3184,6 +3270,18 @@ export default function MCareOrb() {
         @keyframes orbBubbleIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
         @keyframes mcareBackdropIn { from { opacity:0; } to { opacity:1; } }
         @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
+        /* Desktop-light "M-Safe+" redesign (2026-08-29) — the robot+platform
+           group's own tiny ambient float. A deliberately distinct class/
+           keyframe name (not "msafe-float") since that one is defined only
+           inside MSafeIdentityColumn.jsx's own component-scoped <style>
+           tag, which isn't present in the DOM unless /m-care happens to
+           also be mounted — this file needs its own copy, not a dependency
+           on that. */
+        .mcare-desktop-float { animation: mcare-desktop-ambient-float 6s ease-in-out infinite; }
+        @keyframes mcare-desktop-ambient-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @media (prefers-reduced-motion: reduce) {
+          .mcare-desktop-float { animation: none; }
+        }
       `}</style>
 
       <LocationPermissionGate
