@@ -2768,6 +2768,87 @@ treatment all actually read as intended on a real phone — Portia verifies live
 this ships, the same standing caveat as every prior visual round of work on this exact
 component.
 
+## McareIntro — a standalone cinematic buildathon-video intro (2026-08-29)
+
+Portia needed a ~25s animated intro to record in Loom as the opening of the
+buildathon demo video (8 days out from the Sun 6 Sept deadline). She first
+asked to "install AITuber MCP" for this — checked first (WebSearch): it's a
+real MCP server (`github.com/aituberapp/aituber-mcp`) but a thin wrapper
+around a **paid** third-party SaaS (`aituber.app`, needs an `AITUBER_API_KEY`
+this checkout doesn't have and can't create) that generates short AI-narrated
+videos from AI visuals/stock footage/templates for YouTube Shorts/TikTok —
+it does not record a real screen or the real app, and using it would have
+meant the demo video showing AI-generated b-roll instead of the actual
+working product, exactly the "does the claim match the code" gap this app's
+own RULE 3/Demo-Pages-audit discipline exists to catch elsewhere. Confirmed
+with Portia (AskUserQuestion) before proceeding either way; she then gave a
+full, detailed spec for a real animated React component instead.
+
+**`src/components/mcare/McareIntro.jsx`** (new) — a self-contained,
+full-screen (`position:fixed, inset:0, z-index:10001` — clears every other
+fixed element in this app, Header's mobile tray at 9999 included, so it
+plays chrome-free without needing to restructure how routes nest under
+`AppLayout`) 4-phase sequence, timed via real elapsed-time `setTimeout`s
+against a `phase`/`islandIndex` state machine: **hook** (0-3s, the real M
+Principle framing + `LivingOrb` powering on) → **journey** (3-15s, 7
+Caribbean stops — Jamaica, Barbados, Trinidad and Tobago, Dominican
+Republic, The Bahamas, Saint Lucia, Guyana — each ~1.71s, a small
+`LivingOrb` marker animating between stops on an abstract SVG map, a
+floating real-flag-emoji + country label, and a premium phone-mockup card
+with a short mock exchange) → **network** (15-21s, the map pulls back,
+every stop connects, "Analyze. Protect. Coordinate. Resolve." stagger in) →
+**reveal** (21-25s, holds — brand line + tagline over a soft gold glow).
+"Skip intro" (the required accessible bypass) jumps straight to reveal; a
+Replay button appears once there.
+
+Reuses real, already-approved pieces rather than inventing new visual
+language: `LivingOrb` for every robot appearance (same asset, same ring/glow
+"atmosphere" the whole app already uses — no new robot rendering built),
+this app's own gold/navy design tokens, and real Unicode flag emoji (no
+image-generation tool exists in this environment, and stylized abstract map
+dots + real official flags — never illustrated people/places — is both
+honestly buildable and avoids any stereotyping risk). Every phone-mockup
+exchange is grounded in a real, shipped M-Care capability (doctor
+verification, Care Room translation, JourneyPlan, on-demand ride dispatch)
+— copy checked for absolute/unverifiable claims ("guaranteed," "verified
+everywhere") and none appear. `prefers-reduced-motion` keeps the exact same
+phase timing (the video's length shouldn't change) but swaps every spring/
+path-draw/pull-back animation for a plain, fast fade — the same "fully
+simplified, not just slower" convention `LivingOrb.jsx` already established.
+
+**`src/components/mcare/mcareIntroCopy.js`** (new) — every editable string
+(hook line, the 7 island stops' flags/names/mock exchanges, the 4 motion
+words, the 2 closing lines, brand line/subline, button labels) in one file,
+per Portia's own explicit ask, so wording can be tuned without touching
+animation/timing logic.
+
+**`src/pages/McareIntroDemo.jsx`** (new, thin wrapper) + one new route,
+**`/demo/mcare-intro`** (`src/routes/publicRoutes.jsx`), matching this app's
+existing `/demo/*` lazy-route convention exactly (same pattern as
+`/demo/m-recon`, `/demo/master-journey`, etc.).
+
+**Deliberately not built**: any literal "transition into the real M-Care app
+interface" via actual live/authenticated app state (no credentials exist in
+this checkout, and a scripted cinematic sequence needs to be deterministic
+across repeated recording takes) — phase 4 is a polished, static-content
+reveal reusing the real brand identity instead, not a live chat panel.
+
+**Verification**: pure frontend — no entity/function/`m_care.jsonc` change,
+no Base44 Publish needed for backend reasons, ships with the normal frontend
+deploy. Lint clean; typecheck at the same pre-existing baseline (one new
+error surfaced and fixed during the build — `McareIntro`'s `onDone` prop
+needed an explicit default, the same `--allowJs` cross-call-site prop-shape
+issue this file already documents fixing elsewhere in this app); `npm run
+build` exit 0; 871/871 vitest (unchanged — no pure-logic module extracted,
+consistent with how every other purely-presentational mcare component in
+this app has been verified); 292/292 redteam (unchanged — no entity/tool/
+permission surface touched). Live-only, can't be confirmed from this
+checkout (no browser rendering here): whether the timing/pacing, map
+layout, and phone-mockup readability actually land well on a real screen —
+Portia should watch it play through at `/demo/mcare-intro` once published,
+before recording, and the exact per-phase timings/positions are easy single-
+constant edits in `McareIntro.jsx` if any beat needs retiming.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.
