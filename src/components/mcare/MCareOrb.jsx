@@ -2448,10 +2448,10 @@ export default function MCareOrb() {
   // can reuse it instead of drifting into two copies of the same logic. ──
   const titleSubtitleBlock = (
     <div style={{ minWidth: 0 }}>
-      <p style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
-        M-Safe<span style={{ color: GOLD, fontSize: 15, fontWeight: 800, marginLeft: 1 }}>+</span>
+      <p style={{ margin: 0, fontSize: isDesktopPanel ? 19 : 17, fontWeight: 700, letterSpacing: '-0.01em', color: isDesktopPanel ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
+        M-Safe<span style={{ color: GOLD, fontSize: isDesktopPanel ? 15 : 13, fontWeight: 800, marginLeft: 1 }}>+</span>
       </p>
-      <p style={{ margin: 0, fontSize: 12, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>Morales Super Agent</p>
+      <p style={{ margin: 0, fontSize: isDesktopPanel ? 12 : 11, color: isDesktopPanel ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>Morales Super Agent</p>
     </div>
   );
 
@@ -2495,26 +2495,38 @@ export default function MCareOrb() {
   // light foreground text (e.g. #B4A2FF purple) is illegible on the new
   // white mobile panel. isDesktopPanel keeps the exact original values;
   // mobile gets a stronger wash + a darker foreground for the same hue.
+  //
+  // 2026-08-29: on mobile the two main pills (LIVE SESSION + AI SUPER
+  // AGENTIC) were wide enough at the original size that they wrapped onto
+  // two separate rows in the narrow text column next to the robot — the
+  // reference image shows them fitting side-by-side on one line. Shrinking
+  // padding/font/icon/dot size (mobile only, via these consts) closes that
+  // gap; desktop reads the exact same values as before (pillPad='4px 10px',
+  // pillFont=11, pillIconSize=12, pillDotSize=7), byte-identical.
+  const pillPad = isDesktopPanel ? '4px 10px' : '3px 8px';
+  const pillFont = isDesktopPanel ? 11 : 9.5;
+  const pillIconSize = isDesktopPanel ? 12 : 10;
+  const pillDotSize = isDesktopPanel ? 7 : 6;
   const pillsRowBlock = (
-    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: isDesktopPanel ? statusPill.bg : statusPill.bgLight, color: isDesktopPanel ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: isDesktopPanel ? 6 : 5, marginTop: 8 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: isDesktopPanel ? statusPill.bg : statusPill.bgLight, color: isDesktopPanel ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <span style={{ width: pillDotSize, height: pillDotSize, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
       </span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(108,71,255,0.16)' : `${LAVENDER}26`, color: isDesktopPanel ? '#B4A2FF' : '#6D28D9', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-        <Sparkles style={{ width: 12, height: 12 }} /> AI SUPER AGENTIC
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(108,71,255,0.16)' : `${LAVENDER}26`, color: isDesktopPanel ? '#B4A2FF' : '#6D28D9', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <Sparkles style={{ width: pillIconSize, height: pillIconSize }} /> AI SUPER AGENTIC
       </span>
       {privateMode && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.14)', color: isDesktopPanel ? '#A5B4FC' : '#4338CA', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-          <Shield style={{ width: 12, height: 12 }} /> PRIVATE
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: isDesktopPanel ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.14)', color: isDesktopPanel ? '#A5B4FC' : '#4338CA', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <Shield style={{ width: pillIconSize, height: pillIconSize }} /> PRIVATE
         </span>
       )}
       {voiceStatusText && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(212,175,55,0.14)', color: GOLD, borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(212,175,55,0.14)', color: GOLD, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
           {voiceStatusText}
         </span>
       )}
       {responseLanguage && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(156,163,175,0.14)', color: '#D1D5DB', borderRadius: 999, padding: '4px 8px', fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(156,163,175,0.14)', color: '#D1D5DB', borderRadius: 999, padding: isDesktopPanel ? '4px 8px' : '3px 6px', fontSize: isDesktopPanel ? 10 : 9, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
           {responseLanguage}
         </span>
       )}
@@ -2559,7 +2571,7 @@ export default function MCareOrb() {
     </div>
   );
   const capabilityRowBlock = isDesktopPanel ? capabilityItemsRow : (
-    <div style={{ marginTop: 12, width: '100%', background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.06)', padding: '12px 10px' }}>
+    <div style={{ marginTop: 8, width: '100%', background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.06)', padding: '10px 8px' }}>
       {capabilityItemsRow}
     </div>
   );
@@ -3050,10 +3062,10 @@ export default function MCareOrb() {
                   area below actually gets most of the screen, matching every
                   real chat app's own convention of not permanently reserving
                   a "hero" once you're mid-conversation. */}
-              <div style={{ padding: agentMessages.length > 0 ? '10px 16px' : '16px 16px 14px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div style={{ padding: agentMessages.length > 0 ? '10px 16px' : '12px 14px 10px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <div style={{ flexShrink: 0 }}>
-                    <LivingOrb state={orbState} size={agentMessages.length > 0 ? 56 : 104} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
+                    <LivingOrb state={orbState} size={agentMessages.length > 0 ? 56 : 72} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
@@ -3062,7 +3074,7 @@ export default function MCareOrb() {
                     </div>
                     {pillsRowBlock}
                     {agentMessages.length === 0 && (
-                      <p style={{ margin: '8px 0 0', fontSize: 12, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
+                      <p style={{ margin: '6px 0 0', fontSize: 11, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
                     )}
                   </div>
                 </div>

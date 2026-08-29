@@ -138,14 +138,17 @@ const AMBER = '#D97706';
 // move slower" ordering `duration` already implied, rescaled to a speed
 // that actually reads as an orbit.
 const STATE_CONFIG = {
-  // idle: ringCount bumped 2→3 and ringOpacity 0.18→0.22 (2026-08-29) — a
-  // real screenshot comparison against the reference image showed 2 rings
-  // reading as sparse/incomplete at any single frozen moment (they only
-  // ever show 2 ellipses at whatever rotation angle they happen to be at);
-  // a third ring plus slightly higher opacity reads as a denser "orbital
-  // shell" closer to the reference, without changing the ring shapes'
-  // own hug-tightness (see the ring-rendering block below for that).
-  idle:           { ringCount: 3, duration: 3.6, ringOrbitDuration: 16, ringOpacity: 0.22, coreScale: [1, 1.025, 1], glowAlpha: '45', color: GOLD },
+  // idle: bumped to ringCount 3 / ringOpacity 0.22 earlier the same day
+  // (2026-08-29) in response to the rings reading as sparse/incomplete at
+  // any frozen moment — but a closer side-by-side against a cleaner
+  // reference crop showed that overshot: the reference's idle halo is a
+  // soft, barely-there ambient glow, not crisp, wide crossing gold lines.
+  // Dialed back down toward "very subtle" (matching this state's own
+  // top-of-file description) — ringCount back to 2, ringOpacity lower than
+  // even the original 0.18, and a slightly slower orbit for a calmer read.
+  // The ring shapes' own hug-tightness (the w/h formula below) is untouched
+  // — this correction is about brightness/density, not position/size.
+  idle:           { ringCount: 2, duration: 3.6, ringOrbitDuration: 20, ringOpacity: 0.12, coreScale: [1, 1.025, 1], glowAlpha: '45', color: GOLD },
   listening:      { ringCount: 3, duration: 1.1, ringOrbitDuration: 8,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],   glowAlpha: '55', color: GOLD },
   // thinking / tool_executing: the same ring cadence at two speeds/
   // intensities — thinking is the agent composing a reply, no tool call
