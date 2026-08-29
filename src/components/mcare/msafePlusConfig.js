@@ -1,7 +1,7 @@
 /**
- * msafePlusConfig — single source of truth for the M-Safe+ luxury landing
- * screen. All text, palette, and capability data live here so the hero
- * components stay presentational and easy to tune.
+ * msafePlusConfig — single source of truth for the M-Safe+ luxury workspace.
+ * Palette, branding, capability data, chat styling, and the sample preview
+ * conversation all live here so the presentational components stay clean.
  */
 
 export const MSAFE_PALETTE = {
@@ -23,8 +23,15 @@ export const MSAFE_BRAND = {
   subtitle: 'Morales Super Agent · Medical + Travel Concierge',
 };
 
-// Each capability seeds the M-Safe conversation with an opening intent the
-// agent can act on immediately.
+export const MSAFE_CHAT = {
+  panelBg: '#FBFAF6',
+  userAccent: 'linear-gradient(135deg, #F6E6BE 0%, #EAD08C 100%)',
+  userAccentText: '#1D1D1C',
+  agentBubble: '#FFFFFF',
+  border: 'rgba(210,169,61,0.2)',
+};
+
+// Each capability seeds the M-Safe conversation with an opening intent.
 export const CAPABILITIES = [
   {
     id: 'analyze',
@@ -50,4 +57,14 @@ export const CAPABILITIES = [
     icon: 'CircleCheck',
     intent: "I need to resolve something on my care journey. Help me weigh my options and take the right next step with confidence.",
   },
+];
+
+// Shown as a styled preview when no real conversation exists yet, so the
+// workspace matches the reference on first load. Replaced by real messages
+// the moment the user sends a message or taps a capability pill.
+export const SAMPLE_CONVERSATION = [
+  { role: 'user', content: "I need medical support arranged for travel to Geneva next week. Can you help?", time: '09:11' },
+  { role: 'assistant', content: "Of course — I'd be glad to help coordinate your medical care in Geneva. To get started, could you share:\n• Your travel dates (arrival & departure)\n• The type of medical support you need (consultation, procedure, physiotherapy)\n• Any language or accessibility preferences\n• Whether you already have a provider or need me to find one", time: '09:12' },
+  { role: 'user', content: "Arriving Oct 14th, departing Oct 21st. Need an English-speaking doctor, possible physiotherapy for a knee issue.", time: '09:12' },
+  { role: 'assistant', content: "Got it — I've identified 3 top English-speaking clinics near Geneva offering physiotherapy. I can book a consultation for Oct 15 or 16. Would you like me to coordinate travel, a nearby hotel, and your insurance documents?", time: '09:13' },
 ];

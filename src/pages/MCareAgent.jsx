@@ -1,23 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { Send } from 'lucide-react';
-import MessageBubble from '@/components/mcare-agent/MessageBubble';
-import MCareVaultUpload, { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
-import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
-import SmartInputSuggestions from '@/components/mcare-agent/SmartInputSuggestions';
-import GhostTextOverlay from '@/components/mcare-agent/GhostTextOverlay';
-import { useGhostTextSuggestion } from '@/hooks/useGhostTextSuggestion';
-import { buildAcceptedText } from '@/lib/ghostTextSuggestion';
-import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
-import McareAvatar from '@/components/mcare-agent/McareAvatar';
-import { BackButton } from '@/components/nav/BackButton';
 import { useToast } from '@/components/ui/use-toast';
 import { friendlyError } from '@/lib/friendlyError';
-import { handleChatPaste } from '@/lib/chatPaste';
-import MSafeHero from '@/components/mcare/msafe-plus/MSafeHero';
+import { useGhostTextSuggestion } from '@/hooks/useGhostTextSuggestion';
+import { buildAcceptedText } from '@/lib/ghostTextSuggestion';
+import { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
+import MSafeWorkspace from '@/components/mcare/msafe-plus/MSafeWorkspace';
+import MSafeIdentityColumn from '@/components/mcare/msafe-plus/MSafeIdentityColumn';
+import MSafeChatPanel from '@/components/mcare/msafe-plus/MSafeChatPanel';
 
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
@@ -186,147 +176,46 @@ export default function MCareAgent() {
 
   const hasConversation = conversations.length > 0 || activeConversationId;
 
-  // M-Safe+ luxury landing — the calm welcome state shown before the
-  // conversation begins. A capability pill seeds the chat with that intent;
-  // "begin/continue" enters the existing or a new conversation.
-  const [showHero, setShowHero] = useState(true);
-  const handleHeroIntent = (intent) => {
-    setShowHero(false);
-    sendText(intent);
+  // A capability pill seeds the conversation with its intent as the first
+  // user message (sendText creates the conversation if none exists).
+  const handleSelectIntent = (intent) => {
+    if (!isSending) sendText(intent);
   };
-  const handleHeroBegin = () => {
-    setShowHero(false);
-    if (!hasConversation && !isStarting) startNewConversation();
-  };
-
-  if (showHero && !loadingConvos) {
-    return (
-      <MSafeHero
-        onSelectIntent={handleHeroIntent}
-        onBegin={handleHeroBegin}
-        hasConversation={hasConversation}
-      />
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-          <BackButton fallback="/dashboard" />
-          <div className="flex items-center gap-2 flex-1">
-            <McareAvatar size={36} />
-            <div>
-              <h1 className="text-lg font-display font-semibold text-foreground leading-tight tracking-tight">M-Care</h1>
-              <p className="text-xs text-muted-foreground leading-tight">Patient Journey Coordinator</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Journey stage tracker — reflects real case state from tool calls */}
-      {hasConversation && messages.length > 0 && (
-        <JourneyStageTracker messages={messages} />
-      )}
-
-      {/* Conversation list (if multiple) */}
-      {conversations.length > 1 && (
-        <div className="max-w-3xl mx-auto w-full px-4 py-2 flex gap-2 overflow-x-auto">
-          {conversations.map(c => (
-            <button
-              key={c.id}
-              onClick={() => selectConversation(c.id)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border ${c.id === activeConversationId ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-card-foreground border-border'}`}
-            >
-              {c.metadata?.name || 'Conversation'}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-4">
-          {!hasConversation && !loadingConvos && (
-            <div className="flex flex-col items-center justify-center text-center py-16">
-              <div className="mb-4 m-breathe">
-                <McareAvatar size={64} glow />
-              </div>
-              <h2 className="text-xl font-display font-semibold text-foreground mb-2">Welcome to M-Care</h2>
-              <p className="text-sm text-muted-foreground max-w-sm mb-6">{GREETING}</p>
-              <Button onClick={startNewConversation} disabled={isStarting} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-                {isStarting ? 'Starting…' : 'Start Your Journey'}
-              </Button>
-            </div>
-          )}
-
-          {hasConversation && messages.length === 0 && (
-            <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-card border border-border">
-                <p className="text-sm">{GREETING}</p>
-              </div>
-            </div>
-          )}
-
-          {messages.map((msg, idx) => <MessageBubble key={idx} message={msg} onRespond={handleSafetyRespond} showReaction />)}
-
-          {isSending && (
-            <div className="flex justify-start items-end gap-2">
-              <McareAvatar size={28} glow />
-              <div className="rounded-2xl px-4 py-3 bg-card border border-border">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#D4AF37', animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#D4AF37', animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#D4AF37', animationDelay: '300ms' }} />
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* Input */}
-      {hasConversation && (
-        <div className="sticky bottom-0 z-10 bg-background/90 backdrop-blur border-t border-border">
-          <SmartInputSuggestions
-            text={input}
-            disabled={isSending || isUploading}
-            onApplyCorrection={(fixed) => setInput(fixed)}
-          />
-          <div className="max-w-3xl mx-auto w-full px-4 py-3 flex items-end gap-2">
-            <AddImageMenu
-              onDeviceFile={handleFileSelect}
-              onVaultClick={() => vaultRef.current?.open()}
-              onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
-              disabled={isSending || isUploading}
-              uploading={isUploading}
-            />
-            <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
-            <div className="relative flex-1">
-              <GhostTextOverlay
-                typedText={input}
-                suggestion={ghostSuggestion}
-                matchClassName={cn('h-9 rounded-md px-3 py-1 text-base md:text-sm')}
-              />
-              <Input
-                ref={chatInputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: isSending || isUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
-                placeholder={isUploading ? "Uploading document…" : "Tell M-Care what you're considering…"}
-                disabled={isSending || isUploading}
-                className="w-full"
-              />
-            </div>
-            <Button onClick={sendMessage} disabled={(!input.trim() && !isUploading) || isSending || isUploading} size="icon" className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+    <MSafeWorkspace
+      left={
+        <MSafeIdentityColumn
+          onSelectIntent={handleSelectIntent}
+          hasConversation={hasConversation}
+        />
+      }
+      right={
+        <MSafeChatPanel
+          messages={messages}
+          isSending={isSending}
+          messagesEndRef={messagesEndRef}
+          input={input}
+          setInput={setInput}
+          onSend={sendMessage}
+          onKeyDown={handleKeyDown}
+          chatInputRef={chatInputRef}
+          onFileSelect={handleFileSelect}
+          vaultRef={vaultRef}
+          onVaulted={handleVaulted}
+          isUploading={isUploading}
+          ghostSuggestion={ghostSuggestion}
+          onApplyCorrection={(fixed) => setInput(fixed)}
+          onToast={toast}
+          conversations={conversations}
+          onSelectConversation={selectConversation}
+          activeConversationId={activeConversationId}
+          onSafetyRespond={handleSafetyRespond}
+          hasConversation={hasConversation}
+          loadingConvos={loadingConvos}
+          greeting={GREETING}
+        />
+      }
+    />
   );
 }

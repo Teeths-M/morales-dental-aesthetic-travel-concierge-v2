@@ -744,7 +744,7 @@ function ToolCallDisplay({ toolCall }) {
 // finds a signal worth reacting to (deterministic, client-side only — see
 // src/lib/mcareReactionHeuristic.js, the agent itself never decides this). All
 // optional → default rendering is unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
+export default function MessageBubble({ message, onRespond, accent = null, accentTextColor = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
   // extraAudioUrl is a real, playable TTS audio URL attached client-side to
@@ -779,7 +779,7 @@ export default function MessageBubble({ message, onRespond, accent = null, showA
   const userBubbleClass = isUser
     ? (accent ? 'text-white' : 'bg-primary text-primary-foreground')
     : 'bg-card border border-border text-card-foreground';
-  const userBubbleStyle = isUser && accent ? { background: accent } : undefined;
+  const userBubbleStyle = isUser && accent ? { background: accent, ...(accentTextColor ? { color: accentTextColor } : {}) } : undefined;
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'}>
       {!isUser && showAvatar && (
