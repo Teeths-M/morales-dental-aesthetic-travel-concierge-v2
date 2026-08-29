@@ -1096,6 +1096,19 @@ export default function MCareOrb() {
     else locationChoiceInFlightRef.current = false;
   }, [shareCurrentLocationNow, shareLiveLocationNow]);
 
+  // Lock the background page's own scroll while the full-bleed panel is
+  // open — without this, the panel itself renders correctly, but the page
+  // behind it (position:fixed, but the underlying document can still
+  // scroll) shows a stray native scrollbar and can shift position under
+  // the overlay. Restores whatever inline overflow value was there before
+  // (almost always empty/default) on close, never a hardcoded 'visible'.
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, [open]);
+
   // Load the user's existing M-Care conversation when they first open the orb.
   useEffect(() => {
     if (!open || !isAuthenticated || agentConversation || agentLoading) return;
@@ -2562,7 +2575,7 @@ export default function MCareOrb() {
         <JourneyStageTracker messages={agentMessages} />
       )}
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: isDesktopPanel ? DARK : LIGHT_BG }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: isDesktopPanel ? DARK : LIGHT_BG }}>
         {agentMessages.length === 0 && !agentLoading && (
           <>
             {/* A small decorative "•••" accent above the greeting, echoing
@@ -3030,10 +3043,17 @@ export default function MCareOrb() {
                 </button>
               </div>
 
-              <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD }}>
+              {/* The full hero — big robot, tagline, capability card — only
+                  earns its screen space before a real conversation exists.
+                  Once agentMessages is non-empty, it collapses to a compact
+                  identity row (small robot + name/pills only) so the chat
+                  area below actually gets most of the screen, matching every
+                  real chat app's own convention of not permanently reserving
+                  a "hero" once you're mid-conversation. */}
+              <div style={{ padding: agentMessages.length > 0 ? '10px 16px' : '16px 16px 14px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                   <div style={{ flexShrink: 0 }}>
-                    <LivingOrb state={orbState} size={104} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
+                    <LivingOrb state={orbState} size={agentMessages.length > 0 ? 56 : 104} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
@@ -3041,10 +3061,12 @@ export default function MCareOrb() {
                       {headerControlsBlock}
                     </div>
                     {pillsRowBlock}
-                    <p style={{ margin: '8px 0 0', fontSize: 12, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
+                    {agentMessages.length === 0 && (
+                      <p style={{ margin: '8px 0 0', fontSize: 12, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
+                    )}
                   </div>
                 </div>
-                {capabilityRowBlock}
+                {agentMessages.length === 0 && capabilityRowBlock}
               </div>
 
               {chatMain}
