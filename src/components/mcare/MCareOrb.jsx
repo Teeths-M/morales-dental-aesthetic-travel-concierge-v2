@@ -67,6 +67,7 @@ import {
   createGenerationGuard,
 } from '@/lib/conversationStateMachine';
 import { parseMcareCommand } from '@/lib/voiceCommands';
+import { detectWakePhrase } from '@/lib/wakePhrase';
 import { armSurroundingAwareness, disarmSurroundingAwareness } from '@/lib/surroundingAwareness';
 import { useMcarePreferences } from '@/hooks/useMcarePreferences';
 import { detectDistressSignal, distressWelfarePrompt } from '@/lib/distressDetection';
@@ -222,6 +223,11 @@ export default function MCareOrb() {
   const [testAmplitude, setTestAmplitude] = useState(null);
   const [dismissed,  setDismissed]   = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
+  // Gates the "Hey M-Care" wake-phrase listener below — makes the "only
+  // while your screen is on and this tab is in front of you" claim in its
+  // confirm text (voiceCommands.js CONFIRM.wake_phrase_on) literally true
+  // in code, not just an assumption about browser throttling.
+  const [tabVisible, setTabVisible] = useState(document.visibilityState === 'visible');
   const [struggleHint, setStruggleHint] = useState(null);
   const [expanded,   setExpanded]   = useState(false);
   const [agentUploading, setAgentUploading] = useState(false);
@@ -1274,6 +1280,64 @@ export default function MCareOrb() {
     return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down); };
   }, []);
 
+  useEffect(() => {
+    const onVisibility = () => setTabVisible(document.visibilityState === 'visible');
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  // "Hey M-Care" background wake phrase — opt-in only (voiceCommands.js's
+  // WAKE_PHRASE_ON/OFF_PHRASES, persisted via mcarePreferences.js; zero
+  // settings page, per this preference family's own "controlled by
+  // speaking" design). Reuses startContinuousRecognition — the exact
+  // wrapper Conversational Mode itself uses — rather than a second
+  // implementation. Gated on !open by construction: Conversational Mode's
+  // own listening effect only ever runs while the panel is open (see its
+  // own comment above, "Closing the panel drops Conversational Mode too"),
+  // so this can never be active at the same time as that one without a
+  // separate mutex. isOnline/tabVisible make the confirm text's "only while
+  // your screen is on and this tab is in front of you" claim literally true
+  // in code, not just an assumption about browser throttling.
+  const wakeStopRef = useRef(null);
+  useEffect(() => {
+    const shouldArm = prefs.wakePhraseEnabled
+      && isConversationalModeSupported()
+      && !open
+      && !isQuietRoute
+      && !heroBlocksOrb
+      && isOnline
+      && tabVisible;
+    if (!shouldArm) return;
+
+    wakeStopRef.current = startContinuousRecognition({
+      lang: recognitionLocaleFor(responseLanguageRef.current),
+      onFinal: (text) => {
+        if (!detectWakePhrase(text)) return;
+        wakeStopRef.current?.();
+        wakeStopRef.current = null;
+        setOpen(true);
+        setDismissed(true);
+        setStruggleHint(null);
+        markJourneyEventsSeen();
+        // conversationalMode is guaranteed false here (the panel was
+        // closed, the only state this effect ever arms in) — toggling it
+        // turns Conversational Mode ON, same as tapping the phone icon.
+        toggleConversationalMode();
+      },
+      // A recognition-level error here is expected and non-actionable — the
+      // effect's own gating (isOnline/tabVisible/etc.) already covers the
+      // recoverable cases, and this is a background convenience feature
+      // nobody explicitly asked M-Care to open yet, so no user-facing error
+      // toast is warranted; it simply stays off until the gate re-arms it.
+      onUnrecoverableError: () => { wakeStopRef.current = null; },
+    });
+
+    return () => {
+      wakeStopRef.current?.();
+      wakeStopRef.current = null;
+    };
+  }, [prefs.wakePhraseEnabled, open, isQuietRoute, heroBlocksOrb, isOnline, tabVisible]);
+
   const MAX_TIP_ROTATIONS = 3;
   useEffect(() => {
     if (open || dismissed || isQuietRoute || struggleHint) return;
@@ -1807,6 +1871,11 @@ export default function MCareOrb() {
         } else if (command.type === 'always_listen') {
           if (command.value === 'on') { setTalkMode(true); setConversationalMode(true); }
           else { autoResumeConversationalRef.current = false; setConversationalMode(false); }
+        } else if (command.type === 'wake_phrase') {
+          // Persisted, not local-only — the background listener effect
+          // above re-arms itself from prefs.wakePhraseEnabled the moment
+          // this resolves, so no separate "start it now" call is needed.
+          updatePrefs({ wakePhraseEnabled: command.value === 'on' });
         } else if (command.type === 'private_mode') {
           setPrivateMode(command.value === 'on');
           updatePrefs({ privateMode: command.value === 'on' });

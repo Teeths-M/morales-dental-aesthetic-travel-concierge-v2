@@ -72,6 +72,32 @@ describe('parseMcareCommand', () => {
     });
   });
 
+  describe('wake phrase', () => {
+    it('"M, enable wake phrase" → on', () => {
+      const c = parseMcareCommand('M, enable wake phrase');
+      expect(c).toEqual(expect.objectContaining({ type: 'wake_phrase', value: 'on' }));
+      expect(c.confirmText).toMatch(/Hey M-Care/);
+      expect(c.confirmText).toMatch(/close this tab or lock your screen/i);
+    });
+    it('"M, disable wake phrase" → off', () => {
+      const c = parseMcareCommand('M, disable wake phrase');
+      expect(c).toEqual(expect.objectContaining({ type: 'wake_phrase', value: 'off' }));
+    });
+    it('"wake word on" → on, without a wake word prefix', () => {
+      expect(parseMcareCommand('wake word on')).toEqual(
+        expect.objectContaining({ type: 'wake_phrase', value: 'on' })
+      );
+    });
+    it('is distinct from "always listen" (which turns on Conversational Mode directly)', () => {
+      expect(parseMcareCommand('M, always listen')).toEqual(
+        expect.objectContaining({ type: 'always_listen', value: 'on' })
+      );
+      expect(parseMcareCommand('M, enable wake phrase')).toEqual(
+        expect.objectContaining({ type: 'wake_phrase', value: 'on' })
+      );
+    });
+  });
+
   describe('surrounding awareness', () => {
     it('"M, watch my surroundings" → on', () => {
       const c = parseMcareCommand('M, watch my surroundings');

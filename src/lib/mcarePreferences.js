@@ -16,6 +16,11 @@ export const DEFAULT_MCARE_PREFS = {
   talkMode: false,
   privateMode: false,
   responseLanguage: null,
+  // "Hey M-Care" background wake phrase — opt-in only, off by default.
+  // Enabled/disabled by voice/typed command (voiceCommands.js's
+  // WAKE_PHRASE_ON/OFF_PHRASES), not a settings-page toggle, matching this
+  // preference family's own "controlled by speaking, zero menus" design.
+  wakePhraseEnabled: false,
 };
 
 /**
@@ -29,6 +34,7 @@ export function normalizePrefs(stored) {
     talkMode: !!stored.talkMode,
     privateMode: !!stored.privateMode,
     responseLanguage: stored.responseLanguage || null,
+    wakePhraseEnabled: !!stored.wakePhraseEnabled,
   };
 }
 

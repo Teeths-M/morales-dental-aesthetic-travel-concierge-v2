@@ -2336,25 +2336,45 @@ test('PARTNERS: nothing automated may mark a background check passed', () => {
   expect(gate, "only 'passed' and 'manual_override' may count as cleared")
     .toMatch(/PASSED\s*=\s*new Set\(\[\s*['"]passed['"],\s*['"]manual_override['"]\s*\]\)/);
 
-  // A third, independently-discovered path: stripeIdentityWebhook.ts's
-  // syncVerificationStateToProvider reads a ProviderVerification row's own
-  // status and writes it straight onto background_check_status. Inert today
-  // (initiateCheckrScreening is an admitted stub, so no automated source can
-  // actually produce status:'passed' for a background_check row) — but the
-  // sync function itself must not trust an upstream 'passed' verbatim, so a
-  // real Checkr integration wired up later can't silently reopen this.
-  const webhook = strip(read('base44/functions/stripeIdentityWebhook/entry.ts'));
-  const backgroundWriteMatch = webhook.match(/background_check_status:\s*(\w+)/);
-  expect(backgroundWriteMatch, 'stripeIdentityWebhook must write background_check_status from a local variable, not a literal').toBeTruthy();
+  // A third, independently-discovered path: syncVerificationStateToProvider
+  // (reads a ProviderVerification row's own status and writes it straight
+  // onto background_check_status) used to be duplicated inline in TWO files
+  // — stripeIdentityWebhook and syncProviderVerificationState — and the two
+  // copies drifted: only one of them carried this exact guard. Now extracted
+  // to base44/shared/providerVerificationSync.ts, the ONE place this logic
+  // lives, so it can't drift apart again. Inert today (initiateCheckrScreening
+  // is an admitted stub, so no automated source can actually produce
+  // status:'passed' for a background_check row) — but the sync function
+  // itself must not trust an upstream 'passed' verbatim, so a real Checkr
+  // integration wired up later can't silently reopen this.
+  const syncModule = strip(read('base44/shared/providerVerificationSync.ts'));
+  const backgroundWriteMatch = syncModule.match(/background_check_status:\s*(\w+)/);
+  expect(backgroundWriteMatch, 'providerVerificationSync must write background_check_status from a local variable, not a literal').toBeTruthy();
   expect(backgroundWriteMatch[1], 'that variable must never be the raw upstream status — it must be the guarded one')
     .not.toBe('rawBackgroundStatus');
-  expect(webhook, 'an untrusted automated "passed" must be downgraded unless manually overridden')
+  expect(syncModule, 'an untrusted automated "passed" must be downgraded unless manually overridden')
     .toMatch(/rawBackgroundStatus === ['"]passed['"] && !backgroundOverridden/);
+
+  // Every real caller must import the shared function, not keep (or
+  // reintroduce) its own local copy — the actual regression guard for the
+  // drift bug above.
+  for (const callerPath of [
+    'base44/functions/stripeIdentityWebhook/entry.ts',
+    'base44/functions/syncProviderVerificationState/entry.ts',
+    'base44/functions/startDoctorIdentityVerification/entry.ts',
+  ]) {
+    const caller = strip(read(callerPath));
+    expect(caller, `${callerPath} must import syncVerificationStateToProvider from shared/providerVerificationSync.ts, not reimplement it`)
+      .toMatch(/import\s*\{\s*syncVerificationStateToProvider\s*\}\s*from\s*['"].*providerVerificationSync\.ts['"]/);
+    expect(caller, `${callerPath} must not declare its own local syncVerificationStateToProvider function`)
+      .not.toMatch(/(async\s+)?function\s+syncVerificationStateToProvider/);
+  }
 
   // Same file, unrelated small finding: admin alert emails were hardcoded to
   // 'admin@morales.com' (a domain that doesn't even match this app's real
   // one) instead of the ADMIN_EMAIL env var every other function uses —
   // meaning these alerts likely went nowhere. Regression guard.
+  const webhook = strip(read('base44/functions/stripeIdentityWebhook/entry.ts'));
   expect(webhook, 'stripeIdentityWebhook must not hardcode an admin email address')
     .not.toContain('admin@morales.com');
   expect(webhook, 'stripeIdentityWebhook must read the admin address from ADMIN_EMAIL like every other function')
@@ -2378,6 +2398,29 @@ test('PARTNERS: nothing automated may mark a background check passed', () => {
   const alwaysManualTypes = [...alwaysManualMatch[1].matchAll(/['"]([^'"]+)['"]/g)].map(m => m[1]);
   expect(alwaysManualTypes.sort(), 'companion and taxi_service have direct, unsupervised physical access to a vulnerable patient — same as security_agency — and must never be composite-score auto-approved')
     .toEqual(['companion', 'security_agency', 'taxi_service']);
+});
+
+test('IDENTITY VERIFICATION: startDoctorIdentityVerification is self-serve only, ownership always derived server-side', () => {
+  // This app's Stripe Identity pipeline (webhook, activation gate, admin
+  // review dashboard) was real but had no trigger — nothing anywhere created
+  // a Stripe Identity session. startDoctorIdentityVerification is that
+  // trigger, deliberately self-serve only: a doctor may only ever verify
+  // themselves, never act on someone else's record.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const fn = strip(read('base44/functions/startDoctorIdentityVerification/entry.ts'));
+
+  expect(fn, 'must require a real authenticated session — no self-serve without one')
+    .toMatch(/requireAuth:\s*true/);
+  expect(fn, "the doctor record must be looked up by the caller's own email, never a client-supplied ID")
+    .toMatch(/Doctor\.filter\(\{\s*email:\s*user!?\.email\s*\}\)/);
+
+  // strictObject rejects any field not explicitly declared — confirm the
+  // schema declares only 'action', so a caller can never smuggle in a
+  // provider_id/doctor_id to act on someone else's record.
+  const schemaMatch = fn.match(/const BodySchema = strictObject\(\{([\s\S]*?)\}\);/);
+  expect(schemaMatch, 'startDoctorIdentityVerification must define its body schema via strictObject').toBeTruthy();
+  expect(schemaMatch[1], 'the body schema must declare only action — never a caller-supplied provider_id/doctor_id')
+    .not.toMatch(/provider_id|doctor_id/);
 });
 
 test('STALE CHUNK RECOVERY: a deploy-changed JS chunk reloads once instead of showing a scary crash screen or spamming an incident', () => {

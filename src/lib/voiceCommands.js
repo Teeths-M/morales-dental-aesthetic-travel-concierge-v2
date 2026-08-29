@@ -102,6 +102,34 @@ const LISTEN_OFF_PHRASES = new Set([
   'mute the mic',
 ]);
 
+// ── "Hey M-Care" background wake phrase ─────────────────────────────────────
+// Distinct from LISTEN_ON/OFF_PHRASES above: "always listen" turns on
+// Conversational Mode WHILE the panel is already open. This instead opts
+// into a background SpeechRecognition session (MCareOrb.jsx, wakePhrase.js)
+// that runs even while the panel is closed, listening only for "Hey
+// M-Care" itself — a materially different, longer-lived capability that
+// deserves its own honest confirm text (see CONFIRM below) rather than
+// reusing listen_on/off's shorter copy.
+const WAKE_PHRASE_ON_PHRASES = new Set([
+  'enable wake phrase',
+  'turn on wake phrase',
+  'wake phrase on',
+  'wake word on',
+  'enable hey m-care',
+  'enable wake word',
+  'listen for hey m-care',
+  'always listen for my wake word',
+]);
+const WAKE_PHRASE_OFF_PHRASES = new Set([
+  'disable wake phrase',
+  'turn off wake phrase',
+  'wake phrase off',
+  'wake word off',
+  'disable hey m-care',
+  'disable wake word',
+  'stop listening for hey m-care',
+]);
+
 // ── Surrounding Awareness ────────────────────────────────────────────────────
 // An explicit ask ("watch my surroundings") is already clear consent — arm
 // immediately, same as Private Mode, no separate tap-confirm needed. A
@@ -178,6 +206,8 @@ const CONFIRM = {
   modality_text: "Text mode on. I'll keep my replies on screen only.",
   listen_on: "Always listening on. I'll keep an ear out for you.",
   listen_off: "Listening stopped. I'll wait for you to tap the mic.",
+  wake_phrase_on: "Wake phrase on. While this tab is open and your screen is on, I'll listen for \"Hey M-Care\" and open myself the moment you say it — same as tapping me, just hands-free. It stops the instant you close this tab or lock your screen, and you can turn it off any time by saying \"disable wake phrase.\"",
+  wake_phrase_off: "Wake phrase off. I'll wait for you to open me yourself.",
   surrounding_on: "Done — I'll keep an eye on your surroundings and let you know if I spot something useful nearby.",
   surrounding_off: "Surrounding awareness is off. I'll stop watching for nearby places.",
 };
@@ -218,6 +248,10 @@ export function parseMcareCommand(rawText) {
   if (LISTEN_ON_PHRASES.has(normalized)) return { type: 'always_listen', value: 'on', confirmText: CONFIRM.listen_on };
   if (LISTEN_OFF_PHRASES.has(normalized)) return { type: 'always_listen', value: 'off', confirmText: CONFIRM.listen_off };
 
+  // ── "Hey M-Care" background wake phrase ──
+  if (WAKE_PHRASE_ON_PHRASES.has(normalized)) return { type: 'wake_phrase', value: 'on', confirmText: CONFIRM.wake_phrase_on };
+  if (WAKE_PHRASE_OFF_PHRASES.has(normalized)) return { type: 'wake_phrase', value: 'off', confirmText: CONFIRM.wake_phrase_off };
+
   // ── Surrounding Awareness ──
   if (SURROUNDING_ON_PHRASES.has(normalized)) return { type: 'surrounding_awareness', value: 'on', confirmText: CONFIRM.surrounding_on };
   if (SURROUNDING_OFF_PHRASES.has(normalized)) return { type: 'surrounding_awareness', value: 'off', confirmText: CONFIRM.surrounding_off };
@@ -243,6 +277,8 @@ export const COMMAND_PHRASES = {
   modalityTextOnly: [...MODALITY_TEXT_ONLY],
   listenOn: [...LISTEN_ON_PHRASES],
   listenOff: [...LISTEN_OFF_PHRASES],
+  wakePhraseOn: [...WAKE_PHRASE_ON_PHRASES],
+  wakePhraseOff: [...WAKE_PHRASE_OFF_PHRASES],
   surroundingOn: [...SURROUNDING_ON_PHRASES],
   surroundingOff: [...SURROUNDING_OFF_PHRASES],
   languagePrefixes: [...LANGUAGE_PREFIXES],

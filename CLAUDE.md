@@ -2174,6 +2174,211 @@ returns an honest `supported:false` with a clear message instead of fabricating 
 green: lint clean, typecheck at the same baseline, all 10 `VIRTUAL CONSULTATION` redteam tests
 still pass unchanged.
 
+## "Hey M-Care" background wake phrase (2026-08-28)
+
+Portia pasted a spec for a native background voice-activation system: an Android
+foreground service running Picovoice's Porcupine wake-word engine for "Hey M-Care,"
+plus an iOS Siri Shortcut for "Hey Siri, contact M-Care" — both meant to fire even with
+the phone locked. Audited before writing anything, matching this project's own
+established discipline for a new vendor/native-capability ask (Tavily, Daily.co,
+Amadeus were all confirmed with Portia the same way before a line of code was written):
+this app is a Capacitor-wrapped WebView (`capacitor.config.ts`'s own header: "There is
+no Capacitor plugin code in `src/` — the app is the same bundle everywhere") with zero
+custom native code anywhere — no services, no plugins, just the generated
+`MainActivity`+`FileProvider`. The `ios/` project isn't even committed (`cap add ios`
+needs a Mac/Xcode, which this repo/environment doesn't have) — there's no Xcode project
+to add Swift/Siri code to at all. Zero mentions anywhere of Porcupine, Picovoice,
+wake-word, or SiriKit — a real new vendor decision, and nothing in this app runs when
+the phone is locked or backgrounded today, confirmed by reading `useCovertSOS.js` (the
+existing discreet-emergency-gesture mechanism — pure `document.addEventListener`,
+foreground-only) and `conversationalMode.js`'s own header (browser `SpeechRecognition`,
+also foreground-tab-only by design). Asked Portia directly via `AskUserQuestion`; she
+chose the smallest real slice: a web trigger-phrase extending the existing
+Conversational Mode (ships today, zero new vendor), no iOS, and "Hey M-Care" opens the
+panel and starts listening — the same experience as tapping the mic, not the covert SOS
+mechanism. Native Android (Porcupine, a first-ever custom Capacitor plugin, real Google
+Play Sensitive Permissions review risk for this already-live app) and iOS both stay
+named, deferred future work, not silently dropped.
+
+**Shipped, 100% client-side, reusing existing machinery rather than building a second
+implementation of anything**: `src/lib/wakePhrase.js` (new) — `detectWakePhrase(text)`,
+pure, anchored-prefix/exact match only against a small deliberate phrase list ("hey
+m-care", "hey mcare", "ok m-care", etc. — same non-fuzzy discipline as every other phrase
+matcher in this app, e.g. `conversationalMode.js`'s `CORRECTION_PREFIXES`), so an
+ordinary sentence mentioning "hey" or "care" separately is never mistaken for the wake
+phrase. `mcarePreferences.js` gained a 4th additive field, `wakePhraseEnabled: false`, on
+the same `mcare_prefs` User-entity object Talk Mode/Private Mode/response-language
+already persist through. `voiceCommands.js` gained `WAKE_PHRASE_ON/OFF_PHRASES` and a
+new `wake_phrase` command type in `parseMcareCommand` — enabled/disabled by a
+spoken/typed command ("enable wake phrase" / "disable wake phrase"), not a settings
+page, matching this exact preference family's own stated design philosophy in that
+file's own header comment: "The user controls M-Care's modality, privacy, and language
+by *speaking* (or typing) short phrases... with zero menus or settings pages." The
+confirm text is deliberately longer and more explicit than this file's other confirm
+strings, since this is the one preference here that keeps doing something after the
+panel closes: states plainly it only listens while the tab is open and the screen is on,
+stops the instant the tab closes or the phone locks, and names the off-phrase.
+
+`MCareOrb.jsx` — a new background-listening `useEffect`, armed only when
+`prefs.wakePhraseEnabled && isConversationalModeSupported() && !open && !isQuietRoute &&
+!heroBlocksOrb && isOnline && tabVisible` (`tabVisible`, new, mirrors the file's existing
+`isOnline`/online-offline-listener pattern exactly via a `visibilitychange` listener —
+makes the "only while your screen is on and this tab is in front of you" claim in the
+confirm text literally true in code, not an assumption about browser throttling). Reuses
+`conversationalMode.js`'s `startContinuousRecognition` directly — the same
+already-hardened wrapper (auto-restart, bounded network-error retry) Conversational Mode
+itself uses — rather than a second implementation. Gated on `!open` by construction:
+since this file's own existing invariant already guarantees Conversational Mode's real
+listening effect only runs while the panel is open ("Closing the panel drops
+Conversational Mode too — the mic shouldn't keep listening in the background once the
+chat isn't visible"), the two `SpeechRecognition` sessions can never be active at the
+same time without a separate mutex. On a wake-phrase match: stops itself, then runs the
+exact same open-panel sequence already used identically at 3 other call sites in this
+file (`setOpen(true); setDismissed(true); setStruggleHint(null); markJourneyEventsSeen();`)
+plus `toggleConversationalMode()` — the same function the phone-icon button itself calls,
+guaranteed to turn Conversational Mode ON here since `conversationalMode` can only be
+false while the panel is closed.
+
+**A real, disclosed privacy nuance, not just a code comment**: unlike Porcupine
+(declined), the browser's `SpeechRecognition` API is cloud-backed, not on-device — while
+armed, audio is continuously sent to the browser/OS's own recognition service, the same
+way Conversational Mode already works today. Nothing reaches Morales' own backend unless
+the wake phrase is actually recognized.
+
+**Deliberately not built**: any native Android/iOS code (per the confirmed scope above);
+a dedicated visual Settings-page toggle (voice/typed-command activation matches this
+preference family's own established "zero menus" design); capturing and acting on
+anything said in the same breath as the wake phrase ("Hey M-Care, what's my flight
+status") as one utterance — kept simple: the wake phrase alone opens M-Care and starts
+listening, the real request is a fresh turn, same as "Hey Siri"/"OK Google" pausing to
+listen before you speak.
+
+**Verification**: 100% frontend — no entity, no backend function, no `m_care.jsonc`
+change, no Base44 Publish needed, ships with the normal frontend deploy. New
+`tests/wakePhrase.test.js` (13 cases — every real phrase variant, prefix matching with
+trailing content, case/punctuation handling, and the negative cases). `tests/voiceCommands.test.js`
+extended with 4 `wake_phrase` cases. No redteam invariant needed — no entity/RLS/tool-grant
+surface exists for this feature, matching how the equally client-side-only Conversational
+Mode/Talk Mode were verified when they shipped. Lint clean, typecheck at the same 4-error
+pre-existing baseline, `npm run build` exit 0, 835/835 vitest. Live-only, can't be
+confirmed from this checkout: whether "hey m-care"/"hey mcare" is reliably recognized
+(vs. false-positive/false-negative) by real on-device speech recognition, and whether the
+phrase list needs retuning after a real test — Portia verifies live, the same standing
+caveat as every other voice feature in this app's history.
+
+## Doctor identity verification — the missing Stripe Identity trigger (2026-08-28)
+
+Portia had been trying to set up face/identity verification for doctors via Persona,
+configured directly in the Base44 dashboard, and hit a real blocker: Persona requires a
+business email to sign up. Investigating what already existed in the repo (rather than
+troubleshooting the Persona signup itself, which happens entirely outside this checkout)
+found something more useful than a workaround: **this app already had a complete, real
+Stripe Identity face-verification pipeline built and coded** — `stripeIdentityWebhook`
+(receives Stripe's `identity.verification_session.completed` event, signature-verified),
+`activateVerifiedDoctor` (the one gated function that can ever flip a doctor to
+`status: 'active'`, requiring license + identity + background all in a
+`passed`/`manual_override` state first), a real admin review dashboard
+(`AdminProviderVerification.jsx`), and a hash-chained audit trail — sitting entirely
+inert. Confirmed by a repo-wide grep: zero references anywhere to Stripe's
+`identity.verificationSessions` API. Nothing ever created a real verification session —
+the receiver existed with no sender. Confirmed with Portia via `AskUserQuestion`: use
+Stripe Identity instead of Persona, close that exact gap, self-serve only (a doctor
+verifies themselves from their own dashboard — no admin-triggered send-link path this
+round).
+
+**A real, live safety bug found while reading this code, unrelated to the missing
+trigger, fixed in the same pass**: `syncVerificationStateToProvider` — the logic that
+rolls a provider's `ProviderVerification` records up onto their own `Doctor`/
+`TravelAgency`/`TaxiService` entity — existed as two independent, drifted copies. One,
+inline inside `stripeIdentityWebhook`, carried the safety guard that stops an untrusted
+automated `'passed'` background-check status from ever being written directly (only a
+human admin override may clear one — the same standing rule this project has fixed
+multiple times before, e.g. `runDoctorVerificationScan`'s own duplicate activation path).
+The other, inline inside `syncProviderVerificationState` (the function the admin
+dashboard's "Sync Status" button calls), was **missing that exact guard**. Harmless
+today only because `initiateCheckrScreening` is an admitted, permanent stub that can
+never actually produce a real automated `'passed'` — but the two copies had already
+drifted apart once, and a real redteam invariant existed pinning only one of them.
+
+**Shipped**: `base44/shared/providerVerificationSync.ts` (new) — the one real
+implementation now, using the safe version; both `stripeIdentityWebhook` and
+`syncProviderVerificationState` import from it instead of reimplementing, closing the
+drift for good. `base44/functions/startDoctorIdentityVerification/entry.ts` (new) — the
+actual missing trigger. `requireAuth: true`, no `allowedRoles` — any authenticated
+doctor may verify themselves, with the doctor record always derived from
+`Doctor.filter({email: user.email})` server-side, never a caller-supplied ID (the
+`strictObject` body schema declares only `action`, structurally rejecting a
+`provider_id`/`doctor_id` field). Two actions mirroring `runDoctorVerification`'s own
+established `action`-dispatch shape (the sibling *license*-check flow, a different,
+unrelated verification track): `get_status` (the doctor's own current
+`identity_verification_status` plus whether a still-open session exists) and `start`
+(idempotency check first — reuses an existing `requires_input` session rather than
+paying for a duplicate — then `new Stripe(stripeKey).identity.verificationSessions
+.create({type: 'document', options: {document: {require_matching_selfie: true}}, ...})`,
+records a `ProviderVerification` row, syncs it onto the doctor immediately so
+`identity_verification_status` reflects "in progress" without waiting on the webhook,
+and returns the real Stripe-hosted `session.url` for the frontend to redirect to — no
+client-side Stripe.js needed, matching the exact `new Stripe(key)` / return-a-`.url`
+pattern `generateStripePaymentLink` already established for Checkout Sessions). Same
+honest disclosure as every other not-yet-live-tested vendor call in this project
+(Tavily/Daily.co/Amadeus): the exact Identity Verification Sessions response shape is
+written from Stripe's documented API, not verified against a live call from this
+checkout — worth a real test once keys exist.
+
+`src/components/doctor/DoctorIdentityVerificationPanel.jsx` (new) — self-contained, no
+props, mirroring `DoctorVerificationPanel.jsx`'s (the license-check sibling) structure
+and visual language closely: an amber "Identity Verification Required" banner with a
+"Verify Now"/"Continue Verification" button when not yet cleared, a calm green
+"Identity Verified" card once it is. Wired into `src/pages/DoctorDashboard.jsx` at both
+places the license panel already appears — the top-of-dashboard banner area and inside
+the existing "verification" tab, now split into two clearly-labeled sections (License /
+Identity) rather than the tab's previous single-purpose heading.
+
+`Doctor.jsonc`/`TravelAgency.jsonc`/`TaxiService.jsonc` — a small, real, adjacent schema
+gap found and fixed while in this exact area: `identity_verification_status` and
+`background_check_status`'s enums were missing `'initiated'` on all three entities, even
+though `ProviderVerification.status` already declares it and the sync logic can write it
+(reachable today for `background_check_status` via the existing Checkr-stub auto-trigger,
+and now reachable for `identity_verification_status` for the first time via this new
+trigger's own "record an initiated session" step). Additive-only enum fix, no migration.
+
+New redteam coverage: the existing `PARTNERS: nothing automated may mark a background
+check passed` invariant now reads the guard from `providerVerificationSync.ts` (not
+`stripeIdentityWebhook`'s own source, since the logic moved) and independently confirms
+all three real callers (`stripeIdentityWebhook`, `syncProviderVerificationState`,
+`startDoctorIdentityVerification`) import the shared function rather than declaring a
+local copy — the actual regression guard for the drift bug this pass fixed. New
+`IDENTITY VERIFICATION: startDoctorIdentityVerification is self-serve only, ownership
+always derived server-side` test pins `requireAuth: true`, the `Doctor.filter({email:
+user.email})` lookup, and that the body schema structurally excludes a caller-suppliable
+`provider_id`/`doctor_id`.
+
+**Deliberately deferred, not silently dropped**: an admin-triggered "send verification
+link" path (Portia's own choice this round — self-serve only); self-serve identity
+verification for travel_agency/taxi_service dashboards (the receiving pipeline already
+supports it — `provider_type` is already polymorphic throughout `stripeIdentityWebhook`/
+`providerVerificationSync.ts` — only the UI wiring and a small parameter change to a
+generalized sibling function are needed later).
+
+**What Portia needs to do outside this repo, before any of this is live**: set
+`STRIPE_SECRET_KEY` (shared with payments, if not already set) and a new
+`STRIPE_IDENTITY_WEBHOOK_SECRET` as Base44 secrets, plus `ADMIN_EMAIL` if not already
+set (powers the failure-alert emails already coded in the webhook); in the Stripe
+Dashboard, confirm the Identity product is enabled and register a **separate** webhook
+endpoint pointing at the real `stripeIdentityWebhook` function URL, subscribed to
+`identity.verification_session.completed` — this needs its own endpoint distinct from
+the payments webhook, since Stripe issues a unique signing secret per endpoint, and
+that's what goes in `STRIPE_IDENTITY_WEBHOOK_SECRET`. Then **Publish** in Base44 and
+have a real doctor account click "Verify Now" through to a completed Stripe session
+before trusting it live.
+
+**Verification**: lint clean, typecheck at the same pre-existing baseline (no new
+errors), `npm run build` exit 0, 835/835 vitest (unchanged — no new pure-logic module),
+284/284 redteam (1 new, 1 relocated/extended). Live-only, can't be confirmed from this
+checkout: the exact Stripe Identity API response shape, and whether the full self-serve
+flow actually completes end-to-end on a real doctor account — Portia verifies live after
+configuring the secrets/webhook above and publishing.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.

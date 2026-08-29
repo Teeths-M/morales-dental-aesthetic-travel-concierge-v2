@@ -109,6 +109,7 @@
       "type": "string",
       "enum": [
         "pending",
+        "initiated",
         "passed",
         "failed",
         "manual_override"
@@ -119,6 +120,7 @@
       "type": "string",
       "enum": [
         "pending",
+        "initiated",
         "passed",
         "failed",
         "manual_override"

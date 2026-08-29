@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { syncVerificationStateToProvider } from '../../shared/providerVerificationSync.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -31,54 +32,3 @@ Deno.serve(createHandler(async ({ req }) => {
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 }, { name: 'syncProviderVerificationState', requireAuth: false }));
-
-async function syncVerificationStateToProvider(base44, provider_id, provider_type) {
-  try {
-    const allChecks = await base44.asServiceRole.entities.ProviderVerification.filter({
-      provider_id,
-      provider_type
-    });
-
-    const identityCheck = allChecks.find(c => c.verification_type === 'identity');
-    const backgroundCheck = allChecks.find(c => c.verification_type === 'background_check');
-    const licenseCheck = allChecks.find(c => c.verification_type === 'license');
-
-    const identityStatus = identityCheck?.status || 'pending';
-    const backgroundStatus = backgroundCheck?.status || 'pending';
-    const licenseStatus = licenseCheck?.status || 'pending';
-
-    const identityOverridden = identityCheck?.manual_override_status === 'approved_by_admin';
-    const backgroundOverridden = backgroundCheck?.manual_override_status === 'approved_by_admin';
-    const licenseOverridden = licenseCheck?.manual_override_status === 'approved_by_admin';
-
-    const allPassed = 
-      (identityStatus === 'passed' || identityOverridden) &&
-      (backgroundStatus === 'passed' || backgroundOverridden) &&
-      (licenseStatus === 'passed' || licenseOverridden);
-
-    const entityMap = {
-      doctor: 'Doctor',
-      travel_agency: 'TravelAgency',
-      taxi_service: 'TaxiService'
-    };
-
-    const entityName = entityMap[provider_type];
-    if (!entityName) {
-      throw new Error(`Unknown provider type: ${provider_type}`);
-    }
-
-    await base44.asServiceRole.entities[entityName].update(provider_id, {
-      identity_verification_status: identityStatus,
-      background_check_status: backgroundStatus,
-      license_verification_status: licenseStatus,
-      verification_status: allPassed ? 'verified' : (allChecks.length > 0 ? 'verifying' : 'pending_verification'),
-      verification_can_be_activated: allPassed
-    });
-
-    console.log(`✓ Synced verification state for ${provider_type}:${provider_id}`);
-
-  } catch (error) {
-    console.error('Sync failed:', error);
-    throw error;
-  }
-}
