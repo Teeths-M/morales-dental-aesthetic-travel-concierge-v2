@@ -8,7 +8,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { logTrustScanEvent } from '../../shared/trustScanAudit.ts';
 import { VERIFICATION_LEVELS, defaultLimitations } from '../../shared/trustScanLevels.ts';
 
-export default async function(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -98,3 +98,5 @@ export default async function(req: Request): Promise<Response> {
     return Response.json({ error: error.message || 'Internal error' }, { status: 500 });
   }
 }
+
+Deno.serve(handler);

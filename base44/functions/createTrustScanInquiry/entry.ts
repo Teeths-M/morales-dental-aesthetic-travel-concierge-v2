@@ -17,7 +17,7 @@ import { logTrustScanEvent } from '../../shared/trustScanAudit.ts';
 const VALID_DOC_TYPES = new Set(['passport', 'drivers_license', 'national_id', 'residence_permit']);
 const CONSENT_TEXT_VERSION = '1.0';
 
-export default async function(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -172,3 +172,5 @@ export default async function(req: Request): Promise<Response> {
     return Response.json({ error: error.message || 'Internal error' }, { status: 500 });
   }
 }
+
+Deno.serve(handler);

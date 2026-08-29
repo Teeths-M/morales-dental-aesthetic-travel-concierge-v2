@@ -14,7 +14,7 @@ import { verifyWebhookSignature, parseInquiryResult, mapToUserFacingStatus } fro
 import { logTrustScanEvent } from '../../shared/trustScanAudit.ts';
 import { documentsStatus } from '../../shared/trustScanLevels.ts';
 
-export default async function(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get('Persona-Signature') || req.headers.get('persona-signature');
@@ -288,3 +288,5 @@ async function upsertTrustProfileOnVerified(base44: any, verification: any, now:
     });
   }
 }
+
+Deno.serve(handler);

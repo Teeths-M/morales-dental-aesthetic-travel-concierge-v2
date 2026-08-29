@@ -11,7 +11,7 @@ import { logTrustScanEvent } from '../../shared/trustScanAudit.ts';
 
 const VALID_REVIEW_TYPES = new Set(['manual_review', 'appeal', 'accessibility', 'false_match', 'expired_document', 'mismatch_flagged']);
 
-export default async function(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -77,3 +77,5 @@ export default async function(req: Request): Promise<Response> {
     return Response.json({ error: error.message || 'Internal error' }, { status: 500 });
   }
 }
+
+Deno.serve(handler);

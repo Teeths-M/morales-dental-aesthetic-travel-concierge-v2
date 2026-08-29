@@ -2379,6 +2379,78 @@ checkout: the exact Stripe Identity API response shape, and whether the full sel
 flow actually completes end-to-end on a real doctor account — Portia verifies live after
 configuring the secrets/webhook above and publishing.
 
+**Same-day discovery, on push: a second, much larger identity-verification build had
+already landed on `origin/main`, built independently and unrelated to the above.**
+Pushing this work hit a real `git push` rejection — `origin/main` was 5 commits ahead,
+none of them mine. Diffed before merging anything (per this file's own standing
+discipline for exactly this situation): a genuine, ~3600-line "TrustScan" system using
+**Persona** (not Stripe) — new entities (`IdentityVerification`, `TrustProfile`,
+`ConsentRecord`, `CredentialRecheck`, `FraudSignal`, `VerificationEvidence`,
+`VerificationReview`), a real `personaAdapter.ts` (HMAC-SHA256 webhook signature
+verification, confirmed present before trusting anything else), 5 new functions
+(`createTrustScanInquiry`, `getMyIdentityStatus`, `getTrustProfile`, `personaWebhook`,
+`requestManualReview`), and real frontend (`TrustScan.jsx`, `TrustProfile.jsx`,
+`LivenessOverlay.jsx`, `TrustBadge.jsx`) — plus a separate, unrelated
+`chore: add boilerplate auth templates` commit (Base44's own generated MCP OAuth-consent
+scaffolding, `OAuthConsent.jsx`/`AuthLayout.jsx`, carrying its own explicit "do not
+change the fetch calls, headers, or the `ctx` handle handling" instruction). Confirmed
+via `git grep` that none of the new TrustScan code touches `Doctor` at all — it's scoped
+generically by `subject_email`/a partner id, architecturally separate from the
+`Doctor`/`ProviderVerification`/`activateVerifiedDoctor` 3-check gate this same day's
+Stripe work extends. Zero file-level overlap with anything touched above — the merge
+itself was clean, no conflicts.
+
+**Two real bugs found and fixed before pushing, both in code from someone else's build,
+neither touched by anything in this session otherwise**: (1) all 5 new functions used a
+raw `export default async function(req)` with no `Deno.serve(...)` call anywhere — the
+exact same deploy-blocking bug this project has hit and fixed before (13 functions, one
+of them the OTP login path, in an earlier pass) — Base44's bundler needs the literal
+call to register a function; without it, none of these 5 would have actually been
+reachable once published, no matter how correct their logic. Fixed with the same minimal
+pattern: renamed each to a plain `handler` function and added `Deno.serve(handler);` at
+the true end of the file — zero logic touched. (2) `personaWebhook` — a real, working
+signature-verified webhook — was flagged by the `AUTH: no edge function is reachable
+without SOME guard` redteam test as unguarded; a real false positive, not a real gap:
+its guard function is named `verifyWebhookSignature` (Persona's own convention),
+different from the `verifyStripeSignature` name the test's `GUARDS` regex already knew
+to look for. Widened the regex to recognize it too, the same way `SATELLITE_WEBHOOK_SECRET`
+was presumably added for an earlier webhook. Also fixed, unrelated: `window.Persona` (the
+dynamically-loaded Persona SDK's own global) needed the same `/** @type {any} */(window)`
+cast this project has used for this exact class of issue several times before
+(`VoiceMode.jsx`, `neuralSpeech.js`) — one line, `TrustScan.jsx`.
+
+**Left deliberately untouched, disclosed not hidden**: 10 new typecheck errors in
+`OAuthConsent.jsx` (7) and `TrustProfile.jsx` (3) — all prop-shape mismatches from this
+repo's `--allowJs` cross-call-site type unification (the same class of issue this file
+already documents fixing elsewhere with an explicit default value), not runtime bugs.
+Left alone rather than guessed at under a "just push" instruction, for two reasons:
+`OAuthConsent.jsx` carries its own explicit in-file warning against touching its logic,
+and neither file is anything this session wrote or was asked to build — `npm run build`
+(the actual deploy-relevant check; Vite doesn't gate on `tsc`) still succeeds with both
+left exactly as authored. Typecheck baseline moves from the standing 5 to 15 as a result
+— stated here so it isn't mistaken for a regression introduced by unrelated work later.
+
+**A real, unresolved architectural question, surfaced but not decided here**: there are
+now two coexisting, non-communicating identity-verification systems in this app — the
+Stripe Identity trigger this same session built (self-serve, doctor-only, gating
+`activateVerifiedDoctor`'s existing 3-check activation requirement) and the new
+Persona-based TrustScan system (broader, `subject_email`-scoped, its own separate
+verification-level/evidence/review model, entirely unaware of `Doctor.status` or the
+activation gate). Both are real and both were verified working in isolation, but nothing
+reconciles them — a doctor could in principle complete one, both, or neither, with each
+system having no idea about the other. Worth a direct, explicit decision from Portia
+(keep both for different purposes, retire one, or bridge them) rather than either system
+quietly assuming it's the one true path — not decided or acted on in this pass, since it
+wasn't this session's call to make unilaterally.
+
+**Verification (post-merge)**: lint clean, typecheck at the new 15-error baseline (5
+pre-existing + 10 disclosed above, zero regressions from either body of work once both
+were combined and the two real Deno.serve/GUARDS bugs fixed), `npm run build` exit 0,
+835/835 vitest (unchanged), 284/284 redteam (confirmed green on the fully merged +
+fixed state, not just each side independently). Live-only: whether the TrustScan
+Persona flow and the Stripe Identity flow both actually work once published — neither
+was live-tested from this checkout.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.

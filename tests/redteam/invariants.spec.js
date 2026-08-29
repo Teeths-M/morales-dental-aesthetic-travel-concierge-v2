@@ -453,7 +453,7 @@ test('AUTH: no edge function is reachable without SOME guard', () => {
   //   publicDoctorCheck — the homepage "check your doctor" tool
   //   safeTAssist       — the assistant a patient may reach before signing in
   const EXEMPT = new Set(['publicDoctorCheck', 'safeTAssist']);
-  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
+  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|verifyWebhookSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
 
   const dir = join(ROOT, 'base44/functions');
   const unguarded = [];

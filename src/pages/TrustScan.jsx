@@ -103,7 +103,7 @@ export default function TrustScan() {
     const onLoad = () => {
       try {
         // eslint-disable-next-line no-undef
-        personaClientRef.current = window.Persona.Client.init({
+        personaClientRef.current = /** @type {any} */ (window).Persona.Client.init({
           inquiryId: id,
           embed: true,
           element: personaContainerRef.current,
