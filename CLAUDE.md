@@ -2451,6 +2451,323 @@ fixed state, not just each side independently). Live-only: whether the TrustScan
 Persona flow and the Stripe Identity flow both actually work once published — neither
 was live-tested from this checkout.
 
+## Evidence Monitoring pipeline — public medical-tourism incident scanning, propose-only (2026-08-28)
+
+Portia pasted a large 6-module spec ("Evidence Monitoring pipeline... not an automatic
+'doctor blacklist' or diagnostic system") — a scheduled public-incident scanner, an
+LLM-based structured extractor, a deterministic source-reliability evaluator, a
+human-gated "propose, never auto-apply" safety-rule learner, an orchestrator, and an
+admin review queue — with an explicit instruction to inspect the real runtime first and
+never invent infrastructure. That instruction mattered here more than usual: the spec
+assumed a separate Ubuntu server with SSH/cron/a persistent local filesystem, Python +
+a virtualenv, a locally-hosted **Ollama `llama3.2:3b`**, and something called **"Agent
+Reach."** Confirmed via repo-wide search: zero hits for Ollama, zero hits for "Agent
+Reach" (any casing) anywhere in this codebase — the same AI-generated-spec-vs-real-
+architecture mismatch this project has hit and corrected many times before (Phase
+31/32/33's "provider network" specs, the Phase 44 "autonomous journey agent" spec, the
+original Meet Your Care Team spec). Confirmed with Portia via AskUserQuestion: "Agent
+Reach" was a mistake in the spec, proceed on what's real; build the full 6-module
+pipeline in one pass rather than a narrower slice; and — her own explicit cost call,
+after asking directly how much Tavily/LLM spend the spec's every-6-hours cadence would
+actually burn — run it **monthly** instead (`0 6 1 * *`) rather than every 6 hours,
+dropping Tavily usage from ~480 calls/month to **4/month** and LLM analysis calls from
+up to ~2,400/month to **≤40/month**, an honest tradeoff stated plainly: this is a
+periodic monthly sweep, not near-real-time monitoring — `workflow_dispatch` still
+allows an on-demand run any time in between.
+
+**What's actually real, reused rather than reinvented**: `base44/shared/
+providerDiscovery.ts` (the already-live Tavily search adapter, no new vendor/key needed
+— confirmed configured in this Base44 project since Phase 36) is the real substitute for
+both "run discovery queries" and "fetch permitted public content," since Tavily's own
+`content` field returns compliantly-extracted page text — nothing here builds a custom
+scraper that could bypass robots.txt/ToS. `Core.InvokeLLM` + `response_json_schema`
+(the `mcareResearchAndLearn` pattern) replaces Ollama directly. `DiscoveredProviderCandidate`'s
+"never say verified, only propose" entity shape (a `status` enum with no `verified`/
+`confirmed` value) and `providerCandidateMatch.ts`'s capped, never-auto-trusted name
+scorer are reused for entity-resolving a mentioned clinic. `McareKnowledge`'s
+corroboration discipline (two sources disagreeing → both marked `conflicted`,
+never silently resolved) is the model for this pipeline's own conflict handling.
+`DataFreshnessReview`/`VerificationReview`'s admin-review-queue shape (a person reads,
+approves/rejects directly via `base44.entities.X.update(...)` from the client, RLS-
+gated, no backend function needed for that action) is the model for the new review UI.
+
+**One deliberate adaptation, stated plainly, not silently made**: the spec's Module 2
+schema asks the LLM to self-report `source_reliability`, but Module 3 also defines a
+fully deterministic domain-tier scheme — asking an LLM to self-grade its own source's
+reliability duplicates a signal that's more trustworthy computed deterministically from
+the actual domain, matching this app's "AI may narrate, never decide" discipline applied
+everywhere else (Rule 1's Safety Gate, registry-lookup confidence). `source_reliability`
+was dropped from the LLM schema entirely; `source_reliability_tier` comes only from the
+new deterministic classifier.
+
+**Shipped — 4 new admin-only entities** (RLS: `role: admin` on all 4 ops, matching
+`DiscoveredProviderCandidate` exactly): `IncidentCandidate.jsonc` (one row per
+discovered article — bounded snippet only, never a full article body, never images/
+names/passport data; a `status` pipeline tracker `new→analyzed→evaluated→
+proposed_rule_created|dismissed`; a `corroboration_status` enum
+(`single_source_unverified|corroborated|conflicting`) that deliberately has no
+`confirmed`/`verified` value). `ProposedSafetyRule.jsonc` (a plain-language clinician-
+review PROMPT, never a numeric threshold the system applies to itself — `review_status`
+can only ever be set to `approved` by a human admin's own manual update in the review
+queue; no backend function writes that value, confirmed by a redteam invariant).
+`ProviderSafetyReviewTask.jsonc` (mirrors `VerificationReview`'s shape — created ONLY
+when ≥2 corroborated incidents share the same real, high-confidence matched partner; a
+private human task, never a public warning, never a suspension by itself).
+`IncidentScanRun.jsonc` (a small, standalone, admin-only run-audit log — run id,
+trigger, per-stage counts, `failures[]` carrying error text only, never article bodies
+or PHI — same shape as `ExternalSearchLog`/`CrisisReroute`, deliberately not folded into
+the hash-chained `AuditLog`, which stays reserved for real safety decisions).
+
+**Shipped — 3 new shared modules**: `incidentSourceQuality.ts` (`classifySourceReliability` —
+a small, disclosed-non-exhaustive, deterministic domain-pattern list: `.gov`/`who.int`-
+shaped domains → `authoritative_primary` — checked first, so a `.gov` research domain
+like NIH/NCBI classifies as `authoritative_primary`, not `professional_publication`, a
+real, intentional precedence decision, not a bug; a short curated major-outlet list →
+`established_reporting`; `.edu`/journal domains → `professional_publication`; reddit/x/
+facebook/etc. → `user_generated`; else `unknown`, never assumed reliable —
+`computeCorroborationEligibility` requires either one `authoritative_primary` source
+alone, or ≥2 genuinely distinct domains where at least one isn't `user_generated`; a
+lone social post or single article is never enough, matching the spec's own literal
+"never a clinic strike" wording). `incidentTextAnalysis.ts` (`computeContentHash` —
+Web-Crypto SHA-256, Deno-native, for near-duplicate detection; `truncateToWords` —
+enforced in code, never trusted to the LLM's own restraint; `fallbackAnalyze` — a small,
+explicit keyword-vocabulary extractor used ONLY when the real LLM call fails, always
+`analysis_method: 'fallback'` with capped low confidence, `provider_or_clinic_mentioned`
+always stays `'unknown'` in fallback mode — extracting a name safely from raw text
+without an LLM was not attempted). `incidentPipelineStages.ts` (the real stage logic —
+`runScanStage`/`runAnalyzeStage`/`runEvaluateStage`/`runProposeStage`, each a plain
+importable async function, matching this repo's established "extract once, thin
+`entry.ts` wrappers call it" pattern from `weatherEngine.ts`/`checkWeatherAlerts`/
+`checkJourneyWeather` — lets each stage be independently `cronAuthorized`-triggered for
+debugging AND called in-process by the orchestrator with zero extra network hop). At a
+monthly cadence, one run's raw volume is small (4 queries × ≤10 results = ≤40 raw hits
+before dedup) — each stage processes its full current backlog in one pass rather than a
+small capped slice with "leftover rolls to next tick," since a partial batch left over
+for a month would be real staleness, not a minor inefficiency; a generous cap
+(`MAX_ITEMS_PER_STAGE = 200`) exists purely as a safety valve against an abnormal run.
+
+**Shipped — 5 new backend functions**, all `createHandler` + inline `cronAuthorized`
+(matching `calculateDriverTrustScore`'s modern pattern): `scanIncidentEvidence` (the 4
+literal discovery queries from the spec — "medical tourism death," "plastic surgery
+complication," "patient died abroad surgery," "medical tourism lawsuit" — dedupes by
+exact URL then near-duplicate content hash against a bounded recent set, logs every
+search call via the existing `logExternalSearch` helper). `analyzeIncidentEvidence`
+(picks up every `status:'new'` row, extracts via `Core.InvokeLLM` with the adapted
+strict schema, falls back to the deterministic keyword extractor on any LLM failure —
+never a second LLM retry — resolves a mentioned provider against all 5 real partner
+types via `providerCandidateMatch.ts`'s own scorer/threshold, always capped). `evaluateIncidentEvidence`
+(classifies source reliability, checks for a same-story match — exact content-hash, or
+matching incident_type+destination_country+procedure_type across different domains —
+against a bounded pool of analyzed/evaluated/proposed rows so a late-arriving report can
+still corroborate an older single-source row; flags `conflicting` when same-content-hash
+matches disagree on `incident_type`, a cheap deterministic extraction-disagreement
+signal, never silently picking one). `proposeSafetyLearning` (only ever acts on
+`corroborated`/`conflicting` rows, gated in the query itself, never on
+`single_source_unverified` alone; creates/merges a `ProviderSafetyReviewTask` only when
+≥2 corroborated rows share a high-confidence matched partner; drafts one
+`ProposedSafetyRule` per real story group via one more `Core.InvokeLLM` call — reuses an
+existing groupmate's already-drafted rule instead of duplicating when one exists; never
+fabricates a rule if the drafting call itself fails). `runIncidentEvidenceOrchestrator`
+(the one function actually wired into cron — creates a real `IncidentScanRun` audit row,
+calls all 4 stages in-process, records real counts/failures/status; `dry_run: true`
+still performs real search/LLM calls through scan/analyze/evaluate but skips the
+propose stage's real persistence, reporting `would_propose_rules`/
+`would_create_review_tasks` counts instead of creating anything).
+
+**Shipped — admin review UI**: `src/pages/AdminIncidentEvidence.jsx` (new, `/admin/
+incident-evidence`, registered in `adminRoutes.jsx`) — mirrors `AdminDataFreshness.jsx`
+directly: tabs for Proposed Rules, Provider Safety Reviews, and a minimal read-only
+Discovered Evidence browse list; Approve/Reject/Needs-more-evidence and Start-review/
+Resolved/Dismiss buttons call `base44.entities.X.update(...)` directly from the client
+(RLS-gated, no new backend function for the action itself — matching precedent exactly).
+
+**The hard boundary, pinned structurally not just by convention**: nothing in this
+feature imports, calls, or writes to `_shared/safeTEngine.ts`, `computeSafeT`,
+`SafeTScreening`, or `ProcedureKnowledge.risk_level` — a dedicated redteam invariant
+scans every new source file for these references and fails if any appear outside a
+stripped comment. This pipeline proposes human-reviewable observations; it never
+diagnoses a patient, never auto-blocks a clinic, and never touches the app's
+deterministic safety-decision engine.
+
+**Cron wiring**: added a genuinely new monthly tier to `.github/workflows/freshness-
+cron.yml` (`0 6 1 * *`, calling `runIncidentEvidenceOrchestrator`), plus the existing
+`workflow_dispatch` manual-run block — YAML validity and the embedded bash script's
+syntax both confirmed directly (`js-yaml` parse + `bash -n`) before trusting it.
+
+**Deliberately deferred, not silently dropped**: no wiring of an `approved`
+`ProposedSafetyRule` into M-Care's live conversation — that would need a new
+`m_care.jsonc` tool grant (real Publish-order risk per this project's own documented
+Phase 10 history) and is a separate, later, deliberately smaller decision once there's a
+real approved-rules table to consume; zero new `m_care.jsonc`/`tool_configs` grants this
+pass, confirmed both by direct count (113, unchanged) and a redteam invariant. No
+patient-facing surface at all this pass — matches how every comparable system in this
+app shipped admin-only first; the spec's neutral-language guardrail ("Under review,"
+"Source-based safety signal," never "scam") is documented here as the standing rule for
+whenever a patient-facing surface is eventually built. No real government/court-registry
+API integration for source verification beyond domain-pattern classification.
+
+**Verification**: touches 4 new entities, 5 new functions, 3 new shared modules, 1 new
+admin page + route, `.github/workflows/freshness-cron.yml`, and `tests/redteam/
+invariants.spec.js` — needs a **Publish** naming the 4 entities and 5 functions; the
+workflow-file change needs no Base44 publish (picked up on merge to `main`). One real
+bug caught and fixed mid-build by the vitest run itself: `PROFESSIONAL_PUBLICATION_PATTERNS`
+originally included NIH/NCBI/.gov-shaped patterns that could never actually fire (`.gov`
+always matches the authoritative check first, checked earlier) — dead code, removed,
+not a functional bug once caught. Lint clean, typecheck at the same 15-error pre-existing
+baseline (Deno functions aren't in tsc's checked scope; all 8 new/changed `.ts` files
+independently verified via a standalone `tsc --noEmit --allowImportingTsExtensions`
+pass — the one narrowing-related error it reported reproduces identically on an isolated
+2-line discriminated-union test case AND on a pre-existing, untouched file, confirming
+it's an artifact of that bare standalone invocation, not a real bug; this exact
+`if (!result.supported) { ...result.message... }` pattern is already live, working code
+elsewhere in this repo, e.g. `discoverProviderCandidates/entry.ts`), `npm run build`
+exit 0, 871/871 vitest (23 new), 292/292 redteam (8 new). Live-only, can't be confirmed
+from this checkout: whether the real Tavily/LLM calls actually discover and correctly
+classify genuine incidents once published — Portia verifies via a manual
+`workflow_dispatch` run (or `runIncidentEvidenceOrchestrator` with `dry_run: true`)
+after publishing, before waiting for the first real monthly tick.
+
+## Mobile M-Safe redesign — a bright, white/gold home screen for `MCareOrb.jsx` (2026-08-29)
+
+Portia sent a full reference screenshot (a bright white/gold "M-Safe" mobile app screen
+— hamburger/logo/bell header, a two-column robot hero, a floating four-item capability
+card, a chat thread with gold user bubbles and white assistant bubbles, a "Searching &
+Verifying" live-status card, four quick-action pills, a composer, a five-item bottom
+nav with a raised glowing center orb) and asked for the **mobile** M-Care experience to
+be rebuilt to match it as real components/CSS — not the image itself displayed
+anywhere — with desktop, chat/agent state, and all existing business logic preserved.
+
+This is `src/components/mcare/MCareOrb.jsx` — the global floating panel mounted in
+`AppLayout.jsx` on nearly every page. It already branched cleanly on
+`matchMedia('(min-width: 768px)')` (`isDesktopPanel`) into a real desktop 3-column
+layout and a real single-column mobile layout, so the mobile branch already existed
+structurally close (robot header → chat → composer) — it was just styled entirely in
+this app's dark palette with none of the screenshot's extra chrome. This rebuild
+extends that existing branch in place; the desktop branch, `MCareAgent.jsx` (the
+separate `/m-care` full page), and the app's real global `Header.jsx`/`BottomTabBar.jsx`
+are untouched except for one small additive listener in `Header.jsx`.
+
+**Confirmed with Portia before building** (AskUserQuestion, all three "Recommended"
+options chosen): the new bottom-nav row gets real navigation, not just visuals; the new
+hamburger/bell icons get wired to real behavior; the mobile panel goes full-bleed
+(edge-to-edge, no card/backdrop) instead of the prior centered floating-card treatment.
+
+**One deliberate, disclosed deviation from a literal reading of the screenshot**: its
+example conversation ("I need to find a trusted dentist in Cancun..." → "Perfect. I'll
+find verified dental specialists...") was **not** hardcoded as fake seeded chat history
+— this app has a strong, repeatedly-enforced principle against ever fabricating AI
+conversation/output (RULE 3, the whole Demo Pages audit history above). The real,
+already-personalized `GREETING` empty-state bubble stays the only pre-populated
+content; the screenshot's example was used only as tone/wording reference for the
+quick-action chip labels.
+
+**What's real and reused, not rebuilt**: `LivingOrb`/`RobotAvatarImage` (no dark
+card/rectangle behind the robot today — confirmed by direct read; the hero requirement
+is satisfied almost entirely by the outer containers going white, not a robot-component
+change), `titleSubtitleBlock`/`pillsRowBlock` (color-branched, not duplicated),
+`capabilityRowBlock` (already driven by real `orbState`/`activeCapability`
+derivation — thinking→Analyze, tool_executing→Coordinate, alert→Protect,
+speaking/acting→Resolve — restyled into a card with subtitles, the state-derivation
+itself untouched), `JourneyStageTracker.jsx`/`SafetyGateCard.jsx` (already theme via
+Tailwind's real `.dark`-gated CSS variables — once the panel stops forcing `.dark` on
+mobile, both render correctly in light mode automatically, confirmed via `src/index.css`'s
+`:root` block already being genuinely light: `--background: 150 8% 97%`, `--card: 0 0%
+100%`, `--foreground: 156 16% 7%`, `--border: 150 8% 88%`), `MessageBubble.jsx`'s
+`accent` prop (already accepts any CSS `background` value including a gradient string —
+the gold user-bubble is a one-line prop change, not new logic), `VoiceMessageRecorder`'s
+idle mic button (already gold-on-light), and every `quickChips` entry's real `run`
+handler (only labels/grouping/visibility changed, zero handler logic touched).
+
+**Shipped — `MCareOrb.jsx` (mobile branch only, `isDesktopPanel` ternaries throughout,
+desktop pixel-behavior unchanged)**: new local light-mode constants (`LIGHT_BG`,
+`LIGHT_CARD`, `LIGHT_BORDER`, `LIGHT_TEXT`, `LIGHT_TEXT_MUTED`, `MINT #36DDB2`,
+`LAVENDER #A78BFA`, `GOLD_GRADIENT`) — `GOLD` stays `#D4AF37` (reused, not replaced:
+visually indistinguishable from the screenshot's requested `#D6A72E`, and reusing it
+keeps `LivingOrb`'s rings and the launcher button consistent with the newly-lightened
+panel rather than a second, subtly different "gold"). The panel's `className="dark"` is
+now `isDesktopPanel ? 'dark' : ''` — mobile falls through to the real light tokens with
+zero changes needed to the 3 shared components above. The panel goes full-bleed on
+mobile (`width: '100vw', height: '100dvh'`, `borderRadius: 0`, no backdrop
+padding/dimming) — desktop's centered-card math is untouched; `expanded` becomes a
+no-op there (nothing left to expand into) so the expand/collapse header button is now
+`isDesktopPanel &&`-gated, avoiding a visibly non-functional control. A new header row
+(hamburger → `emitOpenSiteMenu()`, a new mirror-image module of the existing
+`openMcareEvent.js` pattern; centered `/morales-m-mark.png` + "M-CARE" +"AI Medical
+Travel Concierge" wordmark, reusing the real existing brand asset, no new image; bell
+with a gold dot reusing the exact real `hasUnseenJourneyEvent` signal the floating
+launcher button's own dot already uses, tapping it scrolls to `bottomRef` and calls the
+existing `markJourneyEventsSeen()`) sits above the existing hero row, safe-area-aware.
+A new fixed `TAGLINE` string renders under the pills row, mobile only. The "LIVE
+SESSION"/"AI SUPER AGENTIC"/"PRIVATE" pills (round-4 translucent washes tuned for a
+dark panel, illegible on white) got light-mode-only stronger backgrounds + darker
+foregrounds via `statusPill.bgLight`/`.fgLight` and inline ternaries — desktop's exact
+original values are untouched. `quickChips` was reordered/relabeled (Find Doctors /
+Safety Check — new — / My Journey as the persistent primary row; Emergency Help / Visa
+Help / conditional partner-signup / conditional sign-in collapsed behind a new "More"
+popover) — every `run` handler is the exact same function reference in both the new
+`quickChips` and `moreChips` arrays, so mobile's "More" popover and desktop's unchanged
+empty-state row can never drift into two different behaviors for the same action. The
+quick-chips row moved from empty-state-only to always-visible just above the composer
+on mobile (desktop's original empty-state-gated row is untouched). A new
+`LiveActivityCard.jsx` (white card, gold spinner, mint "LIVE" pill, expandable chevron)
+replaces the minimal typing-indicator row on mobile — its title/subtitle are **never**
+hardcoded to the screenshot's literal "Searching & Verifying" / "Checking credentials,
+reviews, safety record and availability…" text regardless of what's actually happening
+(RULE-3-style discipline against invented status claims): title is the real per-tool
+`activeRunningTool?.display_projection?.active_label` when a specific tool is running,
+falling back to an honest generic "Thinking it through…"; desktop's existing minimal row
+is unchanged. A new `MSafeBottomNav.jsx` (Home/Journey/raised-glowing-center-orb/
+Services/Profile) renders on mobile only, wired to real navigation: Home closes the
+panel, Journey navigates to `/dashboard/journey` and closes, Services triggers the
+existing "Find Doctors" chip's own real handler, Profile navigates to `/dashboard` and
+closes — the center orb genuinely renders `<LivingOrb state={orbState}>`, real reactive
+state, not a static icon, with no `onClick` (already open). This nav is a
+self-contained footer for the M-Care experience, not a live mirror of the real global
+`BottomTabBar.jsx` (which still exists, unchanged, hidden behind the full-bleed panel
+while open) — "Home" renders gold-highlighted by default, a static design choice
+matching the screenshot, not derived from `useLocation()`.
+
+**Shipped — small additive changes to 4 shared files, every existing caller's default
+rendering unchanged**: `MessageBubble.jsx` gained `showAssistantMeta = false` (renders a
+muted-gray timestamp under an assistant message, no checkmark — that's a delivery
+receipt meaningful only for the user's own sent message; reuses the same `time` value
+already computed for the user-side timestamp). `AddImageMenu.jsx` gained `menuTheme =
+'dark'` (swaps the popup's 3 hardcoded dark colors for light + recolors the trigger icon
+gold when `'light'`). `VoiceMessageRecorder.jsx` gained `theme = 'dark'` (swaps the
+"recording" active-state pill's hardcoded `CARD`/`BORDER`/timer-text colors for light
+equivalents — the idle mic button was already gold-on-light and needed no change).
+`Header.jsx` gained one new `useEffect` listening for the new `SITE_MENU_OPEN_EVENT`
+(`src/lib/openSiteMenuEvent.js`, new — the exact reverse of `openMcareEvent.js`'s
+existing `MCARE_OPEN_EVENT`/`emitOpenMcare` pattern) and calls its own existing
+`setIsMobileOpen(true)`. Because `Header.jsx`'s full-screen tray already renders at
+`z-[9999]` — higher than `MCareOrb`'s panel `z-9001` — the real site menu correctly
+appears on top of the still-mounted M-Care panel when triggered this way, and closing it
+reveals M-Care again underneath; nothing is torn down. Spot-checked
+`InterruptedIntentChip.jsx`/`SmartInputSuggestions.jsx` (both render inside the shared
+`chatMain`) — both were already styled for a light background (`#F4F1FF`/`#374151`,
+`#fff`/`#F0F9FF`) and needed zero changes for the new light mobile panel.
+
+**A real typecheck regression caught and fixed during verification, not shipped**:
+`MSafeBottomNav.jsx`'s reused `itemStyle` object (spread across 4 nav buttons) inferred
+a widened `flexDirection: string` instead of the literal CSS type under this repo's
+`--allowJs` checking — the same class of issue this file already documents fixing
+elsewhere. Fixed with an explicit `/** @type {React.CSSProperties} */` annotation on the
+object, matching the established convention; confirmed zero remaining errors in any
+new/changed file via a targeted re-check before trusting the full-suite count.
+
+**Verification**: pure frontend — no entity/function/`m_care.jsonc` change, no Base44
+Publish needed for backend reasons, ships with the normal frontend deploy. Lint clean,
+typecheck at the same pre-existing baseline (confirmed zero new errors in any
+new/touched file), `npm run build` exit 0 (only the two pre-existing, documented
+warnings), 871/871 vitest (unchanged — no new pure-logic module, this is presentational
+work), 292/292 redteam (unchanged — touches no entity/tool/permission surface, no new
+invariant needed). Live-only, can't be confirmed from this checkout: whether the
+full-bleed framing, the restyled pills'/card's exact contrast and spacing, the robot
+hero's glow/particle visibility against white, and the new bottom nav's raised-orb
+treatment all actually read as intended on a real phone — Portia verifies live after
+this ships, the same standing caveat as every prior visual round of work on this exact
+component.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.
