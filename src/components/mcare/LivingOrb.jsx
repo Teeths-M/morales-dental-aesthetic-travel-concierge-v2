@@ -229,24 +229,41 @@ function Atmosphere({ color, animated, activityState = 'idle' }) {
           filter: 'blur(5px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
-      <motion.div
+      {/* 2026-08-29 clip fix (same mechanism as the ring halo above): these
+          two rings rotate a flattened ellipse, whose true bounding box can
+          reach far past its own resting footprint at ~90/270deg — unclipped,
+          that swept straight down past the shell into whatever renders
+          right after LivingOrb in normal flow (the capability pills/status
+          pill below it), reading as a detached gold "trailing line." Each
+          ring now lives inside its own fixed, non-rotating clip box sized
+          to its resting width/height/position; the ring still rotates
+          freely inside it, just can't escape past that footprint anymore. */}
+      <div
         aria-hidden="true"
         style={{
           position: 'absolute', width: '124%', height: '30%', bottom: '-8%', left: '-12%',
-          borderRadius: '50%', border: `1.5px solid ${color}9e`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
+          overflow: 'hidden', zIndex: -1, pointerEvents: 'none',
         }}
-        animate={animated ? { rotate: 360 } : undefined}
-        transition={animated ? { duration: ringADuration, repeat: Infinity, ease: 'linear' } : undefined}
-      />
-      <motion.div
+      >
+        <motion.div
+          style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1.5px solid ${color}9e`, filter: 'blur(1px)' }}
+          animate={animated ? { rotate: 360 } : undefined}
+          transition={animated ? { duration: ringADuration, repeat: Infinity, ease: 'linear' } : undefined}
+        />
+      </div>
+      <div
         aria-hidden="true"
         style={{
           position: 'absolute', width: '104%', height: '23%', bottom: '-3%', left: '-2%',
-          borderRadius: '50%', border: `1.5px solid ${color}80`, zIndex: -1, pointerEvents: 'none',
+          overflow: 'hidden', zIndex: -1, pointerEvents: 'none',
         }}
-        animate={animated ? { rotate: -360 } : undefined}
-        transition={animated ? { duration: ringBDuration, repeat: Infinity, ease: 'linear' } : undefined}
-      />
+      >
+        <motion.div
+          style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1.5px solid ${color}80` }}
+          animate={animated ? { rotate: -360 } : undefined}
+          transition={animated ? { duration: ringBDuration, repeat: Infinity, ease: 'linear' } : undefined}
+        />
+      </div>
       {/* The innermost, static ring — the one that reads most literally as
           "a stand he's resting on," since it sits closest to the robot's
           own base and never moves. Flattened slightly wider/shorter and
@@ -390,7 +407,16 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
           own rings already use below. Alternating spin direction per
           index and a per-index size/duration stagger, matching
           Atmosphere's own "rings move differently, not in lockstep"
-          choice. Real opacity, no more animating toward 0. */}
+          choice. Real opacity, no more animating toward 0.
+          2026-08-29 clip fix: a rotated ellipse's true bounding box swings
+          between its own width and height as it spins — at ~90/270deg its
+          vertical reach becomes its resting horizontal half-width, which
+          (unclipped) escaped upward into the empty padding above the
+          robot's head as faint stray bar segments. Each ring now lives
+          inside its own fixed, non-rotating clip box sized to its resting
+          footprint — the ring below still rotates freely, but anything
+          that would have swept outside that footprint is cleanly clipped
+          instead of escaping into neighboring UI. */}
       {Array.from({ length: cfg.ringCount }).map((_, i) => {
         // 2026-08-29: tightened from 100+i*14 / 42+i*6 — the reference
         // image's own rings trace close around the sphere's actual
@@ -400,18 +426,22 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
         const w = 92 + i * 10;
         const h = 40 + i * 5;
         return (
-          <motion.div
+          <div
             key={i}
             aria-hidden="true"
-            data-testid="ring-orbit"
             style={{
               position: 'absolute', top: '50%', left: '50%',
               width: `${w}%`, height: `${h}%`, marginLeft: `-${w / 2}%`, marginTop: `-${h / 2}%`,
-              borderRadius: '50%', border: `1px solid ${cfg.color}`, opacity: cfg.ringOpacity,
+              overflow: 'hidden', pointerEvents: 'none',
             }}
-            animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-            transition={{ duration: cfg.ringOrbitDuration + i * 2, repeat: Infinity, ease: 'linear' }}
-          />
+          >
+            <motion.div
+              data-testid="ring-orbit"
+              style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1px solid ${cfg.color}`, opacity: cfg.ringOpacity }}
+              animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
+              transition={{ duration: cfg.ringOrbitDuration + i * 2, repeat: Infinity, ease: 'linear' }}
+            />
+          </div>
         );
       })}
 
