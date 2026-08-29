@@ -138,7 +138,14 @@ const AMBER = '#D97706';
 // move slower" ordering `duration` already implied, rescaled to a speed
 // that actually reads as an orbit.
 const STATE_CONFIG = {
-  idle:           { ringCount: 2, duration: 3.6, ringOrbitDuration: 16, ringOpacity: 0.18, coreScale: [1, 1.025, 1], glowAlpha: '45', color: GOLD },
+  // idle: ringCount bumped 2→3 and ringOpacity 0.18→0.22 (2026-08-29) — a
+  // real screenshot comparison against the reference image showed 2 rings
+  // reading as sparse/incomplete at any single frozen moment (they only
+  // ever show 2 ellipses at whatever rotation angle they happen to be at);
+  // a third ring plus slightly higher opacity reads as a denser "orbital
+  // shell" closer to the reference, without changing the ring shapes'
+  // own hug-tightness (see the ring-rendering block below for that).
+  idle:           { ringCount: 3, duration: 3.6, ringOrbitDuration: 16, ringOpacity: 0.22, coreScale: [1, 1.025, 1], glowAlpha: '45', color: GOLD },
   listening:      { ringCount: 3, duration: 1.1, ringOrbitDuration: 8,  ringOpacity: 0.36, coreScale: [1, 1.1, 1],   glowAlpha: '55', color: GOLD },
   // thinking / tool_executing: the same ring cadence at two speeds/
   // intensities — thinking is the agent composing a reply, no tool call
@@ -205,22 +212,25 @@ function Atmosphere({ color, animated, activityState = 'idle' }) {
   return (
     <>
       {/* Hologram platform — a wide soft base glow plus three concentric
-          ring outlines, brightened/thickened (widescreen-panel round) so it
-          reads as a real glowing dais under the robot, not a faint blur —
-          matching the reference image's own fairly prominent platform. */}
+          ring outlines. 2026-08-29: brightened/sharpened again — a real
+          screenshot comparison against the reference image showed this
+          reading as a faint background wash rather than a distinct stand
+          the robot visibly rests on, so the glow is less blurred and every
+          ring's border alpha and the innermost "stand" ring's own weight
+          are bumped up, closer to the reference's clearly-separated base. */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute', width: '150%', height: '38%', bottom: '-12%', left: '-25%',
-          borderRadius: '50%', background: `radial-gradient(ellipse at center, ${color}4a, transparent 74%)`,
-          filter: 'blur(7px)', zIndex: -1, pointerEvents: 'none',
+          borderRadius: '50%', background: `radial-gradient(ellipse at center, ${color}66, transparent 72%)`,
+          filter: 'blur(5px)', zIndex: -1, pointerEvents: 'none',
         }}
       />
       <motion.div
         aria-hidden="true"
         style={{
           position: 'absolute', width: '124%', height: '30%', bottom: '-8%', left: '-12%',
-          borderRadius: '50%', border: `1.5px solid ${color}80`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
+          borderRadius: '50%', border: `1.5px solid ${color}9e`, filter: 'blur(1px)', zIndex: -1, pointerEvents: 'none',
         }}
         animate={animated ? { rotate: 360 } : undefined}
         transition={animated ? { duration: ringADuration, repeat: Infinity, ease: 'linear' } : undefined}
@@ -229,16 +239,20 @@ function Atmosphere({ color, animated, activityState = 'idle' }) {
         aria-hidden="true"
         style={{
           position: 'absolute', width: '104%', height: '23%', bottom: '-3%', left: '-2%',
-          borderRadius: '50%', border: `1.5px solid ${color}60`, zIndex: -1, pointerEvents: 'none',
+          borderRadius: '50%', border: `1.5px solid ${color}80`, zIndex: -1, pointerEvents: 'none',
         }}
         animate={animated ? { rotate: -360 } : undefined}
         transition={animated ? { duration: ringBDuration, repeat: Infinity, ease: 'linear' } : undefined}
       />
+      {/* The innermost, static ring — the one that reads most literally as
+          "a stand he's resting on," since it sits closest to the robot's
+          own base and never moves. Flattened slightly wider/shorter and
+          given real weight (was a barely-visible 1px/27%-alpha hairline). */}
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', width: '84%', height: '16%', bottom: '2%', left: '8%',
-          borderRadius: '50%', border: `1px solid ${color}45`, zIndex: -1, pointerEvents: 'none',
+          position: 'absolute', width: '88%', height: '14%', bottom: '3%', left: '6%',
+          borderRadius: '50%', border: `1.5px solid ${color}75`, zIndex: -1, pointerEvents: 'none',
         }}
       />
       {/* Gold particles — fading in/out as before, now also drifting
@@ -375,8 +389,13 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
           Atmosphere's own "rings move differently, not in lockstep"
           choice. Real opacity, no more animating toward 0. */}
       {Array.from({ length: cfg.ringCount }).map((_, i) => {
-        const w = 100 + i * 14;
-        const h = 42 + i * 6;
+        // 2026-08-29: tightened from 100+i*14 / 42+i*6 — the reference
+        // image's own rings trace close around the sphere's actual
+        // silhouette, not a wide sprawl well outside it. Smaller base +
+        // slower per-ring growth keeps even 3 rings (idle, above) hugging
+        // the robot rather than fanning outward.
+        const w = 92 + i * 10;
+        const h = 40 + i * 5;
         return (
           <motion.div
             key={i}
