@@ -199,7 +199,7 @@
     },
     {
       "function_name": "assignChauffeurServices",
-      "description": "Match a verified+available taxi partner and send them a structured trip request. Used in BOOKING and TRIP HANDOFF for ALL journey types (standard, BYOJ, leisure)."
+      "description": "Send a real quote REQUEST email to a verified taxi partner in the traveler's home country (airport transfer) and a separate verified partner in the destination country (hotel/clinic legs) - this is NOT a confirmed or dispatched ride. The partner typically responds within 24 hours; nothing is booked, confirmed, verified, or GPS-tracked until they actually reply. Never tell the traveler a specific pickup time, a driver's name, wheelchair-accessibility, or a 'verified'/'GPS-tracked' status unless the tool's own returned fields actually say so - state plainly that quote requests have been sent to a driver in each country and you will follow up once they respond. Used in BOOKING and TRIP HANDOFF for ALL journey types (standard, BYOJ, leisure)."
     },
     {
       "function_name": "requestCompanionPackage",

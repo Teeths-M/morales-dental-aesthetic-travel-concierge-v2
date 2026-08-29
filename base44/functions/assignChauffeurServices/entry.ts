@@ -99,15 +99,25 @@ Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
-    }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { caseId } = await req.json();
     if (!caseId) return Response.json({ error: 'Case ID required' }, { status: 400 });
 
     const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(caseId);
     if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
+
+    // Was admin-only — this silently 403'd whenever M-Care's own chat agent (granted
+    // this function for BOOKING/TRIP HANDOFF) tried to call it on behalf of an
+    // ordinary patient, since the agent forwards the real caller's session, not an
+    // admin one. Same real ownership-check pattern already used by
+    // sendClientBookingProposal/entry.ts (case-insensitive email match) — a patient
+    // may only dispatch their own case's transport; admin/platform_admin unchanged.
+    const isOwner = caseRecord.client_email && user.email && caseRecord.client_email.toLowerCase() === user.email.toLowerCase();
+    const isAdmin = user.role === 'admin' || user.role === 'platform_admin';
+    if (!isOwner && !isAdmin) {
+      return Response.json({ error: 'Unauthorized - you may only arrange transport for your own case' }, { status: 403 });
+    }
 
     const [originDrivers, destDrivers] = await Promise.all([
       base44.asServiceRole.entities.TaxiService.filter({ operating_country: caseRecord.client_country, status: 'active' }),

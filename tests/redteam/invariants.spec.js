@@ -4411,6 +4411,45 @@ test('DISPATCH ORCHESTRATOR: mcare_orchestrator is a separate, non-anonymous, re
   }
 });
 
+test('GROUND TRANSPORT DISPATCH: assignChauffeurServices is ownership-gated, not admin-only, so M-Care\'s own chat agent can actually call it', () => {
+  // Was hard admin-only (user.role !== 'admin' && user.role !== 'platform_admin'),
+  // which silently 403'd every time M-Care's chat agent — granted this function for
+  // BOOKING/TRIP HANDOFF — tried to call it on behalf of an ordinary patient, since
+  // the agent forwards the real caller's session, not an admin one. Fixed to the
+  // same real ownership-check pattern already used by sendClientBookingProposal:
+  // caseRecord.client_email vs. the caller's own email (case-insensitive), OR
+  // admin/platform_admin.
+  const src = read('base44/functions/assignChauffeurServices/entry.ts');
+
+  expect(src, 'must no longer hard-block every non-admin caller before the case is even loaded')
+    .not.toMatch(/if\s*\(!user\s*\|\|\s*\(user\.role\s*!==\s*'admin'\s*&&\s*user\.role\s*!==\s*'platform_admin'\)\)/);
+
+  expect(src, 'must derive isOwner from the real caseRecord.client_email vs. the caller\'s own email, not a caller-supplied field')
+    .toMatch(/caseRecord\.client_email\.toLowerCase\(\)\s*===\s*user\.email\.toLowerCase\(\)/);
+  expect(src, 'admin/platform_admin must still be able to call this directly, matching the existing admin dashboard flow')
+    .toMatch(/user\.role\s*===\s*'admin'\s*\|\|\s*user\.role\s*===\s*'platform_admin'/);
+  expect(src, 'the ownership/admin check must actually gate the response — a 403 when neither is true')
+    .toMatch(/if\s*\(!isOwner\s*&&\s*!isAdmin\)/);
+
+  // The audit trail must still reflect who really called it (patient or admin),
+  // never hardcoded to 'admin' now that a patient can be the real caller.
+  const auditIdx = src.indexOf('AuditLog.create(');
+  const auditBlock = src.slice(auditIdx, auditIdx + 400);
+  expect(auditBlock, 'actor_role must come from the real caller, not a hardcoded literal')
+    .toMatch(/actor_role:\s*user\.role/);
+
+  // The agent's own tool description must never let the model overclaim a confirmed
+  // time, "verified" status, or GPS-tracking this async quote-request flow doesn't
+  // actually return.
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const toolDescMatch = agentConfig.match(/"function_name":\s*"assignChauffeurServices",\s*"description":\s*"([^"]*)"/);
+  expect(toolDescMatch, 'assignChauffeurServices must still be a granted tool with a description').toBeTruthy();
+  const toolDesc = toolDescMatch[1];
+  expect(toolDesc, 'must state this is a quote REQUEST, not a confirmed dispatch').toMatch(/quote REQUEST/);
+  expect(toolDesc, 'must explicitly forbid inventing a confirmed pickup time/driver name/wheelchair/verified/GPS-tracked claim')
+    .toMatch(/Never tell the traveler a specific pickup time/);
+});
+
 test('SEARCH NEARBY PLACES: an empty result is narrated as real and honest, never a false "service down" claim, and the GPS upgrade is confirm-gated', () => {
   // A live incident: searchNearbyPlaces returned a real, successful empty
   // results array (nothing OSM-tagged within the search radius), and the
