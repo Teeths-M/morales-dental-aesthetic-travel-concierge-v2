@@ -69,6 +69,11 @@ const STATUS_MAP = {
   needs_attention:    { color: 'orange',  label: 'Needs Attention' },
   monitor:            { color: 'amber',   label: 'Monitor' },
   cleared:            { color: 'emerald', label: 'Cleared' },
+
+  // ── Medical Evidence Watch confidence tier (MedicalDiscovery.confidence) ──
+  // 'verified' and 'under_review' already exist above and are reused as-is.
+  promising_but_early:{ color: 'amber',   label: 'Promising — Early' },
+  unverified:         { color: 'gray',    label: 'Unverified' },
 };
 
 const COLOR_STYLES = {

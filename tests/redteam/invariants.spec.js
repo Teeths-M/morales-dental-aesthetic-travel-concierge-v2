@@ -5745,3 +5745,139 @@ test('EVIDENCE MONITORING: this feature grants zero new M-Care agent tools — n
   }
   expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(113);
 });
+
+// ── Medical Evidence Watch pipeline ──────────────────────────────────────────
+// A monthly (plus weekly recall-only) admin-only pipeline that discovers
+// medical/regulatory developments relevant to medical travel — new
+// treatments, trials, device approvals, recalls, safety alerts — via real,
+// free, keyless government/research APIs (PubMed, ClinicalTrials.gov,
+// openFDA) plus Tavily for Tier 2/3 discovery/reporting. The sibling of the
+// Evidence Monitoring (incident) pipeline above, for a different domain:
+// instead of provider-safety incidents, this tracks research/regulatory
+// evidence. Never a diagnosis, never a treatment recommendation, and never
+// shown to a patient until a human admin has reviewed it.
+
+test('MEDICAL EVIDENCE WATCH: MedicalDiscovery / EvidenceWatchRun are admin-only and carry no patient PHI field', () => {
+  const rlsAdminOnly = (op) => new RegExp(
+    `"${op}"\\s*:\\s*\\{\\s*"user_condition"\\s*:\\s*\\{\\s*"role"\\s*:\\s*"admin"\\s*\\}\\s*\\}`
+  );
+  const forbiddenFieldKey = /"(client_name|client_email|client_phone|patient_name|patient_email|medical_\w*|diagnosis)"\s*:\s*\{/i;
+
+  for (const entityFile of ['base44/entities/MedicalDiscovery.jsonc', 'base44/entities/EvidenceWatchRun.jsonc']) {
+    const entity = read(entityFile);
+    for (const op of ['read', 'create', 'update', 'delete']) {
+      expect(entity, `${entityFile}.${op} must be admin-gated`).toMatch(rlsAdminOnly(op));
+    }
+    expect(entity, `${entityFile} must never declare a patient-identity field`).not.toMatch(forbiddenFieldKey);
+  }
+});
+
+test('MEDICAL EVIDENCE WATCH: the pipeline itself may only ever reach queued_for_review or needs_more_evidence — approved/rejected/dismissed require a human\'s own reviewMedicalDiscovery call', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const pipeline = strip(read('base44/shared/evidenceWatchPipeline.ts'));
+
+  for (const forbidden of ["status: 'approved'", "status: 'rejected'", "status: 'dismissed'"]) {
+    expect(pipeline, `evidenceWatchPipeline.ts must never write ${forbidden} — those are reserved for reviewMedicalDiscovery`)
+      .not.toContain(forbidden);
+  }
+  expect(pipeline, 'the evaluate stage must only ever advance to needs_more_evidence or queued_for_review on its own')
+    .toMatch(/'needs_more_evidence'\s*:\s*'queued_for_review'/);
+
+  // The one real writer of 'approved'/'rejected'/'dismissed'/'needs_more_evidence'
+  // as a human decision is reviewMedicalDiscovery, gated to admin roles, and it
+  // is the only place `confidence` is never touched (confidence is computed,
+  // never a reviewer's own call) — confirmed by reading its own real body.
+  const reviewFn = read('base44/functions/reviewMedicalDiscovery/entry.ts');
+  expect(reviewFn, 'reviewMedicalDiscovery must be admin/platform_admin gated')
+    .toMatch(/allowedRoles:\s*\[\s*'admin'\s*,\s*'platform_admin'\s*\]/);
+  expect(reviewFn, 'reviewMedicalDiscovery must accept only the 4 real decision values')
+    .toMatch(/z\.enum\(\['approved', 'rejected', 'needs_more_evidence', 'dismissed'\]\)/);
+});
+
+test('MEDICAL EVIDENCE WATCH: nothing in this pipeline touches the deterministic SAFE-T safety-decision engine or writes a ProcedureKnowledge clinical field', () => {
+  const forbidden = /safeTEngine|computeSafeT\b|SafeTScreening|risk_level\s*:|complication_rate\s*:|red_flag_combinations\s*:|smoker_warning\s*:|common_complications\s*:/;
+  const files = [
+    'base44/shared/evidenceWatchPipeline.ts',
+    'base44/shared/evidenceSourceTier.ts',
+    'base44/shared/evidenceConfidence.ts',
+    'base44/shared/evidenceLanguageGuard.ts',
+    'base44/shared/pubmedAdapter.ts',
+    'base44/shared/clinicalTrialsAdapter.ts',
+    'base44/shared/openFdaAdapter.ts',
+    'base44/functions/scanEvidenceWatch/entry.ts',
+    'base44/functions/analyzeEvidenceWatch/entry.ts',
+    'base44/functions/evaluateEvidenceWatch/entry.ts',
+    'base44/functions/runEvidenceWatchOrchestrator/entry.ts',
+    'base44/functions/reviewMedicalDiscovery/entry.ts',
+    'base44/functions/getEvidenceWatchFeed/entry.ts',
+  ];
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const file of files) {
+    const src = strip(read(file));
+    expect(src, `${file} must never reference the deterministic SAFE-T engine or write a ProcedureKnowledge clinical field`).not.toMatch(forbidden);
+  }
+});
+
+test('MEDICAL EVIDENCE WATCH: the banned-absolute-claim-language guard is real and structurally wired into the evaluate stage', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const pipeline = strip(read('base44/shared/evidenceWatchPipeline.ts'));
+  const guard = strip(read('base44/shared/evidenceLanguageGuard.ts'));
+
+  expect(pipeline, 'the evaluate stage must actually call containsBannedClaim against the real summary text')
+    .toMatch(/containsBannedClaim\(row\.plain_language_summary/);
+  expect(pipeline, 'a banned-language hit (or a fallback-only extraction) must be checked BEFORE advancing to queued_for_review')
+    .toMatch(/hasBannedLanguage\s*\|\|\s*isFallback/);
+
+  // The ban must be unconditional — no tier/stage carve-out anywhere that
+  // could let "regulator-approved" language bypass this check.
+  expect(guard, 'the language guard must be a plain, unconditional function of the text alone')
+    .toMatch(/export function containsBannedClaim\(text: string\): boolean/);
+});
+
+test('MEDICAL EVIDENCE WATCH: a tier_3-only (social/discovery) source can never reach above unverified, and only status:approved rows are ever patient-visible', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const confidenceModule = strip(read('base44/shared/evidenceConfidence.ts'));
+
+  expect(confidenceModule, "tier_2 must be capped at 'under_review'")
+    .toMatch(/if\s*\(top\s*===\s*'tier_2'\)\s*\{\s*return\s*'under_review';/);
+  expect(confidenceModule, "anything short of tier_1/tier_2 must fall through to 'unverified'")
+    .toMatch(/return\s*'unverified';\s*\}?\s*$/);
+
+  const feedFn = read('base44/functions/getEvidenceWatchFeed/entry.ts');
+  expect(feedFn, 'getEvidenceWatchFeed must only ever query status: approved')
+    .toMatch(/filter\(\{\s*status:\s*'approved'\s*\}/);
+
+  const adminPage = read('src/pages/AdminEvidenceWatch.jsx');
+  expect(adminPage, "the admin 'Approved' tab must only ever show status === 'approved' rows")
+    .toMatch(/const approved = discoveries\.filter\(\(d\) => d\.status === 'approved'\)/);
+});
+
+test('MEDICAL EVIDENCE WATCH: all 4 pipeline functions are cronAuthorized-gated', () => {
+  for (const fn of ['scanEvidenceWatch', 'analyzeEvidenceWatch', 'evaluateEvidenceWatch', 'runEvidenceWatchOrchestrator']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must import cronAuthorized`).toMatch(/from '\.\.\/\.\.\/shared\/cronAuth\.ts'/);
+    expect(src, `${fn} must actually call cronAuthorized before doing work`).toMatch(/cronAuthorized\(req, base44\)/);
+  }
+});
+
+test('MEDICAL EVIDENCE WATCH: a discovered snippet is always bounded, never the full article/abstract body', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const pipeline = strip(read('base44/shared/evidenceWatchPipeline.ts'));
+  expect(pipeline, 'the scan stage must truncate the snippet before persisting it')
+    .toMatch(/snippet:\s*truncateToWords\(item\.snippet/);
+});
+
+test('MEDICAL EVIDENCE WATCH: this feature grants zero new M-Care agent tools — no Publish-order risk on the agent side', () => {
+  const raw = read('base44/agents/m_care.jsonc');
+  const agentConfig = JSON.parse(raw);
+
+  for (const fn of ['scanEvidenceWatch', 'analyzeEvidenceWatch', 'evaluateEvidenceWatch', 'runEvidenceWatchOrchestrator', 'reviewMedicalDiscovery', 'getEvidenceWatchFeed']) {
+    expect(raw, `${fn} must never be granted as an M-Care agent tool`)
+      .not.toMatch(new RegExp(`"function_name"\\s*:\\s*"${fn}"`));
+  }
+  for (const entityName of ['MedicalDiscovery', 'EvidenceWatchRun']) {
+    expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
+      .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
+  }
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side + a public read-only feed, and must add zero new agent grants').toBe(113);
+});

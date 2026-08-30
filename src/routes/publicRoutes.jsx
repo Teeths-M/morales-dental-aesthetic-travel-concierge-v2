@@ -33,6 +33,7 @@ const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const RequestAccountDeletion = lazy(() => import('@/pages/RequestAccountDeletion'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Procedures    = lazy(() => import('@/pages/Procedures'));
+const EvidenceWatch = lazy(() => import('@/pages/EvidenceWatch'));
 const PartnerDirectory = lazy(() => import('@/pages/PartnerDirectory'));
 const Booking             = lazy(() => import('@/pages/Booking'));
 const ConciergeIntake      = lazy(() => import('@/pages/ConciergeIntake'));
@@ -93,6 +94,7 @@ export const publicRoutes = (
     <Route path="/request-account-deletion" element={<ErrorBoundary><RequestAccountDeletion /></ErrorBoundary>} />
     <Route path="/terms"          element={<ErrorBoundary><TermsOfService /></ErrorBoundary>} />
     <Route path="/procedures"     element={<ErrorBoundary><Procedures /></ErrorBoundary>} />
+    <Route path="/evidence-watch" element={<ErrorBoundary><EvidenceWatch /></ErrorBoundary>} />
     <Route path="/booking"        element={<ErrorBoundary><Booking /></ErrorBoundary>} />
     <Route path="/intake"         element={<ErrorBoundary><ConciergeIntake /></ErrorBoundary>} />
     <Route path="/travel-intake"  element={<ErrorBoundary><TravelIntake /></ErrorBoundary>} />

@@ -60,12 +60,13 @@ jobs:
           set +e
           call () {
             local fn="$1"
+            local payload="${2:-{}}"
             local code
             code=$(curl -sS -o /tmp/out.json -w '%{http_code}' -X POST \
               "$BASE/api/apps/$APP/functions/$fn" \
               -H 'Content-Type: application/json' \
               -H "X-Cron-Secret: $SECRET" \
-              -d '{}')
+              -d "$payload")
             echo "=== $fn -> HTTP $code ==="
             head -c 600 /tmp/out.json; echo
             if [ "$code" -ge 400 ]; then FAILED="$FAILED $fn"; fi
@@ -105,14 +106,23 @@ jobs:
             # 6-hourly slot: rate-limit bucket cleanup (pure DB hygiene, per its own header comment).
             call purgeRateLimitBuckets
           elif [ "$IS_WEEKLY" = "true" ] && [ "$MANUAL" != "true" ]; then
-            # Weekly slot: visa only.
+            # Weekly slot: visa, plus Medical Evidence Watch's narrower
+            # recall/safety-alert check (openFDA device/drug enforcement
+            # endpoints only — real, free, keyless — "an optional weekly
+            # check for regulator recalls and safety alerts," per the spec).
+            # The full monthly scan runs in the monthly slot below.
             call recheckVisaRequirements
+            call runEvidenceWatchOrchestrator '{"scope":"recalls_only"}'
           elif [ "$IS_MONTHLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # Monthly slot: Evidence Monitoring — a periodic public-incident
             # sweep, not near-real-time monitoring (a real Tavily/LLM-cost
             # tradeoff, made deliberately). workflow_dispatch can still run
             # it on demand any time in between (see the daily/manual block).
             call runIncidentEvidenceOrchestrator
+            # Medical Evidence Watch's full scan — PubMed, ClinicalTrials.gov,
+            # and openFDA (all real, free, keyless) plus Tavily, run monthly
+            # for the same cost-conscious reasoning as the line above.
+            call runEvidenceWatchOrchestrator '{"scope":"full"}'
           else
             # Daily slot (and manual runs): clinic + doctor + regulatory + partner trust scores.
             call backfillClinicsFromDoctors
@@ -146,6 +156,8 @@ jobs:
               call checkAbandonedBookings
               call sweepVirtualConsultationReminders
               call runIncidentEvidenceOrchestrator
+              call runEvidenceWatchOrchestrator '{"scope":"full"}'
+              call runEvidenceWatchOrchestrator '{"scope":"recalls_only"}'
             fi
           fi
 

@@ -1,0 +1,91 @@
+{
+  "name": "MedicalDiscovery",
+  "type": "object",
+  "description": "One row per medical/regulatory research finding discovered by the Medical Evidence Watch pipeline (scanEvidenceWatch -> analyzeEvidenceWatch -> evaluateEvidenceWatch, run monthly, plus a narrower weekly recall/safety-alert check). This is the sibling of IncidentCandidate for a different domain: instead of a provider-safety incident, this tracks a new treatment, clinical trial, device approval, recall, or safety alert relevant to medical travel. Never a diagnosis, never a treatment recommendation, never presented to a patient until a human admin has reviewed it (status: approved). `confidence` is computed deterministically by evidenceConfidence.ts from real source tiers -- never self-assessed by the LLM, and the enum deliberately has no plain 'verified fact' value beyond the tiered 'verified' meaning 'a primary authoritative source supports this specific claim', never 'this treatment works'. Sources, trial detail, and regulatory-by-country detail are modeled as structured fields on this one record rather than separate entities -- same minimal-entity-count precedent as IncidentCandidate.evidence_quotes.",
+  "properties": {
+    "url": { "type": "string", "description": "The primary discovery URL. Deduplication key for the scan stage." },
+    "title": { "type": "string", "description": "The raw result title, as returned by the source." },
+    "snippet": { "type": "string", "description": "A short excerpt/summary from the source, used as the analyze stage's raw extraction input -- never the full article/abstract body. Length is bounded by the writer function, not just this schema." },
+    "retrieved_at": { "type": "string", "format": "date-time" },
+    "published_at": { "type": "string", "format": "date-time", "description": "The source's own publication date, when known." },
+    "source_query": { "type": "string", "description": "The discovery query that surfaced this finding." },
+    "content_hash": { "type": "string", "description": "SHA-256 of the normalized title+summary -- near-duplicate detection only, never a security hash." },
+
+    "condition_or_procedure": { "type": "string", "description": "'unknown' when the source does not state it -- never inferred." },
+    "device_or_treatment_name": { "type": "string" },
+    "country": { "type": "string", "description": "Country of the institution, trial, or regulator -- 'unknown' when not stated." },
+    "institution": { "type": "string" },
+
+    "evidence_stage": {
+      "type": "string",
+      "enum": ["lab_preclinical", "human_study", "clinical_trial_recruiting", "trial_completed", "regulator_cleared_approved", "commercially_available", "recall_safety_alert"],
+      "description": "Where this finding actually sits, extracted by analyzeEvidenceWatch. Drives the patient-facing plain-language sentence (evidenceLanguageGuard.ts's stageToPlainLanguage) -- every stage's own wording stays hedged, even regulator_cleared_approved ('verify local availability', never 'a safe cure')."
+    },
+    "study_size": { "type": "number" },
+    "study_type": { "type": "string", "description": "e.g. 'randomized controlled trial', 'case series', 'preclinical animal study'." },
+    "identifier": { "type": "string", "description": "PMID / NCT number / FDA 510(k) or enforcement number, when available." },
+
+    "plain_language_summary": {
+      "type": "string",
+      "description": "LLM-extracted, neutral, factual. The extraction prompt and evaluateEvidenceWatch's own post-hoc check (evidenceLanguageGuard.containsBannedClaim) both forbid absolute-claim language ('cure', 'fully restores', 'breakthrough', 'safe/effective') regardless of evidence_stage or source tier -- a hit forces status back to needs_more_evidence rather than ever reaching queued_for_review untouched."
+    },
+    "limitations_and_unknowns": { "type": "string", "description": "What is NOT yet known -- an honest gaps statement, never filled in by inference." },
+    "availability_by_country": {
+      "type": "array",
+      "items": { "type": "object", "properties": { "country": { "type": "string" }, "status": { "type": "string" } } },
+      "description": "Real, sourced per-country availability/regulatory notes only -- omitted entirely for a country with no real information, never guessed."
+    },
+
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tier": { "type": "string", "enum": ["tier_1", "tier_2", "tier_3"] },
+          "adapter": { "type": "string", "enum": ["pubmed", "clinicaltrials", "openfda", "tavily"] },
+          "url": { "type": "string" },
+          "publisher_domain": { "type": "string" },
+          "retrieved_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Every source contributing to this discovery. A pubmed/clinicaltrials/openfda source is always tier_1 by construction (it came from the authoritative API itself). A tavily source is classified deterministically via incidentSourceQuality.ts's classifySourceReliability, reused not duplicated."
+    },
+    "source_reliability_tier": { "type": "string", "enum": ["tier_1", "tier_2", "tier_3"], "description": "Convenience field -- the best (lowest-numbered) tier among sources." },
+    "freshness_date": { "type": "string", "format": "date-time", "description": "When this record's information was last confirmed current." },
+
+    "analysis_confidence": { "type": "number", "minimum": 0, "maximum": 100, "description": "LLM self-estimate from the extraction step -- informational only, never the patient-facing confidence tier." },
+    "analysis_method": { "type": "string", "enum": ["llm", "fallback"], "description": "'fallback' means the LLM extraction call failed and a small deterministic keyword extractor ran instead -- always paired with status: needs_more_evidence, never auto-advanced." },
+
+    "confidence": {
+      "type": "string",
+      "enum": ["verified", "promising_but_early", "under_review", "unverified"],
+      "default": "unverified",
+      "description": "Computed deterministically by evidenceConfidence.ts from source_reliability_tier + evidence_stage -- NEVER LLM self-assessed. A tier_3-only (social/discovery) source can never reach above 'unverified' and is never publicly displayed, per the spec's own 'discovery-only, no public display, no clinical recommendation' rule."
+    },
+
+    "status": {
+      "type": "string",
+      "enum": ["new", "analyzed", "evaluated", "queued_for_review", "approved", "rejected", "needs_more_evidence", "dismissed"],
+      "default": "new",
+      "description": "new (scanned) -> analyzed (LLM/fallback extraction done) -> evaluated (source tier + confidence computed, language-guard checked) -> queued_for_review (ready for a human). approved/rejected/needs_more_evidence/dismissed are ONLY ever set by reviewMedicalDiscovery -- the pipeline itself may never reach past queued_for_review on its own."
+    },
+    "reviewer_id": { "type": "string" },
+    "reviewer_name": { "type": "string" },
+    "reviewed_at": { "type": "string", "format": "date-time" },
+    "reviewer_notes": { "type": "string" },
+    "history": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Append-only edit trail -- {at, by, action, notes} entries, same precedent as JourneyPlan.steps[].notes. Belt-and-suspenders alongside the hash-chained AuditLog's medical_evidence_approved/medical_evidence_rejected entries."
+    },
+    "created_by_run_id": { "type": "string", "description": "The EvidenceWatchRun this row was discovered in." },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["url", "title", "retrieved_at", "status"],
+  "rls": {
+    "read": { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

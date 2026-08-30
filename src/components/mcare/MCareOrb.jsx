@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2, Menu, Bell, ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2, Menu, Bell, ChevronDown, ChevronUp, Sun, Moon, Newspaper } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LocationPermissionGate from './LocationPermissionGate';
@@ -2454,6 +2454,7 @@ export default function MCareOrb() {
   const moreChips = [
     { label: 'Emergency Help', icon: Siren, run: () => sendAgentMessage('I need emergency help') },
     { label: 'Visa Help', icon: FileText, run: () => sendAgentMessage('I need help with a visa') },
+    { label: 'Medical Research', icon: Newspaper, run: () => { setOpen(false); navigate('/evidence-watch'); } },
   ];
   quickChips.push(...moreChips);
   if (canBecomePartner) { quickChips.push({ label: 'Become a partner', icon: Briefcase, run: () => { setOpen(false); navigate('/partner-signup'); } }); moreChips.push(quickChips[quickChips.length - 1]); }
