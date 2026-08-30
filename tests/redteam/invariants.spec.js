@@ -4144,7 +4144,7 @@ test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving u
   // regression in THIS pass's own text, not to freeze the count forever.
   const agentConfig = read('base44/agents/m_care.jsonc');
   const parsed = JSON.parse(agentConfig);
-  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(113);
+  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(114);
 
   const instructions = parsed.instructions;
 
@@ -4215,7 +4215,7 @@ test('LEARN: analyzeMcarePerformance is cron-authorized, enforces a real minimum
   // AGENTIC ORCHESTRATION test above for the same note) — this assertion
   // exists as a sanity check, not a claim that LEARN itself added anything.
   const agentConfig = read('base44/agents/m_care.jsonc');
-  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(113);
+  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(114);
   expect(agentConfig, "RULE 33 must reference checking recallMcareKnowledge for a self-observed pattern before choosing an alternative")
     .toMatch(/a quick recallMcareKnowledge check may surface a real, self-observed pattern/);
 });
@@ -5743,7 +5743,7 @@ test('EVIDENCE MONITORING: this feature grants zero new M-Care agent tools — n
     expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
       .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
   }
-  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(113);
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(114);
 });
 
 // ── Medical Evidence Watch pipeline ──────────────────────────────────────────
@@ -5867,17 +5867,33 @@ test('MEDICAL EVIDENCE WATCH: a discovered snippet is always bounded, never the 
     .toMatch(/snippet:\s*truncateToWords\(item\.snippet/);
 });
 
-test('MEDICAL EVIDENCE WATCH: this feature grants zero new M-Care agent tools — no Publish-order risk on the agent side', () => {
+test('MEDICAL EVIDENCE WATCH: only the redacting getEvidenceWatchFeed is granted to M-Care — every write-capable pipeline function and the raw entities stay ungranted', () => {
   const raw = read('base44/agents/m_care.jsonc');
   const agentConfig = JSON.parse(raw);
 
-  for (const fn of ['scanEvidenceWatch', 'analyzeEvidenceWatch', 'evaluateEvidenceWatch', 'runEvidenceWatchOrchestrator', 'reviewMedicalDiscovery', 'getEvidenceWatchFeed']) {
+  // The 5 write-capable / admin-only pipeline functions must never be
+  // callable by the agent — only the public, redacting read function is.
+  for (const fn of ['scanEvidenceWatch', 'analyzeEvidenceWatch', 'evaluateEvidenceWatch', 'runEvidenceWatchOrchestrator', 'reviewMedicalDiscovery']) {
     expect(raw, `${fn} must never be granted as an M-Care agent tool`)
       .not.toMatch(new RegExp(`"function_name"\\s*:\\s*"${fn}"`));
   }
+  expect(raw, 'getEvidenceWatchFeed must be granted as a real M-Care agent tool')
+    .toMatch(/"function_name"\s*:\s*"getEvidenceWatchFeed"/);
+
+  // MedicalDiscovery/EvidenceWatchRun's own RLS is admin-only on read (see
+  // the earlier MEDICAL EVIDENCE WATCH RLS test) — a raw entity grant here
+  // would be silently useless (or worse, misleading) since the agent's
+  // entity-tool calls run under the traveler's own session, not an admin's.
+  // getEvidenceWatchFeed exists specifically to bypass that safely via
+  // asServiceRole while redacting reviewer-only fields — never the raw entity.
   for (const entityName of ['MedicalDiscovery', 'EvidenceWatchRun']) {
     expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
       .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
   }
-  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side + a public read-only feed, and must add zero new agent grants').toBe(113);
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature adds exactly one new agent grant (getEvidenceWatchFeed)').toBe(114);
+
+  expect(agentConfig.instructions, 'RULE 40 must exist and tie the new tool to the same no-invented-data and cite-the-source discipline')
+    .toMatch(/RULE 40 -- MEDICAL EVIDENCE WATCH[\s\S]{0,1000}per RULE 3[\s\S]{0,200}per RULE 39/);
+  expect(agentConfig.instructions, 'RULE 40 must forbid claiming more certainty than the item\'s own confidence label')
+    .toMatch(/never carries?\s+more certainty than the item's own confidence label/);
 });
