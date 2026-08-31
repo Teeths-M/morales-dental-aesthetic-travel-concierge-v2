@@ -33,6 +33,11 @@ export function doctorTrustReasons(components: Record<string, any>, caseCount: n
   } else {
     reasons.push('No patient ratings yet');
   }
+  if (typeof components.outcome_record_count === 'number' && components.outcome_record_count > 0) {
+    reasons.push(`${components.outcome_success_rate_pct}% real-outcome success rate (${components.outcome_record_count} confirmed procedure${components.outcome_record_count === 1 ? '' : 's'})`);
+  } else {
+    reasons.push('No confirmed outcome data yet');
+  }
   return reasons;
 }
 

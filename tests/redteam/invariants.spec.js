@@ -5921,3 +5921,34 @@ test('SYSTEM HEALTH: getSystemHealthSummary is public, aggregate-only, and never
     expect(src, `must never reference ReliabilityIncident's ${field} field`).not.toMatch(new RegExp(`\\b${field}\\b`));
   }
 });
+
+test('PARTNERS: ExternalJourney is read-only for the M-Care agent — verifyExternalJourney/enrollExternalJourney (both real, deterministic, already granted) are the only write paths', () => {
+  const raw = read('base44/agents/m_care.jsonc');
+  const agentConfig = JSON.parse(raw);
+  const ej = agentConfig.tool_configs.find((t) => t.entity_name === 'ExternalJourney');
+  expect(ej, 'ExternalJourney entity grant must exist').toBeTruthy();
+  expect(ej.allowed_operations, 'ExternalJourney must be read-only for the agent, matching the Doctor/TravelAgency/TaxiService/Companion/SecurityAgency precedent')
+    .toEqual(['read']);
+  for (const fn of ['verifyExternalJourney', 'enrollExternalJourney']) {
+    expect(raw, `${fn} must still be granted as a real M-Care agent tool`)
+      .toMatch(new RegExp(`"function_name"\\s*:\\s*"${fn}"`));
+  }
+});
+
+test('DOCTOR TRUST SCORE: real outcome data is joined at read time only — OutcomeRecord never gains a doctor-identity field, and the 5 components sum to 100', () => {
+  const src = read('base44/functions/calculateDoctorTrustScore/entry.ts');
+  expect(src, 'must read OutcomeRecord via asServiceRole, joined by the already-computed caseIds')
+    .toMatch(/asServiceRole\.entities\.OutcomeRecord\.filter\(\s*\{\s*case_id:\s*\{\s*\$in:\s*caseIds\s*\}/);
+  expect(src, 'must never write to OutcomeRecord — this is a read-time join only, never a schema/identity change')
+    .not.toMatch(/OutcomeRecord\.(create|update)/);
+
+  const outcomeEntity = read('base44/entities/OutcomeRecord.jsonc');
+  for (const field of ['doctor_id', 'doctor_email']) {
+    expect(outcomeEntity, `OutcomeRecord must not gain a ${field} field — its anonymization design stays untouched`)
+      .not.toContain(`"${field}"`);
+  }
+
+  expect(src, 'must compute a 5th outcome-quality component').toMatch(/outcomeQualityScore/);
+  expect(src, 'the 5 components must sum to the final score, matching the doc comment\'s 5x20=100 structure')
+    .toMatch(/speedScore\s*\+\s*safetyScore\s*\+\s*hs5Score\s*\+\s*satisfactionScore\s*\+\s*outcomeQualityScore/);
+});
