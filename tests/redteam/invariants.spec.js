@@ -5897,3 +5897,27 @@ test('MEDICAL EVIDENCE WATCH: only the redacting getEvidenceWatchFeed is granted
   expect(agentConfig.instructions, 'RULE 40 must forbid claiming more certainty than the item\'s own confidence label')
     .toMatch(/never carries?\s+more certainty than the item's own confidence label/);
 });
+
+test('SYSTEM HEALTH: getSystemHealthSummary is public, aggregate-only, and never leaks per-incident diagnostic detail', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = strip(read('base44/functions/getSystemHealthSummary/entry.ts'));
+
+  expect(src, 'must be publicly readable, matching /procedures and getEvidenceWatchFeed').toMatch(/requireAuth:\s*false/);
+  expect(src, 'ReliabilityIncident RLS is admin-only, so this must read via asServiceRole')
+    .toMatch(/asServiceRole\.entities\.ReliabilityIncident/);
+
+  // ReliabilityIncident carries real per-incident diagnostic and identity
+  // fields (error_message, stack_trace, api_response, user_description,
+  // sentry_event_id, root_cause, resolution, preventive_action, user_email,
+  // session_id, browser, device, page, feature) — none of these may ever be
+  // interpolated into this public function's response, even in aggregate
+  // form that could fingerprint a specific outage.
+  const forbiddenFields = [
+    'error_message', 'stack_trace', 'api_response', 'user_description', 'sentry_event_id',
+    'root_cause', 'resolution', 'preventive_action', 'user_email', 'session_id',
+    'browser', 'device', 'page', 'feature',
+  ];
+  for (const field of forbiddenFields) {
+    expect(src, `must never reference ReliabilityIncident's ${field} field`).not.toMatch(new RegExp(`\\b${field}\\b`));
+  }
+});
