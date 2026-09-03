@@ -28,8 +28,8 @@
     "load:ratelimit": "k6 run tests/load/public-doctor-check-ratelimit.js"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.44",
-    "@base44/vite-plugin": "^1.0.33",
+    "@base44/sdk": "^0.8.46",
+    "@base44/vite-plugin": "^1.0.34",
     "@capacitor/android": "^8.4.1",
     "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.4.1",
