@@ -24,7 +24,8 @@
         "guardian",
         "admin",
         "security",
-        "system"
+        "system",
+        "partner"
       ],
       "default": "traveler"
     },

@@ -44,7 +44,10 @@
         "journey_plan_completed",
         "virtual_consultation_confirmed",
         "virtual_consultation_reminder",
-        "virtual_consultation_decision_recorded"
+        "virtual_consultation_decision_recorded",
+        "guardian_call_placed",
+        "guardian_call_outcome",
+        "partner_quote_confirmed"
       ]
     },
     "source": {

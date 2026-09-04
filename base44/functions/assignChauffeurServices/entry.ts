@@ -2,6 +2,7 @@
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { createHandler } from '../../shared/createHandler.ts';
 import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
+import { sendSms } from '../../shared/twilioSms.ts';
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 import { widenPartnerSearch } from '../../shared/partnerSearchWidening.ts';
 
@@ -302,6 +303,53 @@ Deno.serve(createHandler(async ({ req }) => {
         error_detail: dispatchResults[1].status === 'rejected' ? String((dispatchResults[1] as PromiseRejectedResult).reason) : undefined,
       }),
     ]);
+
+    // ── SMS — non-fatal bonus channel; lets either driver reply with a price
+    // ("$120 confirmed") instead of opening the portal, via
+    // twilioPartnerReplyWebhook. Sent from the dedicated
+    // TWILIO_PARTNER_PHONE_NUMBER (never the patient-safety number).
+    await Promise.allSettled([
+      (async () => {
+        if (!originDriver.phone) return;
+        const smsResult = await sendSms(
+          originDriver.phone,
+          `Morales Medical: transfer request (Origin, case ${caseRef}) for ${caseRecord.client_name || 'a patient'}. Reply with a total price + "confirmed" (e.g. "$120 confirmed") or use your portal: ${originPortalUrl}`,
+          'TWILIO_PARTNER_PHONE_NUMBER',
+        );
+        await logProviderContactAttempt(base44, {
+          case_id: caseId,
+          partner_type: 'taxi_service',
+          partner_id: originDriver.id,
+          partner_name: originDriver.driver_name || originDriver.company_name || 'Driver',
+          channel: 'sms',
+          purpose: 'quote_request',
+          recipient: originDriver.phone,
+          initiated_by: 'assignChauffeurServices',
+          result: smsResult.ok ? 'sent' : 'failed',
+          error_detail: smsResult.ok ? undefined : smsResult.error,
+        });
+      })(),
+      (async () => {
+        if (!destDriver.phone) return;
+        const smsResult = await sendSms(
+          destDriver.phone,
+          `Morales Medical: transfer request (Destination, case ${caseRef}) for ${caseRecord.client_name || 'a patient'}. Reply with a total price + "confirmed" (e.g. "$120 confirmed") or use your portal: ${destPortalUrl}`,
+          'TWILIO_PARTNER_PHONE_NUMBER',
+        );
+        await logProviderContactAttempt(base44, {
+          case_id: caseId,
+          partner_type: 'taxi_service',
+          partner_id: destDriver.id,
+          partner_name: destDriver.driver_name || destDriver.company_name || 'Driver',
+          channel: 'sms',
+          purpose: 'quote_request',
+          recipient: destDriver.phone,
+          initiated_by: 'assignChauffeurServices',
+          result: smsResult.ok ? 'sent' : 'failed',
+          error_detail: smsResult.ok ? undefined : smsResult.error,
+        });
+      })(),
+    ]).catch((smsError) => console.error('[assignChauffeurServices] SMS send failed (non-fatal):', smsError));
 
     return Response.json({
       status:             'DRIVERS_ASSIGNED',

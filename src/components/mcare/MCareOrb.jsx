@@ -722,7 +722,14 @@ export default function MCareOrb() {
     const locationLabel = [bestLocation?.city, bestLocation?.country].filter(Boolean).join(', ');
     const pickupAddress = (lat == null && lng == null) ? (locationLabel || undefined) : undefined;
 
-    const [rideOutcome, guardianOutcome] = await Promise.allSettled([
+    // Third parallel action, additive only — a real, adaptive AI phone call
+    // to an already-trusted contact (Guardian Tier 1), alongside the two
+    // channels above. Deliberately never folded into the rideOk/guardianOk
+    // branch tree below (would balloon 4 branches into 8) — mentioned only
+    // as a bonus sentence when it genuinely succeeds, silent when it
+    // doesn't, since the existing ride/guardian pair already fully covers
+    // the escalation guarantee on their own.
+    const [rideOutcome, guardianOutcome, callOutcome] = await Promise.allSettled([
       base44.functions.invoke('requestOnDemandRide', {
         case_id: activeCaseRecord?.id,
         pickup_latitude: lat,
@@ -740,10 +747,19 @@ export default function MCareOrb() {
             message_context: 'traveler confirmed a distress signal in M-Care',
           })
         : Promise.resolve(null),
+      activeCaseRecord?.id
+        ? base44.functions.invoke('callTrustedContact', {
+            case_id: activeCaseRecord.id,
+            situation_summary: `Distress signal (${ctx?.signal?.category || 'unknown'}): "${ctx?.text || ''}"`,
+            requested_action: 'Please call or check on them now if you can.',
+            trigger: 'distress_confirm',
+          })
+        : Promise.resolve(null),
     ]);
 
     const rideOk = rideOutcome.status === 'fulfilled' && !rideOutcome.value?.data?.error;
     const guardianOk = guardianOutcome.status === 'fulfilled' && guardianOutcome.value && !guardianOutcome.value?.data?.error;
+    const callOk = callOutcome.status === 'fulfilled' && callOutcome.value?.data?.success === true;
     let reply;
     if (rideOk && guardianOk) {
       reply = "I've requested a driver for you and let your guardian know — I'll keep you updated.";
@@ -779,6 +795,9 @@ export default function MCareOrb() {
       reply = sosOk
         ? "I couldn't line up a driver or reach your guardian, so I've sent an emergency alert straight to our safety team with your details — they've been notified and will act on this now."
         : "I'm having real trouble reaching help through any channel right now. Please call your local emergency number directly if you can, or try the SOS button again.";
+    }
+    if (callOk) {
+      reply += " I'm also calling your emergency contact directly right now.";
     }
     setAgentMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     if (talkMode) speakAncillary(reply, { rate: 0.9 });

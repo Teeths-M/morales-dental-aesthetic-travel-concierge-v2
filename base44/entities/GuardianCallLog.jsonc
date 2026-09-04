@@ -1,0 +1,134 @@
+{
+  "name": "GuardianCallLog",
+  "type": "object",
+  "description": "One row per real, adaptive AI phone call placed to an already-trusted contact on a patient's behalf (Guardian Tier 1 — 'call my mom' or the confirmed-distress escalation path). Deliberately NOT for Tier 2 (police/emergency dispatch) — that stays human-only, no autonomous AI-to-dispatch calling anywhere in this app. Every real write goes through callTrustedContact (create) / retellCallWebhook (update on the call's real outcome) — never a direct client write, matching the same read-only-for-the-agent discipline already applied to Doctor/TravelAgency/VaultDocument/Medication/JourneyEvent.",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord this call was made on behalf of."
+    },
+    "client_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Owning patient's email, matches CaseRecord.client_email — RLS anchor, same pattern as JourneyEvent/JourneyPlan."
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Real name of the trusted contact called, from CaseRecord/EmergencyContact — never invented."
+    },
+    "contact_relationship": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "E.164 phone number actually dialed."
+    },
+    "contact_priority": {
+      "type": "number",
+      "description": "Which ranked contact (from getOrderedCaseContacts) this call reached — 1 = the CaseRecord primary, 2+ = a ranked EmergencyContact row."
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "chat_request",
+        "distress_confirm",
+        "sos_tap",
+        "missed_checkin"
+      ],
+      "description": "How this call was initiated. chat_request = the traveler asked M-Care directly ('call my mom'). distress_confirm = a confirmed Silent Guardian distress signal. sos_tap/missed_checkin are named for future wiring, not yet a real trigger source."
+    },
+    "situation_summary": {
+      "type": "string",
+      "description": "The real, disclosed context passed into the call's goal — sourced only from what the patient actually said or a real system signal, never fabricated (RULE 3 discipline applied to a new capability)."
+    },
+    "requested_action": {
+      "type": "string",
+      "description": "What the call asked the contact to do (e.g. 'call the patient back or come now')."
+    },
+    "call_status": {
+      "type": "string",
+      "enum": [
+        "initiated",
+        "in_progress",
+        "completed",
+        "failed",
+        "no_answer"
+      ],
+      "default": "initiated"
+    },
+    "retell_call_id": {
+      "type": "string",
+      "description": "Vendor call id — the join key retellCallWebhook uses to find and update this row."
+    },
+    "recording_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Always false in this build — no jurisdiction-aware recording-consent signal exists yet (see callConsentPolicy.ts). A future pass may set this true only for a confirmed one-party-consent region; nothing today ever sets it true."
+    },
+    "consent_policy_reason": {
+      "type": "string",
+      "description": "The human-readable reason resolveRecordingConsentPolicy() returned for this call, kept for audit even though the outcome is always 'do not record' today."
+    },
+    "call_outcome_summary": {
+      "type": "string",
+      "description": "Plain-language outcome, from the vendor's own real post-call analysis only — never invented if the analysis is empty or the call failed."
+    },
+    "contact_will_help": {
+      "type": "boolean",
+      "description": "Structured extraction from the real call analysis, when the vendor's analysis provides it. Absent (not false) if unknown."
+    },
+    "contact_eta_or_note": {
+      "type": "string"
+    },
+    "call_successful": {
+      "type": "boolean",
+      "description": "The vendor's own call_successful flag, passed through as-is — never M-Care's own guess."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "client_email",
+    "contact_phone",
+    "trigger",
+    "call_status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.client_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    }
+  }
+}

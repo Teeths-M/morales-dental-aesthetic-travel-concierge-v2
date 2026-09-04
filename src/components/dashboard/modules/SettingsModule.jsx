@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { changeLanguage } from '@/i18n';
-import { Bell, Lock, Globe, User, Eye, CheckCircle2, Brain, Trash2 } from 'lucide-react';
+import { Bell, Lock, Globe, User, Eye, CheckCircle2, Brain, Trash2, MessageCircle, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -112,6 +112,63 @@ function ResetSafetyProfileCard({ onReset, isActiveJourney = false }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * ConnectMCareChannelsCard — Base44's own native "connect your number to
+ * this agent" flow (getWhatsAppConnectURL/getTelegramConnectURL), the SAME
+ * m_care agent already live in the app. No new backend messaging code —
+ * this is purely a link into a platform feature. getWhatsAppConnectURL/
+ * getTelegramConnectURL are synchronous URL builders (confirmed by reading
+ * the real SDK source), so no loading state is needed before opening them.
+ */
+function ConnectMCareChannelsCard() {
+  const openChannel = (channel) => {
+    try {
+      const url = channel === 'whatsapp'
+        ? base44.agents.getWhatsAppConnectURL('m_care')
+        : base44.agents.getTelegramConnectURL('m_care');
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      toast.error("Couldn't open that right now — please try again.");
+    }
+  };
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+          <MessageCircle className="w-5 h-5 text-emerald-600" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-800 text-sm">Talk to M-Care by WhatsApp or Telegram</h3>
+          <p className="text-xs text-slate-500">Connect once — no need to open the app to keep talking to M-Care</p>
+        </div>
+      </div>
+      <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+        Connect your number and M-Care becomes reachable right from your messages — the exact
+        same assistant, same case, no separate login.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => openChannel('whatsapp')}
+          className="text-xs font-semibold"
+        >
+          <MessageCircle className="w-3.5 h-3.5 mr-1.5" /> Connect WhatsApp
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => openChannel('telegram')}
+          className="text-xs font-semibold"
+        >
+          <Send className="w-3.5 h-3.5 mr-1.5" /> Connect Telegram
+        </Button>
+      </div>
     </div>
   );
 }
@@ -474,6 +531,9 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
           </label>
         </div>
       </div>
+
+      {/* ── Connect M-Care via WhatsApp/Telegram (Base44's native agent-connect flow) ── */}
+      <ConnectMCareChannelsCard />
 
       {/* ── MedGuard Safety Profile Reset ── */}
       {onResetSafetyProfile && (

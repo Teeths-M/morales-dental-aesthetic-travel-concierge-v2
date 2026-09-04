@@ -2,6 +2,7 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 import { signPortalToken } from '../../shared/portalToken.ts';
 import { sendWhatsApp } from '../../shared/twilioWhatsApp.ts';
+import { sendSms } from '../../shared/twilioSms.ts';
 import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 import { widenPartnerSearch } from '../../shared/partnerSearchWidening.ts';
@@ -287,6 +288,32 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       result: 'failed',
       error_detail: whatsappError?.message || 'WhatsApp send failed',
     });
+  }
+
+  // ── SMS — non-fatal bonus channel; lets the agency reply with a price
+  // ("$450 confirmed") instead of opening the portal, via
+  // twilioPartnerReplyWebhook. Sent from the dedicated TWILIO_PARTNER_PHONE_NUMBER
+  // (never the patient-safety number) so a reply routes to that webhook, not
+  // twilioSafetySmsWebhook/twilioSmsHandshakeWebhook.
+  try {
+    if (selectedAgency.phone) {
+      const smsMessage = `Morales Medical: quote request for ${travelerCount} traveler(s) to ${destination} (${proceduresText}). Reply with a total price + "confirmed" (e.g. "$450 confirmed") or use your portal: ${portalUrl}`;
+      const smsResult = await sendSms(selectedAgency.phone, smsMessage, 'TWILIO_PARTNER_PHONE_NUMBER');
+      await logProviderContactAttempt(base44, {
+        case_id: caseId,
+        partner_type: 'travel_agency',
+        partner_id: selectedAgency.id,
+        partner_name: agencyName,
+        channel: 'sms',
+        purpose: 'quote_request',
+        recipient: selectedAgency.phone,
+        initiated_by: 'assignTravelAgency',
+        result: smsResult.ok ? 'sent' : 'failed',
+        error_detail: smsResult.ok ? undefined : smsResult.error,
+      });
+    }
+  } catch (smsError: any) {
+    console.error('[assignTravelAgency] SMS send failed (non-fatal):', smsError);
   }
 
   return ok({

@@ -2849,6 +2849,237 @@ Portia should watch it play through at `/demo/mcare-intro` once published,
 before recording, and the exact per-phase timings/positions are easy single-
 constant edits in `McareIntro.jsx` if any beat needs retiming.
 
+## Guardian Tier 1 — a real, adaptive outbound voice call to a trusted contact (2026-09)
+
+Portia pasted a large, from-scratch "Medical Tourism Super-Agent Platform" spec (multi-agent
+architecture, a Playwright-based vendor-integration layer, a queue orchestrator, an outbound voice
+booking agent, a tiered Guardian/Emergency system, a multi-channel messaging layer) with the
+instruction to audit first, discuss, then build. Three parallel Explore agents confirmed the
+spec assumes a greenfield build — the real app already implements the large majority of it under
+different names: partner onboarding is self-serve directly into Morales' own entities, not
+external vendor-API integration (zero Playwright browser-automation exists anywhere outside this
+repo's own E2E test suite); `bookingState.ts` is a real, well-designed guarded saga/state-machine
+with 3 automated compensating-action functions (`findDoctorBackup`/`findDriverBackup`/
+`findCompanionBackup`), though only 6 of ~63 status-writing functions actually route through it;
+`base44/agents/` has exactly ONE live, user-facing agent (`m_care.jsonc`, was 114 tools) — the
+spec's 4-domain-worker-agent architecture was already explicitly audited and declined once before
+(see "M-Care Phase 4 — agentic orchestration" above), reconfirmed here; "background work, reports
+back later" is real via `JourneyPlan`/`JourneyEvent` (poll + WebSocket subscribe) and GitHub
+Actions cron, not a message queue (`EmailQueue.jsonc` is a dead, unimplemented schema); doctor
+availability-by-natural-language is real (`parseAvailabilityIntent`/`applyDoctorAvailability`) but
+doctor-only, and none of `TaxiService`/`Companion`/`SecurityAgency`/`TravelAgency` even has a
+per-date/slot data model to build an equivalent on top of. Payment is confirmed tokenized via
+Stripe throughout.
+
+**The one genuine, confirmed-from-zero gap**: real outbound conversational voice AI. Every real
+Twilio Voice call in this app (`escalateSoloCheckIn`, `runSilentSafetyEscalation`) is one-way TTS
+playback to the PATIENT, never a two-way adaptive conversation, and never to a third party — no
+conversational voice AI vendor (Vapi/Retell/Bland) existed anywhere before this pass. This is the
+one real capability behind both the spec's "Outbound Voice Booking Agent" (call a partner with no
+API) and its Guardian Tier 1 ("autonomously call trusted contacts, adapt to what they say" — what
+was real before this pass was SLA-ladder text/email notification to the guardian, not a live call
+that adapts). Also reconfirmed, still unresolved: `m_care.jsonc`'s `whatsapp_greeting`/
+`telegram_greeting`/`voice_config` fields are still all `null` — the screenshot Portia had that
+would confirm whether Base44's own agent platform natively supports multi-channel deployment was
+never shared; she chose "not a priority right now" this round rather than resolving it.
+
+Presented via AskUserQuestion, twice: (1) purpose given the near deadline (she chose full build —
+deadline isn't the constraint), WhatsApp priority (not now), agent architecture (keep single-agent,
+confirmed for the second time); (2) real 2026 pricing checked live (WebSearch) — Retell AI ≈$2,800/
+mo all-in at 10k calls (cheapest at scale, built-in warm-transfer-to-human) vs. Bland AI ≈$3,600-
+4,400/mo vs. Vapi ≈$7,200-8,800/mo once real STT/LLM/TTS/telephony is added — she chose Retell, and
+chose Guardian Tier 1 as the first use case to build end-to-end (the spec's own explicitly-named
+safest first milestone); partner quote-follow-up calling stays named backlog.
+
+**Shipped, the dormant-scaffold discipline throughout** (matches `flightSearchAdapter.ts`/
+`currencyConvert.ts`/`providerDiscovery.ts` exactly — real, honest `{supported:false}` until a real
+key exists, zero further code needed once one is added): `base44/shared/voiceCallAdapter.ts`
+(Retell's real `POST /v2/create-phone-call`, requires `RETELL_API_KEY`/`RETELL_AGENT_ID`/
+`RETELL_FROM_NUMBER` — the agent's own disclosure-opening system prompt has to be authored in
+Retell's dashboard, not code, a real disclosed setup step beyond "add a key"). `base44/shared/
+verifyRetellSignature.ts` — hand-rolled HMAC-SHA256 via Web Crypto (`X-Retell-Signature:
+v={ts},d={hex}`, digest over raw body + timestamp, keyed with the account's own API key), mirrors
+`verifyStripeSignature.ts`'s raw-body-read-before-JSON-parse discipline exactly. `base44/shared/
+callConsentPolicy.ts` — a real, tested, deliberately conservative consent module: recording is
+gated per-region (a starter US all-party-consent state list), never the call itself — blocking a
+live safety call over unresolved recording law would itself be a real safety risk, a disclosed
+engineering judgment call, not a legal opinion; every real caller today resolves region as `null`
+(no phone-to-jurisdiction lookup exists), so recording is unconditionally OFF in this build, not
+dead scaffolding — it activates the moment a real region signal is ever wired in.
+
+New entity `GuardianCallLog.jsonc` (owner-or-admin read, admin-only write — every real write goes
+through the two functions below, same Phase-8 discipline as every sensitive agent-facing entity in
+this file). `base44/functions/callTrustedContact/entry.ts` — resolves the contact ONLY via the
+already-real `getOrderedCaseContacts` (`emergencyContacts.ts`, the Companion Network Alerts cascade
+from a prior session), never a caller-supplied phone number; places the call; on success writes the
+log row and a real `JourneyEvent`; on failure/unsupported, narrates honestly and never claims a
+call happened. `base44/functions/retellCallWebhook/entry.ts` — raw `Deno.serve` bypass (needs the
+exact raw bytes Retell signed, same reason `stripeIdentityWebhook` bypasses `createHandler`),
+verifies signature before touching any entity, idempotent on `retell_call_id`, updates the log row
+and fires a real, honest outcome `JourneyEvent` — "I called your mom, she says she's coming now,"
+or an honest "I wasn't able to confirm what was said" if the vendor's own analysis is empty, never
+invented. `JourneyEvent.jsonc` gained `guardian_call_placed`/`guardian_call_outcome`.
+
+`m_care.jsonc` gained one new tool grant (`callTrustedContact`, 114->115) and **RULE 41 — TRUSTED
+CONTACT CALLING**: fires on an explicit "call my mom" request or right after a confirmed Silent
+Guardian distress signal, states plainly a call is being placed before it happens, falls back to
+`notifyGuardianNow` honestly if the capability isn't connected, and is explicit that this is
+strictly Guardian Tier 1 — it never extends to emergency services, police, or any stranger, and has
+no path to that boundary (matches the spec's own explicit "never fully autonomous" Tier 2 rule,
+which was correspondingly never built at all this pass — no packet-assembly/human-handoff
+scaffolding was added or touched, since this repo's existing structured-emergency-packet + human-
+escalation ladder in `escalateSoloCheckIn`'s later tiers already covers that shape and wasn't in
+scope here).
+
+`MCareOrb.jsx`'s `handleDistressConfirm` — the real, already-proven "confirmed distress -> fan out
+to real channels" flow — gained this as a third, purely additive parallel action (`Promise.
+allSettled` alongside the existing `requestOnDemandRide`/`notifyGuardianNow` pair, gated on
+`activeCaseRecord?.id`). Deliberately NOT folded into the existing rideOk/guardianOk 4-branch reply
+logic (would balloon to 8 branches) — mentioned as a bonus sentence only when it genuinely
+succeeds, silent when it doesn't, since the existing pair already fully covers the escalation
+guarantee on its own.
+
+New redteam invariants (5, `GUARDIAN CALL:` prefix): `GuardianCallLog`'s RLS shape; `callTrustedContact`
+never accepts a caller-supplied phone number and checks ownership before resolving any contact;
+`recording_enabled` is never `true` anywhere in this build (checked at both the caller and every
+branch of the policy module itself); `retellCallWebhook` verifies the signature before touching any
+entity; RULE 41's text explicitly states the emergency-services/police boundary. New `tests/
+callConsentPolicy.test.js` (6 cases, pure logic). The 4 pre-existing `tool_configs.length` sanity
+checks (from earlier, unrelated passes — AGENTIC ORCHESTRATION, LEARN, EVIDENCE MONITORING x2)
+were bumped 114->115 with the standard "this reflects later, unrelated growth" framing, not a claim
+those passes themselves changed.
+
+**Deliberately deferred this pass, named not silently dropped** (Portia's own scope choice, "full
+build" but Guardian Tier 1 first): partner quote-follow-up calling (the other real use case for the
+same Retell scaffold — speeding up `assignTravelAgency`/`assignChauffeurServices`'s existing ~24h
+async email/WhatsApp quote loop by calling a non-responsive already-onboarded partner); Tier 2
+emergency-services calling (never built, per the spec's own explicit instruction and this app's
+existing human-in-the-loop discipline); WhatsApp/Telegram unified inbound messaging (the native-
+Base44-support screenshot question is still open); NL availability + a new per-date/slot data model
+for taxi/companion/security-agency/travel-agency partners; expanding `bookingState.ts`'s guarded-
+update coverage past its current 6/~63 functions; a formal idempotency-key system beyond Stripe's
+own event-id dedup and scattered per-function flags.
+
+**Verification**: touches `GuardianCallLog.jsonc` (new), `JourneyEvent.jsonc`'s enum, 2 new
+functions, 3 new shared modules, and `m_care.jsonc` — needs a **Publish** naming all of these, then
+`callTrustedContact` should be pinged directly (expect 400/401, never 404) before trusting the
+agent to call it live, per this file's own documented Phase-10 undeployed-tool-silence lesson. Lint
+clean; typecheck unchanged at the pre-existing 15-error baseline (none in touched files — confirmed
+via a standalone `tsc --noEmit --allowImportingTsExtensions` check on all 5 new Deno files, which
+surfaced only two confirmed artifact classes of that bare invocation itself, reproduced on an
+isolated repro and on untouched pre-existing files — not real bugs); `npm run build` exit 0;
+62/62 vitest files, 901/901 tests (6 new); 313/313 redteam (5 new, 4 recalibrated). Live-only, can't
+be confirmed from this checkout: whether a real Retell call actually places correctly end-to-end,
+whether the webhook signature scheme matches Retell's real implementation exactly (written from
+documentation, not verified against a live call), and whether the disclosure line genuinely opens
+every call (that depends entirely on how Portia authors the Retell agent's own system prompt, which
+is outside this repo) — she verifies all of this live once a real Retell account, the 3 Base44
+secrets, and the webhook registration exist. The recording-consent policy is real, tested
+scaffolding, not a legal opinion — worth actual counsel review before any real key ever goes live.
+
+## M-Care as a personal assistant over WhatsApp/Telegram/SMS (2026-09)
+
+Portia's ask, illustrated with a real "Boardy Boardman" email thread: M-Care should correspond with
+both patients and partners over email/WhatsApp/SMS the way an AI assistant like Boardy does —
+holding an ongoing conversation over the channel itself, so nobody has to open a separate app or
+log into a portal. Two parallel Explore audits (not assumed, read directly) found the real state
+and one genuinely load-bearing finding: **Base44's own agent platform already has a first-party
+"connect your WhatsApp/Telegram number to this agent" flow** (`getWhatsAppConnectURL`/
+`getTelegramConnectURL`, confirmed real and synchronous by reading `node_modules/@base44/sdk`'s own
+source) — the same `m_care` agent already live in the app. This resolves a question this file has
+flagged and left open since Phase 17 (the `whatsapp_greeting`/`telegram_greeting`/`voice_config`
+fields on `m_care.jsonc`, still all `null`): the platform genuinely does support this natively, for
+a patient linking their own number. It does NOT solve the partner side — a doctor/taxi/travel-
+agency replying to a SPECIFIC quote-request message is a structured-extraction-into-a-case problem,
+not a general "connect and chat" one, and needed real new work. Also confirmed: `base44.asServiceRole.
+agents.createConversation`/`addMessage` genuinely work from backend Deno code with no browser
+session — a real, buildable fallback if the native connect flow ever needs a custom bridge later.
+
+Also confirmed, the real gaps: no inbound WhatsApp webhook exists anywhere (`twilioWhatsApp.ts` is
+outbound-only); no production inbound-email path exists at all (`imapflow`/`mailparser` are
+devDependencies used only by `tests/e2e/lib/testMailbox.js`'s test-mailbox poller — confirmed via a
+repo-wide search, not just `base44/`); no independent email vendor is configured anywhere (all
+outbound email goes through Base44's own hosted `Core.SendEmail`, with no inbound-parse
+counterpart) — inbound email needs a genuinely new vendor decision, same category as Tavily/
+Daily.co/Retell, and Portia chose to defer it. What IS real and reusable on the partner side:
+`twilioSafetySmsWebhook`/`twilioSmsHandshakeWebhook` are real, Twilio-signature-verified, idempotent
+inbound SMS webhooks (a solid transport/security base, fixed-keyword parsing only), and
+`parseCareRoomMessage` already proves the exact "free text → structured JSON via one `InvokeLLM` +
+`response_json_schema` call, parse-only, never writes" pattern a partner-reply parser needed.
+
+Presented via AskUserQuestion: (1) patient side — try Base44's native connect flow first
+(confirmed); (2) partner side — SMS replies to quote requests, reusing the real Twilio transport
+pattern, targeting `assignTravelAgency`/`assignChauffeurServices`' existing ~24h async quote loop
+(confirmed); (3) inbound email — deferred, build on what already has real infrastructure first
+(confirmed). A follow-up audit (one more Explore pass) confirmed the exact real quote-submission
+mechanism before writing any code: no SMS-reachable equivalent existed for either partner type —
+the only real path was portal-token web form → `sendTravelQuoteEmail`/`sendChauffeurQuoteAlert` →
+`submitPartnerQuote` ("Automation Gate," writes `CaseRecord.itinerary_status`/`transfer_status` +
+a single combined `amount`, checks all-4-partner-types-confirmed, auto-fires pricing). Also
+confirmed: `validateTwilioSignature` (the Twilio HMAC-SHA1 request-signature check) is duplicated
+inline in 5 separate functions, no shared helper exists; both `TravelAgency`/`TaxiService` have a
+real, required `phone` field, but neither is ever texted anywhere in the app today.
+
+**Shipped — Slice 1, patient channel, zero new backend code.** `ConnectMCareChannelsCard`
+(`src/components/dashboard/modules/SettingsModule.jsx`) — two buttons calling the real, synchronous
+`base44.agents.getWhatsAppConnectURL('m_care')`/`getTelegramConnectURL('m_care')` and opening the
+result in a new tab. This is purely a link into a platform feature the SDK already exposes.
+
+**Shipped — Slice 2, partner channel: SMS replies to quote requests.** `base44/shared/twilioSms.ts`
+(new, mirrors `twilioWhatsApp.ts`'s exact shape — `sendSms(to, message, fromNumberEnvVar)`, the env
+var param lets a caller send from a SEPARATE dedicated number rather than the default). `base44/
+shared/verifyTwilioSignature.ts` (new) — a real, reusable version of the duplicated signature check
+plus the shared `phonesMatch` last-10-digit-suffix comparison (same technique
+`twilioSmsHandshakeWebhook` already used inline) — used ONLY by the new webhook below; the 5
+existing, live, safety-critical duplicates were deliberately left untouched (rewiring them under an
+unrelated feature is real, avoidable risk — a future dedicated pass could migrate them). `base44/
+shared/submitPartnerQuoteCore.ts` (new) — `submitPartnerQuote/entry.ts`'s real write logic
+extracted into `applyPartnerQuote()`, so the portal path and the new SMS path share exactly one
+write implementation rather than risking two that drift (a Twilio webhook has no Base44 session the
+old `requireAuth:true` endpoint could ever accept, so the new caller imports and calls this
+directly rather than round-tripping through HTTP) — gained a real `logJourneyEvent` call as a bonus
+improvement benefiting both callers, something `submitPartnerQuote` never did before. `base44/
+functions/parsePartnerReplyIntent/entry.ts` (new) — mirrors `parseCareRoomMessage`'s exact
+parse-only shape; deliberately conservative (a reply with two separate, un-combinable numbers, or
+anything not a clear single price + explicit confirmation, comes back `needs_human_review:true`
+rather than guessing). `base44/functions/twilioPartnerReplyWebhook/entry.ts` (new) — raw
+`Deno.serve` (needs Twilio's exact raw bytes for signature verification, same reason
+`stripeIdentityWebhook`/`retellCallWebhook` bypass `createHandler`), idempotent on `MessageSid`,
+correlates the sender's phone against real active `TravelAgency`/`TaxiService` records, finds the
+matching NOT-yet-confirmed case(s) — and never guesses when more than one open request matches the
+same number, or when the parse isn't confident: both route to an honest "please use your portal
+link" reply instead of risking a price applied to the wrong case. `assignTravelAgency`/
+`assignChauffeurServices` gained a non-fatal SMS leg (matching the existing WhatsApp-send pattern
+exactly) sent from a NEW, dedicated `TWILIO_PARTNER_PHONE_NUMBER` — deliberately never the existing
+`TWILIO_PHONE_NUMBER` already serving `twilioSafetySmsWebhook`/`twilioSmsHandshakeWebhook`, since a
+Twilio number has exactly one configured "a message comes in" webhook and colliding with the
+patient-safety number's routing was judged too risky to accept for this feature. `NotificationLog.
+jsonc` gained a `partner` recipient_type (the existing enum only had traveler/guardian/admin/
+security/system). `JourneyEvent.jsonc` gained `partner_quote_confirmed`.
+
+**What Portia needs to do**: patient side needs nothing beyond a Publish — worth separately
+confirming WhatsApp Business verification status on her own Base44 dashboard. Partner side needs a
+second real Twilio phone number provisioned, set as `TWILIO_PARTNER_PHONE_NUMBER`, with
+`{APP_URL}/api/functions/twilioPartnerReplyWebhook` registered as that number's own "a message
+comes in" webhook in the Twilio console.
+
+**Verification**: touches `NotificationLog.jsonc`, `JourneyEvent.jsonc`, `submitPartnerQuote`
+(refactored), and 3 new functions/shared modules — needs a **Publish** naming all of these, then
+`twilioPartnerReplyWebhook`/`parsePartnerReplyIntent` should be pinged directly before trusting real
+Twilio traffic to reach them, per this file's own documented Phase-10 lesson. No `m_care.jsonc`
+change at all this pass — zero Publish-order risk on the agent side. Lint clean; typecheck unchanged
+at the pre-existing 15-error baseline (none in touched files); `npm run build` exit 0; 63/63 vitest
+files, 906/906 tests (5 new in `tests/phonesMatch.test.js`); 320/320 redteam (7 new `PARTNER SMS
+REPLY` tests; 1 pre-existing `AUTH: no edge function reachable without SOME guard` sweep test's
+regex widened to recognize `verifyTwilioSignature` — the same "known false positive on a new,
+correctly-guarded webhook, widen the regex" pattern this file has hit before). A standalone `tsc
+--noEmit --allowImportingTsExtensions` check on every new/changed Deno file surfaced only the same
+confirmed-artifact-class noise already isolated earlier this session — no real bugs. Live-only,
+can't be confirmed from this checkout: whether Base44's native connect URLs actually complete the
+WhatsApp/Telegram linking flow end-to-end on a real device, and whether a real Twilio-signed webhook
+round-trips correctly against the new dedicated number — Portia verifies both live once the account
+setup above is done.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.

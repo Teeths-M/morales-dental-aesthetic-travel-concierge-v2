@@ -453,7 +453,7 @@ test('AUTH: no edge function is reachable without SOME guard', () => {
   //   publicDoctorCheck — the homepage "check your doctor" tool
   //   safeTAssist       — the assistant a patient may reach before signing in
   const EXEMPT = new Set(['publicDoctorCheck', 'safeTAssist']);
-  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|verifyWebhookSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
+  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|verifyTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|verifyRetellSignature|verifyWebhookSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
 
   const dir = join(ROOT, 'base44/functions');
   const unguarded = [];
@@ -4144,7 +4144,7 @@ test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving u
   // regression in THIS pass's own text, not to freeze the count forever.
   const agentConfig = read('base44/agents/m_care.jsonc');
   const parsed = JSON.parse(agentConfig);
-  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(114);
+  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(115);
 
   const instructions = parsed.instructions;
 
@@ -4215,7 +4215,7 @@ test('LEARN: analyzeMcarePerformance is cron-authorized, enforces a real minimum
   // AGENTIC ORCHESTRATION test above for the same note) — this assertion
   // exists as a sanity check, not a claim that LEARN itself added anything.
   const agentConfig = read('base44/agents/m_care.jsonc');
-  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(114);
+  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(115);
   expect(agentConfig, "RULE 33 must reference checking recallMcareKnowledge for a self-observed pattern before choosing an alternative")
     .toMatch(/a quick recallMcareKnowledge check may surface a real, self-observed pattern/);
 });
@@ -5164,6 +5164,131 @@ test('DISTRESS ESCALATION: voice messages are scanned for distress signals too, 
     .toMatch(/pickup_address: pickupAddress,/);
 });
 
+test('GUARDIAN CALL: GuardianCallLog is owner-or-admin read, admin-only write', () => {
+  const src = read('base44/entities/GuardianCallLog.jsonc');
+  const entity = JSON.parse(src);
+  expect(entity.rls.read).toBeTruthy();
+  expect(JSON.stringify(entity.rls.read)).toMatch(/data\.client_email/);
+  for (const op of ['create', 'update', 'delete']) {
+    const rule = JSON.stringify(entity.rls[op]);
+    expect(rule, `${op} must be admin-only`).not.toMatch(/data\.client_email/);
+    expect(rule, `${op} must gate on an admin role`).toMatch(/"role":\s*"(admin|platform_admin)"/);
+  }
+});
+
+test('GUARDIAN CALL: callTrustedContact only ever dials a real, already-on-file contact — never a caller-supplied number', () => {
+  const src = read('base44/functions/callTrustedContact/entry.ts');
+  // The request body schema must not accept a phone field at all — the
+  // only phone number this function ever touches comes from
+  // getOrderedCaseContacts, resolved server-side from real case data.
+  const schemaIdx = src.indexOf('const bodySchema = strictObject({');
+  const schemaEndIdx = src.indexOf('});', schemaIdx);
+  const schemaBlock = src.slice(schemaIdx, schemaEndIdx);
+  expect(schemaBlock).not.toMatch(/phone/i);
+  expect(src).toContain('getOrderedCaseContacts(base44, caseRecord)');
+  // Ownership check must exist before any contact is ever resolved.
+  const ownershipIdx = src.indexOf('caseRecord.client_email !== user.email');
+  const contactsIdx = src.indexOf('getOrderedCaseContacts(base44, caseRecord)');
+  expect(ownershipIdx, 'ownership check must exist').toBeGreaterThan(-1);
+  expect(ownershipIdx).toBeLessThan(contactsIdx);
+});
+
+test('GUARDIAN CALL: recording is never enabled anywhere in this build', () => {
+  const src = read('base44/functions/callTrustedContact/entry.ts');
+  expect(src).not.toMatch(/recording_enabled:\s*true/);
+  const policySrc = read('base44/shared/callConsentPolicy.ts');
+  // Every branch of the policy function must resolve to false — a future
+  // change that flips this on for a specific region is a real, deliberate
+  // decision this test forces to be made consciously (by editing this
+  // assertion too), not a silent side effect.
+  const matches = [...policySrc.matchAll(/shouldRecord:\s*(true|false)/g)].map((m) => m[1]);
+  expect(matches.length).toBeGreaterThan(0);
+  expect(matches.every((v) => v === 'false'), 'every branch must resolve to false in this build').toBe(true);
+});
+
+test('GUARDIAN CALL: retellCallWebhook verifies the signature before touching any entity', () => {
+  const src = read('base44/functions/retellCallWebhook/entry.ts');
+  expect(src).toContain('Deno.serve(async (req) => {');
+  const verifyIdx = src.indexOf('verifyRetellSignature(req)');
+  const firstEntityIdx = src.indexOf('.entities.GuardianCallLog');
+  expect(verifyIdx, 'signature verification must exist').toBeGreaterThan(-1);
+  expect(firstEntityIdx, 'a GuardianCallLog access must exist').toBeGreaterThan(-1);
+  expect(verifyIdx).toBeLessThan(firstEntityIdx);
+  expect(src, 'a bad signature must return before any entity access').toMatch(/if \(errorResponse\) return errorResponse;/);
+});
+
+test('GUARDIAN CALL: RULE 41 keeps trusted-contact calling strictly Tier 1, never emergency services', () => {
+  const data = JSON.parse(read('base44/agents/m_care.jsonc'));
+  const instr = data.instructions;
+  expect(instr).toContain('RULE 41 -- TRUSTED CONTACT CALLING');
+  const ruleIdx = instr.indexOf('RULE 41 -- TRUSTED CONTACT CALLING');
+  const ruleText = instr.slice(ruleIdx, ruleIdx + 900);
+  expect(ruleText).toMatch(/never extends to emergency services, police, or any stranger/);
+  expect(data.tool_configs.some((t) => t.function_name === 'callTrustedContact')).toBe(true);
+});
+
+test('PARTNER SMS REPLY: NotificationLog.recipient_type declares partner as a real, distinct category', () => {
+  const entity = JSON.parse(read('base44/entities/NotificationLog.jsonc'));
+  const recipientType = entity.properties?.recipient_type;
+  expect(recipientType?.enum).toContain('partner');
+});
+
+test('PARTNER SMS REPLY: twilioPartnerReplyWebhook verifies the Twilio signature before touching any entity', () => {
+  const src = read('base44/functions/twilioPartnerReplyWebhook/entry.ts');
+  expect(src).toContain('Deno.serve(async (req) => {');
+  const verifyIdx = src.indexOf('verifyTwilioSignature(req,');
+  const firstEntityIdx = src.indexOf('.entities.NotificationLog');
+  expect(verifyIdx, 'signature verification must exist').toBeGreaterThan(-1);
+  expect(firstEntityIdx, 'a NotificationLog access must exist').toBeGreaterThan(-1);
+  expect(verifyIdx).toBeLessThan(firstEntityIdx);
+  expect(src, 'a bad signature must return before any entity access').toMatch(/if \(errorTwiml\) return errorTwiml;/);
+});
+
+test('PARTNER SMS REPLY: an ambiguous match (multiple open requests) is never guessed — applyPartnerQuote only runs after that early return', () => {
+  const src = read('base44/functions/twilioPartnerReplyWebhook/entry.ts');
+  const ambiguousIdx = src.indexOf('candidates.length > 1');
+  const applyIdx = src.indexOf('applyPartnerQuote(base44,');
+  expect(ambiguousIdx, 'the ambiguous-multiple-candidates check must exist').toBeGreaterThan(-1);
+  expect(applyIdx, 'the real quote-apply call must exist').toBeGreaterThan(-1);
+  expect(ambiguousIdx).toBeLessThan(applyIdx);
+  // The ambiguous branch must itself return before reaching the apply call.
+  const ambiguousBlock = src.slice(ambiguousIdx, applyIdx);
+  expect(ambiguousBlock).toMatch(/return twimlReply\(/);
+});
+
+test('PARTNER SMS REPLY: a needs-review or unconfirmed parse never reaches applyPartnerQuote', () => {
+  const src = read('base44/functions/twilioPartnerReplyWebhook/entry.ts');
+  const gateIdx = src.indexOf('!parsed.is_quote_reply || parsed.needs_human_review || parsed.amount == null || !parsed.confirmed');
+  const applyIdx = src.indexOf('applyPartnerQuote(base44,');
+  expect(gateIdx, 'the confidence gate must exist').toBeGreaterThan(-1);
+  expect(gateIdx).toBeLessThan(applyIdx);
+});
+
+test('PARTNER SMS REPLY: submitPartnerQuote and twilioPartnerReplyWebhook share one real write implementation', () => {
+  const coreSrc = read('base44/shared/submitPartnerQuoteCore.ts');
+  const portalSrc = read('base44/functions/submitPartnerQuote/entry.ts');
+  const webhookSrc = read('base44/functions/twilioPartnerReplyWebhook/entry.ts');
+  // The actual status-flip literals live only in the shared core now — neither
+  // caller may write them directly, which would let the two paths drift.
+  expect(coreSrc).toMatch(/itinerary_status = 'CONFIRMED'/);
+  expect(portalSrc).not.toMatch(/itinerary_status:\s*'CONFIRMED'/);
+  expect(webhookSrc).not.toMatch(/itinerary_status:\s*'CONFIRMED'/);
+  expect(portalSrc).toContain("import { applyPartnerQuote } from '../../shared/submitPartnerQuoteCore.ts';");
+  expect(webhookSrc).toContain("import { applyPartnerQuote } from '../../shared/submitPartnerQuoteCore.ts';");
+});
+
+test('PARTNER SMS REPLY: parsePartnerReplyIntent is parse-only, never writes an entity', () => {
+  const src = read('base44/functions/parsePartnerReplyIntent/entry.ts');
+  expect(src).not.toMatch(/\.entities\.\w+\.(create|update)\(/);
+});
+
+test('PARTNER SMS REPLY: the partner-facing SMS leg always uses the dedicated partner number, never the patient-safety Twilio number', () => {
+  for (const path of ['base44/functions/assignTravelAgency/entry.ts', 'base44/functions/assignChauffeurServices/entry.ts']) {
+    const src = read(path);
+    expect(src, `${path} must send partner SMS from TWILIO_PARTNER_PHONE_NUMBER`).toContain("'TWILIO_PARTNER_PHONE_NUMBER'");
+  }
+});
+
 test('SAVE_MEMORY: Base44\'s hidden native memory tool_call never leaks into the chat UI as a raw badge', () => {
   // Portia's live report: a red "save_memory — error" pill appeared inline
   // in an assistant reply. save_memory is a Base44 platform-native tool
@@ -5743,7 +5868,7 @@ test('EVIDENCE MONITORING: this feature grants zero new M-Care agent tools — n
     expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
       .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
   }
-  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(114);
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(115);
 });
 
 // ── Medical Evidence Watch pipeline ──────────────────────────────────────────
@@ -5890,7 +6015,7 @@ test('MEDICAL EVIDENCE WATCH: only the redacting getEvidenceWatchFeed is granted
     expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
       .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
   }
-  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature adds exactly one new agent grant (getEvidenceWatchFeed)').toBe(114);
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature adds exactly one new agent grant (getEvidenceWatchFeed)').toBe(115);
 
   expect(agentConfig.instructions, 'RULE 40 must exist and tie the new tool to the same no-invented-data and cite-the-source discipline')
     .toMatch(/RULE 40 -- MEDICAL EVIDENCE WATCH[\s\S]{0,1000}per RULE 3[\s\S]{0,200}per RULE 39/);
