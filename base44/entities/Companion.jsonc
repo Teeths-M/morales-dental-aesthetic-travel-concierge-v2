@@ -193,7 +193,22 @@
     "sign_up_completed_at": {
       "type": "string",
       "description": "ISO timestamp"
-    }
+    },
+    "dormancy_tier": {
+      "type": "string",
+      "enum": ["active", "cooling", "at_risk", "dormant"],
+      "description": "Whole-relationship activity tier from calculateCompanionDormancyRisk — days since last CompanionAssignment, or since verified_at for a companion who's never had one, after a 30-day onboarding grace. Admin-only visibility convention (same as performance_score) — not an RLS guarantee, since Base44 RLS here is record-level not field-level. Starting thresholds, not proven-correct — see partnerDormancyScore.ts."
+    },
+    "days_since_last_activity": {
+      "type": "number",
+      "description": "Days since this companion's most recent CompanionAssignment (companion_user_id, by offered_at). Null when they've never had one — dormancy_tier is then driven by days since verified_at instead, never a fabricated activity count."
+    },
+    "dormancy_reasons": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Plain-language explanation of dormancy_tier from partnerDormancyScore.ts's dormancyReason() — real numbers only."
+    },
+    "dormancy_last_calculated": { "type": "string", "format": "date-time" }
   },
   "required": [
     "agency_name",

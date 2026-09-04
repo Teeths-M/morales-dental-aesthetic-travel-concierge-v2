@@ -12,7 +12,8 @@
         "regulatory_rule",
         "passport_renewal_link",
         "mcare_knowledge_conflict",
-        "passport_validity_requirement"
+        "passport_validity_requirement",
+        "partner_dormancy"
       ]
     },
     "subject_id": {

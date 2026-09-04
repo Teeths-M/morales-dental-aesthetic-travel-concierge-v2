@@ -61,7 +61,7 @@ export function freshnessState(kind: FreshnessKind, timestamp: string | null | u
 // a user sees — a person confirms first (consistent with our safety-review pattern).
 
 export type ReviewFlag = {
-  subject_type: 'doctor_license' | 'clinic_status' | 'visa_rule' | 'regulatory_rule' | 'passport_renewal_link' | 'mcare_knowledge_conflict';
+  subject_type: 'doctor_license' | 'clinic_status' | 'visa_rule' | 'regulatory_rule' | 'passport_renewal_link' | 'mcare_knowledge_conflict' | 'passport_validity_requirement' | 'partner_dormancy';
   subject_id?: string;
   subject_label: string;
   change_type:

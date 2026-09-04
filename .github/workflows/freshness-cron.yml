@@ -132,6 +132,9 @@ jobs:
             call calculateDoctorTrustScore
             call calculateCompanionScore
             call calculateDriverTrustScore
+            call calculateDoctorDormancyRisk  # "churn" analogue — is this partner going quiet, not how good are they
+            call calculateCompanionDormancyRisk
+            call calculateDriverDormancyRisk
             call sweepProviderBookingEligibility  # the only path that may SET Doctor.booking_suspended:true — deterministic, never clears
             call analyzeMcarePerformance  # aggregates real JourneyPlan replanning history into McareKnowledge — closes the LEARN node in M-Care's reasoning loop
             # Marketplace: chase doctors who were invited to quote but haven't yet (link-only).

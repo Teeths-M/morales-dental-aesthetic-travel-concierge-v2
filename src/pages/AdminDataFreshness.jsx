@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
   ShieldAlert, Building2, Stethoscope, Plane, Scale,
-  Clock, CheckCircle2, XCircle, RefreshCw, Eye,
+  Clock, CheckCircle2, XCircle, RefreshCw, Eye, UserMinus,
 } from 'lucide-react';
 
 /**
@@ -30,6 +30,7 @@ const SUBJECT = {
   visa_rule:              { label: 'Visa rule',              icon: Plane },
   regulatory_rule:        { label: 'Regulatory',             icon: Scale },
   passport_renewal_link:  { label: 'Passport renewal link',  icon: Plane },
+  partner_dormancy:       { label: 'Partner going dormant',  icon: UserMinus },
 };
 
 const CHANGE_LABEL = {

@@ -311,7 +311,22 @@
       "description": "Set true ONLY by the deterministic sweepProviderBookingEligibility sweep (block direction only, matching 'AI/automated code may raise caution, never clear it'). Cleared ONLY by clearProviderBookingSuspension (admin-only, requires override_reason, mirrors bookingState.ts's clearHold discipline)."
     },
     "booking_suspended_reason": { "type": "string" },
-    "booking_suspended_at": { "type": "string", "format": "date-time" }
+    "booking_suspended_at": { "type": "string", "format": "date-time" },
+    "dormancy_tier": {
+      "type": "string",
+      "enum": ["active", "cooling", "at_risk", "dormant"],
+      "description": "Whole-relationship activity tier from calculateDoctorDormancyRisk — days since last case, or since verified_at for a doctor who's never had one, after a 30-day onboarding grace. Admin-only visibility convention (same as trust_score) — not an RLS guarantee, since Base44 RLS here is record-level not field-level. Starting thresholds, not proven-correct — see partnerDormancyScore.ts."
+    },
+    "days_since_last_activity": {
+      "type": "number",
+      "description": "Days since this doctor's most recent CaseRecord (doctor_selected). Null when the doctor has never had a case — dormancy_tier is then driven by days since verified_at instead, never a fabricated activity count."
+    },
+    "dormancy_reasons": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Plain-language explanation of dormancy_tier from partnerDormancyScore.ts's dormancyReason() — real numbers only."
+    },
+    "dormancy_last_calculated": { "type": "string", "format": "date-time" }
   },
   "required": [
     "full_name",

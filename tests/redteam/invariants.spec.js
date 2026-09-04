@@ -5952,3 +5952,76 @@ test('DOCTOR TRUST SCORE: real outcome data is joined at read time only — Outc
   expect(src, 'the 5 components must sum to the final score, matching the doc comment\'s 5x20=100 structure')
     .toMatch(/speedScore\s*\+\s*safetyScore\s*\+\s*hs5Score\s*\+\s*satisfactionScore\s*\+\s*outcomeQualityScore/);
 });
+
+test('PARTNER DORMANCY: partnerDormancyScore.ts is a pure function with zero I/O', () => {
+  // The "churn" analogue for partners must follow the exact same discipline
+  // as trustScoreReasons.ts — a deterministic formula over inputs the caller
+  // already has, never a live call of any kind.
+  const src = read('base44/shared/partnerDormancyScore.ts');
+  for (const forbidden of ['InvokeLLM', 'asServiceRole', 'fetch(', 'Deno.env']) {
+    expect(src, `partnerDormancyScore.ts must never contain ${forbidden} — it must stay pure, zero I/O`)
+      .not.toContain(forbidden);
+  }
+});
+
+test('PARTNER DORMANCY: each of the 3 dormancy functions checks the partner\'s own prior tier before flagging, only scores active partners, and never automates outreach', () => {
+  const cases = [
+    { file: 'base44/functions/calculateDoctorDormancyRisk/entry.ts', tierRef: 'doctor.dormancy_tier', statusFilter: "status: 'active'" },
+    { file: 'base44/functions/calculateCompanionDormancyRisk/entry.ts', tierRef: 'companion.dormancy_tier', statusFilter: "status: 'active'" },
+    { file: 'base44/functions/calculateDriverDormancyRisk/entry.ts', tierRef: 'driver.dormancy_tier', statusFilter: "status: 'active'" },
+  ];
+  for (const { file, tierRef, statusFilter } of cases) {
+    const src = read(file);
+
+    // One-shot gate: the partner's own PRIOR tier must be read before the
+    // flagForReview call that would use it — mirrors the SAFE-T
+    // decision-before-AI-invocation ordering check above.
+    const tierIdx = src.indexOf(tierRef);
+    const flagIdx = src.indexOf('flagForReview(');
+    expect(tierIdx, `${file} must reference the partner's own prior ${tierRef}`).toBeGreaterThan(-1);
+    expect(flagIdx, `${file} must call flagForReview`).toBeGreaterThan(-1);
+    expect(tierIdx, `${file} must read the prior tier before calling flagForReview`).toBeLessThan(flagIdx);
+
+    // Only a genuine rank-increasing transition into at_risk/dormant may fire.
+    expect(src, `${file} must gate the flag on a real tier-rank increase, not just being in an alert tier`)
+      .toMatch(/DORMANCY_TIER_RANK\[result\.tier\]\s*>\s*DORMANCY_TIER_RANK\[oldTier\]/);
+
+    // Only status:'active' partners are scored in the bulk sweep — a
+    // suspended/pending partner isn't "dormant," they're already out of
+    // rotation for a different, already-tracked reason.
+    expect(src, `${file} must only bulk-score partners with ${statusFilter}`).toContain(statusFilter);
+
+    // No automated outreach to the partner — this is a human-flag-only
+    // feature, matching activatePartner's own stance on the mirror-image
+    // decision (never auto-act on a partner-relationship-sensitive signal).
+    for (const forbidden of ['SendEmail', 'SendSMS', 'linkOnlyEmail', 'linkOnlySms']) {
+      expect(src, `${file} must never send anything directly to the partner`).not.toContain(forbidden);
+    }
+  }
+});
+
+test('PARTNER DORMANCY: partner_dormancy subject_type is written only by the 3 dormancy functions', () => {
+  const functionsDir = join(ROOT, 'base44/functions');
+  const dirs = readdirSync(functionsDir).filter((name) => name !== '_shared');
+  const writers = [];
+  for (const dir of dirs) {
+    const entryPath = join(functionsDir, dir, 'entry.ts');
+    if (!existsSync(entryPath)) continue;
+    const src = readFileSync(entryPath, 'utf8');
+    if (src.includes("subject_type: 'partner_dormancy'")) writers.push(dir);
+  }
+  expect(writers.sort()).toEqual([
+    'calculateCompanionDormancyRisk',
+    'calculateDoctorDormancyRisk',
+    'calculateDriverDormancyRisk',
+  ]);
+});
+
+test('PARTNER DORMANCY: subject_type is declared consistently in both the entity schema and the shared TS union (known drift class — passport_validity_requirement had already drifted between these two)', () => {
+  const entity = read('base44/entities/DataFreshnessReview.jsonc');
+  const freshnessTs = read('base44/shared/freshness.ts');
+  for (const value of ['partner_dormancy', 'passport_validity_requirement']) {
+    expect(entity, `DataFreshnessReview.jsonc's subject_type enum must contain '${value}'`).toContain(`"${value}"`);
+    expect(freshnessTs, `freshness.ts's ReviewFlag subject_type union must contain '${value}'`).toContain(`'${value}'`);
+  }
+});
