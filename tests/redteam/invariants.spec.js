@@ -6047,6 +6047,98 @@ test('SYSTEM HEALTH: getSystemHealthSummary is public, aggregate-only, and never
   }
 });
 
+test('SYSTEM HEALTH: the 8 automation categories are honestly cadenced — no fabricated run counter, no overclaimed live flight tracking', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = strip(read('base44/functions/getSystemHealthSummary/entry.ts'));
+
+  // Exactly 8 category entries, matching the new /system-status hero
+  // visualization's "one subsystem active at a time, cycling through all 8"
+  // requirement. Extracted by counting `category:` object keys, not by
+  // eyeballing — a future edit that silently drops or duplicates an entry
+  // fails this.
+  const categoryMatches = src.match(/category:\s*'[^']+'/g) || [];
+  expect(categoryMatches.length, 'AUTOMATION_CATEGORIES must have exactly 8 entries').toBe(8);
+
+  // Destination Safety is a real, on-demand computation (getDestinationSafetyIndex),
+  // never a standing scheduled scan — this cadence string must stay exactly
+  // 'On demand' so a future edit can't silently imply a periodic scan that
+  // doesn't exist.
+  const destinationSafetyBlock = src.slice(
+    src.indexOf("category: 'Destination Safety'"),
+    src.indexOf("category: 'Destination Safety'") + 300
+  );
+  expect(destinationSafetyBlock, "Destination Safety's cadence must stay 'On demand', not a scheduled interval")
+    .toMatch(/cadence:\s*'On demand'/);
+
+  // pollActiveTripFlights is a confirmed stub (pure time-to-scheduled-arrival
+  // math, not real flight telemetry — see that file's own "LIVE: replace
+  // with FlightStats API call" comment). The public-facing category near it
+  // must never claim live flight tracking.
+  const travelTimelineBlock = src.slice(
+    src.indexOf("category: 'Travel Timeline Monitoring'"),
+    src.indexOf("category: 'Travel Timeline Monitoring'") + 400
+  );
+  expect(travelTimelineBlock, 'must exist').not.toBe('');
+  // Negative lookbehind so the category's own honest disclaimer ("not live
+  // flight-status telemetry") doesn't trip this check — only an
+  // UNQUALIFIED, affirmative claim of live flight tracking should fail it.
+  expect(travelTimelineBlock, 'must never affirmatively claim live flight tracking — real flight telemetry does not exist in this app')
+    .not.toMatch(/(?<!not )(?<!never )(?<!no )(?:live flight|flight tracking|real-time flight)/i);
+});
+
+test('SYSTEM HEALTH: demo mode (/system-status?demo=1) never invents its own category names — must match the real 8 exactly', () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const realSrc = strip(read('base44/functions/getSystemHealthSummary/entry.ts'));
+  const demoSrc = strip(read('src/components/system-health/demoHealthData.js'));
+
+  const extractNames = (s) => [...s.matchAll(/category:\s*'([^']+)'/g)].map((m) => m[1]);
+  const realNames = extractNames(realSrc);
+  const demoNames = extractNames(demoSrc);
+
+  expect(realNames.length, 'the real category list must be non-empty').toBeGreaterThan(0);
+  expect(demoNames, "demoHealthData.js's DEMO_AUTOMATION_CATEGORIES must exactly match getSystemHealthSummary's real category names — demo mode reuses real category facts, it never invents its own")
+    .toEqual(realNames);
+});
+
+test('SYSTEM HEALTH: demo mode never calls the real getSystemHealthSummary query and never mixes simulated numbers into the real stat tiles', () => {
+  const src = read('src/pages/SystemHealth.jsx');
+  expect(src, 'the real query must be disabled while ?demo=1 is active — no live/network dependency during a demo')
+    .toMatch(/enabled:\s*!isDemo/);
+  expect(src, 'demo mode must show an explicit "real numbers hidden" note, never simulated numbers in the same tiles as real ones')
+    .toMatch(/real numbers hidden/i);
+});
+
+test('SYSTEM HEALTH: the demo-mode narration <audio> element never renders outside the isDemo branch', () => {
+  const src = read('src/components/system-health/SystemHealthHero.jsx');
+  const audioIdx = src.indexOf('<audio');
+  expect(audioIdx, '<audio> element must exist').toBeGreaterThan(-1);
+  const isDemoGateIdx = src.lastIndexOf('{isDemo &&', audioIdx);
+  expect(isDemoGateIdx, 'a preceding {isDemo && gate must exist before <audio>')
+    .toBeGreaterThan(-1);
+  // No unrelated closing brace/paren of a *different* block should sit
+  // between the isDemo gate and the <audio> tag — a cheap but real check
+  // that the audio element is a direct descendant of that conditional, not
+  // just textually preceded by it somewhere earlier in the file.
+  const between = src.slice(isDemoGateIdx, audioIdx);
+  expect(between.match(/\n\s*\)\}/g)?.length || 0, 'no earlier conditional block should have closed between the isDemo gate and <audio>')
+    .toBe(0);
+});
+
+test('SYSTEM HEALTH: LivingOrb\'s new ring-halo is opt-in only — every existing caller stays unaffected', () => {
+  const src = read('src/components/mcare/LivingOrb.jsx');
+  expect(src, 'showRingHalo must default to false so every existing LivingOrb caller renders unchanged')
+    .toMatch(/showRingHalo\s*=\s*false/);
+  expect(src, 'ringColorOverride must default to null')
+    .toMatch(/ringColorOverride\s*=\s*null/);
+  // ringColorOverride must never be threaded into Shell's own color prop —
+  // that would recolor the robot's own face/glow/M-badge, not just the ring.
+  const shellCalls = src.match(/<Shell[^/]*\/>/g) || [];
+  for (const call of shellCalls) {
+    expect(call, 'ringColorOverride must never be passed to Shell — it only colors the new ring-halo divs')
+      .not.toMatch(/ringColorOverride/);
+  }
+});
+
 test('PARTNERS: ExternalJourney is read-only for the M-Care agent — verifyExternalJourney/enrollExternalJourney (both real, deterministic, already granted) are the only write paths', () => {
   const raw = read('base44/agents/m_care.jsonc');
   const agentConfig = JSON.parse(raw);

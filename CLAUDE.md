@@ -3080,6 +3080,129 @@ WhatsApp/Telegram linking flow end-to-end on a real device, and whether a real T
 round-trips correctly against the new dedicated number — Portia verifies both live once the account
 setup above is done.
 
+## System Health — "M-Care is still working," a live hero visualization built entirely from real data
+
+Portia asked for `/system-status` to visually communicate "M-Care is still working even when
+nobody is interacting with it" — a status orb with a continuously circulating green/gold ring,
+a calm rotation through named subsystems (one active at a time), a minimal illustrative
+SOURCE→SCAN→VALIDATE→M-CARE→ROUTE→UPDATE pipeline, and a real "signal detected" / honest
+"no new signals" ending beat. Explicit, repeated constraint: never fabricate incidents, scores, or
+scheduler counts — this matches the whole M-Care history's own audit-first discipline, so three
+parallel audits ran before any code, confirming exactly what's real before designing anything.
+
+**Two real, load-bearing gaps found by the audit, not assumed**: (1) `LivingOrb.jsx`'s own
+`STATE_CONFIG` has defined `ringCount`/`ringOrbitDuration`/`ringOpacity` per state since it was
+built, and its doc comments describe "a continuously circulating ring halo" — but a direct grep
+confirmed those three fields were never actually read anywhere in the render logic. No ring has
+ever visibly rendered in this app, despite the extensive comments describing one. (2) The one
+proven technique in this codebase for a rotating concentric ring, `HologramPlatform.jsx`'s own
+`ringDef.map(...)` block, has the identical class of bug in a different shape: its visible
+border/glow sits on the STATIC outer div while the `animate={{rotate}}` targets an empty,
+borderless inner div — rotating an invisible box is imperceptible, so those rings don't visibly
+spin either. Not fixed there (out of scope, real risk of regressing the M-Safe+ identity column) —
+flagged so the mistake isn't copied into new code. Also confirmed: no sequential scheduler
+run-counter ("#600"-style) exists anywhere in this repo (grep for `run_number`/`scan_number`/
+`sequence_number` — zero hits), and `pollActiveTripFlights`'s own code comment confirms flight
+status is pure time-to-scheduled-arrival math, not real flight telemetry — a "Flight/Travel
+Status" subsystem would have been an overclaim.
+
+**Shipped, honesty-preserving substitutions for both gaps**: `LivingOrb.jsx` gained a new
+`RingHalo` sub-component that finally activates `STATE_CONFIG`'s dormant ring fields — reusing
+HologramPlatform's rotating-ellipse technique with the one fix applied (border/glow on the
+ROTATING child, not the static parent) — behind two new, default-off props: `showRingHalo = false`
+and `ringColorOverride = null`. Both default to no-op so every existing caller (the real chat orb,
+`LivingMOrb`, etc.) renders pixel-identical to before. `ringColorOverride` recolors ONLY the new
+ring divs, never `Shell`'s own `color`/`glowAlpha` (confirmed via direct read of
+`RobotAvatarImage.jsx`: those props build exactly one `drop-shadow` on the body image, nothing
+else) — so a page can show a green health ring around the same gold-branded robot face/M-badge
+without touching them. A redteam invariant (`SYSTEM HEALTH: LivingOrb's new ring-halo is opt-in
+only`) pins both defaults and that `ringColorOverride` is never passed into a `<Shell>` call.
+
+Instead of a fabricated run counter, `src/hooks/useSignalDelta.js` (pure logic extracted into
+`computeSignalTransition`, unit-tested in `tests/useSignalDelta.test.js`) compares the two real
+numbers `getSystemHealthSummary` already exposes (`total`, `unresolved_critical_or_high`) across
+real polls — `'signal'` only when a real number genuinely increased, `'quiet'` (the honest "NO NEW
+SIGNALS") otherwise, `'baseline'` only on the very first reading. Uses the function's own
+always-fresh `generated_at` timestamp as the comparison trigger (not `[total, unresolved]`
+directly) — comparing only on the counts would make React skip the effect entirely on an
+unchanged poll (the common case), freezing the state on `'baseline'` forever and never reaching
+the honest steady-state the feature needs. `base44/functions/getSystemHealthSummary/entry.ts`'s
+static `AUTOMATION_CATEGORIES` grew from 7 to 8 entries (still just a hand-maintained array, zero
+new live calls) to match Portia's named subsystems as closely as honesty allows — one deliberate
+rename, "Flight/Travel Status" → **"Travel Timeline Monitoring"** (real backing:
+`sendTravelCountdownReminders`, daily departure-milestone reminders — never live flight
+telemetry), and "Destination Safety" is labeled `cadence: 'On demand'`, not a scheduled interval,
+since `getDestinationSafetyIndex` computes live on request rather than running a standing scan.
+`src/components/system-health/demoHealthData.js` keeps a hand-synced copy of the same 8 real
+category names (never inventing its own) for the fully offline `?demo=1` mode — a redteam
+invariant (`SYSTEM HEALTH: demo mode ... must match the real 8 exactly`) checks the two lists stay
+identical whenever either is edited.
+
+New `src/components/system-health/` holds the composition: `SystemHealthHero.jsx` (owns the one
+shared `tickIndex` clock driving both the category rotation and the pipeline stage — `reducedMotion`
+via a new shared `usePrefersReducedMotion` hook, freezing the clock entirely rather than "slowing
+it down"; `tabVisible` via the exact `visibilitychange` pattern already used in `MCareOrb.jsx`,
+pausing not resetting; maps each pipeline stage onto one of LivingOrb's own existing states —
+`idle`→SOURCE, `tool_executing`→SCAN/VALIDATE, `thinking`→M-CARE, `acting`→ROUTE — so the ring's
+orbit speed/brightness genuinely varies per stage using values that already existed, recolored
+green via `ringColorOverride` only while healthy; UPDATE fires a one-shot `flashToken` pulse,
+gold, exactly once per real/simulated signal, not a persistent state), `CategoryRotator.jsx` (one
+category visible at a time, reusing `SystemHealth.jsx`'s own existing gold cadence-pill styling
+verbatim), `PipelineFlow.jsx` (the illustrative SOURCE→SCAN→VALIDATE→M-CARE→ROUTE→UPDATE strip —
+active/completed/upcoming node styling via plain flex layout, plus a genuinely traveling routing
+dot riding a fixed track above the nodes, gliding between measured percentage positions rather
+than a per-node DOM measurement. The node dots sit inset within their own label columns rather
+than flush with the container edges, so the track is inset by a measured `EDGE_INSET_PCT = 3.75`
+(confirmed via a real Playwright DOM measurement of the rendered layout, not eyeballed) so the
+dot's start/end genuinely lines up with the SOURCE/UPDATE node dots instead of floating ~20px off
+them. Stays correct at any width with no resize listener; carries no
+per-record data, matching the feature's own "no fake database graphics" instruction). `?demo=1`
+(via `useSearchParams`) disables the real query entirely (`enabled: !isDemo` — no live/network
+dependency during an actual pitch), runs a deterministic (never random) client-side simulation
+instead, shows a persistent "DEMO MODE" pill (matching `AdminMissionControl.jsx`'s own established
+DEMO/LIVE badge convention), and replaces the real numeric stat tiles with an explicit "real
+numbers hidden" note rather than ever showing simulated numbers that could be mistaken for real
+ones. Mobile gets a genuinely different composition, not a scaled-down one — the pipeline collapses
+to a 6-dot row + the active stage's name as text, the description line drops from the category
+card.
+
+Also shipped: a demo-only narration track (a real file Portia recorded for presenting this exact
+page to judges, at `public/audio/system-health-demo/narration.mp3`) with a manual "Play/Pause
+Narration" button and deliberately no autoplay attempt — audio starting on its own the instant a
+judge's screen loads this page is exactly the kind of surprise a live pitch can't risk; the
+`<audio>` element itself only ever renders inside the `isDemo` branch, pinned by a redteam
+invariant. A demo-only "recent activity" strip shows the last few categories completing
+(deterministic from `tickIndex`, never random), carrying no run number or invented timestamp — see
+the "#600" rejection above. Real mode gets one small addition demo mode never shows: a
+`LAST CHECKED` line under the ending copy, sourced from `getSystemHealthSummary`'s own
+`generated_at`, rendered as an absolute local clock time rather than a relative "Ns ago" so it
+can't silently read as fresher than it is under a hidden tab or reduced motion. The ending copy
+itself -- `M-CARE CONTINUES WATCHING` and, in italics, `Care shouldn't stop at the border.` --
+renders persistently rather than on a timed reveal sequence, so it's always readable regardless of
+animation state, satisfying the feature's own "functionality must not depend on animation" rule
+without a scripted pause.
+
+**Verification**: touches `getSystemHealthSummary/entry.ts` (needs a **Publish**) plus 8 new/
+modified frontend files — no `m_care.jsonc` change, zero agent-side Publish-order risk. Lint clean,
+typecheck unchanged at the pre-existing 15-error baseline (zero new errors in any touched file --
+one new error was introduced and fixed along the way, the same documented lucide-react `size`
+prop quirk this file already notes elsewhere: the narration button's icons needed
+`size={\`11\`}` instead of a numeric literal), `npm run build` exit 0 (confirmed a real `dist/`
+output including the bundled narration audio), 912/912 vitest, 325/325 redteam (6 SYSTEM HEALTH
+invariants green -- one real false-positive caught and fixed while building this: the
+"no flight-tracking overclaim" check's naive substring match initially flagged the category's own
+honest disclaimer sentence itself, since "not live flight-status telemetry" contains the literal
+substring "live flight" — fixed with a negative lookbehind so only an unqualified, affirmative
+claim fails the check). Visually confirmed via a local Playwright screenshot pass (1280px desktop
+and 390px mobile) rather than left as a live-only unknown -- the orb/ring/category-rotator
+/pipeline/activity-log/ending-copy all render correctly, autoplay is confirmed off (shows
+"PLAY NARRATION," never "PAUSE NARRATION" on load), and the pipeline dot's edge-inset fix was
+verified against real measured DOM positions. One unrelated, pre-existing cosmetic note the same
+screenshot pass surfaced: at a narrow mobile width the global floating M-Care launcher button
+(present on nearly every page, not something this feature added) can overlap the demo-mode
+footnote text at the bottom of the hero -- not fixed here, app-wide chrome outside this feature's
+scope.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.

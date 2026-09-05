@@ -23,6 +23,23 @@
  *
  * requireAuth: false, matching /procedures and getEvidenceWatchFeed's own
  * public, pre-signup-trust-building openness.
+ *
+ * 2026-09: expanded from 7 to 8 categories for the new /system-status "M-Care
+ * is still working" live visualization (SystemHealthHero.jsx), which cycles
+ * through this exact array rather than inventing its own category list. Two
+ * honesty calls made while doing this, worth keeping straight if this list
+ * is ever edited again:
+ * - 'Destination Safety' cadence is deliberately 'On demand', not a
+ *   scheduled interval — getDestinationSafetyIndex computes live when
+ *   requested, it is not a standing scan, and this list must never imply
+ *   otherwise.
+ * - 'Travel Timeline Monitoring' is a deliberate rename away from "flight
+ *   status" — pollActiveTripFlights' own code comment confirms flight
+ *   status is currently pure time-to-scheduled-arrival math, not real
+ *   flight telemetry (a "LIVE: replace with FlightStats API call" TODO
+ *   still sits in that file). What's real here is departure/arrival
+ *   milestone tracking and countdown reminders (sendTravelCountdownReminders,
+ *   real, daily) — this entry must never claim live flight tracking.
  */
 import { createHandler, ok } from '../../shared/createHandler.ts';
 
@@ -30,39 +47,44 @@ const WINDOW_DAYS = 30;
 
 const AUTOMATION_CATEGORIES = [
   {
-    category: 'Clinic & doctor verification',
-    description: 'Re-checks clinic operating status and doctor license/credential freshness.',
+    category: 'Data Freshness',
+    description: 'Re-verifies clinic, regulatory, and visa status once a cached answer goes stale.',
+    cadence: 'Daily / Weekly',
+  },
+  {
+    category: 'Doctor Verification',
+    description: 'Re-checks doctor license and credential status against real registry sources.',
     cadence: 'Daily',
   },
   {
-    category: 'Partner trust scoring',
-    description: 'Recomputes doctor, companion, and driver trust scores from real case history.',
+    category: 'Partner Trust',
+    description: 'Recomputes doctor, driver, and companion trust scores from real case history.',
     cadence: 'Daily',
   },
   {
-    category: 'Visa & travel requirements',
-    description: 'Re-verifies visa rules against a live source once a cached answer goes stale.',
-    cadence: 'Weekly',
+    category: 'Destination Safety',
+    description: 'Computes a real safety index for a destination the moment one is requested — not a standing scan.',
+    cadence: 'On demand',
   },
   {
-    category: 'Medical evidence monitoring',
-    description: 'Scans public medical/regulatory sources and public incident reports for human review.',
+    category: 'Medical-Travel Incidents',
+    description: 'Scans public medical/regulatory sources and incident reports for human review.',
     cadence: 'Weekly / Monthly',
   },
   {
-    category: 'Booking & signup follow-ups',
-    description: 'Sends reminders and recovers stalled bookings or signups, always link-only.',
-    cadence: 'Hourly',
+    category: 'Travel Timeline Monitoring',
+    description: 'Tracks real departure/arrival milestones and sends countdown reminders — not live flight-status telemetry.',
+    cadence: 'Daily',
   },
   {
-    category: 'System hygiene',
-    description: 'Expires stale tokens, sessions, and rate-limit records.',
-    cadence: 'Hourly / every 6 hours',
+    category: 'Journey Monitoring',
+    description: 'Detects real journey completion and delivers proactive updates the moment they are written.',
+    cadence: 'Daily / real-time',
   },
   {
-    category: 'Safety red-team suite',
-    description: 'A deterministic, no-network test suite that must pass before any change reaches this app.',
-    cadence: 'Every push to main',
+    category: 'Recovery Signals',
+    description: 'Flags recovery check-in anomalies and sends reminders for check-ins that are due.',
+    cadence: 'Hourly / on check-in',
   },
 ];
 

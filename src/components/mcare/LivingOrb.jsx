@@ -132,6 +132,29 @@
  * one-shot barge-in ring and `notifyDot`'s pulse are untouched — both are
  * real event signals, not ambient aliveness. Default false leaves every
  * other caller unchanged.
+ *
+ * 2026-09, System Health "still working" visualization: a real, confirmed
+ * gap found while building this — `ringCount`/`ringOrbitDuration`/
+ * `ringOpacity` above have existed in STATE_CONFIG this whole time, and the
+ * top-of-file doc comments describe a continuously-orbiting ring halo, but
+ * a direct grep confirms none of those three fields was ever actually read
+ * anywhere in the render logic below — no ring halo has ever visibly
+ * rendered. `showRingHalo` (default false) finally activates them via a new
+ * `RingHalo` sub-component, reusing the exact rotating-ellipse technique
+ * already proven in HologramPlatform.jsx — with one fix: that file puts its
+ * visible border/glow on the STATIC outer ring div and the `animate`
+ * rotation on an empty, borderless inner div, so its own rings don't
+ * actually visibly spin either (rotating an invisible box is imperceptible)
+ * — found while building this, not touched there (out of scope, real risk
+ * of regressing the M-Safe+ identity column). Here the border/glow lives on
+ * the ROTATING child instead. `ringColorOverride` (default null, falls back
+ * to `cfg.color`) recolors ONLY these new ring divs — never `Shell`'s own
+ * `color`/`glowAlpha`, confirmed by direct read of RobotAvatarImage.jsx to
+ * only ever build one `drop-shadow` on the body image — so a page can show
+ * a green health ring around the exact same gold-branded robot without
+ * touching its face/glow/M-badge. Both props default to false/null, so
+ * every existing caller (the real chat orb, LivingMOrb, etc.) renders
+ * pixel-identical to before this was added.
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -246,7 +269,57 @@ function Atmosphere({ color, animated, activityState = 'idle' }) {
   );
 }
 
-export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false, activityOverride = null, amplitude = null, gazeOverride = null, blinkTrigger = 0, eyesOnly = false, suppressAtmosphere = false }) {
+// Finally renders STATE_CONFIG's own ringCount/ringOrbitDuration/ringOpacity
+// (see this file's 2026-09 doc comment above) — opt-in via showRingHalo so
+// every existing caller is unaffected. Each ring is its own fixed,
+// non-rotating clip box sized to its resting footprint (the same "escaped
+// stray bar segment" fix this file's 2026-08-29 comment already documents
+// for the main shell) containing one rotating, bordered child — alternating
+// spin direction and a size/duration stagger per index, matching
+// Atmosphere's own "rings move differently, not in lockstep" convention.
+function RingHalo({ cfg, color, reducedMotion }) {
+  if (!cfg?.ringCount) return null;
+  return (
+    <>
+      {Array.from({ length: cfg.ringCount }).map((_, i) => {
+        const widthPct = 100 + (i + 1) * 22;
+        const heightPct = widthPct * 0.9;
+        const dir = i % 2 === 0 ? 1 : -1;
+        const duration = cfg.ringOrbitDuration * (1 + i * 0.15);
+        const ringVisual = {
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          border: `1.5px solid ${color}`,
+          boxShadow: `0 0 10px ${color}55`,
+          opacity: cfg.ringOpacity,
+        };
+        return (
+          <div
+            key={i}
+            aria-hidden="true"
+            style={{
+              position: 'absolute', top: '50%', left: '50%',
+              width: `${widthPct}%`, height: `${heightPct}%`,
+              marginLeft: `-${widthPct / 2}%`, marginTop: `-${heightPct / 2}%`,
+              borderRadius: '50%', overflow: 'hidden', pointerEvents: 'none',
+            }}
+          >
+            {reducedMotion ? (
+              <div style={ringVisual} />
+            ) : (
+              <motion.div
+                style={ringVisual}
+                animate={{ rotate: 360 * dir }}
+                transition={{ duration, repeat: Infinity, ease: 'linear' }}
+              />
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, naturalAspect = false, inputFocused = false, activityOverride = null, amplitude = null, gazeOverride = null, blinkTrigger = 0, eyesOnly = false, suppressAtmosphere = false, showRingHalo = false, ringColorOverride = null }) {
   // Four-value face-activity state for RobotAvatarImage.jsx's own overlays
   // (visor-dots/waveform/tilt/eye-glow) — a pure mapping of the real
   // 8-value `state` above, plus one additive real signal (`inputFocused`,
@@ -326,6 +399,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
     return (
       <div style={{ width: size, height: size, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {size >= 80 && !suppressAtmosphere && <Atmosphere color={cfgStatic.color} animated={false} activityState={activityState} />}
+        {showRingHalo && <RingHalo cfg={cfgStatic} color={ringColorOverride || cfgStatic.color} reducedMotion />}
         <Shell size={size} glowAlpha={cfgStatic.glowAlpha} color={cfgStatic.color} activityState={activityState} animated={false} naturalAspect={naturalAspect} amplitude={amplitude} gazeOverride={gazeOverride} blinkTrigger={blinkTrigger} eyesOnly={eyesOnly} />
       </div>
     );
@@ -344,6 +418,7 @@ export default function LivingOrb({ state = 'idle', size = 44, flashToken = 0, n
       transition={{ type: 'spring', stiffness: 160, damping: 16 }}
     >
       {size >= 80 && !suppressAtmosphere && <Atmosphere color={cfg.color} animated activityState={activityState} />}
+      {showRingHalo && <RingHalo cfg={cfg} color={ringColorOverride || cfg.color} reducedMotion={false} />}
 
       {flashToken > 0 && (
         <motion.div
