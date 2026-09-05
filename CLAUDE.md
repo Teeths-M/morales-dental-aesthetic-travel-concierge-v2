@@ -3203,6 +3203,41 @@ screenshot pass surfaced: at a narrow mobile width the global floating M-Care la
 footnote text at the bottom of the hero -- not fixed here, app-wide chrome outside this feature's
 scope.
 
+**Same-session correction, found by re-screenshotting for the actual submission-video recording
+pass**: the page was genuinely unreadable in a real fresh browser context -- every line of text on
+`/system-status` (both this hero and the pre-existing stat tiles/automation list below it) is
+white/`rgba(255,255,255,...)`, written assuming a dark ambient page background, but `SystemHealth.jsx`'s
+root div never supplied one. This app's actual `:root` theme (`src/index.css`) is light by default
+(`--background: 150 8% 97%`, confirmed live as `rgb(247,248,247)`) -- `.dark` is only ever opted
+into per-component (e.g. M-Care's own desktop panel), never ambient -- so without an explicit
+background this page silently inherited that light body color and nearly every line of text on it
+(including content that predates tonight's hero work entirely) rendered at near-zero contrast. The
+prior verification pass's screenshots apparently didn't catch this; a second, independent pass this
+session did, confirmed three ways before trusting it: a direct `getComputedStyle` read (opacity `1`,
+color `rgb(255,255,255)` -- ruling out a mid-animation-fade explanation), a full DOM-ancestor walk
+at the h1's exact screen position (confirming no filter/backdrop-filter/mix-blend-mode anywhere in
+the stack -- ruling out a compositing artifact), and reading `src/index.css` directly to find the
+real light `:root` default. Fixed with the smallest possible change: one wrapping div around
+`SystemHealth.jsx`'s existing content, `{ background: '#060B16', minHeight: '100vh' }` -- this
+app's own documented dark token, zero changes to any inner JSX/logic/test-relevant structure.
+Confirmed safe before applying: every color reference in `CategoryRotator.jsx`/`PipelineFlow.jsx`
+and every remaining color in `SystemHealth.jsx` itself is already white/rgba-white or a named brand
+accent (gold/green/amber) -- nothing anywhere on this page assumes a dark-on-light scheme that a
+dark page background would break. Re-verified via a fresh screenshot pass at both 1280px and 390px
+after the fix: every element (heading, description, category title/description, pipeline stages,
+activity log, "WHAT RUNS AUTOMATICALLY" section, all 8 automation cards, ending copy, footer
+timestamp) reads clearly against the correct dark background, blending seamlessly into the
+already-dark global footer directly below it.
+
+**Verification (correction)**: lint clean, typecheck unchanged (same 15-error baseline, zero new
+errors -- the change is a single wrapping div with no logic), `npm run build` exit 0, 912/912
+vitest (unchanged), 325/325 redteam including all 6 SYSTEM HEALTH invariants re-confirmed green
+(none of them assert anything about page-level background, so this fix couldn't regress any of
+them). Pure frontend, no Base44 Publish needed for backend reasons -- ships with the normal
+frontend deploy. This is the one item in this whole feature that's actually been visually confirmed
+end-to-end via a real local dev server and headless-browser screenshots (not left as a live-only
+unknown) specifically because it was the thing blocking the submission-video recording pass.
+
 ## Demo Pages — audit trail, not all are what they claim
 
 `/demo/*` (24 routes, `src/routes/publicRoutes.jsx`) mixes three genuinely different things under one path prefix: features with a real, live engine behind a dramatized presentation (MedGuard, Siobhan, Weather, ArrivalIntel, IntelligenceScan, SituationRoom, EmailShowcase, RecoveryCascade, MemoryBank, MRecon, JamesVoice, MasterJourney, EmergencyScenario); honest vision-demos that say so (MeshBeacon, WaitingRoom, FamilyEye); and demos that claim real-time/automatic behavior the backing code doesn't actually do (EVN's street-level danger zones, Silent Mode / Tap Protocol's fake dispatch logs — a real gesture-SOS system, `useCovertSOS`→`triggerCovertSOS`, exists and is live but neither demo uses it, Language Bridge's "real-time" claim over browser TTS, Nightlife's wrong lockout numbers, and a Trust Score cluster — `calculateDoctorTrustScore`/`calculateCompanionScore` have zero callers anywhere despite claiming a "daily cron" that doesn't exist — fanning out into `AdminMissionControl`'s fabricated-but-undisclosed score column and `CoverageMatrix`'s "LIVE" mislabel). Audited 2026-08-04, full findings in memory (`project_demo_audit_20260804` if using the memory system) — don't assume a `/demo/*` page is either fully real or fully fake without checking; verify per-page.

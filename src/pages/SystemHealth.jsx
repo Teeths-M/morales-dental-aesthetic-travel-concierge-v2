@@ -58,6 +58,17 @@ export default function SystemHealth() {
   const effectiveIsLoading = !isDemo && isLoading;
 
   return (
+    // Every color used on this page (and inside SystemHealthHero) is a
+    // white/rgba-white or brand-accent value, written assuming a dark
+    // ambient background — but this app's own root theme is light by
+    // default (src/index.css's `:root` block; `.dark` is only ever
+    // opted into per-component, e.g. M-Care's desktop panel), and this
+    // page never supplied its own background. Without this wrapper the
+    // page silently inherits the light body background and every line of
+    // text on it becomes nearly invisible — confirmed via a real headless
+    // screenshot, not assumed. Full-bleed so there's no light gutter
+    // beside a dark content column at wide viewports.
+    <div style={{ background: '#060B16', minHeight: '100vh' }}>
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px 80px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <Activity style={{ width: 20, height: 20, color: '#D4AF37' }} />
@@ -151,6 +162,7 @@ export default function SystemHealth() {
           </p>
         </>
       )}
+    </div>
     </div>
   );
 }
