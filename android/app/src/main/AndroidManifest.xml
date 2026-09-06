@@ -67,4 +67,16 @@
          back to typed text when the mic is unavailable or denied. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <!-- Same silent-failure bug class as location/microphone above:
+         navigator.mediaDevices.getUserMedia({video:...}) inside an Android
+         WebView is gated on the app holding CAMERA. Without it, the M-Care
+         document scanner (DocumentScannerCard.jsx) and the covert-SOS
+         evidence photo (src/lib/covertSosEvidence.js) would silently fail to
+         get camera access in the packaged app while working fine in a mobile
+         browser. Not required to install — the scanner already offers an
+         "Upload" fallback, and a missing photo never blocks or delays a
+         covert SOS alert either way. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

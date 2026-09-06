@@ -81,7 +81,10 @@
         "trustscan_credential_recheck_scheduled",
         "trustscan_booking_suspended",
         "trustscan_booking_suspension_cleared",
-        "trustscan_fraud_signal_recorded"
+        "trustscan_fraud_signal_recorded",
+        "covert_sos_triggered",
+        "covert_sos_evidence_captured",
+        "covert_sos_evidence_accessed"
       ]
     },
     "actor_id": {

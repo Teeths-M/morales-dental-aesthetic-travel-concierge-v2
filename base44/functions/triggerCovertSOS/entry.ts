@@ -180,6 +180,28 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }).catch(() => {});
   }
 
+  // ── 6b. Admin push notification — an ADDITIONAL channel alongside the
+  //        email above, not a replacement. A different channel from the
+  //        link-only email/SMS policy (comms-audit.mjs only scans SendEmail/
+  //        SMS/Twilio/WhatsApp bodies; a push is shown only on the
+  //        recipient's own device, same exemption already used by
+  //        sendGoldenMNotification/sendHandshakeAlert). Independently
+  //        try/caught and non-blocking — a missing/expired push subscription
+  //        must never affect the response or any other channel above. ──────
+  // LEAK-SCAN-IGNORE-START
+  if (adminEmail) {
+    await base44.asServiceRole.functions.invoke('sendPushNotification', {
+      user_email: adminEmail,
+      title: '🚨 Covert SOS Triggered',
+      body: `${patientName} in ${destination} — check email/SMS immediately.`,
+      url: '/admin',
+      urgent: true,
+      tag: 'covert-sos',
+      internal_secret: Deno.env.get('CRON_SECRET'),
+    }).catch(() => {});
+  }
+  // LEAK-SCAN-IGNORE-END
+
   // ── 7. Notify security agency — prefer the one already assigned to this
   //       case; otherwise fall back to any other verified, available agency
   //       in the same destination country. This file's own header says a

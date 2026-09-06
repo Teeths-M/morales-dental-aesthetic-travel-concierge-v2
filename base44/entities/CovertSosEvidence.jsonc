@@ -1,0 +1,114 @@
+{
+  "name": "CovertSosEvidence",
+  "type": "object",
+  "description": "A single rear-camera photo captured as a best-effort follow-up to a covert SOS trigger (see triggerCovertSOS / attachCovertSosEvidence). Never blocks or delays the primary GPS+SMS+email+security dispatch — this is a separate, independent alert leg. file_uri is a Base44 internal storage reference (from Core.UploadPrivateFile), never a directly-fetchable URL; a fresh, short-lived signed URL is minted only when the token is actually opened (see getCovertSosEvidence), so the long-lived opaque token below is the only thing ever placed in an SMS/email/push.",
+  "properties": {
+    "token": {
+      "type": "string",
+      "description": "Opaque single-purpose access token (SOSEVID_<hex>)"
+    },
+    "file_uri": {
+      "type": "string",
+      "description": "Base44 internal storage reference from Core.UploadPrivateFile — not a browser-fetchable URL"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "max_access_count": {
+      "type": "number",
+      "default": 25,
+      "description": "Higher than a typical single-recipient share link — a guardian, admin, and security agency may all legitimately open the same emergency link"
+    },
+    "access_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_accessed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_accessed_ip": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "token",
+    "file_uri",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

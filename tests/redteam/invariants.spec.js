@@ -989,6 +989,76 @@ test('EMERGENCY: the comms exemption is explicit at the call site', () => {
     .not.toMatch(/Body:[^`]*`[^`]*\$\{patientName\}[^`]*Help is on the way/);
 });
 
+test('COVERT SOS EVIDENCE: the photo follow-up never delays or risks the primary alert', () => {
+  // The photo-capture follow-up must be a genuinely separate, un-awaited
+  // call fired AFTER triggerCovertSOS, never raced against or merged into
+  // the GPS-fix timeout that call already budgets. Camera cold-start/
+  // permission/upload latency is far more variable than a GPS fix, so
+  // entangling them would risk losing or delaying the one call that must
+  // always fire fast and cleanly.
+  const hook = read('src/hooks/useCovertSOS.js');
+  const triggerIdx = hook.indexOf("base44.functions.invoke('triggerCovertSOS'");
+  const evidenceIdx = hook.indexOf('captureCovertSosEvidenceAsync(');
+  expect(triggerIdx, 'the primary SOS dispatch must exist').toBeGreaterThan(-1);
+  expect(evidenceIdx, 'the evidence follow-up must exist').toBeGreaterThan(-1);
+  expect(evidenceIdx, 'the evidence follow-up must fire after, not before or inside, the primary dispatch')
+    .toBeGreaterThan(triggerIdx);
+  // Must not be awaited — a hung/slow camera capture must never block the
+  // hook's own cooldown reset or the calling gesture handler.
+  const evidenceLine = hook.slice(evidenceIdx - 10, evidenceIdx + 60);
+  expect(evidenceLine, 'the evidence follow-up call must not be awaited').not.toMatch(/await\s+captureCovertSosEvidenceAsync/);
+
+  // The capture technique itself lives in its own module, not inlined into
+  // the hook — keeps useCovertSOS.js's own pinned gesture/cooldown logic
+  // (see the COVERT SOS test above) untouched by this addition.
+  const lib = read('src/lib/covertSosEvidence.js');
+  expect(lib, 'must reuse getUserMedia with the rear camera, matching DocumentScannerCard.jsx').toContain("facingMode: 'environment'");
+  // The stream must be released before the async blob encode — minimizes how
+  // long the OS camera-in-use indicator stays visible. toBlob is async; the
+  // track-stop call must precede it in source order.
+  const grabFn = lib.slice(lib.indexOf('async function grabOneFrameBlob'), lib.indexOf('async function captureCovertSosEvidenceAsync'));
+  const stopIdx = grabFn.indexOf('stream.getTracks().forEach((t) => t.stop())');
+  const toBlobIdx = grabFn.indexOf('canvas.toBlob');
+  expect(stopIdx, 'the capture stream must be stopped').toBeGreaterThan(-1);
+  expect(stopIdx, 'the camera must be released before the blob encode, not after').toBeLessThan(toBlobIdx);
+  // Every failure mode must be swallowed internally — a covert trigger must
+  // never surface anything on screen regardless of capture outcome.
+  const captureFn = lib.slice(lib.indexOf('export async function captureCovertSosEvidenceAsync'));
+  expect(captureFn, 'capture failures must never throw to the caller').toContain('catch (_) {');
+
+  // The backend follow-up function itself must stay schema-free, matching
+  // triggerCovertSOS's own reasoning, and must require a real session (it is
+  // called by an already-authenticated patient's own browser, unlike the
+  // public token-gated reader below).
+  const attach = read('base44/functions/attachCovertSosEvidence/entry.ts');
+  expect(attach, 'attachCovertSosEvidence must stay schema-free').not.toContain('bodySchema:');
+  expect(attach, 'attachCovertSosEvidence must require a session').toContain('requireAuth: true');
+  // Must reuse the same authorised emergencyDispatch() exemption as
+  // triggerCovertSOS for its own guardian follow-up SMS — not a second,
+  // undocumented bypass of the link-only policy.
+  expect(attach, 'the follow-up guardian SMS must use the authorised exemption').toContain('emergencyDispatch(');
+  expect(attach, 'it must carry an enumerated reason').toMatch(/reason: '(sos_triggered|patient_missing|medical_emergency|authority_dispatch)'/);
+
+  // The public reader must be token-gated with no login, and must mint a
+  // FRESH signed URL at access time rather than ever persisting or returning
+  // the long-lived internal file_uri directly to an unauthenticated caller.
+  const reader = read('base44/functions/getCovertSosEvidence/entry.ts');
+  expect(reader, 'getCovertSosEvidence must be public (token-gated, not session-gated)').toContain('requireAuth: false');
+  expect(reader, 'must mint a signed URL, not expose file_uri directly').toContain('Core.CreateFileSignedUrl');
+  expect(reader, 'the response must never include the raw file_uri').not.toMatch(/return ok\(\{[^)]*file_uri/);
+  // Same atomic conditional-increment race fix accessShareLink already uses —
+  // two simultaneous opens must never both slip past a stale access_count.
+  expect(reader, 'access-count increment must be atomic').toContain('access_count: { $lt:');
+
+  // The entity itself must be scoped, not fully open — read is patient-or-
+  // admin, and every real write goes through the two functions above via
+  // asServiceRole (their own requireAuth gates are the real protection), not
+  // a permissive entity-level create/update rule.
+  const entity = read('base44/entities/CovertSosEvidence.jsonc');
+  expect(entity, 'read must be scoped to the owning patient or an admin').toMatch(/"data\.patient_email"/);
+  expect(entity, 'create must not be open to any authenticated user').not.toMatch(/"create":\s*\{\s*"user_condition":\s*\{\s*"id"/);
+});
+
 test('PORTAL TOKENS: no published default signing key, anywhere', () => {
   // A portal token is a bearer credential: it grants an unauthenticated visitor
   // read access to a patient's case. Eighteen functions used to inline

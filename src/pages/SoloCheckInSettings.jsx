@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Radio, Heart, EyeOff } from 'lucide-react';
 import { isCovertSOSEnabled, enableCovertSOS, disableCovertSOS } from '@/hooks/useCovertSOS';
+import { prewarmCovertSosCamera } from '@/lib/covertSosEvidence';
 import { BackButton } from '@/components/nav/BackButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,7 +67,15 @@ function CovertSOSPanel() {
 
   function toggle() {
     if (armed) { disableCovertSOS(); setArmed(false); }
-    else        { enableCovertSOS();  setArmed(true);  }
+    else {
+      enableCovertSOS();
+      setArmed(true);
+      // Resolve the camera permission prompt now, at this deliberate,
+      // visible moment (the patient actively arming Covert SOS) — so a real
+      // trigger later never needs to show one. See
+      // src/lib/covertSosEvidence.js for why this matters for discreetness.
+      prewarmCovertSosCamera();
+    }
   }
 
   return (
@@ -105,6 +114,7 @@ function CovertSOSPanel() {
               <li>• Or type <strong className="text-red-200">MORALESHELP</strong> in any search/text field</li>
               <li>• <strong className="text-red-200">No confirmation shown</strong> — the attacker will not know</li>
               <li>• Security dispatch fires immediately. Guardian is SMS'd with your GPS.</li>
+              <li>• Your rear camera also takes one photo in the background and sends it to your guardian and Morales — no preview or shutter sound on your screen.</li>
             </ul>
           </div>
           {!tested && (

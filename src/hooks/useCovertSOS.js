@@ -16,6 +16,7 @@
  */
 import { useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { captureCovertSosEvidenceAsync } from '@/lib/covertSosEvidence';
 
 const STORAGE_KEY   = 'morales_covert_sos_enabled';
 const FIRE_KEY      = 'morales_covert_last_fire';
@@ -97,6 +98,13 @@ export function useCovertSOS({ caseId, currentLocation, enabled = true }) {
       accuracy_m:     accuracy,
       trigger_method: method,
     }).catch(() => {});
+
+    // Best-effort evidence follow-up — a genuinely separate call, never
+    // awaited or raced against the primary alert above. See
+    // src/lib/covertSosEvidence.js for why: camera capture is far slower and
+    // less reliable than a GPS fix, so entangling it here would risk delaying
+    // or losing the one call that must always fire fast and cleanly.
+    captureCovertSosEvidenceAsync({ caseId: caseId || null }).catch(() => {});
 
     // Reset after cooldown
     setTimeout(() => { firingRef.current = false; }, COOLDOWN_MS);
