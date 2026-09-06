@@ -1059,6 +1059,74 @@ test('COVERT SOS EVIDENCE: the photo follow-up never delays or risks the primary
   expect(entity, 'create must not be open to any authenticated user').not.toMatch(/"create":\s*\{\s*"user_condition":\s*\{\s*"id"/);
 });
 
+test('TIER 2 EMERGENCY: no autonomous dialing anywhere, and zero M-Care agent involvement', () => {
+  // Zero agent grant — this is entirely backend-triggered by existing
+  // deterministic SOS/escalation code, never something the LLM decides to
+  // call. Confirms neither new function name appears in m_care.jsonc at all.
+  const agent = read('base44/agents/m_care.jsonc');
+  expect(agent, 'assembleTier2EmergencyPacket must never be a granted agent tool').not.toContain('assembleTier2EmergencyPacket');
+  expect(agent, 'routeTier2Emergency must never be a granted agent tool').not.toContain('routeTier2Emergency');
+
+  // The decision function's only terminal actions may be a durable record
+  // and a real notification to Morales' own admin — never a telephony/dial/
+  // call-adapter of any kind. Structurally rules out the one thing this
+  // scaffolding must never grow into.
+  const router = read('base44/functions/routeTier2Emergency/entry.ts');
+  expect(router, 'must update the packet record').toContain('Tier2EmergencyPacket.update');
+  expect(router, 'must write to the audit log').toContain('AuditLog.create');
+  expect(router, 'must notify admin by email').toContain('Core.SendEmail');
+  expect(router, 'must notify admin by push').toContain('sendPushNotification');
+  expect(router, 'must never import the outbound voice-call adapter').not.toContain('voiceCallAdapter');
+  expect(router, 'must never reference Twilio directly').not.toMatch(/twilio/i);
+  expect(router, 'must state plainly that no automated dialing occurred').toContain('No automated dialing has occurred');
+  // The route_reason text itself must never claim a partner/police/ambulance
+  // was actually contacted — only that a human must act.
+  expect(router, 'the human-partner branch must not claim contact was made').toContain('a human must contact the partner now');
+  expect(router, 'the no-partner branch must not claim contact was made').toContain('a human must dial the local emergency number directly');
+
+  // Packet assembly must never be schema-hardened into rejecting an
+  // emergency follow-up, same reasoning as triggerCovertSOS.
+  const assembler = read('base44/functions/assembleTier2EmergencyPacket/entry.ts');
+  expect(assembler, 'assembleTier2EmergencyPacket must stay schema-free').not.toContain('bodySchema:');
+  expect(assembler, 'must never import the outbound voice-call adapter').not.toContain('voiceCallAdapter');
+
+  // The medical-history consent gate is read, never bypassed — must reuse
+  // the exact real field assignDoctorToCase already checks, and the
+  // un-consented branch's honest fallback text must be present verbatim.
+  const packetModule = read('base44/shared/tier2EmergencyPacket.ts');
+  expect(packetModule, 'must check the real consent field').toContain('medical_history_share_consent');
+  expect(packetModule, 'must never populate medical info before checking consent').toContain('Not shared — patient has not consented to sharing medical history.');
+  const consentGivenIdx = packetModule.indexOf('const consentGiven');
+  const summaryDefaultIdx = packetModule.indexOf("let medicalInfoSummary = 'Not shared");
+  expect(consentGivenIdx, 'consent must be checked').toBeGreaterThan(-1);
+  expect(consentGivenIdx, 'consent check must precede the medical summary default').toBeLessThan(summaryDefaultIdx);
+
+  // Both wiring-point call sites must fire the packet assembly un-awaited —
+  // a slow/failed follow-up must never delay or risk the real dispatch.
+  const sos = read('base44/functions/triggerSOS/entry.ts');
+  const sosCallIdx = sos.indexOf("functions?.invoke?.('assembleTier2EmergencyPacket'");
+  expect(sosCallIdx, 'triggerSOS must fire the Tier 2 follow-up').toBeGreaterThan(-1);
+  expect(sos.slice(Math.max(0, sosCallIdx - 20), sosCallIdx), 'triggerSOS must not await the Tier 2 follow-up').not.toMatch(/await\s*$/);
+  expect(sos, 'must gate on the real police/ambulance trigger types').toMatch(/trigger_type === 'police' \|\| trigger_type === 'ambulance'/);
+
+  const solo = read('base44/functions/escalateSoloCheckIn/entry.ts');
+  const soloCallIdx = solo.indexOf("functions?.invoke?.('assembleTier2EmergencyPacket'");
+  expect(soloCallIdx, 'escalateSoloCheckIn must fire the Tier 2 follow-up').toBeGreaterThan(-1);
+  expect(solo.slice(Math.max(0, soloCallIdx - 20), soloCallIdx), 'escalateSoloCheckIn must not await the Tier 2 follow-up').not.toMatch(/await\s*$/);
+  // Must be wired into the real 9h tier, not a new/different threshold.
+  expect(solo.slice(0, soloCallIdx), 'the Tier 2 call must sit inside the real 9h tier').toContain("hoursOverdue >= 9");
+
+  // The routing DATA (not hardcoded logic) must default to no real partner
+  // anywhere, and its own field description must forbid automated writes.
+  const contacts = read('base44/entities/EmergencyContacts.jsonc');
+  expect(contacts, 'has_human_safety_partner must default false').toMatch(/"has_human_safety_partner":\s*\{[^}]*"default":\s*false/s);
+  expect(contacts, 'the field must document it is admin-only to set').toMatch(/only ever be set true by an admin/);
+
+  const packetEntity = read('base44/entities/Tier2EmergencyPacket.jsonc');
+  expect(packetEntity, 'read must be scoped to the owning patient or an admin').toMatch(/"data\.patient_email"/);
+  expect(packetEntity, 'create must be admin-only, not open to any authenticated user').not.toMatch(/"create":\s*\{\s*"user_condition":\s*\{\s*"id"/);
+});
+
 test('PORTAL TOKENS: no published default signing key, anywhere', () => {
   // A portal token is a bearer credential: it grants an unauthenticated visitor
   // read access to a patient's case. Eighteen functions used to inline

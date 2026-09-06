@@ -47,7 +47,9 @@
         "virtual_consultation_decision_recorded",
         "guardian_call_placed",
         "guardian_call_outcome",
-        "partner_quote_confirmed"
+        "partner_quote_confirmed",
+        "emergency_packet_assembled",
+        "emergency_human_response_requested"
       ]
     },
     "source": {

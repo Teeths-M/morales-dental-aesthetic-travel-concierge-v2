@@ -504,6 +504,26 @@ Deno.serve(async (req) => {
           prev_hash: prevHash9,
         });
 
+        // ── Tier 2 scaffolding: same structured packet + human-handoff path
+        // as triggerSOS's police/ambulance trigger — fired here, not
+        // awaited, same non-blocking shape as this function's own
+        // sendSatelliteMessage call above. No autonomous dialing anywhere
+        // downstream — see routeTier2Emergency's own header.
+        base44.asServiceRole.functions?.invoke?.('assembleTier2EmergencyPacket', {
+          internal_secret: Deno.env.get('CRON_SECRET'),
+          case_id: checkIn.case_id,
+          source_function: 'escalateSoloCheckIn',
+          source_event_id: checkIn.id,
+          trigger_type: 'missed_checkin_9h',
+          patient_email: checkIn.user_email,
+          patient_name: checkIn.user_name,
+          patient_phone: checkIn.user_phone,
+          latitude: latestLoc?.latitude ?? null,
+          longitude: latestLoc?.longitude ?? null,
+          location_label: locStr,
+          situation_description: `${checkIn.user_name || 'A solo traveler'} has been unresponsive for ${hoursOverdue.toFixed(1)} hours after a missed safety check-in. Case has been set to CRITICAL priority.`,
+        }).catch(() => {});
+
         await logCrisisReroute(base44, {
           case_id: checkIn.case_id,
           crisis_type: 'EMERGENCY',

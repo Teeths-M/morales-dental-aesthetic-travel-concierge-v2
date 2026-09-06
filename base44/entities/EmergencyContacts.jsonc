@@ -33,6 +33,19 @@
     "notes": {
       "type": "string",
       "description": "Additional emergency contact notes"
+    },
+    "has_human_safety_partner": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a real, vendor-contracted human safety-monitoring/dispatch partner exists for this country (a service that can relay to local emergency dispatch). Must default to false and only ever be set true by an admin, once a real partner relationship and legal/compliance review exist. Read by routeTier2Emergency only to choose which honest message to send to Morales' own admin — no code path may use this field to place an automated call or message to police, ambulance, or any partner service."
+    },
+    "languages_supported": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Languages a human responder in this country can be expected to communicate in. Informational context surfaced in the Tier 2 emergency packet only — never gates any automated action."
     }
   },
   "required": [

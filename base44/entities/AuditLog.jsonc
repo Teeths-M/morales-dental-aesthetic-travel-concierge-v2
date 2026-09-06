@@ -84,7 +84,9 @@
         "trustscan_fraud_signal_recorded",
         "covert_sos_triggered",
         "covert_sos_evidence_captured",
-        "covert_sos_evidence_accessed"
+        "covert_sos_evidence_accessed",
+        "tier2_emergency_packet_assembled",
+        "tier2_emergency_routed"
       ]
     },
     "actor_id": {

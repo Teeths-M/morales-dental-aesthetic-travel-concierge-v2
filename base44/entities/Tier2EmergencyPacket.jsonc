@@ -1,0 +1,164 @@
+{
+  "name": "Tier2EmergencyPacket",
+  "type": "object",
+  "description": "A single canonical, structured emergency packet assembled from an existing police/ambulance-shaped trigger (triggerSOS's police/ambulance trigger_type, or escalateSoloCheckIn's 9h tier) — never a new trigger mechanism. Scaffolding only: no code path reading this entity may ever place a real call or message to police, ambulance, or a human safety-monitoring partner. The terminal action is always a durable record here plus a real notification to Morales' own admin/on-call human (see routeTier2Emergency) — never an autonomous external call.",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "source_function": {
+      "type": "string",
+      "enum": [
+        "triggerSOS",
+        "escalateSoloCheckIn"
+      ]
+    },
+    "source_event_id": {
+      "type": "string",
+      "description": "SOSEvent.id or SoloCheckIn.id this packet was built from — always traceable back to the real trigger, never invented."
+    },
+    "trigger_type": {
+      "type": "string",
+      "description": "e.g. 'police', 'ambulance' (from SOSEvent.trigger_type), or 'missed_checkin_9h' (from escalateSoloCheckIn)."
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "patient_phone": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "location_label": {
+      "type": "string"
+    },
+    "situation_description": {
+      "type": "string",
+      "description": "Reused, real text from the calling trigger only — never LLM-generated."
+    },
+    "preferred_language": {
+      "type": "string",
+      "default": "en"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "medical_info_consent_given": {
+      "type": "boolean",
+      "default": false
+    },
+    "medical_info_summary": {
+      "type": "string",
+      "description": "Consent-gated using the same Consultation.medical_history_share_consent field assignDoctorToCase already checks. 'Not shared — patient has not consented to sharing medical history.' when consent is absent — never silently populated regardless."
+    },
+    "country_emergency_number": {
+      "type": "string",
+      "description": "Snapshotted from EmergencyContacts at routing time, for audit even if the table changes later."
+    },
+    "country_has_human_safety_partner": {
+      "type": "boolean",
+      "default": false
+    },
+    "route_decision": {
+      "type": "string",
+      "enum": [
+        "human_safety_partner_available",
+        "direct_local_emergency_with_human_outreach"
+      ]
+    },
+    "route_reason": {
+      "type": "string",
+      "description": "Plain, honest text. Must never claim police/ambulance/a safety partner was actually contacted — only that a human has been notified and must act."
+    },
+    "human_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notification_channels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "packet_assembled",
+        "human_notified"
+      ],
+      "default": "packet_assembled"
+    },
+    "assembled_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "patient_email",
+    "trigger_type",
+    "source_function",
+    "situation_description",
+    "status",
+    "assembled_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

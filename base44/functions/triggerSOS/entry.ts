@@ -143,6 +143,29 @@ Deno.serve(createHandler(async ({ req }) => {
       triggered_at: now
     });
 
+    // ── Tier 2 scaffolding: police/ambulance-shaped situations additionally
+    // get a structured emergency packet assembled + routed to a human
+    // admin/on-call channel. Fired here, not awaited — a genuinely separate
+    // follow-up call so a slow/failed packet assembly can never delay or
+    // risk the real-time SOS dispatch above. No autonomous dialing anywhere
+    // downstream of this call — see routeTier2Emergency's own header.
+    if (trigger_type === 'police' || trigger_type === 'ambulance') {
+      base44.asServiceRole.functions?.invoke?.('assembleTier2EmergencyPacket', {
+        internal_secret: Deno.env.get('CRON_SECRET'),
+        case_id: case_id || null,
+        source_function: 'triggerSOS',
+        source_event_id: sosEvent.id,
+        trigger_type,
+        patient_email,
+        patient_name: sosEvent.patient_name,
+        patient_phone: sosEvent.patient_phone,
+        latitude: sosEvent.latitude,
+        longitude: sosEvent.longitude,
+        location_label: sosEvent.location_label,
+        situation_description: translatedMessage,
+      }).catch(() => {});
+    }
+
     const notificationsSent = [];
 
     // SECURITY: Resolve a confirmed admin email from env only — never fall back to patient_email

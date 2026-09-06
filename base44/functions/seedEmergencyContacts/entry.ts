@@ -57,7 +57,15 @@ Deno.serve(createHandler(async ({ base44 }) => {
       results.push({ country_name: entry.country_name, status: 'already_exists' });
       continue;
     }
-    await base44.asServiceRole.entities.EmergencyContacts.create(entry);
+    // Explicit honest defaults for the Tier 2 emergency-packet fields — never
+    // rely solely on schema-level defaults for a fresh environment. Real value
+    // only ever comes from an admin setting has_human_safety_partner:true once
+    // a real vendor relationship + legal review exist (none does today).
+    await base44.asServiceRole.entities.EmergencyContacts.create({
+      has_human_safety_partner: false,
+      languages_supported: [],
+      ...entry,
+    });
     results.push({ country_name: entry.country_name, status: 'created' });
   }
 
