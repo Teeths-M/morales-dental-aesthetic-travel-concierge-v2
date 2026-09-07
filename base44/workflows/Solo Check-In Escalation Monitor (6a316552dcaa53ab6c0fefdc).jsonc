@@ -1,0 +1,44 @@
+{
+  "name": "Solo Check-In Escalation Monitor (6a316552dcaa53ab6c0fefdc)",
+  "description": "Monitors and escalates solo check-ins at 2h and 3h overdue intervals",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 30,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-06-16T15:01:38.449000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "solo_check_in_escalation_monitor_6a316552dcaa53ab6c0fefdc",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "escalateSoloCheckIn",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "escalateSoloCheckIn"
+  }
+}

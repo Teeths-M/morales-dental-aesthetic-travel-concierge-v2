@@ -1,0 +1,37 @@
+{
+  "name": "Auto-assign Travel after Doctor Confirms",
+  "description": "Automatically assigns travel agency when doctor confirms",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"doctor_confirmation_status\") != null) and (.trigger.data.doctor_confirmation_status == \"Confirmed\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "Case"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_assign_travel_after_doctor_confirms",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "assignTravelAgency",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "assignTravelAgency"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "M-Care Autonomous Flight Reroute \u2014 Cancellation",
+  "description": "Phase 2 heartbeat: the instant a TravelRequest's flight_status flips to cancelled, M-Care runs the full partner-notification cascade (reusing handleFlightDisruption \u2014 pauses trip, notifies driver + companion + guardian, flags admin for hotel rebooking) and then speaks first to the patient with a critical-priority chat bubble + push: 'I caught that your flight was cancelled \u2014 I've already told everyone and paused your journey. My care team is arranging a new flight.' Writes a CrisisReroute audit record. The third autonomous heartbeat after driver no-show and doctor decline.",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"flight_status\") != null) and (.trigger.data.flight_status == \"cancelled\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "TravelRequest"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "m_care_autonomous_flight_reroute_cancellation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "mcareAutonomousFlightReroute",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "mcareAutonomousFlightReroute"
+  }
+}

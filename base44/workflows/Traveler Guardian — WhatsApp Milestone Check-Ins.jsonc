@@ -1,0 +1,44 @@
+{
+  "name": "Traveler Guardian \u2014 WhatsApp Milestone Check-Ins",
+  "description": "Traveler Guardian \u2014 every 10 minutes, sends due milestone check-ins (landed, arrived_at_hotel, pre_procedure, post_procedure, departure, home_safe) to travelers via WhatsApp, with an email fallback when the traveler hasn't opted in to WhatsApp or has no valid phone. Idempotent (sent_time guard), so overlapping runs can't double-send. The existing escalation ladder takes over if a traveler doesn't respond.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 10,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-08-08T01:30:30.089000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "traveler_guardian_whatsapp_milestone_check_ins",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendMilestoneWhatsAppCheckIns",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "sendMilestoneWhatsAppCheckIns"
+  }
+}

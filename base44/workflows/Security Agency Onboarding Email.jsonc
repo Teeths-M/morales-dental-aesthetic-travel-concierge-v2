@@ -1,0 +1,39 @@
+{
+  "name": "Security Agency Onboarding Email",
+  "description": "Sends verification requirements and onboarding guide immediately when a new Security Agency registers.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "SecurityAgency"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "security_agency_onboarding_email",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendPartnerOnboarding",
+            "args": {
+              "partner_type": "security_agency"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "sendPartnerOnboarding"
+  }
+}

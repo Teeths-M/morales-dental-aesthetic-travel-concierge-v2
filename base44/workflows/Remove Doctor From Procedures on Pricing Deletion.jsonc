@@ -1,0 +1,37 @@
+{
+  "name": "Remove Doctor From Procedures on Pricing Deletion",
+  "description": "",
+  "trigger": {
+    "condition": "${ (.trigger.data.doctor_id != null) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "delete"
+      ],
+      "entity_name": "DoctorPricing"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "remove_doctor_from_procedures_on_pricing_deletion",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "removeDoctorFromProcedures",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "removeDoctorFromProcedures"
+  }
+}

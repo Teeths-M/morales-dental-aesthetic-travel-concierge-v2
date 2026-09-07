@@ -1,0 +1,44 @@
+{
+  "name": "Guardian AM/PM Check-In Sweep",
+  "description": "Phase 3 heartbeat: makes Silent Guardian's 9am/9pm check-in real. Every 15 minutes, sends the scheduled AM/PM Guardian check-in SMS to each active, opted-in solo traveler at their destination's local 9am/9pm, deduped per local calendar day. Until now Guardian Mode's banner was cosmetic \u2014 the check-in SMS was never actually sent on schedule. Writes a JourneyEvent (low-priority chat bubble) per check-in so the Orb's acting state surfaces the background work.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 15,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-08-17T12:11:09.447000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "guardian_am_pm_check_in_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runGuardianCheckInSweep",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "runGuardianCheckInSweep"
+  }
+}

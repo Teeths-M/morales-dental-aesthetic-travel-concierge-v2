@@ -1,0 +1,37 @@
+{
+  "name": "Post-Surgery Feedback Request",
+  "description": "Sends a feedback email to the patient when their recovery session is marked as complete (is_active = false).",
+  "trigger": {
+    "condition": "${ ((.trigger.data.is_active == false) and (.trigger.changed_fields | index(\"is_active\") != null)) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "RecoverySession"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "post_surgery_feedback_request",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendPostSurgeryFeedback",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "sendPostSurgeryFeedback"
+  }
+}

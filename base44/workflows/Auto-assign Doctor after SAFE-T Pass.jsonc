@@ -1,0 +1,37 @@
+{
+  "name": "Auto-assign Doctor after SAFE-T Pass",
+  "description": "Automatically assigns a doctor when SAFE-T review passes",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"safe_t_result\") != null) and (.trigger.data.safe_t_result == \"PASSED\") and (.trigger.data.status == \"Safe-T-Reviewed\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "Case"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_assign_doctor_after_safe_t_pass",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "assignDoctorToCase",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "assignDoctorToCase"
+  }
+}

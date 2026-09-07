@@ -1,0 +1,39 @@
+{
+  "name": "Auto-create case from consultation",
+  "description": "Automatically creates CaseRecord when new Consultation is submitted",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Consultation"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_create_case_from_consultation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "iq200Pipeline",
+            "args": {
+              "action": "create"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "iq200Pipeline"
+  }
+}

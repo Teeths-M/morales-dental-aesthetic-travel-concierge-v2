@@ -1,0 +1,37 @@
+{
+  "name": "M-Care Autonomous Reroute \u2014 Driver No-Show",
+  "description": "The event-driven heartbeat: the instant a RecoveryTransportRequest status flips to no_driver or cancelled, M-Care acts on its own \u2014 finds a backup driver, reassigns the transport, and posts a proactive chat bubble to the traveler before they ever report a problem. This is M-Care working autonomously, not waiting for input.",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"no_driver\" or .trigger.data.status == \"cancelled\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "RecoveryTransportRequest"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "m_care_autonomous_reroute_driver_no_show",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "mcareAutonomousReroute",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "mcareAutonomousReroute"
+  }
+}
