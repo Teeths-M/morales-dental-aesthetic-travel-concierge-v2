@@ -31,6 +31,13 @@ export default function AppLayout() {
   const { pathname } = useLocation();
   useGeoAutoAlign();
 
+  // The landing page is a full-bleed cinematic scene with its own minimal
+  // navigation (LandingNav). The shared Header and Footer stay exactly as they
+  // are on every other route — on this one route only they would sit on top of
+  // the corridor photograph and turn a quiet first impression into a product
+  // chrome. LandingNav carries the sign-in and pilot links, so nothing is lost.
+  const isCinematicLanding = pathname === '/';
+
   // Covert SOS — mounted at the LAYOUT so the 5-tap gesture and the
   // MORALESHELP keyword work on every page. SoloCheckInSettings tells patients
   // they can "type MORALESHELP in any search/text field", but the detector was
@@ -144,14 +151,14 @@ export default function AppLayout() {
 
       <div className="min-h-screen flex flex-col">
         <OfflineBanner />
-        <Header />
-        <main className={`flex-1 pt-[56px] sm:pt-[72px] ${user && !isAdmin ? 'pb-[70px] lg:pb-0' : ''}`}>
+        {!isCinematicLanding && <Header />}
+        <main className={`flex-1 ${isCinematicLanding ? '' : 'pt-[56px] sm:pt-[72px]'} ${user && !isAdmin ? 'pb-[70px] lg:pb-0' : ''}`}>
           {user && !isAdmin && (
             <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
           )}
           <Outlet />
         </main>
-        <Footer />
+        {!isCinematicLanding && <Footer />}
 
         {/* M-Care — hidden on demo pages so judges see a clean experience */}
         {!isDemo && <MCareOrb />}

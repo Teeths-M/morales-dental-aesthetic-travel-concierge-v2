@@ -80,6 +80,7 @@ const MemoryBankDemo           = lazy(() => import('@/pages/MemoryBankDemo'));
 const MReconDemo               = lazy(() => import('@/pages/MReconDemo'));
 const McareIntroDemo           = lazy(() => import('@/pages/McareIntroDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
+const Pilot                    = lazy(() => import('@/pages/Pilot'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
 // Minor reunification — token-gated, no login. Both pages are inert until the
 // module's feature flag is switched on.
@@ -109,6 +110,9 @@ export const publicRoutes = (
     <Route path="/consultation"   element={<ConsultationRedirect />} />
     <Route path="/consultation-success" element={<ErrorBoundary><ConsultationSuccess /></ErrorBoundary>} />
     <Route path="/register-role"  element={<ErrorBoundary><RegisterRole /></ErrorBoundary>} />
+    {/* Pilot waiting list — the destination of every "Join the pilot" on the
+        landing page. Public, one field, writes through joinPilot. */}
+    <Route path="/pilot"          element={<ErrorBoundary><Pilot /></ErrorBoundary>} />
     <Route path="/deep-perfection" element={<ErrorBoundary><DeepPerfection /></ErrorBoundary>} />
     <Route path="/onboarding"     element={<ErrorBoundary><OnboardingEducation /></ErrorBoundary>} />
     <Route path="/travel-concierge" element={<ErrorBoundary><TravelConcierge /></ErrorBoundary>} />

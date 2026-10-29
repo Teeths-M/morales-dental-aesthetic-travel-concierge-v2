@@ -1,42 +1,61 @@
-import React from 'react';
-import LuxuryHero from '../components/home/LuxuryHero';
-import CheckYourDoctor from '../components/home/CheckYourDoctor';
-import LuxuryStatsBar from '../components/home/LuxuryStatsBar';
-import LuxuryHowItWorks from '../components/home/LuxuryHowItWorks';
-import LuxuryWhyMorales from '../components/home/LuxuryWhyMorales';
-import RealMoments from '../components/home/RealMoments';
-import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
-import ProtectionStackSection from '../components/home/ProtectionStackSection';
-import StickyBookCTA from '../components/home/StickyBookCTA';
+import LandingNav from '@/components/landing/LandingNav';
+import LandingHero from '@/components/landing/LandingHero';
+import McareTranscript from '@/components/landing/McareTranscript';
+import PilotSection from '@/components/landing/PilotSection';
+import McareGreeting from '@/components/landing/McareGreeting';
+import { NAVY, MUTED } from '@/components/landing/theme';
 
+/**
+ * Home — the cinematic landing page.
+ *
+ * Three sections and one greeting, in this order: the question, the evidence,
+ * the invitation. The previous composition (hero, stats bar, how-it-works,
+ * experts, why-Morales, protection stack, moments, sticky CTA) was removed from
+ * THIS page only — every one of those components still exists and the routes
+ * that use them still work, so restoring any of them is a one-line change.
+ */
 export default function Home() {
   return (
-    <div style={{ background: '#060B16' }}>
-      <LuxuryHero />
-      {/* Public "Check Your Doctor" tool — calm/light module, after the
-          philosophy (hero) and before the stats bar. Wired to publicDoctorCheck
-          (neutral signals) + submitDoctorCorrection (human queue). */}
-      <CheckYourDoctor />
-      <LuxuryStatsBar />
-      <LuxuryHowItWorks />
-      <OurExpertsTeaser />
-      <LuxuryWhyMorales />
-      <ProtectionStackSection />
-      <RealMoments />
-      {/* Testimonials removed until real patient stories exist (pre-pilot).
-          Fabricated patient reviews have no place on a medical trust product.
-          LuxuryTestimonials.jsx is kept in the codebase to restore with real,
-          consented stories after the pilot. */}
-      <StickyBookCTA />
+    <div style={{ background: NAVY }}>
+      <LandingNav />
 
-      {/* Medical disclaimer */}
-      <div style={{ background: '#060B16', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '20px 24px', textAlign: 'center' }}>
-        <p style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.7, maxWidth: 720, margin: '0 auto', letterSpacing: '0.02em' }}>
-          Morales is a medical travel coordination service, not a medical provider. We do not provide medical advice, diagnosis, or treatment.
-          All clinical decisions are made solely by licensed medical professionals. Savings estimates are based on average published US procedure list prices and vary by provider, location, and individual case.
-          Morales does not guarantee clinical outcomes.
+      <LandingHero />
+
+      <McareTranscript />
+
+      <PilotSection />
+
+      {/* Legal disclaimer — preserved verbatim from the previous landing page.
+          It is a factual statement about the business, not marketing copy, so it
+          stays on the page in full. */}
+      <div
+        style={{
+          background: NAVY,
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          padding: '20px 24px',
+          textAlign: 'center',
+        }}
+      >
+        <p
+          style={{
+            fontSize: 'clamp(0.875rem, 1.5vw, 1rem)',
+            color: MUTED,
+            lineHeight: 1.7,
+            maxWidth: 720,
+            margin: '0 auto',
+            letterSpacing: '0.02em',
+          }}
+        >
+          Morales is a medical travel coordination service, not a medical provider. We do not provide
+          medical advice, diagnosis, or treatment. All clinical decisions are made solely by licensed
+          medical professionals. Savings estimates are based on average published US procedure list
+          prices and vary by provider, location, and individual case. Morales does not guarantee
+          clinical outcomes.
         </p>
       </div>
+
+      {/* M-Care greets once per session and asks for an email — nothing more. */}
+      <McareGreeting />
     </div>
   );
 }
