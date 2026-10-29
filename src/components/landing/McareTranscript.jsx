@@ -1,4 +1,4 @@
-import MSafeDemo from './MSafeDemo';
+import MSafeDemo from './msafeDemo/MSafeDemo';
 import { WHITE, BODY, MUTED, SANS } from './theme';
 
 /**
@@ -44,7 +44,8 @@ export default function McareTranscript() {
           </h2>
 
           <p style={{ margin: '14px 0 0', fontSize: 15, lineHeight: 1.7, color: BODY, maxWidth: '58ch' }}>
-            This is the workspace on a real morning of a journey: one provider check, reported in
+            The workspace below is running, not a still. It plays three situations the way M-Care handles
+            them — a provider check, a missed check-in, a cancelled flight — one step at a time, in
             evidence rather than in badges.
           </p>
         </div>
@@ -54,9 +55,10 @@ export default function McareTranscript() {
         </div>
 
         <p style={{ margin: '18px 0 0', fontSize: 11.5, lineHeight: 1.7, color: MUTED, maxWidth: 760 }}>
-          The workspace above is an illustration: the clinicians named in it are illustrative, and nothing
-          here was sent to a real doctor, driver, registry or emergency service. No patient information
-          appears anywhere on this page.
+          What you are watching is a scripted replay of the workspace: the tools, screens and flows it
+          names are real parts of the system, while the clinicians and patients in it are illustrative,
+          and nothing here was sent to a real doctor, driver, registry or emergency service. No patient
+          information appears anywhere on this page.
         </p>
       </div>
     </section>
