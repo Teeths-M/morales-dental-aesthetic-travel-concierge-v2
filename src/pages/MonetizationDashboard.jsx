@@ -109,7 +109,7 @@ export default function MonetizationDashboard() {
               { label: 'SaaS Subscriptions', desc: '$50–200/mo', color: 'bg-blue-50 border-blue-200 text-blue-700' },
               { label: 'Escrow Fees', desc: '2–3%', color: 'bg-amber-50 border-amber-200 text-amber-700' },
               { label: 'White Label', desc: 'Licensing tiers', color: 'bg-purple-50 border-purple-200 text-purple-700' },
-              { label: 'Certification Badges', desc: 'Morales Safe™', color: 'bg-rose-50 border-rose-200 text-rose-700' }
+              { label: 'Certification Badges', desc: 'M-Care Safe™', color: 'bg-rose-50 border-rose-200 text-rose-700' }
             ].map(r => (
               <div key={r.label} className={`border rounded-xl p-3 ${r.color}`}>
                 <p className="text-xs font-semibold">{r.label}</p>
@@ -138,7 +138,7 @@ export default function MonetizationDashboard() {
                       <span className="font-medium text-gray-900 truncate">{p.partner_name || 'Unnamed Partner'}</span>
                       <Badge variant="outline" className="text-xs capitalize">{p.partner_type}</Badge>
                       {p.certification_badge_active && (
-                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">🏅 Morales Safe™</span>
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">🏅 M-Care Safe™</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">{p.partner_email}</p>

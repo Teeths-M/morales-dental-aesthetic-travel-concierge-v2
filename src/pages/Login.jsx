@@ -104,7 +104,7 @@ export default function Login() {
   const [otpFailCount,   setOtpFailCount]   = useState(0);
   const { country: ipCountry } = useIpGeolocation();
 
-  // Struggle-aware Morales Guide: deterministic, no AI, no network — see
+  // Struggle-aware M-Care Guide: deterministic, no AI, no network — see
   // src/hooks/useStruggleDetector.js. Each fires at most once per step.
   useStruggleDetector({
     active: step === 'phone',
@@ -185,9 +185,9 @@ export default function Login() {
       {/* Logo */}
       <div style={{ marginBottom: 40 }}>
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
+          <img src="/morales-m-mark.png" alt="M-Care" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
           <div>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: TEXT, letterSpacing: '-0.01em' }}>Morales</p>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: TEXT, letterSpacing: '-0.01em' }}>M-Care</p>
             <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>MEDICAL TRAVEL SAFETY</p>
           </div>
         </Link>
@@ -262,7 +262,7 @@ export default function Login() {
       </button>
 
       <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: TEXT_FAINT }}>
-        New to Morales?{' '}
+        New to M-Care?{' '}
         <Link to="/signup" style={{ color: TEAL, textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           Create account <UserPlus style={{ width: 13, height: 13 }} />
         </Link>
@@ -299,7 +299,7 @@ export default function Login() {
 
       {/* Logo */}
       <div style={{ marginBottom: 32 }}>
-        <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
+        <img src="/morales-m-mark.png" alt="M-Care" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
       </div>
 
       <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: TEXT, letterSpacing: '-0.02em' }}>Check your phone</h1>

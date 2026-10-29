@@ -13,7 +13,7 @@ Deno.serve(createHandler(async ({ body }) => {
     .map(([k, v]) => `${k}: ${v}`)
     .join(', ');
 
-  const prompt = `Morales Medical Travel platform admin analyst. Context: ${context || 'platform dashboard'}. Key metrics: ${metricsStr}.
+  const prompt = `M-Care Medical Travel platform admin analyst. Context: ${context || 'platform dashboard'}. Key metrics: ${metricsStr}.
 
 Write a 2-sentence actionable insight brief for the platform admin. Be specific about what the numbers reveal and name one concrete action to take right now. Plain text only, no bullet points.`;
 

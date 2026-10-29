@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     // ── LLM analyzes patterns and decides what's worth reporting ──
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt:
-        'You are the Morales Safety Monitor AI. Analyze operational patterns from a medical travel safety platform and identify systemic issues, anomalies, or risks that require human attention.\n\n' +
+        'You are the M-Care Safety Monitor AI. Analyze operational patterns from a medical travel safety platform and identify systemic issues, anomalies, or risks that require human attention.\n\n' +
         `ACTIVE CASES (${casePatterns.total_active} total, ${casePatterns.outliers.length} outliers requiring attention):\n${JSON.stringify(casePatterns, null, 2)}\n\n` +
         `ACTIVE SOLO CHECK-INS (${checkInPatterns.length}):\n${JSON.stringify(checkInPatterns, null, 2)}\n\n` +
         `UNRESOLVED DISPATCH FAILURES (${failurePatterns.length}):\n${JSON.stringify(failurePatterns, null, 2)}\n\n` +
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: '🤖 Morales Safety Monitor — Hourly Intelligence',
+          text: '🤖 M-Care Safety Monitor — Hourly Intelligence',
           emoji: true,
         },
       },
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         channel: 'morales-safe-t4life',
-        username: 'Morales Safety Monitor',
+        username: 'M-Care Safety Monitor',
         icon_emoji: ':robot_face:',
         text: `🤖 Safety Monitor: ${insights.length} insight(s) detected`,
         blocks,

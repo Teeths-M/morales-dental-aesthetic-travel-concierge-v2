@@ -39,8 +39,8 @@ Deno.serve(async (req) => {
         if (rec.doctor_email) {
           await base44.asServiceRole.integrations.Core.SendEmail({
             to: rec.doctor_email,
-            subject: '⚠️ Your Doctor Verification Has Expired — Morales Platform',
-            body: `<h2>Verification Expired</h2><p>Dear Dr. ${rec.doctor_name},</p><p>Your medical license verification on the Morales Platform expired on ${new Date(rec.expires_at).toLocaleDateString()}.</p><p>You have been temporarily removed from patient search results.</p><p>Please <a href="${Deno.env.get('APP_URL') || ''}/doctor-dashboard">re-verify your license</a> to restore your profile.</p>`
+            subject: '⚠️ Your Doctor Verification Has Expired — M-Care Platform',
+            body: `<h2>Verification Expired</h2><p>Dear Dr. ${rec.doctor_name},</p><p>Your medical license verification on the M-Care Platform expired on ${new Date(rec.expires_at).toLocaleDateString()}.</p><p>You have been temporarily removed from patient search results.</p><p>Please <a href="${Deno.env.get('APP_URL') || ''}/doctor-dashboard">re-verify your license</a> to restore your profile.</p>`
           });
         }
         continue;

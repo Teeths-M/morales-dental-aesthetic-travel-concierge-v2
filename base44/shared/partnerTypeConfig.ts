@@ -1,5 +1,5 @@
 // ── partnerTypeConfig ────────────────────────────────────────────────────────
-// Single source of truth for the field-name differences across Morales's 5
+// Single source of truth for the field-name differences across M-Care's 5
 // partner entities (Doctor/TravelAgency/TaxiService/Companion/SecurityAgency).
 // Confirmed directly against each entity's real .jsonc schema and each real
 // existing caller's own field usage (not guessed) before this file was

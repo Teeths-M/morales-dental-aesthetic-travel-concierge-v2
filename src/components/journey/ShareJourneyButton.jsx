@@ -60,7 +60,7 @@ export default function ShareJourneyButton({ caseId }) {
     );
   }
 
-  const shareMsg = encodeURIComponent(`Follow my journey with Morales Medical: ${shareUrl}`);
+  const shareMsg = encodeURIComponent(`Follow my journey with M-Care Medical: ${shareUrl}`);
 
   return (
     <div className="rounded-xl p-3 space-y-2" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>

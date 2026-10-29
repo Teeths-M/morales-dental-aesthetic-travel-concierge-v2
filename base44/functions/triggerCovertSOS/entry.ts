@@ -148,7 +148,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       emergencyDispatch({
         reason: 'sos_triggered',
         from: 'triggerCovertSOS/guardian',
-        body: `🚨 URGENT — ${patientName} has silently activated an emergency alert. They may be in danger and unable to call for help. Last location: ${gpsStr}. Contact them immediately. If you cannot reach them, call police. — Morales Concierge`,
+        body: `🚨 URGENT — ${patientName} has silently activated an emergency alert. They may be in danger and unable to call for help. Last location: ${gpsStr}. Contact them immediately. If you cannot reach them, call police. — M-Care Concierge`,
       }),
     );
   }
@@ -158,14 +158,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (patientPhone && patientPhone !== guardianPhone) {
     await sendSms(
       patientPhone,
-      `Morales: Your emergency team has been alerted. Help is on the way. Stay calm. — Morales Concierge`
+      `M-Care: Your emergency team has been alerted. Help is on the way. Stay calm. — M-Care Concierge`
     );
   }
 
   // ── 6. Admin email — immediate alert ──────────────────────────────────────
   if (adminEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales — 🚨 COVERT SOS ALERT',
+      from_name: 'M-Care — 🚨 COVERT SOS ALERT',
       to:        adminEmail,
       subject:   `🚨 COVERT SOS — ${patientName} in ${destination} — IMMEDIATE ACTION REQUIRED`,
       body: `<h2 style="color:#dc2626">🚨 COVERT SILENT SOS TRIGGERED</h2>
@@ -215,7 +215,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   let securityNotified = false;
   if (caseRec?.security_agency_email) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales — EMERGENCY DISPATCH',
+      from_name: 'M-Care — EMERGENCY DISPATCH',
       to:        caseRec.security_agency_email,
       subject:   `🚨 IMMEDIATE DISPATCH — Covert SOS — ${patientName}`,
       body: `<p>Your client <strong>${patientName}</strong> has activated a covert emergency. They may be in immediate danger. Last known location: <a href="${gpsStr}">${gpsStr}</a>. Dispatch immediately.</p>`,
@@ -229,10 +229,10 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       const fallbackAgency = (candidates || []).find((a: any) => a.email);
       if (fallbackAgency) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales — EMERGENCY DISPATCH',
+          from_name: 'M-Care — EMERGENCY DISPATCH',
           to:        fallbackAgency.email,
           subject:   `🚨 IMMEDIATE DISPATCH — Covert SOS — traveler in ${destination}`,
-          body: `<p>A Morales traveler, <strong>${patientName}</strong>, in <strong>${destination}</strong> has activated a covert emergency alert and may be in immediate danger. Last known location: <a href="${gpsStr}">${gpsStr}</a>. This case had no security agency pre-assigned — please dispatch and contact Morales admin to confirm.</p>`,
+          body: `<p>A M-Care traveler, <strong>${patientName}</strong>, in <strong>${destination}</strong> has activated a covert emergency alert and may be in immediate danger. Last known location: <a href="${gpsStr}">${gpsStr}</a>. This case had no security agency pre-assigned — please dispatch and contact M-Care admin to confirm.</p>`,
         }).catch(() => {});
         securityNotified = true;
       }

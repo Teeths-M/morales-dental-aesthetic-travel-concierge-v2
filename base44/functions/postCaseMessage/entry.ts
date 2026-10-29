@@ -38,7 +38,7 @@ import { createMedicationFromText } from '../../shared/createMedicationFromText.
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const MSG_TYPES = new Set(['info_request', 'message', 'answer']);
 
 function nudgeEmail(portalUrl: string): string {
@@ -48,7 +48,7 @@ function nudgeEmail(portalUrl: string): string {
 <tr><td style="padding:26px 30px;">
   <div style="font-size:22px;font-weight:900;color:#D4AF37;margin-bottom:12px;">M</div>
   <p style="font-size:15px;color:#fff;margin:0 0 10px;font-weight:700;">You have a new message.</p>
-  <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0 0 20px;line-height:1.6;">Open your Morales portal to read it and reply. For privacy, messages stay in-portal.</p>
+  <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0 0 20px;line-height:1.6;">Open your M-Care portal to read it and reply. For privacy, messages stay in-portal.</p>
   <a href="${portalUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:12px 28px;border-radius:99px;text-decoration:none;">Open My Portal →</a>
 </td></tr></table></td></tr></table></body></html>`;
 }

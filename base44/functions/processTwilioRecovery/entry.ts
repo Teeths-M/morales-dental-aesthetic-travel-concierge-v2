@@ -90,13 +90,13 @@ Deno.serve(async (req) => {
 
     // Only handle RECOVERY commands — pass other messages through
     if (!body.toUpperCase().startsWith('RECOVERY')) {
-      return twiml('Morales: For recovery check-in send: RECOVERY <pain 1-10> <mobility 1-5> <appetite 1-5> <GOOD|CONCERNING|BAD>');
+      return twiml('M-Care: For recovery check-in send: RECOVERY <pain 1-10> <mobility 1-5> <appetite 1-5> <GOOD|CONCERNING|BAD>');
     }
 
     const parsed = parseRecoverySms(body);
     if (!parsed) {
       return twiml(
-        'Morales: Could not parse your check-in. Format: RECOVERY 3 4 5 GOOD (pain mobility appetite wound). ' +
+        'M-Care: Could not parse your check-in. Format: RECOVERY 3 4 5 GOOD (pain mobility appetite wound). ' +
         'Pain 1-10, Mobility 1-5, Appetite 1-5, Wound: GOOD CONCERNING or BAD.'
       );
     }
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
     if (!matchedSession) {
       return twiml(
-        'Morales: Could not match your phone number to an active recovery session. ' +
+        'M-Care: Could not match your phone number to an active recovery session. ' +
         'Please check in via the app or contact your coordinator.'
       );
     }
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       session_id: matchedSession.id, date: todayStr,
     }).catch(() => []);
     if (existing.length > 0) {
-      return twiml(`Morales: Your check-in for today (${todayStr}) has already been recorded. Thank you!`);
+      return twiml(`M-Care: Your check-in for today (${todayStr}) has already been recorded. Thank you!`);
     }
 
     // Submit via checkRecoveryAnomaly
@@ -146,28 +146,28 @@ Deno.serve(async (req) => {
     }).catch(e => ({ data: { error: e.message } }));
 
     if (res.data?.error) {
-      return twiml(`Morales: Check-in received but could not be saved: ${res.data.error}. Please try again or contact your coordinator.`);
+      return twiml(`M-Care: Check-in received but could not be saved: ${res.data.error}. Please try again or contact your coordinator.`);
     }
 
     const severity = res.data?.anomaly_severity || 'none';
     if (severity === 'escalate') {
       return twiml(
-        `Morales: Check-in received (Pain ${parsed.pain_level}, Mobility ${parsed.mobility}, Appetite ${parsed.appetite}, Wound ${parsed.wound_status}). ` +
+        `M-Care: Check-in received (Pain ${parsed.pain_level}, Mobility ${parsed.mobility}, Appetite ${parsed.appetite}, Wound ${parsed.wound_status}). ` +
         'Your care team has been alerted and will contact you shortly. If this is an emergency, call local emergency services immediately.'
       );
     }
     if (severity === 'warning') {
       return twiml(
-        `Morales: Check-in received. Some values are a little lower than expected — your coordinator has been notified. ` +
+        `M-Care: Check-in received. Some values are a little lower than expected — your coordinator has been notified. ` +
         `Reply RECOVERY again tomorrow or contact your coordinator if you need immediate help.`
       );
     }
     return twiml(
-      `Morales: Check-in received ✓ (Pain ${parsed.pain_level}/10, Mobility ${parsed.mobility}/5, Appetite ${parsed.appetite}/5, Wound: ${parsed.wound_status}). Keep recovering well!`
+      `M-Care: Check-in received ✓ (Pain ${parsed.pain_level}/10, Mobility ${parsed.mobility}/5, Appetite ${parsed.appetite}/5, Wound: ${parsed.wound_status}). Keep recovering well!`
     );
 
   } catch (err) {
     console.error('[processTwilioRecovery]', err);
-    return twiml('Morales: A system error occurred. Please try again or contact your coordinator.');
+    return twiml('M-Care: A system error occurred. Please try again or contact your coordinator.');
   }
 });

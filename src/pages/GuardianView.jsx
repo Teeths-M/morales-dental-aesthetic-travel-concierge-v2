@@ -271,13 +271,13 @@ export default function GuardianView() {
         already_pending: 'A security check is already underway — an agency has been contacted and is expected to confirm shortly.',
         confirmed: 'A security agency has already confirmed they are responding.',
         already_confirmed: 'A security agency has already confirmed they are responding.',
-        failed: 'No security agency was available or responded in this area. Morales admin has been alerted to escalate manually.',
-        already_failed: 'No security agency was available. Morales admin has already been alerted to escalate manually.',
+        failed: 'No security agency was available or responded in this area. M-Care admin has been alerted to escalate manually.',
+        already_failed: 'No security agency was available. M-Care admin has already been alerted to escalate manually.',
         no_active_concern: 'There is no missed check-in on file right now, so there is nothing to escalate at this moment.',
       };
       setSecurityMsg(messages[d?.outcome] || 'Request sent.');
     } catch (_) {
-      setSecurityMsg('Could not send the request right now. Please try again, or contact Morales support directly.');
+      setSecurityMsg('Could not send the request right now. Please try again, or contact M-Care support directly.');
     }
     setSecurityState('done');
   };
@@ -501,7 +501,7 @@ export default function GuardianView() {
                    '⚠️ Check-In Overdue — Escalation In Progress'}
                 </p>
                 <p className="text-slate-300 text-xs mt-1">
-                  Morales Safety system has been automatically notified. Emergency protocols are active.
+                  M-Care Safety system has been automatically notified. Emergency protocols are active.
                 </p>
                 {escalation.overdue_since && (
                   <p className="text-slate-400 text-xs mt-0.5">
@@ -563,7 +563,7 @@ export default function GuardianView() {
               {securityState === 'loading' ? 'Requesting…' : 'Request Immediate Security Check'}
             </button>
             <p className="text-[11px] text-slate-500 mt-1.5 text-center">
-              Asks Morales to contact a local security agency for an in-person welfare check right now, without waiting for automatic escalation.
+              Asks M-Care to contact a local security agency for an in-person welfare check right now, without waiting for automatic escalation.
             </p>
             {securityMsg && (
               <p className="text-xs text-slate-300 bg-slate-900/60 rounded-xl px-3 py-2 mt-2 text-center">{securityMsg}</p>

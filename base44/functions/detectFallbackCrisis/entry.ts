@@ -70,7 +70,7 @@ async function sendDoctorReminder(base44: any, doctorEmail: string, portalToken:
 
   await Promise.allSettled([
     base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Medical Travel Safety', to: doctorEmail,
+      from_name: 'M-Care Medical Travel Safety', to: doctorEmail,
       subject: 'Please confirm your procedure date',
       body: linkOnlyEmail({
         from: 'detectFallbackCrisis/doctor-reminder',

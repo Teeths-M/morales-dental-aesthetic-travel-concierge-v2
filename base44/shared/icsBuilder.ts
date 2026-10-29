@@ -6,7 +6,7 @@
  * real ICS writer in this repo, not two.
  */
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 /** Format date as YYYYMMDDTHHMMSSZ (ICS format). */
 export function icsDate(iso: string, timeStr?: string): string {
@@ -44,10 +44,10 @@ export function buildICS(patientName: string, events: ICSEvent[]): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    `PRODID:-//${BRAND}//Morales Journey Itinerary//EN`,
+    `PRODID:-//${BRAND}//M-Care Journey Itinerary//EN`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:Morales Journey',
+    'X-WR-CALNAME:M-Care Journey',
     'X-WR-TIMEZONE:UTC',
     ...events.flatMap(ev => [
       'BEGIN:VEVENT',

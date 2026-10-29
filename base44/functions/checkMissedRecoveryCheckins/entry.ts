@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       // Email doctor
       if (docEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Recovery Monitor',
+          from_name: 'M-Care Recovery Monitor',
           to: docEmail,
           subject: severity === 'escalate' ? '🚨 Missed Recovery Check-In' : '⚠️ Missed Recovery Check-In',
           body: linkOnlyEmail({
@@ -155,12 +155,12 @@ Deno.serve(async (req) => {
       // Email patient reminder
       if (pEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Recovery Team',
+          from_name: 'M-Care Recovery Team',
           to: pEmail,
           subject: 'Recovery check-in reminder',
           body: linkOnlyEmail({
             title: 'We haven’t heard from you today',
-            line: 'Please open the Morales app to submit your recovery check-in and let us know how you’re feeling.',
+            line: 'Please open the M-Care app to submit your recovery check-in and let us know how you’re feeling.',
             ctaUrl: patientDashboardUrl,
             ctaLabel: 'Open My Recovery Check-In',
             from: 'checkMissedRecoveryCheckins',
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
         }
         if (ecEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Recovery Monitor',
+            from_name: 'M-Care Recovery Monitor',
             to: ecEmail,
             subject: 'A recovery check-in alert for your contact',
             body: linkOnlyEmail({

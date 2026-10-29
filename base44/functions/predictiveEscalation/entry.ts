@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
         // Email admin
         if (adminEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales — Predictive Safety Alert',
+            from_name: 'M-Care — Predictive Safety Alert',
             to: adminEmail,
             subject: `⚡ PREDICTIVE ALERT — ${patientName} check-in due in ${minsUntilDue} min`,
             body: `<div style="font-family:sans-serif;max-width:600px;padding:24px;border:2px solid #f97316;border-radius:12px;">
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
   <tr><td style="color:#6b7280;padding:4px 0;">Case ID</td><td>${checkin.case_id || 'N/A'}</td></tr>
 </table>
 <p style="color:#374151;font-weight:600;">Recommended action: Call the patient now. If no answer in 5 minutes, escalate to Standard SOS protocol.</p>
-<p style="color:#9ca3af;font-size:12px;">iQ200 Predictive Engine · Morales Medical</p>
+<p style="color:#9ca3af;font-size:12px;">iQ200 Predictive Engine · M-Care Medical</p>
 </div>`,
           }).catch(() => {});
         }

@@ -55,8 +55,8 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
         const adminEmail = Deno.env.get('ADMIN_EMAIL');
         if (adminEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Medical Travel Safety', to: adminEmail,
-            subject: `A provider's booking eligibility was suspended | Morales`,
+            from_name: 'M-Care Medical Travel Safety', to: adminEmail,
+            subject: `A provider's booking eligibility was suspended | M-Care`,
             body: `<p>A provider was automatically flagged as ineligible for new bookings.</p><p><strong>Reasons:</strong> ${result.reasons.join(' ')}</p><p>This needs an admin review; only an explicit admin action can clear it.</p>`,
           }).catch(() => {});
         }

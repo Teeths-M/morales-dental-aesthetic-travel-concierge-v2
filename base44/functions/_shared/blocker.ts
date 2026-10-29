@@ -15,7 +15,7 @@ import {
 } from './violationEngine.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // ── The safety carve-out ────────────────────────────────────────────────────
 // Decision (Portia, 2026-07-18), in her words: "I don't want to kill anyone."
@@ -199,7 +199,7 @@ async function writeAudit(base44: any, opts: GuardOptions, result: ViolationResu
   const prevHash = await computePrevHash(base44).catch(() => '');
   return base44.asServiceRole.entities.AuditLog.create({
     event_type: isBlock ? 'malicious_action_blocked' : 'violation_scrubbed',
-    actor_id: 'system', actor_role: 'system', actor_name: 'Morales Blocker',
+    actor_id: 'system', actor_role: 'system', actor_name: 'M-Care Blocker',
     resource_type: 'AccountFlag', resource_id: opts.userEmail,
     case_id: opts.caseId || '',
     details: {

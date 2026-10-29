@@ -272,7 +272,7 @@ export default function NightlifeSafetyMode() {
           </div>
           <h1 className="text-2xl font-semibold text-white">Activity Safety Mode</h1>
           <p className="text-slate-400 text-sm mt-1 max-w-xs mx-auto">
-            Going out? Activate safety mode. If you go silent, Morales escalates automatically.
+            Going out? Activate safety mode. If you go silent, M-Care escalates automatically.
           </p>
         </div>
 

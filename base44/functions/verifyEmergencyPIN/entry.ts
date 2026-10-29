@@ -253,7 +253,7 @@ Deno.serve(createHandler(async ({ req }) => {
               const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
               if (adminEmail) {
                 await base44.asServiceRole.integrations.Core.SendEmail({
-                  from_name: 'Morales — SILENT ALARM',
+                  from_name: 'M-Care — SILENT ALARM',
                   to: adminEmail,
                   subject: `🔕 SILENT ALARM — Emergency Terminal: ${normalizedEmail}`,
                   body: `<div style="font-family:sans-serif;max-width:600px;padding:24px;border:2px solid #dc2626;border-radius:12px;">

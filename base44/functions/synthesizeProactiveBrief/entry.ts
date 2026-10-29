@@ -71,7 +71,7 @@ const LIVE_STATUSES = new Set([
   'waiver_refused', 'companion_required_pending', 'companion_required_waived',
 ]);
 
-// Where Morales is genuinely the one holding the ball — so "nothing has
+// Where M-Care is genuinely the one holding the ball — so "nothing has
 // moved" is a fair thing to say. Deliberately excludes Submitted (that's the
 // patient's own unfinished intake) and Recovery (other systems own it).
 const PLANNING_STATUSES = new Set([

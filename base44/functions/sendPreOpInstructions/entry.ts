@@ -18,7 +18,7 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 function nudgeEmail(portalUrl: string): string {
   return `<!doctype html><html><body style="margin:0;background:#060B16;font-family:Arial,Helvetica,sans-serif;padding:28px;">
@@ -27,7 +27,7 @@ function nudgeEmail(portalUrl: string): string {
 <tr><td style="padding:26px 30px;">
   <div style="font-size:22px;font-weight:900;color:#D4AF37;margin-bottom:12px;">M</div>
   <p style="font-size:15px;color:#fff;margin:0 0 10px;font-weight:700;">Your preparation checklist is ready.</p>
-  <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0 0 20px;line-height:1.6;">A few simple steps to get ready for your procedure — open your Morales portal to see them, in your language.</p>
+  <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0 0 20px;line-height:1.6;">A few simple steps to get ready for your procedure — open your M-Care portal to see them, in your language.</p>
   <a href="${portalUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:12px 28px;border-radius:99px;text-decoration:none;">Open My Portal →</a>
 </td></tr></table></td></tr></table></body></html>`;
 }

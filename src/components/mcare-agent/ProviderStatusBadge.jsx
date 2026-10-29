@@ -8,19 +8,19 @@ const TIERS = {
   discovered: {
     emoji: '🔎',
     label: 'Discovered on the web',
-    detail: 'Found via web search — not yet checked by Morales. Verification is a separate, human step before this provider would ever be recommended for booking.',
+    detail: 'Found via web search — not yet checked by M-Care. Verification is a separate, human step before this provider would ever be recommended for booking.',
     color: '#94A3B8',
   },
   verified: {
     emoji: '🛡️',
     label: 'Verified',
-    detail: "License and identity checks passed. Still pending a background check and Morales's final internal review before approval.",
+    detail: "License and identity checks passed. Still pending a background check and M-Care's final internal review before approval.",
     color: '#38BDF8',
   },
   approved: {
     emoji: '✓',
-    label: 'Morales Approved',
-    detail: "Completed Morales's full verification pipeline — license, identity, and background checks, plus internal admin review.",
+    label: 'M-Care Approved',
+    detail: "Completed M-Care's full verification pipeline — license, identity, and background checks, plus internal admin review.",
     color: '#D4AF37',
   },
 };
@@ -30,7 +30,7 @@ const TIERS = {
 // MessageBubble.jsx's extractProviderStatus). Real backing data:
 // 'discovered' = a discoverProviderCandidates (Tavily) result;
 // 'approved' = a matchDoctorsForProcedure result — that tool only ever
-// returns doctors who already cleared Morales's full verification pipeline.
+// returns doctors who already cleared M-Care's full verification pipeline.
 // 'verified' (license + identity checks passed, background check still
 // pending) is a real, distinct state in Doctor.jsonc's schema, but no
 // traveler-facing tool emits it today — M-Care never recommends a doctor

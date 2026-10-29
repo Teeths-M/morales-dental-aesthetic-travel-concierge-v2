@@ -60,7 +60,7 @@ const STATUS_CONFIG = {
 
 const MEDICAL_DOCS = [
   'Medical invitation letter from clinic',
-  'Appointment confirmation from Morales Medical Travel Safety',
+  'Appointment confirmation from M-Care Medical Travel Safety',
   'Treatment itinerary summary',
   'Travel support letter from coordinator',
 ];

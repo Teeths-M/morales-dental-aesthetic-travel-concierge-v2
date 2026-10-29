@@ -1,7 +1,7 @@
 /**
  * protectionType — who are we protecting?
  *
- * Morales began as a medical-travel concierge, so every flow historically
+ * M-Care began as a medical-travel concierge, so every flow historically
  * assumed the person signing up was flying somewhere for a procedure. That
  * assumption is baked into the onboarding wizard (it asks "what procedure
  * interests you?" before it has established that a procedure is even involved)

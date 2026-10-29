@@ -4,7 +4,7 @@
 // context to write a personalized draft) -- one implementation, two
 // callers, same discipline as weatherEngine.ts/findDoctorBackup.ts.
 //
-// Scoped ONLY to partners already onboarded to Morales -- this never fetches
+// Scoped ONLY to partners already onboarded to M-Care -- this never fetches
 // an arbitrary caller-supplied URL, only a URL already on file for a real
 // Doctor/TravelAgency record (the only two partner types that store one;
 // TaxiService/Companion/SecurityAgency have no website field at all today,
@@ -55,7 +55,7 @@ async function fetchPartnerSite(url: string): Promise<{ html: string; pageTitle:
       const res = await fetch(url, {
         redirect: 'follow',
         signal: ctrl.signal,
-        headers: { 'User-Agent': 'Morales-MCare/1.0 (+https://morales.com)' },
+        headers: { 'User-Agent': 'M-Care-MCare/1.0 (+https://morales.com)' },
       });
       const html = await res.text();
       const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
@@ -123,7 +123,7 @@ export async function researchPartnerWebsiteCore(
       partner_whatsapp: partnerWhatsapp, website_url: null, fetched: false, fetch_error: null, page_title: null,
       extracted: null, on_file_contact_matches: null,
       resolved_language: resolvedLanguage, language_source: languageSource,
-      summary: `No website on file for ${partnerName} -- only the contact info Morales already has for them from onboarding.`,
+      summary: `No website on file for ${partnerName} -- only the contact info M-Care already has for them from onboarding.`,
     };
   }
 
@@ -172,9 +172,9 @@ export async function researchPartnerWebsiteCore(
       : `Loaded ${partnerName}'s site (${pageTitle || url}) but found no contact info in the visible text.`);
   }
   if (onFileMatches === false) {
-    summaryParts.push('This differs from what Morales has on file for them -- worth confirming before relying on it.');
+    summaryParts.push('This differs from what M-Care has on file for them -- worth confirming before relying on it.');
   } else if (onFileMatches === true) {
-    summaryParts.push('This matches what Morales already has on file for them.');
+    summaryParts.push('This matches what M-Care already has on file for them.');
   }
 
   return {

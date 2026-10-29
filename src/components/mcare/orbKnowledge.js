@@ -9,17 +9,17 @@ export const KB = [
   // HANDSHAKES / CHECKPOINTS
   {
     k: ['handshake','checkpoint','checkpoints','hs1','hs2','hs3','hs4','hs5','hs6','hs7','hs8','hs9','nine steps','9 steps','complete handshake','how do i complete'],
-    a: `The Morales journey has 9 handshake checkpoints:\n\n1️⃣ Driver Pickup (home → airport)\n2️⃣ Airport Drop-off (departure)\n3️⃣ Airport Pickup (destination)\n4️⃣ Hotel Check-in\n5️⃣ Clinic Appointment\n6️⃣ Companion Meal\n7️⃣ Return Transport (hotel → airport)\n8️⃣ Home Airport Arrival\n9️⃣ Home Drop-off ✓ Golden M\n\nTap the Handshake button on your Dashboard at each stage, or text HS1–HS9 to the shortcode if you have no app signal.`,
+    a: `The M-Care journey has 9 handshake checkpoints:\n\n1️⃣ Driver Pickup (home → airport)\n2️⃣ Airport Drop-off (departure)\n3️⃣ Airport Pickup (destination)\n4️⃣ Hotel Check-in\n5️⃣ Clinic Appointment\n6️⃣ Companion Meal\n7️⃣ Return Transport (hotel → airport)\n8️⃣ Home Airport Arrival\n9️⃣ Home Drop-off ✓ Golden M\n\nTap the Handshake button on your Dashboard at each stage, or text HS1–HS9 to the shortcode if you have no app signal.`,
   },
   // GOLDEN M
   {
     k: ['golden m','golden','certificate','journey complete','completed journey','completion','award','download certificate','share journey'],
-    a: `The Golden M is awarded when all 9 handshake checkpoints are confirmed — your Morales medical journey is 100% complete.\n\nYou receive a downloadable Golden M Certificate (tap "Download My Certificate"). You can also share your journey story on social media with a branded caption.\n\nIt is the highest recognition Morales gives — earned by every patient who completes the full journey safely.`,
+    a: `The Golden M is awarded when all 9 handshake checkpoints are confirmed — your M-Care medical journey is 100% complete.\n\nYou receive a downloadable Golden M Certificate (tap "Download My Certificate"). You can also share your journey story on social media with a branded caption.\n\nIt is the highest recognition M-Care gives — earned by every patient who completes the full journey safely.`,
   },
   // SAFE-T
   {
     k: ['safe-t','safe t','safety monitoring','behavioral signals','signals','i am safe','safe button','monitoring system','passive monitoring'],
-    a: `SAFE-T4life™ monitors your safety using 6 behavioral signals:\n• GPS location staleness\n• App activity level\n• Check-in frequency\n• Time-pattern anomalies\n• Spatial gaps\n• Movement irregularities\n\nIf signals go quiet, your Morales concierge is alerted. Tap "I'm Safe" on the Safe-T page anytime to reset the clock and confirm you're OK.`,
+    a: `SAFE-T4life™ monitors your safety using 6 behavioral signals:\n• GPS location staleness\n• App activity level\n• Check-in frequency\n• Time-pattern anomalies\n• Spatial gaps\n• Movement irregularities\n\nIf signals go quiet, your M-Care concierge is alerted. Tap "I'm Safe" on the Safe-T page anytime to reset the clock and confirm you're OK.`,
   },
   // MEDGUARD / SAFETY SCORE
   {
@@ -34,12 +34,12 @@ export const KB = [
   // BOOKING FLOW
   {
     k: ['book','booking','how to book','procedure form','appointment','consultation','consult','submit booking','booking form'],
-    a: `To book a procedure:\n1. Go to the Booking page\n2. Complete 4 steps: Personal info → Procedure & destination → Medical history → Health questionnaire\n3. Search procedures by keyword (type at least 1 character)\n4. Submit — your case is reviewed and matched with a verified Morales doctor within 24–48 hours.`,
+    a: `To book a procedure:\n1. Go to the Booking page\n2. Complete 4 steps: Personal info → Procedure & destination → Medical history → Health questionnaire\n3. Search procedures by keyword (type at least 1 character)\n4. Submit — your case is reviewed and matched with a verified M-Care doctor within 24–48 hours.`,
   },
   // PROCEDURES
   {
     k: ['procedure','procedures','dental','implant','veneer','crown','invisalign','whitening','rhinoplasty','liposuction','breast','tummy tuck','facelift','bbl','orthopedic','hip replacement','knee replacement','aesthetic','what procedures'],
-    a: `Morales covers three categories:\n\n🦷 Dental: implants, veneers, crowns, Invisalign, teeth whitening, full-arch restorations\n\n💉 Aesthetic: rhinoplasty, liposuction, breast augmentation/lift, tummy tuck, facelift, BBL\n\n🦴 Orthopedic: hip replacement, knee replacement\n\nAll include travel coordination. Search by name on the Procedures page.`,
+    a: `M-Care covers three categories:\n\n🦷 Dental: implants, veneers, crowns, Invisalign, teeth whitening, full-arch restorations\n\n💉 Aesthetic: rhinoplasty, liposuction, breast augmentation/lift, tummy tuck, facelift, BBL\n\n🦴 Orthopedic: hip replacement, knee replacement\n\nAll include travel coordination. Search by name on the Procedures page.`,
   },
   // SOS / EMERGENCY
   {
@@ -49,7 +49,7 @@ export const KB = [
   // PIN VAULT / SILENT ALARM
   {
     k: ['pin','emergency pin','pin vault','pin setup','no login','wrong pin','silent alarm','compromised','any device'],
-    a: `Your Emergency PIN gives access to the Emergency Center from ANY device without logging in — no SMS, no internet required for basic access.\n\nSilent Alarm: if the wrong PIN is entered from an unrecognized device, a silent alert fires to your Morales concierge and the case is flagged as potentially compromised — without alerting anyone nearby.`,
+    a: `Your Emergency PIN gives access to the Emergency Center from ANY device without logging in — no SMS, no internet required for basic access.\n\nSilent Alarm: if the wrong PIN is entered from an unrecognized device, a silent alert fires to your M-Care concierge and the case is flagged as potentially compromised — without alerting anyone nearby.`,
   },
   // PASSPORT VAULT
   {
@@ -99,7 +99,7 @@ export const KB = [
   // DESTINATION SAFETY INDEX
   {
     k: ['destination safety','safety index','country score','country safety','morales intelligence','intelligence data','destination score'],
-    a: `The Destination Safety Index (0–100) is Morales proprietary per-country safety data.\n\nFormula:\n• Start at 100\n• Subtract 8pts per SOS event (last 30 days)\n• Subtract 5pts per unresolved escalation\n• Floor at 30\n\nUpdates in real-time from live patient signal data — not public databases. Shows on your Dashboard during travel.`,
+    a: `The Destination Safety Index (0–100) is M-Care proprietary per-country safety data.\n\nFormula:\n• Start at 100\n• Subtract 8pts per SOS event (last 30 days)\n• Subtract 5pts per unresolved escalation\n• Floor at 30\n\nUpdates in real-time from live patient signal data — not public databases. Shows on your Dashboard during travel.`,
   },
   // PREDICTIVE ESCALATION
   {
@@ -109,37 +109,37 @@ export const KB = [
   // JOURNEY CREDIT / LOYALTY
   {
     k: ['journey credit','loyalty','tier','silver','platinum','member','deposit reduction','reward','points','loyalty program'],
-    a: `Journey Credits are earned by completing Morales journeys. Five tiers:\n\n🥉 Member → 🥈 Silver → 🥇 Gold → 💎 Platinum → 🏆 Golden M\n\nHigher tiers unlock deposit reductions and priority service. Credits never expire. Your current tier and progress to the next level shows on the Journey Credit card on your Dashboard.`,
+    a: `Journey Credits are earned by completing M-Care journeys. Five tiers:\n\n🥉 Member → 🥈 Silver → 🥇 Gold → 💎 Platinum → 🏆 Golden M\n\nHigher tiers unlock deposit reductions and priority service. Credits never expire. Your current tier and progress to the next level shows on the Journey Credit card on your Dashboard.`,
   },
   // LANGUAGE SWITCHER
   {
     k: ['language','translation','spanish','french','arabic','chinese','portuguese','turkish','thai','german','italian','switch language','globe','rtl','right to left'],
-    a: `Morales supports 10 languages: English, Spanish, Portuguese, French, German, Italian, Turkish, Thai, Chinese (Simplified), and Arabic.\n\nClick the 🌐 globe icon in the top-right header to switch. Arabic automatically sets right-to-left (RTL) layout. Your choice is saved to your browser and restored on every visit.`,
+    a: `M-Care supports 10 languages: English, Spanish, Portuguese, French, German, Italian, Turkish, Thai, Chinese (Simplified), and Arabic.\n\nClick the 🌐 globe icon in the top-right header to switch. Arabic automatically sets right-to-left (RTL) layout. Your choice is saved to your browser and restored on every visit.`,
   },
   // OFFLINE / AIRPLANE MODE
   {
     k: ['offline','no internet','airplane mode','no signal','no connection','works offline','no wifi','airplane'],
-    a: `Morales is built for offline resilience:\n\n📡 Emergency Center — accessible without internet\n🔒 Emergency PIN vault — works on any device, no login\n✅ Handshake checkpoints — queued offline, sync when reconnected\n📄 Offline SOS Guide — downloadable reference (/offline-guide)\n📡 Satellite SOS (Iridium/inReach) — works with zero cell signal\n\nCritical safety features never depend on internet connectivity.`,
+    a: `M-Care is built for offline resilience:\n\n📡 Emergency Center — accessible without internet\n🔒 Emergency PIN vault — works on any device, no login\n✅ Handshake checkpoints — queued offline, sync when reconnected\n📄 Offline SOS Guide — downloadable reference (/offline-guide)\n📡 Satellite SOS (Iridium/inReach) — works with zero cell signal\n\nCritical safety features never depend on internet connectivity.`,
   },
   // WHATSAPP / ASSISTANCE
   {
     k: ['whatsapp','contact','message us','get help','assistance','fastest response','chat','support'],
-    a: `The WhatsApp button (bottom-right, green pill) connects you directly to the Morales concierge team — the fastest way to reach us globally. Tap it to open WhatsApp with a pre-filled message. The AI Assistant (SafeT4life) is also accessible from that same button for immediate automated help.`,
+    a: `The WhatsApp button (bottom-right, green pill) connects you directly to the M-Care concierge team — the fastest way to reach us globally. Tap it to open WhatsApp with a pre-filled message. The AI Assistant (SafeT4life) is also accessible from that same button for immediate automated help.`,
   },
   // WHAT IS MORALES
   {
     k: ['what is morales','morales medical','what does morales do','about morales','how does it work','medical tourism','who is morales'],
-    a: `Morales is a full-service medical tourism concierge platform. We connect patients with verified doctors abroad for dental, aesthetic, and orthopedic procedures — then coordinate everything:\n\n✈️ Travel & hotel logistics\n🏥 Verified doctors in destination countries\n👥 Local companions and chauffeurs\n🛡️ 24/7 real-time safety monitoring (SAFE-T)\n🆘 Multi-channel emergency response\n\nEvery journey is tracked through 9 safety handshakes.`,
+    a: `M-Care is a full-service medical tourism concierge platform. We connect patients with verified doctors abroad for dental, aesthetic, and orthopedic procedures — then coordinate everything:\n\n✈️ Travel & hotel logistics\n🏥 Verified doctors in destination countries\n👥 Local companions and chauffeurs\n🛡️ 24/7 real-time safety monitoring (SAFE-T)\n🆘 Multi-channel emergency response\n\nEvery journey is tracked through 9 safety handshakes.`,
   },
   // WALKIE TALKIE
   {
     k: ['walkie talkie','push to talk','voice','radio','real time voice'],
-    a: `The Walkie-Talkie feature (Travel section of Dashboard) provides push-to-talk voice communication between you and your Morales concierge team — useful when you need to speak but can't make a phone call. Works over the internet connection.`,
+    a: `The Walkie-Talkie feature (Travel section of Dashboard) provides push-to-talk voice communication between you and your M-Care concierge team — useful when you need to speak but can't make a phone call. Works over the internet connection.`,
   },
   // INSURANCE
   {
     k: ['insurance','travel insurance','medical insurance','coverage','insured'],
-    a: `The Insurance section of your Dashboard lets you view travel and medical coverage for your journey. Morales works with select providers that cover procedures abroad. Upload your insurance card and policy to the Passport Vault for emergency access without logging in.`,
+    a: `The Insurance section of your Dashboard lets you view travel and medical coverage for your journey. M-Care works with select providers that cover procedures abroad. Upload your insurance card and policy to the Passport Vault for emergency access without logging in.`,
   },
   // RECOVERY VAULT / THREAT CLOSURE
   {
@@ -149,7 +149,7 @@ export const KB = [
   // GUARDIAN SHARE / FAMILY
   {
     k: ['guardian','guardian link','family','share location','track me','share trip','guardian view'],
-    a: `The Guardian Share lets a family member or trusted contact track your journey in real-time. They receive a link showing your location, handshake progress, and safety status — no Morales account needed. Guardian links expire when the journey is complete or when you close the threat loop.`,
+    a: `The Guardian Share lets a family member or trusted contact track your journey in real-time. They receive a link showing your location, handshake progress, and safety status — no M-Care account needed. Guardian links expire when the journey is complete or when you close the threat loop.`,
   },
 ];
 

@@ -219,7 +219,7 @@ export async function dispatchRecoveryTransport(
 
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Safety — RECOVERY TRANSPORT',
+        from_name: 'M-Care Safety — RECOVERY TRANSPORT',
         to: adminEmail,
         subject: `🚗 Recovery Transport Request (${source}) — ${userEmail}`,
         body: `<div style="font-family:sans-serif;max-width:600px;padding:24px;border:2px solid #dc2626;border-radius:12px;">

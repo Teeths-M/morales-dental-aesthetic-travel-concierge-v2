@@ -1,5 +1,5 @@
 /**
- * twilioSafetySmsWebhook — Inbound SMS handler for Morales safety system
+ * twilioSafetySmsWebhook — Inbound SMS handler for M-Care safety system
  *
  * Accepts Twilio POST webhook payloads (From, Body, MessageSid).
  * Parses: SAFE, SAFE <checkpoint>, CHECKIN <checkpoint>, SOS, HELP
@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
             ? `<a href="https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}">📍 Open in Google Maps</a>`
             : 'No GPS coordinates available';
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales — Wilderness SOS',
+            from_name: 'M-Care — Wilderness SOS',
             to: adminEmail,
             subject: `🆘 WILDERNESS SOS received via SMS from ${from}`,
             body: `<div style="font-family:sans-serif">
@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
         } catch (_) {}
       }
 
-      return twimlReply('Morales SOS received. Rescue escalation started. Stay where you are if safe. Help is being dispatched.');
+      return twimlReply('M-Care SOS received. Rescue escalation started. Stay where you are if safe. Help is being dispatched.');
     }
 
     // Parse command
@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
       if (adminEmail) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Safety — SOS',
+            from_name: 'M-Care Safety — SOS',
             to: adminEmail,
             subject: `🆘 SOS received via SMS from ${from}`,
             body: `<p><strong>SOS / HELP received via inbound SMS.</strong></p><p>Phone: ${from}</p><p>Case ID: ${caseId || 'Unknown'}</p><p>Time: ${now}</p><p>Immediate human intervention required.</p>`,
@@ -273,15 +273,15 @@ Deno.serve(async (req) => {
       // received / help dispatched" on their lock screen could put them in
       // more danger. Escalation above is identical either way.
       return twimlReply(isCovertKeyword
-        ? 'Thanks for your message. Your Morales account is up to date.'
-        : 'SOS received. Morales emergency team has been alerted. Stay where you are. Help is being dispatched.');
+        ? 'Thanks for your message. Your M-Care account is up to date.'
+        : 'SOS received. M-Care emergency team has been alerted. Stay where you are. Help is being dispatched.');
     }
 
     // ── SAFE / CHECKIN ────────────────────────────────────────────────────────
     if (isSafe) {
       if (!checkIn) {
         await logEntry('safe_no_checkin_found', 'No active check-in found for phone', '');
-        return twimlReply('Thank you for confirming. We could not find an active check-in for your number. Please log in to your Morales dashboard if needed.');
+        return twimlReply('Thank you for confirming. We could not find an active check-in for your number. Please log in to your M-Care dashboard if needed.');
       }
 
       // Already acknowledged?
@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
         if (adminEmail) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Safety',
+              from_name: 'M-Care Safety',
               to: adminEmail,
               subject: `✅ ${checkIn.user_name || 'Traveler'} confirmed safe via SMS`,
               body: `<p>${checkIn.user_name || checkIn.user_email} replied SAFE via SMS. Check-in acknowledged. Escalation resolved for case ${checkIn.case_id}.</p><p>Phone: ${from} | Time: ${now}</p>`,
@@ -337,7 +337,7 @@ Deno.serve(async (req) => {
 
       // No name: an SMS confirmation lands on a lock screen, and "Thank you,
       // <full name>! You are marked safe" told anyone holding the handset who
-      // this person is and that they are a Morales patient. The confirmation
+      // this person is and that they are a M-Care patient. The confirmation
       // is just as clear without it.
       return twimlReply('You are marked safe. Thank you. Your next check-in is in 12 hours.');
     }
@@ -356,13 +356,13 @@ Deno.serve(async (req) => {
     // without losing the SAFE/SOS lifeline.
     await logEntry('unrecognized_command', `Body: ${body}`, checkIn?.case_id || '');
     return twimlReply(
-      'Morales Safety: Reply SAFE to confirm you are okay, or SOS for emergency help. '
-      + 'For anything else, please log in to the Morales app — we do not handle requests by reply.',
+      'M-Care Safety: Reply SAFE to confirm you are okay, or SOS for emergency help. '
+      + 'For anything else, please log in to the M-Care app — we do not handle requests by reply.',
     );
 
   } catch (err) {
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Error processing request. Please contact Morales support.</Message></Response>`,
+      `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Error processing request. Please contact M-Care support.</Message></Response>`,
       { status: 200, headers: { 'Content-Type': 'application/xml' } }
     );
   }

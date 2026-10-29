@@ -121,7 +121,7 @@ export default function PostOpRecoveryTracker({ checkIns = [] }) {
       {allDone && (
         <div className="mt-3 pt-3 text-center" style={{ borderTop: `1px solid ${GOLD}25` }}>
           <p className="text-xs font-semibold" style={{ color: GOLD }}>
-            🏆 All 4 recovery milestones complete — the Morales journey continues.
+            🏆 All 4 recovery milestones complete — the M-Care journey continues.
           </p>
         </div>
       )}

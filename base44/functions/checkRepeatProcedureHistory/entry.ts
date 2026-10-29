@@ -1,6 +1,6 @@
 // checkRepeatProcedureHistory — lets M-Care answer honestly, in a live chat,
 // whether a patient has had the SAME major procedure done before on an
-// earlier trip through Morales, even before any current CaseRecord exists.
+// earlier trip through M-Care, even before any current CaseRecord exists.
 // Mirrors why validateProcedureSafety exists as its own callable tool
 // separate from the real booking-time re-check.
 //

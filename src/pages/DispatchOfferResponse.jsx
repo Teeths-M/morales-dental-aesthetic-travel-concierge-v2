@@ -76,7 +76,7 @@ export default function DispatchOfferResponse() {
     <div className="mx-auto max-w-lg p-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Morales emergency dispatch</CardTitle>
+          <CardTitle className="text-lg">M-Care emergency dispatch</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">

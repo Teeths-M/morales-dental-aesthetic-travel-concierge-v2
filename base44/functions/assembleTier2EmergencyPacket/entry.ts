@@ -11,7 +11,7 @@
  * place a real outbound call or message to police, ambulance, or a human
  * safety-monitoring partner — no such vendor relationship exists today and
  * no per-country legal/compliance review has been done. The terminal action
- * is always a durable record plus a real notification to Morales' own
+ * is always a durable record plus a real notification to M-Care' own
  * admin/on-call human. See routeTier2Emergency's own header for the routing
  * decision and notification logic.
  *

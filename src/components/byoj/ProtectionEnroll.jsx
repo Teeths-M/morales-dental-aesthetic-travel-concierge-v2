@@ -5,15 +5,15 @@ import { ShieldAlert, Check, Loader2, Users } from 'lucide-react';
 // BYOJ_DISCLOSURE_TEXT_NONMEDICAL. Legal-approved (BYOJ_DISCLOSURE_STATUS =
 // 'legal_approved', version 'byoj-disclosure-v1').
 const DISCLOSURE_MEDICAL =
-  'Morales did not select, vet, or approve this doctor or clinic, and we cannot control their actions or your ' +
+  'M-Care did not select, vet, or approve this doctor or clinic, and we cannot control their actions or your ' +
   'medical care. What we provide is independent verification of what is publicly knowable, continuous journey ' +
   'monitoring, and 24/7 emergency response. We cannot guarantee a medical outcome. By enrolling, you are choosing ' +
-  'Morales as your safety net — not as the party responsible for the procedure itself.';
+  'M-Care as your safety net — not as the party responsible for the procedure itself.';
 const DISCLOSURE_NONMEDICAL =
-  'Morales did not select, vet, or approve this provider or venue, and we cannot control their actions or your ' +
+  'M-Care did not select, vet, or approve this provider or venue, and we cannot control their actions or your ' +
   'safety during this trip. What we provide is independent verification of what is publicly knowable, continuous ' +
   'journey monitoring, and 24/7 emergency response. We cannot guarantee an outcome. By enrolling, you are choosing ' +
-  'Morales as your safety net — not as the party responsible for the trip itself.';
+  'M-Care as your safety net — not as the party responsible for the trip itself.';
 
 /**
  * Enrollment step. The disclosure is an UNAVOIDABLE gate — enroll stays disabled
@@ -38,7 +38,7 @@ export default function ProtectionEnroll({ onEnroll, loading, journeyType = 'med
             {accepted && <Check className="w-3 h-3 text-[#060B16]" strokeWidth={3} />}
           </span>
           <span className="text-[12.5px] text-[#EAF2F4] leading-relaxed">
-            I understand Morales is providing <b>monitoring and support</b>, not a vetted booking or a guarantee of
+            I understand M-Care is providing <b>monitoring and support</b>, not a vetted booking or a guarantee of
             outcome, and I choose to enroll.
           </span>
         </button>

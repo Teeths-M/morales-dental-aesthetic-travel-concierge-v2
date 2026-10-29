@@ -3,7 +3,7 @@ import { escapeHtml } from './emailTemplate.ts';
 import { logJourneyEvent } from './logJourneyEvent.ts';
 import { widenPartnerSearch } from './partnerSearchWidening.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // Same HMAC minting shape already proven in checkPartnerSLABreaches/assignChauffeurServices —

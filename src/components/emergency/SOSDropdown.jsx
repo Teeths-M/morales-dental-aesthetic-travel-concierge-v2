@@ -139,7 +139,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
             setOpen(!open);
           }
         }}
-        aria-label="Activate SOS emergency alert — notifies your guardian and Morales team"
+        aria-label="Activate SOS emergency alert — notifies your guardian and M-Care team"
         aria-expanded={open}
         aria-haspopup="listbox"
         className={`relative flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-xs transition-all w-full justify-center ${

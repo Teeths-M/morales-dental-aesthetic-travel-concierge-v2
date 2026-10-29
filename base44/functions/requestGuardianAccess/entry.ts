@@ -45,7 +45,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     await Promise.allSettled(active.map((session: any) =>
       base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical Travel Safety',
+        from_name: 'M-Care Medical Travel Safety',
         to: email,
         subject: 'Your journey tracking link',
         body: linkOnlyEmail({

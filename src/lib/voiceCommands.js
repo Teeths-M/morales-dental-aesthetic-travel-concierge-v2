@@ -18,7 +18,7 @@
 import { detectTalkModeCommand } from './talkMode';
 
 // ── Normalization ───────────────────────────────────────────────────────────
-// Strips an optional wake word ("M", "M,", "hey M", "Morales") and trailing
+// Strips an optional wake word ("M", "M,", "hey M", "M-Care") and trailing
 // punctuation, lowercases. Kept separate from talkMode's own normalize so
 // the wake-word strip is the only behavioral addition here.
 const WAKE_PREFIXES = [

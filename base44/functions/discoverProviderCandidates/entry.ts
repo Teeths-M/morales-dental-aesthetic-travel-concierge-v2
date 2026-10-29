@@ -8,9 +8,9 @@ import { PARTNER_TYPE_CONFIG, partnerDisplayName, type PartnerType } from '../..
 
 // ── discoverProviderCandidates ───────────────────────────────────────────────
 // M-Care's controlled web-discovery tool. Runs when a traveler asks for a
-// provider not already in Morales's network:
+// provider not already in M-Care's network:
 //   1. Existing provider memory — real Doctor records checked first, so a
-//      web search never happens for someone Morales already works with.
+//      web search never happens for someone M-Care already works with.
 //   2. Tavily web discovery — a real, structured search (title/url/snippet/
 //      source/relevance/timestamp), honestly unavailable if TAVILY_API_KEY
 //      isn't configured. Every call is audit-logged via logExternalSearch,
@@ -107,8 +107,8 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       known_providers: knownMatches,
       candidates: [],
       message: knownMatches.length > 0
-        ? `Found ${knownMatches.length} ${cfg.noun}(s) already in the Morales network matching this. Open-web discovery isn't configured yet (${searchResult.message}), so I can't search beyond that right now.`
-        : `No matching ${cfg.noun} found in the Morales network yet, and open-web discovery isn't configured (${searchResult.message}). This would need a human to source a candidate manually.`,
+        ? `Found ${knownMatches.length} ${cfg.noun}(s) already in the M-Care network matching this. Open-web discovery isn't configured yet (${searchResult.message}), so I can't search beyond that right now.`
+        : `No matching ${cfg.noun} found in the M-Care network yet, and open-web discovery isn't configured (${searchResult.message}). This would need a human to source a candidate manually.`,
     });
   }
 
@@ -177,6 +177,6 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     discovery_available: true,
     known_providers: knownMatches,
     candidates: candidateRows.slice(0, 8),
-    message: `Checked the Morales network first (${knownMatches.length} match${knownMatches.length === 1 ? '' : 'es'}), then searched the web and found ${candidateRows.length} new candidate${candidateRows.length === 1 ? '' : 's'}. None of the web candidates are verified — that's a separate step a human completes before anyone is contacted.`,
+    message: `Checked the M-Care network first (${knownMatches.length} match${knownMatches.length === 1 ? '' : 'es'}), then searched the web and found ${candidateRows.length} new candidate${candidateRows.length === 1 ? '' : 's'}. None of the web candidates are verified — that's a separate step a human completes before anyone is contacted.`,
   });
 }, { name: 'discoverProviderCandidates', requireAuth: false, bodySchema, rateLimit: { max: 8, windowSeconds: 300 } }));

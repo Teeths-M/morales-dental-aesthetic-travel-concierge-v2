@@ -48,8 +48,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         // points to the real, working, login-gated dashboard instead of a broken promise.
         const portalUrl = `${APP_URL}/doctor-dashboard`;
 
-        const smsMsg = `Hi Dr. ${doctor.full_name}! Log in to your Morales D&A doctor dashboard here: ${portalUrl} - Questions? Reply to this message.`;
-        const emailBody = `<p>Dear Dr. ${doctor.full_name},</p><p>Your secure doctor portal link is ready. Click below to access your cases, confirm appointments, and manage your schedule:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Doctor Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
+        const smsMsg = `Hi Dr. ${doctor.full_name}! Log in to your M-Care D&A doctor dashboard here: ${portalUrl} - Questions? Reply to this message.`;
+        const emailBody = `<p>Dear Dr. ${doctor.full_name},</p><p>Your secure doctor portal link is ready. Click below to access your cases, confirm appointments, and manage your schedule:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Doctor Portal</a></p><p>- M-Care Medical Travel Safety Team</p>`;
 
         if (doctor.email) {
           try {
@@ -59,14 +59,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'partner',
               recipient_identifier: doctor.email,
               event_trigger: 'portal_broadcast',
-              payload: { subject: '🔗 Your Doctor Portal Link - Morales D&A' },
+              payload: { subject: '🔗 Your Doctor Portal Link - M-Care D&A' },
               internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               console.log(`Portal broadcast to ${doctor.email} suppressed — blackout active`);
               results.skipped.push({ name: doctor.full_name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: doctor.email, subject: '🔗 Your Doctor Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: doctor.email, subject: '🔗 Your Doctor Portal Link - M-Care D&A', body: emailBody, from_name: 'M-Care Medical Travel Safety' });
               results.sent.push({ name: doctor.full_name, type: 'doctor', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'email', error: 'send_failed' }); }
@@ -95,8 +95,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         // requires a specific consultation_id this broadcast doesn't have.
         const portalUrl = `${APP_URL}/travel-agency-dashboard`;
 
-        const smsMsg = `Hi ${agency.agency_name}! Log in to your Morales D&A travel agency dashboard here: ${portalUrl} - Submit travel quotes and manage bookings directly.`;
-        const emailBody = `<p>Dear ${agency.contact_person || agency.agency_name},</p><p>Your secure travel agency portal link is ready. Click below to view patient cases and submit travel arrangements:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Travel Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
+        const smsMsg = `Hi ${agency.agency_name}! Log in to your M-Care D&A travel agency dashboard here: ${portalUrl} - Submit travel quotes and manage bookings directly.`;
+        const emailBody = `<p>Dear ${agency.contact_person || agency.agency_name},</p><p>Your secure travel agency portal link is ready. Click below to view patient cases and submit travel arrangements:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Travel Portal</a></p><p>- M-Care Medical Travel Safety Team</p>`;
 
         if (agency.email) {
           try {
@@ -106,14 +106,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'partner',
               recipient_identifier: agency.email,
               event_trigger: 'portal_broadcast',
-              payload: { subject: '🔗 Your Travel Agency Portal Link - Morales D&A' },
+              payload: { subject: '🔗 Your Travel Agency Portal Link - M-Care D&A' },
               internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               console.log(`Portal broadcast to ${agency.email} suppressed — blackout active`);
               results.skipped.push({ name: agency.agency_name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: agency.email, subject: '🔗 Your Travel Agency Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: agency.email, subject: '🔗 Your Travel Agency Portal Link - M-Care D&A', body: emailBody, from_name: 'M-Care Medical Travel Safety' });
               results.sent.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email', error: 'send_failed' }); }
@@ -144,8 +144,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         const portalUrl = `${APP_URL}/taxi-service-dashboard`;
 
         const name = driver.driver_name || driver.company_name;
-        const smsMsg = `Hi ${name}! Log in to your Morales D&A chauffeur dashboard here: ${portalUrl} - View transfer assignments and submit quotes.`;
-        const emailBody = `<p>Dear ${name},</p><p>Your secure chauffeur portal link is ready. Click below to view patient transfers and submit pricing:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Transfer Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
+        const smsMsg = `Hi ${name}! Log in to your M-Care D&A chauffeur dashboard here: ${portalUrl} - View transfer assignments and submit quotes.`;
+        const emailBody = `<p>Dear ${name},</p><p>Your secure chauffeur portal link is ready. Click below to view patient transfers and submit pricing:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Transfer Portal</a></p><p>- M-Care Medical Travel Safety Team</p>`;
 
         if (driver.email) {
           try {
@@ -155,14 +155,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'partner',
               recipient_identifier: driver.email,
               event_trigger: 'portal_broadcast',
-              payload: { subject: '🔗 Your Chauffeur Portal Link - Morales D&A' },
+              payload: { subject: '🔗 Your Chauffeur Portal Link - M-Care D&A' },
               internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               console.log(`Portal broadcast to ${driver.email} suppressed — blackout active`);
               results.skipped.push({ name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: driver.email, subject: '🔗 Your Chauffeur Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: driver.email, subject: '🔗 Your Chauffeur Portal Link - M-Care D&A', body: emailBody, from_name: 'M-Care Medical Travel Safety' });
               results.sent.push({ name, type: 'taxi_service', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name, type: 'taxi_service', channel: 'email', error: 'send_failed' }); }
@@ -194,8 +194,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         if (!caseRecord.client_phone && !caseRecord.client_email) { results.skipped.push({ name: caseRecord.client_name, reason: 'No phone or email' }); continue; }
 
         const payUrl = `${APP_URL}/portal/proposal/${caseRecord.proposal_token}`;
-        const smsMsg = `Hi ${caseRecord.client_name}! Your Morales D&A treatment proposal & payment portal is ready. Access it here: ${payUrl} - Pay now to secure your spot!`;
-        const emailBody = `<p>Dear ${caseRecord.client_name},</p><p>Your personalized treatment proposal is ready and your payment portal is now open. Click below to review your package and complete your payment:</p><p><a href="${payUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">View Proposal & Pay Now</a></p><p>Current Status: <strong>${caseRecord.status}</strong></p><p>- Morales Medical Travel Safety Team</p>`;
+        const smsMsg = `Hi ${caseRecord.client_name}! Your M-Care D&A treatment proposal & payment portal is ready. Access it here: ${payUrl} - Pay now to secure your spot!`;
+        const emailBody = `<p>Dear ${caseRecord.client_name},</p><p>Your personalized treatment proposal is ready and your payment portal is now open. Click below to review your package and complete your payment:</p><p><a href="${payUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">View Proposal & Pay Now</a></p><p>Current Status: <strong>${caseRecord.status}</strong></p><p>- M-Care Medical Travel Safety Team</p>`;
 
         if (caseRecord.client_email) {
           try {
@@ -206,13 +206,13 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
               recipient_role: 'patient',
               recipient_identifier: caseRecord.client_email,
               event_trigger: 'broadcastPortalLinks',
-              payload: { subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A' },
+              payload: { subject: '💳 Your Treatment Proposal & Payment Portal - M-Care D&A' },
               internal_secret: Deno.env.get('CRON_SECRET'),
             }).catch(() => ({ suppressed: false }));
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               results.skipped.push({ name: caseRecord.client_name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: caseRecord.client_email, subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: caseRecord.client_email, subject: '💳 Your Treatment Proposal & Payment Portal - M-Care D&A', body: emailBody, from_name: 'M-Care Medical Travel Safety' });
               results.sent.push({ name: caseRecord.client_name, type: 'patient', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'email', error: 'send_failed' }); }

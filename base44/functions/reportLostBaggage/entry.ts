@@ -13,7 +13,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const finderUrl = `${appUrl}/luggage/${bag.finder_contact_token}`;
 
     // Generate claim summary via AI — plain text fallback if LLM unavailable
-    let claimSummary = `Lost baggage claim for ${bag.bag_label || 'suitcase'} on flight ${bag.airline_code || ''}${bag.flight_number || ''} (${bag.origin_airport || '?'} → ${bag.destination_airport || '?'}). Claim reference: ${claimRef}. Filed automatically by Morales Medical Concierge.`;
+    let claimSummary = `Lost baggage claim for ${bag.bag_label || 'suitcase'} on flight ${bag.airline_code || ''}${bag.flight_number || ''} (${bag.origin_airport || '?'} → ${bag.destination_airport || '?'}). Claim reference: ${claimRef}. Filed automatically by M-Care Medical Concierge.`;
     try {
       const aiSummary = await base44.asServiceRole.integrations.Core.InvokeLLM({
         model: 'gpt_5_mini',
@@ -52,7 +52,7 @@ Write a professional 150-word claim body suitable for email submission to the ai
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: bag.patient_email,
       subject: `🧳 Lost Baggage Claim Filed — ${claimRef}`,
-      body: `Dear ${bag.patient_name || 'Traveller'},\n\nYour lost baggage claim has been filed automatically.\n\nClaim Reference: ${claimRef}\nBag: ${bag.bag_label}\nFlight: ${bag.airline_code}${bag.flight_number}\n\nQR Finder Portal (share publicly if needed): ${finderUrl}\n\nClaim Report:\n${claimSummary}\n\nOur team is tracking this case. We will notify you immediately when your bag is located.\n\nMorales Medical Concierge`
+      body: `Dear ${bag.patient_name || 'Traveller'},\n\nYour lost baggage claim has been filed automatically.\n\nClaim Reference: ${claimRef}\nBag: ${bag.bag_label}\nFlight: ${bag.airline_code}${bag.flight_number}\n\nQR Finder Portal (share publicly if needed): ${finderUrl}\n\nClaim Report:\n${claimSummary}\n\nOur team is tracking this case. We will notify you immediately when your bag is located.\n\nM-Care Medical Concierge`
     });
 
     // Notify admin

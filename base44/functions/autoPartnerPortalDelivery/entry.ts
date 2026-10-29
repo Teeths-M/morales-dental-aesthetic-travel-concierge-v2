@@ -16,7 +16,7 @@
 import { createHandler, ok } from '../../shared/createHandler.ts';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendEmail(base44, to, subject, body) {
@@ -31,15 +31,15 @@ function portalEmailHtml(name, role, portalUrl) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;max-width:600px;margin:0 auto;background:#060B16;color:#fff;border-radius:16px;overflow:hidden;">
   <div style="background:linear-gradient(135deg,#0C1A1D,#080F18);padding:32px;border-bottom:1px solid rgba(212,175,55,0.3);">
     <div style="font-size:28px;font-weight:900;color:#D4AF37;">M</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;margin-top:4px;">Morales Concierge</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;margin-top:4px;">M-Care Concierge</div>
   </div>
   <div style="padding:32px;">
     <p style="font-size:15px;color:rgba(255,255,255,0.7);margin:0 0 16px;">Hello ${name},</p>
-    <p style="font-size:15px;color:rgba(255,255,255,0.7);margin:0 0 24px;">Your Morales ${role} portal is ready. Access your cases, manage your schedule, and coordinate with the team — all in one place.</p>
+    <p style="font-size:15px;color:rgba(255,255,255,0.7);margin:0 0 24px;">Your M-Care ${role} portal is ready. Access your cases, manage your schedule, and coordinate with the team — all in one place.</p>
     <div style="text-align:center;margin:32px 0;">
       <a href="${portalUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:16px 40px;border-radius:99px;text-decoration:none;">Open My Portal →</a>
     </div>
-    <p style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin:0;">This link is unique to you. Do not share it. — Morales Concierge</p>
+    <p style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin:0;">This link is unique to you. Do not share it. — M-Care Concierge</p>
   </div>
 </div>`;
 }
@@ -56,7 +56,7 @@ function proposalEmailHtml(clientName, payUrl) {
     <div style="text-align:center;margin:32px 0;">
       <a href="${payUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:16px 40px;border-radius:99px;text-decoration:none;">Review Proposal &amp; Pay Now →</a>
     </div>
-    <p style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin:0;">Morales Medical Travel Safety</p>
+    <p style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin:0;">M-Care Medical Travel Safety</p>
   </div>
 </div>`;
 }
@@ -83,7 +83,7 @@ Deno.serve(createHandler(async ({ base44, req }) => {
       const portalUrl = `${APP_URL}/doctor-dashboard`;
       const sent = await sendEmail(
         base44, d.email,
-        `Your Morales Doctor Portal is Ready — ${BRAND}`,
+        `Your M-Care Doctor Portal is Ready — ${BRAND}`,
         portalEmailHtml(d.full_name || 'Doctor', 'Doctor', portalUrl)
       );
 
@@ -106,7 +106,7 @@ Deno.serve(createHandler(async ({ base44, req }) => {
       const portalUrl = `${APP_URL}/portal/travel`;
       const sent = await sendEmail(
         base44, a.email,
-        `Your Morales Travel Portal is Ready — ${BRAND}`,
+        `Your M-Care Travel Portal is Ready — ${BRAND}`,
         portalEmailHtml(a.contact_person || a.agency_name || 'Partner', 'Travel Agency', portalUrl)
       );
 
@@ -129,7 +129,7 @@ Deno.serve(createHandler(async ({ base44, req }) => {
       const portalUrl = `${APP_URL}/portal/transfer`;
       const sent = await sendEmail(
         base44, drv.email,
-        `Your Morales Transfer Portal is Ready — ${BRAND}`,
+        `Your M-Care Transfer Portal is Ready — ${BRAND}`,
         portalEmailHtml(drv.driver_name || drv.company_name || 'Partner', 'Chauffeur', portalUrl)
       );
 

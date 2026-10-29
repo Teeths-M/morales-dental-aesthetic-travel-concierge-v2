@@ -22,22 +22,22 @@ async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
 
 const SMS_TEMPLATES = {
   booking_confirmation: (name, procedure, date) =>
-    `Hi ${name}! Your booking for ${procedure} on ${date} has been confirmed. We'll be in touch soon with your full itinerary. - Morales Medical Travel Safety`,
+    `Hi ${name}! Your booking for ${procedure} on ${date} has been confirmed. We'll be in touch soon with your full itinerary. - M-Care Medical Travel Safety`,
 
   appointment_reminder: (name, procedure, date, time) =>
-    `Reminder: ${name}, your ${procedure} appointment is on ${date} at ${time}. Please reply CONFIRM or call us if you need to reschedule. - Morales Medical Travel Safety`,
+    `Reminder: ${name}, your ${procedure} appointment is on ${date} at ${time}. Please reply CONFIRM or call us if you need to reschedule. - M-Care Medical Travel Safety`,
 
   status_update: (name, status) =>
-    `Hi ${name}, your case status has been updated to: ${status}. Log in to your dashboard for details. - Morales Medical Travel Safety`,
+    `Hi ${name}, your case status has been updated to: ${status}. Log in to your dashboard for details. - M-Care Medical Travel Safety`,
 
   travel_confirmed: (name, destination, date) =>
-    `Great news ${name}! Your travel to ${destination} on ${date} has been confirmed. Check your email for full itinerary. - Morales Medical Travel Safety`,
+    `Great news ${name}! Your travel to ${destination} on ${date} has been confirmed. Check your email for full itinerary. - M-Care Medical Travel Safety`,
 
   payment_received: (name, amount) =>
-    `Hi ${name}, we've received your payment of $${amount}. Your medical travel package is now secured! - Morales Medical Travel Safety`,
+    `Hi ${name}, we've received your payment of $${amount}. Your medical travel package is now secured! - M-Care Medical Travel Safety`,
 
   proposal_ready: (name, url) =>
-    `Hi ${name}, your personalized treatment proposal is ready! View it here: ${url} - Morales Medical Travel Safety`,
+    `Hi ${name}, your personalized treatment proposal is ready! View it here: ${url} - M-Care Medical Travel Safety`,
 
   custom: (message) => message,
 };
@@ -51,7 +51,7 @@ Deno.serve(createHandler(async ({ req }) => {
     // including a free-text "custom" message type and any target phone number. The
     // route was admin-only but this function only required *some* logged-in user —
     // any registered patient/partner account could call it directly to send up to
-    // 10 arbitrary SMS/hour to any number via Morales' own Twilio account.
+    // 10 arbitrary SMS/hour to any number via M-Care' own Twilio account.
     if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }

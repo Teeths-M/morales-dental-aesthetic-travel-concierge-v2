@@ -2,7 +2,7 @@
 import { linkOnlyEmail } from '../../shared/notify.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 Deno.serve(createHandler(async ({ base44, body }) => {
@@ -45,7 +45,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // The dietary/allergy/AI meal-plan detail this used to carry in the email
   // body is exactly what must stay in-platform — the companion dashboard
   // already surfaces it (DietaryInfoCard, getCompanionDietaryProfile).
-  const subject = 'Your recovery meal brief is ready — Morales Medical Travel Safety';
+  const subject = 'Your recovery meal brief is ready — M-Care Medical Travel Safety';
   const html = linkOnlyEmail({
     title: 'A recovery meal brief is ready for you',
     line: 'You have a new companion assignment with dietary preferences, allergy notes and a recovery meal plan waiting in your dashboard.',

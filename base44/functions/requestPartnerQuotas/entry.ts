@@ -19,7 +19,7 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
  * which is what the token was for.
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — was previously
@@ -199,7 +199,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }),
     base44.asServiceRole.entities.AuditLog.create({
       event_type: 'partner_quotas_requested', actor_id: 'system', actor_role: 'system',
-      actor_name: 'Morales Automation', resource_type: 'CaseRecord', resource_id: case_id,
+      actor_name: 'M-Care Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, details: { sent_to: sent, patient: patientName }, sensitive: false, timestamp: now,
       prev_hash: partnerQuotasPrevHash,
     })

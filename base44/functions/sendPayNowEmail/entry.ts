@@ -1,7 +1,7 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -47,7 +47,7 @@ function payNowEmail({ clientName, procedures, destination, caseRef,
         ✓ Hotel accommodation (procedure + recovery)<br/>
         ✓ All local transfers (airport, clinic, hotel)<br/>
         ✓ Recovery companion service<br/>
-        ✓ 24/7 Morales concierge support
+        ✓ 24/7 M-Care concierge support
       </p>
     </div>
   </div>
@@ -90,7 +90,7 @@ function payNowEmail({ clientName, procedures, destination, caseRef,
     Payment links expire in 48 hours. This quote is valid for 7 days.<br/>
     Questions? Contact your concierge on WhatsApp anytime.
   </p>
-  <p style="margin:16px 0 0;font-size:14px;color:#fff;font-weight:700;text-align:center;">Morales Concierge Team</p>
+  <p style="margin:16px 0 0;font-size:14px;color:#fff;font-weight:700;text-align:center;">M-Care Concierge Team</p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -123,7 +123,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND,
       to: c.client_email,
-      subject: `Your Morales package is ready — choose your payment | ${BRAND}`,
+      subject: `Your M-Care package is ready — choose your payment | ${BRAND}`,
       body: payNowEmail({
         clientName:   c.client_name,
         procedures,
@@ -141,7 +141,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }),
     base44.asServiceRole.entities.AuditLog.create({
       event_type: 'pay_now_email_sent', actor_id: 'system', actor_role: 'system',
-      actor_name: 'Morales Automation', resource_type: 'CaseRecord', resource_id: case_id,
+      actor_name: 'M-Care Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, sensitive: false, timestamp: new Date().toISOString(),
       details: { sent_to: c.client_email, full: c.package_price_full, terms: c.package_price_terms },
     }),

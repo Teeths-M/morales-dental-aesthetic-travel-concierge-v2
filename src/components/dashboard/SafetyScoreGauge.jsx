@@ -28,7 +28,7 @@ const CY   = 62;
 const CIRC = 2 * Math.PI * R; // 314.2
 
 /**
- * SafetyScoreGauge — Morales Safety Score circular gauge
+ * SafetyScoreGauge — M-Care Safety Score circular gauge
  *
  * Props:
  *   score        — 0-100 risk score (null = loading)
@@ -60,7 +60,7 @@ export default function SafetyScoreGauge({ score, breakdown, analyzedAt, isLoadi
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-[10px] font-extrabold tracking-[0.2em] uppercase" style={{ color: GOLD }}>
-              Your Morales Safety Score
+              Your M-Care Safety Score
             </p>
             <p className="text-[9px] tracking-widest uppercase mt-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
               Powered by MedGuard™

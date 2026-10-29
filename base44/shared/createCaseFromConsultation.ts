@@ -120,11 +120,11 @@ export async function createCaseFromConsultation(base44: any, consultation_id: s
         const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: consultation.email,
-          from_name: 'Morales Travel Concierge',
+          from_name: 'M-Care Travel Concierge',
           subject: '⚖️ Informed Consent Confirmed — SAFE-T 4LIFE™',
           body: linkOnlyEmail({
             title: 'Your consent and payment receipt are ready',
-            line: 'View and download your signed consent and payment receipt in your Morales portal.',
+            line: 'View and download your signed consent and payment receipt in your M-Care portal.',
             ctaUrl: `${appUrl}/dashboard`,
             ctaLabel: 'Open My Portal',
             from: 'createCaseFromConsultation',

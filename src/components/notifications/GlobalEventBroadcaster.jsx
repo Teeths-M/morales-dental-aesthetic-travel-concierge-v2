@@ -198,7 +198,7 @@ export default function GlobalEventBroadcaster({ user }) {
         type:     'success',
         icon:     '🛡️',
         title:    'MedGuard™ Protection Active',
-        body:     'We are monitoring your safety in real time. You are not alone — Morales is watching.',
+        body:     'We are monitoring your safety in real time. You are not alone — M-Care is watching.',
         duration: 7000,
         position: 'top',
       });
@@ -243,7 +243,7 @@ export default function GlobalEventBroadcaster({ user }) {
       title:    `Welcome to ${country}`,
       body:     activeTrip?.current_step < 4
         ? 'Your driver and hotel details are ready. Tap to view.'
-        : 'Morales protection is active. Stay safe.',
+        : 'M-Care protection is active. Stay safe.',
       duration: 0, // stays until dismissed
       position: 'top',
       action: activeTrip ? {
@@ -569,7 +569,7 @@ export default function GlobalEventBroadcaster({ user }) {
         // ── Step 1: Reverse-geocode to neighbourhood name ──────────────────
         const geoRes  = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}&format=json&zoom=10`,
-          { headers: { 'Accept-Language': 'en', 'User-Agent': 'MoralesMedical/1.0' }, signal: AbortSignal.timeout(6000) }
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'M-CareMedical/1.0' }, signal: AbortSignal.timeout(6000) }
         );
         const geo     = await geoRes.json();
         const suburb  = geo.address?.suburb || geo.address?.neighbourhood || geo.address?.city_district || '';
@@ -584,7 +584,7 @@ export default function GlobalEventBroadcaster({ user }) {
             showNotification({
               type: 'alert', icon: cached === 'HIGH' ? '🔴' : '🟡',
               title: `EVN-iQ400 · ${cached === 'HIGH' ? 'High-Risk Area' : 'Area Advisory'}`,
-              body: `${suburb || city} is flagged as ${cached.toLowerCase()} risk. Stay alert and use your Morales-vetted transport.`,
+              body: `${suburb || city} is flagged as ${cached.toLowerCase()} risk. Stay alert and use your M-Care-vetted transport.`,
               duration: cached === 'HIGH' ? 0 : 12000, position: 'top',
               action: cached === 'HIGH' ? { label: 'Contact Concierge →', onPress: () => { window.location.href = '/emergency'; } } : null,
             });
@@ -595,7 +595,7 @@ export default function GlobalEventBroadcaster({ user }) {
         // ── Step 3a: Online → LLM assessment ──────────────────────────────
         if (navigator.onLine && !isSystemPaused()) {
           const res  = await base44.integrations.Core.InvokeLLM({
-            prompt: `Travel safety AI for Morales Medical Concierge. Patient is in: "${suburb ? suburb + ', ' : ''}${city}, ${nation}". Assess risk for international medical tourist. Respond with JSON only (no fences): {"risk":"LOW"|"MODERATE"|"HIGH","reason":"factual sentence under 18 words","tip":"protective action under 12 words"}`,
+            prompt: `Travel safety AI for M-Care Medical Concierge. Patient is in: "${suburb ? suburb + ', ' : ''}${city}, ${nation}". Assess risk for international medical tourist. Respond with JSON only (no fences): {"risk":"LOW"|"MODERATE"|"HIGH","reason":"factual sentence under 18 words","tip":"protective action under 12 words"}`,
             response_type: 'text',
           });
           const text = typeof res === 'string' ? res : (res?.result || res?.text || '');
@@ -608,7 +608,7 @@ export default function GlobalEventBroadcaster({ user }) {
             // Structured parse failed — extract risk level from free text
             const m = text.match(/\b(HIGH|MODERATE|LOW)\b/i);
             if (!m) return;
-            parsed = { risk: m[1].toUpperCase(), reason: 'Exercise caution in this area.', tip: 'Stay close to your hotel or Morales venue.' };
+            parsed = { risk: m[1].toUpperCase(), reason: 'Exercise caution in this area.', tip: 'Stay close to your hotel or M-Care venue.' };
           }
 
           const risk = (parsed.risk || '').toUpperCase();
@@ -634,7 +634,7 @@ export default function GlobalEventBroadcaster({ user }) {
           showNotification({
             type: 'alert', icon: '🔴',
             title: 'EVN-iQ400 · High-Risk Area (Offline)',
-            body: `${suburb || city} is on Morales\' offline risk list. Return to your hotel or contact your concierge.`,
+            body: `${suburb || city} is on M-Care\' offline risk list. Return to your hotel or contact your concierge.`,
             duration: 0, position: 'top',
             action: { label: 'SOS →', onPress: () => { window.location.href = '/emergency'; } },
           });

@@ -11,7 +11,7 @@ export default function PageNotFound() {
           <div className="relative">
             <img
               src="/morales-m-mark.png"
-              alt="Morales"
+              alt="M-Care"
               className="w-16 h-16 object-contain opacity-60"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
@@ -33,7 +33,7 @@ export default function PageNotFound() {
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-semibold"
           style={{ background: 'rgba(212,175,55,0.06)', borderColor: 'rgba(212,175,55,0.2)', color: '#D4AF37' }}>
           <Shield className="w-3.5 h-3.5" />
-          Protected by Morales Security Stack
+          Protected by M-Care Security Stack
         </div>
 
         {/* Actions */}

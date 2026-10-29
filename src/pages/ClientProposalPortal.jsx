@@ -194,7 +194,7 @@ export default function ClientProposalPortal() {
               <div className="px-5 py-3 flex items-center gap-3" style={{ background: 'rgba(197,160,89,0.08)', borderBottom: '1px solid rgba(197,160,89,0.15)' }}>
                 <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: '#C5A059' }} />
                 <div>
-                  <p className="text-xs font-semibold" style={{ color: '#C5A059' }}>✨ Morales Luxury Credit Applied</p>
+                  <p className="text-xs font-semibold" style={{ color: '#C5A059' }}>✨ M-Care Luxury Credit Applied</p>
                   <p className="text-[10px] text-white/60">Your $49 USD consultation retainer has been fully refunded and credited back to your itinerary total.</p>
                 </div>
               </div>
@@ -292,7 +292,7 @@ export default function ClientProposalPortal() {
             {creditAmount > 0 && (
               <div className="mt-4 rounded-xl px-4 py-3 text-left" style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.25)' }}>
                 <p className="text-xs font-semibold flex items-center gap-2" style={{ color: '#C5A059' }}>
-                  <Sparkles className="w-3.5 h-3.5" /> ✨ Morales Luxury Credit Applied
+                  <Sparkles className="w-3.5 h-3.5" /> ✨ M-Care Luxury Credit Applied
                 </p>
                 <p className="text-[10px] text-white/60 mt-1">Your $49 USD consultation retainer has been fully refunded and credited back to your itinerary total.</p>
               </div>

@@ -45,7 +45,7 @@ export default function InsuranceCoverage() {
               <ShieldCheck className="w-7 h-7 text-white" />
             </div>
             <div>
-              <p className="text-blue-200 text-xs font-semibold uppercase tracking-widest">Morales Medical</p>
+              <p className="text-blue-200 text-xs font-semibold uppercase tracking-widest">M-Care Medical</p>
               <h1 className="text-2xl font-semibold">Cancellation & Insurance</h1>
             </div>
           </div>

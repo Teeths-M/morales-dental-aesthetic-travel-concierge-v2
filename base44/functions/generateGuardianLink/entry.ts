@@ -44,12 +44,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // Optionally notify the guardian by email
     if (guardian_email) {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical Safe-T',
+        from_name: 'M-Care Medical Safe-T',
         to: guardian_email,
         subject: `${user.full_name || user.email} shared their travel status with you`,
         body: `<div style="font-family:sans-serif;max-width:600px;">
 <h2>You've been granted Guardian View access</h2>
-<p><strong>${user.full_name || 'Your contact'}</strong> is traveling with Morales Medical and has shared their journey status with you.</p>
+<p><strong>${user.full_name || 'Your contact'}</strong> is traveling with M-Care Medical and has shared their journey status with you.</p>
 <p><a href="${guardianUrl}" style="background:#047857;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin:16px 0;">View Live Status →</a></p>
 <p style="color:#6b7280;font-size:14px;">This link expires in ${expires_hours} hours and requires no login. View only — no actions can be taken.</p>
 <p style="color:#9ca3af;font-size:12px;">If you did not expect this, you may ignore this email.</p>

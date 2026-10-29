@@ -7,7 +7,7 @@ import { strictObject, Fields } from '../../shared/validate.ts';
 // the live ProcedureKnowledge lookup via getProcedureIllustration (tier 2)
 // has a curated diagram, this fetches a real image from the open web via
 // Tavily's image search and returns it. The returned URL is third-party and
-// is shown in chat with an honest "sourced from the web — not Morales-
+// is shown in chat with an honest "sourced from the web — not M-Care-
 // curated" caption; it is NEVER persisted to ProcedureKnowledge.image_url
 // (third-party URLs can be ephemeral/hotlink-blocked and re-hosting raises
 // licensing issues). Caching of web hits stays session-level inside the chat

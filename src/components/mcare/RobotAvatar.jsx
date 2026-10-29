@@ -169,7 +169,7 @@ export default function RobotAvatar({ size = 104, color = '#D4AF37', glowAlpha =
         ))}
 
         {/* Side "M" badge on the shell itself — not inside the visor. Doubles
-            as the "side earpiece" a mounted gold component with the Morales
+            as the "side earpiece" a mounted gold component with the M-Care
             M engraved on it, rather than a second, redundant element
             crowding the same small area. A domed gradient + drop-shadow
             give it a raised, mounted look instead of a flat sticker. */}

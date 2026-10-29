@@ -4,11 +4,11 @@ import { scrubPHI } from '../../shared/scrubPHI.ts';
 import { escapeHtml } from '../../shared/emailTemplate.ts';
 
 // ── moralesAssist ─────────────────────────────────────────────────────────────
-// AI concierge for Morales Assist. Resolves support requests through natural
+// AI concierge for M-Care Assist. Resolves support requests through natural
 // conversation. When human judgment is required, captures full context and
 // notifies the care team — the client never repeats themselves.
 
-const SYSTEM_PROMPT = `You are the Morales Concierge — the personal AI assistant for Morales Medical Travel, a premium platform that coordinates dental and aesthetic procedures abroad for international clients.
+const SYSTEM_PROMPT = `You are the M-Care Concierge — the personal AI assistant for M-Care Medical Travel, a premium platform that coordinates dental and aesthetic procedures abroad for international clients.
 
 ## Identity & Tone
 You speak like a senior concierge at a five-star property — measured, warm, precise, never hurried.
@@ -93,7 +93,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const conv = raw.slice(firstUser);
 
   const historyLines = conv.slice(0, -1)
-    .map(m => `${m.role === 'user' ? 'Client' : 'Morales'}: ${m.content}`)
+    .map(m => `${m.role === 'user' ? 'Client' : 'M-Care'}: ${m.content}`)
     .join('\n');
 
   const lastMsg = conv[conv.length - 1]?.content ?? '';
@@ -103,7 +103,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     userCtx ? `\n\nClient context: ${userCtx}` : '',
     historyLines ? `\n\nConversation so far:\n${historyLines}` : '',
     `\n\nClient: ${lastMsg}`,
-    '\n\nMorales Concierge (JSON only, no prose outside the JSON):',
+    '\n\nM-Care Concierge (JSON only, no prose outside the JSON):',
   ].join('');
 
   const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
@@ -148,15 +148,15 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // If handoff needed: capture full context and notify the care team
   if (needsHandoff) {
     const summary = conv
-      .map(m => `${m.role === 'user' ? 'Client' : 'Morales'}: ${escapeHtml(m.content)}`)
+      .map(m => `${m.role === 'user' ? 'Client' : 'M-Care'}: ${escapeHtml(m.content)}`)
       .join('\n\n');
 
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to:      'support@moralesdentalandaesthetics.com',
-        subject: `Morales Assist — Specialist Needed${firstName ? ` · ${firstName}` : ''}`,
+        subject: `M-Care Assist — Specialist Needed${firstName ? ` · ${firstName}` : ''}`,
         body: `
-<h2 style="color:#D4AF37">Morales Assist — Specialist Follow-up Required</h2>
+<h2 style="color:#D4AF37">M-Care Assist — Specialist Follow-up Required</h2>
 <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse">
   <tr><td style="padding:4px 12px 4px 0;color:#888">Client</td><td><strong>${escapeHtml(user?.full_name || 'N/A')}</strong> (${escapeHtml(user?.email || 'N/A')})</td></tr>
   ${trip_phase ? `<tr><td style="padding:4px 12px 4px 0;color:#888">Journey phase</td><td>${escapeHtml(trip_phase)}</td></tr>` : ''}
@@ -166,7 +166,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 <h3 style="margin:0 0 8px">Full Conversation</h3>
 <pre style="white-space:pre-wrap;font-family:sans-serif;font-size:13px;line-height:1.6">${summary}</pre>
 <hr style="margin:16px 0"/>
-<p style="color:#aaa;font-size:11px">Morales Assist · AI Handoff · ${new Date().toISOString()}</p>`,
+<p style="color:#aaa;font-size:11px">M-Care Assist · AI Handoff · ${new Date().toISOString()}</p>`,
       });
     } catch (_) {
       // Email failure must not surface to the client

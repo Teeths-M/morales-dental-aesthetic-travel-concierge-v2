@@ -1,11 +1,11 @@
 /**
  * getDestinationSafetyIndex
  *
- * Returns a proprietary Morales Safety Index (0–100) for a destination country.
+ * Returns a proprietary M-Care Safety Index (0–100) for a destination country.
  * Built from our own SOS event history + live active patient count.
  *
  * A competitor starting today has a score of null — no data.
- * Morales gets more accurate with every patient journey.
+ * M-Care gets more accurate with every patient journey.
  *
  * Score formula:
  *   Base:                    100
@@ -40,7 +40,7 @@ Deno.serve(createHandler(async ({ req }) => {
       sosLast7  = relevant.filter((s: any) => s.triggered_at > sevenDaysAgo).length;
     } catch (_) {}
 
-    // Active Morales patients currently in this destination
+    // Active M-Care patients currently in this destination
     let activePatients = 0;
     try {
       const activeCases = await base44.asServiceRole.entities.CaseRecord.filter({

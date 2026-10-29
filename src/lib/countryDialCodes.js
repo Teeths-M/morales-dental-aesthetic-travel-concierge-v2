@@ -1,5 +1,5 @@
 // Country dial codes for the shared PhoneField (flag + code selector, so a user
-// never hand-types "+1 868…"). Covers Morales' source and destination markets
+// never hand-types "+1 868…"). Covers M-Care' source and destination markets
 // (Americas, Caribbean, Europe, Middle East, Asia, Africa). The list is
 // searchable in the UI, so ordering is by name; detection picks the right one.
 //

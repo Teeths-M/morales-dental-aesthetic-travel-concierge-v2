@@ -59,7 +59,7 @@ Deno.serve(createHandler(async ({ req, base44, user, body }) => {
         const r = await fetch(website_url, {
           redirect: 'follow',
           signal: AbortSignal.timeout(8000),
-          headers: { 'User-Agent': 'Morales-MCare/1.0 (+verification)' }
+          headers: { 'User-Agent': 'M-Care-MCare/1.0 (+verification)' }
         });
         statusCode = r.status; live = r.ok;
         const html = await r.text();

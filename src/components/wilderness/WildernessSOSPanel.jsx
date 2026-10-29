@@ -17,8 +17,8 @@ const STATE_LABELS = {
   idle: '',
   capturing_gps: 'Capturing GPS…',
   ready: 'SOS Packet Ready',
-  syncing: 'Syncing to Morales…',
-  synced: 'SOS Received by Morales',
+  syncing: 'Syncing to M-Care…',
+  synced: 'SOS Received by M-Care',
   error: 'Sync Failed — Use SMS',
 };
 
@@ -77,7 +77,7 @@ export default function WildernessSOSPanel({
         {!isOnline && (
           <div className="bg-amber-900/40 border border-amber-600/50 rounded-xl px-4 py-3 text-xs text-amber-300">
             <p className="font-semibold mb-0.5">No internet detected</p>
-            <p>Morales can still create an SOS packet with your GPS coordinates. If SMS is available, send the emergency packet by text. When internet returns, the app will sync automatically.</p>
+            <p>M-Care can still create an SOS packet with your GPS coordinates. If SMS is available, send the emergency packet by text. When internet returns, the app will sync automatically.</p>
           </div>
         )}
 
@@ -206,7 +206,7 @@ export default function WildernessSOSPanel({
                 <span>
                   The app cannot send SMS silently — it opens your SMS app with a pre-filled message.
                   You must press Send. GPS works without internet; SMS requires cellular signal.
-                  {isOnline ? ' Morales servers have been notified.' : ' Morales will sync automatically when internet returns.'}
+                  {isOnline ? ' M-Care servers have been notified.' : ' M-Care will sync automatically when internet returns.'}
                 </span>
               </div>
             </motion.div>
@@ -218,9 +218,9 @@ export default function WildernessSOSPanel({
           <button
             onClick={triggerOfflineSOS}
             className="flex items-center justify-center gap-2 w-full border border-red-600/50 text-red-300 hover:bg-red-900/30 font-semibold py-2.5 rounded-xl text-xs"
-            aria-label="Retry sync to Morales servers"
+            aria-label="Retry sync to M-Care servers"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Retry Sync to Morales
+            <RefreshCw className="w-3.5 h-3.5" /> Retry Sync to M-Care
           </button>
         )}
 

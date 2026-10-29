@@ -5,10 +5,10 @@ import LivingOrb from '@/components/mcare/LivingOrb';
 // message, the panel header, and every typing/loading indicator across
 // MCareOrb.jsx and MCareAgent.jsx.
 //
-// 2026-08-12: previously rendered a real photo of a person in a Morales
+// 2026-08-12: previously rendered a real photo of a person in a M-Care
 // vest, circle-cropped (a base44-builder[bot] "mascot-style" addition).
 // Portia flagged it live as reading like an unsettling, face-like image at
-// chat-avatar size — replaced with the same dark orb + embossed Morales M
+// chat-avatar size — replaced with the same dark orb + embossed M-Care M
 // emblem every other M-Care surface uses, so there is exactly one visual
 // definition of "M-Care's presence" in this app, not two.
 //

@@ -258,7 +258,7 @@ function computeRiskScore(caseRecord, repeatCheck?: RepeatProcedureResult) {
   }
 
   // Repeat-procedure history: patient has had this SAME major procedure done
-  // before, on an earlier trip through Morales, at least REVIEW_THRESHOLD
+  // before, on an earlier trip through M-Care, at least REVIEW_THRESHOLD
   // times. Guaranteed HIGH (never a score contribution that could get
   // diluted by an otherwise-clean profile) — a patient repeating the same
   // major surgery may show no other risk factor at all. Reuses the exact

@@ -39,7 +39,7 @@ Deno.serve(createHandler(async ({ req }) => {
             <p style="margin:0;color:#111;font-size:15px">${safeQuestion}</p>
           </div>
           <p>Please reply to this email or log in to your dashboard to provide the requested information.</p>
-          <p style="color:#888;font-size:12px;margin-top:24px">Morales Medical Travel Safety</p>
+          <p style="color:#888;font-size:12px;margin-top:24px">M-Care Medical Travel Safety</p>
         `,
       });
     }

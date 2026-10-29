@@ -63,7 +63,7 @@ export const MSAFE_PALETTE = {
 export const MSAFE_BRAND = {
   title: 'M-Safe',
   plus: '+',
-  name: 'Morales Super Agent',
+  name: 'M-Care Super Agent',
   subtitle: 'Medical + Travel Concierge',
 };
 

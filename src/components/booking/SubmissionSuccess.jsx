@@ -141,7 +141,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
             Your Journey Has Begun.
           </h1>
           <p className="text-sm leading-relaxed mb-6 max-w-md mx-auto" style={{ color: '#94a3b8' }}>
-            Welcome to Morales. Your consultation is now in the hands of our medical team. You are officially in our care.
+            Welcome to M-Care. Your consultation is now in the hands of our medical team. You are officially in our care.
           </p>
 
           <div className="flex flex-wrap gap-2 justify-center">
@@ -330,7 +330,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
         <div className="flex items-start gap-2 rounded-xl p-3" style={{ background: CALM.surfaceSoft, border: `1px solid ${CALM.border}` }}>
           <Shield className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-slate-400 leading-relaxed">
-            <strong className="text-slate-500">Morales</strong> coordinates your care and watches over your safety — but we're not your doctor. Every plan is reviewed by licensed medical professionals, and the clinical decisions are always theirs. SAFE-T 4LIFE™ supports that care; it never replaces it.
+            <strong className="text-slate-500">M-Care</strong> coordinates your care and watches over your safety — but we're not your doctor. Every plan is reviewed by licensed medical professionals, and the clinical decisions are always theirs. SAFE-T 4LIFE™ supports that care; it never replaces it.
           </p>
         </div>
 

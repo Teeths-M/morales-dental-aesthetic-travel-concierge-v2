@@ -114,7 +114,7 @@ function CovertSOSPanel() {
               <li>• Or type <strong className="text-red-200">MORALESHELP</strong> in any search/text field</li>
               <li>• <strong className="text-red-200">No confirmation shown</strong> — the attacker will not know</li>
               <li>• Security dispatch fires immediately. Guardian is SMS'd with your GPS.</li>
-              <li>• Your rear camera also takes one photo in the background and sends it to your guardian and Morales — no preview or shutter sound on your screen.</li>
+              <li>• Your rear camera also takes one photo in the background and sends it to your guardian and M-Care — no preview or shutter sound on your screen.</li>
             </ul>
           </div>
           {!tested && (

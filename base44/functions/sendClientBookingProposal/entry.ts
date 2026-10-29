@@ -105,7 +105,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // LEAK_PATTERNS exist to catch. Every other patient-facing sender in this
     // codebase routes through linkOnlyEmail/linkOnlySms; this one didn't.
     const shortMsg = linkOnlySms({
-      line: 'Your Morales travel package is ready to review and pay.',
+      line: 'Your M-Care travel package is ready to review and pay.',
       url: paymentUrl,
       from: 'sendClientBookingProposal',
     });
@@ -135,7 +135,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: caseRecord.client_email,
-          subject: `Your Medical Travel Package — Morales Concierge`,
+          subject: `Your Medical Travel Package — M-Care Concierge`,
           body: emailHtml,
         });
         channels.email = { success: true };

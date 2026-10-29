@@ -48,14 +48,14 @@ const SEED_GREETINGS = {
   TR: {
     en: {
       greeting_template: 'Hoş geldiniz — Welcome to {{destination_city}}, {{patient_name}}! We are honoured to have you in Turkey.',
-      driver_line: 'Your driver {{driver_name}} is waiting at the arrivals hall, holding a Morales Concierge sign.',
+      driver_line: 'Your driver {{driver_name}} is waiting at the arrivals hall, holding a M-Care Concierge sign.',
       cultural_note: 'Turkish hospitality (misafirperverlik) is deeply valued. Expect warm, attentive care from your entire team.',
     },
   },
   HU: {
     en: {
       greeting_template: 'Üdvözöljük! Welcome to {{destination_city}}, {{patient_name}}. Budapest\'s finest medical team is ready for you.',
-      driver_line: 'Your driver {{driver_name}} awaits you in the arrivals hall. They are holding a sign with the Morales logo.',
+      driver_line: 'Your driver {{driver_name}} awaits you in the arrivals hall. They are holding a sign with the M-Care logo.',
       cultural_note: 'Hungary has a proud tradition of medical excellence. Your procedure is in expert hands.',
     },
   },
@@ -130,7 +130,7 @@ Deno.serve(createHandler(async ({ req }) => {
     // Generic fallback (unknown destination)
     if (!greetingRow) {
       greetingRow = {
-        greeting_template: 'Welcome to {{destination_city}}, {{patient_name}}! Your Morales Concierge team is here for you.',
+        greeting_template: 'Welcome to {{destination_city}}, {{patient_name}}! Your M-Care Concierge team is here for you.',
         driver_line: 'Your driver {{driver_name}} is waiting at the arrivals exit.',
         cultural_note: '',
       };

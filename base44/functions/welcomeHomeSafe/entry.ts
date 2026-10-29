@@ -43,7 +43,7 @@ That took courage — travelling abroad, trusting a new team, going through a pr
 
 M is still with you.
 
-Your recovery is being monitored. Our team will check in with you every ${nextCheckinHours} hours. If you feel anything concerning before your next check-in — pain, swelling, unusual symptoms — do not wait. Open the Morales app and tap Secure Line. We respond immediately, day or night.
+Your recovery is being monitored. Our team will check in with you every ${nextCheckinHours} hours. If you feel anything concerning before your next check-in — pain, swelling, unusual symptoms — do not wait. Open the M-Care app and tap Secure Line. We respond immediately, day or night.
 
 What to expect over the next days:
   • Gentle check-in messages from your care team
@@ -55,7 +55,7 @@ You went further than most people ever will to take care of yourself. That matte
 
 Rest. Heal. We are here.
 
-— Your Morales Care Team
+— Your M-Care Care Team
 
 ───────────────────────────────────
 Need help right now? Open the app → Secure Line
@@ -103,7 +103,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // ── 1. Patient email ──────────────────────────────────────────────────────────
   if (patientEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Care Team',
+      from_name: 'M-Care Care Team',
       to: patientEmail,
       subject: `${patientName.split(' ')[0]}, you made it home. M is still with you.`,
       body: buildPatientEmail(patientName, nextCheckinHours),
@@ -115,17 +115,17 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   if (guardianPhone) {
     await sendSms(
       guardianPhone,
-      `Morales: ${firstName} has arrived home safely. Recovery monitoring continues. Your Morales care team is watching. — Morales Concierge`,
+      `M-Care: ${firstName} has arrived home safely. Recovery monitoring continues. Your M-Care care team is watching. — M-Care Concierge`,
     );
   }
 
   // ── 3. Guardian email (if no phone or as supplement) ─────────────────────────
   if (guardianEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Care Team',
+      from_name: 'M-Care Care Team',
       to: guardianEmail,
       subject: `${firstName} is home safe`,
-      body: `Dear ${guardianName},\n\n${firstName} has arrived home safely after their procedure.\n\nMorales recovery monitoring remains active. If we detect anything concerning, you will be the first to know.\n\nThank you for being their support through this journey.\n\n— Morales Care Team`,
+      body: `Dear ${guardianName},\n\n${firstName} has arrived home safely after their procedure.\n\nM-Care recovery monitoring remains active. If we detect anything concerning, you will be the first to know.\n\nThank you for being their support through this journey.\n\n— M-Care Care Team`,
     }).catch(e => console.error('[welcomeHomeSafe] guardian email failed:', e?.message));
   }
 

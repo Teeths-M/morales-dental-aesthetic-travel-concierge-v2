@@ -190,7 +190,7 @@ export default function ConsultationSuccess() {
             ) : (
               <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 12, padding: '14px 16px' }}>
                 <p style={{ margin: '0 0 10px', fontSize: 12, color: '#fca5a5', lineHeight: 1.5 }}>
-                  ⚠️ Are you sure? Without Guardian Mode, Morales has no way to check on you if you go silent during your journey.
+                  ⚠️ Are you sure? Without Guardian Mode, M-Care has no way to check on you if you go silent during your journey.
                 </p>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button

@@ -1,6 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 const MAX_DOCTORS = 5;
 
@@ -83,7 +83,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;max-width:600px;margin:0 auto;background:#060B16;color:#ffffff;border-radius:16px;overflow:hidden;">
   <div style="background:linear-gradient(135deg,#0C1A1D,#080F18);padding:32px;border-bottom:1px solid rgba(212,175,55,0.3);">
     <div style="font-size:28px;font-weight:900;color:#D4AF37;letter-spacing:-0.03em;">M</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;margin-top:4px;">Morales Concierge</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.2em;text-transform:uppercase;margin-top:4px;">M-Care Concierge</div>
   </div>
   <div style="padding:32px;">
     <p style="font-size:15px;color:rgba(255,255,255,0.7);margin:0 0 24px;">Hello Dr. ${doctorName},</p>
@@ -93,7 +93,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       <div style="font-size:18px;font-weight:800;color:#ffffff;margin-bottom:8px;">${procedure_name}</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.5);font-style:italic;">"${patient_query}"</div>
     </div>
-    <p style="font-size:14px;color:rgba(255,255,255,0.6);margin:0 0 24px;">Can you accommodate this patient? Reply to this email or log into your Morales Doctor Portal.</p>
+    <p style="font-size:14px;color:rgba(255,255,255,0.6);margin:0 0 24px;">Can you accommodate this patient? Reply to this email or log into your M-Care Doctor Portal.</p>
     <div style="text-align:center;margin:32px 0;">
       <a href="${APP_URL}/doctor-dashboard" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:14px 32px;border-radius:99px;text-decoration:none;">Respond in My Portal →</a>
     </div>

@@ -79,7 +79,7 @@ export default function DoctorVerificationPanel({ _user }) {
           <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-amber-800">Verification Required</p>
-            <p className="text-xs text-amber-700 mt-0.5">You must be verified before you can receive patient referrals on the Morales Platform.</p>
+            <p className="text-xs text-amber-700 mt-0.5">You must be verified before you can receive patient referrals on the M-Care Platform.</p>
           </div>
           <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white flex-shrink-0"
             onClick={() => setShowForm(true)}>

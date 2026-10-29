@@ -15,7 +15,7 @@ import { buildICS, icsDate, googleCalUrl, type ICSEvent } from '../../shared/ics
  * Returns: { ics_content, google_cal_url, vault_id }
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 Deno.serve(createHandler(async ({ base44, body }) => {
@@ -57,8 +57,8 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     uid: uid('pickup'),
     start:    icsDate(depDate, '07:00'),
     end:      icsDate(depDate, '08:30'),
-    summary:  `🚗 Driver Pickup — Morales Journey Begins`,
-    description: `Your Morales driver will pick you up from home.\n\nCase Ref: ${caseRef}\nConcierge: ${APP_URL}/dashboard`,
+    summary:  `🚗 Driver Pickup — M-Care Journey Begins`,
+    description: `Your M-Care driver will pick you up from home.\n\nCase Ref: ${caseRef}\nConcierge: ${APP_URL}/dashboard`,
     location: origin,
   });
 
@@ -104,7 +104,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       // calendar view. "Clinic Appointment — Tummy Tuck" tells a colleague
       // glancing at a phone what someone is having done. The event stays; the
       // procedure name moves into the dashboard.
-      description: `Your appointment with your Morales-assigned doctor. Full details are in your Morales dashboard.\n\nCase Ref: ${caseRef}\n\nIMPORTANT: Arrive 30 minutes early. Do not eat 6 hours before if anaesthesia is involved.`,
+      description: `Your appointment with your M-Care-assigned doctor. Full details are in your M-Care dashboard.\n\nCase Ref: ${caseRef}\n\nIMPORTANT: Arrive 30 minutes early. Do not eat 6 hours before if anaesthesia is involved.`,
       location: c.clinic_selected || dest,
     });
 
@@ -114,7 +114,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       start:    icsDate(procIso, '19:00'),
       end:      icsDate(procIso, '20:00'),
       summary:  `🍽️ Companion Meal Delivery — Recovery Day 1`,
-      description: `Your Morales recovery companion will deliver your personalised recovery meal.\n\nDietary preferences have been communicated.\nCase Ref: ${caseRef}`,
+      description: `Your M-Care recovery companion will deliver your personalised recovery meal.\n\nDietary preferences have been communicated.\nCase Ref: ${caseRef}`,
       location: c.hotel_address || c.hotel_name || dest,
     });
   }
@@ -129,7 +129,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     start:    icsDate(returnIso, '10:00'),
     end:      icsDate(returnIso, '16:00'),
     summary:  `✈️ Return Flight — ${dest} → ${origin}`,
-    description: `Your return journey home after your Morales experience.\n\nCase Ref: ${caseRef}\nConcierge: ${APP_URL}/dashboard`,
+    description: `Your return journey home after your M-Care experience.\n\nCase Ref: ${caseRef}\nConcierge: ${APP_URL}/dashboard`,
     location: `${dest} International Airport`,
   });
 
@@ -139,7 +139,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     start:    icsDate(returnIso, '17:00'),
     end:      icsDate(returnIso, '18:30'),
     summary:  `🏠 Welcome Home — Journey Complete`,
-    description: `Your Morales driver will drop you home from the airport. The Golden M is nearly yours.\n\nCase Ref: ${caseRef}`,
+    description: `Your M-Care driver will drop you home from the airport. The Golden M is nearly yours.\n\nCase Ref: ${caseRef}`,
     location: origin,
   });
 
@@ -154,7 +154,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       user_email:         c.client_email,
       document_type:      'other',
       encrypted_file_uri: `data:text/calendar;base64,${b64}`,
-      file_name:          `Morales_Journey_${caseRef}.ics`,
+      file_name:          `M-Care_Journey_${caseRef}.ics`,
       mime_type:          'text/calendar',
       file_size_bytes:    icsContent.length,
       status:             'active',
@@ -179,7 +179,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       subject: `Your journey calendar is ready | ${BRAND}`,
       body: linkOnlyEmail({
         title: 'Your journey calendar is ready.',
-        line: 'Your complete itinerary — flights, hotel, clinic, and return — is saved to your Morales portal. Open it to add everything to your calendar in one tap.',
+        line: 'Your complete itinerary — flights, hotel, clinic, and return — is saved to your M-Care portal. Open it to add everything to your calendar in one tap.',
         ctaUrl: `${APP_URL}/dashboard/journey`,
         ctaLabel: 'Open My Journey',
       }),

@@ -82,7 +82,7 @@ export const REGISTRY_ADAPTERS: Record<string, Adapter> = {
       try {
         const res = await fetch(url, {
           signal: AbortSignal.timeout(10000),
-          headers: { 'Accept': 'application/json', 'User-Agent': 'MoralesMedicalPlatform/1.0' },
+          headers: { 'Accept': 'application/json', 'User-Agent': 'M-CareMedicalPlatform/1.0' },
         });
         if (!res.ok) return { found: false, reason: 'service_unavailable', source: 'CO_RETHUS' };
         const data = await res.json();

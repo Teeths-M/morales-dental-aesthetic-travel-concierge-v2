@@ -25,7 +25,7 @@ export default function Pilot() {
           <div>
             <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: WHITE }}>M-Care</p>
             <p style={{ margin: 0, fontSize: 11.5, letterSpacing: '0.08em', color: MUTED }}>
-              MORALES CARE CONCIERGE
+              M-CARE CARE CONCIERGE
             </p>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function Pilot() {
               What happens next
             </p>
             <p style={{ margin: '6px 0 0', fontSize: 14, lineHeight: 1.7, color: BODY }}>
-              A person from the Morales team replies. You'll be asked what you're travelling for and when,
+              A person from the M-Care team replies. You'll be asked what you're travelling for and when,
               so the pilot place can be matched to a real journey rather than a queue position.
             </p>
           </div>

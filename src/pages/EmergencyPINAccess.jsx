@@ -39,7 +39,7 @@ export default function EmergencyPINAccess() {
           <div className="w-16 h-16 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
             <Shield className="w-8 h-8 text-blue-400" />
           </div>
-          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">Morales Medical</p>
+          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">M-Care Medical</p>
           <h1 className="text-2xl font-semibold text-white mt-1">Emergency Access</h1>
           <p className="text-slate-400 text-sm mt-2">Enter your Universal Emergency PIN — no app login, no SMS, any device</p>
         </div>

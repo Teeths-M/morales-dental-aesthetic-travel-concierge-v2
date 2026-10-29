@@ -73,21 +73,21 @@ Deno.serve(createHandler(async ({ req }) => {
   if (patientEmail) {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales M-Care',
+        from_name: 'M-Care M-Care',
         to: patientEmail,
         subject: `New message from ${guardianName} via your Family Portal`,
         body: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#060B16;color:#EEF2F7;padding:24px;border-radius:16px;">
-  <p style="font-size:12px;color:#D4AF37;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Morales M-Care · Family Portal</p>
+  <p style="font-size:12px;color:#D4AF37;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">M-Care M-Care · Family Portal</p>
   <h2 style="margin:0 0 12px;font-size:18px;color:#fff;">${guardianName} sent you a message</h2>
   <p style="font-size:15px;line-height:1.6;color:rgba(238,242,247,0.85);margin:0 0 16px;background:rgba(255,255,255,0.05);padding:12px;border-radius:10px;white-space:pre-wrap;">${text.replace(/</g, '&lt;')}</p>
-  <p style="font-size:12px;color:rgba(238,242,247,0.4);margin:0;">Reply through your Morales app, or ask M-Care to pass a message back to ${guardianName}.</p>
+  <p style="font-size:12px;color:rgba(238,242,247,0.4);margin:0;">Reply through your M-Care app, or ask M-Care to pass a message back to ${guardianName}.</p>
 </div>`,
       });
       channels.push('email');
     } catch (_) {}
   }
   if (patientPhone) {
-    const smsBody = `Morales M-Care: ${guardianName} sent you a message via your Family Portal: "${text.slice(0, 120)}${text.length > 120 ? '…' : ''}"`;
+    const smsBody = `M-Care M-Care: ${guardianName} sent you a message via your Family Portal: "${text.slice(0, 120)}${text.length > 120 ? '…' : ''}"`;
     const r = await twilioSms(patientPhone, smsBody);
     if (r.ok) channels.push('sms');
   }

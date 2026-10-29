@@ -371,7 +371,7 @@ export const PLATFORM_PRICING = {
   SAFETY_TEAM_RATE: 0.20,              // 20% — group / corporate / team plan
   SAFETY_INDIVIDUAL_RATE: 0.25,        // 25% — individual safety-only subscription
 
-  // Doctor trust badge — monthly subscription to carry the Morales M
+  // Doctor trust badge — monthly subscription to carry the M-Care M
   DOCTOR_BADGE_MONTHLY_USD: 9.99,
 
   // M Local — home-country doctor network monthly subscription

@@ -217,9 +217,9 @@ Deno.serve(async (req) => {
 
               if (isComplete) {
                 // Golden M SMS (same message as completeHandshake function)
-                responseMsg = `✅ Checkpoint 9/9 — ${label} confirmed. Journey complete! Welcome home. The Golden M is yours. — Morales Concierge`;
+                responseMsg = `✅ Checkpoint 9/9 — ${label} confirmed. Journey complete! Welcome home. The Golden M is yours. — M-Care Concierge`;
               } else {
-                responseMsg = `✅ Checkpoint ${handshakeNumber}/9 — ${label} confirmed. Your Morales journey continues.`;
+                responseMsg = `✅ Checkpoint ${handshakeNumber}/9 — ${label} confirmed. Your M-Care journey continues.`;
               }
               executionResult = `hs${handshakeNumber}_confirmed`;
               caseId = trip.case_id || null;

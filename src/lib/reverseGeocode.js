@@ -58,7 +58,7 @@ export async function reverseGeocodePrecise(lat, lng) {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}&format=json&zoom=14`,
       {
-        headers: { 'Accept-Language': 'en', 'User-Agent': 'Morales Medical/1.0' },
+        headers: { 'Accept-Language': 'en', 'User-Agent': 'M-Care Medical/1.0' },
         signal: AbortSignal.timeout(5000),
       }
     );

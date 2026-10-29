@@ -59,9 +59,9 @@ Deno.serve(createHandler(async ({ base44, req }) => {
 
       // Notify the doctor that verification has started
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical Travel Safety',
+        from_name: 'M-Care Medical Travel Safety',
         to: doc.email,
-        subject: 'M is verifying your credentials — Morales Concierge',
+        subject: 'M is verifying your credentials — M-Care Concierge',
         body: `<div style="font-family:-apple-system,sans-serif;max-width:600px;margin:0 auto;background:#060B16;color:#fff;border-radius:16px;overflow:hidden;">
   <div style="background:linear-gradient(135deg,#0C1A1D,#080F18);padding:32px;border-bottom:1px solid rgba(212,175,55,0.3);">
     <div style="font-size:28px;font-weight:900;color:#D4AF37;">M</div>
@@ -73,7 +73,7 @@ Deno.serve(createHandler(async ({ base44, req }) => {
     <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:20px;margin:0 0 24px;">
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.7);">✓ License received and queued for review<br>✓ AI document analysis in progress<br>✓ Our team will review the results and activate your account</p>
     </div>
-    <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0;">Typical verification time: 24–48 hours. You will receive an email as soon as your account is approved. — Morales Concierge Team</p>
+    <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0;">Typical verification time: 24–48 hours. You will receive an email as soon as your account is approved. — M-Care Concierge Team</p>
   </div>
 </div>`,
       }).catch(() => {});

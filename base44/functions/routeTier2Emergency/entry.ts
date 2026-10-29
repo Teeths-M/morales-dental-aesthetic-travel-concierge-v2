@@ -4,7 +4,7 @@
  * The Tier 2 decision function — given an already-assembled Tier2EmergencyPacket,
  * decides which honest routing message applies (per the real, admin-set
  * EmergencyContacts.has_human_safety_partner DATA for that country, never a
- * hardcoded per-country if/else) and notifies Morales' own admin/on-call
+ * hardcoded per-country if/else) and notifies M-Care' own admin/on-call
  * human with everything they need to act right now.
  *
  * HARD BOUNDARY: this function's terminal action is ALWAYS one of —
@@ -56,7 +56,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   if (adminEmail) {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales — 🚨 TIER 2 EMERGENCY',
+        from_name: 'M-Care — 🚨 TIER 2 EMERGENCY',
         to: adminEmail,
         subject: `🚨 TIER 2 EMERGENCY — ${packet.patient_name} — ${packet.destination_country} — HUMAN ACTION REQUIRED`,
         body: `<div style="background:#7f1d1d;color:#fff;padding:20px;border-radius:8px;">

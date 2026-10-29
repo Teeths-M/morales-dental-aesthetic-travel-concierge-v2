@@ -8,7 +8,7 @@ import type { PartnerType } from '../../shared/partnerTypeConfig.ts';
 // website" -- real text/structured-data research (fetch + regex/JSON-LD
 // extraction), no screenshot, no headless browser. See
 // partnerWebsiteResearch.ts's own header for the full reasoning and its
-// honest JS-rendered-page limitation. Scoped ONLY to a partner Morales
+// honest JS-rendered-page limitation. Scoped ONLY to a partner M-Care
 // already has a record for -- never an arbitrary caller-supplied URL.
 
 const bodySchema = strictObject({

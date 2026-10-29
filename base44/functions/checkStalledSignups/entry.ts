@@ -66,11 +66,11 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
 
     if (p.email) {
       tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical Travel Safety',
+        from_name: 'M-Care Medical Travel Safety',
         to: p.email,
         subject: 'Pick up where you left off',
         body: linkOnlyEmail({
-          title: 'You started something with Morales',
+          title: 'You started something with M-Care',
           line: 'You began setting things up but didn’t finish. It only takes a couple of minutes to pick back up right where you stopped.',
           ctaUrl: resumeUrl,
           ctaLabel: 'Continue',
@@ -80,7 +80,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
     }
     if (p.phone) {
       tasks.push(sendSms(p.phone, linkOnlySms({
-        line: 'You started something with Morales but didn’t finish. Pick up right where you left off:',
+        line: 'You started something with M-Care but didn’t finish. Pick up right where you left off:',
         url: resumeUrl,
         from: 'checkStalledSignups',
       })));

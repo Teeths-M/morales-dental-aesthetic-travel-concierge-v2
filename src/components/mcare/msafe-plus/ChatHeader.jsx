@@ -87,7 +87,7 @@ export default function ChatHeader({ lastMessage, onClose }) {
       <p className="flex-1 min-w-0 truncate text-[12.5px] font-semibold" style={{ color: 'var(--ms-ink)' }}>
         M-Safe
         <span style={{ color: 'var(--ms-ink-faint)', fontWeight: 400 }}> · </span>
-        <span style={{ color: 'var(--ms-ink-soft)', fontWeight: 500 }}>Morales Super Agent</span>
+        <span style={{ color: 'var(--ms-ink-soft)', fontWeight: 500 }}>M-Care Super Agent</span>
       </p>
 
       <div className="hidden sm:block flex-shrink-0">

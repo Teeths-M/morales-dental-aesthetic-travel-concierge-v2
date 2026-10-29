@@ -1,5 +1,5 @@
 /**
- * Babel Engine — Morales Universal Auto-Translation
+ * Babel Engine — M-Care Universal Auto-Translation
  * Zero-dependency mini-i18n. Identical API to react-i18next's useTranslation().
  *
  * Detection order:

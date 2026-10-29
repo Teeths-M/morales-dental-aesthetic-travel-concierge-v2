@@ -54,7 +54,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         kind: 'status_change',
         // Actor is intentionally redacted to a generic label — never the
         // real reviewer identity.
-        detail: `Updated by the Morales team: ${allowed.join(', ')}.`,
+        detail: `Updated by the M-Care team: ${allowed.join(', ')}.`,
       });
     }
   }

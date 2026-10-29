@@ -1,5 +1,5 @@
 // ── Bring Your Own Journey (BYOJ) — shared spine ──────────────────────────────
-// Protection layer for a procedure or trip booked OUTSIDE Morales. Morales did not
+// Protection layer for a procedure or trip booked OUTSIDE M-Care. M-Care did not
 // select or vet the provider, so our duty is monitor / alert / escalate — never
 // prevent or guarantee. This module holds the canonical service promise, the
 // legal-approved disclosure (medical + non-medical variants), and the honest
@@ -13,7 +13,7 @@
 export const BYOJ_SERVICE_PROMISE = {
   we_do: ['verification of what is publicly knowable', 'continuous journey monitoring', 'alerting', 'human-coordinator escalation', '24/7 emergency response'],
   we_do_not: ['select or vet the provider', 'prevent a procedure', 'control the clinic', 'guarantee a medical outcome'],
-  one_line: 'Morales provides monitoring, alerting, and human-coordinator escalation — not prevention or a guarantee of outcome.',
+  one_line: 'M-Care provides monitoring, alerting, and human-coordinator escalation — not prevention or a guarantee of outcome.',
 } as const;
 
 /**
@@ -24,17 +24,17 @@ export const BYOJ_SERVICE_PROMISE = {
 export const BYOJ_DISCLOSURE_STATUS = 'legal_approved';
 export const BYOJ_DISCLOSURE_VERSION = 'byoj-disclosure-v1';
 export const BYOJ_DISCLOSURE_TEXT =
-  'Morales did not select, vet, or approve this doctor or clinic, and we cannot control their actions or your ' +
+  'M-Care did not select, vet, or approve this doctor or clinic, and we cannot control their actions or your ' +
   'medical care. What we provide is independent verification of what is publicly knowable, continuous journey ' +
   'monitoring, and 24/7 emergency response. We cannot guarantee a medical outcome. By enrolling, you are choosing ' +
-  'Morales as your safety net — not as the party responsible for the procedure itself.';
+  'M-Care as your safety net — not as the party responsible for the procedure itself.';
 // Non-medical (Travel-mode) variant — same commitments/limitations, clause for
 // clause, with only the medical-specific nouns swapped for generic ones.
 export const BYOJ_DISCLOSURE_TEXT_NONMEDICAL =
-  'Morales did not select, vet, or approve this provider or venue, and we cannot control their actions or your ' +
+  'M-Care did not select, vet, or approve this provider or venue, and we cannot control their actions or your ' +
   'safety during this trip. What we provide is independent verification of what is publicly knowable, continuous ' +
   'journey monitoring, and 24/7 emergency response. We cannot guarantee an outcome. By enrolling, you are choosing ' +
-  'Morales as your safety net — not as the party responsible for the trip itself.';
+  'M-Care as your safety net — not as the party responsible for the trip itself.';
 
 // R3 — one-time only at launch. Recurring tiers are defined but MUST stay disabled
 // until Stripe Subscriptions + webhooks are built and tested.

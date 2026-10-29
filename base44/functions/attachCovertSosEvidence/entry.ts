@@ -132,7 +132,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // ── 4. Second admin email ────────────────────────────────────────────────
   if (adminEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales — 🚨 COVERT SOS ALERT',
+      from_name: 'M-Care — 🚨 COVERT SOS ALERT',
       to: adminEmail,
       subject: `📷 Covert SOS Photo Evidence — ${patientName}`,
       body: `<p>A rear-camera photo was captured following <strong>${patientName}</strong>'s covert SOS trigger.</p><p><a href="${evidenceUrl}">View captured photo</a></p><p style="color:#6b7280;font-size:12px;">This link expires in 7 days.</p>`,

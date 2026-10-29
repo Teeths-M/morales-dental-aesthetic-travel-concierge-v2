@@ -19,7 +19,7 @@ import { linkOnlyEmail } from '../../shared/notify.ts';
  *   HS9 (Home drop-off confirmed)      → 100% of travel agency (flight/hotel) released
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -98,7 +98,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
             // logs — so it must not carry the patient's name. The case
             // reference is enough to reconcile, and it resolves to a person
             // only inside M.
-            description: `Morales escrow release — ${hsLabel} — Case ${caseRef}`,
+            description: `M-Care escrow release — ${hsLabel} — Case ${caseRef}`,
           }).toString(),
         });
         if (transferResp.ok) {
@@ -125,7 +125,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         subject: `A payment has been released to you | ${BRAND}`,
         body: linkOnlyEmail({
           title: 'A payment has been released to you.',
-          line: 'Your payment has cleared from escrow. Open your Morales portal to view the amount and case details.',
+          line: 'Your payment has cleared from escrow. Open your M-Care portal to view the amount and case details.',
           ctaUrl: PARTNER_DASHBOARDS[hold.partner_type] || `${APP_URL}/partner-portal`,
           ctaLabel: 'View in My Portal',
         }),
@@ -134,7 +134,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
     tasks.push(base44.asServiceRole.entities.AuditLog.create({
       event_type:   'escrow_payment_released',
-      actor_id:     'system', actor_role: 'system', actor_name: 'Morales Escrow Engine',
+      actor_id:     'system', actor_role: 'system', actor_name: 'M-Care Escrow Engine',
       resource_type:'EscrowHold', resource_id: hold.id, case_id,
       sensitive:    true, timestamp: now,
       details: { partner_type: hold.partner_type, amount: hold.amount_held_usd, handshake: hsNum, stripe_transfer_id: stripeTransferId },

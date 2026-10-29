@@ -1,7 +1,7 @@
 ﻿/**
  * EmailShowcase — /demo/emails
  *
- * Shows all 5 key Morales email templates as live rendered previews.
+ * Shows all 5 key M-Care email templates as live rendered previews.
  * Public, no login required. Built for buildathon judges.
  */
 import React, { useState, useRef } from 'react';
@@ -45,7 +45,7 @@ const EMAILS = [
     </td></tr>
     <tr><td style="padding:14px 20px;background:rgba(212,175,55,0.06);">
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.7;font-style:italic;">"We are honoured to have walked this journey beside you. Your trust means everything."</p>
-      <p style="margin:8px 0 0;font-size:12px;color:#D4AF37;">— The Morales Medical Travel Safety Team</p>
+      <p style="margin:8px 0 0;font-size:12px;color:#D4AF37;">— The M-Care Medical Travel Safety Team</p>
     </td></tr>
   </table>
   <div style="text-align:center;">
@@ -65,7 +65,7 @@ const EMAILS = [
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#29483d;padding:24px 32px;text-align:center;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">M-Care Medical Travel Safety</div>
   <div style="width:100px;height:1px;background:linear-gradient(to right,transparent,#D4AF37,transparent);margin:10px auto;"></div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4AF37;">Handshake 5 / 9 — Confirmed</div>
 </td></tr>
@@ -98,7 +98,7 @@ const EMAILS = [
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#0C1A1D;padding:24px 32px;border-bottom:1px solid #2A3F4A;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">M-Care Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4AF37;margin-top:6px;">Companion Mission Briefing</div>
 </td></tr>
 <tr><td style="padding:32px;">
@@ -123,14 +123,14 @@ const EMAILS = [
       <li>Accompany to clinic for procedure</li>
       <li>Coordinate meal delivery during recovery</li>
       <li>Be available via WhatsApp throughout stay</li>
-      <li>Complete HS6 in the Morales app</li>
+      <li>Complete HS6 in the M-Care app</li>
     </ul>
   </div>
   <div style="text-align:center;margin-bottom:18px;">
     <a href="#" style="display:inline-block;background:#D4AF37;color:#060B16;text-decoration:none;padding:13px 28px;border-radius:999px;font-size:14px;font-weight:700;">Open Companion Dashboard →</a>
   </div>
   <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:14px;">
-    <p style="margin:0;font-size:12px;color:#fca5a5;line-height:1.6;"><strong>Emergency:</strong> If you or the patient are in danger, contact Morales Emergency Line immediately. Patient safety is always the priority.</p>
+    <p style="margin:0;font-size:12px;color:#fca5a5;line-height:1.6;"><strong>Emergency:</strong> If you or the patient are in danger, contact M-Care Emergency Line immediately. Patient safety is always the priority.</p>
   </div>
 </td></tr>
 </table></td></tr></table></body></html>`,
@@ -141,18 +141,18 @@ const EMAILS = [
     label: 'Guardian Alert',
     who: 'Emergency Contact',
     when: 'Guardian escalation Strike 2 — check-in missed',
-    subject: '[Morales Guardian] Maria hasn\'t checked in — please contact her',
+    subject: '[M-Care Guardian] Maria hasn\'t checked in — please contact her',
     html: `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #fca5a5;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#7f1d1d;padding:24px 32px;text-align:center;">
   <div style="font-size:32px;margin-bottom:8px;">🛡️</div>
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Guardian Alert</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">M-Care Guardian Alert</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fca5a5;margin-top:6px;">Check-In Missed — Action Required</div>
 </td></tr>
 <tr><td style="padding:32px;">
   <h1 style="margin:0 0 12px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#13221d;">Hi Carmen,</h1>
-  <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#40514a;">This is an urgent alert from Morales Guardian. <strong>Maria</strong> has missed a scheduled check-in during her medical journey.</p>
+  <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#40514a;">This is an urgent alert from M-Care Guardian. <strong>Maria</strong> has missed a scheduled check-in during her medical journey.</p>
   <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
     <table width="100%" cellspacing="0" cellpadding="0">
       <tr><td style="padding:5px 0;color:#64746d;font-size:13px;width:40%;">Traveler</td><td style="padding:5px 0;color:#13221d;font-size:14px;font-weight:700;">Maria C.</td></tr>
@@ -161,11 +161,11 @@ const EMAILS = [
       <tr><td style="padding:5px 0;color:#64746d;font-size:13px;">Status</td><td style="padding:5px 0;color:#dc2626;font-size:13px;font-weight:700;">2nd check-in missed</td></tr>
     </table>
   </div>
-  <p style="margin:0 0 20px;font-size:14px;line-height:1.7;color:#40514a;">Please try to contact Maria immediately. If you cannot reach her, call the Morales Emergency Line. Our team is standing by.</p>
+  <p style="margin:0 0 20px;font-size:14px;line-height:1.7;color:#40514a;">Please try to contact Maria immediately. If you cannot reach her, call the M-Care Emergency Line. Our team is standing by.</p>
   <div style="text-align:center;">
     <a href="#" style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;padding:13px 28px;border-radius:999px;font-size:14px;font-weight:700;">View Guardian Tracker →</a>
   </div>
-  <p style="margin:20px 0 0;font-size:12px;color:#64746d;text-align:center;">Morales Medical Travel Safety · Guardian Safety System · Case MRC-2026-001</p>
+  <p style="margin:20px 0 0;font-size:12px;color:#64746d;text-align:center;">M-Care Medical Travel Safety · Guardian Safety System · Case MRC-2026-001</p>
 </td></tr>
 </table></td></tr></table></body></html>`,
   },
@@ -180,13 +180,13 @@ const EMAILS = [
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#29483d;padding:24px 32px;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">M-Care Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4AF37;margin-top:6px;">New Travel Quote Request</div>
 </td></tr>
 <tr><td style="padding:32px;">
   <div style="font-size:36px;margin-bottom:12px;">✈️</div>
   <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#13221d;">New patient travel request</h1>
-  <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#40514a;">A Morales patient requires travel coordination. Please submit your flight and hotel quote via the Travel Agency Portal.</p>
+  <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#40514a;">A M-Care patient requires travel coordination. Please submit your flight and hotel quote via the Travel Agency Portal.</p>
   <div style="background:#f8faf9;border:1px solid #e7ede9;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
     <table width="100%" cellspacing="0" cellpadding="0">
       <tr><td style="padding:5px 0;color:#64746d;font-size:13px;width:40%;">Patient name</td><td style="padding:5px 0;color:#13221d;font-size:14px;font-weight:700;">Maria C.</td></tr>
@@ -338,7 +338,7 @@ export default function EmailShowcase() {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 32, fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>
-          All emails use Morales branded HTML templates. Delivered via Base44 integrations.
+          All emails use M-Care branded HTML templates. Delivered via Base44 integrations.
         </p>
       </div>
     </div>

@@ -2,8 +2,8 @@
 import { createHandler } from '../../shared/createHandler.ts';
 import { logProviderContactAttempt } from '../../shared/logProviderContactAttempt.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
-const TEAM = 'Morales Concierge Team';
+const BRAND = 'M-Care Medical Travel Safety';
+const TEAM = 'M-Care Concierge Team';
 
 const PROCEDURE_LABELS = {
   dental_implants: 'Dental Implants',

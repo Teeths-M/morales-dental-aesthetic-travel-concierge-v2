@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
 <p>New medical information has been recorded during your recent consultation. As a result, your SAFE-T 4LIFE™ safety profile needs to be re-evaluated with the latest data.</p>
 <p>Please log in to your dashboard and re-run your SAFE-T 4LIFE™ scan to ensure your risk assessment reflects your current health status.</p>
 <p>This step is required before your booking can progress.</p>
-<p>— The Morales Medical Travel Team</p>`,
+<p>— The M-Care Medical Travel Team</p>`,
           });
         } catch (_) {}
       }

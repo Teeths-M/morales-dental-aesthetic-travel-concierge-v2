@@ -1,5 +1,5 @@
 /**
- * PatientJourneyCredit — Morales loyalty credit score.
+ * PatientJourneyCredit — M-Care loyalty credit score.
  *
  * Built from completed journey behavior. Patients with higher credit get:
  *   - Lower deposit required on next booking
@@ -10,7 +10,7 @@
  * Shows progress bar + tier + benefits unlocked.
  *
  * This is the Starbucks Stars / airline miles model for medical tourism.
- * A competitor cannot give historical Morales credit to their customers.
+ * A competitor cannot give historical M-Care credit to their customers.
  */
 import React from 'react';
 

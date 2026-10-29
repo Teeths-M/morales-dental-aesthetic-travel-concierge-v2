@@ -413,7 +413,7 @@ export default function MedGuardDemo() {
 
         {/* Footer tagline */}
         <p style={{ textAlign: 'center', marginTop: 32, fontSize: 14, color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>
-          "MedGuard doesn't watch you. It learns you. And when you stop being you, it asks why." — Morales Medical 🛡️
+          "MedGuard doesn't watch you. It learns you. And when you stop being you, it asks why." — M-Care Medical 🛡️
         </p>
 
       </div>

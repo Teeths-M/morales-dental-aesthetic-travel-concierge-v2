@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
     if (!matchedAgency && !matchedTaxi) {
       await logEntry('unrecognized_sender', 'No TravelAgency/TaxiService phone match');
-      return twimlReply("Thanks for your message — we don't recognize this number for an open quote request. Please contact Morales support if you believe this is an error.");
+      return twimlReply("Thanks for your message — we don't recognize this number for an open quote request. Please contact M-Care support if you believe this is an error.");
     }
 
     // ── Find the pending case(s) this reply could be about ───────────────────
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
 
     if (candidates.length === 0) {
       await logEntry('no_pending_case', 'Partner matched but no open quote request found');
-      return twimlReply("Thanks — we don't see an open quote request for your number right now. If you're expecting one, please contact Morales support.");
+      return twimlReply("Thanks — we don't see an open quote request for your number right now. If you're expecting one, please contact M-Care support.");
     }
 
     if (candidates.length > 1) {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
         result: 'skipped',
         error_detail: 'multiple open quote requests for this number — needs human review',
       });
-      return twimlReply("Thanks — you have more than one open request with us right now, so I can't tell which one this is for. Please reply using your portal link so it applies to the right case, or contact Morales support.");
+      return twimlReply("Thanks — you have more than one open request with us right now, so I can't tell which one this is for. Please reply using your portal link so it applies to the right case, or contact M-Care support.");
     }
 
     const target = candidates[0];
@@ -178,9 +178,9 @@ Deno.serve(async (req) => {
       result: 'sent',
     });
 
-    return twimlReply(`Thanks! Quote of $${Number(parsed.amount).toFixed(2)} confirmed and logged for case ${target.case_id.slice(-8).toUpperCase()}. — Morales`);
+    return twimlReply(`Thanks! Quote of $${Number(parsed.amount).toFixed(2)} confirmed and logged for case ${target.case_id.slice(-8).toUpperCase()}. — M-Care`);
   } catch (error) {
     console.error('[twilioPartnerReplyWebhook]', error);
-    return twimlReply('Error processing your reply. Please contact Morales support or use your portal link.');
+    return twimlReply('Error processing your reply. Please contact M-Care support or use your portal link.');
   }
 });

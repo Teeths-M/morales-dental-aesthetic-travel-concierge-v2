@@ -407,7 +407,7 @@ export const QUESTION_GRAPH = [
   {
     id: 'clinical_boundary_acknowledged',
     targetFields: ['clinical_boundary_acknowledged'],
-    question: "One last thing — please confirm you understand Morales coordinates your care but doesn't diagnose or prescribe. Your doctor makes every clinical decision.",
+    question: "One last thing — please confirm you understand M-Care coordinates your care but doesn't diagnose or prescribe. Your doctor makes every clinical decision.",
     deterministicReason: 'a clear boundary we hold with every patient, always',
     inputType: INPUT_TYPES.BOOLEAN,
     requiresAuth: true,

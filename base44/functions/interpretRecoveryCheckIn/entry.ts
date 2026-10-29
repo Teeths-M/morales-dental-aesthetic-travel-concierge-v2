@@ -15,9 +15,9 @@ Deno.serve(createHandler(async ({ body }) => {
     : 'none';
   const painDesc = (pain_level ?? 0) >= 7 ? 'high pain' : (pain_level ?? 0) >= 4 ? 'moderate pain' : 'low pain';
 
-  const prompt = `Morales Medical Travel concierge. Patient just submitted their recovery check-in: overall rating ${rating ?? '?'}/5, pain level ${pain_level ?? '?'}/10 (${painDesc}), concerns: ${concernsStr}, patient note: "${note || 'none'}".
+  const prompt = `M-Care Medical Travel concierge. Patient just submitted their recovery check-in: overall rating ${rating ?? '?'}/5, pain level ${pain_level ?? '?'}/10 (${painDesc}), concerns: ${concernsStr}, patient note: "${note || 'none'}".
 
-Write ONE warm, personalized 2-sentence care response (as Morales concierge, not a doctor). If they have concerns or high pain, be reassuring and specific. If they're doing well, celebrate it warmly. Address their exact situation. Plain text only.`;
+Write ONE warm, personalized 2-sentence care response (as M-Care concierge, not a doctor). If they have concerns or high pain, be reassuring and specific. If they're doing well, celebrate it warmly. Address their exact situation. Plain text only.`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {

@@ -1,8 +1,8 @@
 /**
- * DestinationSafetyIndex — proprietary Morales safety score for the patient's destination.
+ * DestinationSafetyIndex — proprietary M-Care safety score for the patient's destination.
  *
  * Shows on the patient dashboard during active travel. The score is derived
- * from our own SOS event history + live Morales patient count in-country.
+ * from our own SOS event history + live M-Care patient count in-country.
  * No competitor has this data. It becomes more accurate with every patient.
  *
  * Props:
@@ -78,7 +78,7 @@ export default function DestinationSafetyIndex({ country, caseId }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD }}>
-            Morales Safety Index
+            M-Care Safety Index
           </span>
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 999, background: `${color}15`, color, fontWeight: 700 }}>
             {label}
@@ -87,7 +87,7 @@ export default function DestinationSafetyIndex({ country, caseId }) {
         <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
           <strong style={{ color: '#fff' }}>{country}</strong>
           {data.active_patients > 0 && (
-            <> · <strong style={{ color }}>{data.active_patients}</strong> active Morales patient{data.active_patients !== 1 ? 's' : ''} in-country</>
+            <> · <strong style={{ color }}>{data.active_patients}</strong> active M-Care patient{data.active_patients !== 1 ? 's' : ''} in-country</>
           )}
           {data.incidents_this_week === 0 && (
             <> · <span style={{ color: '#22c55e' }}>0 incidents this week</span></>

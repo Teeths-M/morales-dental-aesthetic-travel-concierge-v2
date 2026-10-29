@@ -111,7 +111,7 @@ export default function DemoCheatsheet() {
 
         {/* Print-only title */}
         <div id="cs-print-title" style={{ display: 'none' }}>
-          <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#060B16' }}>Morales — Presenter Cheat Sheet</h1>
+          <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#060B16' }}>M-Care — Presenter Cheat Sheet</h1>
           <p style={{ margin: '0 0 16px', fontSize: 12, color: '#475569' }}>moralesdentalandaesthetics.com · Pitch day reference card</p>
           <hr style={{ borderColor: '#D4AF37', marginBottom: 16 }} />
         </div>
@@ -250,7 +250,7 @@ export default function DemoCheatsheet() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.15)', marginTop: 8 }}>
-          Morales Medical Travel Safety · Presenter Use Only
+          M-Care Medical Travel Safety · Presenter Use Only
         </p>
 
       </div>

@@ -13,7 +13,7 @@ const AccountDeletedNotice = () => {
           <h1 className="text-3xl font-semibold text-slate-900 mb-4">Account Deleted</h1>
           <p className="text-slate-600 mb-8">
             This account and its personal data have been removed. If this wasn't you, or you'd like to
-            book with Morales again, please contact us.
+            book with M-Care again, please contact us.
           </p>
           <div className="p-4 bg-slate-50 rounded-md text-sm text-slate-600">
             <a href="mailto:info@moralesconcierge.com" className="text-slate-700 underline">

@@ -173,14 +173,14 @@ Deno.serve(createHandler(async ({ req }) => {
     // Notify the doctor — non-critical, never throws
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical Platform',
+        from_name: 'M-Care Medical Platform',
         to: doctor.email,
-        subject: '✅ Your Profile is Now Verified — Welcome to the Morales Network',
+        subject: '✅ Your Profile is Now Verified — Welcome to the M-Care Network',
         body: `<p>Dear Dr. ${doctor.full_name},</p>
-<p>Your credentials have been reviewed and approved. Your profile is now <strong>verified and active</strong> on the Morales Medical Travel Platform.</p>
+<p>Your credentials have been reviewed and approved. Your profile is now <strong>verified and active</strong> on the M-Care Medical Travel Platform.</p>
 <p>Patients searching for specialists in your field can now find and book with you.</p>
 <p><strong>Important:</strong> Your verification must be renewed annually. We will contact you before it expires.</p>
-<p>— The Morales Concierge Team</p>`,
+<p>— The M-Care Concierge Team</p>`,
       });
     } catch (_) { /* email failure is non-fatal */ }
 

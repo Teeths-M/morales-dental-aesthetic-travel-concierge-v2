@@ -87,7 +87,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     identity_confidence: newConfidence,
     eligible_for_verified_badge: eligibleForVerifiedBadge,
     message: eligibleForVerifiedBadge
-      ? `Real registry match found via ${(result as any).registry_name || adapter.registry_name} — genuine verification evidence, still not a Morales approval.`
+      ? `Real registry match found via ${(result as any).registry_name || adapter.registry_name} — genuine verification evidence, still not a M-Care approval.`
       : found
         ? `A registry record exists but the match isn't confident enough (or the name doesn't clearly match) — this needs manual human review, not an automatic verified label.`
         : `No matching registry record found for that license number — this needs manual human review before treating this candidate as anything more than a lead.`,

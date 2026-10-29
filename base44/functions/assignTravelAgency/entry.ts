@@ -7,7 +7,7 @@ import { logProviderContactAttempt } from '../../shared/logProviderContactAttemp
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 import { widenPartnerSearch } from '../../shared/partnerSearchWidening.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // Doctor confirmation is written by respondToDoctorPortalCase as mixed-case
@@ -228,7 +228,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#40514a;">Just click below to open your portal and submit your quote whenever you're ready — usually within 24 hours is a huge help.</p>
   <a href="${e(portalUrl)}" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;font-weight:700;">Submit My Quote →</a>
   <p style="margin:28px 0 0;font-size:14px;color:#40514a;line-height:1.7;">Thank you so much, really appreciate you working with us on this one.</p>
-  <p style="margin:14px 0 0;font-size:14px;color:#13221d;font-weight:700;">Warmly,<br/>The Morales Concierge Team</p>
+  <p style="margin:14px 0 0;font-size:14px;color:#13221d;font-weight:700;">Warmly,<br/>The M-Care Concierge Team</p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 
@@ -297,7 +297,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // twilioSafetySmsWebhook/twilioSmsHandshakeWebhook.
   try {
     if (selectedAgency.phone) {
-      const smsMessage = `Morales Medical: quote request for ${travelerCount} traveler(s) to ${destination} (${proceduresText}). Reply with a total price + "confirmed" (e.g. "$450 confirmed") or use your portal: ${portalUrl}`;
+      const smsMessage = `M-Care Medical: quote request for ${travelerCount} traveler(s) to ${destination} (${proceduresText}). Reply with a total price + "confirmed" (e.g. "$450 confirmed") or use your portal: ${portalUrl}`;
       const smsResult = await sendSms(selectedAgency.phone, smsMessage, 'TWILIO_PARTNER_PHONE_NUMBER');
       await logProviderContactAttempt(base44, {
         case_id: caseId,

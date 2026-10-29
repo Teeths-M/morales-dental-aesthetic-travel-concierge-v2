@@ -59,7 +59,7 @@ async function sendWhatsApp(to: string, message: string) {
  * At 48 hours with any partner still unconfirmed, escalates to human intervention.
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 

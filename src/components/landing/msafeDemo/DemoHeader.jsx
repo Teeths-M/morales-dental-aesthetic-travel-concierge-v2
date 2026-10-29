@@ -43,7 +43,7 @@ export default function DemoHeader() {
       >
         M-Safe
         <span style={{ color: C.faint, fontWeight: 400 }}> · </span>
-        <span style={{ color: C.soft, fontWeight: 500 }}>Morales Super Agent</span>
+        <span style={{ color: C.soft, fontWeight: 500 }}>M-Care Super Agent</span>
       </p>
 
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>

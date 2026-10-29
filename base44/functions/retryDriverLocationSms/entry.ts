@@ -81,7 +81,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
       if (adminEmail) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Safety — Driver Share Alert',
+            from_name: 'M-Care Safety — Driver Share Alert',
             to: adminEmail,
             subject: `Driver hasn't shared location — call them (${t.driver_name || 'Driver'})`,
             body: `<div style="font-family:sans-serif;max-width:560px;padding:24px;border:2px solid #f59e0b;border-radius:12px;">

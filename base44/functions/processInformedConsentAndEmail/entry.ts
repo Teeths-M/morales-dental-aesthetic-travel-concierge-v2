@@ -40,11 +40,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // disclosure text stay in the portal; the email only links to it.
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: client_email,
-      from_name: 'Morales Travel Concierge',
+      from_name: 'M-Care Travel Concierge',
       subject: '⚖️ Informed Consent Confirmed & Payment Receipt — SAFE-T 4LIFE™',
       body: linkOnlyEmail({
         title: 'Your consent and payment receipt are ready',
-        line: 'View and download your signed consent and payment receipt in your Morales portal.',
+        line: 'View and download your signed consent and payment receipt in your M-Care portal.',
         ctaUrl: `${APP_URL}/dashboard`,
         ctaLabel: 'Open My Portal',
         from: 'processInformedConsentAndEmail',

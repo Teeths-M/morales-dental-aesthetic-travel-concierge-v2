@@ -106,6 +106,6 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     escalated,
     message: escalated
       ? 'You’re enrolled and protected. Because our checks flagged something, a coordinator is already reaching out.'
-      : 'You’re enrolled. Morales is now monitoring your journey end to end.',
+      : 'You’re enrolled. M-Care is now monitoring your journey end to end.',
   });
 }, { name: 'enrollExternalJourney', requireAuth: true }));

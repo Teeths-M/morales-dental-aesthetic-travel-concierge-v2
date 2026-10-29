@@ -24,7 +24,7 @@ import { findDriverBackup } from '../../shared/findDriverBackup.ts';
 import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 import { escapeHtml } from '../../shared/emailTemplate.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendSms(to: string, message: string) {
@@ -229,7 +229,7 @@ Reply OK or tell me what you need.`;
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: BRAND, to: caseRecord.client_email,
-          subject: 'I\'ve already handled this — update on your booking | Morales',
+          subject: 'I\'ve already handled this — update on your booking | M-Care',
           body: linkOnlyEmail({
             from: 'handleCrisisReroute/patient',
             title: 'I\'ve already handled this.',
@@ -263,7 +263,7 @@ Reply OK or tell me what you need.`;
         base44.asServiceRole.entities.TravelAgency.get(caseRecord.travel_vendor_id)
           .then((agency: any) => agency?.email ? base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: agency.email,
-            subject: 'Schedule update affects a trip you support | Morales',
+            subject: 'Schedule update affects a trip you support | M-Care',
             body: linkOnlyEmail({
               from: 'handleCrisisReroute/travel',
               title: 'A provider change affects a trip you are supporting.',
@@ -282,7 +282,7 @@ Reply OK or tell me what you need.`;
       stakeTasks.push(
         base44.asServiceRole.integrations.Core.SendEmail({
           from_name: BRAND, to: caseRecord.companion_email,
-          subject: 'Itinerary update for your trip | Morales',
+          subject: 'Itinerary update for your trip | M-Care',
           body: linkOnlyEmail({
             from: 'handleCrisisReroute/companion',
             title: 'The provider for this trip changed.',

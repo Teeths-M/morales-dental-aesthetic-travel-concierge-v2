@@ -217,7 +217,7 @@ function DeleteMyAccountCard({ email }) {
         </div>
         <div>
           <h3 className="font-semibold text-slate-800 text-sm">Delete My Account</h3>
-          <p className="text-xs text-slate-500">Permanently remove your personal data from Morales</p>
+          <p className="text-xs text-slate-500">Permanently remove your personal data from M-Care</p>
         </div>
       </div>
 

@@ -9,7 +9,7 @@ import VerificationResult from '@/components/byoj/VerificationResult';
 import ProtectionEnroll from '@/components/byoj/ProtectionEnroll';
 
 /**
- * Bring Your Own Journey — protection for a procedure booked OUTSIDE Morales.
+ * Bring Your Own Journey — protection for a procedure booked OUTSIDE M-Care.
  * Flow: itinerary entry → honest verification result → protection enrollment.
  * This is a standalone surface, not a modification of the booking flow.
  */
@@ -103,7 +103,7 @@ export default function BringYourOwnJourney() {
           <>
             <ItineraryIntakeBar form={form} update={update} onVerify={handleVerify} loading={loading} needsSignIn={!user} />
             <p className="text-[12px] text-[#54666E] mt-3">
-              Manual entry for now. Morales did not select or vet this provider — we verify, monitor, and support.
+              Manual entry for now. M-Care did not select or vet this provider — we verify, monitor, and support.
             </p>
           </>
         )}

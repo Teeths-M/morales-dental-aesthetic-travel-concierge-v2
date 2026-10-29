@@ -55,7 +55,7 @@ export default function RecoveryCheckIn() {
         .then(r => { const msg = (r?.data ?? r)?.patient_message; if (msg) setAiMessage(msg); })
         .catch(() => {});
     } catch (_e) {
-      setError('Could not submit. Please try again or contact your Morales coordinator.');
+      setError('Could not submit. Please try again or contact your M-Care coordinator.');
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +133,7 @@ export default function RecoveryCheckIn() {
         {step === 3 && (
           <Step key="s3">
             <Label>Anything else you want your care team to know?</Label>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 16 }}>Optional. Your doctor and Morales coordinator will see this.</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 16 }}>Optional. Your doctor and M-Care coordinator will see this.</p>
             <textarea
               value={note}
               onChange={e => setNote(e.target.value)}
@@ -167,7 +167,7 @@ export default function RecoveryCheckIn() {
               </h2>
               <p style={{ margin: '0 0 20px', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
                 {concerns.length > 0 || pain >= 7
-                  ? 'We\'ve alerted your doctor and a Morales coordinator will be in touch shortly.'
+                  ? 'We\'ve alerted your doctor and a M-Care coordinator will be in touch shortly.'
                   : 'Your recovery update has been recorded. Your care team will review it.'
                 }
               </p>
@@ -185,7 +185,7 @@ export default function RecoveryCheckIn() {
                   {aiMessage}
                 </motion.p>
               )}
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Morales Medical Travel Safety</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>M-Care Medical Travel Safety</p>
             </div>
           </Step>
         )}
@@ -200,10 +200,10 @@ export default function RecoveryCheckIn() {
 function Page({ children }) {
   return (
     <div style={{ minHeight: '100vh', background: '#060B16', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
-      {/* Morales header */}
+      {/* M-Care header */}
       <div style={{ marginBottom: 24, textAlign: 'center' }}>
         <div style={{ width: 48, height: 48, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: 24, fontWeight: 900, color: '#060B16', fontFamily: 'Georgia, serif' }}>M</div>
-        <p style={{ margin: 0, fontSize: 11, letterSpacing: '0.2em', color: GOLD, textTransform: 'uppercase' }}>Morales · Recovery Care</p>
+        <p style={{ margin: 0, fontSize: 11, letterSpacing: '0.2em', color: GOLD, textTransform: 'uppercase' }}>M-Care · Recovery Care</p>
       </div>
       <div style={{ width: '100%', maxWidth: 440 }}>
         {children}

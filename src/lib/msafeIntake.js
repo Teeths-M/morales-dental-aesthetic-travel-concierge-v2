@@ -93,7 +93,7 @@ export function buildIntakeStages({ doctor, clinic }) {
   // enough to promise that, so the card says what is true.
   const licenceVerified = doctor.license_verification_status === 'verified';
   const badge = licenceVerified
-    ? { label: 'Verified by Morales', tone: 'green' }
+    ? { label: 'Verified by M-Care', tone: 'green' }
     : { label: 'Profile verified', tone: 'green' };
 
   const location = name
@@ -191,7 +191,7 @@ export function buildIntakeStages({ doctor, clinic }) {
         rows: [
           { label: 'Photos', value: portfolioCounts(doctor.portfolio).total ? String(portfolioCounts(doctor.portfolio).label || '—') : 'None on file' },
           { label: 'Clinic on record', value: name || '—' },
-          { label: 'Verified against', value: 'Morales TrustScan record' },
+          { label: 'Verified against', value: 'M-Care TrustScan record' },
         ],
       },
       action: { label: 'Walk me through their work' },

@@ -12,7 +12,7 @@ import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
  * failures are isolated so one bad record can't abort the sweep.
  */
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sms(to: string, msg: string) {
@@ -71,7 +71,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
         await Promise.allSettled([
           vc.client_email && sms(await patientPhone(base44, vc.client_email), linkOnlySms({
             from: 'sweepVirtualConsultationReminders/1h-patient',
-            line: 'Your Morales virtual consultation starts in about an hour.',
+            line: 'Your M-Care virtual consultation starts in about an hour.',
             url: `${APP_URL}/dashboard`,
           })),
           base44.asServiceRole.entities.VirtualConsultation.update(vc.id, { reminder_1h_sent: true }),

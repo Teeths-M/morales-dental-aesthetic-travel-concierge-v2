@@ -1,7 +1,7 @@
 import { GOLD } from './theme';
 
 /**
- * McareMark — M-Care's presence. The real Morales mark inside a soft gold ring,
+ * McareMark — M-Care's presence. The real M-Care mark inside a soft gold ring,
  * sized by the caller. Deliberately faceless: it is an instrument, not a
  * character, and it should never wink at anyone.
  */

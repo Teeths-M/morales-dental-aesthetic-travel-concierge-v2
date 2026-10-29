@@ -65,12 +65,12 @@ export function PageLoader({ label = '' }) {
       aria-label={label || 'Loading page'}
       className="fixed inset-0 flex flex-col items-center justify-center bg-[#060B16] z-50"
     >
-      {/* Morales M logo */}
+      {/* M-Care M logo */}
       <div
         className="w-14 h-14 rounded-2xl border border-white/[0.08] flex items-center justify-center mb-6"
         style={{ background: '#051A1D' }}
       >
-        <img src="/morales-m-mark.png" alt="Morales" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+        <img src="/morales-m-mark.png" alt="M-Care" style={{ width: 32, height: 32, objectFit: 'contain' }} />
       </div>
       <div
         className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mb-4"

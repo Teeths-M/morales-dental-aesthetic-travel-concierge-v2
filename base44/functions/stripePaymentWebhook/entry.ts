@@ -542,7 +542,7 @@ async function handleConsultationFeePaid(base44, {
         const adminEmail = Deno.env.get('ADMIN_EMAIL');
         if (adminEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Medical — Senior Review',
+            from_name: 'M-Care Medical — Senior Review',
             to: adminEmail,
             subject: '⚠️ Senior medical review required',
             body: linkOnlyEmail({

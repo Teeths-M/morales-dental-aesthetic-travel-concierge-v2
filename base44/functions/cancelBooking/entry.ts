@@ -24,7 +24,7 @@ const CancelBookingSchema = strictObject({
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const { case_id, reason } = await body<{ case_id?: string; reason?: string }>();
@@ -85,7 +85,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 <tr><td style="padding:26px 30px;">
   <div style="font-size:22px;font-weight:900;color:#D4AF37;margin-bottom:12px;">M</div>
   <p style="font-size:15px;color:#fff;margin:0 0 10px;font-weight:700;">Your booking has been cancelled.</p>
-  <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0 0 20px;line-height:1.6;">Open your Morales portal for the details and your refund status. Anything already arranged on your behalf is shown there.</p>
+  <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0 0 20px;line-height:1.6;">Open your M-Care portal for the details and your refund status. Anything already arranged on your behalf is shown there.</p>
   <a href="${APP_URL}/dashboard/bookings" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:12px 28px;border-radius:99px;text-decoration:none;">Open My Portal →</a>
 </td></tr></table></td></tr></table></body></html>`,
     }).catch(() => {});

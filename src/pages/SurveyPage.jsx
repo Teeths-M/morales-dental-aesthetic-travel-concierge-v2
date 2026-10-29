@@ -10,14 +10,14 @@ const QUESTIONS = {
     'How satisfied were you with your doctor and clinical care?',
     'How well were your travel and logistics coordinated?',
     'How safe and supported did you feel throughout your journey?',
-    'How likely are you to recommend Morales Medical to others?'
+    'How likely are you to recommend M-Care Medical to others?'
   ],
   doctor: [
     'How would you rate the quality of patient referrals you received?',
     'How efficient was the case coordination process?',
     'How clear and complete was the patient information provided?',
-    'How responsive was the Morales support team?',
-    'How likely are you to continue partnering with Morales Medical?'
+    'How responsive was the M-Care support team?',
+    'How likely are you to continue partnering with M-Care Medical?'
   ],
   default: [
     'How would you rate your overall experience?',

@@ -233,13 +233,13 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }).catch(e => console.error('[completeHandshake] destination handshake create failed:', e));
 
     if (destinationPhone) {
-      const smsBody = `Morales Medical Concierge: ${trip.user_name || 'Your patient'} says they have just arrived at ${destinationLabel}. Reply: HANDSHAKE ${dstCheckpointId} to confirm presence. If they have NOT arrived, reply: ALERT ${dstCheckpointId}`;
+      const smsBody = `M-Care Medical Concierge: ${trip.user_name || 'Your patient'} says they have just arrived at ${destinationLabel}. Reply: HANDSHAKE ${dstCheckpointId} to confirm presence. If they have NOT arrived, reply: ALERT ${dstCheckpointId}`;
       sendSmsDirect(destinationPhone, smsBody).catch(() => {});
     } else {
       // No destination phone on record — alert admin so they can manually verify.
       if (adminEmail) {
         base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Safety',
+          from_name: 'M-Care Safety',
           to: adminEmail,
           subject: `⚠️ HS${n} Destination Verification Required — ${trip.user_name || trip.user_email}`,
           body: `Patient ${trip.user_name || trip.user_email} has confirmed HS${n} (${hs.label}) arrival via app.\n\nNo ${destinationLabel} contact phone is on file for case ${trip.case_id}.\n\nManually verify the patient is physically present at the destination within 15 minutes.\n\nTrip ID: ${trip_id}\nCase ID: ${trip.case_id}\nHandshake: ${hs.label}\nConfirmed at: ${now}`,
@@ -252,7 +252,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     if (!gps_location?.lat || !gps_location?.lng) {
       if (adminEmail) {
         base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Safety',
+          from_name: 'M-Care Safety',
           to: adminEmail,
           subject: `⚠️ HS${n} confirmed WITHOUT GPS — ${trip.user_name || trip.user_email}`,
           body: `Patient ${trip.user_name || trip.user_email} confirmed HS${n} (${hs.label}) with no GPS coordinates attached.\n\nThis is a high-risk checkpoint. A position-verified confirmation was not possible.\n\nTrip ID: ${trip_id}\nCase ID: ${trip.case_id || 'N/A'}\nConfirmed at: ${now}`,
@@ -295,10 +295,10 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // Family gets a calm message at airport, hotel, clinic, and home arrival.
   // Guardian phone comes from case emergency_contact field.
   const GUARDIAN_MESSAGES: Record<number, string> = {
-    3: `${trip.patient_name || 'Your traveller'} has landed safely at the destination airport. They are in good hands. — Morales Concierge`,
-    4: `${trip.patient_name || 'Your traveller'} has checked in safely at the hotel. They are comfortable and settling in. — Morales Concierge`,
-    5: `${trip.patient_name || 'Your traveller'} has arrived safely at the clinic. The care team is ready. — Morales Concierge`,
-    9: `${trip.patient_name || 'Your traveller'} is home safely. Journey complete. The Golden M is theirs. Thank you for trusting Morales. — Morales Concierge`,
+    3: `${trip.patient_name || 'Your traveller'} has landed safely at the destination airport. They are in good hands. — M-Care Concierge`,
+    4: `${trip.patient_name || 'Your traveller'} has checked in safely at the hotel. They are comfortable and settling in. — M-Care Concierge`,
+    5: `${trip.patient_name || 'Your traveller'} has arrived safely at the clinic. The care team is ready. — M-Care Concierge`,
+    9: `${trip.patient_name || 'Your traveller'} is home safely. Journey complete. The Golden M is theirs. Thank you for trusting M-Care. — M-Care Concierge`,
   };
 
   if (GUARDIAN_MESSAGES[n]) {
@@ -345,7 +345,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     downstream.push(
       sendSms(
         trip.user_phone,
-        'Welcome home. We\'re honored to have been part of your journey. The Golden M is yours. — Morales Concierge'
+        'Welcome home. We\'re honored to have been part of your journey. The Golden M is yours. — M-Care Concierge'
       )
     );
   }

@@ -94,7 +94,7 @@ const REGISTRY_ADAPTERS: Record<string, any> = {
     async lookup(licenseNumber: string, _doctorName: string) {
       const url = `https://www.consultorsalud.com/rethus/buscar?numero=${encodeURIComponent(licenseNumber)}`;
       try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { 'Accept': 'application/json', 'User-Agent': 'MoralesMedicalPlatform/1.0' } });
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { 'Accept': 'application/json', 'User-Agent': 'M-CareMedicalPlatform/1.0' } });
         if (!res.ok) return { found: false, reason: 'service_unavailable', source: 'CO_RETHUS' };
         const data = await res.json();
         if (!data || data.length === 0) return { found: false, reason: 'not_found', source: 'CO_RETHUS' };
@@ -255,9 +255,9 @@ Return ONLY JSON: {"web_presence":"found"|"not_found","web_detail":string|null,"
         (d.clinic_name && String(d.clinic_name).toLowerCase().includes(cneedle)));
       networkSignal = overlap
         ? { label: 'Our safety network', status: 'found', finding: 'This name or clinic overlaps with a record our team has reviewed internally. It isn’t a verdict — reach out and a coordinator can share what we’re able to.' }
-        : { label: 'Our safety network', status: 'clear', finding: 'No matches in Morales’ fraud-signal database — we have no red flags on record (not the same as verified).' };
+        : { label: 'Our safety network', status: 'clear', finding: 'No matches in M-Care’ fraud-signal database — we have no red flags on record (not the same as verified).' };
     } catch (_) {
-      networkSignal = { label: 'Our safety network', status: 'clear', finding: 'No matches in Morales’ fraud-signal database — we have no red flags on record (not the same as verified).' };
+      networkSignal = { label: 'Our safety network', status: 'clear', finding: 'No matches in M-Care’ fraud-signal database — we have no red flags on record (not the same as verified).' };
     }
 
     const signals = [licenseSignal, webSignal, newsSignal, networkSignal];

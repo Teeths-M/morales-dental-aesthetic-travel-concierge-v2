@@ -27,7 +27,7 @@ import {
 
 export const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // ── Audit ─────────────────────────────────────────────────────────────────────
 
@@ -145,12 +145,12 @@ export async function resolveContacts(base44: any, incident: any, policy: any): 
     companion: null,
     careTeam: policy?.care_team_contact
       ? {
-        name: policy.care_team_contact.name || 'Morales care team',
+        name: policy.care_team_contact.name || 'M-Care care team',
         phone: policy.care_team_contact.phone || Deno.env.get('ADMIN_PHONE') || null,
         email: policy.care_team_contact.email || Deno.env.get('ADMIN_EMAIL') || null,
       }
       : {
-        name: 'Morales care team',
+        name: 'M-Care care team',
         phone: Deno.env.get('ADMIN_PHONE') || null,
         email: Deno.env.get('ADMIN_EMAIL') || null,
       },
@@ -203,11 +203,11 @@ export function fanoutMessage(incident: any, role: string): string {
     case 'patient':
       return `Your emergency alert is live${where}. I'm alerting your care team and looking for the nearest responder now. Stay where you are if it is safe to do so.`;
     case 'guardian':
-      return `An emergency alert has been raised for someone in your care${where}. The Morales care team has been notified and a responder is being contacted.`;
+      return `An emergency alert has been raised for someone in your care${where}. The M-Care care team has been notified and a responder is being contacted.`;
     case 'doctor':
-      return `An emergency alert has been raised for a patient in your care${where}. The Morales care team has been notified.`;
+      return `An emergency alert has been raised for a patient in your care${where}. The M-Care care team has been notified.`;
     case 'companion':
-      return `An emergency alert has been raised for a traveller you are accompanying${where}. The Morales care team has been notified.`;
+      return `An emergency alert has been raised for a traveller you are accompanying${where}. The M-Care care team has been notified.`;
     case 'care_team':
       return `EMERGENCY: ${incident.type} incident${where}. Fanout sent, dispatch starting.`;
     case 'emergency_services':

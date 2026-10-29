@@ -1,7 +1,7 @@
 /**
  * TravelPassCard — "M-Safe Travel Pass": printable QR codes for navigating
  * to the hotel/clinic and for sharing emergency contact info, offline and
- * without needing the Morales app installed on the scanning device.
+ * without needing the M-Care app installed on the scanning device.
  *
  * Deliberately does NOT include a medical-history QR. This app already has a
  * full medical manifest (blood type, allergies, medications, conditions,

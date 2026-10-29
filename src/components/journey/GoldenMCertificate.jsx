@@ -56,7 +56,7 @@ export default function GoldenMCertificate({ patientName, procedure, destination
   }
 
   function handleShare() {
-    const text = `✅ I just completed my ${procedure || 'medical journey'} in ${destination || 'my destination'} with Morales Medical Concierge — 9/9 checkpoints, safely home. 🏆 #MoralesMedical #GoldenM #MedicalTravel`;
+    const text = `✅ I just completed my ${procedure || 'medical journey'} in ${destination || 'my destination'} with M-Care Medical Concierge — 9/9 checkpoints, safely home. 🏆 #MCareMedical #GoldenM #MedicalTravel`;
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
     } else if (navigator.clipboard) {
@@ -182,7 +182,7 @@ export default function GoldenMCertificate({ patientName, procedure, destination
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ width: 140, height: 1, background: '#cbd5e1', marginBottom: 6 }} />
-                <p style={{ margin: 0, fontSize: 11, color: '#94a3b8' }}>Morales Medical Travel Safety</p>
+                <p style={{ margin: 0, fontSize: 11, color: '#94a3b8' }}>M-Care Medical Travel Safety</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ margin: '0 0 4px', fontSize: 10, color: '#94a3b8', letterSpacing: '0.08em' }}>CERTIFICATE NUMBER</p>

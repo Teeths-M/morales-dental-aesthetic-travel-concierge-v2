@@ -39,7 +39,7 @@ export default function QRCodeDisplay({ bag, onClose }) {
 
   const handleShare = async () => {
     if (navigator.share) {
-      await navigator.share({ title: 'My Luggage QR Tag', text: `Morales Medical luggage tag — ${bag.bag_label}`, url: finderUrl });
+      await navigator.share({ title: 'My Luggage QR Tag', text: `M-Care Medical luggage tag — ${bag.bag_label}`, url: finderUrl });
     } else {
       navigator.clipboard.writeText(finderUrl);
     }

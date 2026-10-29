@@ -61,7 +61,7 @@ export default function VerificationResult({ result, onContinue }) {
 
       {result.escalated && (
         <div className="mx-6 mb-5 rounded-xl border border-[#E0736B]/40 bg-[#E0736B]/8 px-4 py-3 text-[12.5px] text-[#F0C9C5]">
-          Because we found something that needs a closer look, a Morales coordinator is already being notified to reach out — you’re not on your own with this.
+          Because we found something that needs a closer look, a M-Care coordinator is already being notified to reach out — you’re not on your own with this.
         </div>
       )}
 

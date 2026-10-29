@@ -20,7 +20,7 @@ const MOMENTS = [
   {
     tag:     'Above and Beyond',
     tagColor: GOLD,
-    moment:  'James was nervous about the language barrier. His Morales companion had already briefed the clinic team in Turkish, translated every post-op instruction into English, and arranged a FaceTime with his surgeon at home before he left the recovery room.',
+    moment:  'James was nervous about the language barrier. His M-Care companion had already briefed the clinic team in Turkish, translated every post-op instruction into English, and arranged a FaceTime with his surgeon at home before he left the recovery room.',
     who:     'James A.',
     where:   'Istanbul, Turkey 🇹🇷',
     procedure: 'Smile Makeover',
@@ -28,7 +28,7 @@ const MOMENTS = [
   {
     tag:     'We Had Your Back',
     tagColor: '#22c55e',
-    moment:  'When Priya\'s flight was cancelled, her Morales coordinator had her rebooked in 11 minutes — before she even reached the gate.',
+    moment:  'When Priya\'s flight was cancelled, her M-Care coordinator had her rebooked in 11 minutes — before she even reached the gate.',
     who:     'Priya S.',
     where:   'Bangkok, Thailand 🇹🇭',
     procedure: 'Rhinoplasty',
@@ -64,7 +64,7 @@ export default function RealMoments() {
           >
             Not reviews. Scenes.<br />
             <span style={{ color: GOLD, fontStyle: 'italic', fontWeight: 400, fontFamily: 'Georgia, serif' }}>
-              This is what Morales looks like.
+              This is what M-Care looks like.
             </span>
           </h2>
           <p className="text-white/45 max-w-xl mx-auto" style={{ fontSize: 15, lineHeight: 1.7 }}>

@@ -49,7 +49,7 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
 
   // SECURITY: contact info and status must always come from the real,
   // re-fetched CaseRecord — never from the request body — so this endpoint
-  // can't be used as a free WhatsApp-send relay via Morales' own Twilio
+  // can't be used as a free WhatsApp-send relay via M-Care' own Twilio
   // account to an arbitrary number.
   const caseData = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
   if (!caseData) {

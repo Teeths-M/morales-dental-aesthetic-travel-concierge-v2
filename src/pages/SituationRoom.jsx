@@ -22,7 +22,7 @@ import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 const GOLD = '#D4AF37';
 
 const SITUATION_ROOM_STATUSES = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
-const HQ   = [25.77, -80.19]; // Miami, FL — Morales HQ
+const HQ   = [25.77, -80.19]; // Miami, FL — M-Care HQ
 
 // World bounds — prevents Leaflet from wrapping / tiling the map twice
 const WORLD_BOUNDS = /** @type {any} */([[-85, -180], [85, 180]]);
@@ -59,7 +59,7 @@ const HS_LABELS = {
 
 // Seed data — shown only when no real cases exist (judges / demo mode)
 const DEMO_CASES = [
-  { id: 'demo-1', client_name: 'María G.',  procedure_country: 'Mexico',    current_step: 4, trip_phase: 'Travel-Coordination',   status: 'Travel-Coordination',   flag: '🇲🇽', procedure: 'Dental Implants',   doctor: 'Dr. Hernández', clinic: 'Clínica Morales MX',       _demo: true },
+  { id: 'demo-1', client_name: 'María G.',  procedure_country: 'Mexico',    current_step: 4, trip_phase: 'Travel-Coordination',   status: 'Travel-Coordination',   flag: '🇲🇽', procedure: 'Dental Implants',   doctor: 'Dr. Hernández', clinic: 'Clínica M-Care MX',       _demo: true },
   { id: 'demo-2', client_name: 'James T.',  procedure_country: 'Colombia',  current_step: 2, trip_phase: 'Ready-For-Travel',      status: 'Ready-For-Travel',      flag: '🇨🇴', procedure: 'All-on-4 Implants',  doctor: 'Dr. Castillo',  clinic: 'Bogotá Dental Center',     _demo: true },
   { id: 'demo-3', client_name: 'Sophie R.', procedure_country: 'Thailand',  current_step: 6, trip_phase: 'Procedure-In-Progress', status: 'Procedure-In-Progress', flag: '🇹🇭', procedure: 'Rhinoplasty',        doctor: 'Dr. Suwan',     clinic: 'Bangkok Aesthetic Clinic', _demo: true },
   { id: 'demo-4', client_name: 'Carlos M.', procedure_country: 'Turkey',    current_step: 3, trip_phase: 'Ready-For-Travel',      status: 'Ready-For-Travel',      flag: '🇹🇷', procedure: 'Porcelain Veneers',  doctor: 'Dr. Yilmaz',    clinic: 'Istanbul Smile Studio',    _demo: true },
@@ -95,12 +95,12 @@ const FEED_EVENT_STYLE = {
 // Sample feed — shown ONLY in demo mode, where the header says SAMPLE DATA.
 const FEED_ITEMS = [
   { icon: '📡', text: 'MESH BEACON ACTIVATED — Elena G. · Taipei · GPS 25.0517°N 121.5645°E · Mesh relay: 2 nodes · Fire dept + Police auto-dispatched', color: '#ef4444', time: '0:00', tag: 'Beacon · CR-55' },
-  { icon: '🚨', text: 'COUNTRY SAFETY ALERT — Carlos M. · Turkey zone risk 78/100 · Doctor & Clinic VERIFIED SAFE ✅ · Morales Concierge Team activated', color: '#ef4444', time: '0:02', tag: 'Country Advisory · Turkey' },
+  { icon: '🚨', text: 'COUNTRY SAFETY ALERT — Carlos M. · Turkey zone risk 78/100 · Doctor & Clinic VERIFIED SAFE ✅ · M-Care Concierge Team activated', color: '#ef4444', time: '0:02', tag: 'Country Advisory · Turkey' },
   { icon: '✅', text: 'Sophie R. — Clinic Arrival confirmed at Bangkok Aesthetic Clinic',           color: '#22c55e', time: '0:12',  tag: 'HS5 · Thailand'  },
   { icon: '🛡️', text: 'Anika P. — MedGuard™ SAFE · score 14/100 · all 6 signals nominal',         color: '#22c55e', time: '1:47',  tag: 'Recovery · India' },
   { icon: '🌍', text: 'EVN-iQ400 — No new advisories across all 5 active destinations',             color: GOLD,      time: '3:22',  tag: 'System-wide'     },
   { icon: '📡', text: 'Anika P. — Safe-T4life check-in received · 4h ahead of deadline',           color: '#22c55e', time: '5:10',  tag: 'HS7 · India'     },
-  { icon: '⚠️', text: 'EVN-iQ400 — Turkey country zone score updated to 78 · Doctor & Clinic remain Morales-verified and safe', color: '#f59e0b', time: '8:44', tag: 'Country Risk · Turkey' },
+  { icon: '⚠️', text: 'EVN-iQ400 — Turkey country zone score updated to 78 · Doctor & Clinic remain M-Care-verified and safe', color: '#f59e0b', time: '8:44', tag: 'Country Risk · Turkey' },
   { icon: '✈️', text: 'James T. — Airport Drop-off confirmed · patient boarded flight to Colombia', color: '#60a5fa', time: '12:01', tag: 'HS2 · Colombia'  },
   { icon: '💳', text: 'María G. — Escrow milestone released after Hotel Check-in confirmed',        color: GOLD,      time: '15:30', tag: 'HS4 · Mexico'    },
   { icon: '🚗', text: 'Carlos M. — Driver Pickup confirmed · en route to Istanbul airport',         color: '#22c55e', time: '22:15', tag: 'HS1 · Turkey'    },
@@ -399,7 +399,7 @@ export default function SituationRoom() {
                   {alertCase.client_name} is in {alertCase.procedure_country} — Zone Risk {alertEvn.riskScore}/100
                 </span>
                 <span style={{ fontSize: 9, color: '#22c55e', fontWeight: 700, marginLeft: 10 }}>
-                  ✅ Doctor &amp; Clinic: Morales-Verified Safe
+                  ✅ Doctor &amp; Clinic: M-Care-Verified Safe
                 </span>
               </div>
               <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 800, color: '#ef4444', letterSpacing: '0.08em' }}>
@@ -439,7 +439,7 @@ export default function SituationRoom() {
               >
                 <Popup>
                   <div style={{ fontSize: 12, minWidth: 140 }}>
-                    <strong style={{ color: '#b8860b' }}>Morales HQ</strong><br />
+                    <strong style={{ color: '#b8860b' }}>M-Care HQ</strong><br />
                     <span style={{ color: '#555' }}>Miami, Florida</span>
                   </div>
                 </Popup>
@@ -474,7 +474,7 @@ export default function SituationRoom() {
                     <div style={{ fontSize: 12, minWidth: 170 }}>
                       <strong>{dest.name}</strong>
                       {isHR && <div style={{ color: '#ef4444', fontWeight: 700, marginTop: 4 }}>🌍 HIGH COUNTRY ZONE RISK</div>}
-                      {isHR && <div style={{ color: '#22c55e', fontSize: 11, marginTop: 2 }}>✅ Doctor &amp; Clinic: Morales-Verified</div>}
+                      {isHR && <div style={{ color: '#22c55e', fontSize: 11, marginTop: 2 }}>✅ Doctor &amp; Clinic: M-Care-Verified</div>}
                       {count > 0 ? (
                         <div style={{ color: isHR ? '#ef4444' : '#1a8f3a', marginTop: 4 }}>
                           {count} active patient{count > 1 ? 's' : ''}{isDemo ? ' (sample data)' : ''}

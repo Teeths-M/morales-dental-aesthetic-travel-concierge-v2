@@ -49,11 +49,11 @@ export async function sendGuardianCheckIn(
   const now   = new Date().toISOString();
 
   const messages: Record<string, string> = {
-    am_checkin:  `Good morning from Morales \u{1F305} Daily check-in: Reply SAFE or tap the app. Token: ${token}`,
-    pm_checkin:  `Good evening from Morales \u{1F319} Nightly check-in: Reply SAFE if all is well. Token: ${token}`,
-    gps_silence: `Morales check-in: We haven't seen your location in a while. Reply SAFE or tap the app. Token: ${token}`,
-    scheduled:   `Morales Guardian check-in: Reply SAFE to confirm you're okay. Token: ${token}`,
-    critical:    `\u{1F6A8} URGENT — Morales: We need to confirm you're safe. Reply SAFE immediately or we will escalate. Token: ${token}`,
+    am_checkin:  `Good morning from M-Care \u{1F305} Daily check-in: Reply SAFE or tap the app. Token: ${token}`,
+    pm_checkin:  `Good evening from M-Care \u{1F319} Nightly check-in: Reply SAFE if all is well. Token: ${token}`,
+    gps_silence: `M-Care check-in: We haven't seen your location in a while. Reply SAFE or tap the app. Token: ${token}`,
+    scheduled:   `M-Care Guardian check-in: Reply SAFE to confirm you're okay. Token: ${token}`,
+    critical:    `\u{1F6A8} URGENT — M-Care: We need to confirm you're safe. Reply SAFE immediately or we will escalate. Token: ${token}`,
   };
 
   const message = messages[reason] || messages.scheduled;

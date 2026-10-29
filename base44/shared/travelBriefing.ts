@@ -1,6 +1,6 @@
 /**
  * travelBriefing — the real, pure aggregator behind getTravelBriefing. Calls
- * only real, already-existing tools/modules (weather, Morales's own safety
+ * only real, already-existing tools/modules (weather, M-Care's own safety
  * index, the recall-then-research brain, curated + researched trip tips,
  * cached visa lookup, the dormant flight adapter) and merges their real
  * results into one structured object. Deliberately makes NO LLM call of its

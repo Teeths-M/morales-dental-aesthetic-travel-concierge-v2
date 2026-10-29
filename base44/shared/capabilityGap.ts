@@ -34,7 +34,7 @@ export type CapabilityGapResult = {
 export type CapabilityAvailable = { available: true };
 
 /**
- * The honest answer to "can M-Care find a provider Morales has never heard
+ * The honest answer to "can M-Care find a provider M-Care has never heard
  * from?" — true only when a real TAVILY_API_KEY is configured. Without one,
  * discovery only ever happens through self-registration (mcareCreate*Pending)
  * or a patient personally naming a doctor they already know
@@ -69,7 +69,7 @@ export function verificationCapabilityFor(countryISO: string | null | undefined)
 
 /**
  * Whether M-Care can contact a given "provider" at all. Only ever true for a
- * provider already onboarded to Morales (a real partner record with contact
+ * provider already onboarded to M-Care (a real partner record with contact
  * info on file) — M-Care cannot cold-contact a business it discovered on its
  * own, since discovery itself doesn't exist (see providerDiscoveryStatus).
  */
@@ -78,6 +78,6 @@ export function outreachCapabilityFor(providerIsKnownPartner: boolean): Capabili
   return {
     available: false,
     state: CAPABILITY_GAP.OUTREACH_UNAVAILABLE,
-    reason: 'M-Care can only contact providers already onboarded to Morales — it cannot cold-contact a business it discovered on its own, since no discovery capability exists yet.',
+    reason: 'M-Care can only contact providers already onboarded to M-Care — it cannot cold-contact a business it discovered on its own, since no discovery capability exists yet.',
   };
 }

@@ -106,20 +106,20 @@ const TIER_ADVISORY = { 1: 1.3, 2: 2.2, 3: 3.2, 4: 4.3 };
 // ── Contextual notes by region / specific country ───────────────────────────
 const DESTINATION_CONTEXT = {
   // Americas — Medical Tourism Tier
-  CO: { note: 'Bogotá and Medellín have world-class, internationally accredited clinics in secured zones. Petty theft in busy areas — keep valuables close.', timeNote: 'Risk increases after dark in commercial districts. Use Morales-vetted transport only.' },
-  MX: { note: 'Tijuana, Mexico City, and Cancún have established medical corridors. Northern border states carry elevated risk — your Morales partner operates in secured zones.', timeNote: 'Avoid inter-city travel after dark. Stay in medical tourist areas.' },
-  BR: { note: 'São Paulo and Rio de Janeiro have mature medical tourism infrastructure. Partner clinics are in secured districts with escort options available.', timeNote: 'Never use street taxis after dark. Use Morales-vetted transport.' },
+  CO: { note: 'Bogotá and Medellín have world-class, internationally accredited clinics in secured zones. Petty theft in busy areas — keep valuables close.', timeNote: 'Risk increases after dark in commercial districts. Use M-Care-vetted transport only.' },
+  MX: { note: 'Tijuana, Mexico City, and Cancún have established medical corridors. Northern border states carry elevated risk — your M-Care partner operates in secured zones.', timeNote: 'Avoid inter-city travel after dark. Stay in medical tourist areas.' },
+  BR: { note: 'São Paulo and Rio de Janeiro have mature medical tourism infrastructure. Partner clinics are in secured districts with escort options available.', timeNote: 'Never use street taxis after dark. Use M-Care-vetted transport.' },
   AR: { note: 'Buenos Aires is relatively safe by South American standards. The medical district (Barrio Norte) is well-monitored.', timeNote: 'Standard urban precautions apply. Avoid displaying expensive items.' },
-  VE: { note: 'Morales partners in Venezuela operate exclusively in secured, escorted zones. General street movement requires coordination with your concierge.', timeNote: 'Night movement outside partner facilities is not advised without escort.' },
-  GT: { note: 'Guatemala City Zone 10 (Zona Viva) is safe for medical tourists. Zones 1, 3, 6 carry elevated risk — avoid without a guide.', timeNote: 'After dark, stay within your hotel compound or Morales-vetted venues.' },
-  HN: { note: 'Tegucigalpa and San Pedro Sula have high crime rates — your Morales itinerary is designed around secured medical corridors only.', timeNote: 'Strictly follow your Morales escort plan. No solo movement after dark.' },
+  VE: { note: 'M-Care partners in Venezuela operate exclusively in secured, escorted zones. General street movement requires coordination with your concierge.', timeNote: 'Night movement outside partner facilities is not advised without escort.' },
+  GT: { note: 'Guatemala City Zone 10 (Zona Viva) is safe for medical tourists. Zones 1, 3, 6 carry elevated risk — avoid without a guide.', timeNote: 'After dark, stay within your hotel compound or M-Care-vetted venues.' },
+  HN: { note: 'Tegucigalpa and San Pedro Sula have high crime rates — your M-Care itinerary is designed around secured medical corridors only.', timeNote: 'Strictly follow your M-Care escort plan. No solo movement after dark.' },
   CR: { note: 'Costa Rica has one of the lowest crime rates in Latin America. San José medical zone is well-regarded and internationally accredited.', timeNote: 'Standard urban precautions. Avoid isolated beach areas at night.' },
   DO: { note: 'Punta Cana and Santo Domingo medical zones are active and well-monitored. Tourist areas have dedicated police presence.', timeNote: 'Stay in resort and medical corridors. Avoid unmarked taxis.' },
   // Europe
-  TR: { note: 'Istanbul leads Europe with 32 JCI-accredited hospitals. Şişli, Nişantaşı, and Levent are Morales-verified medical zones. Ankara is safe for medical visits.', timeNote: 'Standard urban caution. Avoid political gatherings and Syrian border regions.' },
+  TR: { note: 'Istanbul leads Europe with 32 JCI-accredited hospitals. Şişli, Nişantaşı, and Levent are M-Care-verified medical zones. Ankara is safe for medical visits.', timeNote: 'Standard urban caution. Avoid political gatherings and Syrian border regions.' },
   PL: { note: 'Warsaw and Kraków offer excellent dental and aesthetic surgery at 60% less than Western Europe. Safe and well-regulated.', timeNote: 'Very safe by European standards. Standard precautions apply.' },
   HU: { note: 'Budapest is Eastern Europe\'s dental tourism capital. Highly regulated healthcare with EU-standard clinics.', timeNote: 'Extremely safe. Enjoy the city — standard urban awareness.' },
-  UA: { note: 'Active conflict advisory in eastern regions. Medical tourism limited to western cities (Lviv). Coordinate all movement with Morales.', timeNote: 'Follow all Morales security guidance. Avoid eastern regions entirely.' },
+  UA: { note: 'Active conflict advisory in eastern regions. Medical tourism limited to western cities (Lviv). Coordinate all movement with M-Care.', timeNote: 'Follow all M-Care security guidance. Avoid eastern regions entirely.' },
   GE: { note: 'Tbilisi is emerging as a medical tourism hub with modern facilities and competitive pricing. Generally safe for international patients.', timeNote: 'Exercise normal caution. Tbilisi is one of the safest capitals in the region.' },
   RS: { note: 'Belgrade offers excellent dental and aesthetic procedures at significant savings. Safe and welcoming to international patients.', timeNote: 'Standard precautions apply. City centre is well-monitored.' },
   JO: { note: 'Jordan is a trusted Middle East medical hub with JCI hospitals. Amman is safe and welcoming to international patients.', timeNote: 'Amman is very safe. Standard precautions apply.' },
@@ -127,7 +127,7 @@ const DESTINATION_CONTEXT = {
   AE: { note: 'Dubai and Abu Dhabi have exceptional medical infrastructure. Extremely low street crime with strong rule of law.', timeNote: 'One of the safest countries globally for international patients.' },
   SA: { note: 'Riyadh and Jeddah have major hospital groups. Dress codes and cultural norms must be respected throughout.', timeNote: 'Safe in medical zones. Follow all local cultural guidelines.' },
   // Asia
-  IN: { note: 'Delhi, Mumbai, Chennai, and Bangalore have dedicated international patient units at major hospitals. Morales partners in secured zones.', timeNote: 'Use vetted transport. Avoid isolated areas and street food before procedures.' },
+  IN: { note: 'Delhi, Mumbai, Chennai, and Bangalore have dedicated international patient units at major hospitals. M-Care partners in secured zones.', timeNote: 'Use vetted transport. Avoid isolated areas and street food before procedures.' },
   TH: { note: 'Bangkok\'s Bumrungrad International is a global benchmark. Medical district is among Asia\'s safest for international patients.', timeNote: 'Nightlife zones near Silom/Sukhumvit carry elevated risk. Stay in medical corridors.' },
   MY: { note: 'Kuala Lumpur (Gleneagles, Pantai) offers world-class care at 40–70% less than Western prices. Safe and organized.', timeNote: 'Very safe by regional standards. Standard urban awareness.' },
   SG: { note: 'Singapore has one of the world\'s safest healthcare environments. Zero concern for street safety.', timeNote: 'No meaningful risk. One of the safest cities globally.' },
@@ -142,12 +142,12 @@ const DESTINATION_CONTEXT = {
   TN: { note: 'Tunis has good dental and aesthetic clinics. Security has improved significantly in recent years.', timeNote: 'Avoid isolated border regions. Tunis medical zone is safe.' },
   KE: { note: 'Nairobi has modern hospitals (Aga Khan, Nairobi Hospital) but exercise vigilance in public areas. Partner clinics in secured zones.', timeNote: 'Avoid CBD after dark. Use vetted transport at all times.' },
   ZA: { note: 'Cape Town and Johannesburg have excellent private hospitals. Exercise HIGH vigilance — South Africa has elevated crime rates.', timeNote: 'Never walk alone after dark. Use only vetted transport. Don\'t display valuables.' },
-  NG: { note: 'Lagos and Abuja have modern private hospitals but exercise significant caution. Morales arranges escorted access only.', timeNote: 'Use Morales escort at all times. Avoid crowds and busy transit hubs.' },
+  NG: { note: 'Lagos and Abuja have modern private hospitals but exercise significant caution. M-Care arranges escorted access only.', timeNote: 'Use M-Care escort at all times. Avoid crowds and busy transit hubs.' },
   // Default tier responses
-  _tier1: { note: 'Your destination has a low overall advisory rating. Morales partner clinics operate to international standards.', timeNote: 'Standard urban precautions apply. Enjoy your journey safely.' },
-  _tier2: { note: 'Your destination has a moderate advisory rating. Morales partners operate in verified safe zones with vetted transport.', timeNote: 'Use Morales-approved transport. Avoid unfamiliar areas after dark.' },
-  _tier3: { note: 'Your destination carries an elevated advisory. Your Morales itinerary is routed through secured medical corridors with escort options.', timeNote: 'Follow your Morales safety plan strictly. Contact your concierge before any movement.' },
-  _tier4: { note: 'Your destination carries a high-risk advisory. Morales has arranged maximum-security coordination for your journey.', timeNote: 'Do not move without Morales escort. Emergency contacts are pre-loaded in your app.' },
+  _tier1: { note: 'Your destination has a low overall advisory rating. M-Care partner clinics operate to international standards.', timeNote: 'Standard urban precautions apply. Enjoy your journey safely.' },
+  _tier2: { note: 'Your destination has a moderate advisory rating. M-Care partners operate in verified safe zones with vetted transport.', timeNote: 'Use M-Care-approved transport. Avoid unfamiliar areas after dark.' },
+  _tier3: { note: 'Your destination carries an elevated advisory. Your M-Care itinerary is routed through secured medical corridors with escort options.', timeNote: 'Follow your M-Care safety plan strictly. Contact your concierge before any movement.' },
+  _tier4: { note: 'Your destination carries a high-risk advisory. M-Care has arranged maximum-security coordination for your journey.', timeNote: 'Do not move without M-Care escort. Emergency contacts are pre-loaded in your app.' },
 };
 
 function getContext(iso2) {

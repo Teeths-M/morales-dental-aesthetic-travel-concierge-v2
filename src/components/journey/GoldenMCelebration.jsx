@@ -59,7 +59,7 @@ export default function GoldenMCelebration({ visible, trip, patientName, onClose
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
       style={{ background: 'rgba(6,11,22,0.95)', backdropFilter: 'blur(8px)' }}
     >
-      {/* ── Real Morales M logo mark with deep glow ── */}
+      {/* ── Real M-Care M logo mark with deep glow ── */}
       <div className="relative flex flex-col items-center mb-6">
         {/* Outer radial glow */}
         <div className="absolute" style={{
@@ -85,10 +85,10 @@ export default function GoldenMCelebration({ visible, trip, patientName, onClose
           animation: 'mring2 2.6s ease-in-out 0.7s infinite',
         }} />
 
-        {/* The actual Morales M mark */}
+        {/* The actual M-Care M mark */}
         <img
           src="/morales-m-mark.png"
-          alt="Morales M"
+          alt="M-Care M"
           style={{
             width: 140,
             height: 'auto',
@@ -170,9 +170,9 @@ export default function GoldenMCelebration({ visible, trip, patientName, onClose
           </button>
           <button
             onClick={async () => {
-              const text = `I just completed my Morales Medical journey — all 9 safety handshakes confirmed. The Golden M is mine. 🏆 #MoralesMedical #GoldenM #MedicalTravel`;
+              const text = `I just completed my M-Care Medical journey — all 9 safety handshakes confirmed. The Golden M is mine. 🏆 #MCareMedical #GoldenM #MedicalTravel`;
               if (navigator.share) {
-                try { await navigator.share({ title: 'My Golden M — Morales Medical', text }); } catch (_) {}
+                try { await navigator.share({ title: 'My Golden M — M-Care Medical', text }); } catch (_) {}
               } else {
                 try {
                     await navigator.clipboard.writeText(text);

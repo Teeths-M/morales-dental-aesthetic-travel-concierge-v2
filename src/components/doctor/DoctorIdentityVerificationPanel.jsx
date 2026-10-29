@@ -74,7 +74,7 @@ export default function DoctorIdentityVerificationPanel() {
           <p className="text-xs text-amber-700 mt-0.5">
             {verificationStatus === 'failed'
               ? "Your last attempt didn't go through — please try again."
-              : 'A quick photo ID + selfie check, handled securely by Stripe. Required before you can be activated on the Morales Platform.'}
+              : 'A quick photo ID + selfie check, handled securely by Stripe. Required before you can be activated on the M-Care Platform.'}
           </p>
           {hasPendingSession && (
             <p className="text-xs text-amber-700 mt-1 flex items-center gap-1">

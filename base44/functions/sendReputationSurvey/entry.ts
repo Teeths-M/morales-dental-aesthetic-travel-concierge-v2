@@ -7,20 +7,20 @@ const SURVEY_QUESTIONS = {
     'How satisfied were you with your doctor and clinical care?',
     'How well were your travel and logistics coordinated?',
     'How safe and supported did you feel throughout your journey?',
-    'How likely are you to recommend Morales Medical to others?'
+    'How likely are you to recommend M-Care Medical to others?'
   ],
   doctor: [
     'How would you rate the quality of patient referrals you received?',
     'How efficient was the case coordination process?',
     'How clear and complete was the patient information provided?',
-    'How responsive was the Morales support team?',
-    'How likely are you to continue partnering with Morales Medical?'
+    'How responsive was the M-Care support team?',
+    'How likely are you to continue partnering with M-Care Medical?'
   ],
   travel_agency: [
     'How well-organized were the travel requirements you received?',
     'How timely were bookings and confirmations from the platform?',
     'How satisfied are you with the commission structure?',
-    'How responsive is the Morales coordination team?',
+    'How responsive is the M-Care coordination team?',
     'How likely are you to continue this partnership?'
   ]
 };
@@ -60,8 +60,8 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: patient_email,
-      subject: '⭐ How was your Morales Medical experience?',
-      body: `Dear ${patient_name || 'Valued Partner'},\n\nThank you for being part of the Morales Medical family. Your feedback helps us deliver world-class care.\n\nPlease take 2 minutes to complete your experience survey:\n${surveyUrl}\n\nYour honest feedback means everything to us.\n\nWarm regards,\nMorales Medical Team`
+      subject: '⭐ How was your M-Care Medical experience?',
+      body: `Dear ${patient_name || 'Valued Partner'},\n\nThank you for being part of the M-Care Medical family. Your feedback helps us deliver world-class care.\n\nPlease take 2 minutes to complete your experience survey:\n${surveyUrl}\n\nYour honest feedback means everything to us.\n\nWarm regards,\nM-Care Medical Team`
     });
 
     return ok({ success: true, token, survey_url: surveyUrl });

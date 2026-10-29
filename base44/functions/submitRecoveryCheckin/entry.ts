@@ -85,7 +85,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
             body: emergencyDispatch({
               reason: 'medical_emergency',
               from: 'submitRecoveryCheckin',
-              body: `Dear ${contact.name || 'Family Member'},\n\nThis is an automated alert from the Morales Medical Concierge team.\n\n${session.patient_name} reported a pain level of ${numericPain}/10 during their recovery check-in and has requested immediate medical assistance.\n\nCase ID: ${session.case_id}\nTime: ${new Date().toLocaleString()}\n${notes ? `Patient note: "${notes}"` : ''}\n\nOur concierge team has been alerted and is responding now. Please do not panic — this alert was triggered so you are aware immediately.\n\nMorales Emergency Response\n+1 (800) MORALES`,
+              body: `Dear ${contact.name || 'Family Member'},\n\nThis is an automated alert from the M-Care Medical Concierge team.\n\n${session.patient_name} reported a pain level of ${numericPain}/10 during their recovery check-in and has requested immediate medical assistance.\n\nCase ID: ${session.case_id}\nTime: ${new Date().toLocaleString()}\n${notes ? `Patient note: "${notes}"` : ''}\n\nOur concierge team has been alerted and is responding now. Please do not panic — this alert was triggered so you are aware immediately.\n\nM-Care Emergency Response\n+1 (800) MORALES`,
             }),
           }).catch(e => console.error('[submitRecoveryCheckin] family alert failed:', contact.email, e))
         );

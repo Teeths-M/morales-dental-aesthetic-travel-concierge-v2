@@ -176,7 +176,7 @@ export default function CaseStatusModule({ _userEmail }) {
         <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #0F3A20, #1a4f2e)', border: '1px solid rgba(197,160,89,0.3)' }}>
           <Sparkles className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#C5A059' }} />
           <div>
-            <p className="text-sm font-semibold" style={{ color: '#C5A059' }}>✨ Morales Luxury Credit Applied</p>
+            <p className="text-sm font-semibold" style={{ color: '#C5A059' }}>✨ M-Care Luxury Credit Applied</p>
             <p className="text-xs text-white/70 mt-0.5">Your $49 USD consultation retainer has been fully refunded and credited back to your itinerary total.</p>
           </div>
         </div>

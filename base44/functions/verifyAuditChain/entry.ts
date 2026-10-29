@@ -87,7 +87,7 @@ Deno.serve(createHandler(async ({ req }) => {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: Deno.env.get('ADMIN_EMAIL'),
           subject: '🚨 CRITICAL: Audit Chain Integrity Violation Detected',
-          body: `The Morales Platform audit log hash chain has been broken.\n\n${broken_entries.length} broken link(s) detected.\n\nFirst broken entry:\n- ID: ${broken_entries[0].id}\n- Timestamp: ${broken_entries[0].timestamp}\n- Issue: ${broken_entries[0].issue}\n\nPlease investigate immediately via /admin/audit-chain.`,
+          body: `The M-Care Platform audit log hash chain has been broken.\n\n${broken_entries.length} broken link(s) detected.\n\nFirst broken entry:\n- ID: ${broken_entries[0].id}\n- Timestamp: ${broken_entries[0].timestamp}\n- Issue: ${broken_entries[0].issue}\n\nPlease investigate immediately via /admin/audit-chain.`,
         });
       } catch (_) {
         // Email failure must not prevent returning the report

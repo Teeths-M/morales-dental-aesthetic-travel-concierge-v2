@@ -119,7 +119,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const adminEmail = Deno.env.get('ADMIN_EMAIL');
   if (adminEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Medical Travel Safety',
+      from_name: 'M-Care Medical Travel Safety',
       to: adminEmail,
       subject: 'A doctor nomination needs your review',
       body: linkOnlyEmail({

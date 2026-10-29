@@ -8,7 +8,7 @@ async function aiNudgeBody(params: {
 }): Promise<string | null> {
   if (!ANTHROPIC_KEY) return null;
   const modules = params.remaining.map(m => m.replace(/_/g, ' ')).join(', ');
-  const prompt = `Morales Medical Travel concierge. Write a warm 3-sentence nudge email body (no greeting, no sign-off) for ${params.name}, who is preparing for ${params.procedure || 'their procedure'} in ${params.destination || 'their destination'}. They still need to complete: ${modules}. Explain briefly WHY each module matters for their specific journey. Plain text only.`;
+  const prompt = `M-Care Medical Travel concierge. Write a warm 3-sentence nudge email body (no greeting, no sign-off) for ${params.name}, who is preparing for ${params.procedure || 'their procedure'} in ${params.destination || 'their destination'}. They still need to complete: ${modules}. Explain briefly WHY each module matters for their specific journey. Plain text only.`;
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -70,8 +70,8 @@ Deno.serve(async (req) => {
         remaining,
       });
       const emailBody = aiBody
-        ? `Hi ${userName},\n\n${aiBody}\n\nComplete them here: ${appUrl}/onboarding\n\nBest regards,\nMorales Medical Team`
-        : `Hi ${userName},\n\nYou have ${remaining.length} education module(s) left to complete before your journey:\n${remaining.map(m => `• ${m.replace(/_/g, ' ')}`).join('\n')}\n\nComplete them here: ${appUrl}/onboarding\n\nBest regards,\nMorales Medical Team`;
+        ? `Hi ${userName},\n\n${aiBody}\n\nComplete them here: ${appUrl}/onboarding\n\nBest regards,\nM-Care Medical Team`
+        : `Hi ${userName},\n\nYou have ${remaining.length} education module(s) left to complete before your journey:\n${remaining.map(m => `• ${m.replace(/_/g, ' ')}`).join('\n')}\n\nComplete them here: ${appUrl}/onboarding\n\nBest regards,\nM-Care Medical Team`;
 
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: prog.user_email,

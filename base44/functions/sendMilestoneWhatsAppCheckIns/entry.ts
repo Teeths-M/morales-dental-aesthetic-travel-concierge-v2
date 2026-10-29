@@ -25,7 +25,7 @@ import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
 import { isSpanish, toE164, sendWhatsApp } from '../../shared/twilioWhatsApp.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // Generic, non-milestone-specific copy — no medical/journey status leaves the
 // platform. milestone_type is still recorded on SoloCheckIn/NotificationLog

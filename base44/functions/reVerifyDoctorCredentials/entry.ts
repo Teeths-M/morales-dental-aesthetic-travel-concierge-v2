@@ -123,8 +123,8 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
       if (doc.email) {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: doc.email,
-          subject: 'Action required: licence re-verification — Morales',
-          body: `Dear Dr. ${name},\n\nOur scheduled re-check could not confirm your licence (${license}) as active in the official registry. Your profile is temporarily suspended from new bookings while our team reviews this. Please reply with current documentation.\n\nMorales Verification Team`,
+          subject: 'Action required: licence re-verification — M-Care',
+          body: `Dear Dr. ${name},\n\nOur scheduled re-check could not confirm your licence (${license}) as active in the official registry. Your profile is temporarily suspended from new bookings while our team reviews this. Please reply with current documentation.\n\nM-Care Verification Team`,
         }).catch(() => {});
       }
       suspended++;

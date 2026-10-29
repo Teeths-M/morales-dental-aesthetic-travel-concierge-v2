@@ -85,7 +85,7 @@ Deno.serve(createHandler(async ({ req }) => {
     if (driverEmail) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: driverEmail,
-        subject: 'Transfer Request — Morales Medical Travel Safety',
+        subject: 'Transfer Request — M-Care Medical Travel Safety',
         body: linkOnlyEmail({
           title: 'A patient is ready for transport coordination',
           line: 'Please open your transfer portal to provide flat-rate pricing for your assigned regional transit legs. This link is valid for 7 days — please do not share it.',

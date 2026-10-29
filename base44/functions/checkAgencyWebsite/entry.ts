@@ -23,7 +23,7 @@ Deno.serve(createHandler(async ({ body }) => {
       const res = await fetch(url, {
         redirect: 'follow',
         signal: ctrl.signal,
-        headers: { 'User-Agent': 'Morales-MCare/1.0 (+https://morales.com)' }
+        headers: { 'User-Agent': 'M-Care-MCare/1.0 (+https://morales.com)' }
       });
       status_code = res.status;
       is_live = res.ok;

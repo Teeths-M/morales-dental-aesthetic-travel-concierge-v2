@@ -52,7 +52,7 @@ function computeRisk({ activityType, hasOperator, isRemote, isSolo }) {
   }
 
   const certWarning = !hasOperator
-    ? 'Operator certification status: Unverified. Morales does not have verified safety data for this provider.'
+    ? 'Operator certification status: Unverified. M-Care does not have verified safety data for this provider.'
     : null;
 
   return { risk, nudges, checks, certWarning };
@@ -121,7 +121,7 @@ export default function WildernessSafetyNudge({
 
       <div className="px-5 pb-3 flex items-center gap-1.5 text-[10px] opacity-50">
         <Shield className="w-3 h-3" />
-        <span>Rule-based assessment only. Morales does not hold verified global activity safety data.</span>
+        <span>Rule-based assessment only. M-Care does not hold verified global activity safety data.</span>
       </div>
     </div>
   );

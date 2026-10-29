@@ -146,7 +146,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (adminEmail) {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Safety — Driver Battery Alert',
+          from_name: 'M-Care Safety — Driver Battery Alert',
           to: adminEmail,
           subject: `Driver's phone battery critical during location sharing (${req.driver_name || 'Driver'})`,
           body: `<div style="font-family:sans-serif;max-width:560px;padding:24px;border:2px solid #dc2626;border-radius:12px;">

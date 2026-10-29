@@ -33,7 +33,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: bag.patient_email,
       subject: '🎉 Your Lost Bag Has Been Found!',
-      body: `Great news! Someone found your bag.\n\nBag: ${bag.bag_label}\nFound by: ${finder_name}\nLocation: ${current_location}\n${finder_phone ? `Finder phone: ${finder_phone}` : ''}\n${finder_email ? `Finder email: ${finder_email}` : ''}\n\nYour concierge team will coordinate the return. We'll be in touch shortly.\n\nMorales Medical`,
+      body: `Great news! Someone found your bag.\n\nBag: ${bag.bag_label}\nFound by: ${finder_name}\nLocation: ${current_location}\n${finder_phone ? `Finder phone: ${finder_phone}` : ''}\n${finder_email ? `Finder email: ${finder_email}` : ''}\n\nYour concierge team will coordinate the return. We'll be in touch shortly.\n\nM-Care Medical`,
     }).catch(() => {});
   }
 

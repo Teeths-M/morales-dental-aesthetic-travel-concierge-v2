@@ -61,7 +61,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: user.email,
       subject: '🌿 Recovery Mode Activated — Your Post-Surgery Care Has Begun',
-      body: `Dear ${user.full_name},\n\nYour procedure is complete and your Recovery Mode has been activated.\n\n✅ Non-critical notifications have been silenced\n✅ Your concierge check-ins are scheduled every ${intervalHours} hours\n✅ Emergency SOS remains available at all times\n\nYour recovery monitoring runs until: ${endAt.toLocaleDateString()}\n\nRest well. Your care team is watching over you.\n\nMorales Medical Recovery Team`
+      body: `Dear ${user.full_name},\n\nYour procedure is complete and your Recovery Mode has been activated.\n\n✅ Non-critical notifications have been silenced\n✅ Your concierge check-ins are scheduled every ${intervalHours} hours\n✅ Emergency SOS remains available at all times\n\nYour recovery monitoring runs until: ${endAt.toLocaleDateString()}\n\nRest well. Your care team is watching over you.\n\nM-Care Medical Recovery Team`
     });
 
     return Response.json({ success: true, session, checkins_scheduled: checkins.length, recovery_ends_at: endAt.toISOString() });

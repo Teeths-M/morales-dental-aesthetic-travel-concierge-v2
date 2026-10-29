@@ -25,7 +25,7 @@ const LoginRequired = ({ onLogin }) => (
       }}>M</div>
 
       <h1 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', marginBottom: 12, letterSpacing: '-0.01em' }}>
-        Welcome to Morales
+        Welcome to M-Care
       </h1>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.42)', marginBottom: 40, lineHeight: 1.65, maxWidth: 280, margin: '0 auto 40px' }}>
         Your personal medical travel concierge — verified doctors, seamless travel, and safe recovery in one place.
@@ -45,7 +45,7 @@ const LoginRequired = ({ onLogin }) => (
       </Button>
 
       <p style={{ marginTop: 24, fontSize: 11, color: 'rgba(255,255,255,0.18)', lineHeight: 1.6 }}>
-        Protected by Morales · End-to-end encrypted
+        Protected by M-Care · End-to-end encrypted
       </p>
     </div>
   </div>

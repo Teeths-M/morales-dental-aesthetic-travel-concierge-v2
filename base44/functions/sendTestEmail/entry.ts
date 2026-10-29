@@ -7,7 +7,7 @@
  * SECURITY: this used to accept an arbitrary `to` address with no check at
  * all (the doc comment here claimed a "shared demo token" gate that was
  * never actually implemented) — an unauthenticated open relay that could
- * fire any of the 5 branded templates at any address, under the Morales
+ * fire any of the 5 branded templates at any address, under the M-Care
  * name. The real frontend caller (EmailShowcase.jsx) only ever sends its own
  * hardcoded DEMO_EMAIL constant, so restricting `to` to that same literal
  * value server-side closes the relay with zero change to the actual demo —
@@ -21,14 +21,14 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 const ALLOWED_DEMO_RECIPIENT = 'theonmorales@gmail.com';
 
 const GOLD    = '#D4AF37';
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 const TEMPLATES: Record<string, { subject: string; html: string }> = {
 
   golden_m: {
-    subject: `🏆 [Morales Test] Welcome home. The Golden M is yours.`,
+    subject: `🏆 [M-Care Test] Welcome home. The Golden M is yours.`,
     html: `<!doctype html><html><body style="margin:0;background:#060B16;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
@@ -52,7 +52,7 @@ const TEMPLATES: Record<string, { subject: string; html: string }> = {
     </td></tr>
     <tr><td style="padding:14px 20px;background:rgba(212,175,55,0.06);">
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.7;font-style:italic;">"We are honoured to have walked this journey beside you. Your trust means everything."</p>
-      <p style="margin:8px 0 0;font-size:12px;color:${GOLD};">— The Morales Concierge Team</p>
+      <p style="margin:8px 0 0;font-size:12px;color:${GOLD};">— The M-Care Concierge Team</p>
     </td></tr>
   </table>
   <div style="text-align:center;">
@@ -64,7 +64,7 @@ const TEMPLATES: Record<string, { subject: string; html: string }> = {
   },
 
   companion: {
-    subject: `🌍 [Morales Test] Your Mission Briefing — Maria in Caracas`,
+    subject: `🌍 [M-Care Test] Your Mission Briefing — Maria in Caracas`,
     html: `<!doctype html><html><body style="margin:0;background:#060B16;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
@@ -95,18 +95,18 @@ const TEMPLATES: Record<string, { subject: string; html: string }> = {
   },
 
   guardian: {
-    subject: `🛡️ [Morales Test] Guardian Alert — Check-in missed`,
+    subject: `🛡️ [M-Care Test] Guardian Alert — Check-in missed`,
     html: `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #fca5a5;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#7f1d1d;padding:24px 32px;text-align:center;">
   <div style="font-size:32px;margin-bottom:8px;">🛡️</div>
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Guardian Alert</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">M-Care Guardian Alert</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fca5a5;margin-top:6px;">Check-In Missed — Action Required</div>
 </td></tr>
 <tr><td style="padding:32px;">
   <h1 style="margin:0 0 12px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#13221d;">Hi Carmen,</h1>
-  <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#40514a;">This is an urgent alert from Morales Guardian. <strong>Maria</strong> has missed a scheduled check-in during her medical journey.</p>
+  <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#40514a;">This is an urgent alert from M-Care Guardian. <strong>Maria</strong> has missed a scheduled check-in during her medical journey.</p>
   <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
     <table width="100%" cellspacing="0" cellpadding="0">
       <tr><td style="padding:5px 0;color:#64746d;font-size:13px;width:40%;">Traveler</td><td style="padding:5px 0;color:#13221d;font-size:14px;font-weight:700;">Maria C.</td></tr>
@@ -124,7 +124,7 @@ const TEMPLATES: Record<string, { subject: string; html: string }> = {
   },
 
   handshake: {
-    subject: `✅ [Morales Test] HS5 Confirmed — Patient has arrived at the clinic`,
+    subject: `✅ [M-Care Test] HS5 Confirmed — Patient has arrived at the clinic`,
     html: `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
@@ -152,7 +152,7 @@ const TEMPLATES: Record<string, { subject: string; html: string }> = {
   },
 
   travel: {
-    subject: `✈️ [Morales Test] New Travel Quote Request — Maria C. to Caracas`,
+    subject: `✈️ [M-Care Test] New Travel Quote Request — Maria C. to Caracas`,
     html: `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
@@ -163,7 +163,7 @@ const TEMPLATES: Record<string, { subject: string; html: string }> = {
 <tr><td style="padding:32px;">
   <div style="font-size:36px;margin-bottom:12px;">✈️</div>
   <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#13221d;">New patient travel request</h1>
-  <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#40514a;">A Morales patient requires travel coordination for their upcoming procedure.</p>
+  <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#40514a;">A M-Care patient requires travel coordination for their upcoming procedure.</p>
   <div style="background:#f8faf9;border:1px solid #e7ede9;border-radius:12px;padding:16px 20px;margin-bottom:18px;">
     <table width="100%" cellspacing="0" cellpadding="0">
       <tr><td style="padding:5px 0;color:#64746d;font-size:13px;width:40%;">Patient</td><td style="padding:5px 0;color:#13221d;font-size:14px;font-weight:700;">Maria C.</td></tr>

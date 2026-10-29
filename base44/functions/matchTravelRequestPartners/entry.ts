@@ -120,7 +120,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
           </ul>
           <p>Please prepare a quote for this travel package.</p>
           <a href="${portalUrl}" style="display:inline-block;padding:12px 24px;background-color:#059669;color:white;text-decoration:none;border-radius:6px;margin:16px 0;">View Request Details</a>
-          <p>Best regards,<br/>Morales Travel Concierge</p>
+          <p>Best regards,<br/>M-Care Travel Concierge</p>
         `
       });
     }

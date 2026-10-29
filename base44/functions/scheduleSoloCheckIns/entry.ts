@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
               <div style="text-align:center;margin-bottom:24px;">
                 <span style="font-size:48px;">🛡️</span>
                 <h1 style="color:#111827;font-size:24px;margin:12px 0 4px;">Safety Check-In Required</h1>
-                <p style="color:#6b7280;font-size:14px;margin:0;">Morales Travel Concierge · Traveler Safety Protection</p>
+                <p style="color:#6b7280;font-size:14px;margin:0;">M-Care Travel Concierge · Traveler Safety Protection</p>
               </div>
               <p style="color:#374151;font-size:16px;line-height:1.6;">Hi <strong>${caseRecord.client_name}</strong>,</p>
               <p style="color:#374151;font-size:16px;line-height:1.6;">

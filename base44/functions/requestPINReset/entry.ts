@@ -101,11 +101,11 @@ Deno.serve(createHandler(async ({ req }) => {
 
     await base44.integrations.Core.SendEmail({
       to: email,
-      subject: `Reset your Morales ${label}`,
+      subject: `Reset your M-Care ${label}`,
       body: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
           <h2 style="color:#0C1A1D">Reset your ${label}</h2>
-          <p>We received a request to reset your ${label} for Morales Medical Travel Concierge.</p>
+          <p>We received a request to reset your ${label} for M-Care Medical Travel Concierge.</p>
           <p>
             <a href="${resetUrl}"
                style="display:inline-block;background:#1d4ed8;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;margin:16px 0">
@@ -116,7 +116,7 @@ Deno.serve(createHandler(async ({ req }) => {
           <p>If you didn't request this, ignore this email — your PIN remains safe.</p>
           <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
           <p style="font-size:12px;color:#666">If the button doesn't work, paste this link into your browser:<br/>${resetUrl}</p>
-          <p style="font-size:12px;color:#999">— The Morales Safe-T Team</p>
+          <p style="font-size:12px;color:#999">— The M-Care Safe-T Team</p>
         </div>
       `,
     });

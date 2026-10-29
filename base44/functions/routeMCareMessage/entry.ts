@@ -71,7 +71,7 @@ ${toolList}
 
 Tool meanings:
 - startBookingIntent: the user wants to book or explore a medical/cosmetic procedure or trip (e.g. "I want a tummy tuck", "looking into dental implants", "help me plan my surgery trip").
-- startDoctorSignup: the user identifies as a doctor/clinic wanting to join Morales as a partner.
+- startDoctorSignup: the user identifies as a doctor/clinic wanting to join M-Care as a partner.
 - startTravelAgencySignup: the user identifies as a travel agency wanting to join as a partner.
 - startAvailabilityIntent: a partnered doctor is declaring or updating their availability/capacity.
 

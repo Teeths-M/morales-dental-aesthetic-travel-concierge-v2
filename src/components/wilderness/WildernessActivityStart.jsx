@@ -273,7 +273,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
     <div className="space-y-4">
       <div>
         <p className="text-white font-semibold text-sm mb-1">Select Wilderness Activity</p>
-        <p className="text-slate-400 text-xs">Morales will activate the appropriate safety protocol and GPS beacon.</p>
+        <p className="text-slate-400 text-xs">M-Care will activate the appropriate safety protocol and GPS beacon.</p>
       </div>
 
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">

@@ -169,7 +169,7 @@ SAFE-T 4LIFE™ Team`
     // Return matched doctors. verification_status/status/license_verified are
     // included here (not just used internally by the filter above) so the
     // caller — M-Care's agent — can honestly tell a traveler this doctor is
-    // Morales-approved, instead of the fact being computed and then thrown
+    // M-Care-approved, instead of the fact being computed and then thrown
     // away. Every doctor in matchedDoctors already satisfies VERIFIED_STATUSES
     // + status:'active' + license_verified:true by construction (see the
     // filter above), so these three fields can never reflect an unapproved

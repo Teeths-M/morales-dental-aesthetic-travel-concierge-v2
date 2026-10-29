@@ -126,7 +126,7 @@ Deno.serve(createHandler(async ({ req }) => {
     // ── 6. Admin incident report email ────────────────────────────────────────
     if (adminEmail) {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales — iQ200 Coordination Engine',
+        from_name: 'M-Care — iQ200 Coordination Engine',
         to: adminEmail,
         subject: `✅ THREAT LOOP CLOSED — ${patientName} safe [${incidentRef}]`,
         body: `<div style="font-family:sans-serif;max-width:600px;padding:24px;border:2px solid #16a34a;border-radius:12px;">
@@ -161,10 +161,10 @@ Deno.serve(createHandler(async ({ req }) => {
 
     for (const contactEmail of contactEmails) {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical — Safety Update',
+        from_name: 'M-Care Medical — Safety Update',
         to: contactEmail,
         subject: `✅ ${patientName} has confirmed they are safe`,
-        body: `Good news — ${patientName} has signed off as safely arrived via the Morales Emergency System.\n\n${safe_location ? `Safe location: ${safe_location}\n\n` : ''}The Morales concierge team will follow up shortly with a full incident summary.\n\n— Morales Medical Concierge`,
+        body: `Good news — ${patientName} has signed off as safely arrived via the M-Care Emergency System.\n\n${safe_location ? `Safe location: ${safe_location}\n\n` : ''}The M-Care concierge team will follow up shortly with a full incident summary.\n\n— M-Care Medical Concierge`,
       }).catch(() => {});
     }
 

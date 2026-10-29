@@ -111,7 +111,7 @@ export default function LiveBeaconPanel({
 
   const shareWhatsApp = () => {
     if (!guardianLink) return;
-    const text = encodeURIComponent(`I'm sharing my live location with you via Morales Safety. View it here: ${guardianLink}`);
+    const text = encodeURIComponent(`I'm sharing my live location with you via M-Care Safety. View it here: ${guardianLink}`);
     window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
   };
 

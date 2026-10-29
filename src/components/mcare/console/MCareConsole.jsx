@@ -65,7 +65,7 @@ export default function MCareConsole({
             paddingBottom: 'calc(10px + env(safe-area-inset-bottom))',
           }}
         >
-          Provider verification is one of the most important parts of Morales — nothing here books a clinic for you.
+          Provider verification is one of the most important parts of M-Care — nothing here books a clinic for you.
         </p>
       </div>
     </div>

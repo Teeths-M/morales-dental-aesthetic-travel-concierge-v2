@@ -17,7 +17,7 @@ const MEDICAL_SCENES = [
     id: 1,
     tag: 'THE CHALLENGE',
     headline: 'You deserve world-class care.',
-    sub: 'But navigating international treatment alone feels overwhelming. We built Morales to remove every barrier.',
+    sub: 'But navigating international treatment alone feels overwhelming. We built M-Care to remove every barrier.',
     emotion: '"Can I really trust this?"',
     icon: HeartPulse,
     bg: 'from-[#060B16] to-[#0a1020]',
@@ -89,7 +89,7 @@ const MEDICAL_SCENES = [
     id: 7,
     tag: 'STEP 6 — RECOVERY & RETURN',
     headline: 'Your care journey never travels alone.',
-    sub: 'Recovery check-ins, follow-up care, and safe return home. Morales stays with you until you are fully recovered.',
+    sub: 'Recovery check-ins, follow-up care, and safe return home. M-Care stays with you until you are fully recovered.',
     emotion: '"Peace of mind."',
     icon: Home,
     bg: 'from-[#060B16] to-[#0d1015]',
@@ -100,7 +100,7 @@ const MEDICAL_SCENES = [
     id: 8,
     tag: 'YOUR JOURNEY BEGINS',
     headline: 'Trusted Care. Comfortable Travel. Peace of Mind.',
-    sub: 'Transform your health through Morales — with confidence, safety, and world-class support.',
+    sub: 'Transform your health through M-Care — with confidence, safety, and world-class support.',
     emotion: null,
     icon: Shield,
     bg: 'from-[#060B16] to-[#0a0d12]',
@@ -114,7 +114,7 @@ const TRAVEL_SCENES = [
     id: 1,
     tag: 'THE CHALLENGE',
     headline: 'The world is incredible. It should feel safe too.',
-    sub: 'New cities, new routines, unfamiliar risks. We built Morales to remove every blind spot on your trip.',
+    sub: 'New cities, new routines, unfamiliar risks. We built M-Care to remove every blind spot on your trip.',
     emotion: '"Can I really trust this?"',
     icon: Plane,
     bg: 'from-[#060B16] to-[#0a1020]',
@@ -180,7 +180,7 @@ const TRAVEL_SCENES = [
     id: 7,
     tag: 'STEP 6 — MONITORING & RETURN',
     headline: 'Your journey never travels alone.',
-    sub: 'Real-time check-ins, MedGuard™ safety monitoring, and a safe return home. Morales stays with you until you land back safely.',
+    sub: 'Real-time check-ins, MedGuard™ safety monitoring, and a safe return home. M-Care stays with you until you land back safely.',
     emotion: '"Peace of mind."',
     icon: Home,
     bg: 'from-[#060B16] to-[#0d1015]',
@@ -191,7 +191,7 @@ const TRAVEL_SCENES = [
     id: 8,
     tag: 'YOUR JOURNEY BEGINS',
     headline: 'Trusted Care. Comfortable Travel. Peace of Mind.',
-    sub: 'Transform your travels through Morales — with confidence, safety, and world-class support.',
+    sub: 'Transform your travels through M-Care — with confidence, safety, and world-class support.',
     emotion: null,
     icon: Shield,
     bg: 'from-[#060B16] to-[#0a0d12]',
@@ -265,7 +265,7 @@ function ProblemVisual() {
         className="mt-4 px-6 py-3 rounded-2xl text-[13px] font-semibold"
         style={{ background: `${GOLD}20`, border: `1px solid ${GOLD}55`, color: GOLD }}
       >
-        ✦ Morales changes this.
+        ✦ M-Care changes this.
       </motion.div>
     </div>
   );

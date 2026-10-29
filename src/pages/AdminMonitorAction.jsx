@@ -72,7 +72,7 @@ export default function AdminMonitorAction() {
             </div>
             <div>
               <h1 className="text-lg font-bold">AI Recommended Action</h1>
-              <p className="text-xs text-muted-foreground">Morales Safety Monitor</p>
+              <p className="text-xs text-muted-foreground">M-Care Safety Monitor</p>
             </div>
           </div>
 

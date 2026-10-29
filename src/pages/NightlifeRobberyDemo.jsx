@@ -92,7 +92,7 @@ const TIMELINE = [
     phone: 'resolved',
     sms: {
       to: 'All Contacts',
-      body: 'MORALES UPDATE: Marco has been located and is safe. Medical escort active. Vault secure — no data was compromised. — Morales Concierge',
+      body: 'MORALES UPDATE: Marco has been located and is safe. Medical escort active. Vault secure — no data was compromised. — M-Care Concierge',
     },
   },
 ];
@@ -134,7 +134,7 @@ function PhoneMockup({ screen }) {
               <div className="text-center mt-4 mb-4">
                 <div className="w-10 h-10 rounded-2xl mx-auto mb-2 flex items-center justify-center font-bold text-base"
                   style={{ background: GOLD, color: DARK, fontFamily: 'Georgia, serif' }}>M</div>
-                <p className="text-[10px] font-semibold text-white">Morales Emergency Access</p>
+                <p className="text-[10px] font-semibold text-white">M-Care Emergency Access</p>
                 <p className="text-[9px] mt-0.5" style={{ color: '#64748b' }}>No app required · Token login</p>
               </div>
               <div className="rounded-xl p-3 mb-3" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
@@ -353,7 +353,7 @@ export default function NightlifeRobberyDemo({ minimal = false }) {
             <span style={{ color: GOLD }}>He Saved Himself.</span>
           </h1>
           <p className="text-base max-w-xl mx-auto" style={{ color: '#64748b' }}>
-            Marco was robbed at a Medellín nightclub. He borrowed a stranger's phone, opened Morales Emergency Access, triggered help — and when the robbers tried to break into his vault, the system locked them out and sent their location to security.
+            Marco was robbed at a Medellín nightclub. He borrowed a stranger's phone, opened M-Care Emergency Access, triggered help — and when the robbers tried to break into his vault, the system locked them out and sent their location to security.
           </p>
         </div>
 

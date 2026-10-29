@@ -6,7 +6,7 @@ import { sendSms } from '../../shared/twilioSms.ts';
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 import { widenPartnerSearch } from '../../shared/partnerSearchWidening.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // ── Token generation — HMAC-signed to match verifyPortalToken() in getPortalData.
@@ -91,7 +91,7 @@ function chauffeurEmail({ driverName, passengerName, serviceType, routes, caseRe
     This link is valid for 7 days and is specific to your account. Do not share it.
     Questions? Reach us on WhatsApp or reply to this email.
   </p>
-  <p style="margin:14px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
+  <p style="margin:14px 0 0;font-size:14px;color:#13221d;font-weight:700;">M-Care Concierge Team</p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -313,7 +313,7 @@ Deno.serve(createHandler(async ({ req }) => {
         if (!originDriver.phone) return;
         const smsResult = await sendSms(
           originDriver.phone,
-          `Morales Medical: transfer request (Origin, case ${caseRef}) for ${caseRecord.client_name || 'a patient'}. Reply with a total price + "confirmed" (e.g. "$120 confirmed") or use your portal: ${originPortalUrl}`,
+          `M-Care Medical: transfer request (Origin, case ${caseRef}) for ${caseRecord.client_name || 'a patient'}. Reply with a total price + "confirmed" (e.g. "$120 confirmed") or use your portal: ${originPortalUrl}`,
           'TWILIO_PARTNER_PHONE_NUMBER',
         );
         await logProviderContactAttempt(base44, {
@@ -333,7 +333,7 @@ Deno.serve(createHandler(async ({ req }) => {
         if (!destDriver.phone) return;
         const smsResult = await sendSms(
           destDriver.phone,
-          `Morales Medical: transfer request (Destination, case ${caseRef}) for ${caseRecord.client_name || 'a patient'}. Reply with a total price + "confirmed" (e.g. "$120 confirmed") or use your portal: ${destPortalUrl}`,
+          `M-Care Medical: transfer request (Destination, case ${caseRef}) for ${caseRecord.client_name || 'a patient'}. Reply with a total price + "confirmed" (e.g. "$120 confirmed") or use your portal: ${destPortalUrl}`,
           'TWILIO_PARTNER_PHONE_NUMBER',
         );
         await logProviderContactAttempt(base44, {

@@ -100,13 +100,13 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     // Email the agency (registered app users only — the onboarding contact is logged in).
     try {
       const subject = decision === 'approve'
-        ? 'Your agency is approved on Morales'
+        ? 'Your agency is approved on M-Care'
         : decision === 'reject'
-          ? 'Update on your Morales agency application'
-          : 'Your Morales agency application needs human review';
+          ? 'Update on your M-Care agency application'
+          : 'Your M-Care agency application needs human review';
       const greeting = `Hi ${agency.contact_person || agency.agency_name},`;
       const msg = decision === 'approve'
-        ? `${greeting}\n\nM-Care verified your IATA code ${agency.iata_code} and your agency is approved on Morales. You can now receive patient bookings.\n\nReasoning: ${reason}`
+        ? `${greeting}\n\nM-Care verified your IATA code ${agency.iata_code} and your agency is approved on M-Care. You can now receive patient bookings.\n\nReasoning: ${reason}`
         : decision === 'reject'
           ? `${greeting}\n\nUnfortunately your agency application was not approved. Reason: ${reason}\n\nYou can reapply once the issue is resolved.`
           : `${greeting}\n\nYour application needs a closer look from our human team. Reason: ${reason}\n\nSomeone will reach out shortly.`;

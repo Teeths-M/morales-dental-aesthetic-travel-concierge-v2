@@ -2,7 +2,7 @@
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -58,7 +58,7 @@ function goldenMEmail({ clientName, procedures, duration, caseRef }: {
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7;font-style:italic;">
         "We are honoured to have walked this journey beside you. Your trust in us means everything. We will be here whenever you need us again."
       </p>
-      <p style="margin:10px 0 0;font-size:12px;color:${GOLD};">— The Morales Concierge Team</p>
+      <p style="margin:10px 0 0;font-size:12px;color:${GOLD};">— The M-Care Concierge Team</p>
     </td></tr>
   </table>
 
@@ -132,7 +132,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
         user_email: clientEmail,
         title:      '⭐ The Golden M Is Yours',
-        body:       `Welcome home, ${clientName.split(' ')[0]}. All 9 checkpoints complete. Journey done. Thank you for trusting Morales.`,
+        body:       `Welcome home, ${clientName.split(' ')[0]}. All 9 checkpoints complete. Journey done. Thank you for trusting M-Care.`,
         url:        '/dashboard',
         type:       'golden_m',
         tag:        `golden-m-${trip_id}`,
@@ -144,7 +144,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   if (clientPhone) {
     tasks.push(sendSms(clientPhone,
-      `✨ Welcome home, ${clientName.split(' ')[0]}. Your Morales journey is complete — all 9 handshakes confirmed. The Golden M is yours. Thank you for trusting us. — ${BRAND}`
+      `✨ Welcome home, ${clientName.split(' ')[0]}. Your M-Care journey is complete — all 9 handshakes confirmed. The Golden M is yours. Thank you for trusting us. — ${BRAND}`
     ));
   }
 

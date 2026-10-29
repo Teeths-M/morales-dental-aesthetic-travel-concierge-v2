@@ -52,8 +52,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (adminEmail) {
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Medical Travel Safety', to: adminEmail,
-      subject: `[${severity.toUpperCase()}] A concern was reported about a provider | Morales`,
+      from_name: 'M-Care Medical Travel Safety', to: adminEmail,
+      subject: `[${severity.toUpperCase()}] A concern was reported about a provider | M-Care`,
       body: `<h2>Provider concern report</h2><p><strong>Category:</strong> ${category}</p><p><strong>Severity:</strong> ${severity}</p><p>A report has been filed and needs review.</p><p><a href="${appUrl}/admin">Open Admin Console</a></p>`,
     }).catch(() => {});
   }

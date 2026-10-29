@@ -91,7 +91,7 @@ class ErrorBoundary extends Component {
             maxWidth: 440, width: '100%', background: CARD, border: `1px solid ${BORDER}`,
             borderRadius: 24, padding: '40px 32px', textAlign: 'center',
           }}>
-            <img src="/morales-m-mark.png" alt="Morales" style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }} />
+            <img src="/morales-m-mark.png" alt="M-Care" style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }} />
             <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: GOLD }}>
               Update Available
             </p>
@@ -125,7 +125,7 @@ class ErrorBoundary extends Component {
           maxWidth: 440, width: '100%', background: CARD, border: `1px solid ${BORDER}`,
           borderRadius: 24, padding: '40px 32px', textAlign: 'center',
         }}>
-          <img src="/morales-m-mark.png" alt="Morales" style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }} />
+          <img src="/morales-m-mark.png" alt="M-Care" style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }} />
 
           <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: GOLD }}>
             We're Sorry

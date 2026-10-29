@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 /**
- * useSafetyScore — Morales Safety Score
+ * useSafetyScore — M-Care Safety Score
  *
  * Calls runMedGuardAnalysis (6 behavioral signals) during active travel.
  * React Query caches the result for 5 minutes and refetches automatically.

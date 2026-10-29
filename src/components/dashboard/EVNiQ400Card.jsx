@@ -199,7 +199,7 @@ export default function EVNiQ400Card({ country, countryCode }) {
                     label="Government advisories"
                     value={data.sourcesActive > 0
                       ? `${data.sourcesActive} source${data.sourcesActive !== 1 ? 's' : ''} active`
-                      : 'Morales curated profile'}
+                      : 'M-Care curated profile'}
                     color={level.color}
                   />
                   <Signal
@@ -218,7 +218,7 @@ export default function EVNiQ400Card({ country, countryCode }) {
                   )}
                   <Signal
                     icon={data.riskScore < 55 ? CheckCircle2 : AlertTriangle}
-                    label="Morales safety escorts"
+                    label="M-Care safety escorts"
                     value={data.riskScore >= 55
                       ? 'Available — ask your concierge'
                       : 'Not required for this destination'}

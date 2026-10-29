@@ -28,7 +28,7 @@ const steps = [
     number: '04',
     icon: Heart,
     title: 'Home Safe. Golden M Earned.',
-    desc: 'Your final checkpoint confirmed. The Golden M is yours — proof that Morales walked every step beside you, from your front door to your safe return.',
+    desc: 'Your final checkpoint confirmed. The Golden M is yours — proof that M-Care walked every step beside you, from your front door to your safe return.',
   },
 ];
 
@@ -51,7 +51,7 @@ export default function LuxuryHowItWorks() {
             </h2>
             <div className="w-10 h-[2px] mb-6" style={{ background: GOLD }} />
             <p className="text-white/70 text-[17px] leading-[1.75] mb-9" style={{ fontWeight: 300 }}>
-              Most platforms book you a flight and a doctor. Morales builds a 9-point safety spine around your entire journey — from your front door to your safe return home.
+              Most platforms book you a flight and a doctor. M-Care builds a 9-point safety spine around your entire journey — from your front door to your safe return home.
             </p>
             <Link
               to="/how-it-works"

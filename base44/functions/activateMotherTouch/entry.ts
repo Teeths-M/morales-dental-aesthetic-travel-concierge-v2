@@ -17,7 +17,7 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
  * 6. Update CaseRecord with mother_touch_active = true
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendSms(to: string, msg: string) {

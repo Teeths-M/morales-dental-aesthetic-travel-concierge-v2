@@ -101,7 +101,7 @@ export default function OutreachDraftCard({ toolCall, onRespond }) {
               <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 10, padding: 8, borderRadius: 8, background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: GOLD }} />
                 <p style={{ fontSize: 11, color: '#F5F1E8', lineHeight: 1.5 }}>
-                  Their website's contact info looked different from what's on file with Morales — worth double-checking before sending.
+                  Their website's contact info looked different from what's on file with M-Care — worth double-checking before sending.
                 </p>
               </div>
             )}

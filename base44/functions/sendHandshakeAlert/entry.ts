@@ -2,7 +2,7 @@
 import { linkOnlyEmail } from '../../shared/notify.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // Which handshakes notify which role, and what generic line to show them —

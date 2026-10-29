@@ -106,7 +106,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   });
 
   await base44.asServiceRole.integrations.Core.SendEmail({
-    from_name: 'Morales Medical Travel Safety',
+    from_name: 'M-Care Medical Travel Safety',
     to: nomination.doctor_email,
     subject: 'A patient recommended you to M',
     body: html,

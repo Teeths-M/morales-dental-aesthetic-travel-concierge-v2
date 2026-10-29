@@ -438,7 +438,7 @@ export default function IQ200AdminCenter() {
               onClick={handleSeedDemoJourney}
               disabled={seedingDemo}
               className="gap-1.5"
-              title="Creates one realistic mid-journey demo case (Sofia Morales) for judge/investor walkthroughs — safe to click more than once"
+              title="Creates one realistic mid-journey demo case (Sofia M-Care) for judge/investor walkthroughs — safe to click more than once"
             >
               <Sparkles className="w-4 h-4" /> {seedingDemo ? 'Seeding...' : 'Seed Demo Journey'}
             </Button>

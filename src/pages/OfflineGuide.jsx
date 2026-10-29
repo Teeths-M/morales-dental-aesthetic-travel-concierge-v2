@@ -86,7 +86,7 @@ export default function OfflineGuide() {
           {/* Access SOS */}
           <Section icon={AlertTriangle} color="bg-red-700/50 text-red-300" title="Accessing SOS Without Signal">
             <Step number="1" title="Open the installed app">
-              Tap the Morales Medical icon on your home screen. It loads from your device — no internet needed.
+              Tap the M-Care Medical icon on your home screen. It loads from your device — no internet needed.
             </Step>
             <Step number="2" title='Tap the red SOS button'>
               A pulsing red <strong className="text-white">Emergency SOS</strong> button is always visible in the bottom-left corner of every screen. Tap it to reach the Emergency Hub.
@@ -118,7 +118,7 @@ export default function OfflineGuide() {
             <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700 space-y-3">
               <div className="flex gap-3 items-start">
                 <code className="bg-purple-900/50 text-purple-300 px-2 py-1 rounded text-xs font-mono shrink-0">SOS</code>
-                <p className="text-slate-400 text-sm">Send to your Morales number to trigger an emergency alert to your guardian</p>
+                <p className="text-slate-400 text-sm">Send to your M-Care number to trigger an emergency alert to your guardian</p>
               </div>
               <div className="flex gap-3 items-start">
                 <code className="bg-purple-900/50 text-purple-300 px-2 py-1 rounded text-xs font-mono shrink-0">CHECKIN ok</code>
@@ -129,7 +129,7 @@ export default function OfflineGuide() {
                 <p className="text-slate-400 text-sm">Verify your assigned driver via SMS handshake</p>
               </div>
             </div>
-            <p className="text-slate-500 text-xs">Your Morales SMS number is provided in your onboarding email and on the Emergency Hub page.</p>
+            <p className="text-slate-500 text-xs">Your M-Care SMS number is provided in your onboarding email and on the Emergency Hub page.</p>
           </Section>
 
           {/* Quick links */}
@@ -153,7 +153,7 @@ export default function OfflineGuide() {
         </div>
 
         <p className="text-center text-xs text-slate-600 mt-8 pb-4">
-          Morales Medical · Emergency Infrastructure · No signal required after installation
+          M-Care Medical · Emergency Infrastructure · No signal required after installation
         </p>
       </div>
     </div>

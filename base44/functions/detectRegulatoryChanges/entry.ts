@@ -43,7 +43,7 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
     try {
       const res = await fetch(src.url, {
         signal: AbortSignal.timeout(12000),
-        headers: { 'User-Agent': 'MoralesMedicalPlatform/1.0 (compliance-monitor)' },
+        headers: { 'User-Agent': 'M-CareMedicalPlatform/1.0 (compliance-monitor)' },
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
       content = normalize(await res.text());

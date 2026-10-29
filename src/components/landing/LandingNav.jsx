@@ -41,7 +41,7 @@ export default function LandingNav() {
       <Link
         to="/"
         style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', minWidth: 0 }}
-        aria-label="Morales — home"
+        aria-label="M-Care — home"
       >
         <McareMark size={26} glow={false} />
         <span
@@ -55,7 +55,7 @@ export default function LandingNav() {
             whiteSpace: 'nowrap',
           }}
         >
-          Morales
+          M-Care
         </span>
       </Link>
 

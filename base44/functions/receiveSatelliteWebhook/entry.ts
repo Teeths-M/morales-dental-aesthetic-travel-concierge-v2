@@ -32,7 +32,7 @@ import { computePrevHash } from '../../shared/auditHashChain.ts';
  *  8. Return 200 (Rock Seven retries on non-200)
  */
 
-const BRAND = 'Morales Concierge';
+const BRAND = 'M-Care Concierge';
 
 /**
  * Is this POST provably from Rock Seven, or could anyone have sent it?

@@ -140,7 +140,7 @@ export default function BookVirtualConsultation() {
         <CheckCircle2 size="40" color="#22C55E" style={{ marginBottom: 12 }} />
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 8 }}>Your consultation is booked</h1>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', marginBottom: 24 }}>
-          A calendar invite and full details are in your Morales dashboard.
+          A calendar invite and full details are in your M-Care dashboard.
         </p>
         <button
           type="button"

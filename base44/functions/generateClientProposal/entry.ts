@@ -9,7 +9,7 @@ async function aiProposalNarrative(params: {
 }): Promise<string | null> {
   if (!ANTHROPIC_KEY) return null;
   const procs = Array.isArray(params.procedures) ? params.procedures.join(' + ') : String(params.procedures || 'procedure');
-  const prompt = `You are the senior concierge at Morales Medical Travel. Write ONE compelling paragraph (max 55 words) for ${params.name}'s personalized proposal. Package: ${procs} in ${params.destination || 'destination'}, ${params.totalDays}-day stay, all-inclusive at $${Math.round(params.finalPrice).toLocaleString()}. Warm but professional tone. No bullet points.`;
+  const prompt = `You are the senior concierge at M-Care Medical Travel. Write ONE compelling paragraph (max 55 words) for ${params.name}'s personalized proposal. Package: ${procs} in ${params.destination || 'destination'}, ${params.totalDays}-day stay, all-inclusive at $${Math.round(params.finalPrice).toLocaleString()}. Warm but professional tone. No bullet points.`;
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

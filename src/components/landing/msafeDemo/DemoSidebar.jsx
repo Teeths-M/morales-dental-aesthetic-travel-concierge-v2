@@ -18,7 +18,7 @@ export default function DemoSidebar({ scenarios, activeIndex, onSelect }) {
         M-Safe<span style={{ color: C.gold }}>+</span>
       </p>
       <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 600, color: C.ink, lineHeight: 1.5 }}>
-        Morales Super Agent
+        M-Care Super Agent
       </p>
       <p style={{ margin: '1px 0 0', fontSize: 11, color: C.soft, lineHeight: 1.5 }}>
         Medical + Travel Concierge

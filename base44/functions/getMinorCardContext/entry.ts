@@ -14,7 +14,7 @@ import { openAndNotify } from '../../shared/minorReunificationEngine.ts';
  * The scan itself is trigger (b). It opens a case if none is open, and attaches
  * as a duplicate event if one already is — so a card scanned at a bus stop
  * raises the alarm immediately rather than waiting for someone to find a way to
- * contact Morales. Repeat scans inside the same window replay the same event
+ * contact M-Care. Repeat scans inside the same window replay the same event
  * and change nothing.
  */
 Deno.serve(createHandler(async ({ base44, body }) => {

@@ -278,7 +278,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
               { label: 'Local Emergency', value: '112 / 911' },
               { label: 'Police (Venezuela)', value: '171 / 08000POLICIA' },
               { label: 'Tourist Police', value: '+58 800 4 TURISMO' },
-              { label: 'Morales Admin', value: 'Contact via guardian link' },
+              { label: 'M-Care Admin', value: 'Contact via guardian link' },
             ].map((c, i) => (
               <div key={i} className="flex justify-between text-sm">
                 <span className="text-slate-400">{c.label}</span>
@@ -332,7 +332,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
                 );
               })}
             </div>
-            <p className="text-slate-500 text-xs mt-2">⚠️ Full documents require additional verification. Contact Morales admin to retrieve copies.</p>
+            <p className="text-slate-500 text-xs mt-2">⚠️ Full documents require additional verification. Contact M-Care admin to retrieve copies.</p>
           </div>
         )}
 
@@ -354,7 +354,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
             They can see your last-known location and case status.
           </p>
           <p className="text-slate-400 text-xs mt-2">
-            If unreachable: your Morales admin has your full case details and emergency contact on file.
+            If unreachable: your M-Care admin has your full case details and emergency contact on file.
           </p>
         </div>
       </div>

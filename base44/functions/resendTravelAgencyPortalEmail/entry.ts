@@ -1,7 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { renderEmail } from '../../shared/emailTemplate.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — previously an
 // unsigned plain btoa(JSON) token with no signature suffix, which fails that
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       // SMS — send alongside email if phone on file
       const phone = agency.whatsapp_number || agency.phone;
       if (phone) {
-        await sendSms(phone, `Hi ${agencyName}! Travel quote needed for ${consultation.patient_name}. Access your Morales travel portal: ${portalLink}`);
+        await sendSms(phone, `Hi ${agencyName}! Travel quote needed for ${consultation.patient_name}. Access your M-Care travel portal: ${portalLink}`);
       }
 
       sent.push({ name: agencyName, email: agency.email, portal_link: portalLink, sms_sent: !!phone });

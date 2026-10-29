@@ -49,7 +49,7 @@ const WAYPOINTS = [
     risk: 'SAFE',
     lat: 32.5298, lng: -117.0198,
     svg: { x: 242, y: 168 },
-    scanMsg: 'Medical tourism zone — vetted by Morales. Safe corridor.',
+    scanMsg: 'Medical tourism zone — vetted by M-Care. Safe corridor.',
     scanDuration: 2200,
   },
   {
@@ -201,10 +201,10 @@ export default function EVNiQ400Demo() {
       confirm: '🔴 HIGH RISK CONFIRMED via cache · Zona Norte in 24h local database · No network needed',
     },
     airplane: {
-      boot:    ['✈️ Airplane mode · Zero network dependency activated', '✅ Morales Offline KB v4.0 loaded · 200+ pre-loaded risk zones · 30+ countries'],
+      boot:    ['✈️ Airplane mode · Zero network dependency activated', '✅ M-Care Offline KB v4.0 loaded · 200+ pre-loaded risk zones · 30+ countries'],
       scan:    '⏳ Scanning offline knowledge base...',
       cross:   '⚡ Offline KB match: Zona Norte — pre-loaded gang zone data...',
-      confirm: '🔴 HIGH RISK CONFIRMED via Offline KB · No internet · No API · Pre-loaded Morales Intelligence',
+      confirm: '🔴 HIGH RISK CONFIRMED via Offline KB · No internet · No API · Pre-loaded M-Care Intelligence',
     },
   };
 

@@ -15,7 +15,7 @@ const BORDER = '#2A3F4A';
  * behind if someone asked how we got them.
  *
  * They also framed the wrong product. Eight coloured savings badges is what a
- * discount marketplace looks like; Morales coordinates and protects a medical
+ * discount marketplace looks like; M-Care coordinates and protects a medical
  * journey. Opening on price sets up the whole relationship as a bargain hunt,
  * on the one screen where a patient is deciding whether to trust us with
  * surgery abroad.

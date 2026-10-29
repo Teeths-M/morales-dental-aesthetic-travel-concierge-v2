@@ -39,7 +39,7 @@ async function alertAdminNoContact(base44: any, transport: any) {
   if (!adminEmail) return;
   try {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Safety — Autonomous Reroute',
+      from_name: 'M-Care Safety — Autonomous Reroute',
       to: adminEmail,
       subject: `Auto-reroute blocked — no patient contact on transport ${transport.id}`,
       body: `<div style="font-family:sans-serif;max-width:560px;padding:24px;border:2px solid #dc2626;border-radius:12px;">
@@ -145,7 +145,7 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
     if (adminEmail) {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Safety — Autonomous Reroute',
+          from_name: 'M-Care Safety — Autonomous Reroute',
           to: adminEmail,
           subject: `No backup driver available — ${transport.user_name || 'patient'} stranded`,
           body: `<div style="font-family:sans-serif;max-width:560px;padding:24px;border:2px solid #dc2626;border-radius:12px;">

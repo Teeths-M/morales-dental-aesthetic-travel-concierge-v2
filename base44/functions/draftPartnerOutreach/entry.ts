@@ -6,7 +6,7 @@ import { PARTNER_TYPE_CONFIG, type PartnerType } from '../../shared/partnerTypeC
 import { SUPPORTED_LANGUAGE_CODES, LANGUAGE_LABELS, type LanguageCode } from '../../shared/partnerLanguage.ts';
 
 // ── draftPartnerOutreach ─────────────────────────────────────────────────────
-// Drafts a warm, specific message to an already-onboarded Morales partner on
+// Drafts a warm, specific message to an already-onboarded M-Care partner on
 // a traveler's behalf. Writes nothing, sends nothing -- pure draft.
 //
 // This is the one place in this codebase's provider-outreach machinery that
@@ -82,11 +82,11 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const targetLanguage: LanguageCode = (language as LanguageCode | undefined) ?? research.resolved_language;
   const languageSource = language ? 'override' : research.language_source;
 
-  const prompt = `Write a short, warm, professional outreach message from a medical travel concierge (Morales) to a partner ${cfg.noun} named "${research.partner_name}".
+  const prompt = `Write a short, warm, professional outreach message from a medical travel concierge (M-Care) to a partner ${cfg.noun} named "${research.partner_name}".
 The traveler's stated reason for reaching out: "${safeIntent}"
 ${caseContext ? `Relevant case context: ${caseContext}` : ''}
 ${research.summary ? `What we know about them from their own website: ${research.summary}` : ''}
-Write in ${LANGUAGE_LABELS[targetLanguage]}. 2-4 short sentences, no subject line, no signature block beyond "Warmly, The Morales Concierge Team" on its own line at the end. Do not invent any fact not given above. Return ONLY the message text, nothing else.`;
+Write in ${LANGUAGE_LABELS[targetLanguage]}. 2-4 short sentences, no subject line, no signature block beyond "Warmly, The M-Care Concierge Team" on its own line at the end. Do not invent any fact not given above. Return ONLY the message text, nothing else.`;
 
   const invokeDraft = async (): Promise<string> => {
     try {

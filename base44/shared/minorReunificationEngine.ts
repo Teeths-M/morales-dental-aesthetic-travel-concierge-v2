@@ -29,7 +29,7 @@ import { placeOutboundCall } from './voiceCallAdapter.ts';
 
 export const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 /** States that mean "this case is still open" — a duplicate trigger attaches to one of these. */
 export const OPEN_STATES: ReunificationState[] = [
@@ -394,7 +394,7 @@ export function resolveMinorContacts(minor: any): MinorContacts {
     guardians,
     groupLeader,
     careTeam: {
-      name: 'Morales care team',
+      name: 'M-Care care team',
       phone: Deno.env.get('ADMIN_PHONE') || null,
       email: Deno.env.get('ADMIN_EMAIL') || null,
     },
@@ -416,9 +416,9 @@ export function reunificationMessage(caseRow: any, minor: any, role: MinorRecipi
   const body = (() => {
     switch (role) {
       case 'guardian':
-        return `M-Care: ${first} pressed the help button. We are locating them now and our care team has been alerted. Please stay by your phone — someone from Morales is calling you.`;
+        return `M-Care: ${first} pressed the help button. We are locating them now and our care team has been alerted. Please stay by your phone — someone from M-Care is calling you.`;
       case 'group_leader':
-        return `This is Morales calling about ${first}, who pressed the help button on their trip. Please confirm you are with them and tell us where you are.`;
+        return `This is M-Care calling about ${first}, who pressed the help button on their trip. Please confirm you are with them and tell us where you are.`;
       case 'care_team':
         return `MINOR REUNIFICATION ${caseRow.id}: ${first} (trip ${caseRow.trip_id || 'unassigned'}). State NOTIFIED. Guardian messaged, group leader call placed. Safety answer pending.`;
       case 'authorised_adult':
@@ -540,7 +540,7 @@ async function deliverOne(base44: any, caseRow: any, minor: any, row: any): Prom
       await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND,
         to: row.recipient_ref,
-        subject: 'Morales — a child on your trip has pressed the help button',
+        subject: 'M-Care — a child on your trip has pressed the help button',
         body: `<p>${body}</p>`,
         text: body,
         category: 'transactional',
@@ -556,7 +556,7 @@ async function deliverOne(base44: any, caseRow: any, minor: any, row: any): Prom
           minor_name: minor?.display_name || 'the child',
           contact_name: row.recipient_name || 'group leader',
           case_id: caseRow.id,
-          situation_summary: 'A child on your trip pressed the help button in the Morales safety app.',
+          situation_summary: 'A child on your trip pressed the help button in the M-Care safety app.',
           requested_action: 'Confirm whether the child is with you, and where you are.',
         },
         metadata: { case_id: caseRow.id, channel: 'minor_reunification' },

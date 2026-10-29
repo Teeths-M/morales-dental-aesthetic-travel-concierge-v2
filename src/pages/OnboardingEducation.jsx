@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 const MODULES = [
   {
     id: 'welcome',
-    title: 'Welcome to Morales Medical',
+    title: 'Welcome to M-Care Medical',
     icon: '🌍',
     description: 'Learn how your journey works, who your team is, and what to expect at every stage.',
     steps: [
@@ -35,7 +35,7 @@ const MODULES = [
     description: 'Walk through a simulated travel day so nothing surprises you on the real one.',
     steps: [
       { title: 'Airport Pickup Protocol', content: 'Your chauffeur will hold a sign with your name. Confirm the license plate matches what was sent to you. Never get into an unverified vehicle.' },
-      { title: 'Hotel Check-In', content: 'Your hotel is pre-booked and confirmed. Present your Morales welcome card at check-in — all arrangements are pre-paid.' },
+      { title: 'Hotel Check-In', content: 'Your hotel is pre-booked and confirmed. Present your M-Care welcome card at check-in — all arrangements are pre-paid.' },
       { title: 'Clinic Arrival Day', content: 'Your driver takes you directly to the clinic. A bilingual liaison will greet you and guide you through pre-operative preparation.' }
     ]
   },

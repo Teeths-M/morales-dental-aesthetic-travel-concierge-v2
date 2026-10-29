@@ -13,7 +13,7 @@ const GREEN = '#22C55E'; // matches SystemHealth.jsx's own existing "healthy" co
 const TICK_MS = 4000;
 
 // Portia's own pitch narration for this exact moment ("This is real! the
-// system running Morales today...") — a real audio file she generated and
+// system running M-Care today...") — a real audio file she generated and
 // downloaded, copied into public/audio/system-health-demo/narration.mp3
 // (public/ is served as-is by Vite, so a plain root-relative path is all
 // that's needed, no import). Demo-mode only — the real (non-demo) page

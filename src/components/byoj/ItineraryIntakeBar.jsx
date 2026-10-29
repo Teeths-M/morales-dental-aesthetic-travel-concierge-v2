@@ -280,7 +280,7 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
             {combinationRisk.violations[0]?.pairLabel}: {combinationRisk.violations[0]?.reason}
           </p>
           <p className="text-[12px] text-red-600/80 m-0 mt-1.5">
-            You’ve already booked, so we won’t stop you here — verify anyway and a Morales coordinator
+            You’ve already booked, so we won’t stop you here — verify anyway and a M-Care coordinator
             is alerted to help you re-stage this safely with your provider.
           </p>
         </div>

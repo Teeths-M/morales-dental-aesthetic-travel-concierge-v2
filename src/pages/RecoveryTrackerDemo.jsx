@@ -167,7 +167,7 @@ function TrackerCard({ caseData, lastRefresh }) {
                 {isComplete ? 'Golden M Achieved ✨' : `Last confirmed: ${HS_LABELS[currentStep]}`}
               </p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {isComplete ? 'All 9 checkpoints confirmed by Morales' : 'Digitally confirmed by Morales system'}
+                {isComplete ? 'All 9 checkpoints confirmed by M-Care' : 'Digitally confirmed by M-Care system'}
               </p>
             </div>
           </div>
@@ -183,7 +183,7 @@ function TrackerCard({ caseData, lastRefresh }) {
             <span style={{ fontSize: 20 }}>{HS_ICONS[currentStep + 1]}</span>
             <div>
               <p className="text-sm font-semibold text-white">{HS_LABELS[currentStep + 1]}</p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Will be confirmed by Morales</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Will be confirmed by M-Care</p>
             </div>
           </div>
         </motion.div>
@@ -193,7 +193,7 @@ function TrackerCard({ caseData, lastRefresh }) {
       <div className="text-center pb-4">
         <div className="flex items-center justify-center gap-1.5 mb-2">
           <Shield className="w-3.5 h-3.5" style={{ color: GOLD }} />
-          <span className="text-xs font-semibold" style={{ color: GOLD }}>Protected by Morales</span>
+          <span className="text-xs font-semibold" style={{ color: GOLD }}>Protected by M-Care</span>
         </div>
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
           Medical &amp; privacy information is never shared on this page.<br />
@@ -278,7 +278,7 @@ export default function RecoveryTrackerDemo() {
 
       {/* Simulated "phone view" header — mimics what family sees */}
       <div className="pt-6 pb-4 px-6 text-center" style={{ borderBottom: '1px solid #2A3F4A' }}>
-        <img src="/morales-m-mark.png" alt="Morales" className="w-10 mx-auto mb-3"
+        <img src="/morales-m-mark.png" alt="M-Care" className="w-10 mx-auto mb-3"
           style={{ filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.5))' }} />
         <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: GOLD }}>Live Journey Update</div>
         <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -309,7 +309,7 @@ export default function RecoveryTrackerDemo() {
             Det. Alicia Stone, 40 — NYPD detective, mother of three — was found unresponsive in her hotel room at 6:30 a.m., one week after a butt lift and liposuction in Colombia.
             She died alone. No one was alerted when she stopped responding.{' '}
             <span style={{ color: '#f8fafc', fontWeight: 600 }}>
-              Morales checks in every 2 hours during recovery. A missed response triggers an immediate alert to family and the on-call concierge — minutes, not morning.
+              M-Care checks in every 2 hours during recovery. A missed response triggers an immediate alert to family and the on-call concierge — minutes, not morning.
             </span>
           </p>
           <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Source: New York Post, Oct. 26, 2025</p>
@@ -356,7 +356,7 @@ export default function RecoveryTrackerDemo() {
           <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
             The patient shares this link with family from inside the app. No login required.
             Friends watch in real time — like a flight tracker, but for medical travel.
-            Every share is organic marketing for Morales.
+            Every share is organic marketing for M-Care.
           </p>
           <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
             Zero medical data exposed — only name, phase, and checkpoint progress.

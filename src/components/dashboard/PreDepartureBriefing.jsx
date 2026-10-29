@@ -42,19 +42,19 @@ function offlineBriefing(country, procedure, evnScore) {
   return {
     threatLevel: risk?.label || 'Moderate',
     precautions: [
-      'Always travel with your Morales emergency card accessible.',
+      'Always travel with your M-Care emergency card accessible.',
       // "Vetted" implied a completed check on the driver. Until activatePartner
       // gates on a cleared background check, what is actually true is narrower
       // and still worth saying: the transfer is arranged by M and every handoff
       // is logged, timed and located — which is the protection that holds even
       // when a check would not have caught anything.
-      `Your Morales concierge has pre-arranged your transport in ${country}, and every handover is confirmed and logged.`,
+      `Your M-Care concierge has pre-arranged your transport in ${country}, and every handover is confirmed and logged.`,
       'Keep your Emergency PIN memorised — accessible from any device without internet.',
       'Share your Guardian Link with a trusted family member before departure.',
     ],
-    emergencyProtocol: `If you need immediate help in ${country}: (1) Press the SOS button in the Morales app. (2) Text HELP to your Morales shortcode. (3) Activate your Emergency PIN from any device. Your concierge will respond within 5 minutes.`,
-    culturalNote: `Follow local dress codes and customs in ${country}. Your Morales guide has destination-specific guidance in the Knowledge Base (tap the ✨ orb).`,
-    recoveryNote: procedure ? `After your ${procedure} procedure, follow the Morales post-op protocol. Your Day 3, 7, 14, and 30 check-ins are pre-scheduled.` : 'Follow your Morales post-op recovery timeline closely.',
+    emergencyProtocol: `If you need immediate help in ${country}: (1) Press the SOS button in the M-Care app. (2) Text HELP to your M-Care shortcode. (3) Activate your Emergency PIN from any device. Your concierge will respond within 5 minutes.`,
+    culturalNote: `Follow local dress codes and customs in ${country}. Your M-Care guide has destination-specific guidance in the Knowledge Base (tap the ✨ orb).`,
+    recoveryNote: procedure ? `After your ${procedure} procedure, follow the M-Care post-op protocol. Your Day 3, 7, 14, and 30 check-ins are pre-scheduled.` : 'Follow your M-Care post-op recovery timeline closely.',
     generatedBy: 'offline',
   };
 }
@@ -110,7 +110,7 @@ export default function PreDepartureBriefing({ caseRecord, userName }) {
     try {
       const evnLine = evnScore ? `Current EVN-iQ400 environmental risk score: ${evnScore}/100.` : '';
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `Generate a pre-departure safety briefing for a Morales Medical Concierge patient.
+        prompt: `Generate a pre-departure safety briefing for a M-Care Medical Concierge patient.
 Patient: ${name}
 Destination: ${country}
 Procedure: ${procedure || 'medical procedure'}

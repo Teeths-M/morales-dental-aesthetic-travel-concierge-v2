@@ -98,7 +98,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         await base44.integrations.Core.SendEmail({
           to: partnerEmail,
           subject: 'Application Status',
-          body: `<p>Thank you for applying to the Morales platform.</p>
+          body: `<p>Thank you for applying to the M-Care platform.</p>
                  <p>After an automated review, we are unable to approve your application at this time.</p>
                  <p>If you believe this is in error, please contact our support team with your identification documents.</p>`,
         });
@@ -404,9 +404,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     if (partnerActuallyActivated) {
       await base44.integrations.Core.SendEmail({
         to: partnerEmail,
-        subject: '✅ Your Profile is Now Verified — Welcome to the Morales Network',
+        subject: '✅ Your Profile is Now Verified — Welcome to the M-Care Network',
         body: `<p>Dear ${partnerName},</p>
-               <p>Your credentials cleared our automated screening and your profile is now <strong>verified and active</strong> on the Morales Medical Travel Platform.</p>
+               <p>Your credentials cleared our automated screening and your profile is now <strong>verified and active</strong> on the M-Care Medical Travel Platform.</p>
                <p>Patients searching for specialists in your field can now find and book with you.</p>`,
       });
       await logProviderContactAttempt(base44, {

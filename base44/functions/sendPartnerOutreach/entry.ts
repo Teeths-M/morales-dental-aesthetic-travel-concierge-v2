@@ -62,7 +62,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const partner = await base44.asServiceRole.entities[cfg.entity].get(partner_id).catch(() => null);
   if (!partner) return err(`${cfg.noun} not found`, 404);
   if (partner.status && partner.status !== 'active') {
-    return err(`${cfg.noun} is not an active Morales partner.`, 400);
+    return err(`${cfg.noun} is not an active M-Care partner.`, 400);
   }
   if (!isLinkedPartner(partner_type as PartnerType, partner_id, partner.email || '', caseRecord)) {
     return err('This partner is not linked to that case.', 403);
@@ -80,9 +80,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       const escaped = String(message)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical Travel Safety',
+        from_name: 'M-Care Medical Travel Safety',
         to: recipient,
-        subject: 'A message from your Morales patient',
+        subject: 'A message from your M-Care patient',
         body: `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#1a1a1a;white-space:pre-wrap;">${escaped}</div>`,
       });
       sendResult = { ok: true };

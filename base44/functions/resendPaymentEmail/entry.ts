@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
     if (caseRecord.client_phone) {
       await sendSms(
         caseRecord.client_phone,
-        `Hi ${caseRecord.client_name}! Your Morales payment link is ready. Tap to pay and secure your spot: ${paymentUrl}`
+        `Hi ${caseRecord.client_name}! Your M-Care payment link is ready. Tap to pay and secure your spot: ${paymentUrl}`
       );
     }
 

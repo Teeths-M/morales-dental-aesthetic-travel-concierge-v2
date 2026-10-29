@@ -88,7 +88,7 @@ export default function CoverageMatrix() {
             <span style={{ color: GOLD }}>M has an answer for all of it.</span>
           </h1>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
-            Every scenario investors and judges ask about — mapped to the exact Morales system that handles it. Tap any row to see the live demo.
+            Every scenario investors and judges ask about — mapped to the exact M-Care system that handles it. Tap any row to see the live demo.
           </p>
         </div>
 

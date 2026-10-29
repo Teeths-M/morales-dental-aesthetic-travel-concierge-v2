@@ -107,7 +107,7 @@ function ApplicationCard({ app, onStatusChange, onDelete }) {
                   <div>
                     <p className="text-xs font-semibold text-red-700">Application Denied</p>
                     {app.denial_reason && <p className="text-xs text-red-600 mt-0.5">{app.denial_reason}</p>}
-                    <p className="text-xs text-red-600 mt-1">Contact your Morales coordinator to discuss next steps or reapplication options.</p>
+                    <p className="text-xs text-red-600 mt-1">Contact your M-Care coordinator to discuss next steps or reapplication options.</p>
                   </div>
                 </div>
               )}
@@ -307,10 +307,9 @@ export default function VisaApplicationTracker() {
       <div className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
         <AlertTriangle className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
         <p className="text-[10px] text-slate-400 leading-relaxed">
-          Morales uses your procedure date to send reminders at 30, 14, and 7 days before travel. Always apply for your visa well in advance â€” most medical visas require 3â€“15 business days to process.
+          M-Care uses your procedure date to send reminders at 30, 14, and 7 days before travel. Always apply for your visa well in advance â€” most medical visas require 3â€“15 business days to process.
         </p>
       </div>
     </div>
   );
 }
-

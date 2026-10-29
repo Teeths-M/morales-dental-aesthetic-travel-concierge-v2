@@ -200,7 +200,7 @@ Deno.serve(createHandler(async ({ req }) => {
             taxiServices: [
                 {
                     company_name: "San José Medical Transport",
-                    driver_name: "Juan Pablo Morales",
+                    driver_name: "Juan Pablo M-Care",
                     email: "juanpablo@sjmedicaltransport.cr",
                     phone: "+506-8888-9999",
                     operating_country: "Costa Rica",

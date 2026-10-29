@@ -131,16 +131,16 @@ Deno.serve(createHandler(async ({ req }) => {
       const driver = await base44.asServiceRole.entities.TaxiService.get(trip.chauffeur_id).catch(() => null);
       if (driver?.phone) {
         await sendSms(driver.phone,
-          `Morales update: Patient journey resumed after ${duration_minutes}min pause. ` +
+          `M-Care update: Patient journey resumed after ${duration_minutes}min pause. ` +
           `All pickup times have been shifted forward by ${duration_minutes} minutes. Please check your schedule.`
         ).catch(() => {});
       }
       if (driver?.email) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Concierge',
+          from_name: 'M-Care Concierge',
           to: driver.email,
           subject: `Schedule Update — Patient Journey Resumed (+${duration_minutes}min shift)`,
-          body: `<p>The patient's journey has resumed after a ${duration_minutes}-minute pause. All your scheduled pickup times have been shifted forward by ${duration_minutes} minutes.</p><p>Please review your updated schedule in the Morales Driver Portal.</p>`,
+          body: `<p>The patient's journey has resumed after a ${duration_minutes}-minute pause. All your scheduled pickup times have been shifted forward by ${duration_minutes} minutes.</p><p>Please review your updated schedule in the M-Care Driver Portal.</p>`,
         }).catch(() => {});
       }
     }
@@ -150,7 +150,7 @@ Deno.serve(createHandler(async ({ req }) => {
       const agency = await base44.asServiceRole.entities.TravelAgency.get(trip.travel_agency_id).catch(() => null);
       if (agency?.email) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Concierge',
+          from_name: 'M-Care Concierge',
           to: agency.email,
           subject: `Itinerary Update — Journey Resumed (+${duration_minutes}min)`,
           body: `<p>Patient journey for ${trip.user_name || trip.user_email} has resumed. All itinerary timings shifted +${duration_minutes} minutes due to a pause period.</p>`,

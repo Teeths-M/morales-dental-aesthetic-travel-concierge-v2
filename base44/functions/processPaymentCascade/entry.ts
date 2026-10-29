@@ -12,7 +12,7 @@ import { linkOnlyEmail } from '../../shared/notify.ts';
  * Balance:    → Remaining partners (Doctor/Driver/Companion) after 2nd installment
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -26,7 +26,7 @@ function activationEmail({ role, ctaUrl, ctaLabel }: {
 }) {
   return linkOnlyEmail({
     title: 'A patient is confirmed — your assignment is ready.',
-    line: `Your ${role} assignment has been activated. Open your Morales portal to see the patient, dates, and next steps.`,
+    line: `Your ${role} assignment has been activated. Open your M-Care portal to see the patient, dates, and next steps.`,
     ctaUrl,
     ctaLabel,
   });
@@ -247,7 +247,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }).catch(() => {}) : Promise.resolve(),
     base44.asServiceRole.entities.AuditLog.create({
       event_type: 'payment_cascade_triggered', actor_id: 'system', actor_role: 'system',
-      actor_name: 'Morales Automation', resource_type: 'CaseRecord', resource_id: case_id,
+      actor_name: 'M-Care Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, sensitive: false, timestamp: new Date().toISOString(),
       details: { payment_type, amount_paid: amountPaid, cascaded, new_status: newPaymentStatus },
     })

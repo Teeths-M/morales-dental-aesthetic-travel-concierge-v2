@@ -31,7 +31,7 @@ export function buildPreOpChecklist(profile: PreOpProfile): ChecklistItem[] {
 
   // Universal prep — always safe.
   items.push({ category: 'documents', confirm_with_doctor: false,
-    text: 'Bring your passport and a copy of your Morales itinerary (it is in your portal).' });
+    text: 'Bring your passport and a copy of your M-Care itinerary (it is in your portal).' });
   items.push({ category: 'timing', confirm_with_doctor: false,
     text: 'Arrive at the clinic at least 30 minutes before your appointment.' });
   items.push({ category: 'comfort', confirm_with_doctor: false,
@@ -69,7 +69,7 @@ export function buildPreOpChecklist(profile: PreOpProfile): ChecklistItem[] {
 
   // Close the loop.
   items.push({ category: 'timing', confirm_with_doctor: false,
-    text: 'Confirm your procedure date and arrival time in your Morales portal.' });
+    text: 'Confirm your procedure date and arrival time in your M-Care portal.' });
 
   return items;
 }

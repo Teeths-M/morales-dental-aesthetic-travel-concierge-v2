@@ -84,8 +84,8 @@ Return JSON: { "found": boolean, "confidence": number (0-100), "details": string
 
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: doctor.email,
-        subject: 'Your Credentials Have Been Verified — Morales Medical',
-        body: `Dear Dr. ${doctorName},\n\nCongratulations! Your medical credentials have been successfully verified through the official government registry.\n\nYou are now fully activated on the Morales platform and can begin accepting patient cases.\n\nBest regards,\nMorales Medical Verification Team`
+        subject: 'Your Credentials Have Been Verified — M-Care Medical',
+        body: `Dear Dr. ${doctorName},\n\nCongratulations! Your medical credentials have been successfully verified through the official government registry.\n\nYou are now fully activated on the M-Care platform and can begin accepting patient cases.\n\nBest regards,\nM-Care Medical Verification Team`
       });
 
       return Response.json({ status: 'verified', method: 'government_registry' });

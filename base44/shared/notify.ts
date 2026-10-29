@@ -14,7 +14,7 @@
 // red-team suite enforces the structural half (no sender may call SendEmail or
 // Twilio directly).
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const GOLD = '#D4AF37';
 
 const esc = (v: unknown) => String(v ?? '')
@@ -88,7 +88,7 @@ export function linkOnlyEmail(o: LinkOnlyEmailOpts): string {
   <p style="font-size:15px;color:#fff;margin:0 0 10px;font-weight:700;">${esc(o.title)}</p>
   <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:0 0 20px;line-height:1.6;">${esc(o.line)}</p>
   <a href="${esc(o.ctaUrl)}" style="display:inline-block;background:linear-gradient(135deg,${GOLD},#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:12px 28px;border-radius:99px;text-decoration:none;">${esc(label)} →</a>
-  <p style="font-size:11px;color:rgba(255,255,255,0.3);margin:22px 0 0;">For your privacy, the details are in your Morales portal — nothing private is sent by email. Please do not reply to this message.</p>
+  <p style="font-size:11px;color:rgba(255,255,255,0.3);margin:22px 0 0;">For your privacy, the details are in your M-Care portal — nothing private is sent by email. Please do not reply to this message.</p>
 </td></tr></table></td></tr></table></body></html>`;
 }
 
@@ -103,7 +103,7 @@ export interface LinkOnlySmsOpts {
 /**
  * The SMS/WhatsApp equivalent. Same rule, tighter budget: one generic line and
  * a link. No greeting by name — "Hi Maria" over SMS already discloses that
- * Maria is a Morales patient to anyone holding the handset.
+ * Maria is a M-Care patient to anyone holding the handset.
  */
 export function linkOnlySms(o: LinkOnlySmsOpts): string {
   assertLinkOnly(o.line, o.from || 'linkOnlySms');

@@ -19,7 +19,7 @@ import McareAvatar from '@/components/mcare-agent/McareAvatar';
 const STARTER_MESSAGE = {
   medical:    "I'd like to start planning my medical trip.",
   nonmedical: "I'd like to start planning my trip.",
-  byoj:       "I already booked a procedure elsewhere and I'd like to add Morales's safety protection.",
+  byoj:       "I already booked a procedure elsewhere and I'd like to add M-Care's safety protection.",
 };
 
 const GOLD       = BRAND.gold;
@@ -33,7 +33,7 @@ const CONTENT = {
   medical: {
     headline:    'NEVER\nALONE',
     subheadline: 'Travel abroad for world-class medical care — and come home safely.',
-    body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. If something goes wrong, Morales activates your emergency response plan and coordinates the next steps.',
+    body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. If something goes wrong, M-Care activates your emergency response plan and coordinates the next steps.',
     cta:         { label: 'Start Your Journey', path: '/intake' },
   },
   nonmedical: {
@@ -45,7 +45,7 @@ const CONTENT = {
     // handoff between transfers, hotel and clinic is confirmed and logged, so
     // nobody is unaccounted for. That is the real differentiator anyway, and
     // unlike "vetted" it is true.
-    body:        'Wherever you land, Morales is already there. Every transfer, hotel and clinic handover confirmed and logged, personal companions, and a safety net that follows you across every border and time zone.',
+    body:        'Wherever you land, M-Care is already there. Every transfer, hotel and clinic handover confirmed and logged, personal companions, and a safety net that follows you across every border and time zone.',
     cta:         { label: 'Plan My Journey', path: '/travel-intake' },
   },
 };

@@ -87,7 +87,7 @@ const extractSatMap = (raw) => {
   return { text, satMap: { label: match[1].trim(), dest: match[2].trim() } };
 };
 
-// Extract a {{sharelink:LABEL|URL}} token — a real Morales URL (e.g. a live-
+// Extract a {{sharelink:LABEL|URL}} token — a real M-Care URL (e.g. a live-
 // location share link) that needs to render as a tappable "open" button, not
 // inert plain text. Distinct from {{maps:...}}/{{qr:...}}, whose DESTINATION
 // is an address/coords pair fed into generateMapLink() — a share-location
@@ -166,7 +166,7 @@ const extractTrustScan = (raw) => {
 // token after it leaking into the visible text as raw {{...}} syntax.
 // TIER is 'discovered' (a discoverProviderCandidates/Tavily result) or
 // 'approved' (a matchDoctorsForProcedure result — every doctor that tool
-// can return already cleared Morales's full pipeline). 'verified' is a real
+// can return already cleared M-Care's full pipeline). 'verified' is a real
 // tier in the data model but not yet emitted by any tool — see
 // ProviderStatusBadge.jsx.
 // Tolerant of case and incidental whitespace around the delimiters (i flag,
@@ -316,13 +316,13 @@ function coordsFromDest(dest) {
   return { latitude, longitude };
 }
 
-// Renders a QR code for a real Morales share-link URL (e.g. a live-location
+// Renders a QR code for a real M-Care share-link URL (e.g. a live-location
 // streaming link) — a convenience for handing the link to another device by
 // scanning instead of retyping, NOT an offline pin the way InlineQrBlock's
 // geo: URI is. Deliberately encodes the URL as-is rather than resolving it
 // through generateMapLink (this isn't a maps destination) and deliberately
 // carries no "works offline" claim — opening it still requires a real
-// network round-trip to Morales' own backend, since the whole point of a
+// network round-trip to M-Care' own backend, since the whole point of a
 // live-location link is streaming GPS to a server, which can never work
 // without a data connection.
 function ShareLinkQrBlock({ label, url }) {
@@ -384,7 +384,7 @@ const normProcedureKey = (q) => (q || '').toLowerCase().replace(/[^a-z0-9]+/g, '
 // ProcedureKnowledge's expanded catalog (generateProcedureIllustrations'
 // batch-generated diagrams). Tier 3, only if tier 2 also misses: a real image
 // fetched from the open web via fetchProcedureIllustrationFromWeb (Tavily
-// image search), shown with an honest "sourced from the web — not Morales-
+// image search), shown with an honest "sourced from the web — not M-Care-
 // curated" caption and memoized per chat session. Honest empty state only if
 // all three tiers come back empty.
 function ProcedureMediaCard({ query }) {
@@ -482,7 +482,7 @@ function ProcedureMediaCard({ query }) {
       <div className="p-2.5">
         <p className="text-xs font-semibold text-gray-800">{match.title}</p>
         {isWebSourced
-          ? <p className="mt-0.5 text-[11px] text-amber-600 leading-snug">Illustration sourced from the web — not Morales-curated</p>
+          ? <p className="mt-0.5 text-[11px] text-amber-600 leading-snug">Illustration sourced from the web — not M-Care-curated</p>
           : match.desc && <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{match.desc}</p>}
       </div>
     </div>

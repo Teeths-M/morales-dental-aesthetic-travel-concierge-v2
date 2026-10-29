@@ -129,9 +129,9 @@ Deno.serve(createHandler(async ({ req }) => {
 
         // SMS patient
         if (trip.user_phone) {
-          const smsBody = `Morales update: Flight ${trip.flight_number} is delayed ${delayMin} min. ` +
+          const smsBody = `M-Care update: Flight ${trip.flight_number} is delayed ${delayMin} min. ` +
             `New estimated arrival: ${updatedArrival.toLocaleString('en-US', { timeStyle: 'short', dateStyle: 'short' })}. ` +
-            `Your driver has been notified. — Morales Concierge`;
+            `Your driver has been notified. — M-Care Concierge`;
           await sendSms(trip.user_phone, smsBody).catch(() => {});
         }
 
@@ -175,8 +175,8 @@ Deno.serve(createHandler(async ({ req }) => {
         // Welcome SMS
         if (trip.user_phone) {
           const welcomeSms = `Welcome to ${trip.destination_city || 'your destination'}! ` +
-            `Your driver ${trip.driver_name || 'your Morales driver'} is waiting. ` +
-            `Check the Morales app for your full welcome briefing. — Morales Concierge`;
+            `Your driver ${trip.driver_name || 'your M-Care driver'} is waiting. ` +
+            `Check the M-Care app for your full welcome briefing. — M-Care Concierge`;
           await sendSms(trip.user_phone, welcomeSms).catch(() => {});
         }
 

@@ -105,7 +105,7 @@ export default function PublicRecoveryTracker() {
           </div>
           <h2 className="text-lg font-semibold text-white mb-2">Journey Not Available</h2>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>{error || 'This journey tracker link is not available.'}</p>
-          <p className="text-xs mt-4" style={{ color: 'rgba(255,255,255,0.25)' }}>Morales Medical Travel Safety</p>
+          <p className="text-xs mt-4" style={{ color: 'rgba(255,255,255,0.25)' }}>M-Care Medical Travel Safety</p>
         </div>
       </div>
     );
@@ -122,7 +122,7 @@ export default function PublicRecoveryTracker() {
 
       {/* Header */}
       <div className="pt-8 pb-6 px-6 text-center" style={{ borderBottom: '1px solid #2A3F4A' }}>
-        <img src="/morales-m-mark.png" alt="Morales" className="w-10 mx-auto mb-3"
+        <img src="/morales-m-mark.png" alt="M-Care" className="w-10 mx-auto mb-3"
           style={{ filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.5))' }} />
         <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: GOLD }}>Live Journey Update</div>
         <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -228,7 +228,7 @@ export default function PublicRecoveryTracker() {
                   {isComplete ? 'Golden M Achieved ✨' : `Last confirmed: ${HS_LABELS[currentStep]}`}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  {isComplete ? 'All 9 checkpoints confirmed by Morales' : 'Digitally confirmed by Morales system'}
+                  {isComplete ? 'All 9 checkpoints confirmed by M-Care' : 'Digitally confirmed by M-Care system'}
                 </p>
               </div>
             </div>
@@ -244,7 +244,7 @@ export default function PublicRecoveryTracker() {
               <span style={{ fontSize: 20 }}>{HS_ICONS[currentStep + 1]}</span>
               <div>
                 <p className="text-sm font-semibold text-white">{HS_LABELS[currentStep + 1]}</p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Will be confirmed by Morales</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Will be confirmed by M-Care</p>
               </div>
             </div>
           </motion.div>
@@ -254,14 +254,14 @@ export default function PublicRecoveryTracker() {
         <div className="text-center pb-6">
           <div className="flex items-center justify-center gap-1.5 mb-2">
             <Shield className="w-3.5 h-3.5" style={{ color: GOLD }} />
-            <span className="text-xs font-semibold" style={{ color: GOLD }}>Protected by Morales</span>
+            <span className="text-xs font-semibold" style={{ color: GOLD }}>Protected by M-Care</span>
           </div>
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
             Medical & privacy information is never shared on this page.<br/>
             This update is shared with your consent by the traveller.
           </p>
           <a href="/" className="block mt-4 text-xs underline" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            Powered by Morales Medical Travel Safety
+            Powered by M-Care Medical Travel Safety
           </a>
         </div>
       </div>

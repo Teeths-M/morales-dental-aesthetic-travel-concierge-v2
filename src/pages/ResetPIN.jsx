@@ -107,7 +107,7 @@ export default function ResetPIN() {
           <div className="w-14 h-14 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
             <Shield className="w-7 h-7 text-blue-400" />
           </div>
-          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">Morales Medical</p>
+          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">M-Care Medical</p>
           <h1 className="text-2xl font-semibold text-white mt-1">{pinType === 'vault' ? 'Reset Vault PIN' : 'Reset Emergency PIN'}</h1>
         </div>
 

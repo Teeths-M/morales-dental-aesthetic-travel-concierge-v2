@@ -85,7 +85,7 @@ export default function LuggageFinderPortal() {
             <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Thank You!</h2>
             <p className="text-gray-500 text-sm">
-              The owner has been notified anonymously. A Morales Medical coordinator will contact you shortly to arrange the return.
+              The owner has been notified anonymously. A M-Care Medical coordinator will contact you shortly to arrange the return.
             </p>
             <div className="mt-6 bg-emerald-50 rounded-xl p-4">
               <p className="text-emerald-700 text-xs font-medium">Your good deed is making someone's medical journey a little easier. 💙</p>
@@ -99,7 +99,7 @@ export default function LuggageFinderPortal() {
               </div>
               <h2 className="text-2xl font-semibold text-gray-900 mb-2">Found a Bag?</h2>
               <p className="text-gray-500 text-sm leading-relaxed">
-                You've scanned a <strong>Morales Medical</strong> luggage tag. Please fill in the details below — the owner will be notified <em>without sharing your personal information</em>.
+                You've scanned a <strong>M-Care Medical</strong> luggage tag. Please fill in the details below — the owner will be notified <em>without sharing your personal information</em>.
               </p>
             </div>
 
@@ -141,7 +141,7 @@ export default function LuggageFinderPortal() {
             </Button>
 
             <p className="text-center text-xs text-gray-400 mt-3">
-              Your contact info is only shared with Morales Medical staff, never published publicly.
+              Your contact info is only shared with M-Care Medical staff, never published publicly.
             </p>
           </>
         )}

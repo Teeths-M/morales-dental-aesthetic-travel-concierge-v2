@@ -149,12 +149,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // on the case, read in-app; the email is a link-only nudge.
   if (patientEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Care Team',
+      from_name: 'M-Care Care Team',
       to: patientEmail,
       subject: 'Your medication schedule is ready',
       body: linkOnlyEmail({
         title: 'Your medication schedule is ready',
-        line: 'Your personalised post-procedure medication schedule is ready to view in your Morales app.',
+        line: 'Your personalised post-procedure medication schedule is ready to view in your M-Care app.',
         ctaUrl: `${APP_URL}/dashboard`,
         ctaLabel: 'Open My Schedule',
         from: 'schedulePostOpMedReminders',

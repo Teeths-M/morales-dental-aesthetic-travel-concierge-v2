@@ -14,7 +14,7 @@ async function aiCarePackage(caseRecord: Record<string, unknown>): Promise<Recor
   const origin = String(caseRecord.client_country || 'unknown');
   const procs = Array.isArray(caseRecord.procedures) ? caseRecord.procedures.join(', ') : String(caseRecord.procedures || 'unspecified');
   const dietary = [caseRecord.dietary_restrictions, caseRecord.allergy_types, caseRecord.allergy_free_text].filter(Boolean).join(', ');
-  const prompt = `You are the cultural care coordinator for Morales Medical Travel concierge.
+  const prompt = `You are the cultural care coordinator for M-Care Medical Travel concierge.
 Patient origin: ${origin}. Procedures: ${procs}. Dietary/allergies: ${dietary || 'none noted'}. Recovery phase: Post-op days 1–3 (liquid/soft only).
 
 Generate a culturally authentic care package as JSON:

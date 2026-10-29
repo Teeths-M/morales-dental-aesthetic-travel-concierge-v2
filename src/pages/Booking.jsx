@@ -1034,7 +1034,7 @@ export default function Booking() {
               "SAFE-T assessment" was our engine's name — it tells a patient
               nothing at the moment they most need to understand what happened.
 
-              The 24-hour turnaround is a real commitment Morales makes, not an
+              The 24-hour turnaround is a real commitment M-Care makes, not an
               invented figure, and it matches what ProcedureStackingBlocker
               already tells patients. Keep it in step with that screen if it ever
               changes. */}

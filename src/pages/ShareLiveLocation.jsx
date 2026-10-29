@@ -205,11 +205,11 @@ export default function ShareLiveLocation() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               {isDriverLink ? (
                 <>
-                  When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to Morales securely, so your passenger can watch you approach on their map. You can <span className="font-medium text-foreground">stop sharing at any time</span> — it stops the moment you tap Stop.
+                  When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to M-Care securely, so your passenger can watch you approach on their map. You can <span className="font-medium text-foreground">stop sharing at any time</span> — it stops the moment you tap Stop.
                 </>
               ) : (
                 <>
-                  When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to Morales securely. We share it only with your care team so they can keep you safe. You can <span className="font-medium text-foreground">stop sharing at any time</span> — no one is watching unless you say so.
+                  When you tap <span className="font-medium text-foreground">Share my location</span>, your device will send your live GPS to M-Care securely. We share it only with your care team so they can keep you safe. You can <span className="font-medium text-foreground">stop sharing at any time</span> — no one is watching unless you say so.
                 </>
               )}
             </p>

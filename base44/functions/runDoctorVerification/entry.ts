@@ -176,8 +176,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       if (rec.doctor_email) {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: rec.doctor_email,
-          subject: '✅ Your Doctor Verification is Approved — Morales Platform',
-          body: `<h2>Verification Approved</h2><p>Dear Dr. ${rec.doctor_name},</p><p>Your medical license has been verified and is valid until ${new Date(expiresAt).toLocaleDateString()}.</p><p>You are now eligible to receive patient referrals on the Morales Platform.</p>`
+          subject: '✅ Your Doctor Verification is Approved — M-Care Platform',
+          body: `<h2>Verification Approved</h2><p>Dear Dr. ${rec.doctor_name},</p><p>Your medical license has been verified and is valid until ${new Date(expiresAt).toLocaleDateString()}.</p><p>You are now eligible to receive patient referrals on the M-Care Platform.</p>`
         });
       }
 
@@ -218,7 +218,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       if (rec.doctor_email) {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: rec.doctor_email,
-          subject: '❌ Doctor Verification Denied — Morales Platform',
+          subject: '❌ Doctor Verification Denied — M-Care Platform',
           body: `<h2>Verification Denied</h2><p>Dear Dr. ${rec.doctor_name},</p><p>Unfortunately, we were unable to verify your medical license.</p><p><strong>Reason:</strong> ${denial_reason || 'Your registration number could not be confirmed with the official registry.'}</p><p>Please contact support if you believe this is an error.</p>`
         });
       }

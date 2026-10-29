@@ -94,13 +94,13 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   // ── 2. Notify driver ─────────────────────────────────────────────────────────
   const driverMsg = disruption_type === 'delay'
-    ? `Morales: ${firstName}'s ${flightLabel} is delayed by ${delayMin} minutes. New arrival: ${new_arrival ? new Date(new_arrival).toLocaleTimeString() : 'TBD'}. Please standby — we will confirm pickup when airborne.`
-    : `Morales: ${firstName}'s ${flightLabel} has been CANCELLED. Pickup is suspended. We will contact you once the passenger has a new flight. Thank you for your patience.`;
+    ? `M-Care: ${firstName}'s ${flightLabel} is delayed by ${delayMin} minutes. New arrival: ${new_arrival ? new Date(new_arrival).toLocaleTimeString() : 'TBD'}. Please standby — we will confirm pickup when airborne.`
+    : `M-Care: ${firstName}'s ${flightLabel} has been CANCELLED. Pickup is suspended. We will contact you once the passenger has a new flight. Thank you for your patience.`;
 
   if (driverPhone) { await sendSms(driverPhone, driverMsg); actions.push('driver_sms'); }
   if (driverEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Operations',
+      from_name: 'M-Care Operations',
       to: driverEmail,
       subject: `Flight disruption — ${firstName} — ${disruption_type === 'delay' ? `${delayMin}min delay` : 'CANCELLED'}`,
       body: driverMsg,
@@ -110,13 +110,13 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   // ── 3. Notify companion ──────────────────────────────────────────────────────
   const companionMsg = isOvernight
-    ? `Morales: ${firstName}'s ${flightLabel} has been disrupted (${disruption_type}${disruption_type === 'delay' ? `, ${delayMin} min` : ''}). This may require an overnight extension. Please standby and await assignment update from Morales operations.`
-    : `Morales: ${firstName}'s ${flightLabel} is delayed by ${delayMin} minutes. Estimated new arrival: ${new_arrival ? new Date(new_arrival).toLocaleTimeString() : 'TBD'}. Please adjust your schedule.`;
+    ? `M-Care: ${firstName}'s ${flightLabel} has been disrupted (${disruption_type}${disruption_type === 'delay' ? `, ${delayMin} min` : ''}). This may require an overnight extension. Please standby and await assignment update from M-Care operations.`
+    : `M-Care: ${firstName}'s ${flightLabel} is delayed by ${delayMin} minutes. Estimated new arrival: ${new_arrival ? new Date(new_arrival).toLocaleTimeString() : 'TBD'}. Please adjust your schedule.`;
 
   if (companionPhone) { await sendSms(companionPhone, companionMsg); actions.push('companion_sms'); }
   if (companionEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Operations',
+      from_name: 'M-Care Operations',
       to: companionEmail,
       subject: `Schedule update — ${firstName} flight disruption`,
       body: companionMsg,
@@ -126,16 +126,16 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   // ── 4. Notify guardian ───────────────────────────────────────────────────────
   const guardianSms = disruption_type === 'delay'
-    ? `Morales: ${firstName}'s ${flightLabel} is delayed by approximately ${delayMin} minutes. They are safe. Morales is monitoring and coordinating. New arrival: ${new_arrival ? new Date(new_arrival).toLocaleTimeString() : 'TBD'}.`
-    : `Morales: ${firstName}'s ${flightLabel} has been cancelled. They are safe and with our team. We are arranging an alternative. You will receive an update when a new flight is confirmed.`;
+    ? `M-Care: ${firstName}'s ${flightLabel} is delayed by approximately ${delayMin} minutes. They are safe. M-Care is monitoring and coordinating. New arrival: ${new_arrival ? new Date(new_arrival).toLocaleTimeString() : 'TBD'}.`
+    : `M-Care: ${firstName}'s ${flightLabel} has been cancelled. They are safe and with our team. We are arranging an alternative. You will receive an update when a new flight is confirmed.`;
 
   if (guardianPhone) { await sendSms(guardianPhone, guardianSms); actions.push('guardian_sms'); }
   if (guardianEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Care Team',
+      from_name: 'M-Care Care Team',
       to: guardianEmail,
       subject: `${firstName} — flight ${disruption_type === 'delay' ? 'delayed' : 'cancelled'} — they are safe`,
-      body: `Dear ${guardianName},\n\n${firstName}'s ${flightLabel} has been ${disruption_type === 'delay' ? `delayed by approximately ${delayMin} minutes` : 'cancelled'}.\n\n${firstName} is safe. The Morales team is coordinating and monitoring the situation.${new_arrival ? `\n\nNew estimated arrival: ${new Date(new_arrival).toLocaleString()}` : ''}\n\nYou will receive another update once the situation is resolved.\n\n— Morales Care Team`,
+      body: `Dear ${guardianName},\n\n${firstName}'s ${flightLabel} has been ${disruption_type === 'delay' ? `delayed by approximately ${delayMin} minutes` : 'cancelled'}.\n\n${firstName} is safe. The M-Care team is coordinating and monitoring the situation.${new_arrival ? `\n\nNew estimated arrival: ${new Date(new_arrival).toLocaleString()}` : ''}\n\nYou will receive another update once the situation is resolved.\n\n— M-Care Care Team`,
     }).catch(() => {});
     actions.push('guardian_email');
   }
@@ -144,7 +144,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const adminEmail = Deno.env.get('ADMIN_EMAIL');
   if (isOvernight && adminEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Operations — URGENT',
+      from_name: 'M-Care Operations — URGENT',
       to: adminEmail,
       subject: `🚨 Overnight disruption — ${firstName} — hotel rebooking required`,
       body: `Patient ${patientName} (${patientEmail}) has experienced an overnight flight disruption.\n\nDisruption type: ${disruption_type}\nFlight: ${flightLabel}\nDelay: ${delayMin} minutes\nReason: ${reason || 'Not specified'}\nOriginal arrival: ${original_arrival || 'Unknown'}\nNew arrival: ${new_arrival || 'Cancelled / TBD'}\n\nACTIONS REQUIRED:\n1. Confirm patient accommodation for tonight\n2. Rebook flight if cancelled\n3. Update driver and companion once new times are known\n4. Call manageTripPause action:resume once patient is airborne\n\nCase ID: ${case_id}`,

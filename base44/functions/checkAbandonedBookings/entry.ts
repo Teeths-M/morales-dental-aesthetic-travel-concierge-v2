@@ -13,7 +13,7 @@ import { linkOnlyEmail, linkOnlySms } from '../../shared/notify.ts';
  * Stage 3 (≥ 48hr): Release quotas — notify all 4 partners, reset pipeline
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendSms(to: string, msg: string) {
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
         if (c.client_email) {
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: c.client_email,
-            subject: 'Your Morales package is still waiting for you',
+            subject: 'Your M-Care package is still waiting for you',
             body: linkOnlyEmail({
               title: 'Your package is still waiting',
               line: 'Everything is reserved for you — your doctor, your travel, and your partners are standing by. Complete your booking before it expires.',
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
         }
         if (c.client_phone) {
           tasks.push(sendSms(c.client_phone, linkOnlySms({
-            line: 'Your confirmed Morales package is still waiting — complete your booking before it expires.',
+            line: 'Your confirmed M-Care package is still waiting — complete your booking before it expires.',
             url: payUrl,
             from: 'checkAbandonedBookings',
           })));
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         }
         if (c.client_phone) {
           tasks.push(sendSms(c.client_phone, linkOnlySms({
-            line: 'Your Morales package expires in 24 hours. If payment is not received, your confirmed quotes will be released.',
+            line: 'Your M-Care package expires in 24 hours. If payment is not received, your confirmed quotes will be released.',
             url: payUrl,
             from: 'checkAbandonedBookings',
           })));

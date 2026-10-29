@@ -77,17 +77,17 @@ function SidebarContent({ location, onClose = null }) {
 
       {/* Logo */}
       <div style={{ padding: '20px 16px 16px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-        <Link to="/" aria-label="Morales home" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <Link to="/" aria-label="M-Care home" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: `0 0 20px ${GOLD}40`,
           }}>
-            <img src="/morales-m-mark.png" alt="Morales" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+            <img src="/morales-m-mark.png" alt="M-Care" style={{ width: 28, height: 28, objectFit: 'contain' }} />
           </div>
           <div>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Admin Portal</p>
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.3, marginTop: 2 }}>Morales Concierge</p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.3, marginTop: 2 }}>M-Care Concierge</p>
           </div>
         </Link>
       </div>

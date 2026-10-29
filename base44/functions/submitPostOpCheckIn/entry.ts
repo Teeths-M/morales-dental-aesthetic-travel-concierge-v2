@@ -54,7 +54,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   if (needsFollowup && rec.doctor_email) {
     const firstName = (rec.patient_name || 'Patient').split(' ')[0];
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales — Recovery Alert',
+      from_name: 'M-Care — Recovery Alert',
       to:        rec.doctor_email,
       subject:   `⚠️ Day ${rec.day} Recovery Flag — ${rec.patient_name} needs follow-up`,
       body: `<p>Your patient <strong>${rec.patient_name}</strong> submitted their Day ${rec.day} post-op check-in and flagged a concern.</p>
@@ -72,7 +72,7 @@ ${note ? `<tr><td>Patient note</td><td>${note}</td></tr>` : ''}
   const adminEmail = Deno.env.get('ADMIN_EMAIL');
   if (adminEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales — Recovery Check-In Submitted',
+      from_name: 'M-Care — Recovery Check-In Submitted',
       to:        adminEmail,
       subject:   `Day ${rec.day} Check-In — ${rec.patient_name} (Rating: ${rating}/5${needsFollowup ? ' ⚠️ FOLLOW-UP NEEDED' : ''})`,
       body:      `<p>${rec.patient_name} submitted Day ${rec.day} post-op check-in.</p><p>Rating: ${rating}/5 | Pain: ${pain_level}/10</p>${needsFollowup ? '<p><strong>⚠️ Doctor follow-up required.</strong></p>' : ''}<p>${note || ''}</p>`,

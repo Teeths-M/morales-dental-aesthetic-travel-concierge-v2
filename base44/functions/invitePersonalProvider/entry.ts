@@ -3,7 +3,7 @@ import { strictObject, Fields, z } from '../../shared/validate.ts';
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 import { escapeHtml } from '../../shared/emailTemplate.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // ── invitePersonalProvider ────────────────────────────────────────────────────

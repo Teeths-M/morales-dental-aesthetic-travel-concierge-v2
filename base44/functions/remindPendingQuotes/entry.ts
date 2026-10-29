@@ -19,7 +19,7 @@ import { cronAuthorized } from '../../shared/cronAuth.ts';
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const BATCH = 40;
 const HR = 3600_000;
 

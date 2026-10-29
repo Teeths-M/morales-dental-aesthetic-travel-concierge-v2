@@ -622,7 +622,7 @@ export default function AdminSoloMonitor() {
         <div className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-xs text-slate-500 space-y-1">
           <p className="font-semibold text-slate-600">System behavior:</p>
           <p>• Phone shares live GPS location <strong>while the app is open</strong>. When closed, last-known location is preserved.</p>
-          <p>• If signal stops, Morales uses last-known location and escalation protocols automatically.</p>
+          <p>• If signal stops, M-Care uses last-known location and escalation protocols automatically.</p>
           <p>• Guardians receive a secure tracking link — no login required, no medical/vault data exposed.</p>
           <p>• Police are <strong>never</strong> automatically contacted. Admin must initiate via the checklist above.</p>
         </div>

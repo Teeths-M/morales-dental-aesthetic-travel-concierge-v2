@@ -10,7 +10,7 @@ export const DISCLOSURE_TEXT = `
 
 2. Variance of Outcomes: I acknowledge that healing processes and clinical outcomes vary by individual and cannot be universally guaranteed. Results depend on personal health factors, post-operative compliance, and biological response.
 
-3. Platform Coordination Scope: I explicitly agree that this platform operates solely as a logistics and travel concierge coordinating transit, lodging, and scheduling. Morales Medical Travel Safety is not a medical provider and does not render clinical services.
+3. Platform Coordination Scope: I explicitly agree that this platform operates solely as a logistics and travel concierge coordinating transit, lodging, and scheduling. M-Care Medical Travel Safety is not a medical provider and does not render clinical services.
 
 4. Independent Medical Responsibility: I recognize that the selected licensed physician or dentist holds sole, absolute medical responsibility and clinical liability for my treatment. The platform bears no clinical liability whatsoever.
 
@@ -41,7 +41,7 @@ export function buildInformedConsentHtml({ clientName, clientEmail, procedures, 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Informed Consent & Payment Receipt — Morales Concierge</title>
+  <title>Informed Consent & Payment Receipt — M-Care Concierge</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f7f4;font-family:'Georgia',serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f4;padding:40px 0;">
@@ -50,7 +50,7 @@ export function buildInformedConsentHtml({ clientName, clientEmail, procedures, 
 
         <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#1a3a2e 0%,#2d6a4f 100%);padding:32px 40px;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#a8d5b5;letter-spacing:3px;text-transform:uppercase;">Morales Medical Travel Safety</p>
+          <p style="margin:0;font-size:11px;color:#a8d5b5;letter-spacing:3px;text-transform:uppercase;">M-Care Medical Travel Safety</p>
           <h1 style="margin:12px 0 4px;font-size:26px;color:#ffffff;font-weight:normal;letter-spacing:-0.5px;">Payment & Consent Confirmed</h1>
           <p style="margin:0;font-size:13px;color:#b7dfc4;">SAFE-T 4LIFE™ Informed Consent Archive</p>
         </td></tr>
@@ -125,7 +125,7 @@ export function buildInformedConsentHtml({ clientName, clientEmail, procedures, 
         <!-- Footer -->
         <tr><td style="padding:32px 40px;text-align:center;border-top:1px solid #e5e7eb;margin-top:32px;">
           <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This signed agreement is retained by the SAFE-T 4LIFE™ system for legal and audit compliance, including after account deletion.</p>
-          <p style="margin:0;font-size:11px;color:#9ca3af;">© ${new Date().getFullYear()} Morales Medical Travel Safety. All rights reserved.</p>
+          <p style="margin:0;font-size:11px;color:#9ca3af;">© ${new Date().getFullYear()} M-Care Medical Travel Safety. All rights reserved.</p>
         </td></tr>
 
       </table>

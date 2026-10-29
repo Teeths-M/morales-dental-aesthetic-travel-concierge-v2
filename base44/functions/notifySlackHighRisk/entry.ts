@@ -31,7 +31,7 @@ Deno.serve(createHandler(async ({ req }) => {
 
     const message = {
       channel: 'morales-safe-t4life',
-      username: 'Morales Safe-T4Life',
+      username: 'M-Care Safe-T4Life',
       icon_emoji: ':hospital:',
       text: `⚠️ *High-Risk Medical Review Required*`,
       blocks: [

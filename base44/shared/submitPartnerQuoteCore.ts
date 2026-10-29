@@ -101,7 +101,7 @@ export async function applyPartnerQuote(
       event_type: 'all_quotas_confirmed_auto_pricing',
       actor_id: 'system',
       actor_role: 'system',
-      actor_name: 'Morales Automation Gate',
+      actor_name: 'M-Care Automation Gate',
       resource_type: 'CaseRecord',
       resource_id: caseId,
       case_id: caseId,

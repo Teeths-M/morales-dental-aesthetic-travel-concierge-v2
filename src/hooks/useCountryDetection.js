@@ -99,7 +99,7 @@ export function useCountryDetection({ lat, lng, enabled = true }) {
     // Nominatim: zoom=3 = country level, fast response, minimal data
     fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}&format=json&zoom=3`,
-      { headers: { 'Accept-Language': 'en', 'User-Agent': 'Morales Medical/1.0' } }
+      { headers: { 'Accept-Language': 'en', 'User-Agent': 'M-Care Medical/1.0' } }
     )
       .then(r => r.json())
       .then(data => {

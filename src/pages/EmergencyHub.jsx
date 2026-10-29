@@ -92,7 +92,7 @@ export default function EmergencyHub() {
               You are not alone. We are here. 🛡️
             </p>
             <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
-              Stay calm — your Morales concierge is being alerted. Tap SOS below to activate all 6 emergency channels instantly.
+              Stay calm — your M-Care concierge is being alerted. Tap SOS below to activate all 6 emergency channels instantly.
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function EmergencyHub() {
                 <AlertTriangle className="w-7 h-7 text-red-400" />
               </div>
               <div>
-                <p className="text-red-400 text-xs font-semibold uppercase tracking-widest">Morales Emergency Center</p>
+                <p className="text-red-400 text-xs font-semibold uppercase tracking-widest">M-Care Emergency Center</p>
                 <h1 className="text-2xl font-semibold text-white">We Are Sending Help</h1>
               </div>
             </div>

@@ -102,7 +102,7 @@ export default function WildernessSafetyMode() {
                 <p className="text-red-300 font-semibold text-sm">You are offline</p>
                 <p className="text-red-400 text-xs mt-1">
                   GPS still works. Create an SOS packet below and send via SMS if you have cellular signal.
-                  When internet returns, Morales will sync automatically.
+                  When internet returns, M-Care will sync automatically.
                 </p>
               </div>
             </motion.div>
@@ -124,7 +124,7 @@ export default function WildernessSafetyMode() {
           <p>• <strong className="text-slate-300">GPS</strong> captures your location using hardware — works without internet.</p>
           <p>• <strong className="text-slate-300">SOS packet</strong> is stored locally the moment you press Emergency SOS.</p>
           <p>• <strong className="text-slate-300">SMS fallback</strong> opens your phone's SMS app with a pre-filled rescue message. You must press Send. SMS requires cellular signal.</p>
-          <p>• <strong className="text-slate-300">Auto-sync</strong> — when internet returns, Morales servers receive the SOS automatically.</p>
+          <p>• <strong className="text-slate-300">Auto-sync</strong> — when internet returns, M-Care servers receive the SOS automatically.</p>
           <p>• <strong className="text-slate-300">Guardian links</strong> show last-known GPS location. No medical or vault data is exposed.</p>
           <p>• This is a web app, not a satellite communicator. True signal-void scenarios require a dedicated emergency beacon (PLB/SPOT).</p>
         </div>

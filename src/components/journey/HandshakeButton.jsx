@@ -27,7 +27,7 @@ const HANDSHAKE_LABELS = [
 const NEXT_STEP_HINTS = [
   null,
   'Next: airport drop-off when you arrive.',        // after HS1
-  'Next: your Morales team meets you at arrivals.', // after HS2
+  'Next: your M-Care team meets you at arrivals.', // after HS2
   'Next: hotel check-in — rest up!',                // after HS3
   'Next: clinic visit — your doctor is ready.',     // after HS4
   'Next: companion delivery — recovery begins.',    // after HS5

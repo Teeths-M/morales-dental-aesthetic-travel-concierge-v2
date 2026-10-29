@@ -1,7 +1,7 @@
 /**
  * useEmergencyComms
  *
- * Unified Emergency Communications Cascade for Morales Safe-T4life™.
+ * Unified Emergency Communications Cascade for M-Care Safe-T4life™.
  *
  * Tries channels in priority order:
  *   1. Internet API     → triggerSOS backend (online only)

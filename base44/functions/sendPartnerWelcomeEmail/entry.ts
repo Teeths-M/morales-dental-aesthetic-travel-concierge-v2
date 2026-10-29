@@ -1,7 +1,7 @@
 ﻿import { createHandler } from '../../shared/createHandler.ts';
 import { renderEmail } from '../../shared/emailTemplate.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — previously
 // unsigned (plain btoa(JSON)) and would fail that verification, making the
@@ -111,7 +111,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       portalType = null;
       portalPath = `/companion-dashboard`;
       eyebrow = 'Companion Network';
-      title = 'Welcome to the Morales companion network';
+      title = 'Welcome to the M-Care companion network';
       intro = `Welcome ${partner.contact_person || partner.full_name || partner.email}! Your companion profile has been created and is entering verification. Once verified, you'll receive assignment requests for patients who need a trusted companion during their journey and recovery.`;
       rows = [
         ['Name', partner.full_name],
@@ -129,7 +129,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       portalType = null;
       portalPath = `/security-agency-dashboard`;
       eyebrow = 'Security Partner Network';
-      title = 'Welcome to the Morales security network';
+      title = 'Welcome to the M-Care security network';
       intro = `Welcome ${partner.contact_person || partner.agency_name || partner.email}! Your agency profile has been created and is entering verification. Once verified, you'll receive escort and dispatch requests for patient journeys in your regions.`;
       rows = [
         ['Agency Name', partner.agency_name],

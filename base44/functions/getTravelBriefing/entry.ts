@@ -4,7 +4,7 @@ import { buildTravelBriefing } from '../../shared/travelBriefing.ts';
 
 /**
  * getTravelBriefing — the real M-Care agent tool behind RULE 36 (TRAVEL
- * INTELLIGENCE) in m_care.jsonc. One call, real weather + Morales's own
+ * INTELLIGENCE) in m_care.jsonc. One call, real weather + M-Care's own
  * destination safety index + recent notable events + curated/researched
  * trip tips + (when a nationality is given) the real cached visa/entry
  * requirement + (when an origin and a specific date are given) real flight

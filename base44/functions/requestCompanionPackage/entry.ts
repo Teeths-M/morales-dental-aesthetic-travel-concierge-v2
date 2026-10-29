@@ -155,7 +155,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         // Email
         if (companionEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Concierge — Job Offer',
+            from_name: 'M-Care Concierge — Job Offer',
             to: companionEmail,
             subject: `New Job: Companion in ${country} — $650 Package`,
             body: `<div style="font-family:sans-serif;max-width:600px;padding:24px;">

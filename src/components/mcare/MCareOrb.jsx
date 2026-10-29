@@ -131,7 +131,7 @@ const DESKTOP_LUXURY_BG = '#F8F7F2';
 const DESKTOP_LUXURY_GOLD = '#D2A93D';
 const DESKTOP_LUXURY_USER_GRADIENT = 'linear-gradient(135deg, #F6E6BE 0%, #EAD08C 100%)';
 const AGENT_NAME = 'm_care';
-const GREETING = "I'm M-Safe, your Morales Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
+const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 const TAGLINE = "I analyze. I protect. I coordinate. I resolve. I've got you.";
 
 // Public pages where all users should see visitor-facing tips
@@ -2513,7 +2513,7 @@ export default function MCareOrb() {
         M-Safe<span style={{ color: (isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_GOLD : GOLD, fontSize: isDesktopPanel ? 20 : 13, fontWeight: 800, marginLeft: 1 }}>+</span>
       </p>
       <p style={{ margin: 0, fontSize: isDesktopPanel ? 13 : 11, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>
-        {isDesktopPanel ? 'Morales Super Agent • Medical + Travel Concierge' : 'Morales Super Agent'}
+        {isDesktopPanel ? 'M-Care Super Agent • Medical + Travel Concierge' : 'M-Care Super Agent'}
       </p>
     </div>
   );
@@ -3205,7 +3205,7 @@ export default function MCareOrb() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${useDarkTheme ? BORDER_DARK : `${DESKTOP_LUXURY_GOLD}33`}`, flexShrink: 0 }}>
                     <McareAvatar size={28} />
                     <span style={{ fontSize: 14, fontWeight: 700, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, whiteSpace: 'nowrap' }}>
-                      M-Safe <span style={{ fontWeight: 400, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>• Morales Super Agent</span>
+                      M-Safe <span style={{ fontWeight: 400, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>• M-Care Super Agent</span>
                     </span>
                     {useDarkTheme ? standaloneStatusPill : <LiveSessionBadge />}
                     <div style={{ marginLeft: 'auto' }}>{headerControlsBlock}</div>

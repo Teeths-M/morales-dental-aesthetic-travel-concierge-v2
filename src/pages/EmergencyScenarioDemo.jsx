@@ -132,7 +132,7 @@ const TIMELINE = [
     detail: 'Security team located Maria using last cached GPS coordinates. Police escort secured. Medical check completed.',
     sms: {
       to: 'All Contacts',
-      body: 'MORALES UPDATE: Maria has been located and is safe. Security escort arranged. Thank you for your patience. — Morales Concierge',
+      body: 'MORALES UPDATE: Maria has been located and is safe. Security escort arranged. Thank you for your patience. — M-Care Concierge',
     },
   },
 ];
@@ -164,7 +164,7 @@ function SmsPopup({ sms, onDismiss }) {
     >
       <div className="px-4 py-3 flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', borderBottom: '1px solid rgba(239,68,68,0.2)' }}>
         <MessageSquare className="w-4 h-4 text-red-400 flex-shrink-0" />
-        <p className="text-xs font-semibold text-red-300">Morales Safety SMS</p>
+        <p className="text-xs font-semibold text-red-300">M-Care Safety SMS</p>
         <p className="text-xs ml-auto" style={{ color: '#475569' }}>to: {sms.to}</p>
       </div>
       <div className="px-4 py-3">
@@ -325,7 +325,7 @@ export default function EmergencyScenarioDemo({ minimal = false }) {
             <span style={{ color: '#ef4444' }}>Missing. 9 Hours.</span>
           </h1>
           <p className="text-base max-w-xl mx-auto" style={{ color: '#64748b' }}>
-            Watch the Morales Safe-T4life™ system respond to a kidnapping scenario — automatically, in the correct sequence, with no human intervention needed.
+            Watch the M-Care Safe-T4life™ system respond to a kidnapping scenario — automatically, in the correct sequence, with no human intervention needed.
           </p>
         </div>
 

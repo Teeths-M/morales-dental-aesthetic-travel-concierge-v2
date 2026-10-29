@@ -43,7 +43,7 @@ const DISASTER_GUIDES = {
       'Expect aftershocks — move to open ground away from buildings',
       'Do not use elevators — take stairs only',
       'Check yourself and others for injuries before moving',
-      'Text your Morales guardian your location immediately',
+      'Text your M-Care guardian your location immediately',
       'Avoid damaged buildings — exit only when safe',
     ],
     avoid: ['Standing near windows', 'Running outside during shaking', 'Using elevators', 'Doorframes (outdated advice)'],
@@ -59,7 +59,7 @@ const DISASTER_GUIDES = {
     after: [
       'Wait for official all-clear before going outside',
       'Avoid floodwater — even 6 inches can knock you down',
-      'Report your location to your Morales coordinator',
+      'Report your location to your M-Care coordinator',
       'Do not drive through flooded roads',
     ],
     avoid: ['Windows', 'Coastal areas', 'Driving in storms', 'Outdoors during eye of hurricane'],
@@ -76,7 +76,7 @@ const DISASTER_GUIDES = {
       'Do not return until authorities declare it safe',
       'Avoid contact with floodwater — it may be contaminated',
       'Document damage for insurance',
-      'Contact Morales coordinator for evacuation assistance',
+      'Contact M-Care coordinator for evacuation assistance',
     ],
     avoid: ['Floodwater on foot or in vehicle', 'Electrical equipment near water', 'Returning too soon'],
   },
@@ -91,7 +91,7 @@ const DISASTER_GUIDES = {
     after: [
       'Wait for official all-clear — multiple waves can come hours apart',
       'Avoid debris-filled water',
-      'Contact your Morales guardian to confirm your safety',
+      'Contact your M-Care guardian to confirm your safety',
     ],
     avoid: ['Coastal areas after earthquake', 'Watching the ocean recede', 'Returning before all-clear'],
   },
@@ -107,7 +107,7 @@ const DISASTER_GUIDES = {
       'Clear ash from rooftops — it is very heavy and can cause collapse',
       'Do not wear contact lenses — ash can scratch corneas',
       'Listen to emergency radio for evacuation updates',
-      'Contact Morales for emergency transport out of the zone',
+      'Contact M-Care for emergency transport out of the zone',
     ],
     avoid: ['Lava flow paths', 'Ash inhalation', 'River valleys (risk of lahars)', 'Driving in ash'],
   },
@@ -137,7 +137,7 @@ const DISASTER_GUIDES = {
     after: [
       'Watch for gas leaks, downed power lines, and structural damage',
       'Wear sturdy shoes — debris can cause foot injuries',
-      'Document damage and contact Morales for emergency support',
+      'Document damage and contact M-Care for emergency support',
     ],
     avoid: ['Windows', 'Mobile homes', 'Bridges', 'Cars (cannot outrun tornados)'],
   },
@@ -166,7 +166,7 @@ const DISASTER_GUIDES = {
     ],
     after: [
       'Avoid downed power lines and standing water',
-      'Report your status to your Morales coordinator',
+      'Report your status to your M-Care coordinator',
     ],
     avoid: ['Coastal areas', 'Open fields', 'Flood-prone roads'],
   },
@@ -181,7 +181,7 @@ const DISASTER_GUIDES = {
     after: [
       'Do not go outside until the all-clear is given',
       'Check for gas leaks and structural damage before re-entering',
-      'Contact your Morales emergency line',
+      'Contact your M-Care emergency line',
     ],
     avoid: ['Storm surge zones', 'Driving during cyclone', 'Coastal roads post-cyclone'],
   },
@@ -252,7 +252,7 @@ export default function NaturalDisasterPanel({ userCountry }) {
                 M{quakeAlert.magnitude?.toFixed(1)} — {quakeAlert.place} · {new Date(quakeAlert.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
               <p className="text-xs mt-1 text-red-300/70">
-                Follow the earthquake guide below. Contact Morales immediately.
+                Follow the earthquake guide below. Contact M-Care immediately.
               </p>
             </div>
           </motion.div>
@@ -440,12 +440,12 @@ export default function NaturalDisasterPanel({ userCountry }) {
         </div>
       )}
 
-      {/* Morales 24/7 line */}
+      {/* M-Care 24/7 line */}
       <div className="rounded-2xl p-4 flex items-center gap-3"
         style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.3)' }}>
         <Radio className="w-5 h-5 flex-shrink-0" style={{ color: '#D4AF37' }} />
         <div className="flex-1">
-          <p className="text-sm font-semibold text-white">Morales Emergency Line — 24/7</p>
+          <p className="text-sm font-semibold text-white">M-Care Emergency Line — 24/7</p>
           <p className="text-xs" style={{ color: '#94a3b8' }}>Your coordinator is always reachable during a crisis.</p>
         </div>
         <a href="tel:+18005550199"

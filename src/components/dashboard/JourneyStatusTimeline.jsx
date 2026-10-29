@@ -198,7 +198,7 @@ export default function JourneyStatusTimeline({ caseRecord }) {
           <div className="rounded-xl px-4 py-3 flex items-start gap-2.5" style={{ background: 'rgba(212,175,55,0.08)', border: `1px solid ${GOLD}25` }}>
             <span style={{ color: GOLD, fontSize: 16, flexShrink: 0 }}>🔒</span>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
-              Your funds are held securely by Morales. Partner payments are released only after each physical checkpoint is confirmed via handshake — protecting your investment at every step.
+              Your funds are held securely by M-Care. Partner payments are released only after each physical checkpoint is confirmed via handshake — protecting your investment at every step.
             </p>
           </div>
         </div>

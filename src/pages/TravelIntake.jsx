@@ -46,7 +46,7 @@ const SERVED_COUNTRY_LIST = SERVED_COUNTRY_OPTIONS;
 const PHASE_LABELS = ['Getting to know you', 'Planning your journey', 'Almost there', 'Finishing up'];
 
 /**
- * TravelIntake — conversational booking for travelers who want Morales's
+ * TravelIntake — conversational booking for travelers who want M-Care's
  * travel/transfer coordination without a medical procedure. Same engine as
  * ConciergeIntake.jsx (questionGraph/flowEngine/QuestionCard), a different
  * question graph and a different terminal entity (TravelRequest instead of
@@ -230,7 +230,7 @@ function LoadingShell() {
     <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
       <img
         src="/morales-m-mark.png"
-        alt="Morales"
+        alt="M-Care"
         style={{ width: 36, height: 36, margin: '0 auto 16px', display: 'block', opacity: 0.6 }}
       />
       Preparing your travel request...
@@ -254,7 +254,7 @@ function WelcomeCard({ onBegin, resuming }) {
     >
       <img
         src="/morales-m-mark.png"
-        alt="Morales"
+        alt="M-Care"
         style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }}
       />
 

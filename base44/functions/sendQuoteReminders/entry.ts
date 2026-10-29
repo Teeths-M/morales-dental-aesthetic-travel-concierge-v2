@@ -2,7 +2,7 @@
 import { cronAuthorized } from '../../shared/cronAuth.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — was previously
 // unsigned and would fail that verification (portal link non-functional).
@@ -54,7 +54,7 @@ function stage1Email({ ctaUrl, role }: {
   const roleMsg = role === 'travel_agency' ? 'flight and hotel package pricing' : 'transfer leg pricing';
   return linkOnlyEmail({
     title: 'A patient is waiting on your quote.',
-    line: `We're still missing your ${roleMsg}. Open your Morales portal to review the request and submit your quote — it takes just a few minutes.`,
+    line: `We're still missing your ${roleMsg}. Open your M-Care portal to review the request and submit your quote — it takes just a few minutes.`,
     ctaUrl,
     ctaLabel: 'Submit Quote',
   });
@@ -66,7 +66,7 @@ function stage2Email({ ctaUrl, role }: {
   const roleMsg = role === 'travel_agency' ? 'travel package' : 'transfer pricing';
   return linkOnlyEmail({
     title: 'Just following up on your quote.',
-    line: `A patient is still hoping to finalise their ${roleMsg}. Open your Morales portal to submit your quote and keep their journey on track.`,
+    line: `A patient is still hoping to finalise their ${roleMsg}. Open your M-Care portal to submit your quote and keep their journey on track.`,
     ctaUrl,
     ctaLabel: 'Submit Quote Now',
   });

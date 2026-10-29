@@ -223,7 +223,7 @@ const VIBRATE = {
 // ── Push notification handler ─────────────────────────────────────────────────
 // Shows the OS-level notification popup even when the app is closed.
 self.addEventListener('push', (event) => {
-  let data = { title: 'Morales', body: 'You have a new update.', url: '/dashboard', type: 'default' };
+  let data = { title: 'M-Care', body: 'You have a new update.', url: '/dashboard', type: 'default' };
   try {
     if (event.data) data = { ...data, ...JSON.parse(event.data.text()) };
   } catch (_) {}

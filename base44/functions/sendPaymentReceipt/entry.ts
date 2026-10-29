@@ -1,7 +1,7 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -61,7 +61,7 @@ function receiptHtml({ clientName, clientEmail, caseRef, receiptNumber, procedur
   </div>
 
   <p style="margin:0 0 20px;font-size:13px;color:#64746d;line-height:1.6;text-align:center;">
-    This receipt has been saved to your secure Morales Vault. You can access it anytime via your dashboard.
+    This receipt has been saved to your secure M-Care Vault. You can access it anytime via your dashboard.
   </p>
   <div style="text-align:center;">
     <a href="${APP_URL}/dashboard/documents" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-size:13px;font-weight:700;">View My Vault →</a>
@@ -69,7 +69,7 @@ function receiptHtml({ clientName, clientEmail, caseRef, receiptNumber, procedur
   <p style="margin:24px 0 0;font-size:13px;color:#64746d;line-height:1.6;text-align:center;">
     Keep this receipt for your records. Questions? Reach your concierge on WhatsApp.
   </p>
-  <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;text-align:center;">Morales Concierge Team</p>
+  <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;text-align:center;">M-Care Concierge Team</p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -158,7 +158,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }),
     base44.asServiceRole.entities.AuditLog.create({
       event_type: 'payment_receipt_issued', actor_id: 'system', actor_role: 'system',
-      actor_name: 'Morales Automation', resource_type: 'CaseRecord', resource_id: case_id,
+      actor_name: 'M-Care Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, sensitive: false, timestamp: new Date().toISOString(),
       details: { receipt_number: receiptNumber, amount_paid: amountPaid, vault_id: vaultId },
     })

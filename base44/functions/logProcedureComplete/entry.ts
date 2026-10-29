@@ -181,7 +181,7 @@ Return JSON only: { "summary": "one short sentence" }`,
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: '🌿 Recovery Mode Activated — Your Post-Surgery Care Has Begun',
-        body: `Dear ${caseRecord.client_name},\n\nYour procedure is complete and Recovery Mode has been automatically activated.\n\n✅ Non-critical notifications have been silenced\n✅ Gentle check-ins scheduled every ${intervalHours} hours\n✅ Emergency SOS remains available at all times\n\nRecovery monitoring ends: ${recoveryEnd.toLocaleDateString()}\n\nRest well. Your care team is watching over you.\n\n— Morales Medical Recovery Team`
+        body: `Dear ${caseRecord.client_name},\n\nYour procedure is complete and Recovery Mode has been automatically activated.\n\n✅ Non-critical notifications have been silenced\n✅ Gentle check-ins scheduled every ${intervalHours} hours\n✅ Emergency SOS remains available at all times\n\nRecovery monitoring ends: ${recoveryEnd.toLocaleDateString()}\n\nRest well. Your care team is watching over you.\n\n— M-Care Medical Recovery Team`
       });
     } catch (recoveryErr) {
       console.error('[logProcedureComplete] Recovery auto-trigger failed (non-fatal):', recoveryErr.message);
@@ -192,7 +192,7 @@ Return JSON only: { "summary": "one short sentence" }`,
     if (guardianPhone) {
       sendSms(
         guardianPhone,
-        `${caseRecord.client_name}'s procedure is complete. The doctor has confirmed. They are now in recovery and being cared for. — Morales Concierge`
+        `${caseRecord.client_name}'s procedure is complete. The doctor has confirmed. They are now in recovery and being cared for. — M-Care Concierge`
       ).catch(() => {});
     }
 

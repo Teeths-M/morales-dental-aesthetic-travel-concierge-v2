@@ -1,5 +1,5 @@
 /**
- * providerCandidateMatch — scores a raw web-search hit against Morales's
+ * providerCandidateMatch — scores a raw web-search hit against M-Care's
  * already-known partners, and computes an honest confidence figure for a
  * newly-discovered candidate.
  *
@@ -35,7 +35,7 @@ export type SearchCandidateText = {
 /** Below this, a candidate is treated as a genuinely new lead, not a duplicate of a known partner. */
 export const DUPLICATE_MATCH_THRESHOLD = 0.55;
 
-/** 0-1: how likely `candidate`'s title/snippet is actually describing `provider`, an existing Morales partner. */
+/** 0-1: how likely `candidate`'s title/snippet is actually describing `provider`, an existing M-Care partner. */
 export function scoreAgainstKnownProvider(candidate: SearchCandidateText, provider: KnownProviderSignature): number {
   const text = `${candidate.title || ''} ${candidate.snippet || ''}`.toLowerCase();
   const nameLow = (provider.name || '').toLowerCase().trim();

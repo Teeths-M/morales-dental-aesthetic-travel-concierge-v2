@@ -64,10 +64,10 @@ Deno.serve(async (req) => {
     if (caseRecord.client_email) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
-        subject: 'Your Morales Recovery Check-In Schedule',
+        subject: 'Your M-Care Recovery Check-In Schedule',
         body: `Your procedure is complete. We will check in with you at:\n\n` +
           checkInSchedule.map(d => `• Day ${d}: ${new Date(procedureTime.getTime() + d * 24 * 60 * 60 * 1000).toLocaleDateString()}`).join('\n') +
-          `\n\nYour Morales care team is monitoring your recovery. If you have any concerns before your scheduled check-in, contact us immediately or tap Secure Line in the app.\n\nMorales Medical Travel`,
+          `\n\nYour M-Care care team is monitoring your recovery. If you have any concerns before your scheduled check-in, contact us immediately or tap Secure Line in the app.\n\nM-Care Medical Travel`,
       }).catch(e => console.error('[scheduleRecoveryCheckIns] Email failed:', e?.message));
     }
 

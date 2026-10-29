@@ -24,7 +24,7 @@ Deno.serve(createHandler(async ({ req }) => {
 
     const message = {
       channel: '#new-cases',
-      username: 'Morales Case Router',
+      username: 'M-Care Case Router',
       icon_emoji: ':stethoscope:',
       text: `*New Case Auto-Assigned* — ${doctor_name}`,
       blocks: [

@@ -32,7 +32,7 @@ import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
  * phone number, an email or an ID — so a future edit cannot quietly re-leak.
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // ── SMS helper (Twilio) ───────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ async function buildMilestoneDispatches(base44: any, c: any, daysLeft: number): 
         body: linkOnlyEmail({
           from: 'sendTravelCountdownReminders/patient',
           title: `Your journey begins ${when}.`,
-          line: 'Your preparation briefing and checklist for this milestone are ready in your Morales dashboard.',
+          line: 'Your preparation briefing and checklist for this milestone are ready in your M-Care dashboard.',
           ctaLabel: 'View My Journey',
           ctaUrl: `${APP_URL}/dashboard/journey`,
         }),
@@ -82,7 +82,7 @@ async function buildMilestoneDispatches(base44: any, c: any, daysLeft: number): 
     if ((daysLeft === 1 || daysLeft === 3) && c.client_phone) {
       tasks.push(sms(c.client_phone, linkOnlySms({
         from: 'sendTravelCountdownReminders/patient',
-        line: `Your Morales journey begins ${when}. Your briefing is ready.`,
+        line: `Your M-Care journey begins ${when}. Your briefing is ready.`,
         url: `${APP_URL}/dashboard/journey`,
       })));
     }
@@ -127,7 +127,7 @@ async function buildMilestoneDispatches(base44: any, c: any, daysLeft: number): 
     if (daysLeft === 1 && driver.phone) {
       tasks.push(sms(driver.phone, linkOnlySms({
         from: 'sendTravelCountdownReminders/driver',
-        line: 'You have a Morales pickup tomorrow. Please confirm in your portal.',
+        line: 'You have a M-Care pickup tomorrow. Please confirm in your portal.',
         url: `${APP_URL}/taxi-service-dashboard`,
       })));
     }
@@ -186,7 +186,7 @@ async function buildDayOfDispatches(base44: any, c: any): Promise<Promise<unknow
   if (c.client_phone) {
     tasks.push(sms(c.client_phone, linkOnlySms({
       from: 'sendTravelCountdownReminders/dayof-patient',
-      line: 'Today is your Morales journey day. Everything is confirmed — your brief is ready.',
+      line: 'Today is your M-Care journey day. Everything is confirmed — your brief is ready.',
       url: `${APP_URL}/dashboard/journey`,
     })));
   }
@@ -209,7 +209,7 @@ async function buildDayOfDispatches(base44: any, c: any): Promise<Promise<unknow
   if (driver?.phone) {
     tasks.push(sms(driver.phone, linkOnlySms({
       from: 'sendTravelCountdownReminders/dayof-driver',
-      line: 'You have a Morales pickup today. Passenger contact and route are in your portal.',
+      line: 'You have a M-Care pickup today. Passenger contact and route are in your portal.',
       url: `${APP_URL}/taxi-service-dashboard`,
     })));
   }

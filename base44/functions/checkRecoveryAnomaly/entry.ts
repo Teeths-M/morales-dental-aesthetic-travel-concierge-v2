@@ -244,7 +244,7 @@ Deno.serve(createHandler(async ({ req }) => {
       // Email doctor
       if (docEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Recovery Monitor',
+          from_name: 'M-Care Recovery Monitor',
           to: docEmail,
           subject,
           body: `<pre style="font-family:monospace">${docBody}</pre>`,
@@ -254,29 +254,29 @@ Deno.serve(createHandler(async ({ req }) => {
       if (severity === 'escalate') {
         // SMS doctor
         if (docPhone) {
-          await sendSms(docPhone, `Morales ESCALATION: ${pName} — ${reasonSummary.slice(0, 120)}. Check dashboard.`).catch(() => {});
+          await sendSms(docPhone, `M-Care ESCALATION: ${pName} — ${reasonSummary.slice(0, 120)}. Check dashboard.`).catch(() => {});
         }
 
         // Email + SMS patient
         if (pEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Recovery Team',
+            from_name: 'M-Care Recovery Team',
             to: pEmail,
             subject: '⚠️ Your Recovery Check-In — Action Recommended',
-            body: `<p>Dear ${pName},</p><p>${ai?.patient_msg || 'Your care team has been notified about your recovery check-in and will contact you shortly.'}</p><p>If you are experiencing a medical emergency, please call your local emergency number immediately or use the SOS button in the Morales app.</p><p>— Morales Recovery Team</p>`,
+            body: `<p>Dear ${pName},</p><p>${ai?.patient_msg || 'Your care team has been notified about your recovery check-in and will contact you shortly.'}</p><p>If you are experiencing a medical emergency, please call your local emergency number immediately or use the SOS button in the M-Care app.</p><p>— M-Care Recovery Team</p>`,
           }).catch(() => {});
         }
         if (pPhone) {
-          await sendSms(pPhone, `Morales: Your care team has been alerted about your recovery check-in. They will contact you shortly. If urgent, call local emergency services.`).catch(() => {});
+          await sendSms(pPhone, `M-Care: Your care team has been alerted about your recovery check-in. They will contact you shortly. If urgent, call local emergency services.`).catch(() => {});
         }
 
         // Emergency contact — if 2+ consecutive anomaly days or explicit escalation
         if (newConsecutive >= 2 && (ecPhone || ecEmail)) {
-          const ecMsg = `Morales medical alert: ${pName}'s recovery requires attention (${newConsecutive} consecutive concern days). Please check in with them. If urgent, contact local emergency services.`;
+          const ecMsg = `M-Care medical alert: ${pName}'s recovery requires attention (${newConsecutive} consecutive concern days). Please check in with them. If urgent, contact local emergency services.`;
           if (ecPhone) await sendSms(ecPhone, ecMsg).catch(() => {});
           if (ecEmail) {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Recovery Monitor',
+              from_name: 'M-Care Recovery Monitor',
               to: ecEmail,
               subject: `Medical Alert — ${pName}`,
               body: `<p>${ecMsg}</p><p>A hospital visit may be recommended. Their care team is aware and is following up.</p>`,

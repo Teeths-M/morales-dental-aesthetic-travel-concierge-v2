@@ -1,11 +1,11 @@
 /**
- * storeSafetySignal — Morales Safety Intelligence Network
+ * storeSafetySignal — M-Care Safety Intelligence Network
  *
  * Called at the end of every patient journey (HS9 / closeEmergencyThreatLoop).
  * Stores anonymized behavioral signals that compound into destination intelligence.
  *
  * A competitor starting today has zero signals.
- * After 50 journeys, the Morales Safety Intelligence Network makes MedGuard
+ * After 50 journeys, the M-Care Safety Intelligence Network makes MedGuard
  * genuinely predictive — not just reactive.
  *
  * Signal schema (all anonymized — no PII):

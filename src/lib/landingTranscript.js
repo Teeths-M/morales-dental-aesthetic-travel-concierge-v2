@@ -26,7 +26,7 @@ export const SCENARIOS = [
     day: 'Day 1 · the shortlist',
     kind: 'illustrative',
     footnote:
-      'Provider records and licence lookups are real parts of Morales — publicDoctorCheck and verifyDoctorLicense run against partner records and primary registries. This transcript is a demonstration: no registry was queried and no clinic was contacted.',
+      'Provider records and licence lookups are real parts of M-Care — publicDoctorCheck and verifyDoctorLicense run against partner records and primary registries. This transcript is a demonstration: no registry was queried and no clinic was contacted.',
     messages: [
       {
         from: MCARE,
@@ -114,7 +114,7 @@ export const SCENARIOS = [
         at: '08:49',
         tone: 'critical',
         title: 'No approved alternative left',
-        text: 'I have escalated to a person on the Morales team, with your location and the time the window closed.',
+        text: 'I have escalated to a person on the M-Care team, with your location and the time the window closed.',
       },
       {
         from: MCARE,

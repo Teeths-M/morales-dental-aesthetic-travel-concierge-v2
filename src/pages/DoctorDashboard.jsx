@@ -816,12 +816,12 @@ export default function DoctorDashboard() {
             <TabsContent value="verification" className="p-8 space-y-8">
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Medical License Verification</h3>
-                <p className="text-sm text-muted-foreground mb-6">Verify your medical license against your country's official government registry. Verified doctors receive a "✅ Verified by Morales" badge on their profile.</p>
+                <p className="text-sm text-muted-foreground mb-6">Verify your medical license against your country's official government registry. Verified doctors receive a "✅ Verified by M-Care" badge on their profile.</p>
                 <DoctorVerificationPanel user={user} />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Identity Verification</h3>
-                <p className="text-sm text-muted-foreground mb-6">A one-time photo ID + selfie check, handled securely by Stripe. One of the three checks (license, identity, background) required before you can be activated on the Morales Platform.</p>
+                <p className="text-sm text-muted-foreground mb-6">A one-time photo ID + selfie check, handled securely by Stripe. One of the three checks (license, identity, background) required before you can be activated on the M-Care Platform.</p>
                 <DoctorIdentityVerificationPanel />
               </div>
             </TabsContent>

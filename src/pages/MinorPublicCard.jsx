@@ -70,7 +70,7 @@ export default function MinorPublicCard() {
       if (status === 404) {
         setState('invalid');
       } else {
-        setError('We could not reach Morales just now. Please call the number below.');
+        setError('We could not reach M-Care just now. Please call the number below.');
         setState('error');
       }
     }
@@ -98,7 +98,7 @@ export default function MinorPublicCard() {
           <div className="rounded-2xl border border-border bg-card p-7 shadow-sm">
             <div className="mb-5 flex items-center gap-2 text-primary">
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-              <span className="text-xs font-semibold uppercase tracking-widest">Morales care</span>
+              <span className="text-xs font-semibold uppercase tracking-widest">M-Care care</span>
             </div>
 
             <h1 className="text-2xl font-semibold text-foreground">
@@ -108,7 +108,7 @@ export default function MinorPublicCard() {
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               {card?.case_id
                 ? 'Their care team has already been alerted and someone is being contacted right now. Please stay with them.'
-                : 'Please call the Morales care team using the button below.'}
+                : 'Please call the M-Care care team using the button below.'}
             </p>
 
             {error && (
@@ -127,7 +127,7 @@ export default function MinorPublicCard() {
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-4 text-base font-semibold text-primary-foreground"
               >
                 <Phone className="h-5 w-5" aria-hidden="true" />
-                Call Morales now
+                Call M-Care now
               </a>
             ) : (
               <p className="mt-6 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">

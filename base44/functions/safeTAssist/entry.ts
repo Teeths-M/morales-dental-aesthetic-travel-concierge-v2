@@ -14,7 +14,7 @@ const ASSISTANT_NAME: Record<string, string> = {
   visa: 'SAFE-T VISA ASSIST',
 };
 
-const VISA_SYSTEM_PROMPT = `You are SAFE-T VISA ASSIST, a friendly, warm, and reassuring AI travel visa advisor for Morales Medical Travel Safety.
+const VISA_SYSTEM_PROMPT = `You are SAFE-T VISA ASSIST, a friendly, warm, and reassuring AI travel visa advisor for M-Care Medical Travel Safety.
 
 Your role is to:
 - Help international medical travelers understand visa requirements
@@ -33,7 +33,7 @@ Always end responses with a helpful next step or offer to answer follow-up quest
 Keep responses concise (2-4 short paragraphs max) and easy to read.
 Use occasional emojis to keep the tone friendly and approachable.`;
 
-const SAFETY_SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for Morales Medical Travel Safety — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
+const SAFETY_SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for M-Care Medical Travel Safety — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
 
 Your Role: You are the patient's all-knowing, always-available companion throughout their medical journey.
 
@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('[safeTAssist] error:', error);
     return Response.json({
-      reply: "I'm having a moment of difficulty. If this is urgent, please tap **Secure Line** or contact your Morales coordinator directly.",
+      reply: "I'm having a moment of difficulty. If this is urgent, please tap **Secure Line** or contact your M-Care coordinator directly.",
     });
   }
 });

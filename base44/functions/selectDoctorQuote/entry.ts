@@ -18,7 +18,7 @@ import { guardedStatusUpdate, BOOKING } from '../../shared/bookingState.ts';
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 function linkEmail(title: string, line: string, ctaUrl: string, ctaLabel: string): string {
   return `<!doctype html><html><body style="margin:0;background:#060B16;font-family:Arial,Helvetica,sans-serif;padding:28px;">
@@ -29,7 +29,7 @@ function linkEmail(title: string, line: string, ctaUrl: string, ctaLabel: string
   <p style="font-size:16px;color:#fff;margin:0 0 10px;font-weight:700;">${title}</p>
   <p style="font-size:14px;color:rgba(255,255,255,0.6);margin:0 0 22px;line-height:1.6;">${line}</p>
   <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:13px 30px;border-radius:99px;text-decoration:none;">${ctaLabel} →</a>
-  <p style="font-size:12px;color:rgba(255,255,255,0.3);margin:22px 0 0;">Details stay in your Morales portal — nothing private is sent by email.</p>
+  <p style="font-size:12px;color:rgba(255,255,255,0.3);margin:22px 0 0;">Details stay in your M-Care portal — nothing private is sent by email.</p>
 </td></tr></table></td></tr></table></body></html>`;
 }
 

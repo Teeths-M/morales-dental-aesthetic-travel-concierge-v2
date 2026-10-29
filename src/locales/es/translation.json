@@ -28,7 +28,7 @@
     "always_on": "Safe-T4life · siempre activo",
     "channels": "Canales SOS",
     "ble_detected": "Hardware BLE detectado",
-    "morales_assist": "Morales Assist",
+    "morales_assist": "M-Care Assist",
     "find_nearby": "Encontrar Cerca"
   },
   "dashboard": {
@@ -60,7 +60,7 @@
     "real_time": "MedGuard está ejecutando análisis en tiempo real"
   },
   "safety_score": {
-    "title": "Tu Puntuación de Seguridad Morales",
+    "title": "Tu Puntuación de Seguridad M-Care",
     "powered_by": "Desarrollado por MedGuard™",
     "dormant": "Inactivo",
     "dormant_sub": "El monitoreo activo comienza cuando inicia tu viaje",
@@ -221,11 +221,11 @@
     "to_next": "{{count}} créditos para {{tier}}"
   },
   "destination_safety": {
-    "title": "Índice de Seguridad Morales",
-    "powered_by": "Morales Intelligence™",
+    "title": "Índice de Seguridad M-Care",
+    "powered_by": "M-Care Intelligence™",
     "proprietary": "Datos Exclusivos",
     "incidents_week": "incidentes esta semana",
-    "active_patients": "paciente(s) Morales activo(s) en el país"
+    "active_patients": "paciente(s) M-Care activo(s) en el país"
   },
   "guide": {
     "tips_stuck": "¿Atascado en el formulario? Solo pregunta.",
@@ -252,7 +252,7 @@
     "offline_fallback_body": "Aún puedo responder preguntas sobre:\n\n• Handshakes y Golden M\n• SAFE-T y MedGuard\n• Mapa del Viaje y SOS\n• Reservas, Procedimientos, Portales\n• Pausa del Sistema, Crédito de Viaje, Paquete de Acompañante\n\nIntenta preguntar sobre cualquiera de esos temas.",
     "error_fallback": "Estoy teniendo problemas para conectarme. Pregúntame sobre handshakes, SAFE-T, el Mapa del Viaje, SOS, reservas, o cualquier función de la plataforma — también lo sé todo sin conexión.",
     "llm_fallback": "Estoy aquí para ayudar — intenta preguntar de otra manera.",
-    "tips_visitor_welcome": "Bienvenido a Morales. Puedo ayudarte.",
+    "tips_visitor_welcome": "Bienvenido a M-Care. Puedo ayudarte.",
     "tips_visitor_planning": "¿Planeando un viaje médico? Pregúntame lo que sea.",
     "tips_visitor_offline": "Funciona sin conexión — conozco todo sobre esta plataforma.",
     "tips_patient_offline": "Funciona sin conexión — pregúntame cuando quieras.",
@@ -292,7 +292,7 @@
     "quick_admin_pause": "¿Cómo pauso el sistema?",
     "quick_admin_trust": "¿Qué es la Puntuación de Confianza del Médico?",
     "quick_admin_credits": "¿Cómo funcionan los créditos de integración?",
-    "quick_visitor_what": "¿Qué es Morales Medical?",
+    "quick_visitor_what": "¿Qué es M-Care Medical?",
     "quick_visitor_how": "¿Cómo funciona el turismo médico?",
     "quick_visitor_safety": "¿Cómo funciona el monitoreo de seguridad?",
     "quick_visitor_book": "¿Cómo reservo un procedimiento?"
@@ -345,13 +345,13 @@
     "feature_checkpoint_title": "Cada Punto de Control Confirmado",
     "feature_checkpoint_desc": "Si te pierdes un check-in, escalamos automáticamente — SMS, llamada de voz, despacho de seguridad, policía. Nunca estás solo.",
     "feature_verified_title": "Solo Especialistas Verificados",
-    "feature_verified_desc": "Cada médico es evaluado en credenciales, historial de procedimientos y resultados de pacientes. Solo el 1% superior obtiene la insignia Morales.",
+    "feature_verified_desc": "Cada médico es evaluado en credenciales, historial de procedimientos y resultados de pacientes. Solo el 1% superior obtiene la insignia M-Care.",
     "after_surgery_eyebrow": "Después de la Cirugía",
     "after_surgery_q": "¿Qué pasa\ndespués de la cirugía?",
-    "after_surgery_a": "Ahí es donde Morales\nse vuelve más valiosa.",
-    "after_surgery_p": "La mayoría de las plataformas rastrean tu reserva.\nMorales te rastrea a ti — hasta que llegues a casa a salvo.",
+    "after_surgery_a": "Ahí es donde M-Care\nse vuelve más valiosa.",
+    "after_surgery_p": "La mayoría de las plataformas rastrean tu reserva.\nM-Care te rastrea a ti — hasta que llegues a casa a salvo.",
     "step1_title": "El monitoreo de recuperación comienza en el momento en que termina la cirugía.",
-    "step1_desc": "Tu reloj de recuperación comienza de inmediato. Si te pierdes un check-in por 45 minutos, Morales escala automáticamente — no 24 horas después. 45 minutos.",
+    "step1_desc": "Tu reloj de recuperación comienza de inmediato. Si te pierdes un check-in por 45 minutos, M-Care escala automáticamente — no 24 horas después. 45 minutos.",
     "step2_title": "Tu familia nunca te pierde de vista.",
     "step2_desc": "Un enlace sin inicio de sesión. Un mapa en vivo. Cada punto de control confirmado en tiempo real. Ellos duermen tranquilos. Nosotros no.",
     "step3_title": "Seis canales antes de rendirnos.",
@@ -439,14 +439,14 @@
     "badge_ai": "🧠 IA de Seguridad Conductual",
     "badge_satellite": "✈️ SOS Satelital — Listo Sin Señal",
     "badge_golden": "🏆 El Estándar de Oro para Viajes Médicos",
-    "copyright": "© {{year}} Morales Medical Travel Safety. Todos los derechos reservados.",
+    "copyright": "© {{year}} M-Care Medical Travel Safety. Todos los derechos reservados.",
     "privacy": "Política de Privacidad",
     "terms": "Términos de Servicio"
   },
   "about": {
     "eyebrow": "Acerca de Nosotros",
     "headline": "Tu Seguridad, Nuestra Misión",
-    "intro": "Morales Medical Travel Safety fue fundada en un principio simple: todos merecen acceso a atención médica de clase mundial en el extranjero, entregada con seguridad inquebrantable y atención personalizada.",
+    "intro": "M-Care Medical Travel Safety fue fundada en un principio simple: todos merecen acceso a atención médica de clase mundial en el extranjero, entregada con seguridad inquebrantable y atención personalizada.",
     "quote": "\"La Precisión del Cuidado\"",
     "quote_caption": "Nuestra filosofía guía desde el primer día",
     "value_safety_title": "Seguridad Primero",
@@ -459,7 +459,7 @@
     "value_excellence_desc": "Un historial de más de 500 transformaciones exitosas y satisfacción del 98%."
   },
   "how_it_works": {
-    "eyebrow": "Así Funciona Morales",
+    "eyebrow": "Así Funciona M-Care",
     "subtitle": "Sin formularios que aprender, sin pasos que memorizar. Solo hablas — M-Care se encarga del resto, desde la primera frase hasta el día en que regresas a casa a salvo.",
     "step_label": "Paso",
     "step1_title": "Solo Dile a M-Care",
@@ -467,10 +467,10 @@
     "step2_title": "Tu Evaluación de Seguridad Ocurre Mientras Hablas",
     "step2_desc": "M-Care realiza tu evaluación de seguridad ahí mismo, en la conversación. Si algo necesita revisión, lo dice claramente y da paso a un médico — las decisiones de seguridad nunca quedan al azar.",
     "step3_title": "M-Care Te Conecta con un Médico Verificado",
-    "step3_desc": "Todo médico que M-Care puede recomendar ya ha superado la verificación completa de Morales — licencia, identidad y antecedentes. Nunca te presentamos a alguien sin verificar.",
+    "step3_desc": "Todo médico que M-Care puede recomendar ya ha superado la verificación completa de M-Care — licencia, identidad y antecedentes. Nunca te presentamos a alguien sin verificar.",
     "step4_title": "M-Care Coordina tu Viaje",
     "step4_desc": "Viaje, hotel, transporte — M-Care solicita cotizaciones reales a socios verificados y te mantiene al tanto conforme llegan, en lugar de dejarte reservar cada parte por tu cuenta.",
-    "step5_title": "Tu Procedimiento, con Alguien que Morales Ha Verificado",
+    "step5_title": "Tu Procedimiento, con Alguien que M-Care Ha Verificado",
     "step5_desc": "Llegas sabiendo que tu médico ya fue revisado, tu evaluación de seguridad está registrada, y tu equipo de cuidado sabe exactamente quién eres.",
     "step6_title": "M-Care Te Acompaña Durante la Recuperación",
     "step6_desc": "Chequeos reales durante la recuperación, no un formulario para llenar después. Si algo no se siente bien, solo dile a M-Care — sigue escuchando.",

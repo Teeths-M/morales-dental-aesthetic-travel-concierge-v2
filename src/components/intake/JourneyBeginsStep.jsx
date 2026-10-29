@@ -30,11 +30,11 @@ export default function JourneyBeginsStep({
     >
       <img
         src="/morales-m-mark.png"
-        alt="Morales"
+        alt="M-Care"
         style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }}
       />
       <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: GOLD }}>
-        Welcome to Morales
+        Welcome to M-Care
       </p>
       <h2 style={{ margin: '0 0 14px', fontSize: 24, fontWeight: 600, color: CALM.text, lineHeight: 1.3 }}>
         {title || (firstName ? `${firstName}, your journey has begun.` : 'Your journey has begun.')}

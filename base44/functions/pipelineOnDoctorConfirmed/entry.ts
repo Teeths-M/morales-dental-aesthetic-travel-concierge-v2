@@ -41,7 +41,7 @@ async function sendSms(to, message) {
   });
 }
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 Deno.serve(async (req) => {
   try {

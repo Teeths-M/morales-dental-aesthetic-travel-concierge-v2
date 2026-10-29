@@ -4,7 +4,7 @@ import { pickBestDoctor } from './pickBestDoctor.ts';
 import { logJourneyEvent } from './logJourneyEvent.ts';
 import { widenPartnerSearch } from './partnerSearchWidening.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // Same verification gate assignDoctorToCase enforces on the very first

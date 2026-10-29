@@ -38,7 +38,7 @@ function IntroScene({ onNext }) {
       </h1>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', maxWidth: 360, lineHeight: 1.65, margin: '0 0 12px' }}>
         When Elena is trapped in Caracas — her phone activates for her.
-        No button press. No signal. Morales finds a way.
+        No button press. No signal. M-Care finds a way.
       </p>
       <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', maxWidth: 320, lineHeight: 1.6, margin: '0 0 32px', fontStyle: 'italic' }}>
         This demo illustrates our future emergency detection vision. Device mesh networking requires our native app, currently on the roadmap.
@@ -76,7 +76,7 @@ function TriggerScene({ onNext }) {
       layer="LAYER 1 · AUTO-ACTIVATION"
       title={phase < 2 ? 'Earthquake Detected' : 'Beacon Auto-Fired'}
       sub={phase < 1 ? 'Magnitude 6.8 · Caracas, Venezuela · 14:32 local time'
-         : phase < 2 ? 'Morales accelerometer reading seismic impact…'
+         : phase < 2 ? 'M-Care accelerometer reading seismic impact…'
          : 'She was unconscious. The phone activated for her.'}
     >
       <svg width="280" height="50" viewBox="0 0 280 50" style={{ margin: '0 0 28px', overflow: 'visible' }}>
@@ -183,7 +183,7 @@ function MeshRelayScene({ onNext }) {
   }, [onNext]);
 
   return (
-    <Scene layer="LAYER 3 · MESH RELAY NETWORK" title="Signal Propagating" sub="Nearby Morales users relay the beacon until it reaches the cloud">
+    <Scene layer="LAYER 3 · MESH RELAY NETWORK" title="Signal Propagating" sub="Nearby M-Care users relay the beacon until it reaches the cloud">
       <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginTop: 8, width: '100%', maxWidth: 480, justifyContent: 'center' }}>
         {RELAY_NODES.map((node, i) => (
           <React.Fragment key={node.label}>
@@ -356,7 +356,7 @@ function DispatchScene() {
   }, []);
 
   return (
-    <Scene layer="LAYER 5 · CONCIERGE COORDINATION" title="Morales Takes Over" sub="Your dedicated concierge team contacts each service — voice, digital, or direct. Whatever the country requires.">
+    <Scene layer="LAYER 5 · CONCIERGE COORDINATION" title="M-Care Takes Over" sub="Your dedicated concierge team contacts each service — voice, digital, or direct. Whatever the country requires.">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', maxWidth: 420 }}>
         {DISPATCH_SERVICES.map(({ icon, label, detail, color }, i) => (
           <motion.div key={label}
@@ -382,9 +382,9 @@ function DispatchScene() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             style={{ marginTop: 40, textAlign: 'center' }}>
             <div style={{ fontSize: 52, marginBottom: 14 }}>🛡️</div>
-            <p style={{ fontSize: 20, fontWeight: 900, color: GOLD, margin: '0 0 8px', letterSpacing: '-0.01em' }}>Morales — The Lifeline</p>
+            <p style={{ fontSize: 20, fontWeight: 900, color: GOLD, margin: '0 0 8px', letterSpacing: '-0.01em' }}>M-Care — The Lifeline</p>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', maxWidth: 320, margin: '0 auto 28px', lineHeight: 1.6 }}>
-              "When the earth shakes and the signal dies, Morales becomes the lifeline."
+              "When the earth shakes and the signal dies, M-Care becomes the lifeline."
             </p>
             <Link to="/demo" style={{ padding: '12px 32px', borderRadius: 12, background: `${GOLD}18`, border: `1px solid ${GOLD}45`, color: GOLD, fontSize: 12, fontWeight: 800, textDecoration: 'none', letterSpacing: '0.06em' }}>
               ← ALL DEMOS
@@ -399,14 +399,14 @@ function DispatchScene() {
 // ── Judge Q&A overlay ─────────────────────────────────────────────────────────
 const QA = [
   { q: 'How does it know an earthquake happened?', a: 'The phone\'s accelerometer detects violent shaking — same technology Google uses for Android Earthquake Alerts. No internet needed. Fires in milliseconds.' },
-  { q: 'Does it pull live disaster data from the internet?', a: 'Not yet. The design is USGS Earthquake Feed (60s), GDACS and NOAA tsunami warnings, cross-referenced against which clients are in the affected country. None of those feeds are wired into Morales today — this is roadmap, shown here as the intended behaviour.' },
+  { q: 'Does it pull live disaster data from the internet?', a: 'Not yet. The design is USGS Earthquake Feed (60s), GDACS and NOAA tsunami warnings, cross-referenced against which clients are in the affected country. None of those feeds are wired into M-Care today — this is roadmap, shown here as the intended behaviour.' },
   { q: 'What if the phone is destroyed or she\'s unconscious?', a: 'The beacon fires before destruction. If no beacon fires, the concierge layer sweeps all clients in the affected region proactively — they don\'t wait for a ping.' },
   { q: 'GPS doesn\'t work underground — how do you find her?', a: 'Last cached GPS coordinates transmit — typically accurate within 10–50 meters. Cell tower triangulation as fallback. Rescue teams use the last known point, same as real SAR operations.' },
-  { q: 'How is this different from Life360 or Find My Friends?', a: 'Those tools show family where you are. Morales coordinates the rescue — dispatches local emergency services in their language, activates the US Embassy, contacts the concierge, logs an audit chain.' },
-  { q: 'Has this worked in a real emergency?', a: 'No — and to be precise about what you are watching: this screen is a scripted vision demo, not a live system. Accelerometer trauma detection, BLE mesh relay, USGS/GDACS feeds and Embassy protocols are not built in Morales today; they are the roadmap and they need the native app. The technologies are proven elsewhere, but we have not integrated them yet. What IS live today is the internet SOS path, guardian and admin alerting, the audit chain, and live location tracking.' },
-  { q: 'What about a hiker who falls and breaks their leg?', a: 'The accelerometer detects the impact automatically — same fall-detection logic as Apple Watch. GPS coordinates are cached and transmitted. If other hikers are within 100m, the BLE mesh relays the signal out. Honest limit: true remote wilderness with zero nearby devices needs satellite (SPOT/inReach). Morales is the layer for 99% of real medical travel — cities, clinics, tourist areas.' },
+  { q: 'How is this different from Life360 or Find My Friends?', a: 'Those tools show family where you are. M-Care coordinates the rescue — dispatches local emergency services in their language, activates the US Embassy, contacts the concierge, logs an audit chain.' },
+  { q: 'Has this worked in a real emergency?', a: 'No — and to be precise about what you are watching: this screen is a scripted vision demo, not a live system. Accelerometer trauma detection, BLE mesh relay, USGS/GDACS feeds and Embassy protocols are not built in M-Care today; they are the roadmap and they need the native app. The technologies are proven elsewhere, but we have not integrated them yet. What IS live today is the internet SOS path, guardian and admin alerting, the audit chain, and live location tracking.' },
+  { q: 'What about a hiker who falls and breaks their leg?', a: 'The accelerometer detects the impact automatically — same fall-detection logic as Apple Watch. GPS coordinates are cached and transmitted. If other hikers are within 100m, the BLE mesh relays the signal out. Honest limit: true remote wilderness with zero nearby devices needs satellite (SPOT/inReach). M-Care is the layer for 99% of real medical travel — cities, clinics, tourist areas.' },
   { q: 'Does it work in a snowstorm?', a: 'Yes. Snow does not block GPS — satellites are above the atmosphere. The accelerometer still fires. BLE range shrinks in dense snow but still works at shorter range. The real risk is cell signal loss in remote mountains. The system still fires the alert and logs last known GPS — which is exactly what rescue teams work from.' },
-  { q: 'Child trapped — can the parent remotely activate the beacon?', a: 'No platform can remotely activate another person\'s phone without pre-installed remote control software (which creates serious privacy risks). What Morales does: (1) beacon fires automatically if the phone detects trauma — no child action needed; (2) the Secret Tap protocol means a conscious child can trigger SOS with two quick taps; (3) Family Eye gives parents real-time location tracking — they see the dot stop moving instantly and the concierge is auto-alerted.' },
+  { q: 'Child trapped — can the parent remotely activate the beacon?', a: 'No platform can remotely activate another person\'s phone without pre-installed remote control software (which creates serious privacy risks). What M-Care does: (1) beacon fires automatically if the phone detects trauma — no child action needed; (2) the Secret Tap protocol means a conscious child can trigger SOS with two quick taps; (3) Family Eye gives parents real-time location tracking — they see the dot stop moving instantly and the concierge is auto-alerted.' },
 ];
 
 function JudgePanel({ onClose }) {

@@ -88,7 +88,7 @@ export function renderEmail(opts: EmailOptions): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Morales Medical Travel Safety</title>
+<title>M-Care Medical Travel Safety</title>
 <style>
   body { margin:0; padding:0; background:${BG_DARK}; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; }
   .wrapper { background:${BG_DARK}; padding:40px 16px; }
@@ -116,8 +116,8 @@ export function renderEmail(opts: EmailOptions): string {
   <div class="wrapper">
     <div class="container">
       <div class="header">
-        <img class="logo" src="${logoUrl}" alt="Morales" />
-        <p class="brand">Morales</p>
+        <img class="logo" src="${logoUrl}" alt="M-Care" />
+        <p class="brand">M-Care</p>
         <p class="tagline">Medical Travel Safety</p>
       </div>
       <div class="content">
@@ -131,7 +131,7 @@ export function renderEmail(opts: EmailOptions): string {
       </div>
       <div class="footer">
         <p>${footer}</p>
-        <p style="margin-top:8px;">Morales Medical Travel Safety Team</p>
+        <p style="margin-top:8px;">M-Care Medical Travel Safety Team</p>
       </div>
     </div>
   </div>

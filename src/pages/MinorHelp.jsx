@@ -156,7 +156,7 @@ export default function MinorHelp() {
 
         {phase === 'idle' && (
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-2">Morales</p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-2">M-Care</p>
             <h1 className="text-2xl font-semibold text-foreground mb-2">
               {firstName ? `Hi ${firstName}.` : 'Are you okay?'}
             </h1>

@@ -17,7 +17,7 @@ I, the undersigned, acknowledge and confirm the following:
 
 5. PHYSICIAN CONSULTATION: I agree to disclose all identified risk factors to my treating physician prior to the procedure date and to obtain written medical clearance where required.
 
-6. RELEASE OF LIABILITY: I release Morales Medical Travel and its affiliated partners from liability arising from complications attributable to undisclosed medical conditions or risk factors.
+6. RELEASE OF LIABILITY: I release M-Care Medical Travel and its affiliated partners from liability arising from complications attributable to undisclosed medical conditions or risk factors.
 
 7. ACCURACY OF INFORMATION: I certify that all medical information I have provided is true, accurate, and complete to the best of my knowledge.
 

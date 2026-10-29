@@ -1,7 +1,7 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { renderEmail } from '../../shared/emailTemplate.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — previously an
 // unsigned plain btoa(JSON) token with no signature suffix, which fails that
@@ -107,7 +107,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     // SMS — send alongside email if phone on file
     const phone = cab.whatsapp_number || cab.phone;
     if (phone) {
-      await sendSms(phone, `Hi ${driverName}! Transfer request for ${consultation.patient_name}. Access your Morales chauffeur portal: ${portalLink}`);
+      await sendSms(phone, `Hi ${driverName}! Transfer request for ${consultation.patient_name}. Access your M-Care chauffeur portal: ${portalLink}`);
     }
 
     sent.push({ name: driverName, email: cab.email, portal_link: portalLink, sms_sent: !!phone });

@@ -76,7 +76,7 @@ Deno.serve(createHandler(async ({ req }) => {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: user.email,
-        subject: 'Your SAFE-T Override Consent Has Been Recorded — Morales Concierge',
+        subject: 'Your SAFE-T Override Consent Has Been Recorded — M-Care Concierge',
         body: `
 Dear ${user.full_name || 'Patient'},
 
@@ -89,7 +89,7 @@ Your case is now proceeding to doctor review. Our team will be in touch shortly.
 
 This document has been archived in our secure compliance system.
 
-— Morales Medical Travel Safety
+— M-Care Medical Travel Safety
         `.trim(),
       });
     } catch (emailErr) {

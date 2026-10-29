@@ -96,8 +96,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       if (caseRecord?.emergency_contact_email) {
         await base44.integrations.Core.SendEmail({
           to:      caseRecord.emergency_contact_email,
-          subject: `[Morales] Pattern alert — ${caseRecord.patient_name || 'Your traveler'} hasn't checked in`,
-          body: `Hi,\n\nMorales MedGuard has detected an unusual pattern for ${caseRecord.patient_name || 'your traveler'}.\n\n${nudge_message || 'Their behavioral patterns have deviated from their baseline.'}\n\nLast known location is available in your Guardian View link.\n\nIf you cannot reach them, please call the Morales Emergency Line immediately.\n\n— Morales Safety Team`,
+          subject: `[M-Care] Pattern alert — ${caseRecord.patient_name || 'Your traveler'} hasn't checked in`,
+          body: `Hi,\n\nM-Care MedGuard has detected an unusual pattern for ${caseRecord.patient_name || 'your traveler'}.\n\n${nudge_message || 'Their behavioral patterns have deviated from their baseline.'}\n\nLast known location is available in your Guardian View link.\n\nIf you cannot reach them, please call the M-Care Emergency Line immediately.\n\n— M-Care Safety Team`,
         }).catch(() => {});
       }
     }

@@ -20,7 +20,7 @@ import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 const GOLD = '#D4AF37';
 
 // ── Per-language medical phrases ───────────────────────────────────────────────
-// Covers the 8 most common Morales destination countries.
+// Covers the 8 most common M-Care destination countries.
 // Bilingual (English + destination) so local responders can understand both.
 const PHRASES = {
   Venezuela:   { lang: 'es', name: 'Nombre', blood: 'Tipo de Sangre', allergies: 'Alergias', conditions: 'Condiciones Médicas', procedure: 'Procedimiento Reciente', emergency: 'Contacto de Emergencia', concierge: 'Coordinadora Médica', intro: 'Soy turista médico. Por favor contacte a mi coordinadora.', none: 'Ninguna conocida' },
@@ -70,7 +70,7 @@ function MedCard({ caseRec, user }) {
             M
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Morales Medical</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '0.15em', textTransform: 'uppercase' }}>M-Care Medical</div>
             <div style={{ fontSize: 10, color: GOLD, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Emergency Medical ID</div>
           </div>
         </div>
@@ -83,7 +83,7 @@ function MedCard({ caseRec, user }) {
       {/* Intro phrase — large, bilingual */}
       <div style={{ background: '#fef9ec', borderBottom: '1px solid #fcd34d', padding: '14px 28px' }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 3 }}>
-          ⚠️ I am a medical tourist under Morales Medical concierge care.
+          ⚠️ I am a medical tourist under M-Care Medical concierge care.
         </div>
         <div style={{ fontSize: 12, color: '#78350f' }}>{p.intro}</div>
       </div>
@@ -125,7 +125,7 @@ function MedCard({ caseRec, user }) {
               <span style={{ fontWeight: 600 }}>Personal:</span> {emergencyContact}
             </div>
             <div style={{ fontSize: 13, color: '#0f172a' }}>
-              <span style={{ fontWeight: 600 }}>Morales 24/7 Concierge ({p.concierge}):</span>{' '}
+              <span style={{ fontWeight: 600 }}>M-Care 24/7 Concierge ({p.concierge}):</span>{' '}
               <span style={{ color: '#be123c', fontWeight: 700 }}>+1 (800) MORALES</span>
             </div>
           </div>

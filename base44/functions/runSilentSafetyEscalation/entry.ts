@@ -356,7 +356,7 @@ Deno.serve(createHandler(async ({ req }) => {
       // ── STEP 1: SMS reminder (T+15m) ────────────────────────────────────
       if (overdueMins >= T.SMS_REMINDER_MIN && !ci.traveler_sms_sent_at && ci.status === 'pending') {
         const checkInLink = await buildCheckInLink(base44, ci.id, ci.case_id);
-        const smsBody = `Morales Safety: We haven't heard from you. Reply SAFE or tap to confirm: ${checkInLink}`;
+        const smsBody = `M-Care Safety: We haven't heard from you. Reply SAFE or tap to confirm: ${checkInLink}`;
 
         let smsSid = null;
         let smsStatus = 'sent';
@@ -375,7 +375,7 @@ Deno.serve(createHandler(async ({ req }) => {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
               to: ci.user_email,
-              subject: `⚠️ Morales Safety Check-In Required`,
+              subject: `⚠️ M-Care Safety Check-In Required`,
               body: linkOnlyEmail({
                 title: 'A safety check-in is due',
                 line: 'We have not received your scheduled safety check-in. Please open the link to let us know you are safe.',
@@ -411,7 +411,7 @@ Deno.serve(createHandler(async ({ req }) => {
       if (overdueMins >= T.VOICE_CALL_MIN && !ci.traveler_voice_call_at &&
           (ci.status === 'pending' || ci.status === 'escalated_2h')) {
 
-        const twiml = `<Response><Say voice="alice">This is Morales Safety. We have not received your scheduled check-in. Please open your safety link or reply SAFE by text message. If this is an emergency, stay where you are. We are escalating support.</Say><Pause length="2"/><Say voice="alice">Repetimos. Por favor confirme que está seguro.</Say></Response>`;
+        const twiml = `<Response><Say voice="alice">This is M-Care Safety. We have not received your scheduled check-in. Please open your safety link or reply SAFE by text message. If this is an emergency, stay where you are. We are escalating support.</Say><Pause length="2"/><Say voice="alice">Repetimos. Por favor confirme que está seguro.</Say></Response>`;
 
         let voiceStatus = 'attempted';
         if (patientPhone) {
@@ -463,7 +463,7 @@ Deno.serve(createHandler(async ({ req }) => {
         const guardianSmsBody = emergencyDispatch({
           reason: 'patient_missing',
           from: 'runSilentSafetyEscalation',
-          body: `Morales Safety Alert: ${patientName} missed a required check-in. View last known location: ${guardianUrl || appUrl}`,
+          body: `M-Care Safety Alert: ${patientName} missed a required check-in. View last known location: ${guardianUrl || appUrl}`,
         });
         // LEAK-SCAN-IGNORE-END
 
@@ -500,17 +500,17 @@ Deno.serve(createHandler(async ({ req }) => {
   <div style="background:#dc2626;color:white;padding:16px 24px;border-radius:8px;margin-bottom:24px;">
     <h2 style="margin:0;font-size:20px;">🚨 Safety Alert — ${patientName}</h2>
   </div>
-  <p style="color:#374151;font-size:16px;">${patientName} has not responded to their Morales safety check-in for over ${Math.round(overdueMins)} minutes.</p>
+  <p style="color:#374151;font-size:16px;">${patientName} has not responded to their M-Care safety check-in for over ${Math.round(overdueMins)} minutes.</p>
   <p style="color:#374151;"><strong>Last Known Location:</strong> ${locLabel}</p>
   ${mapsUrl ? `<p><a href="${mapsUrl}" style="color:#1d4ed8;">📍 View in Google Maps</a></p>` : ''}
   ${guardianUrl ? `<p style="margin-top:24px;"><a href="${guardianUrl}" style="background:#1d4ed8;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:bold;">👁 View Live Safety Status — No Login Required</a></p>` : ''}
   <p style="color:#6b7280;font-size:13px;margin-top:24px;">Please try to contact ${patientName} immediately. If unreachable, contact local emergency services. This link shows live GPS location while the app is open, and last-known location when offline.</p>
-  <p style="color:#9ca3af;font-size:11px;margin-top:16px;">Do not reply to this email. Call Morales emergency line if needed. No sensitive medical data is contained in this alert.</p>
+  <p style="color:#9ca3af;font-size:11px;margin-top:16px;">Do not reply to this email. Call M-Care emergency line if needed. No sensitive medical data is contained in this alert.</p>
 </div>`;
 
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Safety System',
+              from_name: 'M-Care Safety System',
               to: emergencyContact,
               subject: `🚨 Safety Alert: ${patientName} missed check-in`,
               // Exempt: active-emergency alert to the patient's own emergency
@@ -602,7 +602,7 @@ Deno.serve(createHandler(async ({ req }) => {
         if (adminEmail) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Safety — URGENT',
+              from_name: 'M-Care Safety — URGENT',
               to: adminEmail,
               subject: '🚨 SECURITY DISPATCH REQUIRED',
               body: linkOnlyEmail({
@@ -663,7 +663,7 @@ Deno.serve(createHandler(async ({ req }) => {
         if (adminEmail) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Safety — CRITICAL',
+              from_name: 'M-Care Safety — CRITICAL',
               to: adminEmail,
               subject: '🚔 POLICE / ADMIN ESCALATION REQUIRED',
               body: linkOnlyEmail({
@@ -735,7 +735,7 @@ Deno.serve(createHandler(async ({ req }) => {
           // Link-only: real position, timeline, and traveler detail live in Situation Room.
           if (adminEmail) {
             base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Safety — Location Alert',
+              from_name: 'M-Care Safety — Location Alert',
               to: adminEmail,
               subject: '⚠️ Location signal lost for an active traveler',
               body: linkOnlyEmail({

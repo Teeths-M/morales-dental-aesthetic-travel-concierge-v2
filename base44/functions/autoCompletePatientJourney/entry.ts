@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
             client_email: caseRecord.client_email,
             event_type: 'journey_completed',
             source: 'autoCompletePatientJourney',
-            message_text: 'Your journey is complete. Thank you for choosing Morales — wishing you a smooth continued recovery.',
+            message_text: 'Your journey is complete. Thank you for choosing M-Care — wishing you a smooth continued recovery.',
             priority: 'low',
             action_taken: completionReason,
           });

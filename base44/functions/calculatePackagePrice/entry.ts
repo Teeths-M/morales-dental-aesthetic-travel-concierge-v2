@@ -81,7 +81,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   await base44.asServiceRole.entities.AuditLog.create({
     event_type: 'package_price_calculated', actor_id: 'system', actor_role: 'system',
-    actor_name: 'Morales Pricing Engine', resource_type: 'CaseRecord', resource_id: case_id,
+    actor_name: 'M-Care Pricing Engine', resource_type: 'CaseRecord', resource_id: case_id,
     case_id, sensitive: false, timestamp: now,
     details: {
       base_cost: baseCost, adjusted_base: adjustedBase, consult_credit: CONSULT_FEE,

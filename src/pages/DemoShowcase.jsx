@@ -149,7 +149,7 @@ function HandshakeDemo() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-6"
           >
-            {/* Real Morales M mark */}
+            {/* Real M-Care M mark */}
             <div className="relative flex flex-col items-center mb-4">
               <div className="absolute" style={{
                 width: 180, height: 180, top: '50%', left: '50%',
@@ -159,7 +159,7 @@ function HandshakeDemo() {
               }} />
               <img
                 src="/morales-m-mark.png"
-                alt="Morales M"
+                alt="M-Care M"
                 style={{
                   width: 90,
                   height: 'auto',
@@ -216,7 +216,7 @@ function HandshakeDemo() {
             </button>
             {step > 0 && (
               <p className="text-center text-xs" style={{ color: '#475569' }}>
-                Or text <span style={{ color: GOLD }}>HS{step + 1}</span> to the Morales shortcode
+                Or text <span style={{ color: GOLD }}>HS{step + 1}</span> to the M-Care shortcode
               </p>
             )}
           </motion.div>
@@ -662,7 +662,7 @@ function SafeTBlockDemo() {
           A patient died after a clinic booked her for a tummy tuck, liposuction, and fat transfer in a single session.
           The combined fat removal volume exceeded safe surgical limits. Her booking was confirmed. No platform reviewed the combination.{' '}
           <span style={{ color: '#fff', fontWeight: 600 }}>
-            Morales flags this before payment is taken — the booking is blocked until a licensed physician approves the combination in writing.
+            M-Care flags this before payment is taken — the booking is blocked until a licensed physician approves the combination in writing.
           </span>
         </p>
       </motion.div>
@@ -729,9 +729,9 @@ export default function DemoShowcase() {
   }
 
   useEffect(() => {
-    document.title = 'Morales Medical Travel Safety — Platform Demo';
+    document.title = 'M-Care Medical Travel Safety — Platform Demo';
     sessionStorage.setItem('morales_demo_session', '1');
-    return () => { document.title = 'Morales Medical Travel Safety'; };
+    return () => { document.title = 'M-Care Medical Travel Safety'; };
   }, []);
 
   return (

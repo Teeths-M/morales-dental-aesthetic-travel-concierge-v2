@@ -248,7 +248,7 @@ Deno.serve(createHandler(async ({ req }) => {
           ? `🏔️ WILDERNESS SOS — SEARCH & RESCUE REQUIRED — ${patient_name || patient_email}`
           : `🚨 SOS — ${route.label} — ${patient_name || patient_email}`;
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Safe-T Emergency System',
+          from_name: 'M-Care Safe-T Emergency System',
           to: adminNotifyEmail,
           subject,
           body: isWilderness
@@ -300,7 +300,7 @@ Deno.serve(createHandler(async ({ req }) => {
             body: new URLSearchParams({
               To: patient_phone,
               From: from,
-              Body: `Morales Safe-T: Your ${route.label} SOS has been received. Emergency team alerted. Stay calm and stay where you are. If safe to call, dial your local emergency number.`,
+              Body: `M-Care Safe-T: Your ${route.label} SOS has been received. Emergency team alerted. Stay calm and stay where you are. If safe to call, dial your local emergency number.`,
             }).toString(),
           });
           if (resp.ok) {
@@ -331,7 +331,7 @@ Deno.serve(createHandler(async ({ req }) => {
             await base44.asServiceRole.integrations.Core.SendEmail({
               to: emergencyContactEmail,
               subject: `⚠️ Emergency Alert: ${patient_name || patient_email} triggered SOS`,
-              body: `<p>Your contact <strong>${patient_name}</strong> has triggered an emergency SOS (${route.label}) at ${location_label || 'their current location'}. The Morales Medical emergency team has been alerted and is coordinating a response.</p>`
+              body: `<p>Your contact <strong>${patient_name}</strong> has triggered an emergency SOS (${route.label}) at ${location_label || 'their current location'}. The M-Care Medical emergency team has been alerted and is coordinating a response.</p>`
             });
             notificationsSent.push('emergency_contact');
           } catch (_) { notificationsSent.push('emergency_contact_email_failed'); }

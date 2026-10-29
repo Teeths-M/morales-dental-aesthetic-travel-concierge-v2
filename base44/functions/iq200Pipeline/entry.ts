@@ -179,7 +179,7 @@ Deno.serve(createHandler(async ({ req }) => {
         subject: `Your Personalized Medical Travel Package — MORALES Concierge`,
         body: linkOnlyEmail({
           title: 'Your personalized package is ready.',
-          line: 'Your complete medical travel package is ready to review. Open it in your Morales portal to see everything included and your total, then accept to secure your dates.',
+          line: 'Your complete medical travel package is ready to review. Open it in your M-Care portal to see everything included and your total, then accept to secure your dates.',
           ctaUrl: paymentUrl,
           ctaLabel: 'Review & Accept Proposal',
         }),
@@ -239,10 +239,10 @@ Deno.serve(createHandler(async ({ req }) => {
       // accident waiting for the next person who needs "a bit more detail".
       emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
-        subject: `Your Confirmed Medical Travel Itinerary – Morales Concierge`,
+        subject: `Your Confirmed Medical Travel Itinerary – M-Care Concierge`,
         body: linkOnlyEmail({
           title: 'Your journey is secured.',
-          line: 'Your payment is confirmed and your medical travel experience is secured. Open your Morales portal to view your full itinerary and total.',
+          line: 'Your payment is confirmed and your medical travel experience is secured. Open your M-Care portal to view your full itinerary and total.',
           ctaUrl: `${appUrl}/dashboard/bookings`,
           ctaLabel: 'View My Booking',
         }),
@@ -277,14 +277,14 @@ Deno.serve(createHandler(async ({ req }) => {
       const procedureList = (caseRecord.procedures || ['Procedure']).join(', ');
       const doctorEmailBody = linkOnlyEmail({
         title: 'A new case has been confirmed for you.',
-        line: 'A patient has been confirmed and paid. Open your Morales portal to review the case and confirm the procedure date.',
+        line: 'A patient has been confirmed and paid. Open your M-Care portal to review the case and confirm the procedure date.',
         ctaUrl: doctorPortalUrl,
         ctaLabel: 'Access Doctor Portal',
       });
       if (caseRecord.doctor_email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: caseRecord.doctor_email,
-          subject: `A new case has been confirmed for you — Morales Concierge`,
+          subject: `A new case has been confirmed for you — M-Care Concierge`,
           body: doctorEmailBody
         }));
       }
@@ -294,14 +294,14 @@ Deno.serve(createHandler(async ({ req }) => {
       const originDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
       const originDriverEmailBody = linkOnlyEmail({
         title: 'A pickup has been confirmed.',
-        line: 'A new local pickup is assigned to you. Open your Morales portal for the pickup address, schedule, and details.',
+        line: 'A new local pickup is assigned to you. Open your M-Care portal for the pickup address, schedule, and details.',
         ctaUrl: originDriverPortalUrl,
         ctaLabel: 'Access Portal',
       });
       if (originDriver?.email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: originDriver.email,
-          subject: `A pickup has been confirmed — Morales Concierge`,
+          subject: `A pickup has been confirmed — M-Care Concierge`,
           body: originDriverEmailBody
         }));
       }
@@ -311,14 +311,14 @@ Deno.serve(createHandler(async ({ req }) => {
       const destDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
       const destDriverEmailBody = linkOnlyEmail({
         title: 'An arrival transfer has been confirmed.',
-        line: 'A new airport arrival transfer is assigned to you. Open your Morales portal for the destination, schedule, and details.',
+        line: 'A new airport arrival transfer is assigned to you. Open your M-Care portal for the destination, schedule, and details.',
         ctaUrl: destDriverPortalUrl,
         ctaLabel: 'Access Portal',
       });
       if (destDriver?.email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: destDriver.email,
-          subject: `An arrival transfer has been confirmed — Morales Concierge`,
+          subject: `An arrival transfer has been confirmed — M-Care Concierge`,
           body: destDriverEmailBody
         }));
       }

@@ -73,7 +73,7 @@ export default function GuardianAccess() {
         </div>
 
         <p className="text-center text-xs text-slate-600 mt-4">
-          No password needed — this only works if a traveler already shared their status with your email. <Link to="/" className="text-blue-400 hover:underline">Back to Morales</Link>
+          No password needed — this only works if a traveler already shared their status with your email. <Link to="/" className="text-blue-400 hover:underline">Back to M-Care</Link>
         </p>
       </div>
     </div>

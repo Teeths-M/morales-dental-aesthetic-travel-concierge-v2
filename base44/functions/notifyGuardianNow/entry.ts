@@ -114,7 +114,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         from: 'notifyGuardianNow',
       });
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Medical Safe-T',
+        from_name: 'M-Care Medical Safe-T',
         to: session.guardian_email,
         subject: is_confirmed_emergency ? 'Urgent update from your traveler' : 'Location update from your traveler',
         body: html,

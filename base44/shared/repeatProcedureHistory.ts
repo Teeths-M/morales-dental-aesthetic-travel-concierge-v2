@@ -1,5 +1,5 @@
 // Repeat-procedure history check — detects whether a patient has had the SAME
-// major procedure done before, on a separate, earlier trip through Morales.
+// major procedure done before, on a separate, earlier trip through M-Care.
 //
 // This is a distinct signal from getViolations()/procedureCompatibility.ts,
 // which only ever checks procedures combined together in ONE booking/cart.

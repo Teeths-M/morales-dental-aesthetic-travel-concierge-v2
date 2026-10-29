@@ -276,7 +276,7 @@ export default function PortalTravelAgency() {
       {/* Header */}
       <div style={{ background: '#0F3A20', padding: '24px 32px' }} className="ta-header">
         <p style={{ margin: 0, fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: '#C5A059', marginBottom: 6 }}>
-          Morales Medical Travel Safety | TRAVEL REQUEST
+          M-Care Medical Travel Safety | TRAVEL REQUEST
         </p>
         <h1 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: 26, color: '#fff', fontWeight: 400 }}>
           Patient ready for travel quotation
@@ -455,7 +455,7 @@ export default function PortalTravelAgency() {
         </button>
 
         <p style={{ textAlign: 'center', fontSize: 11, color: '#aaa', marginTop: 16 }}>
-          Morales Medical Travel Safety · Secure Vendor Portal
+          M-Care Medical Travel Safety · Secure Vendor Portal
         </p>
       </div>
     </div>

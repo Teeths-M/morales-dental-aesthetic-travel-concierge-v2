@@ -140,7 +140,7 @@ function DashboardHome({ user, consultations, language }) {
     staleTime: 5 * 60_000,
   });
 
-  // Morales Safety Score — powered by MedGuard™ 6-signal analysis
+  // M-Care Safety Score — powered by MedGuard™ 6-signal analysis
   const tripPhaseForScore = activeTrip?.trip_phase || latestActive?.trip_phase;
   const safetyScore = useSafetyScore({
     caseId:    latestActive?.id,
@@ -475,7 +475,7 @@ function DashboardHome({ user, consultations, language }) {
         />
       )}
 
-      {/* Morales Safety Score — proprietary 0-100 gauge powered by MedGuard™ */}
+      {/* M-Care Safety Score — proprietary 0-100 gauge powered by MedGuard™ */}
       {latestConsultation && (
         <SafetyScoreGauge
           score={safetyScore.score}
@@ -516,7 +516,7 @@ function DashboardHome({ user, consultations, language }) {
         <EVNiQ400Card country={latestConsultation.procedure_country} />
       )}
 
-      {/* Destination Safety Index — proprietary Morales intelligence */}
+      {/* Destination Safety Index — proprietary M-Care intelligence */}
       {latestConsultation?.procedure_country && (
         <DestinationSafetyIndex
           country={latestConsultation.procedure_country}
@@ -747,7 +747,7 @@ function DashboardHome({ user, consultations, language }) {
           <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest mb-0.5">
             {language === 'es' ? 'Tu Coordinador Asignado' : language === 'fr' ? 'Votre Coordinateur Assigné' : 'Your Assigned Coordinator'}
           </p>
-          <p className="text-sm font-semibold text-slate-800">Ana Morales — {language === 'es' ? 'Especialista en Cuidado del Paciente' : language === 'fr' ? 'Spécialiste des Soins Patients' : 'Patient Care Specialist'}</p>
+          <p className="text-sm font-semibold text-slate-800">Ana M-Care — {language === 'es' ? 'Especialista en Cuidado del Paciente' : language === 'fr' ? 'Spécialiste des Soins Patients' : 'Patient Care Specialist'}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="w-2 h-2 bg-emerald-500 rounded-full" />
             <span className="text-xs text-emerald-600 font-medium">
@@ -758,7 +758,7 @@ function DashboardHome({ user, consultations, language }) {
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* WhatsApp — primary global CTA */}
           <a
-            href="https://wa.me/18005550199?text=Hello%20Ana%2C%20I%20need%20help%20with%20my%20Morales%20journey."
+            href="https://wa.me/18005550199?text=Hello%20Ana%2C%20I%20need%20help%20with%20my%20M-Care%20journey."
             target="_blank"
             rel="noopener noreferrer"
           >

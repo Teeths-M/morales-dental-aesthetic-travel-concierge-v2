@@ -77,6 +77,6 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       contact_phone: doctor.escalation_contact_phone || null,
     },
     source_links: Array.isArray(doctor.evidence_links) ? doctor.evidence_links : [],
-    disclosure: 'This shows exactly what Morales has verified and when. It is not a guarantee of outcome or a claim this provider is risk-free.',
+    disclosure: 'This shows exactly what M-Care has verified and when. It is not a guarantee of outcome or a claim this provider is risk-free.',
   });
 }, { name: 'getProviderTrustProfile', requireAuth: false, bodySchema }));

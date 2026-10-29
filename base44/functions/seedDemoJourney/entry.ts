@@ -52,7 +52,7 @@ Deno.serve(createHandler(async ({ base44 }) => {
   let caseRecord;
   try {
     caseRecord = await base44.asServiceRole.entities.CaseRecord.create({
-      client_name: 'Sofia Morales (DEMO)',
+      client_name: 'Sofia M-Care (DEMO)',
       client_email: DEMO_EMAIL,
       client_phone: '+1-555-0100',
       client_country: 'United States',
@@ -114,7 +114,7 @@ Deno.serve(createHandler(async ({ base44 }) => {
   return ok({
     status: 'created',
     case_id: caseRecord.id,
-    client_name: 'Sofia Morales (DEMO)',
+    client_name: 'Sofia M-Care (DEMO)',
     client_email: DEMO_EMAIL,
     proposal_token: proposalToken,
     doctor_referenced: !!doctorId,

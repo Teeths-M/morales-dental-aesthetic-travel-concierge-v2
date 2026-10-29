@@ -2,7 +2,7 @@
 import { createHandler } from '../../shared/createHandler.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 const PROCEDURE_LABELS = {
   dental_implants: 'Dental Implants',
@@ -142,7 +142,7 @@ Deno.serve(createHandler(async ({ req }) => {
   // outbound email/SMS body. Neither outbound email below includes any of
   // this detail; both are generic linkOnlyEmail notifications.
   const riskPrompt = `
-You are the SAFE-T 4LIFE™ medical travel safety AI for Morales Medical Travel Safety.
+You are the SAFE-T 4LIFE™ medical travel safety AI for M-Care Medical Travel Safety.
 
 Evaluate the following patient profile for medical tourism risk:
 

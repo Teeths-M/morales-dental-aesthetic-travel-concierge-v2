@@ -12,7 +12,7 @@
  *
  * starterMessage (optional): an honest, generic statement of what the click
  * already means (e.g. "I already booked a procedure elsewhere and I'd like
- * to add Morales's safety protection") — auto-sent as the opening message so
+ * to add M-Care's safety protection") — auto-sent as the opening message so
  * the user never has to re-type what a specific button already told M-Care.
  * Never a fabricated fact, only a plain restatement of the click's own
  * intent.

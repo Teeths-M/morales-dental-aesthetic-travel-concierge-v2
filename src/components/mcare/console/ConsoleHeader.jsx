@@ -37,7 +37,7 @@ export default function ConsoleHeader() {
           M-Care
         </p>
         <p className="truncate" style={{ color: CONSOLE.textSoft, fontSize: 11.5, margin: '1px 0 0' }}>
-          Morales care concierge
+          M-Care care concierge
         </p>
       </div>
 

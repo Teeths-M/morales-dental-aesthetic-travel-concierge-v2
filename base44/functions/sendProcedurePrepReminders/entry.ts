@@ -20,7 +20,7 @@ import { linkOnlyEmail } from '../../shared/notify.ts';
  * a generic teaser + a portal link, never a date, an amount or an identity.
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const ACTIVE_STATUSES = ['PMP-25', 'PMP-50', 'Deposit-Paid', 'Travel-Coordination', 'Ready-For-Travel'];

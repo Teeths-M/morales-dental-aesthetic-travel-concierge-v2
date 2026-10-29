@@ -55,7 +55,7 @@ export default function CheckInConfirm() {
             <span className="text-white font-serif font-semibold text-lg">M</span>
           </div>
           <div className="text-left">
-            <p className="text-sm font-semibold text-slate-800 leading-tight">Morales</p>
+            <p className="text-sm font-semibold text-slate-800 leading-tight">M-Care</p>
             <p className="text-[10px] text-slate-400 uppercase tracking-widest">Solo Traveler Safety</p>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function CheckInConfirm() {
 
         <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400">
           <Shield className="w-3.5 h-3.5" />
-          <span>Morales Solo Traveler Protection · One-time secure link</span>
+          <span>M-Care Solo Traveler Protection · One-time secure link</span>
         </div>
       </div>
     </div>

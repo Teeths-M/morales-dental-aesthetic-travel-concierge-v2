@@ -161,8 +161,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     start: startISO,
     end: endISO,
     summary: 'Meet Your Care Team — Virtual Consultation',
-    description: `Your virtual consultation with your Morales-matched doctor.\n\nFull details are in your Morales dashboard.\n\nBooking Ref: ${String(vc.id).slice(-8).toUpperCase()}`,
-    location: 'Video call — link in your Morales portal',
+    description: `Your virtual consultation with your M-Care-matched doctor.\n\nFull details are in your M-Care dashboard.\n\nBooking Ref: ${String(vc.id).slice(-8).toUpperCase()}`,
+    location: 'Video call — link in your M-Care portal',
   };
   const icsContent = buildICS(consultation.patient_name || 'Patient', [icsEvent]);
   const googleCalLink = googleCalUrl(icsEvent.summary, icsEvent.start, icsEvent.end, icsEvent.description, icsEvent.location);
@@ -175,7 +175,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       user_email: consultation.email,
       document_type: 'other',
       encrypted_file_uri: `data:text/calendar;base64,${b64}`,
-      file_name: `Morales_Consultation_${String(vc.id).slice(-8)}.ics`,
+      file_name: `M-Care_Consultation_${String(vc.id).slice(-8)}.ics`,
       mime_type: 'text/calendar',
       file_size_bytes: icsContent.length,
       status: 'active',
@@ -189,12 +189,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   if (consultation.email) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Medical Travel Safety', to: consultation.email,
-      subject: 'Your virtual consultation is booked | Morales Medical Travel Safety',
+      from_name: 'M-Care Medical Travel Safety', to: consultation.email,
+      subject: 'Your virtual consultation is booked | M-Care Medical Travel Safety',
       body: linkOnlyEmail({
         from: 'bookVirtualConsultation/patient',
         title: 'Your virtual consultation is booked.',
-        line: 'Meet the real care team, understand every step, and proceed only when you are confident. Your full booking details and calendar invite are ready in your Morales portal.',
+        line: 'Meet the real care team, understand every step, and proceed only when you are confident. Your full booking details and calendar invite are ready in your M-Care portal.',
         ctaLabel: 'Open My Consultations',
         ctaUrl: `${APP_URL}/dashboard`,
       }),
@@ -202,8 +202,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }
   if (doctor.email) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Medical Travel Safety', to: doctor.email,
-      subject: 'A new virtual consultation needs your confirmation | Morales Medical Travel Safety',
+      from_name: 'M-Care Medical Travel Safety', to: doctor.email,
+      subject: 'A new virtual consultation needs your confirmation | M-Care Medical Travel Safety',
       body: linkOnlyEmail({
         from: 'bookVirtualConsultation/doctor',
         title: 'You have a new virtual consultation request.',

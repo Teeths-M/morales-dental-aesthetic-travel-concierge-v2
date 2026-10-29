@@ -13,7 +13,7 @@ import { cronAuthorized } from '../../shared/cronAuth.ts';
  * - 1-day: Urgent — includes SMS fallback
  */
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -68,7 +68,7 @@ function reminderEmail({ clientName, caseRef, daysUntilDue, balanceDue, payUrl, 
   <p style="margin:24px 0 0;font-size:13px;color:#64746d;line-height:1.6;">
     ${tone === 'urgent' ? 'If you have already made payment, please disregard this message.' : 'Questions? Reply to this email or reach your concierge on WhatsApp.'}
   </p>
-  <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
+  <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;">M-Care Concierge Team</p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
         // SMS fallback — last resort
         if (c.client_phone) {
           tasks.push(sendSms(c.client_phone,
-            `Hi ${c.client_name?.split(' ')[0]}, your Morales journey balance of ${usd(balance)} is due tomorrow. Pay now: ${payUrl} — ${BRAND}`
+            `Hi ${c.client_name?.split(' ')[0]}, your M-Care journey balance of ${usd(balance)} is due tomorrow. Pay now: ${payUrl} — ${BRAND}`
           ));
           sent.push({ case_id: c.id, days: 1, type: 'email+sms' });
         } else {

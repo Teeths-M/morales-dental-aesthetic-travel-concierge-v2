@@ -45,7 +45,7 @@ export default function ConfirmEmail() {
   return (
     <div style={{ minHeight: '100vh', background: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: '"SF Pro Display", system-ui, sans-serif' }}>
       <div style={{ maxWidth: 420, width: '100%', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 24, padding: '40px 32px', textAlign: 'center' }}>
-        <img src="/morales-m-mark.png" alt="Morales" style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }} />
+        <img src="/morales-m-mark.png" alt="M-Care" style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }} />
 
         {state === 'checking' && (
           <>

@@ -28,7 +28,7 @@ function loadPending() {
 
 /**
  * Lets a patient select more than one procedure in a single beat — the
- * precondition for Morales's core "wow moment": narrating that it's
+ * precondition for M-Care's core "wow moment": narrating that it's
  * evaluating whether the combination is safe (ProcedureEvaluationStep,
  * reusing the same procedureCompatibility engine every other cart-driven
  * flow in the app relies on) rather than silently accepting whatever was

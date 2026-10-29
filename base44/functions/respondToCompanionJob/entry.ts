@@ -92,7 +92,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       // Admin notification
       if (adminEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales — Companion Assignment',
+          from_name: 'M-Care — Companion Assignment',
           to: adminEmail,
           subject: `✅ Companion Accepted — ${companionDisplay} (${assignment.destination_country})`,
           body: `<p><strong>${escapeHtml(companionDisplay)}</strong> has accepted the companion job for case <strong>${escapeHtml(assignment.case_id)}</strong> in ${escapeHtml(assignment.destination_country)}.</p>
@@ -114,7 +114,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#0C1A1D;padding:28px 32px;border-bottom:1px solid #2A3F4A;">
-  <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Medical Travel Safety</div>
+  <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">M-Care Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:6px;">Companion Mission Briefing</div>
 </td></tr>
 <tr><td style="padding:32px;">
@@ -145,8 +145,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       <li>Accompany them to the clinic for their procedure</li>
       <li>Coordinate meal delivery during recovery</li>
       <li>Be available via WhatsApp during their stay</li>
-      <li>Complete HS6 (Companion Meal Delivery) in the Morales app</li>
-      <li>Report any safety concerns immediately to Morales Concierge</li>
+      <li>Complete HS6 (Companion Meal Delivery) in the M-Care app</li>
+      <li>Report any safety concerns immediately to M-Care Concierge</li>
     </ul>
   </div>
 
@@ -158,19 +158,19 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:16px 20px;">
     <p style="margin:0;font-size:12px;color:#fca5a5;line-height:1.6;">
-      <strong>Emergency Protocol:</strong> If you or the patient are in danger at any time, contact Morales Emergency Line immediately. Do not hesitate. Patient safety is always the priority.
+      <strong>Emergency Protocol:</strong> If you or the patient are in danger at any time, contact M-Care Emergency Line immediately. Do not hesitate. Patient safety is always the priority.
     </p>
   </div>
 
   <p style="margin:24px 0 0;font-size:12px;color:#475569;text-align:center;">
-    Morales Medical Travel Safety · Companion Mission Briefing · ${e(assignment.destination_country || '')}
+    M-Care Medical Travel Safety · Companion Mission Briefing · ${e(assignment.destination_country || '')}
   </p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 
       if (companionEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales — Companion Briefing',
+          from_name: 'M-Care — Companion Briefing',
           to: companionEmail,
           subject: `🌍 Your Mission Briefing — ${e(assignment.patient_first_name || 'Patient')} in ${e(assignment.destination_country || 'your destination')}`,
           body: briefingHtml,

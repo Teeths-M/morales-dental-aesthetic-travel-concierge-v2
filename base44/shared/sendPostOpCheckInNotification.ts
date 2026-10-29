@@ -28,7 +28,7 @@ export const QUESTIONS: Record<number, PostOpCheckInDayInfo> = {
   3:  { subject: '🌿 Day 3 Recovery Check-In — How are you doing?',          question: "You're 3 days home. How is your recovery going so far?", label: 'Day 3' },
   7:  { subject: '💛 One Week Post-Procedure — Quick Check-In',              question: "It's been one week since your procedure. How are you feeling?", label: 'One Week In' },
   14: { subject: "✨ Two-Week Recovery Milestone — Tell Us How You're Doing", question: 'Two weeks in — are you starting to see and feel the results?', label: 'Two Weeks In' },
-  30: { subject: '🏆 One Month Post-Procedure — Your Morales Journey Continues', question: 'One month on — how has your life changed since your procedure?', label: 'One Month In' },
+  30: { subject: '🏆 One Month Post-Procedure — Your M-Care Journey Continues', question: 'One month on — how has your life changed since your procedure?', label: 'One Month In' },
 };
 
 export async function sendPostOpCheckInNotification(base44: any, params: {
@@ -55,7 +55,7 @@ export async function sendPostOpCheckInNotification(base44: any, params: {
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#0C1A1D;padding:24px 32px;border-bottom:1px solid #2A3F4A;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">M-Care Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:6px;">Post-Procedure Recovery</div>
 </td></tr>
 <tr><td style="padding:32px;">
@@ -81,7 +81,7 @@ export async function sendPostOpCheckInNotification(base44: any, params: {
 </table></td></tr></table></body></html>`;
 
   await base44.asServiceRole.integrations.Core.SendEmail({
-    from_name: 'Morales — Recovery Care',
+    from_name: 'M-Care — Recovery Care',
     to:        patient_email,
     subject:   q.subject,
     body:      html,

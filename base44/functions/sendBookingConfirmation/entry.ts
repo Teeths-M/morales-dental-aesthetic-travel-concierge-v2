@@ -1,7 +1,7 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
-const BRAND   = 'Morales Medical Travel Safety';
+const BRAND   = 'M-Care Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -70,7 +70,7 @@ function bookingEmail({ clientName, procedures, departureDate, destination, case
       late-night risk patterns — and dispatches your concierge or security team automatically,
       before you ever need to ask for help.
       <br/><br/>
-      <em>You are never alone on a Morales journey.</em>
+      <em>You are never alone on a M-Care journey.</em>
     </p>
   </div>
 
@@ -78,7 +78,7 @@ function bookingEmail({ clientName, procedures, departureDate, destination, case
     Questions? Reach us on WhatsApp anytime. Your dedicated concierge is available 24/7.<br/>
     This is an automated confirmation. Please do not reply to this email.
   </p>
-  <p style="margin:14px 0 0;font-size:14px;color:#060B16;font-weight:700;">The Morales Concierge Team</p>
+  <p style="margin:14px 0 0;font-size:14px;color:#060B16;font-weight:700;">The M-Care Concierge Team</p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -130,7 +130,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   await base44.asServiceRole.integrations.Core.SendEmail({
     from_name: BRAND,
     to: clientEmail,
-    subject: `Your Morales journey is confirmed — ${caseRef}`,
+    subject: `Your M-Care journey is confirmed — ${caseRef}`,
     body: bookingEmail({ clientName, procedures, departureDate, destination, caseRef }),
   });
 

@@ -19,11 +19,11 @@ import { computePrevHash } from '../../shared/auditHashChain.ts';
  *   rock7_imei     — required for rockblock_iridium
  *   device_phone   — required for inreach_sms (E.164)
  *   device_label   — human label (e.g. "Garmin inReach Mini 2 — silver")
- *   include_in_package — boolean, true = device included/rented by Morales
+ *   include_in_package — boolean, true = device included/rented by M-Care
  *   send_test      — boolean, true = send verification message (default true)
  */
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {

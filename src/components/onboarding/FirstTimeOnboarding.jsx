@@ -46,11 +46,11 @@ function StepWelcome({ onNext }) {
   return (
     <div className="flex flex-col items-center text-center gap-6 py-4">
       <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 border border-[#D4AF37]/30 flex items-center justify-center">
-        <img src="/morales-m-mark.png" alt="Morales" className="w-10 h-10 object-contain" />
+        <img src="/morales-m-mark.png" alt="M-Care" className="w-10 h-10 object-contain" />
       </div>
 
       <div>
-        <h2 className="text-2xl font-semibold text-white mb-2">Welcome to Morales</h2>
+        <h2 className="text-2xl font-semibold text-white mb-2">Welcome to M-Care</h2>
         <p className="text-slate-400 text-base leading-relaxed max-w-xs mx-auto">
           Your personal medical travel concierge. We'll guide you every step of the way — from choosing a procedure to recovering safely at home.
         </p>

@@ -11,7 +11,7 @@ const BORDER = '#2A3F4A';
 const SCRIPT = [
   {
     speaker: 'M',
-    text: "Hello James. I'm M — your Morales concierge. I'll be with you every step of your journey. Where are you traveling to?",
+    text: "Hello James. I'm M — your M-Care concierge. I'll be with you every step of your journey. Where are you traveling to?",
     pause: 3200,
   },
   {
@@ -388,7 +388,7 @@ export default function JamesVoiceDemo() {
                     <Printer style={{ width: 13, height: 13 }} /> Print Brief
                   </button>
                   <a
-                    href={`mailto:?subject=James%20Williams%20—%20Emergency%20Medical%20Brief&body=MORALES%20CONCIERGE%20EMERGENCY%20BRIEF%0A%0APatient%3A%20James%20Emmanuel%20Williams%0ADOB%3A%20March%2019%2C%201987%0ABlood%20Type%3A%20O%2B%0AProcedure%3A%20Dental%20Implants%20(Day%204%20post-op)%0AConditions%3A%20Asthma%2C%20Type%202%20Diabetes%0AMedications%3A%20Metformin%20500mg%2C%20Ventolin%20inhaler%0AAllergies%3A%20Shellfish%20(anaphylaxis)%2C%20Penicillin%0ADoctor%3A%20Dr.%20Martinez%20—%20Tijuana%20Clinic%0ACompanion%3A%20Maria%20—%20%2B52%20664%20000%200000%0AEmergency%20Contact%3A%20Sandra%20—%20%2B1%20868%20000%200000%0A%0AMorales%20Concierge%2024%2F7%3A%20concierge%40morales-dental.com`}
+                    href={`mailto:?subject=James%20Williams%20—%20Emergency%20Medical%20Brief&body=MORALES%20CONCIERGE%20EMERGENCY%20BRIEF%0A%0APatient%3A%20James%20Emmanuel%20Williams%0ADOB%3A%20March%2019%2C%201987%0ABlood%20Type%3A%20O%2B%0AProcedure%3A%20Dental%20Implants%20(Day%204%20post-op)%0AConditions%3A%20Asthma%2C%20Type%202%20Diabetes%0AMedications%3A%20Metformin%20500mg%2C%20Ventolin%20inhaler%0AAllergies%3A%20Shellfish%20(anaphylaxis)%2C%20Penicillin%0ADoctor%3A%20Dr.%20Martinez%20—%20Tijuana%20Clinic%0ACompanion%3A%20Maria%20—%20%2B52%20664%20000%200000%0AEmergency%20Contact%3A%20Sandra%20—%20%2B1%20868%20000%200000%0A%0AM-Care%20Concierge%2024%2F7%3A%20concierge%40morales-dental.com`}
                     style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 0', borderRadius: 10, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
                   >
                     <Mail style={{ width: 13, height: 13 }} /> Email Brief

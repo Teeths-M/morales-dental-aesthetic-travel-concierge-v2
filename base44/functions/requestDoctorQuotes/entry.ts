@@ -22,7 +22,7 @@ import { guardedStatusUpdate, BOOKING } from '../../shared/bookingState.ts';
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const MAX_DOCTORS = 8;
 const QUOTE_WINDOW_HOURS = 72;
 const VERIFIED = new Set(['verified', 'auto_verified', 'manually_approved']);
@@ -67,7 +67,7 @@ function inviteEmail(portalUrl: string): string {
     A patient is requesting a quote for a procedure you specialise in. For their privacy, the details are in your secure portal — please log in to review the request and submit a fair, transparent quote.
   </p>
   <a href="${portalUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:14px 32px;border-radius:99px;text-decoration:none;">Open My Portal →</a>
-  <p style="font-size:12px;color:rgba(255,255,255,0.3);margin:24px 0 0;">No patient details are shared outside Morales — everything stays in your portal.</p>
+  <p style="font-size:12px;color:rgba(255,255,255,0.3);margin:24px 0 0;">No patient details are shared outside M-Care — everything stays in your portal.</p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -196,7 +196,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // ── Audit (append-only, hash-chained) ──────────────────────────────────────
   await base44.asServiceRole.entities.AuditLog.create({
     event_type: 'doctor_quotes_requested',
-    actor_id: 'system', actor_role: 'system', actor_name: 'Morales Marketplace',
+    actor_id: 'system', actor_role: 'system', actor_name: 'M-Care Marketplace',
     resource_type: 'DoctorQuoteRequest', resource_id: quoteRequest.id, case_id: caseId,
     sensitive: false, timestamp: now.toISOString(),
     details: { procedures, doctors_invited: invited, expires_at: expiresAt, is_minor: isMinor },

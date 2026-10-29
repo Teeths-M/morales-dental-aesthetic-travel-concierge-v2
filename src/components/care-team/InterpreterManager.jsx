@@ -8,7 +8,7 @@ import { Languages, Flag } from 'lucide-react';
  * Section 1557 language-access standard: machine translation is fine for
  * ordinary conversation, but self-identified bilingual staff or informal
  * translation does not meet the bar for consent/diagnosis/treatment/risk
- * discussion — a qualified human interpreter is required there, and Morales
+ * discussion — a qualified human interpreter is required there, and M-Care
  * doesn't yet offer one to book in-app (an honest, named v1 gap).
  */
 export default function InterpreterManager({ virtualConsultationId, languagesDiffer, patientLanguage, doctorLanguage, onAcknowledged = null }) {
@@ -37,7 +37,7 @@ export default function InterpreterManager({ virtualConsultationId, languagesDif
         You and {doctorLanguage ? 'your doctor' : 'this provider'} speak different languages
         {patientLanguage && doctorLanguage ? ` (${patientLanguage} vs ${doctorLanguage})` : ''}. Machine-translated
         captions can help with general conversation, but for consent, diagnosis, treatment, or risk discussion, a
-        qualified human interpreter is required — not a bilingual staff member, not AI translation. Morales doesn't
+        qualified human interpreter is required — not a bilingual staff member, not AI translation. M-Care doesn't
         yet offer one to book in-app.
       </p>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

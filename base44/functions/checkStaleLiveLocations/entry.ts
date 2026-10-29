@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
                 <p>This may mean their device lost internet, the app went to background, or the device was locked.</p>
                 <p><strong>Last known location:</strong> ${loc.latitude?.toFixed(5)}, ${loc.longitude?.toFixed(5)}</p>
                 <p><a href="${mapsUrl}">📍 View on Maps</a> &nbsp; <a href="${guardianUrl}">👁 Guardian Live View</a></p>
-                <p>If you cannot reach them, contact the Morales emergency line immediately.</p>`,
+                <p>If you cannot reach them, contact the M-Care emergency line immediately.</p>`,
             }).catch(() => {});
           }
         }
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
 
         if (adminEmail) {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: 'Morales Safe-T Emergency',
+            from_name: 'M-Care Safe-T Emergency',
             to: adminEmail,
             subject: `🚨 30-MIN LOCATION BLACKOUT — ${caseRecord?.client_name || loc.user_email}`,
             body: `<div style="background:#dc2626;color:white;padding:16px;border-radius:8px;"><strong>🚨 30-Minute Location Blackout</strong></div>

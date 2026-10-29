@@ -14,7 +14,7 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
  * Trigger: called from onDoctorConfirmed (auto) or admin CaseDetailDrawer (manual).
  */
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 // ── Role-specific AI prompt builder ──────────────────────────────────────────
 // LEAK-SCAN-IGNORE-START — this builds the InvokeLLM prompt, not an outbound

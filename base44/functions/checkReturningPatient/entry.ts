@@ -1,7 +1,7 @@
 /**
  * checkReturningPatient
  *
- * Detects whether a patient has prior completed cases with Morales.
+ * Detects whether a patient has prior completed cases with M-Care.
  * Called at the start of a new booking or on dashboard load.
  *
  * Returns:
@@ -86,7 +86,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (completedCases.length === 1) {
     welcomeMessage += ` You came to us for ${lastProcedure} in ${lastDestination}.`;
   } else {
-    welcomeMessage += ` You have trusted Morales ${completedCases.length} times now.`;
+    welcomeMessage += ` You have trusted M-Care ${completedCases.length} times now.`;
   }
   if (preferredCompanions.length) {
     welcomeMessage += ` ${preferredCompanions[0]} is available again if you'd like the same companion.`;

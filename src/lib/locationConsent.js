@@ -73,7 +73,7 @@ export function revokeLocationConsentLocally(caseId) {
  */
 export const LOCATION_CONSENT_POINTS = [
   'Your coordinator and your emergency contact can see where you are while your journey is active.',
-  'It updates as you move, and only while the Morales app is open on your phone.',
+  'It updates as you move, and only while the M-Care app is open on your phone.',
   'It switches itself off when your journey is complete.',
   'You can turn it off yourself at any time, and it stops immediately.',
 ];

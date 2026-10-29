@@ -594,7 +594,7 @@ function LoadingShell() {
     <div style={{ textAlign: 'center', color: TEXT_SOFT, fontSize: 'clamp(1rem, 2vw, 1.1rem)' }}>
       <img
         src="/morales-m-mark.png"
-        alt="Morales"
+        alt="M-Care"
         style={{ width: 36, height: 36, margin: '0 auto 16px', display: 'block', opacity: 0.6 }}
       />
       Preparing your consultation...
@@ -638,7 +638,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
     >
       <img
         src="/morales-m-mark.png"
-        alt="Morales"
+        alt="M-Care"
         style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }}
       />
 

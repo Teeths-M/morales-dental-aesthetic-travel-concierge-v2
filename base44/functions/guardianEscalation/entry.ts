@@ -74,7 +74,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     if (phone) {
       await base44.integrations.Twilio.SendSMS({
         to:   phone,
-        body: `Hi ${name}, Morales here 👋 We noticed your check-in is overdue. Tap the app or reply SAFE if you're okay.`,
+        body: `Hi ${name}, M-Care here 👋 We noticed your check-in is overdue. Tap the app or reply SAFE if you're okay.`,
       }).catch(() => {});
     }
 
@@ -96,14 +96,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     if (phone) {
       await base44.integrations.Twilio.SendSMS({
         to:   phone,
-        body: `${name}, Morales Guardian needs to hear from you. 2nd check-in missed. Reply SAFE or open the app now. If you need help, reply SOS.`,
+        body: `${name}, M-Care Guardian needs to hear from you. 2nd check-in missed. Reply SAFE or open the app now. If you need help, reply SOS.`,
       }).catch(() => {});
     }
 
     if (cons.emergency_contact_number) {
       await base44.integrations.Twilio.SendSMS({
         to:   cons.emergency_contact_number,
-        body: `[Morales Guardian] ${name} has missed a check-in. This is a precaution. Please try to contact them. Last known: ${context_note || 'see Guardian View link'}.`,
+        body: `[M-Care Guardian] ${name} has missed a check-in. This is a precaution. Please try to contact them. Last known: ${context_note || 'see Guardian View link'}.`,
       }).catch(() => {});
     }
 
@@ -126,7 +126,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     if (phone) {
       await base44.integrations.Twilio.SendSMS({
         to:   phone,
-        body: `🚨 URGENT — Morales: 3 missed check-ins. Reply SAFE immediately or emergency protocols activate. If in danger, reply SOS.`,
+        body: `🚨 URGENT — M-Care: 3 missed check-ins. Reply SAFE immediately or emergency protocols activate. If in danger, reply SOS.`,
       }).catch(() => {});
     }
 
@@ -134,8 +134,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     if (cons.emergency_contact_email || cons.emergency_contact_number) {
       await base44.integrations.Core.SendEmail({
         to:      cons.emergency_contact_email || `${cons.emergency_contact_number}@sms.example.com`,
-        subject: `[URGENT] Morales Guardian Alert — ${name} has missed 3 check-ins`,
-        body: `Hi ${cons.emergency_contact_name || 'Guardian'},\n\nThis is an urgent alert from Morales Guardian.\n\n${name} has missed 3 consecutive check-ins.\n\nAnomaly Score: ${anomaly_score}/100\nContext: ${context_note || 'No additional context'}\n\nPlease try to contact them immediately.\n\nIf you cannot reach them, contact Morales Emergency: our team is standing by.\n\n— Morales Safety Team`,
+        subject: `[URGENT] M-Care Guardian Alert — ${name} has missed 3 check-ins`,
+        body: `Hi ${cons.emergency_contact_name || 'Guardian'},\n\nThis is an urgent alert from M-Care Guardian.\n\n${name} has missed 3 consecutive check-ins.\n\nAnomaly Score: ${anomaly_score}/100\nContext: ${context_note || 'No additional context'}\n\nPlease try to contact them immediately.\n\nIf you cannot reach them, contact M-Care Emergency: our team is standing by.\n\n— M-Care Safety Team`,
       }).catch(() => {});
     }
 
@@ -153,7 +153,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // In-app critical notification
     await base44.asServiceRole.entities.Notification.create({
       user_email: email,
-      message:    '🚨 Morales Guardian has escalated your case. A team member will contact you shortly. If you are safe, tap "I\'m Safe" immediately.',
+      message:    '🚨 M-Care Guardian has escalated your case. A team member will contact you shortly. If you are safe, tap "I\'m Safe" immediately.',
       type:       'guardian_critical',
       is_read:    false,
       created_at: now,

@@ -6,7 +6,7 @@
  * status:'new', extracts structured facts via Core.InvokeLLM with a strict
  * JSON schema (falling back to a small, deterministic keyword extractor on
  * any LLM failure — never a second LLM retry, always low confidence),
- * resolves a mentioned clinic/provider against Morales's known partners
+ * resolves a mentioned clinic/provider against M-Care's known partners
  * (providerCandidateMatch.ts — always capped, never auto-trusted), and
  * advances each row to status:'analyzed'.
  */

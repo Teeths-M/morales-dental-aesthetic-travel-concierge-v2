@@ -123,7 +123,7 @@ async function notifyContact(base44, contact, ctx) {
           <p><strong>Last Known Location:</strong> ${ctx.locStr}</p>
           ${ctx.mapsUrl ? `<p><a href="${ctx.mapsUrl}">📍 Open in Google Maps</a></p>` : ''}
           ${ctx.guardianUrl ? `<p><a href="${ctx.guardianUrl}">👁 View live safety status, and options to reach out or request help</a></p>` : ''}
-          <p>${isUrgent ? 'Please try to contact them immediately. If you cannot reach them, Morales will continue escalating automatically.' : "We're here to protect them — please check in and make sure they're okay. This is an early, precautionary notice — no emergency has been declared."}</p>`,
+          <p>${isUrgent ? 'Please try to contact them immediately. If you cannot reach them, M-Care will continue escalating automatically.' : "We're here to protect them — please check in and make sure they're okay. This is an early, precautionary notice — no emergency has been declared."}</p>`,
       });
       result.emailSent = true;
     } catch (_) { /* non-blocking */ }
@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
         if (checkIn.case_id) {
           base44.asServiceRole.functions?.invoke?.('sendSatelliteMessage', {
             case_id: checkIn.case_id,
-            message: `MORALES SAFETY: We cannot reach you. Reply SAFE if okay or SOS if emergency. Help is on standby. — Morales Concierge`,
+            message: `MORALES SAFETY: We cannot reach you. Reply SAFE if okay or SOS if emergency. Help is on standby. — M-Care Concierge`,
             reason:  'missed_check_in_satellite_fallback',
           }).catch(() => {}); // non-blocking — doesn't gate the rest of escalation
         }
@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
               const voiceResp = await fetch(twilioUrl, {
                 method: 'POST',
                 headers: { Authorization: 'Basic ' + btoa(`${sid}:${auth}`), 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ From: from, To: checkIn.user_phone, Twiml: `<Response><Say>This is an automated safety call from Morales Medical. You have not responded to your check-in. Please open the app and confirm you are safe. If you are in danger, trigger the SOS button immediately.</Say></Response>` }),
+                body: new URLSearchParams({ From: from, To: checkIn.user_phone, Twiml: `<Response><Say>This is an automated safety call from M-Care Medical. You have not responded to your check-in. Please open the app and confirm you are safe. If you are in danger, trigger the SOS button immediately.</Say></Response>` }),
                 signal: controller.signal,
               });
               if (!voiceResp.ok) {
@@ -382,7 +382,7 @@ Deno.serve(async (req) => {
         if (adminEmail) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Safe-T Emergency',
+              from_name: 'M-Care Safe-T Emergency',
               to: adminEmail,
               subject: `🚨 5H ESCALATION — ${checkIn.user_name} — SECURITY DISPATCH REQUIRED`,
               body: `<div style="background:#dc2626;color:white;padding:20px;border-radius:8px;">
@@ -466,7 +466,7 @@ Deno.serve(async (req) => {
         if (adminEmail) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: 'Morales Safe-T EMERGENCY',
+              from_name: 'M-Care Safe-T EMERGENCY',
               to: adminEmail,
               subject: `🆘 9H EMERGENCY DISPATCH — ${checkIn.user_name} — CONTACT POLICE/EMBASSY NOW`,
               body: `<div style="background:#7f1d1d;color:white;padding:20px;border-radius:8px;">

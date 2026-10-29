@@ -214,7 +214,7 @@ export function detectViolations(input: unknown, scope: ViolationScope): Violati
  * pattern tripped is a instruction manual for evading it next time.
  */
 export const BLOCK_MESSAGE =
-  'This action has been blocked by Morales to protect your safety and privacy. ' +
+  'This action has been blocked by M-Care to protect your safety and privacy. ' +
   'Sharing contact information or attempting to bypass safety protocols is not ' +
   'allowed on this platform. If you believe this was a mistake, please contact support.';
 
@@ -224,5 +224,5 @@ export const BLOCK_MESSAGE =
  * is never processed as part of a workflow — it is answered once and closed.
  */
 export const REPLY_REDIRECT_MESSAGE =
-  'Please log in to the Morales app to take action on this request. ' +
+  'Please log in to the M-Care app to take action on this request. ' +
   'For your privacy and safety, we do not handle requests by reply.';

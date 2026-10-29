@@ -139,7 +139,7 @@ export default function WelcomeCountryModal({
               transition={{ delay: 1.3 }}
               className="text-slate-400 text-sm mb-8"
             >
-              Your Morales care team is ready. What do you need first?
+              Your M-Care care team is ready. What do you need first?
             </motion.p>
 
             {/* Actions */}

@@ -32,7 +32,7 @@ const PARTNERS = [
       '"Very gentle with my mother after surgery. Never rushed."',
       '"Spoke slowly and clearly. Made me feel safe."',
     ],
-    brief: `Mario is on his way. He has completed 347 Morales trips with zero complaints and a 4.9 star rating. Patients describe him as always on time and very gentle. He will call your name clearly when he arrives. He will not honk. He is 8 minutes away.`,
+    brief: `Mario is on his way. He has completed 347 M-Care trips with zero complaints and a 4.9 star rating. Patients describe him as always on time and very gentle. He will call your name clearly when he arrives. He will not honk. He is 8 minutes away.`,
   },
   {
     role: 'Companion',
@@ -64,7 +64,7 @@ const PARTNERS = [
     trips: 1247,
     rating: 4.95,
     complaints: 0,
-    badge: 'Morales Verified',
+    badge: 'M-Care Verified',
     specialty: 'Dental implants · Oral surgery · 18 years experience',
     eta: 'Clinic ready at 10:00 AM',
     plate: null,
@@ -74,7 +74,7 @@ const PARTNERS = [
       '"My implants healed in 3 days. He said I was his fastest recovery."',
       '"He called to check on me the next morning. Incredible care."',
     ],
-    brief: `Dr. Martinez has treated 1,247 dental patients through Morales. His satisfaction rate is 98.2% and his average recovery time is 3.8 days — faster than the regional average. Zero serious complications have been reported. The clinic team is fully prepared for your arrival.`,
+    brief: `Dr. Martinez has treated 1,247 dental patients through M-Care. His satisfaction rate is 98.2% and his average recovery time is 3.8 days — faster than the regional average. Zero serious complications have been reported. The clinic team is fully prepared for your arrival.`,
   },
 ];
 
@@ -93,13 +93,13 @@ function mapDoctorToPartner(doc) {
     trips: caseCount,
     rating: Math.round((score / 20) * 100) / 100, // 0-100 trust score → 0-5 stars
     complaints: null, // not tracked by this scoring system — show "—", never fabricate a count
-    badge: 'Morales Verified',
+    badge: 'M-Care Verified',
     specialty: doc.specialty || 'Dental & aesthetic procedures',
     eta: null,
     plate: null,
     car: null,
     quotes: [`Trust score computed from ${caseCount} case${caseCount === 1 ? '' : 's'}: confirmation speed, safety record, clinic check-in completion, and patient feedback.`],
-    brief: `${doc.full_name} has a Morales trust score of ${score}/100, computed from ${caseCount} case${caseCount === 1 ? '' : 's'} — confirmation speed, safety record, on-time clinic handshake completion, and patient feedback. Recalculated daily.`,
+    brief: `${doc.full_name} has a M-Care trust score of ${score}/100, computed from ${caseCount} case${caseCount === 1 ? '' : 's'} — confirmation speed, safety record, on-time clinic handshake completion, and patient feedback. Recalculated daily.`,
   };
 }
 
@@ -115,13 +115,13 @@ function mapCompanionToPartner(comp) {
     trips: assignmentCount,
     rating: Math.round((score / 20) * 100) / 100, // 0-100 performance score → 0-5 stars
     complaints: null,
-    badge: 'Morales Verified',
+    badge: 'M-Care Verified',
     specialty: 'Post-operative companion care',
     eta: null,
     plate: null,
     car: null,
     quotes: [`Performance score computed from ${assignmentCount} assignment${assignmentCount === 1 ? '' : 's'}: response speed, completion rate, patient feedback, and reliability.`],
-    brief: `${comp.full_name} has a Morales performance score of ${score}/100, computed from ${assignmentCount} assignment${assignmentCount === 1 ? '' : 's'} — response speed, completion rate, patient feedback, and reliability. Recalculated daily.`,
+    brief: `${comp.full_name} has a M-Care performance score of ${score}/100, computed from ${assignmentCount} assignment${assignmentCount === 1 ? '' : 's'} — response speed, completion rate, patient feedback, and reliability. Recalculated daily.`,
   };
 }
 
@@ -266,7 +266,7 @@ function PartnerCard({ partner, muted, expanded, onExpand }) {
           {/* Verified badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
             <CheckCircle2 style={{ width: 14, height: 14, color: GREEN }} />
-            <span style={{ fontSize: 11, color: GREEN, fontWeight: 700 }}>Morales verified · Background checked · Insured</span>
+            <span style={{ fontSize: 11, color: GREEN, fontWeight: 700 }}>M-Care verified · Background checked · Insured</span>
           </div>
         </div>
       )}

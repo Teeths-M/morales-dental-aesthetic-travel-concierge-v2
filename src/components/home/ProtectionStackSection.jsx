@@ -17,7 +17,7 @@ const OUTCOMES = [
     Icon: MapPin,
     color: '#22c55e',
     title: 'Every checkpoint confirmed.',
-    desc: 'From airport pickup to clinic arrival, every handshake is tracked in real time. Miss a check-in — and your Morales coordinator is alerted immediately and reaches out.',
+    desc: 'From airport pickup to clinic arrival, every handshake is tracked in real time. Miss a check-in — and your M-Care coordinator is alerted immediately and reaches out.',
   },
   {
     Icon: Users,
@@ -29,7 +29,7 @@ const OUTCOMES = [
     Icon: WifiOff,
     color: '#a855f7',
     title: 'No signal? You\'re still protected.',
-    desc: 'Offline GPS cache, queued emergency alerts, encrypted vault. When connectivity fails, Morales doesn\'t.',
+    desc: 'Offline GPS cache, queued emergency alerts, encrypted vault. When connectivity fails, M-Care doesn\'t.',
   },
 ];
 
@@ -64,7 +64,7 @@ export default function ProtectionStackSection() {
             fontSize: 16, color: 'rgba(255,255,255,0.45)',
             maxWidth: 520, margin: '0 auto', lineHeight: 1.7,
           }}>
-            Behind the scenes, Morales is running hundreds of checks, monitoring your journey,
+            Behind the scenes, M-Care is running hundreds of checks, monitoring your journey,
             and standing by — so you never have to think about what could go wrong.
           </p>
         </div>
@@ -143,7 +143,7 @@ export default function ProtectionStackSection() {
               Recovery doesn't end at the airport.
             </h3>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: 0, maxWidth: 660 }}>
-              When you land home, your Morales coordinator stays with you. Virtual follow-ups, care access,
+              When you land home, your M-Care coordinator stays with you. Virtual follow-ups, care access,
               and domestic doctor coordination continue through your full recovery — because the most vulnerable
               moment is often the one after you board the flight home.
             </p>
@@ -195,7 +195,7 @@ export default function ProtectionStackSection() {
             marginTop: 18, fontSize: 12,
             color: 'rgba(255,255,255,0.2)', fontStyle: 'italic', letterSpacing: '0.02em',
           }}>
-            Built by Portia Morales, after watching a family member navigate medical travel alone.
+            Built by Portia M-Care, after watching a family member navigate medical travel alone.
           </p>
         </div>
 

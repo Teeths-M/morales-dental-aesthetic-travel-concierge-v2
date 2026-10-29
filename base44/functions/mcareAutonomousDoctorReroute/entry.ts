@@ -90,7 +90,7 @@ Deno.serve(createHandler(async ({ req, base44, body }) => {
     if (adminEmail) {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Safety — Autonomous Doctor Reroute',
+          from_name: 'M-Care Safety — Autonomous Doctor Reroute',
           to: adminEmail,
           subject: `No backup doctor available — ${clientName}'s case needs manual assignment`,
           body: `<div style="font-family:sans-serif;max-width:560px;padding:24px;border:2px solid #dc2626;border-radius:12px;">

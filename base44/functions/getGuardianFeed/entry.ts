@@ -61,7 +61,7 @@ Deno.serve(createHandler(async ({ req }) => {
         notifs.push({
           kind: 'escalation',
           title: 'Check-in overdue — escalation active',
-          detail: 'Morales is actively checking on them',
+          detail: 'M-Care is actively checking on them',
           time: ts,
           ts: ts ? new Date(ts).getTime() : 0,
         });

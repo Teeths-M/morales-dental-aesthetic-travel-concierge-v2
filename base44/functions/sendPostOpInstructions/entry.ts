@@ -83,12 +83,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // instructions stay on the case, read in-app; outbound is link-only.
   if (patientEmail) {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: 'Morales Care Team',
+      from_name: 'M-Care Care Team',
       to: patientEmail,
       subject: 'Your post-op care instructions are ready',
       body: linkOnlyEmail({
         title: 'Your post-op care instructions are ready',
-        line: 'Your doctor’s notes and post-procedure care instructions are ready to view in your Morales app.',
+        line: 'Your doctor’s notes and post-procedure care instructions are ready to view in your M-Care app.',
         ctaUrl: `${APP_URL}/dashboard`,
         ctaLabel: 'Open My Instructions',
         from: 'sendPostOpInstructions',

@@ -85,7 +85,7 @@ Deno.serve(createHandler(async ({ req }) => {
         to: verification.partner_email,
         subject: '✅ Verification Approved - You Are Now Verified!',
         body: `<p>Great news! Your verification has been approved by our review team.</p>
-               <p>You now have the "Verified by Morales" badge on your profile.</p>
+               <p>You now have the "Verified by M-Care" badge on your profile.</p>
                <p>Reviewer: ${user.full_name}</p>
                ${notes ? `<p>Notes: ${notes}</p>` : ''}`
       });

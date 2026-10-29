@@ -8,7 +8,7 @@ import { Shield, ArrowRight, Lock, Heart, LayoutGrid } from 'lucide-react';
  *
  * Replaces the generic EmptyState with a warm, single-CTA welcome that:
  * - Greets the user by name
- * - Explains what Morales does in one sentence
+ * - Explains what M-Care does in one sentence
  * - Has ONE primary action: "Start Your Journey" → /intake
  * - Has a secondary "Browse All Features" link → /dashboard/features
  *
@@ -53,7 +53,7 @@ export default function DashboardWelcome({ user }) {
         style={{ lineHeight: 1.6 }}
       >
         Travel abroad for world-class medical care — and come home safely.
-        Morales watches over every checkpoint, so your family never worries.
+        M-Care watches over every checkpoint, so your family never worries.
       </motion.p>
 
       {/* ── Primary CTA ── */}

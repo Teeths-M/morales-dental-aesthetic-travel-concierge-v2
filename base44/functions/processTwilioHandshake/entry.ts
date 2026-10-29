@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
       if (adminEmail) {
         base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'Morales Safety — Security Alert',
+          from_name: 'M-Care Safety — Security Alert',
           to: adminEmail,
           subject: `🚨 HANDSHAKE SPOOFING ATTEMPT — ${checkpointId} — unregistered phone`,
           body: `A handshake confirmation was rejected because the sending phone number is not registered for this checkpoint.\n\nCheckpoint: ${checkpointId}\nHandshake type: ${h.handshake_type}\nCase ID: ${h.case_id}\nPatient: ${h.patient_name || h.patient_email}\nRejected from: ${fromPhone}\nTime: ${now}\n\nThe handshake has NOT been confirmed. Verify the patient's safety immediately.`,

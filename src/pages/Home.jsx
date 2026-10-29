@@ -10,7 +10,7 @@ import { NAVY, MUTED } from '@/components/landing/theme';
  *
  * Three sections and one greeting, in this order: the question, the evidence,
  * the invitation. The previous composition (hero, stats bar, how-it-works,
- * experts, why-Morales, protection stack, moments, sticky CTA) was removed from
+ * experts, why-M-Care, protection stack, moments, sticky CTA) was removed from
  * THIS page only — every one of those components still exists and the routes
  * that use them still work, so restoring any of them is a one-line change.
  */
@@ -46,10 +46,10 @@ export default function Home() {
             letterSpacing: '0.02em',
           }}
         >
-          Morales is a medical travel coordination service, not a medical provider. We do not provide
+          M-Care is a medical travel coordination service, not a medical provider. We do not provide
           medical advice, diagnosis, or treatment. All clinical decisions are made solely by licensed
           medical professionals. Savings estimates are based on average published US procedure list
-          prices and vary by provider, location, and individual case. Morales does not guarantee
+          prices and vary by provider, location, and individual case. M-Care does not guarantee
           clinical outcomes.
         </p>
       </div>

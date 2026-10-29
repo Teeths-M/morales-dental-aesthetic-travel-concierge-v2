@@ -72,7 +72,7 @@ export default function DoctorVerifiedBadge({ doctorId, showDetail = false }) {
       return (
         <div className="flex flex-col gap-0.5">
           <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-semibold">
-            <CheckCircle className="w-3.5 h-3.5" /> Verified by Morales
+            <CheckCircle className="w-3.5 h-3.5" /> Verified by M-Care
           </span>
           {doctorData.verification_method && (
             <span className="text-[11px] text-slate-400">
@@ -91,7 +91,7 @@ export default function DoctorVerifiedBadge({ doctorId, showDetail = false }) {
     }
     return (
       <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-        <CheckCircle className="w-3 h-3" /> Verified by Morales
+        <CheckCircle className="w-3 h-3" /> Verified by M-Care
       </span>
     );
   }

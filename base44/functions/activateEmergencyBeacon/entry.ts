@@ -11,7 +11,7 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
  * Output: { beacon_id, received_at, coords }
  */
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 
 function fmtCoord(lat: number, lon: number): string {
   return `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(4)}° ${lon >= 0 ? 'E' : 'W'}`;

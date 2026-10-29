@@ -24,7 +24,7 @@ import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
  *   81-100: CRITICAL — security team dispatched preemptively
  */
 
-const BRAND = 'Morales Medical Travel Safety';
+const BRAND = 'M-Care Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendSms(to: string, msg: string) {
@@ -216,7 +216,7 @@ async function analyzeCase(base44: any, caseRecord: any) {
     // Proactive patient outreach
     if (caseRecord.client_phone) {
       tasks.push(sendSms(caseRecord.client_phone,
-        `Hi ${firstName}, this is Morales Concierge. We noticed it's been a while since your last check-in. Please reply "SAFE" to confirm you're okay, or call us immediately if you need assistance. Your safety is our priority. — ${BRAND}`
+        `Hi ${firstName}, this is M-Care Concierge. We noticed it's been a while since your last check-in. Please reply "SAFE" to confirm you're okay, or call us immediately if you need assistance. Your safety is our priority. — ${BRAND}`
       ));
       actions.push('patient_sms_sent');
     }

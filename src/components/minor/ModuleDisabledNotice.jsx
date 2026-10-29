@@ -18,7 +18,7 @@ export default function ModuleDisabledNotice({ title = 'Not available yet' }) {
         <h1 className="text-xl font-semibold text-foreground mb-2">{title}</h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Minor reunification is not switched on for this account. If you are expecting it,
-          ask the Morales care team to enable it for the trip.
+          ask the M-Care care team to enable it for the trip.
         </p>
       </div>
     </div>

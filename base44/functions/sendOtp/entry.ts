@@ -59,13 +59,13 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: identifier,
-        subject: `${code} is your Morales verification code`,
+        subject: `${code} is your M-Care verification code`,
         body: renderEmail({
           appUrl,
           preheader: 'Your verification code — valid for 10 minutes.',
           eyebrow: 'Email Verification',
           title: 'Your verification code',
-          intro: 'Enter this code to verify your email address. It is valid for 10 minutes. Never share it with anyone — Morales staff will never ask for it.',
+          intro: 'Enter this code to verify your email address. It is valid for 10 minutes. Never share it with anyone — M-Care staff will never ask for it.',
           bodyHtml: `<p style="font-size:32px;letter-spacing:0.35em;font-weight:600;text-align:center;margin:24px 0;color:#0C1A1D;">${code}</p>`,
         }),
       });
@@ -91,7 +91,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     const smsBody = new URLSearchParams({
       From: fromNumber!,
       To:   identifier,
-      Body: `Your Morales verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
+      Body: `Your M-Care verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
     });
 
     const sendOnce = () => fetch(

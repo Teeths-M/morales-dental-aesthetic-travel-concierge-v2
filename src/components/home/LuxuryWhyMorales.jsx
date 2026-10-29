@@ -23,7 +23,7 @@ const features = [
   {
     icon: WifiOff,
     title: 'Works Without Internet',
-    desc: 'No signal. No wifi. Airplane mode. Morales still protects you — offline GPS cache, queued emergency SOS, encrypted PIN vault. Built for the worst-case scenario.',
+    desc: 'No signal. No wifi. Airplane mode. M-Care still protects you — offline GPS cache, queued emergency SOS, encrypted PIN vault. Built for the worst-case scenario.',
   },
 ];
 

@@ -85,11 +85,11 @@ export default function Header() {
     { name: t('nav.procedures'),    path: '/procedures', icon: ClipboardList,
       starterMessage: "I'd like to learn about a procedure — its risks, recovery, and what to expect." },
     { name: t('nav.how_it_works'),  path: '/how-it-works', icon: HelpCircle,
-      starterMessage: "Can you explain how Morales and M-Care work?" },
+      starterMessage: "Can you explain how M-Care and M-Care work?" },
     // Supply-side door — one quiet tab, no dropdown; M-Care asks which
     // partner type (doctor, travel agency, taxi, companion, security).
     { name: t('nav.for_partners'), path: '/signup', icon: Handshake,
-      starterMessage: "I'm interested in becoming a Morales partner." },
+      starterMessage: "I'm interested in becoming a M-Care partner." },
     // Demo entry is for judges/internal use — never shown to patients unless
     // explicitly enabled at build time (VITE_SHOW_DEMO_NAV=true). No
     // starterMessage — stays a normal link, untouched.
@@ -147,7 +147,7 @@ export default function Header() {
               flexShrink: 0,
             }}
           >
-            <img src="/morales-m-mark.png" alt="Morales" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+            <img src="/morales-m-mark.png" alt="M-Care" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
           </div>
           <div className="flex flex-col gap-[3px] min-w-0 overflow-hidden">
             <span
