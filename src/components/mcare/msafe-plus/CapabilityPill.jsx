@@ -1,39 +1,36 @@
 import React from 'react';
-import { Search, Shield, Share2, CircleCheck } from 'lucide-react';
-import { MSAFE_PALETTE as C } from '../msafePlusConfig';
+import { Search, Shield, LayoutGrid, Check, Share2, CircleCheck } from 'lucide-react';
 
-const ICONS = { Search, Shield, Share2, CircleCheck };
+// Share2 / CircleCheck stay mapped because the ring orb's own pill row uses
+// the older capability icon names.
+const ICONS = { Search, Shield, LayoutGrid, Check, Share2, CircleCheck };
 
-// A single white/transparent pill with a thin pale-gold border, a gold
-// thin-line icon, and a bold charcoal label. Subtle gold glow on hover/tap.
-export default function CapabilityPill({ label, icon, onClick }) {
+// A single rounded pill: thin-line icon and a label. `full` makes it fill its
+// grid cell in the sidebar's 2x2 capability block; without it the pill sizes
+// to its content, which is how the orb's row of pills uses it.
+export default function CapabilityPill({ label, icon, onClick, full = false }) {
   const Icon = ICONS[icon] || Search;
   return (
     <button
       type="button"
       onClick={onClick}
-      className="msafe-pill group inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-200"
+      className={`msafe-pill inline-flex items-center gap-2 rounded-xl px-3 py-2 transition-all duration-200 ${full ? 'w-full justify-start' : ''}`}
       style={{
-        background: 'rgba(255,255,255,0.6)',
-        border: `1px solid ${C.goldDeep}66`,
-        color: C.charcoal,
+        background: 'var(--ms-card)',
+        border: '1px solid var(--ms-border)',
+        color: 'var(--ms-ink)',
       }}
     >
-      <Icon
-        className="w-3.5 h-3.5 transition-colors"
-        strokeWidth={1.6}
-        style={{ color: C.goldDeep }}
-      />
-      <span className="text-[12px] font-semibold tracking-tight" style={{ color: C.charcoal }}>
+      <Icon className="w-[15px] h-[15px] flex-shrink-0" strokeWidth={1.7} style={{ color: 'var(--ms-gold)' }} />
+      <span className="text-[12.5px] font-semibold tracking-tight" style={{ color: 'var(--ms-ink)' }}>
         {label}
       </span>
       <style>{`
-        .msafe-pill:hover, .msafe-pill:active {
-          border-color: ${C.goldMid}cc;
-          box-shadow: 0 0 0 3px ${C.goldLight}33, 0 2px 10px ${C.goldDeep}22;
-          background: rgba(255,255,255,0.85);
+        .msafe-pill:hover {
+          border-color: var(--ms-gold);
+          box-shadow: 0 1px 6px rgba(0,0,0,0.05);
         }
-        .msafe-pill:active { transform: scale(0.96); }
+        .msafe-pill:active { transform: scale(0.98); }
       `}</style>
     </button>
   );

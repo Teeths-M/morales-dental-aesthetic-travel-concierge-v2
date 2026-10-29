@@ -1,8 +1,51 @@
 /**
- * msafePlusConfig — single source of truth for the M-Safe+ luxury workspace.
- * Palette, branding, capability data, chat styling, and the sample preview
- * conversation all live here so the presentational components stay clean.
+ * msafePlusConfig — single source of truth for the M-Safe+ workspace.
+ * Palette, branding, capability data and chat styling live here so the
+ * presentational components stay clean.
  */
+
+// The light "M-Safe+" workspace surface (the desktop reference). These are
+// exposed to the components as CSS custom properties on the workspace root,
+// so the moon control switches the entire surface by swapping values once
+// rather than threading a theme object through every component.
+export const MSAFE_THEME_VARS = {
+  light: {
+    '--ms-sidebar': '#FBF7EE',
+    '--ms-main': '#FFFFFF',
+    '--ms-card': '#FFFFFF',
+    '--ms-raised': '#FBFAF6',
+    '--ms-border': '#EAE3D5',
+    '--ms-border-soft': '#F2EDE2',
+    '--ms-ink': '#333333',
+    '--ms-ink-soft': '#666666',
+    '--ms-ink-faint': '#8C8C87',
+    '--ms-green': '#3CB371',
+    '--ms-green-bg': 'rgba(60, 179, 113, 0.12)',
+    '--ms-green-ink': '#1F7A4D',
+    '--ms-amber-bg': 'rgba(218, 165, 32, 0.14)',
+    '--ms-amber-ink': '#8A6512',
+    '--ms-gold': '#DAA520',
+    '--ms-chip': '#F6F1E4',
+  },
+  dark: {
+    '--ms-sidebar': '#12100C',
+    '--ms-main': '#0B0B0A',
+    '--ms-card': '#151410',
+    '--ms-raised': '#1A1814',
+    '--ms-border': '#2A2620',
+    '--ms-border-soft': '#221F1A',
+    '--ms-ink': '#F2EFE6',
+    '--ms-ink-soft': '#B9B3A4',
+    '--ms-ink-faint': '#8B8579',
+    '--ms-green': '#3CB371',
+    '--ms-green-bg': 'rgba(60, 179, 113, 0.16)',
+    '--ms-green-ink': '#6FD79C',
+    '--ms-amber-bg': 'rgba(218, 165, 32, 0.18)',
+    '--ms-amber-ink': '#E0BE6A',
+    '--ms-gold': '#D9B44A',
+    '--ms-chip': '#1E1B16',
+  },
+};
 
 export const MSAFE_PALETTE = {
   ivory: '#F8F7F3',
@@ -12,10 +55,6 @@ export const MSAFE_PALETTE = {
   goldMid: '#D8B85A',
   goldLight: '#F1DE9B',
   goldPlus: '#D4AF37',
-  // Nudged 2026-08-29 to the exact "LIVE SESSION" mint from the desktop
-  // "M-Safe+" light redesign reference (#27B86C) — zero other consumers of
-  // these three values exist besides LiveSessionBadge.jsx, confirmed via
-  // grep, so this is a contained value change, not a shared-risk edit.
   mintBg: 'rgba(39, 184, 108, 0.14)',
   mintDot: '#27B86C',
   mintText: '#166A3E',
@@ -24,7 +63,8 @@ export const MSAFE_PALETTE = {
 export const MSAFE_BRAND = {
   title: 'M-Safe',
   plus: '+',
-  subtitle: 'Morales Super Agent · Medical + Travel Concierge',
+  name: 'Morales Super Agent',
+  subtitle: 'Medical + Travel Concierge',
 };
 
 export const MSAFE_CHAT = {
@@ -52,23 +92,13 @@ export const CAPABILITIES = [
   {
     id: 'coordinate',
     label: 'Coordinate',
-    icon: 'Share2',
+    icon: 'LayoutGrid',
     intent: "Help me coordinate my medical travel — flights, accommodation, transfers, and the logistics around my procedure.",
   },
   {
     id: 'resolve',
     label: 'Resolve',
-    icon: 'CircleCheck',
+    icon: 'Check',
     intent: "I need to resolve something on my care journey. Help me weigh my options and take the right next step with confidence.",
   },
-];
-
-// Shown as a styled preview when no real conversation exists yet, so the
-// workspace matches the reference on first load. Replaced by real messages
-// the moment the user sends a message or taps a capability pill.
-export const SAMPLE_CONVERSATION = [
-  { role: 'user', content: "I need medical support arranged for travel to Geneva next week. Can you help?", time: '09:11' },
-  { role: 'assistant', content: "Of course — I'd be glad to help coordinate your medical care in Geneva. To get started, could you share:\n• Your travel dates (arrival & departure)\n• The type of medical support you need (consultation, procedure, physiotherapy)\n• Any language or accessibility preferences\n• Whether you already have a provider or need me to find one", time: '09:12' },
-  { role: 'user', content: "Arriving Oct 14th, departing Oct 21st. Need an English-speaking doctor, possible physiotherapy for a knee issue.", time: '09:12' },
-  { role: 'assistant', content: "Got it — I've identified 3 top English-speaking clinics near Geneva offering physiotherapy. I can book a consultation for Oct 15 or 16. Would you like me to coordinate travel, a nearby hotel, and your insurance documents?", time: '09:13' },
 ];

@@ -21,7 +21,7 @@ export default function ChatComposer({
   const canSend = (!!input.trim() || isUploading) && !disabled;
 
   return (
-    <div className="flex-shrink-0" style={{ borderTop: '1px solid rgba(210,169,61,0.18)', background: '#FBFAF6' }}>
+    <div className="flex-shrink-0" style={{ borderTop: '1px solid var(--ms-border)', background: 'var(--ms-main)' }}>
       <SmartInputSuggestions text={input} disabled={disabled} onApplyCorrection={onApplyCorrection} />
       <div className="flex items-center gap-2 px-3 py-3">
         <AddImageMenu
@@ -51,7 +51,7 @@ export default function ChatComposer({
             placeholder="Ask M-Safe anything…"
             disabled={disabled}
             className="w-full rounded-full"
-            style={{ background: '#FFFFFF', borderColor: 'rgba(210,169,61,0.3)' }}
+            style={{ background: 'var(--ms-card)', borderColor: 'var(--ms-border)', color: 'var(--ms-ink)' }}
           />
         </div>
         <button
@@ -76,7 +76,7 @@ export default function ChatComposer({
         .msafe-mic {
           width: 38px; height: 38px; border-radius: 9999px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: #FBF3DE; border: 1px solid rgba(210,169,61,0.35); color: #C9A43B;
+          background: var(--ms-chip); border: 1px solid var(--ms-border); color: var(--ms-gold);
           transition: all .15s;
         }
         .msafe-mic:hover { box-shadow: 0 0 0 3px rgba(210,169,61,0.12); }

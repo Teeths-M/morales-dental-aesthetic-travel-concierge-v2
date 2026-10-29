@@ -214,6 +214,7 @@ export default function MCareAgent() {
           hasConversation={hasConversation}
           loadingConvos={loadingConvos}
           greeting={GREETING}
+          onSelectIntent={handleSelectIntent}
         />
       }
     />
