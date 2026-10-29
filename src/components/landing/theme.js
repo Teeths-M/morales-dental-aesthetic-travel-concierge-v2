@@ -30,6 +30,10 @@ export const SANS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helve
 export const HERO_VIDEO =
   'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/54fd2ace2_23-WhoWouldKnow58s.mp4';
 
+/** The demonstration film — the ground behind the M-Safe workspace. */
+export const DEMO_VIDEO =
+  'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/c4f9da0f6_s4.mp4';
+
 /** The pilot film — the closing section's ground. */
 export const PILOT_VIDEO =
   'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/8bf574b87_Lisahappyend.mp4';

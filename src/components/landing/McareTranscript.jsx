@@ -1,5 +1,6 @@
 import MSafeDemo from './msafeDemo/MSafeDemo';
-import { WHITE, BODY, MUTED, SANS } from './theme';
+import AmbientVideo from './AmbientVideo';
+import { WHITE, BODY, MUTED, SANS, DEMO_VIDEO } from './theme';
 
 /**
  * McareTranscript — the product demonstration, and the only one on the page.
@@ -14,6 +15,8 @@ export default function McareTranscript() {
     <section
       id="mcare-demo"
       style={{
+        position: 'relative',
+        overflow: 'hidden',
         background: '#060B16',
         padding: 'clamp(40px, 8vh, 88px) clamp(16px, 4vw, 32px)',
         fontFamily: SANS,
@@ -21,7 +24,11 @@ export default function McareTranscript() {
       }}
       aria-labelledby="mcare-transcript-heading"
     >
-      <div style={{ maxWidth: 1040, margin: '0 auto' }}>
+      {/* The demonstration film runs behind the section, dimmed to a panel so
+          the workspace and the small print over it keep their contrast. */}
+      <AmbientVideo src={DEMO_VIDEO} variant="panel" objectPosition="center" />
+
+      <div style={{ position: 'relative', maxWidth: 1040, margin: '0 auto' }}>
         <div style={{ maxWidth: 720 }}>
           <p
             style={{
