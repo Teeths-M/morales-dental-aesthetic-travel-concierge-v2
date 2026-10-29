@@ -1,5 +1,6 @@
 import JoinPilotForm from './JoinPilotForm';
-import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF } from './theme';
+import AmbientVideo from './AmbientVideo';
+import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF, PILOT_VIDEO } from './theme';
 
 /**
  * PilotSection — the closing action, and the honest version of what the pilot is.
@@ -14,13 +15,19 @@ export default function PilotSection() {
       id="pilot"
       aria-labelledby="pilot-heading"
       style={{
+        position: 'relative',
+        overflow: 'hidden',
         background: '#060B16',
         borderTop: `1px solid ${HAIRLINE}`,
         padding: 'clamp(52px, 10vh, 104px) clamp(20px, 5vw, 40px)',
         fontFamily: SANS,
       }}
     >
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      {/* The pilot film sits behind the whole section, dimmed to a panel so the
+          form and the small print keep their contrast. */}
+      <AmbientVideo src={PILOT_VIDEO} variant="panel" objectPosition="center 45%" />
+
+      <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
         <p style={{ margin: 0, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD }}>
           Invitation only
         </p>

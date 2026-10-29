@@ -30,6 +30,10 @@ export const SANS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helve
 export const HERO_VIDEO =
   'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/54fd2ace2_23-WhoWouldKnow58s.mp4';
 
+/** The pilot film — the closing section's ground. */
+export const PILOT_VIDEO =
+  'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/8bf574b87_Lisahappyend.mp4';
+
 /** The two corridor frames. Empty hall, then one distant figure. */
 export const CORRIDOR_EMPTY =
   'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/0e05bf9b3_generated_image.png';

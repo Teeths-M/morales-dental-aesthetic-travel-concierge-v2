@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import HeroVideo from './HeroVideo';
-import { WHITE, BODY, RED, GOLD, SANS, MUTED } from './theme';
+import AmbientVideo from './AmbientVideo';
+import { WHITE, BODY, RED, GOLD, SANS, MUTED, HERO_VIDEO, CORRIDOR_EMPTY } from './theme';
 
 /**
  * LandingHero — the question, and the answer.
@@ -24,7 +24,7 @@ export default function LandingHero() {
         fontFamily: SANS,
       }}
     >
-      <HeroVideo />
+      <AmbientVideo src={HERO_VIDEO} poster={CORRIDOR_EMPTY} variant="hero" />
 
       <div
         style={{
