@@ -1,0 +1,41 @@
+{
+  "name": "Emergency Dispatch Offer Timeout Sweep",
+  "description": "Every 5 minutes (the platform's minimum schedule gap): expires any responder offer past its 90-second window and offers the next ranked responder, or marks the incident UNRESOLVED and pages the human care team. Also recovers an incident left mid-dispatch by a crash. NOTE: because the platform cannot schedule below 5 minutes, an expired offer can wait up to ~5 minutes before the next responder is offered. The function accepts an X-Cron-Secret header, so an external 1-minute scheduler can be pointed at it if tighter resolution is required.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "emergency_dispatch_offer_timeout_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sweepDispatchOffers",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

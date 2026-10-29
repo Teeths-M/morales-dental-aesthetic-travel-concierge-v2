@@ -1,0 +1,195 @@
+{
+  "name": "EmergencyDispatchPolicy",
+  "type": "object",
+  "description": "The per-country configuration that drives the dispatch machine deterministically: which emergency number applies, whether the emergency call is required by policy, which parties are notified, how long a responder offer lives, how many responders may be tried, and which responders form the pool. ADMIN-ONLY for every write \u2014 this is the one place verification tier, clinical risk fields and dispatch behaviour are authored, and no model or content tool may write it. offer_timeout_seconds defaults to 90 and max_offers defaults to 5 per the operating rule; max_concurrent_offers exists only to record the invariant (always 1) rather than to make it configurable.",
+  "properties": {
+    "country_code": {
+      "type": "string",
+      "description": "ISO-2 code this policy governs. One active policy per country."
+    },
+    "country_name": {
+      "type": "string"
+    },
+    "emergency_number": {
+      "type": "string",
+      "description": "The country's real emergency number (e.g. 999, 911). Only dialled automatically when requires_emergency_call is true."
+    },
+    "emergency_number_label": {
+      "type": "string"
+    },
+    "requires_emergency_call": {
+      "type": "boolean",
+      "default": false,
+      "description": "Policy decision, not an inference: whether a trigger of this type must also raise the local emergency services."
+    },
+    "notify_roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "patient",
+          "guardian",
+          "doctor",
+          "companion",
+          "care_team"
+        ]
+      },
+      "description": "Which parties the t=0 fanout must attempt. Emergency services are added separately from requires_emergency_call, so they can never be silently omitted by an empty list here."
+    },
+    "offer_timeout_seconds": {
+      "type": "number",
+      "default": 90,
+      "description": "How long a single responder has to accept before the offer expires and the next one is tried."
+    },
+    "max_offers": {
+      "type": "number",
+      "default": 5,
+      "description": "Hard cap on responders tried before the incident is declared UNRESOLVED."
+    },
+    "max_concurrent_offers": {
+      "type": "number",
+      "default": 1,
+      "description": "Always 1. Recorded here so the sequential-dispatch rule is explicit config rather than an unwritten assumption; the engine refuses to exceed it."
+    },
+    "responder_pool": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "responder_type": {
+            "type": "string",
+            "enum": [
+              "security_agency",
+              "taxi_service",
+              "companion",
+              "medical"
+            ]
+          },
+          "responder_id": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "The eligible responders for this country. Live verification status is re-read at dispatch time \u2014 being listed here never overrides a denied or suspended agency."
+    },
+    "escalation_contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Who to page when dispatch goes UNRESOLVED."
+    },
+    "care_team_contact": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "description": "The internal human care team \u2014 always notified, even when no policy exists for the country."
+    },
+    "clinical_risk_overrides": {
+      "type": "object",
+      "description": "Admin-authored clinical risk adjustments applied to this country's dispatch (e.g. forcing a stricter tier, or requiring the emergency call regardless of type). Never written by a model or content tool."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Incremented on every admin edit; copied into each incident's policy_snapshot."
+    },
+    "updated_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "country_code",
+    "offer_timeout_seconds",
+    "max_offers",
+    "is_active"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

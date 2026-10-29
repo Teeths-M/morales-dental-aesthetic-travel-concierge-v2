@@ -1,0 +1,174 @@
+{
+  "name": "DispatchOffer",
+  "type": "object",
+  "description": "One sequential offer of an incident to one responder. The engine guarantees at most ONE row per incident is in OFFERED status at any moment (asserted by countLiveOffers); a job is never broadcast to the pool. ranking fields are snapshotted at offer time \u2014 verification_tier, eta_seconds and whether that ETA was actually declared by the partner or is unknown \u2014 so a later ranking is explainable rather than reconstructed. expires_at drives the 90-second timer; an expired offer is moved to EXPIRED by sweepDispatchOffers and the next ranked responder is offered. offer_token is the unguessable handle a responder uses to accept or decline without an app login (the token IS the authorization; do not reuse it across incidents).",
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the patient's recovery record shows every offer made on their behalf."
+    },
+    "offer_token": {
+      "type": "string",
+      "description": "Random, unguessable responder handle. Deliberately not the record id."
+    },
+    "responder_id": {
+      "type": "string"
+    },
+    "responder_type": {
+      "type": "string",
+      "enum": [
+        "security_agency",
+        "taxi_service",
+        "companion",
+        "medical"
+      ]
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "responder_phone": {
+      "type": "string"
+    },
+    "responder_email": {
+      "type": "string"
+    },
+    "rank_position": {
+      "type": "number",
+      "description": "1-based position in the deterministic ranking, so the sequence is auditable."
+    },
+    "attempt_number": {
+      "type": "number",
+      "description": "Which offer this is for the incident (1 = first responder tried)."
+    },
+    "verification_tier": {
+      "type": "number",
+      "description": "Snapshotted verificationTierScore at offer time. Negative tiers are never offered at all."
+    },
+    "eta_seconds": {
+      "type": "number"
+    },
+    "eta_source": {
+      "type": "string",
+      "enum": [
+        "declared",
+        "unknown"
+      ],
+      "description": "Whether the partner actually published a response time, or the engine had to sort it last for having no ETA. Never a guessed number."
+    },
+    "last_accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Snapshot of the responder's most recent prior acceptance \u2014 the third ranking key."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "QUEUED",
+        "OFFERED",
+        "ACCEPTED",
+        "DECLINED",
+        "EXPIRED",
+        "WITHDRAWN"
+      ],
+      "default": "OFFERED"
+    },
+    "offered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the responder actually acted \u2014 preserved from an offline client action, never rewritten to send time."
+    },
+    "responded_at_source": {
+      "type": "string",
+      "enum": [
+        "client",
+        "server_fallback"
+      ]
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decline_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "patient_email",
+    "responder_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

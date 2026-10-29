@@ -1,0 +1,156 @@
+{
+  "name": "IncidentNotification",
+  "type": "object",
+  "description": "One row per party per channel for an incident's notification fanout. All rows are created QUEUED at trigger time and fired in parallel \u2014 delivery of one never gates another, and none of them ever gate dispatch. Each row carries its OWN independent status: QUEUED, SENT, DELIVERED, ACKNOWLEDGED or FAILED. SENT means the provider accepted the message and nothing more; only a real provider delivery receipt or a human acknowledgement may move it to DELIVERED/ACKNOWLEDGED, enforced by canAdvanceNotification. A row with neither a phone nor an email is still created with channel 'app' so an unreachable party is a VISIBLE gap rather than a silently missing row.",
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the patient may read the full fanout of their own incident."
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "push",
+        "sms",
+        "email",
+        "call",
+        "emergency_number",
+        "app"
+      ]
+    },
+    "recipient_role": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "guardian",
+        "doctor",
+        "companion",
+        "care_team",
+        "emergency_services",
+        "responder"
+      ]
+    },
+    "recipient_name": {
+      "type": "string"
+    },
+    "recipient_ref": {
+      "type": "string",
+      "description": "Phone or email actually targeted. Stored so the record shows who was really contacted."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "QUEUED",
+        "SENT",
+        "DELIVERED",
+        "ACKNOWLEDGED",
+        "FAILED"
+      ],
+      "default": "QUEUED"
+    },
+    "queued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "delivered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "provider_ref": {
+      "type": "string",
+      "description": "Provider message id (e.g. Twilio sid) used to match an inbound delivery receipt back to this row."
+    },
+    "is_live_fanout": {
+      "type": "boolean",
+      "default": true,
+      "description": "True for the t=0 fanout. Unresolved dispatch later pages the care team with additional rows rather than cancelling these \u2014 the standing notifications stay live."
+    }
+  },
+  "required": [
+    "incident_id",
+    "patient_email",
+    "channel",
+    "recipient_role",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

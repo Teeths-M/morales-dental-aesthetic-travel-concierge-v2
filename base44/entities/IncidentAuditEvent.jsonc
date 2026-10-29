@@ -1,0 +1,118 @@
+{
+  "name": "IncidentAuditEvent",
+  "type": "object",
+  "description": "The immutable audit trail for the dispatch machine. One row per state transition \u2014 incident status changes, every notification status change, every offer made / accepted / declined / expired, and every escalation. APPEND-ONLY: the update rule points at `immutable`, which nothing ever sets true, so no app user can alter a row, and delete is closed entirely. Rows are only ever created by the dispatch functions running as service role. `sequence` is monotonic per incident so the timeline can be reconstructed even if two rows share a timestamp.",
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the patient's read-only recovery record is built from these rows."
+    },
+    "sequence": {
+      "type": "number",
+      "description": "Monotonic counter per incident. Manifest order, independent of clock resolution."
+    },
+    "subject_type": {
+      "type": "string",
+      "enum": [
+        "incident",
+        "notification",
+        "offer"
+      ],
+      "description": "Which record the transition happened to."
+    },
+    "subject_id": {
+      "type": "string"
+    },
+    "from_state": {
+      "type": "string"
+    },
+    "to_state": {
+      "type": "string"
+    },
+    "actor": {
+      "type": "string",
+      "description": "Who caused it \u2014 'dispatch_engine', 'responder:<id>', 'care_team:<id>', or a system job name. Never a model."
+    },
+    "actor_type": {
+      "type": "string",
+      "enum": [
+        "engine",
+        "responder",
+        "care_team",
+        "patient",
+        "admin",
+        "provider_callback",
+        "system"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "description": "Channel involved, when the transition was a delivery (sms/email/push/call/emergency_number)."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the transition actually happened. For an offline-queued client action this is the client's original timestamp, never the flush time."
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Structured justification for the transition \u2014 the ranking that produced an offer, the timer value, the provider message id, the failure reason. Detail only, never free text shown to a patient."
+    },
+    "immutable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Always false and never written by anything. The update RLS rule requires this to be true, which no record can satisfy \u2014 that is what makes the table append-only at the platform level rather than by convention."
+    }
+  },
+  "required": [
+    "incident_id",
+    "patient_email",
+    "subject_type",
+    "subject_id",
+    "to_state",
+    "actor",
+    "actor_type",
+    "timestamp"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "data.immutable": true
+    },
+    "delete": false
+  }
+}

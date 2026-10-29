@@ -1,0 +1,214 @@
+{
+  "name": "Incident",
+  "type": "object",
+  "description": "A single emergency incident opened by the deterministic dispatch engine. No model creates, advances or closes one of these \u2014 every transition is written by openIncident, respondToDispatchOffer or sweepDispatchOffers, each of which is a pure state machine over the fields here. dedupe_key is the idempotency anchor: a duplicate trigger inside the same time bucket resolves to the SAME incident and must never open a second dispatch. policy_snapshot freezes the per-country policy in force at trigger time, so an incident can always be explained later even after the policy changes. This record deliberately contains no financial fields: a failed dispatch moves people, never funds.",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "description": "The user id of the patient the incident belongs to. RLS anchor."
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS and for the notification senders."
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string",
+      "description": "Optional journey/case grouping. Absent for an incident raised outside a trip."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "CaseRecord id when the incident is tied to a medical journey."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "medical",
+        "security",
+        "transport",
+        "natural_disaster",
+        "lost",
+        "other"
+      ],
+      "description": "What kind of emergency. Drives which emergency number and pool the policy selects."
+    },
+    "trigger_source": {
+      "type": "string",
+      "enum": [
+        "patient_sos",
+        "guardian",
+        "checkin_missed",
+        "companion",
+        "doctor",
+        "admin",
+        "offline_flush",
+        "system"
+      ],
+      "description": "Where the trigger came from. Recorded on the incident and on the opening audit event."
+    },
+    "client_ref": {
+      "type": "string",
+      "description": "Caller-supplied idempotency reference (e.g. an offline packet id) so a retried request is recognisable."
+    },
+    "dedupe_key": {
+      "type": "string",
+      "description": "patient_id:trip:type:time-bucket. Two triggers sharing this key are the same incident."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "DISPATCHING",
+        "ASSIGNED",
+        "EN_ROUTE",
+        "ARRIVED",
+        "UNRESOLVED",
+        "RESOLVED",
+        "DUPLICATE_SUPPRESSED"
+      ],
+      "default": "OPEN",
+      "description": "Advanced only through canTransitionIncident's table in shared/incidentDispatch.ts."
+    },
+    "country_code": {
+      "type": "string",
+      "description": "ISO-2 country used to select the policy and the emergency number."
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "location_label": {
+      "type": "string"
+    },
+    "clinical_risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Admin-authored clinical risk factors carried into the dispatch decision. Never written by a model or a content tool \u2014 the IncidentDispatchPolicy RLS and the absence of an agent grant are what enforce that."
+    },
+    "policy_snapshot": {
+      "type": "object",
+      "description": "The EmergencyDispatchPolicy in force at trigger time (emergency number, timers, max_offers, pool size), frozen so the incident remains explainable after the policy changes."
+    },
+    "policy_missing": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when no active policy existed for this country. The incident still opens and still notifies the internal care team; dispatch goes straight to UNRESOLVED with reason 'no_policy'. A visible config gap, never a silent failure."
+    },
+    "duplicate_of": {
+      "type": "string",
+      "description": "When this record lost the concurrent-trigger tiebreak, the id of the incident that survived."
+    },
+    "unresolved_reason": {
+      "type": "string",
+      "enum": [
+        "pool_exhausted",
+        "max_offers_reached",
+        "no_policy",
+        "no_eligible_responders"
+      ]
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_by": {
+      "type": "string"
+    },
+    "triggered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The moment the emergency actually happened on the client \u2014 preserved verbatim from an offline queue, never rewritten to server receive time."
+    },
+    "triggered_at_source": {
+      "type": "string",
+      "enum": [
+        "client",
+        "server_fallback"
+      ],
+      "description": "Whether triggered_at came from the caller or had to be filled with server time."
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the server accepted the trigger. Kept separately so a queued offline action is never misrepresented as having arrived when it happened."
+    }
+  },
+  "required": [
+    "patient_email",
+    "type",
+    "trigger_source",
+    "status",
+    "dedupe_key"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}
