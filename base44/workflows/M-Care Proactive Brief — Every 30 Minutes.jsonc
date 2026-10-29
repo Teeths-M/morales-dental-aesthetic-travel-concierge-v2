@@ -1,0 +1,41 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "m_care_proactive_brief_every_30_minutes",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "synthesizeProactiveBrief",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "name": "M-Care Proactive Brief \u2014 Every 30 Minutes",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 30,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-10-29T00:00:00Z",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "M-Care reads each active case across every system at once (safety check-ins, recovery check-ins, itinerary/transfer/doctor/payment gaps before departure, stalled stages) and speaks up about the single most important thing \u2014 or stays silent when nothing clears the bar."
+}

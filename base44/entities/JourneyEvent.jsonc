@@ -49,7 +49,8 @@
         "guardian_call_outcome",
         "partner_quote_confirmed",
         "emergency_packet_assembled",
-        "emergency_human_response_requested"
+        "emergency_human_response_requested",
+        "proactive_brief"
       ]
     },
     "source": {
@@ -66,7 +67,7 @@
     },
     "tool_result": {
       "type": "object",
-      "description": "Real structured outcome data for audit purposes only \u2014 never interpolated directly into a patient-facing bubble."
+      "description": "Real structured outcome data for audit purposes only \u2014 never interpolated directly into a patient-facing bubble. For event_type 'proactive_brief' this carries brief_key (the stable dedupe key that stops the same synthesized brief re-firing), signal (which cross-signal produced it), score, and that signal's own facts."
     },
     "user_action_required": {
       "type": "boolean",
