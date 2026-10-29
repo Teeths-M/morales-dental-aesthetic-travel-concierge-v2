@@ -14,7 +14,10 @@ import { MSAFE_THEME_VARS } from '../msafePlusConfig';
 const ThemeContext = createContext({ dark: false, toggle: () => {} });
 export const useMSafeTheme = () => useContext(ThemeContext);
 
-const THEME_KEY = 'msafe_theme';
+// v2: the workspace opens in its gold light surface. The previous key could
+// still hold a 'dark' choice from the retired console, which would open the
+// session on a surface nobody asked for.
+const THEME_KEY = 'msafe_theme_v2';
 
 export default function MSafeWorkspace({ left, right }) {
   const [dark, setDark] = useState(() => {

@@ -5,9 +5,12 @@ import { friendlyError } from '@/lib/friendlyError';
 import { useGhostTextSuggestion } from '@/hooks/useGhostTextSuggestion';
 import { buildAcceptedText } from '@/lib/ghostTextSuggestion';
 import { DOC_LABEL } from '@/components/mcare-agent/MCareVaultUpload';
-import MCareConsole from '@/components/mcare/console/MCareConsole';
+import MSafeWorkspace from '@/components/mcare/msafe-plus/MSafeWorkspace';
+import MSafeIdentityColumn from '@/components/mcare/msafe-plus/MSafeIdentityColumn';
+import MSafeChatPanel from '@/components/mcare/msafe-plus/MSafeChatPanel';
 
 const AGENT_NAME = 'm_care';
+const GREETING = "I'm M-Care, your personal journey coordinator. I'll help you get from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 
 export default function MCareAgent() {
   const { toast } = useToast();
@@ -173,25 +176,47 @@ export default function MCareAgent() {
 
   const hasConversation = conversations.length > 0 || activeConversationId;
 
+  // A capability pill seeds the conversation with its intent as the first
+  // user message (sendText creates the conversation if none exists).
+  const handleSelectIntent = (intent) => {
+    if (!isSending) sendText(intent);
+  };
+
   return (
-    <MCareConsole
-      messages={messages}
-      isSending={isSending}
-      messagesEndRef={messagesEndRef}
-      showDemo={!hasConversation && messages.length === 0}
-      onSafetyRespond={handleSafetyRespond}
-      input={input}
-      setInput={setInput}
-      onSend={sendMessage}
-      onKeyDown={handleKeyDown}
-      chatInputRef={chatInputRef}
-      onFileSelect={handleFileSelect}
-      vaultRef={vaultRef}
-      onVaulted={handleVaulted}
-      isUploading={isUploading}
-      ghostSuggestion={ghostSuggestion}
-      onApplyCorrection={(fixed) => setInput(fixed)}
-      onToast={toast}
+    <MSafeWorkspace
+      left={
+        <MSafeIdentityColumn
+          onSelectIntent={handleSelectIntent}
+          hasConversation={hasConversation}
+        />
+      }
+      right={
+        <MSafeChatPanel
+          messages={messages}
+          isSending={isSending}
+          messagesEndRef={messagesEndRef}
+          input={input}
+          setInput={setInput}
+          onSend={sendMessage}
+          onKeyDown={handleKeyDown}
+          chatInputRef={chatInputRef}
+          onFileSelect={handleFileSelect}
+          vaultRef={vaultRef}
+          onVaulted={handleVaulted}
+          isUploading={isUploading}
+          ghostSuggestion={ghostSuggestion}
+          onApplyCorrection={(fixed) => setInput(fixed)}
+          onToast={toast}
+          conversations={conversations}
+          onSelectConversation={selectConversation}
+          activeConversationId={activeConversationId}
+          onSafetyRespond={handleSafetyRespond}
+          hasConversation={hasConversation}
+          loadingConvos={loadingConvos}
+          greeting={GREETING}
+          onSelectIntent={handleSelectIntent}
+        />
+      }
     />
   );
 }
