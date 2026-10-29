@@ -81,6 +81,10 @@ const MReconDemo               = lazy(() => import('@/pages/MReconDemo'));
 const McareIntroDemo           = lazy(() => import('@/pages/McareIntroDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
+// Minor reunification — token-gated, no login. Both pages are inert until the
+// module's feature flag is switched on.
+const MinorPublicCard          = lazy(() => import('@/pages/MinorPublicCard'));
+const MinorHelp                = lazy(() => import('@/pages/MinorHelp'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -143,5 +147,10 @@ export const publicRoutes = (
     <Route path="/recovery-check-in/:token"  element={<ErrorBoundary><RecoveryCheckIn /></ErrorBoundary>} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<ErrorBoundary><PublicRecoveryTracker /></ErrorBoundary>} />
+    {/* Minor reunification — printed card (read-only, first name + case id only)
+        and the minor's own help screen. Neither requires a login: a lost child
+        does not have one. */}
+    <Route path="/card/:token"         element={<ErrorBoundary><MinorPublicCard /></ErrorBoundary>} />
+    <Route path="/minor-help/:token"   element={<ErrorBoundary><MinorHelp /></ErrorBoundary>} />
   </Route>
 );

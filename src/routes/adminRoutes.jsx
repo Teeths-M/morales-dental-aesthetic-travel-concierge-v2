@@ -54,6 +54,8 @@ const AdminVaultDocumentReview = lazy(() => import('@/pages/AdminVaultDocumentRe
 const AdminIncidentEvidence    = lazy(() => import('@/pages/AdminIncidentEvidence'));
 const AdminEvidenceWatch       = lazy(() => import('@/pages/AdminEvidenceWatch'));
 const IncidentConsole           = lazy(() => import('@/pages/IncidentConsole'));
+const MinorReunificationConsole = lazy(() => import('@/pages/MinorReunificationConsole'));
+const MinorCaseDetail           = lazy(() => import('@/pages/MinorCaseDetail'));
 
 export const adminRoutes = (
   <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
@@ -101,6 +103,8 @@ export const adminRoutes = (
       <Route path="/admin/incident-evidence"       element={<ErrorBoundary><AdminIncidentEvidence /></ErrorBoundary>} />
       <Route path="/admin/evidence-watch"          element={<ErrorBoundary><AdminEvidenceWatch /></ErrorBoundary>} />
       <Route path="/admin/incidents"                element={<ErrorBoundary><IncidentConsole /></ErrorBoundary>} />
+      <Route path="/admin/minor-reunification"      element={<ErrorBoundary><MinorReunificationConsole /></ErrorBoundary>} />
+      <Route path="/admin/minor-reunification/:id"  element={<ErrorBoundary><MinorCaseDetail /></ErrorBoundary>} />
       {/* Dev/test tools */}
       <Route path="/test-portal-link"                element={<ErrorBoundary><TestPortalLink /></ErrorBoundary>} />
       <Route path="/portal-test-hub"                 element={<ErrorBoundary><PortalTestHub /></ErrorBoundary>} />

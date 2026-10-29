@@ -1,0 +1,41 @@
+{
+  "name": "Minor Check-In Sweep",
+  "description": "Runs every 5 minutes (the platform's minimum schedule gap): finds every enrolled minor whose scheduled check-in window has elapsed and opens a reunification case for them \u2014 or attaches to the case already open \u2014 then lets the normal parallel fanout run. The trigger is stamped with the moment the check-in became due, not the moment the sweep noticed, so the recorded response time stays honest. The function does nothing else: it cannot advance a case's state, cannot close one, and cannot decide a minor is fine. It is a no-op while the minor_reunification feature flag is off.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "minor_checkin_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sweepMinorCheckIns",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
