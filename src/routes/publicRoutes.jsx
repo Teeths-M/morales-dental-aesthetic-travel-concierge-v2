@@ -85,17 +85,10 @@ const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
 // module's feature flag is switched on.
 const MinorPublicCard          = lazy(() => import('@/pages/MinorPublicCard'));
 const MinorHelp                = lazy(() => import('@/pages/MinorHelp'));
-// M-care pilot — the public single-page site. Its own design system, no chrome.
-const MCarePilot               = lazy(() => import('@/pages/MCarePilot'));
 
 export const publicRoutes = (
-  <>
-    {/* The marketing site sits OUTSIDE AppLayout: no header, no footer, no
-        product chrome. The product's previous home is preserved at /home. */}
-    <Route path="/" element={<ErrorBoundary><MCarePilot /></ErrorBoundary>} />
-
-    <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-      <Route path="/home"           element={<ErrorBoundary><Home /></ErrorBoundary>} />
+  <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
+    <Route path="/"               element={<ErrorBoundary><Home /></ErrorBoundary>} />
     <Route path="/discover"       element={<ErrorBoundary><Discover /></ErrorBoundary>} />
     <Route path="/providers"      element={<ErrorBoundary><Providers /></ErrorBoundary>} />
     <Route path="/providers/:id"  element={<ErrorBoundary><ProviderDetail /></ErrorBoundary>} />
@@ -159,6 +152,5 @@ export const publicRoutes = (
         does not have one. */}
     <Route path="/card/:token"         element={<ErrorBoundary><MinorPublicCard /></ErrorBoundary>} />
     <Route path="/minor-help/:token"   element={<ErrorBoundary><MinorHelp /></ErrorBoundary>} />
-    </Route>
-  </>
+  </Route>
 );
