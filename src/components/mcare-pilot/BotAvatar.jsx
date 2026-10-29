@@ -1,35 +1,18 @@
 /**
- * BotAvatar — the M-care mark, 32px.
+ * BotAvatar — M-care's own bot, at 32px.
  *
- * White body, gold linework, a thin gold ring. Small enough to sit beside every
- * message without competing with it, which is the point: the bot is visibly
- * present for the whole sequence rather than being named in a label.
+ * This is the real M-care render (`public/robot-avatar.png`, the same glossy
+ * white shell, black visor and amber eyes used everywhere in the product),
+ * not a redrawn stand-in — the walkthrough is showing this product, so the
+ * face in it has to be the face people actually meet in the app.
+ *
+ * It sits in a white circle with a thin gold ring: the brand accent, and the
+ * only thing that marks who is speaking now that the bubbles carry no labels.
  */
 export default function BotAvatar({ className = '' }) {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      width="32"
-      height="32"
-      className={`mp-avatar ${className}`}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <circle cx="16" cy="16" r="15.25" fill="#ffffff" stroke="#C9A227" strokeWidth="1.5" />
-      <circle cx="16" cy="7.4" r="1.3" fill="#C9A227" />
-      <path d="M16 8.7V10.8" stroke="#C9A227" strokeWidth="1.2" strokeLinecap="round" />
-      <rect
-        x="9.6"
-        y="10.8"
-        width="12.8"
-        height="9.6"
-        rx="3"
-        fill="#ffffff"
-        stroke="#C9A227"
-        strokeWidth="1.4"
-      />
-      <circle cx="13.4" cy="15.6" r="1.15" fill="#C9A227" />
-      <circle cx="18.6" cy="15.6" r="1.15" fill="#C9A227" />
-    </svg>
+    <span className={`mp-avatar ${className}`} aria-hidden="true">
+      <img src="/robot-avatar.png" alt="" width="32" height="32" />
+    </span>
   );
 }

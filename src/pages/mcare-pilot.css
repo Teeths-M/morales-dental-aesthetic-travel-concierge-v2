@@ -331,8 +331,22 @@
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
   margin-top: 1.15rem;
+  border: 1.5px solid #c9a227;
+  border-radius: 999px;
+  background-color: #ffffff;
+}
+
+.mp-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .mp-stamp {
