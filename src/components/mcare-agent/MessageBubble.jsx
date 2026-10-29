@@ -744,9 +744,14 @@ function ToolCallDisplay({ toolCall }) {
 // finds a signal worth reacting to (deterministic, client-side only — see
 // src/lib/mcareReactionHeuristic.js, the agent itself never decides this). All
 // optional → default rendering is unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, accentTextColor = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined }) {
+export default function MessageBubble({ message, onRespond, accent = null, accentTextColor = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined, variant = null }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
+  // variant="console" is the dark M-Care demonstration surface. It only
+  // changes how the bubble is painted — every piece of content inside
+  // (tokens, cards, attachments) renders exactly as before, so no caller
+  // loses a feature by opting in.
+  const consoleVariant = variant === 'console';
   // extraAudioUrl is a real, playable TTS audio URL attached client-side to
   // an assistant reply (see MCareOrb.jsx's voiceReplyAudioUrls) — not part
   // of message.file_urls itself (that array is server-authoritative and can
@@ -776,10 +781,16 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
   const ts = message.created_date || message.timestamp;
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
   const reaction = isUser && showReaction ? pickMessageReaction(message.content) : null;
-  const userBubbleClass = isUser
-    ? (accent ? 'text-white' : 'bg-primary text-primary-foreground')
-    : 'bg-card border border-border text-card-foreground';
-  const userBubbleStyle = isUser && accent ? { background: accent, ...(accentTextColor ? { color: accentTextColor } : {}) } : undefined;
+  const userBubbleClass = consoleVariant
+    ? ''
+    : isUser
+      ? (accent ? 'text-white' : 'bg-primary text-primary-foreground')
+      : 'bg-card border border-border text-card-foreground';
+  const userBubbleStyle = consoleVariant
+    ? (isUser
+      ? { background: '#232936', color: '#f0f0f0', border: '1px solid #2c333e' }
+      : { background: '#1a1f26', color: '#e0e0e0', border: '1px solid #242a33' })
+    : (isUser && accent ? { background: accent, ...(accentTextColor ? { color: accentTextColor } : {}) } : undefined);
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'}>
       {!isUser && showAvatar && (
@@ -798,7 +809,7 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
             reads as a single mark regardless of background, and the user
             side uses a deeper bronze than the assistant's lighter gold so it
             still contrasts clearly against its own bubble color. */}
-        <span
+        {!consoleVariant && <span
           aria-hidden="true"
           style={{
             position: 'absolute',
@@ -812,7 +823,7 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
               ? { borderRight: '2px solid #8A6412', borderTopRightRadius: 13 }
               : { borderLeft: '2px solid #C9A43B', borderTopLeftRadius: 13 }),
           }}
-        />
+        />}
         {(() => {
           const { text: t0 } = extractLocationContext(message.content);
           const { text: t1, choices } = extractChoices(t0);

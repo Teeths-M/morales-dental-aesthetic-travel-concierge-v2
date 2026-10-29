@@ -16,6 +16,7 @@ export default function ChatComposer({
   input, setInput, onSend, onKeyDown, chatInputRef,
   onFileSelect, vaultRef, onVaulted, isUploading, isSending,
   ghostSuggestion, onApplyCorrection, onToast,
+  placeholder = 'Ask M-Safe anything…',
 }) {
   const disabled = isSending || isUploading;
   const canSend = (!!input.trim() || isUploading) && !disabled;
@@ -48,7 +49,7 @@ export default function ChatComposer({
               disabled,
               onError: (msg) => onToast?.({ title: 'Paste', description: msg, variant: 'destructive' }),
             })}
-            placeholder="Ask M-Safe anything…"
+            placeholder={placeholder}
             disabled={disabled}
             className="w-full rounded-full"
             style={{ background: 'var(--ms-card)', borderColor: 'var(--ms-border)', color: 'var(--ms-ink)' }}
