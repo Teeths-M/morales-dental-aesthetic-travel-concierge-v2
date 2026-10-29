@@ -245,29 +245,54 @@
   font-weight: 500;
 }
 
+/* A bright screen in a dark room. The frame is the only white on the page. */
 .mp-phone {
   position: relative;
   width: 100%;
   max-width: 372px;
   margin-left: auto;
-  background-color: #0e131a;
-  border: 1px solid rgba(245, 243, 239, 0.16);
-  padding: 0.9rem 0.85rem 1rem;
+  background-color: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.5);
 }
 
-.mp-phone-notch {
-  width: 52px;
-  height: 3px;
-  margin: 0 auto 0.9rem;
-  background-color: rgba(245, 243, 239, 0.2);
+.mp-chat-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  /* the avatar carries a top offset for message rows; not here */
+  padding: 0.95rem 1.1rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ededed;
+}
+
+.mp-chat-head .mp-avatar {
+  margin-top: 0;
+}
+
+.mp-chat-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: #111111;
+}
+
+.mp-chat-status {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #6b6b6b;
 }
 
 .mp-thread {
-  height: clamp(340px, 50vh, 500px);
+  height: clamp(380px, 56vh, 560px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  background-color: #ffffff;
+  padding: 1rem 1.1rem 1.25rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(245, 243, 239, 0.2) transparent;
+  scrollbar-color: rgba(17, 17, 17, 0.18) transparent;
 }
 
 .mp-thread::-webkit-scrollbar {
@@ -275,56 +300,139 @@
 }
 
 .mp-thread::-webkit-scrollbar-thumb {
-  background-color: rgba(245, 243, 239, 0.2);
+  background-color: rgba(17, 17, 17, 0.18);
+}
+
+/* One row per message. The gutter is the avatar's width either way, so the
+   driver's replies stay on the same axis as the bot's even though the driver
+   has no face here. */
+.mp-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 1.15rem;
+}
+
+.mp-row:last-child {
+  margin-bottom: 0;
+}
+
+.mp-row-gutter {
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.mp-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.mp-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: block;
+  margin-top: 1.15rem;
 }
 
 .mp-stamp {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.45rem;
+  gap: 0.45rem;
+  margin-bottom: 0.4rem;
   font-size: 0.6875rem;
   line-height: 1.4;
-  color: rgba(245, 243, 239, 0.42);
+  color: #6b6b6b;
 }
 
 .mp-stamp-time {
-  color: rgba(245, 243, 239, 0.55);
+  color: #6b6b6b;
 }
 
 .mp-dev {
-  border: 1px solid rgba(245, 243, 239, 0.26);
-  padding: 0.06rem 0.4rem;
+  background-color: #e4e4e4;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
   font-size: 0.5938rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  color: rgba(245, 243, 239, 0.55);
+  letter-spacing: 0.08em;
+  color: #111111;
   white-space: nowrap;
 }
 
 .mp-bubble {
-  background-color: rgba(245, 243, 239, 0.06);
-  border: 1px solid rgba(245, 243, 239, 0.09);
+  display: inline-block;
+  max-width: 100%;
+  background-color: #f1f1f1;
+  border: 0;
+  border-radius: 14px;
   padding: 0.8rem 0.95rem;
   font-size: 1rem;
-  line-height: 1.5;
-  color: #f5f3ef;
+  line-height: 1.65;
+  color: #111111;
   letter-spacing: -0.005em;
 }
 
-/* The only place red appears in this section: a step where something is
-   escalated to someone. Nothing else in the walkthrough is accented. */
+/* The only red in the section, on the two steps where something is escalated:
+   the missed check-in and the message to the doctor. */
 .mp-bubble--escalation {
-  border-left: 2px solid #e23b2e;
+  border-left: 3px solid #b3261e;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
 }
 
 .mp-close-card {
-  border: 1px solid rgba(245, 243, 239, 0.18);
+  background-color: #fbf7e8;
+  border: 1px solid #c9a227;
+  border-radius: 14px;
   padding: 1rem 1.05rem;
   font-size: 1rem;
-  line-height: 1.5;
-  color: rgba(245, 243, 239, 0.82);
+  line-height: 1.6;
+  color: #111111;
+}
+
+.mp-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background-color: #f1f1f1;
+  border-radius: 14px;
+  padding: 0.9rem 0.95rem;
+}
+
+.mp-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background-color: #9a9a9a;
+  animation: mp-dot 1.15s ease-in-out infinite;
+}
+
+.mp-dot:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.mp-dot:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+.mp-typing--paused .mp-dot {
+  animation-play-state: paused;
+}
+
+@keyframes mp-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
 }
 
 .mp-ghost {
@@ -350,6 +458,38 @@
 .mp-ghost:disabled {
   opacity: 0.32;
   cursor: default;
+}
+
+/* The primary control carries the brand gold. */
+.mp-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #c9a227;
+  border: 1px solid #c9a227;
+  color: #111111;
+  padding: 0.7rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+
+.mp-play:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.mp-play:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+/* The transcript sits on the dark page, so it keeps the light-on-dark stamp. */
+.mp-transcript-stamp {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(245, 243, 239, 0.62);
 }
 
 .mp-enter {
