@@ -12,7 +12,13 @@ import { WHITE, BODY, MUTED, SANS } from './theme';
 export default function McareTranscript() {
   return (
     <section
-      style={{ background: '#060B16', padding: 'clamp(40px, 8vh, 88px) clamp(16px, 4vw, 32px)', fontFamily: SANS }}
+      id="mcare-demo"
+      style={{
+        background: '#060B16',
+        padding: 'clamp(40px, 8vh, 88px) clamp(16px, 4vw, 32px)',
+        fontFamily: SANS,
+        scrollMarginTop: 16,
+      }}
       aria-labelledby="mcare-transcript-heading"
     >
       <div style={{ maxWidth: 1040, margin: '0 auto' }}>

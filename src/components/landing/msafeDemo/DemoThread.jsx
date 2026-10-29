@@ -54,6 +54,35 @@ function AgentText({ step }) {
   );
 }
 
+/**
+ * Decision — the fork in the road, stated plainly, with the rule that decided
+ * it. This is the element the whole demo exists to show: what the agent chose,
+ * and why it was allowed to choose it.
+ */
+function Decision({ step }) {
+  return (
+    <div className="msd-item">
+      <div
+        style={{
+          border: `1px solid ${C.border}`,
+          borderLeft: `2px solid ${C.gold}`,
+          borderRadius: 10,
+          background: '#FBF8F1',
+          padding: '10px 12px 11px',
+        }}
+      >
+        <p style={{ margin: 0, fontSize: 8.5, fontWeight: 700, letterSpacing: '0.16em', color: C.goldInk }}>
+          DECISION
+        </p>
+        <p style={{ margin: '5px 0 0', fontSize: 12.5, fontWeight: 700, color: C.ink, lineHeight: 1.45 }}>
+          {step.title}
+        </p>
+        <p style={{ margin: '5px 0 0', fontSize: 11, color: C.soft, lineHeight: 1.6 }}>{step.rule}</p>
+      </div>
+    </div>
+  );
+}
+
 function Verb({ step }) {
   return (
     <div className="msd-item" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '1px 2px' }}>
@@ -91,6 +120,7 @@ export default function DemoThread({ items, typing }) {
     <div className="msd-thread">
       {items.map((step, index) => {
         if (step.kind === 'verb') return <Verb key={index} step={step} />;
+        if (step.kind === 'decision') return <Decision key={index} step={step} />;
         if (step.kind === 'doctor') return <DoctorCard key={index} step={step} />;
         return <AgentText key={index} step={step} />;
       })}

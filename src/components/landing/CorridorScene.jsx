@@ -115,6 +115,17 @@ export default function CorridorScene({ sectionRef }) {
         style={{ position: 'absolute', inset: 0, background: NAVY, opacity: 0.8 }}
       />
 
+      {/* Vignette — pulls the eye down the centre of the corridor and stops the
+          corners going flat as the figure comes forward. */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(ellipse at 50% 46%, rgba(0,0,0,0) 28%, rgba(4,7,14,0.52) 76%, rgba(4,7,14,0.86) 100%)',
+        }}
+      />
+
       {/* Readability gradient under the copy, plus a seamless join into the
           transcript section below so the scene has no visible edge. */}
       <div

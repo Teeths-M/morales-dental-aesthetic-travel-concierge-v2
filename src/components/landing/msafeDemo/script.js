@@ -2,10 +2,14 @@
  * The three situations the landing-page demo actually plays, one after another.
  *
  * Each step is a moment in the session: a message from M-Care ('text'), a tool
- * the agent actually runs ('verb'), or a provider check result ('doctor').
- * `completes` marks which task pill the step finishes. Delays are the pause
- * BEFORE that step appears, so the whole thing paces like a session rather
- * than a slideshow.
+ * the agent actually runs ('verb'), a provider check result ('doctor'), or a
+ * decision it states out loud ('decision').
+ *
+ * The decision steps are the point. Anyone can claim to be careful; the demo
+ * shows the fork in the road and which way the agent went, with the rule that
+ * decided it. `completes` marks which task pill the step finishes; delays are
+ * the pause BEFORE that step appears, so the whole thing paces like a session
+ * rather than a slideshow.
  */
 export const SCENARIOS = [
   {
@@ -49,9 +53,15 @@ export const SCENARIOS = [
         note: 'No electronic registry available for this credential yet — flagged for care-team review, not marked failed.',
       },
       {
+        kind: 'decision',
+        delay: 1500,
+        title: 'Elena is verified. Marco is not verified — and not failed.',
+        rule: 'A badge is only issued from a primary source. Where I cannot reach one, I say so and hand it to a human rather than quietly deciding.',
+      },
+      {
         kind: 'text',
-        delay: 1600,
-        text: 'So to be precise about what that badge means: a primary source confirmed the credential today. It is a statement about evidence, not a score, and not a promise about the surgery. Where I cannot reach a register, I say so rather than quietly marking the surgeon failed.',
+        delay: 1500,
+        text: 'That is the whole rule: verified is a statement about evidence, not a score, and never a promise about the surgery.',
         note: 'Pilot note: licence verification covers the electronic registries reachable today — not every country publishes one.',
       },
     ],
@@ -85,8 +95,14 @@ export const SCENARIOS = [
         completes: 1,
       },
       {
+        kind: 'decision',
+        delay: 1500,
+        title: 'Guardian paged. Emergency services not called.',
+        rule: 'A missed window is a signal, not an emergency. Something has to be genuinely wrong before a siren is raised, and a person makes that call.',
+      },
+      {
         kind: 'text',
-        delay: 1600,
+        delay: 1500,
         text: 'If you tap check-in in the next 90 seconds this stops here. If you do not, I call the front desk myself.',
         note: 'Pilot note: escalation to emergency services is never automatic — a human care-team member places that call.',
       },
@@ -112,13 +128,19 @@ export const SCENARIOS = [
       {
         kind: 'text',
         delay: 1700,
-        text: 'Two seats are held on the 11:15 to San José, and the clinic has been told to expect you an hour later. Neither is booked — I will not spend your money without you.',
+        text: 'Two seats are held on the 11:15 to San José, and the clinic has been told to expect you an hour later.',
       },
       {
         kind: 'verb',
         delay: 1500,
         text: 'mcareAutonomousFlightReroute · clinic and driver rescheduled',
         completes: 1,
+      },
+      {
+        kind: 'decision',
+        delay: 1500,
+        title: 'Rebooking prepared. Purchase withheld.',
+        rule: 'Your approval is the last step of every purchase, however urgent the morning is. I hold seats; I do not spend your money.',
       },
       {
         kind: 'text',

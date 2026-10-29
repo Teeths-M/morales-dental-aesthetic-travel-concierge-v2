@@ -43,12 +43,15 @@ export default function LandingHero() {
               margin: 0,
               fontFamily: SANS,
               fontWeight: 600,
-              letterSpacing: '-0.025em',
+              letterSpacing: '-0.032em',
               color: WHITE,
-              // Sized so the longest line never wraps awkwardly at 360px.
-              fontSize: 'clamp(1.75rem, 4.1vw, 3.35rem)',
-              lineHeight: 1.1,
+              // Two lines, by design — the question lands on the first and
+              // leaves a breath for the answer. Sized so neither line wraps
+              // into a third at 360px.
+              fontSize: 'clamp(1.9rem, 4.4vw, 3.75rem)',
+              lineHeight: 1.04,
               textWrap: 'balance',
+              textShadow: '0 2px 34px rgba(4,7,14,0.65)',
             }}
           >
             If something happened to you abroad tonight, who would know?
@@ -56,13 +59,15 @@ export default function LandingHero() {
 
           <p
             style={{
-              margin: 'clamp(8px, 1.2vh, 16px) 0 0',
+              margin: 'clamp(6px, 1vh, 12px) 0 0',
               fontWeight: 700,
-              letterSpacing: '-0.03em',
+              letterSpacing: '-0.038em',
               color: RED,
-              // Deliberately a touch larger than the question.
-              fontSize: 'clamp(2.3rem, 5.4vw, 4.5rem)',
-              lineHeight: 1.02,
+              // Deliberately larger than the question: this is the line people
+              // remember, so it has to out-weigh the fear that sets it up.
+              fontSize: 'clamp(2.6rem, 6.2vw, 5.2rem)',
+              lineHeight: 0.98,
+              textShadow: '0 2px 40px rgba(4,7,14,0.6)',
             }}
           >
             Someone would.
@@ -103,6 +108,34 @@ export default function LandingHero() {
               Invitation only · limited places
             </span>
           </div>
+
+          {/* The hook stops them; this is the hand-off to the proof. */}
+          <a
+            href="#mcare-demo"
+            style={{
+              marginTop: 'clamp(30px, 5vh, 52px)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 12,
+              textDecoration: 'none',
+              color: MUTED,
+              fontSize: 10.5,
+              fontWeight: 600,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                display: 'inline-block',
+                width: 1,
+                height: 34,
+                background: `linear-gradient(to bottom, rgba(212,175,55,0), ${GOLD})`,
+              }}
+            />
+            Watch it work
+          </a>
         </div>
       </div>
     </section>
