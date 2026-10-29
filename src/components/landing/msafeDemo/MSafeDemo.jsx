@@ -201,6 +201,35 @@ export default function MSafeDemo() {
         @keyframes msd-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(60,179,113,0.5); } 50% { box-shadow: 0 0 0 4px rgba(60,179,113,0); } }
         .msd-pulse { animation: msd-pulse 2.2s ease-out infinite; }
 
+        /* The moment the agent commits to one course of action: a gold halo
+           blooms once as the block lands, then settles into a quiet resting
+           glow so the decision still reads as the considered one. */
+        @keyframes msd-decision-glow {
+          0%   { box-shadow: 0 1px 2px rgba(45,42,38,0.04), 0 0 0 0 rgba(197,160,89,0); }
+          26%  { box-shadow: 0 6px 18px rgba(197,160,89,0.20), 0 0 0 5px rgba(197,160,89,0.13); }
+          100% { box-shadow: 0 8px 20px rgba(197,160,89,0.12), 0 0 0 0 rgba(197,160,89,0); }
+        }
+        .msd-decision {
+          position: relative;
+          box-shadow: 0 8px 20px rgba(197,160,89,0.12);
+          animation: msd-decision-glow 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        }
+        /* An inner gold sheen from the deciding edge — texture, not glare. */
+        .msd-decision::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          pointer-events: none;
+          background: radial-gradient(130% 150% at 0% 0%, rgba(197,160,89,0.16), rgba(197,160,89,0) 64%);
+          animation: msd-decision-sheen 2.4s ease-out both;
+        }
+        @keyframes msd-decision-sheen {
+          0%   { opacity: 0; }
+          30%  { opacity: 1; }
+          100% { opacity: 0.5; }
+        }
+
         @media (max-width: 860px) {
           .msd-shell { grid-template-columns: 1fr; min-height: 0; }
           .msd-sidebar { display: none; }
@@ -212,7 +241,8 @@ export default function MSafeDemo() {
           .msd-body { padding: 13px 12px 16px; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .msd-item, .msd-dot, .msd-pulse { animation: none !important; }
+          .msd-item, .msd-dot, .msd-pulse, .msd-decision, .msd-decision::before { animation: none !important; }
+          .msd-decision::before { opacity: 0.5; }
         }
       `}</style>
     </div>

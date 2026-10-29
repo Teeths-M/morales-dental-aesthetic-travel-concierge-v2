@@ -63,11 +63,12 @@ function Decision({ step }) {
   return (
     <div className="msd-item">
       <div
+        className="msd-decision"
         style={{
           border: `1px solid ${C.border}`,
           borderLeft: `2px solid ${C.gold}`,
           borderRadius: 10,
-          background: '#FBF8F1',
+          background: 'linear-gradient(180deg, #FDFBF6 0%, #F9F5EC 100%)',
           padding: '10px 12px 11px',
         }}
       >
