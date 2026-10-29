@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap');
+
+/*
+ * M-care pilot — single-page marketing site.
+ *
+ * Its own design system, scoped under .mp-root so it never inherits the
+ * product's ivory-and-gold tokens. Unlayered on purpose: the app's `@layer base`
+ * rules set the font family on p/span/button and would otherwise win.
+ *
+ * Palette is the whole system: near-black ground, off-white text, one red used
+ * twice on the page and nowhere else.
+ */
+
+.mp-root {
+  background-color: #0b0f14;
+  color: #f5f3ef;
+  font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 19px;
+  line-height: 1.6;
+  letter-spacing: -0.012em;
+  overflow-x: hidden;
+  min-height: 100dvh;
+}
+
+.mp-root h1,
+.mp-root h2,
+.mp-root p,
+.mp-root span,
+.mp-root li,
+.mp-root label,
+.mp-root input,
+.mp-root button,
+.mp-root a {
+  font-family: inherit;
+}
+
+.mp-root h1 {
+  margin: 0;
+  font-size: clamp(2.35rem, 6vw, 5.1rem);
+  font-weight: 600;
+  line-height: 0.97;
+  letter-spacing: -0.042em;
+}
+
+.mp-root h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.1vw, 1.8rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+/* ── Type roles ─────────────────────────────────────────────────────────── */
+
+.mp-lede {
+  font-size: clamp(1.125rem, 1.3vw, 1.25rem);
+  line-height: 1.55;
+  color: rgba(245, 243, 239, 0.62);
+  max-width: 38ch;
+}
+
+/* The second line of the hero. Same setting as the h1 — the sentence and its
+   answer are one thought, so the red line is never subordinate to it. */
+.mp-shout {
+  margin: 0;
+  font-size: clamp(2.35rem, 6vw, 5.1rem);
+  font-weight: 600;
+  line-height: 0.97;
+  letter-spacing: -0.042em;
+  color: #e23b2e;
+}
+
+.mp-body {
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: rgba(245, 243, 239, 0.62);
+  max-width: 58ch;
+}
+
+.mp-beat-text {
+  font-size: clamp(1.25rem, 1.95vw, 1.7rem);
+  line-height: 1.44;
+  letter-spacing: -0.022em;
+  color: #f5f3ef;
+  max-width: 46ch;
+}
+
+.mp-meta {
+  font-size: 1.125rem;
+  line-height: 1.5;
+  color: rgba(245, 243, 239, 0.55);
+}
+
+.mp-fine {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: rgba(245, 243, 239, 0.4);
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────────── */
+
+.mp-hero {
+  position: relative;
+  height: 100dvh;
+  min-height: 620px;
+  overflow: hidden;
+  background-color: #0b0f14;
+}
+
+.mp-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 52%;
+}
+
+/* The two states of the same photograph. The second is the first plus a
+   distant figure; scrolling simply lets it arrive. Both sit perfectly
+   registered because one was made from the other. */
+.mp-plate {
+  transition: filter 3.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+  filter: brightness(0.78) saturate(0.94);
+}
+
+.mp-plate--awake {
+  filter: brightness(0.94) saturate(1);
+}
+
+.mp-figure {
+  opacity: 0;
+  transform: scale(1.035);
+  transition:
+    opacity 3.8s cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.mp-figure--awake {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.mp-veil {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(11, 15, 20, 0.52);
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────────── */
+
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.1rem;
+  border: 1px solid rgba(245, 243, 239, 0.3);
+  padding: 1.75rem 2.25rem;
+  font-size: clamp(1.3rem, 1.9vw, 1.6rem);
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  color: #f5f3ef;
+}
+
+.mp-badge-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex-shrink: 0;
+  border: 1px solid rgba(245, 243, 239, 0.5);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+
+.mp-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(245, 243, 239, 0.26);
+  padding: 0.85rem 0;
+  font-size: 1.125rem;
+  line-height: 1.4;
+  color: #f5f3ef;
+  outline: none;
+  border-radius: 0;
+  transition: border-color 0.2s ease;
+}
+
+.mp-input::placeholder {
+  color: rgba(245, 243, 239, 0.32);
+}
+
+.mp-input:focus {
+  border-bottom-color: #f5f3ef;
+}
+
+.mp-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: rgba(245, 243, 239, 0.55);
+}
+
+.mp-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background-color: #e23b2e;
+  color: #0b0f14;
+  border: 0;
+  padding: 1.05rem 1.9rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+
+.mp-cta:hover {
+  opacity: 0.86;
+}
+
+.mp-cta:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-plate,
+  .mp-figure {
+    transition: none;
+  }
+  .mp-figure {
+    transform: none;
+  }
+}
