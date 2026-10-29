@@ -1,0 +1,161 @@
+{
+  "name": "MinorNotification",
+  "type": "object",
+  "description": "One row per party per channel for a reunification case's notification fanout. The whole point of this entity is that 'alerted' is never a single boolean: SENT, DELIVERED, ACKNOWLEDGED and ANSWERED are four separate statuses, each with its own timestamp, advanced only by canAdvanceMinorNotification. SENT means the provider accepted the message and nothing more \u2014 a message stuck at SENT is the visible difference between 'we tried' and 'a human knows'. Rows are created QUEUED for every party at once and fired in parallel, so one unreachable guardian can never delay the call to the group leader.",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "minor_id": {
+      "type": "string"
+    },
+    "guardian_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS \u2014 the guardian may read the full fanout of their own minor's case."
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "sms",
+        "email",
+        "call",
+        "push",
+        "app"
+      ]
+    },
+    "recipient_role": {
+      "type": "string",
+      "enum": [
+        "guardian",
+        "group_leader",
+        "care_team",
+        "authorised_adult",
+        "minor"
+      ]
+    },
+    "recipient_name": {
+      "type": "string"
+    },
+    "recipient_ref": {
+      "type": "string",
+      "description": "The phone or email actually targeted, so the record shows who was really contacted."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "QUEUED",
+        "SENT",
+        "DELIVERED",
+        "ACKNOWLEDGED",
+        "ANSWERED",
+        "FAILED"
+      ],
+      "default": "QUEUED",
+      "description": "Advanced only by canAdvanceMinorNotification. ANSWERED is terminal and is reachable directly from SENT for a live call, because 'the call connected' is a real fact that has no separate delivery step."
+    },
+    "queued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "delivered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "answered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "provider_ref": {
+      "type": "string",
+      "description": "Provider message or call id (e.g. a Twilio sid) used to match an inbound status callback back to this row."
+    },
+    "answered_by": {
+      "type": "string",
+      "description": "Who actually answered, when that is known from the provider."
+    },
+    "answer_note": {
+      "type": "string"
+    },
+    "is_live_fanout": {
+      "type": "boolean",
+      "default": true,
+      "description": "True for the t=0 fanout. Later paging adds rows rather than cancelling these \u2014 the standing notifications stay live."
+    }
+  },
+  "required": [
+    "case_id",
+    "minor_id",
+    "guardian_email",
+    "channel",
+    "recipient_role",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.guardian_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

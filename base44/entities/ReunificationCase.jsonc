@@ -1,0 +1,199 @@
+{
+  "name": "ReunificationCase",
+  "type": "object",
+  "description": "One minor reunification case. The state column advances only through the table in shared/minorReunification.ts, written only by advanceReunificationState (a human care-team decision) or by the engine's fixed opening sequence. There is no field here that lets a model, a client or a third-party token move a case: opening a case is the only automation, and it always lands in NOTIFIED without judging anything. safe_answer records the answer to the single question asked of the minor \u2014 yes, no, or a voice answer \u2014 with the method kept separate so a spoken answer is never shown as a tap.",
+  "properties": {
+    "minor_id": {
+      "type": "string",
+      "description": "The MinorTraveller this case is about. A minor can have only one open case; duplicate triggers attach to it."
+    },
+    "minor_display_name": {
+      "type": "string",
+      "description": "First name, denormalised so the public card and the console never need a join."
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "primary_guardian_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS \u2014 the guardian may read their own minor's case."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "TRIGGERED",
+        "LOCATING",
+        "NOTIFIED",
+        "REUNITING",
+        "HANDED_OVER",
+        "CLOSED",
+        "ABORTED"
+      ],
+      "default": "TRIGGERED",
+      "description": "Advanced only through canTransitionReunification. No state may be skipped, and ABORTED requires a human actor plus a reason code."
+    },
+    "state_entered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the current state began \u2014 what the console's age column reads."
+    },
+    "trigger_source": {
+      "type": "string",
+      "enum": [
+        "minor_help",
+        "qr_scan",
+        "missed_checkin",
+        "authorised_adult"
+      ],
+      "description": "Which of the four triggers opened this case."
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The moment the trigger actually happened. Preserved from an offline client, never rewritten to server receive time."
+    },
+    "opened_at_source": {
+      "type": "string",
+      "enum": [
+        "client",
+        "server_fallback"
+      ]
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the server accepted the trigger. Kept separately so a queued offline alarm is never misrepresented as arriving when it happened."
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_by": {
+      "type": "string",
+      "description": "The human care-team actor who closed or aborted the case."
+    },
+    "last_trigger_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a duplicate trigger last attached to this case."
+    },
+    "trigger_count": {
+      "type": "number",
+      "default": 1,
+      "description": "How many triggers have attached. A rising count on an open case is itself a signal to the care team."
+    },
+    "safe_answer": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no"
+      ],
+      "default": "unknown",
+      "description": "The answer to 'are you safe right now?'. Stays 'unknown' until the minor actually answers \u2014 never inferred from silence."
+    },
+    "safe_answer_method": {
+      "type": "string",
+      "enum": [
+        "tap",
+        "voice"
+      ],
+      "description": "Whether the answer was tapped or spoken. Kept separate so a spoken answer is never displayed as a tap."
+    },
+    "safe_answer_transcript": {
+      "type": "string",
+      "description": "The raw spoken answer, when the minor answered by voice. Recorded verbatim, never paraphrased by a model."
+    },
+    "safe_answer_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "location_latitude": {
+      "type": "number"
+    },
+    "location_longitude": {
+      "type": "number"
+    },
+    "location_source": {
+      "type": "string",
+      "enum": [
+        "device",
+        "last_known",
+        "none"
+      ],
+      "default": "none",
+      "description": "Whether this is a fresh device fix or the minor's last known position. A stale coordinate must never be presented as live."
+    },
+    "location_captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "abort_reason_code": {
+      "type": "string",
+      "description": "Required to abort. Validated against ABORT_REASON_CODES in the shared module."
+    },
+    "abort_actor_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "minor_id",
+    "minor_display_name",
+    "state",
+    "trigger_source",
+    "opened_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.primary_guardian_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

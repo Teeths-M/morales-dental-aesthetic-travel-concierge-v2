@@ -1,0 +1,66 @@
+{
+  "name": "FeatureFlag",
+  "type": "object",
+  "description": "A switch that turns a self-contained module on or off without a deploy. The row itself is a boolean with a description \u2014 no secrets, no PII \u2014 so it is publicly readable, which is what lets a token-gated page decide whether to render before it has any identity. Writes are admin-only. Absence of a row is NOT 'enabled': every reader fails closed, so a missing or unreadable flag means the module is off. The minor reunification module ships with its flag set to false.",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Stable identifier, e.g. 'minor_reunification'. Callers look the flag up by this, never by record id."
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Defaults to false. A flag created without an explicit value is off."
+    },
+    "module": {
+      "type": "string",
+      "description": "Which module the flag governs, for grouping in the admin view."
+    },
+    "description": {
+      "type": "string"
+    },
+    "updated_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "key",
+    "enabled"
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

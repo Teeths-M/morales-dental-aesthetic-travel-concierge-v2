@@ -1,0 +1,192 @@
+{
+  "name": "MinorTraveller",
+  "type": "object",
+  "description": "A minor enrolled in the reunification programme for a specific trip, with the adults authorised to act for them. Managed by the Morales care team only (admin RLS) \u2014 a minor never holds an account, and no client-side write path exists. Three unguessable tokens separate three completely different authorities: qr_token the printed card (read-only, cannot act for the minor), help_token the minor's own device (may raise an alarm and answer the safety question), adult_token an authorised adult's phone (may open a case). guardian_contacts is the standing record; authorised_adults carries the role that decides how each person is contacted \u2014 a group_leader is called, a guardian is messaged. display_name holds a FIRST NAME ONLY because it is the only identity ever shown on the public QR card.",
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "description": "First name only. This is the ONLY identity string shown on the public QR card, so it must never carry a surname."
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Full legal name \u2014 care-team only, never rendered on a public page."
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Optional. Care-team only; never exposed on the public card."
+    },
+    "trip_id": {
+      "type": "string",
+      "description": "The trip or journey this minor is travelling on."
+    },
+    "primary_guardian_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS \u2014 the primary guardian may read their own minor's record."
+    },
+    "guardian_contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Standing guardian contacts. Every one of them is messaged at NOTIFIED."
+    },
+    "authorised_adults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "guardian",
+              "group_leader",
+              "other"
+            ],
+            "description": "Decides the contact method at NOTIFIED: group_leader is CALLED, guardian and other are messaged."
+          }
+        }
+      },
+      "description": "Adults authorised to act for the minor. At most the group_leader is called at NOTIFIED \u2014 the call channel is reserved for the person physically leading the trip."
+    },
+    "qr_token": {
+      "type": "string",
+      "description": "Token printed on the physical card. Read-only: it can surface a first name and case id and open a case on scan, but it can never move a case or answer for the minor."
+    },
+    "help_token": {
+      "type": "string",
+      "description": "Token held on the minor's own device. The only token that may raise a help alarm and submit the safety answer."
+    },
+    "adult_token": {
+      "type": "string",
+      "description": "Token handed to an authorised adult so they can open a case from their own phone."
+    },
+    "last_known_latitude": {
+      "type": "number"
+    },
+    "last_known_longitude": {
+      "type": "number"
+    },
+    "last_known_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checkin_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the scheduled check-in window is running for this minor."
+    },
+    "checkin_interval_minutes": {
+      "type": "number",
+      "default": 60,
+      "description": "How often the minor must check in. A missed window is trigger (c)."
+    },
+    "last_checkin_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "next_checkin_due_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the next check-in is expected. The sweep compares this against now and never recomputes it from a guess."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string",
+      "description": "Care-team only."
+    }
+  },
+  "required": [
+    "display_name",
+    "full_name",
+    "trip_id",
+    "qr_token",
+    "help_token",
+    "adult_token"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.primary_guardian_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "name": "CaseEvent",
+  "type": "object",
+  "description": "The append-only record of everything that happened to a reunification case. One row per state change, plus one row per duplicate trigger that attached without changing state, plus safety answers and location captures. APPEND-ONLY at the platform level, not by convention: the update rule points at `immutable`, which nothing ever sets true, so no app user can alter a row, and delete is closed entirely. Rows are only ever created by the reunification engine running as service role. `sequence` is monotonic per case so the timeline reconstructs correctly even when two rows share a timestamp.",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "minor_id": {
+      "type": "string"
+    },
+    "guardian_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS \u2014 the guardian may read the timeline of their own minor's case."
+    },
+    "sequence": {
+      "type": "number",
+      "description": "Monotonic counter per case. Manifest order, independent of clock resolution."
+    },
+    "event_kind": {
+      "type": "string",
+      "enum": [
+        "state_change",
+        "duplicate_trigger",
+        "safety_answer",
+        "location_captured",
+        "notification"
+      ],
+      "description": "What kind of event this is. A duplicate_trigger and a state_change both carry a to_state; for a duplicate the from and to states are equal, which is exactly how 'this attached, it did not open a second case' is provable later."
+    },
+    "from_state": {
+      "type": "string"
+    },
+    "to_state": {
+      "type": "string"
+    },
+    "actor_type": {
+      "type": "string",
+      "enum": [
+        "system",
+        "human",
+        "minor",
+        "third_party"
+      ],
+      "description": "Who caused the event. 'human' is a real care-team member and is the only actor type permitted to abort a case."
+    },
+    "actor_id": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the event actually happened. For an offline-queued trigger this is the device's original timestamp, never the flush time."
+    },
+    "reason_code": {
+      "type": "string",
+      "description": "Why the transition happened, from a fixed enum in the shared module. Required for ABORTED."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Derived from the trigger source and its time bucket, so a replayed trigger is recognisable as the same event rather than a new one."
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Structured detail for the timeline \u2014 which channel fired, what the location source was, which adult opened the case. Detail only, never free text shown to a minor."
+    },
+    "immutable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Always false and never written by anything. The update RLS rule requires this to be true, which no record can satisfy \u2014 that is what makes the table append-only at the platform level."
+    }
+  },
+  "required": [
+    "case_id",
+    "minor_id",
+    "guardian_email",
+    "event_kind",
+    "to_state",
+    "actor_type",
+    "at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.guardian_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "data.immutable": true
+    },
+    "delete": false
+  }
+}
