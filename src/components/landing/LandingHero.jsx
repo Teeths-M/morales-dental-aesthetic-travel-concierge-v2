@@ -1,21 +1,19 @@
-import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import CorridorScene from './CorridorScene';
+import HeroVideo from './HeroVideo';
 import { WHITE, BODY, RED, GOLD, SANS, MUTED } from './theme';
 
 /**
  * LandingHero — the question, and the answer.
  *
- * Everything else that used to live in the first screen has been removed: no
- * stage labels, no second CTA, no oversized numerals, no feature strip. One
- * question, one answer, one line of support, one action.
+ * The first screen is now a film that starts itself the moment the page loads:
+ * a visitor lands, and something is already happening behind the question.
+ * Everything else that used to live here has been removed — no stage labels, no
+ * second CTA, no oversized numerals, no feature strip. One question, one
+ * answer, one line of support, one action.
  */
 export default function LandingHero() {
-  const sectionRef = useRef(null);
-
   return (
     <section
-      ref={sectionRef}
       className="landing-hero"
       style={{
         position: 'relative',
@@ -26,7 +24,7 @@ export default function LandingHero() {
         fontFamily: SANS,
       }}
     >
-      <CorridorScene sectionRef={sectionRef} />
+      <HeroVideo />
 
       <div
         style={{
