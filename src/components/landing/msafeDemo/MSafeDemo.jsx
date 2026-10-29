@@ -3,6 +3,7 @@ import { ArrowRight, Check } from 'lucide-react';
 import DemoSidebar from './DemoSidebar';
 import DemoHeader from './DemoHeader';
 import DemoThread from './DemoThread';
+import LiveMonitorStrip from './LiveMonitorStrip';
 import { SCENARIOS } from './script';
 import { useDemoPlayback } from './useDemoPlayback';
 import { C } from './theme';
@@ -79,6 +80,10 @@ export default function MSafeDemo() {
 
       <div className="msd-main">
         <DemoHeader />
+
+        {/* The other half of the promise: the journey being watched while
+            nobody is asking a question. */}
+        <LiveMonitorStrip visible={visible} reduced={reduced} />
 
         <div className="msd-body">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
