@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 /*
  * M-care pilot — single-page marketing site.
@@ -230,6 +230,157 @@
   cursor: default;
 }
 
+/* ── Walkthrough ────────────────────────────────────────────────────────── */
+
+.mp-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: 0.01em;
+}
+
+.mp-root .mp-h2-lg {
+  font-size: clamp(1.75rem, 3vw, 2.55rem);
+  line-height: 1.1;
+  letter-spacing: -0.032em;
+  font-weight: 500;
+}
+
+.mp-phone {
+  position: relative;
+  width: 100%;
+  max-width: 372px;
+  margin-left: auto;
+  background-color: #0e131a;
+  border: 1px solid rgba(245, 243, 239, 0.16);
+  padding: 0.9rem 0.85rem 1rem;
+}
+
+.mp-phone-notch {
+  width: 52px;
+  height: 3px;
+  margin: 0 auto 0.9rem;
+  background-color: rgba(245, 243, 239, 0.2);
+}
+
+.mp-thread {
+  height: clamp(340px, 50vh, 500px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 243, 239, 0.2) transparent;
+}
+
+.mp-thread::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mp-thread::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 243, 239, 0.2);
+}
+
+.mp-stamp {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: rgba(245, 243, 239, 0.42);
+}
+
+.mp-stamp-time {
+  color: rgba(245, 243, 239, 0.55);
+}
+
+.mp-dev {
+  border: 1px solid rgba(245, 243, 239, 0.26);
+  padding: 0.06rem 0.4rem;
+  font-size: 0.5938rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(245, 243, 239, 0.55);
+  white-space: nowrap;
+}
+
+.mp-bubble {
+  background-color: rgba(245, 243, 239, 0.06);
+  border: 1px solid rgba(245, 243, 239, 0.09);
+  padding: 0.8rem 0.95rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #f5f3ef;
+  letter-spacing: -0.005em;
+}
+
+/* The only place red appears in this section: a step where something is
+   escalated to someone. Nothing else in the walkthrough is accented. */
+.mp-bubble--escalation {
+  border-left: 2px solid #e23b2e;
+}
+
+.mp-close-card {
+  border: 1px solid rgba(245, 243, 239, 0.18);
+  padding: 1rem 1.05rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(245, 243, 239, 0.82);
+}
+
+.mp-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid rgba(245, 243, 239, 0.3);
+  color: #f5f3ef;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.mp-ghost:hover:not(:disabled) {
+  background-color: rgba(245, 243, 239, 0.07);
+  border-color: rgba(245, 243, 239, 0.5);
+}
+
+.mp-ghost:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.mp-enter {
+  animation: mp-enter 0.34s ease-out both;
+}
+
+@keyframes mp-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mp-transcript summary {
+  cursor: pointer;
+  color: rgba(245, 243, 239, 0.55);
+  transition: color 0.18s ease;
+}
+
+.mp-transcript summary:hover {
+  color: rgba(245, 243, 239, 0.85);
+}
+
+.mp-transcript summary::-webkit-details-marker {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mp-plate,
   .mp-figure {
@@ -237,5 +388,8 @@
   }
   .mp-figure {
     transform: none;
+  }
+  .mp-enter {
+    animation: none;
   }
 }

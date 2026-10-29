@@ -1,5 +1,6 @@
 import '@/pages/mcare-pilot.css';
 import HeroCorridor from '@/components/mcare-pilot/HeroCorridor';
+import Walkthrough from '@/components/mcare-pilot/Walkthrough';
 import VerificationBadge from '@/components/mcare-pilot/VerificationBadge';
 import PilotForm from '@/components/mcare-pilot/PilotForm';
 
@@ -69,6 +70,11 @@ export default function MCarePilot() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── Walkthrough ──────────────────────────────────────────────────── */}
+      <section className={`${CONTAINER} border-t border-[rgba(245,243,239,0.12)] py-24 md:py-36`}>
+        <Walkthrough />
       </section>
 
       {/* ── Verification ─────────────────────────────────────────────────── */}
