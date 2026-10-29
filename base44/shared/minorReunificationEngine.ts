@@ -680,5 +680,108 @@ export async function updateMinorLastKnown(
   }).catch(() => {});
 }
 
+// ── The complete opening sequence ─────────────────────────────────────────────
+
+export interface OpenAndNotifyResult {
+  caseRow: any;
+  attached: boolean;
+  replayed: boolean;
+  notifications: any[];
+}
+
+/**
+ * The whole opening sequence in one place, so all four triggers share it rather
+ * than each re-implementing "open, locate, notify" slightly differently.
+ *
+ * The ordering encodes the two rules that matter:
+ *   • LOCATING is recorded the moment the trigger is received. A GPS fix is
+ *     never awaited before notifying, so a child indoors with no signal is
+ *     still escalated immediately.
+ *   • Every notification row is created, then the case moves to NOTIFIED, then
+ *     all rows are fired at once. Nothing waits on anything else.
+ */
+export async function openAndNotify(base44: any, params: {
+  minor: any;
+  trigger_source: MinorTriggerSource;
+  occurred_at: string;
+  occurred_at_source: 'client' | 'server_fallback';
+  actor_type: CaseActorType;
+  actor_id?: string | null;
+  evidence?: Record<string, unknown>;
+  location?: { latitude: number; longitude: number; at?: string } | null;
+}): Promise<OpenAndNotifyResult> {
+  const result = await openOrAttachCase(base44, {
+    minor: params.minor,
+    trigger_source: params.trigger_source,
+    occurred_at: params.occurred_at,
+    occurred_at_source: params.occurred_at_source,
+    actor_type: params.actor_type,
+    actor_id: params.actor_id,
+    evidence: params.evidence,
+  });
+
+  // A duplicate trigger attaches and stops here. It never re-notifies: the
+  // standing fanout is already live for this case.
+  if (result.attached) {
+    return { caseRow: result.caseRow, attached: true, replayed: result.replayed, notifications: [] };
+  }
+
+  const now = new Date().toISOString();
+  const caseRow = result.caseRow;
+  const minor = params.minor;
+
+  // ── Location: fresh device fix, else the minor's last known, else none ────
+  let located = caseRow;
+  let locationSource: 'device' | 'last_known' | 'none' = 'none';
+
+  const fix = params.location;
+  if (fix && Number.isFinite(fix.latitude) && Number.isFinite(fix.longitude)) {
+    locationSource = 'device';
+    located = await base44.asServiceRole.entities.ReunificationCase.update(caseRow.id, {
+      location_latitude: fix.latitude,
+      location_longitude: fix.longitude,
+      location_source: 'device',
+      location_captured_at: fix.at || now,
+    }).catch(() => caseRow);
+    await updateMinorLastKnown(base44, minor, { latitude: fix.latitude, longitude: fix.longitude, at: fix.at || now });
+  } else if (
+    Number.isFinite(minor?.last_known_latitude) &&
+    Number.isFinite(minor?.last_known_longitude)
+  ) {
+    locationSource = 'last_known';
+    located = await base44.asServiceRole.entities.ReunificationCase.update(caseRow.id, {
+      location_latitude: minor.last_known_latitude,
+      location_longitude: minor.last_known_longitude,
+      location_source: 'last_known',
+      location_captured_at: minor.last_known_at || now,
+    }).catch(() => caseRow);
+  }
+
+  // ── Fanout rows, then NOTIFIED, then fire ─────────────────────────────────
+  const contacts = resolveMinorContacts(minor);
+  const targets = buildReunificationTargets(contacts);
+  const rows = await createNotificationRows(base44, located, targets, now);
+
+  const notified = await moveCase(base44, {
+    caseRow: located,
+    to: 'NOTIFIED',
+    actor_type: 'system',
+    actor_id: 'reunification_engine',
+    reason_code: 'fanout_dispatched',
+    at: now,
+    evidence: {
+      channels: targets.map((t) => `${t.role}:${t.channel}`),
+      notification_rows: rows.length,
+      location_source: locationSource,
+      waited_for_location_before_notifying: false,
+      sequential: false,
+    },
+  });
+
+  await fireReunificationFanout(base44, notified.caseRow, minor, rows, now);
+
+  return { caseRow: notified.caseRow, attached: false, replayed: result.replayed, notifications: rows };
+}
+
 /** Re-exported so callers do not each re-implement occurred-at resolution. */
 export { resolveMinorOccurredAt, isTerminalReunification };

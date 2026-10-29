@@ -24,8 +24,7 @@
         "state_change",
         "duplicate_trigger",
         "safety_answer",
-        "location_captured",
-        "notification"
+        "location_captured"
       ],
       "description": "What kind of event this is. A duplicate_trigger and a state_change both carry a to_state; for a duplicate the from and to states are equal, which is exactly how 'this attached, it did not open a second case' is provable later."
     },
