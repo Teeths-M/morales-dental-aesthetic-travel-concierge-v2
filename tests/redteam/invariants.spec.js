@@ -451,8 +451,8 @@ test('AUTH: no edge function is reachable without SOME guard', () => {
   //
   // Deliberate exceptions, both public by design AND IP rate-limited:
   //   publicDoctorCheck — the homepage "check your doctor" tool
-  //   safeTAssist       — the assistant a patient may reach before signing in
-  const EXEMPT = new Set(['publicDoctorCheck', 'safeTAssist']);
+  //   safeTAssist, joinPilot — assistant + landing waiting list, both IP-capped
+  const EXEMPT = new Set(['publicDoctorCheck', 'safeTAssist', 'joinPilot']);
   const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|verifyTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|verifyRetellSignature|verifyWebhookSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|x-webhook-secret|DISPATCH_WEBHOOK_SECRET|loadCardByToken|offer_token|createHandler/;
 
   const dir = join(ROOT, 'base44/functions');
@@ -469,7 +469,7 @@ test('AUTH: no edge function is reachable without SOME guard', () => {
   // The two exemptions must keep their rate limiters.
   for (const fn of EXEMPT) {
     const src = readFileSync(join(dir, fn, 'entry.ts'), 'utf8');
-    expect(src, `${fn} is public and must stay rate-limited`).toContain('RateLimitBucket');
+    expect(src, `${fn} is public and must stay rate-limited`).toMatch(/RateLimitBucket|enforceRateLimit/);
   }
 });
 

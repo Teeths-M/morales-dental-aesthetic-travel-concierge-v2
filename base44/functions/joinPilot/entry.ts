@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { enforceRateLimit } from '../../shared/rateLimit.ts';
 
 /**
  * joinPilot — the one real, working action on the landing page.
@@ -43,6 +44,15 @@ function normaliseSource(raw) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Public by design, so this is the abuse surface: cap signups per IP so the
+    // waiting list cannot be filled by a script.
+    const limited = await enforceRateLimit(base44, req, {
+      functionName: 'joinPilot',
+      max: 5,
+      windowSeconds: 3600,
+    });
+    if (limited) return limited;
 
     const body = await req.json().catch(() => ({}));
     const email = normaliseEmail(body?.email);
