@@ -17,6 +17,8 @@ const PassportVault       = lazy(() => import('@/pages/PassportVault'));
 const InsuranceCoverage   = lazy(() => import('@/pages/InsuranceCoverage'));
 const TravelServices      = lazy(() => import('@/pages/TravelServices'));
 const TripOverview        = lazy(() => import('@/pages/TripOverview'));
+const TripAssistance      = lazy(() => import('@/pages/TripAssistance'));
+const TripShowCard        = lazy(() => import('@/pages/TripShowCard'));
 const WalkieTalkie        = lazy(() => import('@/pages/WalkieTalkie'));
 const BaggageTrackerPage  = lazy(() => import('@/pages/BaggageTrackerPage'));
 const AdventureSafetyCenter = lazy(() => import('@/pages/AdventureSafetyCenter'));
@@ -71,6 +73,8 @@ export const clientRoutes = (
       <Route path="/insurance"                  element={<ErrorBoundary><InsuranceCoverage /></ErrorBoundary>} />
       <Route path="/travel-services"            element={<ErrorBoundary><TravelServices /></ErrorBoundary>} />
       <Route path="/trip-overview"              element={<ErrorBoundary><TripOverview /></ErrorBoundary>} />
+      <Route path="/trip-assistance"            element={<ErrorBoundary><TripAssistance /></ErrorBoundary>} />
+      <Route path="/trip-assistance/card"       element={<ErrorBoundary><TripShowCard /></ErrorBoundary>} />
       <Route path="/walkie-talkie"              element={<ErrorBoundary><WalkieTalkie /></ErrorBoundary>} />
       <Route path="/baggage-tracker"            element={<ErrorBoundary><BaggageTrackerPage /></ErrorBoundary>} />
       <Route path="/nightlife-safety"           element={<ErrorBoundary><NightlifeSafetyMode /></ErrorBoundary>} />

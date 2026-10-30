@@ -10,6 +10,13 @@
 
 export const MINOR_REUNIFICATION_FLAG = 'minor_reunification';
 
+/**
+ * Trip assistance — scripts, written requests and the emergency packet.
+ * Ships off: absence of the row, an RLS refusal or a malformed record all mean
+ * "off", which is the only safe direction for a module that can send a packet.
+ */
+export const TRIP_ASSISTANCE_FLAG = 'trip_assistance';
+
 export async function isFeatureEnabled(
   base44: any,
   key: string,

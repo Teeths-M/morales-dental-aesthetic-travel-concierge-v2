@@ -1,0 +1,115 @@
+{
+  "name": "TripShowScreenCard",
+  "type": "object",
+  "description": "One pre-generated show-this-screen sentence for a trip, in the trip language with its English wording stored alongside. Generated at booking and cached on the device, because the moment it is needed is the moment the signal is worst and live translation is the one thing that cannot be relied on. The text is fixed copy with only the traveller's first name substituted \u2014 never a free sentence, never a model output at display time. The public page renders exactly this and nothing else.",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS."
+    },
+    "situation": {
+      "type": "string",
+      "enum": [
+        "help_needed",
+        "need_doctor",
+        "need_ambulance",
+        "allergic_to_medicine",
+        "being_followed",
+        "locked_out_of_room"
+      ],
+      "description": "A closed list. A new situation needs a template, not a text field."
+    },
+    "label": {
+      "type": "string",
+      "description": "English label for the traveller's own choice list \u2014 never shown on the held-up screen."
+    },
+    "text_local": {
+      "type": "string",
+      "description": "The large sentence. This is the entire product on that screen."
+    },
+    "text_en": {
+      "type": "string"
+    },
+    "language_code": {
+      "type": "string"
+    },
+    "language_name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "trip_id",
+    "patient_email",
+    "situation",
+    "text_local",
+    "text_en",
+    "language_code"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

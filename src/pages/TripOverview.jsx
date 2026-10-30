@@ -7,7 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { CACHE } from '@/lib/constants';
 import {
   Plane, Car, Calendar, MapPin, Star, CheckCircle, Mail, Phone,
-  Globe, User, Shield, Heart, Package, FileText
+  Globe, User, Shield, Heart, Package, FileText, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -593,6 +593,25 @@ export default function TripOverview() {
 
               {/* Printed emergency card set — the only evidence the safety layer is in a pocket */}
               <TripCardSetPanel />
+
+              {/* Trip assistance — scripts, written requests and the emergency packet */}
+              <Link
+                to="/trip-assistance"
+                className="mb-8 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 transition-colors hover:border-[#D4AF37]"
+              >
+                <span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.11em] text-slate-500">
+                    Trip assistance
+                  </span>
+                  <span className="mt-0.5 block text-sm font-semibold text-slate-900">
+                    Ask M-Care to call, or send a written request
+                  </span>
+                  <span className="mt-0.5 block text-xs text-slate-500">
+                    Show-this-screen sentences, your emergency packet and what may be said if you cannot answer.
+                  </span>
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
+              </Link>
 
               {/* Contact Support CTA */}
               {/* @ts-ignore — shadcn Card forwardRef type omits children */}

@@ -1,0 +1,128 @@
+{
+  "name": "TripEmergencyDisclosure",
+  "type": "object",
+  "description": "The standing list of what may be SAID out loud when the traveller cannot answer. Approved by the traveller at booking, while calm \u2014 which is the whole point: the alternative is a scared person on call deciding the boundary of someone's privacy at 3am. This is a consent record, not a document. It never carries a rendered packet and is never sent to anyone. Anything not on this approved, include-flagged list cannot be spoken during an emergency, and an attempt to go beyond it must be recorded on TripDisclosureException with a reason and an authoriser BEFORE the words leave someone's mouth. Never included, whatever is ticked: payment details, passport or identity documents, and the full medical record \u2014 those are excluded in code, not by a checkbox.",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS."
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Explicit traveller approval. Absence is not consent: the engine treats a missing or false value as 'nothing may be said'."
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "first_name",
+              "location",
+              "traveller_status",
+              "procedure_general",
+              "doctor_or_clinic",
+              "emergency_contact"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "include": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "description": "The closed allowlist. There is no free-form entry: a field the enum does not name can never be spoken under this consent."
+    },
+    "always_excluded": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Kept visible so the traveller can see the exclusions stated, not inferred."
+    }
+  },
+  "required": [
+    "trip_id",
+    "patient_email",
+    "version"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

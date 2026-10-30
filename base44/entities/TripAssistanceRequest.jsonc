@@ -1,0 +1,309 @@
+{
+  "name": "TripAssistanceRequest",
+  "type": "object",
+  "description": "One thing the traveller asked for, and what actually came back. The tier decides what is possible, not a preference: tier 1 may be a written request or a human call, tier 2 is written only and goes to a named care-team human, tier 3 always reaches a human and is never scripted. approved_script_text is the exact wording that was approved, stored verbatim with its own fingerprint \u2014 not re-derived later, because a script that can be recomposed is a script that can quietly change after consent. attempt_status and agreement are separate fields on purpose: connected means someone picked up, agreed means they said yes to this specific ask, and collapsing them is how a log starts lying. retry_used is a boolean because exactly one retry is allowed, after which a human owns it.",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS."
+    },
+    "tier": {
+      "type": "number",
+      "enum": [
+        1,
+        2,
+        3
+      ]
+    },
+    "category_key": {
+      "type": "string",
+      "description": "Must exist in the server's closed category list. Validated on create, not trusted from the client."
+    },
+    "category_label": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "written",
+        "human_call",
+        "human_only"
+      ],
+      "description": "human_only is what a tier 3 request becomes: a human handles it, and no script is spoken on the traveller's behalf."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_approval",
+        "approved",
+        "written_sent",
+        "in_progress",
+        "agreed",
+        "not_agreed",
+        "escalated",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending_approval"
+    },
+    "values": {
+      "type": "object",
+      "description": "The bounded form inputs. Only keys the category declares are stored, and only those can reach a template."
+    },
+    "attachment_file_uri": {
+      "type": "string",
+      "description": "Private file. Medical-adjacent documents are attached for a human to read, never described aloud."
+    },
+    "attachment_name": {
+      "type": "string"
+    },
+    "recipient_type": {
+      "type": "string"
+    },
+    "recipient_name": {
+      "type": "string"
+    },
+    "recipient_contact": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string"
+    },
+    "ask_text": {
+      "type": "string",
+      "description": "The sentence in the trip language, composed deterministically from an approved template."
+    },
+    "ask_text_en": {
+      "type": "string"
+    },
+    "ask_language": {
+      "type": "string"
+    },
+    "translation_missing": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when no approved template exists for that language, so the sentence stayed in English. Stated on the review screen rather than hidden."
+    },
+    "closing_question": {
+      "type": "string"
+    },
+    "expected_answer": {
+      "type": "string"
+    },
+    "disclosures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Every personal detail this script discloses, itemised so the traveller approves exact facts rather than a promise."
+    },
+    "prohibited": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "approved_script_text": {
+      "type": "string",
+      "description": "Verbatim. What was approved is what is kept."
+    },
+    "script_fingerprint": {
+      "type": "string"
+    },
+    "approval_scope": {
+      "type": "string",
+      "default": "this_call_only"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approval_method": {
+      "type": "string",
+      "enum": [
+        "traveller_in_app",
+        "care_team_standing_list"
+      ],
+      "description": "care_team_standing_list is the emergency exception: the traveller could not respond, so only the standing approved list may be said."
+    },
+    "standing_list_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this record may not carry any disclosure outside the approved standing list."
+    },
+    "attempt_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "attempted",
+        "connected",
+        "no_answer",
+        "wrong_department",
+        "dropped"
+      ],
+      "default": "not_started"
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 0
+    },
+    "retry_used": {
+      "type": "boolean",
+      "default": false
+    },
+    "agreement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "agreed",
+        "partial",
+        "refused"
+      ],
+      "default": "unknown"
+    },
+    "agreed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcome_notes": {
+      "type": "string"
+    },
+    "next_step": {
+      "type": "string"
+    },
+    "summary_text": {
+      "type": "string",
+      "description": "The one plain line the traveller reads. Generated from the structured outcome only \u2014 never from a model's reading of the conversation."
+    },
+    "summary_language": {
+      "type": "string"
+    },
+    "escalation_reason": {
+      "type": "string"
+    },
+    "escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handled_by": {
+      "type": "string",
+      "description": "The named care-team human who owns this. Tier 2 and 3 require one before the request is considered picked up."
+    },
+    "quiet_hours_override": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set only when the traveller explicitly asked for this call, or the request is tier 3."
+    },
+    "blocked_reason": {
+      "type": "string",
+      "enum": [
+        "quiet_hours",
+        "cap_exceeded",
+        "module_disabled",
+        "no_handover_contact"
+      ]
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Derived from trip, category and the approval, so a double tap cannot become two calls."
+    },
+    "retain_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trip end plus the policy's outcome retention. The sweep clears past-due rows."
+    },
+    "audio_purge_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Only meaningful when an audio recording exists. Incident-attached calls follow incident retention instead."
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "patient_email",
+    "tier",
+    "category_key",
+    "mode",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "data.handled_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

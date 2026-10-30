@@ -58,6 +58,7 @@ const MinorReunificationConsole = lazy(() => import('@/pages/MinorReunificationC
 const MinorCaseDetail           = lazy(() => import('@/pages/MinorCaseDetail'));
 const AdminTripCards            = lazy(() => import('@/pages/AdminTripCards'));
 const AdminTripCardDetail       = lazy(() => import('@/pages/AdminTripCardDetail'));
+const AdminTripAssistance       = lazy(() => import('@/pages/AdminTripAssistance'));
 
 export const adminRoutes = (
   <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
@@ -109,6 +110,7 @@ export const adminRoutes = (
       <Route path="/admin/minor-reunification/:id"  element={<ErrorBoundary><MinorCaseDetail /></ErrorBoundary>} />
       <Route path="/admin/trip-cards"                element={<ErrorBoundary><AdminTripCards /></ErrorBoundary>} />
       <Route path="/admin/trip-cards/:id"            element={<ErrorBoundary><AdminTripCardDetail /></ErrorBoundary>} />
+      <Route path="/admin/trip-assistance"           element={<ErrorBoundary><AdminTripAssistance /></ErrorBoundary>} />
       {/* Dev/test tools */}
       <Route path="/test-portal-link"                element={<ErrorBoundary><TestPortalLink /></ErrorBoundary>} />
       <Route path="/portal-test-hub"                 element={<ErrorBoundary><PortalTestHub /></ErrorBoundary>} />

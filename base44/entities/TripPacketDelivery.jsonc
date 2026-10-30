@@ -1,0 +1,145 @@
+{
+  "name": "TripPacketDelivery",
+  "type": "object",
+  "description": "Audit of what actually went out, not what was attempted. One row per send, naming the exact packet version, the recipient, the channel, who sent it, and the outcome as the provider reported it. 'Accepted' means the provider took the message \u2014 it is NOT delivery, and it certainly is not that a human read it. That distinction is the same one that stops 'we confirmed the booking' from being a status flag set by nobody. When a send fails, fallback_required is set and the next step is a phone call, never a resend of the same message: resending into a dead channel is how a control room convinces itself help is coming. Police rows cannot exist \u2014 the sender refuses that recipient before any record is written.",
+  "properties": {
+    "packet_id": {
+      "type": "string"
+    },
+    "packet_version": {
+      "type": "number"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "incident_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS \u2014 the traveller can see who received what about them."
+    },
+    "recipient_type": {
+      "type": "string",
+      "enum": [
+        "driver",
+        "clinic",
+        "care_team",
+        "hospital_handover"
+      ]
+    },
+    "recipient_label": {
+      "type": "string",
+      "description": "The person or place, as a human would say it, e.g. 'Hotel front desk, Posada del Sol'."
+    },
+    "recipient_contact": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "sms",
+        "whatsapp",
+        "email",
+        "internal",
+        "pdf"
+      ]
+    },
+    "sent_by": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "delivered_confirmed",
+        "failed"
+      ],
+      "description": "accepted = the provider took it. delivered_confirmed only when the provider actually said so."
+    },
+    "provider_ref": {
+      "type": "string",
+      "description": "Twilio sid or message id, so a later status callback can find this row."
+    },
+    "failure_detail": {
+      "type": "string"
+    },
+    "fallback_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "fallback_note": {
+      "type": "string",
+      "description": "What a human must do next \u2014 always a call, never a resend."
+    },
+    "body_text": {
+      "type": "string",
+      "description": "Exactly what was sent, bounded at write time. Kept so 'what did the driver actually get' is a fact."
+    }
+  },
+  "required": [
+    "packet_id",
+    "packet_version",
+    "recipient_type",
+    "channel",
+    "sent_at",
+    "outcome"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

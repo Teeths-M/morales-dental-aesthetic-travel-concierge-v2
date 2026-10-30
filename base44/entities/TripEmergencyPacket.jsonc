@@ -1,0 +1,175 @@
+{
+  "name": "TripEmergencyPacket",
+  "type": "object",
+  "description": "What a responder actually needs, assembled once at booking and versioned \u2014 deliberately a different object from the disclosure consent list. That list decides what may be SAID; this is what is already written and ready to send, so nobody at 3am is composing anything. It holds only the responder facts: lodging address and gate code, front desk number, doctor and clinic, procedure and date, allergies and current medicines, language, emergency contact. A version is frozen when it changes: editing a field supersedes the old row rather than mutating it in place, so a delivery log that names v2 can never be read against v3 contents. police_prohibited is not a suggestion \u2014 sendTripEmergencyPacket refuses that recipient outright.",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS."
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "Set when a packet version was current during an incident, so the incident record can name the exact version in play."
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "superseded"
+      ],
+      "default": "draft",
+      "description": "draft = missing something a responder would need. ready = complete enough to send. superseded = a newer version replaced it."
+    },
+    "lodging_address": {
+      "type": "string"
+    },
+    "lodging_name": {
+      "type": "string"
+    },
+    "gate_code": {
+      "type": "string"
+    },
+    "front_desk_number": {
+      "type": "string"
+    },
+    "doctor_name": {
+      "type": "string"
+    },
+    "clinic_name": {
+      "type": "string"
+    },
+    "clinic_address": {
+      "type": "string"
+    },
+    "procedure_general": {
+      "type": "string",
+      "description": "General terms only, e.g. 'dental procedure'. Never an operative note."
+    },
+    "procedure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "allergies": {
+      "type": "string"
+    },
+    "current_medicines": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string"
+    },
+    "language_name": {
+      "type": "string"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Named so the traveller can close the gaps while calm, and so a care-team human knows what a driver will not have."
+    },
+    "police_prohibited": {
+      "type": "boolean",
+      "default": true,
+      "description": "The packet is never sent to police. It becomes what a care-team human reads down the line, address first."
+    },
+    "assembled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "assembled_by": {
+      "type": "string"
+    },
+    "superseded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "superseded_by_id": {
+      "type": "string"
+    },
+    "last_delivery_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_snapshot": {
+      "type": "object",
+      "description": "Which records the values came from, so a stale address is explainable rather than mysterious."
+    }
+  },
+  "required": [
+    "trip_id",
+    "patient_email",
+    "version",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

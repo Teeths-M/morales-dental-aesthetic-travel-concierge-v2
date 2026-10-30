@@ -1,0 +1,116 @@
+{
+  "name": "TripDisclosureException",
+  "type": "object",
+  "description": "A record of going beyond the standing disclosure list during an emergency, written BEFORE the words are spoken. This is the guard that makes the emergency exception safe rather than open: the traveller cannot approve a per-call script because they cannot respond, so the care team may say only what is on the approved list \u2014 and if something outside it genuinely matters, it has to be justified in writing first, with a named human accountable and a link to the incident. reason and authorized_by are required by the schema on purpose: an exception with no reason is an oversight, and one with no authoriser is nobody's decision. spoken stays false until someone confirms it was actually said, so a prepared exception is never mistaken for a disclosure that happened.",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "The incident this disclosure belongs to. An exception outside an incident is not an emergency exception."
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "disclosed_to": {
+      "type": "string",
+      "description": "Who was told \u2014 a responder, a clinic clerk, a dispatcher. A role or place, not a patient."
+    },
+    "field_label": {
+      "type": "string",
+      "description": "What is being disclosed that the standing list does not cover."
+    },
+    "field_value": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Required. Why this could not wait for the traveller's own approval."
+    },
+    "authorized_by": {
+      "type": "string",
+      "description": "Required. The named human who authorised it, recorded before it was spoken."
+    },
+    "authorized_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "spoken": {
+      "type": "boolean",
+      "default": false
+    },
+    "spoken_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "not_spoken_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "incident_id",
+    "patient_email",
+    "field_label",
+    "reason",
+    "authorized_by",
+    "authorized_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}
