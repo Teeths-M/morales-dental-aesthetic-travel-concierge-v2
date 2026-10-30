@@ -1,0 +1,94 @@
+{
+  "name": "TravelerPlace",
+  "type": "object",
+  "description": "One place a traveller deliberately told M-Care about: somewhere they want to visit, or somewhere they specifically want to avoid. This is the traveller's own stated intent, never an inference from a conversation \u2014 a place only exists here because someone saved it, and they can edit or delete it. kind is not a safety rating: 'avoid' means 'I personally would rather not go there', which may be a personal preference, a mobility need, or a past bad experience. It is never published, never aggregated into a danger score, and never shown to anyone else. Coordinates come from a real place the traveller picked or their own device position at that moment; an address without coordinates is still stored so they can find it again, but it cannot be used for proximity matching until it has a coordinate.",
+  "properties": {
+    "owner_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised owner for RLS and for the proximity sweep's per-traveller lookup."
+    },
+    "label": {
+      "type": "string",
+      "description": "What the traveller calls it, e.g. 'Hotel Posada del Sol' or 'The alley behind the market'."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "visit",
+        "avoid"
+      ],
+      "default": "visit",
+      "description": "visit = they plan to go; avoid = they would rather not. A personal preference, not a safety classification."
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Free text as the traveller entered it. Never geocoded into a coordinate we would then treat as exact."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "lodging",
+        "clinic",
+        "pharmacy",
+        "restaurant",
+        "market",
+        "transport",
+        "attraction",
+        "embassy",
+        "other"
+      ],
+      "default": "other"
+    },
+    "notes": {
+      "type": "string",
+      "description": "The traveller's own note, e.g. 'only during daylight'."
+    },
+    "city": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string",
+      "description": "Optional link to the journey this place belongs to, so a place can be scoped to one trip rather than forever."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "current_location",
+        "search",
+        "agent"
+      ],
+      "default": "manual",
+      "description": "How it was saved. 'agent' means the traveller asked M-Care in conversation and confirmed \u2014 never a silent save."
+    }
+  },
+  "required": [
+    "owner_email",
+    "label",
+    "kind"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

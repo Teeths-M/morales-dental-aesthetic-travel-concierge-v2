@@ -43,6 +43,7 @@ const DecisionRoom            = lazy(() => import('@/pages/DecisionRoom'));
 const TrustScan               = lazy(() => import('@/pages/TrustScan'));
 const TrustProfile            = lazy(() => import('@/pages/TrustProfile'));
 const IncidentRecovery        = lazy(() => import('@/pages/IncidentRecovery'));
+const Surroundings            = lazy(() => import('@/pages/Surroundings'));
 
 const CHECKOUT_ROLES = [
   ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
@@ -54,6 +55,7 @@ export const clientRoutes = (
     {/* Core dashboard routes */}
     <Route element={<ProtectedRoute allowedRoles={CLIENT_PORTAL_ROLES} />}>
       <Route path="/safe-t"                     element={<ErrorBoundary><SafeT /></ErrorBoundary>} />
+      <Route path="/around-you"                 element={<ErrorBoundary><Surroundings /></ErrorBoundary>} />
       <Route path="/dashboard"                  element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/features"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/consultations"    element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />

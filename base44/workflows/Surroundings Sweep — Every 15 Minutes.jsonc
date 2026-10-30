@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/15 * * * *",
+      "one_time_date": null,
+      "timezone": "America/Port_of_Spain",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Reads the advisories already on record and asks whether any of them bear on where a traveller currently is, or on a place they saved. It reads stored records only \u2014 it fetches nothing, infers nothing, and creates no alert. When there is nothing relevant it stays silent, and each alert reaches a given traveller at most once.",
+  "name": "Surroundings Sweep \u2014 Every 15 Minutes",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "surroundings_sweep_every_15_minutes",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sweep": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "evaluateSurroundings",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check what's around each traveller",
+            "description": "Match recorded advisories to positions and saved places"
+          }
+        }
+      }
+    ]
+  }
+}

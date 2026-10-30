@@ -1,0 +1,166 @@
+{
+  "name": "SurroundingsAlert",
+  "type": "object",
+  "description": "One source-backed advisory about something happening somewhere: a reported incident, a demonstration, a closed road, a weather hazard, an official warning. Every row names the source that supports it, when it was reported, and when a human last re-checked it \u2014 because those three facts are the difference between a safety service and a rumour mill. Written only through ingestSurroundingsAlert by an admin or the care team; there is no client write path, and no automated job may create one from a model's output. level is what the SOURCE says; what a traveller is shown is derived at read time by shared/surroundings.ts, which refuses to promote an unverified report above CAUTION and demotes anything that has gone stale. latitude/longitude are the event's location, not a neighbourhood rating: this table must never be used to score or label a district, and a row without coordinates may only be shown as country-level guidance.",
+  "properties": {
+    "headline": {
+      "type": "string",
+      "description": "The source's own short statement, quoted faithfully. No embellishment, no dramatisation \u2014 the engine composes the traveller-facing sentence from this."
+    },
+    "detail": {
+      "type": "string",
+      "description": "Short factual detail: what happened, what area, what official guidance says. Never a guess at causes."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "security_incident",
+        "civil_unrest",
+        "road_closure",
+        "severe_weather",
+        "official_advisory",
+        "scam_risk",
+        "restricted_area"
+      ]
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "information",
+        "caution",
+        "warning",
+        "urgent"
+      ],
+      "description": "The level as claimed by the source. The display level is derived, never taken verbatim."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "official_government",
+        "official_local_authority",
+        "official_transport",
+        "official_weather",
+        "verified_partner",
+        "media",
+        "public_report"
+      ],
+      "description": "Decides whether this may ever be presented as a WARNING or URGENT. media and public_report are capped at CAUTION by the engine."
+    },
+    "source_name": {
+      "type": "string",
+      "description": "Who published it, as a person would say it, e.g. 'Trinidad and Tobago Police Service'."
+    },
+    "source_url": {
+      "type": "string",
+      "description": "The page the statement came from, so a traveller can read the original themselves."
+    },
+    "independently_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set only when a second, independent source corroborates an unverified report. Without it, an unverified report can never be shown above CAUTION."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "description": "The care team's assessment of how much weight this deserves. 'low' caps the display level at CAUTION."
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "radius_m": {
+      "type": "number",
+      "description": "How wide an area the report covers, when the source states one. Widens relevance, never the level."
+    },
+    "area_label": {
+      "type": "string",
+      "description": "The named area as the source describes it, e.g. 'Independence Square, Port of Spain'."
+    },
+    "city": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string",
+      "description": "Used only when a traveller has no position: matches their trip country, and the engine caps that presentation at CAUTION."
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the event was reported by the source. Never the time we ingested it \u2014 conflating the two is how stale news reads as live."
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a human last confirmed the source still says this. This is what freshness is computed from."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this stops being relevant at all. Past this, the engine drops it rather than showing a resolved incident forever."
+    },
+    "suggested_action": {
+      "type": "string",
+      "description": "A practical, reviewed suggestion from the record, e.g. 'Avoid the immediate area and use the parallel street'. Reviewed before it is stored \u2014 never generated at display time."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "withdrawn",
+        "expired"
+      ],
+      "default": "active",
+      "description": "withdrawn means the source corrected or retracted it. Nothing withdrawn is ever shown."
+    },
+    "withdrawn_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "withdrawal_reason": {
+      "type": "string"
+    },
+    "dedupe_key": {
+      "type": "string",
+      "description": "Stable identity for this event from this source, so re-ingesting an updated report refreshes one row instead of stacking duplicates that each notify separately."
+    },
+    "ingested_by": {
+      "type": "string",
+      "description": "The person who recorded it. Accountability for every claim M-Care repeats."
+    }
+  },
+  "required": [
+    "headline",
+    "category",
+    "level",
+    "source_type",
+    "source_name",
+    "reported_at",
+    "last_checked_at",
+    "status"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileText,
   MessageCircle, Shield, Settings, Menu, ChevronRight,
-  Stethoscope, Plane, AlertTriangle, Globe, Camera,
+  Stethoscope, Plane, AlertTriangle, Globe, Camera, Radar,
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
@@ -26,6 +26,7 @@ const NAV_ITEMS = Object.freeze([
   { icon: Stethoscope,     label: 'Medical',       path: '/intake' },
   { icon: Plane,           label: 'Travel',         path: '/travel-intake' },
   { icon: Shield,          label: 'Safety',         path: '/safe-t' },
+  { icon: Radar,           label: 'Around You',     path: '/around-you' },
   { icon: FileText,        label: 'Documents',      path: '/passport-vault' },
   { icon: MessageCircle,   label: 'Messages',       path: '/dashboard/messages', badge: 2 },
   { icon: AlertTriangle,   label: 'Emergency',      path: '/emergency' },

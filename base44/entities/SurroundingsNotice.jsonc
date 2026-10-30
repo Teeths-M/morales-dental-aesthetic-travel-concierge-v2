@@ -1,0 +1,134 @@
+{
+  "name": "SurroundingsNotice",
+  "type": "object",
+  "description": "The delivery log for one surroundings alert to one traveller, and the thing that makes deduplication real. A row exists only after evaluateSurroundings decided to tell somebody something, so its presence IS the record that the alert was already sent to that person \u2014 which is why one alert never becomes three notifications. It also keeps the facts as they stood at the moment of sending: the level shown, the distance measured, and whether the information was already stale when it went out. Those are deliberately frozen copies rather than references, because a later correction to the alert must not retroactively rewrite what a traveller was actually told. push_result distinguishes what really happened from what was attempted: a provider accepting a message is not delivery, and 'not_attempted' is recorded honestly rather than implied as success.",
+  "properties": {
+    "alert_id": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised recipient for RLS and per-person dedupe."
+    },
+    "dedupe_key": {
+      "type": "string",
+      "description": "surroundings:<alert_id>:<email>. Checked before writing, so a retried sweep cannot notify twice."
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "information",
+        "caution",
+        "warning",
+        "urgent"
+      ],
+      "description": "The level actually shown, after any downgrade \u2014 not necessarily the source's claimed level."
+    },
+    "reported_level": {
+      "type": "string",
+      "description": "What the source claimed, kept so a downgrade is visible in the audit trail."
+    },
+    "headline": {
+      "type": "string",
+      "description": "Frozen copy of the alert headline at send time."
+    },
+    "message_text": {
+      "type": "string",
+      "description": "Exactly what the traveller was told, including source and freshness wording."
+    },
+    "distance_m": {
+      "type": "number",
+      "description": "Distance measured at send time, or absent when the alert applied only to the trip country."
+    },
+    "matched_place_label": {
+      "type": "string",
+      "description": "Which saved place made this relevant, when that was the reason."
+    },
+    "proximity": {
+      "type": "string",
+      "enum": [
+        "position",
+        "saved_visit",
+        "saved_avoid",
+        "country_only"
+      ]
+    },
+    "was_stale": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when freshness had already degraded \u2014 the reason it was said at all is recorded, not hidden."
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "in_app",
+        "push",
+        "push_and_chat"
+      ]
+    },
+    "push_result": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "skipped_no_subscription",
+        "skipped_quiet_hours",
+        "failed",
+        "not_attempted"
+      ],
+      "default": "not_attempted",
+      "description": "What actually happened, as far as we can know it. 'sent' means the push service accepted it \u2014 not that a person read it."
+    },
+    "push_detail": {
+      "type": "string"
+    },
+    "quiet_hours_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "delivered_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "alert_id",
+    "client_email",
+    "level",
+    "delivered_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
