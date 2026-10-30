@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { resolveOccurredAt } from '../../shared/incidentDispatch.ts';
+import { arrivalDeadlineAt, arrivalBufferSeconds } from '../../shared/tripCard.ts';
 import {
   advanceDispatch,
   notifyResponderMoving,
@@ -98,11 +99,28 @@ Deno.serve(async (req) => {
 
     // ── Accept ──────────────────────────────────────────────────────────────
     if (action === 'accept') {
+      // The ETA in force is his OWN quoted time if he supplied one at the
+      // moment he said yes, otherwise the partner's declared response time.
+      // Never a guess, and never reconstructed later.
+      const requestedEta = Number(body.eta_seconds);
+      const acceptedEta = Number.isFinite(requestedEta) && requestedEta > 0
+        ? Math.round(requestedEta)
+        : (Number.isFinite(Number(offer.eta_seconds)) && Number(offer.eta_seconds) > 0
+          ? Math.round(Number(offer.eta_seconds))
+          : null);
+
       await base44.asServiceRole.entities.DispatchOffer.update(offer.id, {
         status: 'ACCEPTED',
         responded_at: responded.occurred_at,
         responded_at_source: responded.occurred_at_source,
         accepted_at: responded.occurred_at,
+        // Measured from ACCEPTANCE, never from when the offer went out: the
+        // ETA only starts existing when he says yes.
+        accepted_eta_seconds: acceptedEta,
+        arrival_buffer_seconds: arrivalBufferSeconds(acceptedEta),
+        arrival_deadline_at: arrivalDeadlineAt(responded.occurred_at, acceptedEta),
+        arrival_validation: 'pending',
+        superseded: false,
       });
 
       await appendAudit(base44, {

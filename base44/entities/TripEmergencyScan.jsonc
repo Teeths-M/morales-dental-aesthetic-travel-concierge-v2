@@ -1,0 +1,112 @@
+{
+  "name": "TripEmergencyScan",
+  "type": "object",
+  "description": "One row per scan of a printed trip card, including scans that never became a request. Deliberately holds NO device identifier and NO raw IP: the purge job deletes rows within 24 hours and there is nothing left behind worth identifying a bystander by. Throttling applies to WRITING these rows, never to joining an open request \u2014 a fifth person tapping must still reach the help that already exists. Rows for a card whose request is already open are recorded as joins, so the near-miss trail can show how many people scanned before anyone acted.",
+  "properties": {
+    "card_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "token_id": {
+      "type": "string",
+      "description": "Which printed token was presented. Not the token itself."
+    },
+    "incident_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "scan",
+        "tap",
+        "join",
+        "location_gps",
+        "location_address",
+        "location_skip",
+        "blocked_throttle",
+        "invalid_token",
+        "expired_token"
+      ],
+      "description": "What the scan actually did. 'scan' with no later tap is still recorded \u2014 that is the near-miss evidence."
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Short, non-identifying outcome label for the care team's trail."
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "purge_after": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Retention boundary. The sweep deletes rows past this, so nothing about a bystander outlives 24 hours."
+    }
+  },
+  "required": [
+    "card_id",
+    "kind",
+    "at",
+    "purge_after"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

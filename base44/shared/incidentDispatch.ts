@@ -52,8 +52,14 @@ export type NotificationStatus =
 const INCIDENT_TRANSITIONS: Record<IncidentStatus, IncidentStatus[]> = {
   OPEN: ['DISPATCHING', 'UNRESOLVED', 'RESOLVED', 'DUPLICATE_SUPPRESSED'],
   DISPATCHING: ['ASSIGNED', 'UNRESOLVED', 'RESOLVED'],
-  ASSIGNED: ['EN_ROUTE', 'DISPATCHING', 'UNRESOLVED', 'RESOLVED'],
-  EN_ROUTE: ['ARRIVED', 'UNRESOLVED', 'RESOLVED'],
+  // ASSIGNED → ARRIVED: a driver who reaches the traveller sends a GPS
+  // check-in without ever passing through an explicit "en route" write. The
+  // arrival is a real fact and must not be refused by bookkeeping.
+  ASSIGNED: ['EN_ROUTE', 'ARRIVED', 'DISPATCHING', 'UNRESOLVED', 'RESOLVED'],
+  // EN_ROUTE → DISPATCHING: a driver can accept, go en route, and then simply
+  // not arrive. Without this edge the incident would be stuck with a promise
+  // that nobody is keeping, which is exactly the screen-does-nothing case.
+  EN_ROUTE: ['ARRIVED', 'DISPATCHING', 'UNRESOLVED', 'RESOLVED'],
   ARRIVED: ['RESOLVED'],
   UNRESOLVED: ['ASSIGNED', 'RESOLVED'],
   RESOLVED: [],

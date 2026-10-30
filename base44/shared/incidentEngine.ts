@@ -245,7 +245,10 @@ export async function createNotificationRows(base44: any, incident: any, targets
 }
 
 async function deliverOne(base44: any, incident: any, row: any): Promise<{ ok: boolean; providerRef?: string; detail?: string }> {
-  const body = fanoutMessage(incident, row.recipient_role);
+  // A caller may supply the exact words (a destination-confirmation page, an
+  // arrival-deadline page). Without one, the deterministic per-role copy is
+  // used — nothing is ever drafted by a model on this path.
+  const body = row.message_override || fanoutMessage(incident, row.recipient_role);
 
   try {
     if (row.channel === 'sms') {
@@ -435,6 +438,13 @@ export async function advanceDispatch(base44: any, params: {
   reason: string;
 }): Promise<{ incident: any; offer: any | null; unresolved: boolean }> {
   const { incident, policy, now, reason } = params;
+
+  // A closed case must never produce another offer. moveIncident would refuse
+  // the transition, but by then the offer row would already exist and be live —
+  // a driver summoned for an emergency that a human had already stood down.
+  if (incident?.status === 'RESOLVED' || incident?.status === 'DUPLICATE_SUPPRESSED') {
+    return { incident, offer: null, unresolved: false, refused: true } as any;
+  }
 
   const offers = await loadOffers(base44, incident.id);
 

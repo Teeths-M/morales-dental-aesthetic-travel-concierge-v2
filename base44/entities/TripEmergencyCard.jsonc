@@ -1,0 +1,311 @@
+{
+  "name": "TripEmergencyCard",
+  "type": "object",
+  "description": "One printed QR card for one trip, and the single emergency request that card can open. This row is both the card (token binding, language, live expiry) and the trip's request record, because there is exactly one card and at most one open request per trip \u2014 splitting them would let the two disagree. The token is signed and emergency-only: it can open or rejoin this trip's request and nothing else. expires_at is always trip_ends_at + 24h, and trip_ends_at is extended whenever the real trip moves, so a delayed flight or an extended recovery never kills a card while the traveller is still in the country. patient_first_name is the ONLY identity ever rendered on the public page \u2014 never a surname, never a procedure, never a contact. The two addresses are kept apart on purpose: bystander_location_* is what a stranger reported, traveller_location_* is the last confirmed position we held. Neither is silently merged, and dispatch waits for the care team to pick which one the driver is sent to (destination_basis).",
+  "properties": {
+    "trip_id": {
+      "type": "string",
+      "description": "The trip this card belongs to. The token is bound to it and to nothing else."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The CaseRecord the trip runs on. Trip end is re-derived from this row so expiry follows the real trip."
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS \u2014 the traveller may read their own card. Never sent to a public browser."
+    },
+    "patient_first_name": {
+      "type": "string",
+      "description": "First name only. The sole identity string the public page renders. Never a surname."
+    },
+    "country_code": {
+      "type": "string",
+      "description": "ISO-2 of the trip country. Selects the emergency number and the page language."
+    },
+    "country_name": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "es",
+        "pt",
+        "fr",
+        "it",
+        "de",
+        "tr",
+        "th",
+        "ar",
+        "zh",
+        "en"
+      ],
+      "default": "en",
+      "description": "Trip-country language, rendered FIRST with English directly underneath. The person holding the card is usually a local who does not read English."
+    },
+    "emergency_number": {
+      "type": "string",
+      "description": "The trip country's real emergency number, snapshotted onto the card so the public page never has to look anything up."
+    },
+    "emergency_number_label": {
+      "type": "string"
+    },
+    "trip_ends_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The ACTUAL trip end, extended whenever the trip moves. Only ever moved forward \u2014 a cleared date field must never be the reason a card died abroad."
+    },
+    "trip_end_source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "case_derived",
+        "extended"
+      ],
+      "default": "manual"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Always trip_ends_at + 24h, recomputed on every validation. This row \u2014 not the token's own exp \u2014 is the authority."
+    },
+    "token_id": {
+      "type": "string",
+      "description": "Identifies the printed token so a card can be revoked without invalidating every other card."
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "issued_by": {
+      "type": "string"
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked_reason": {
+      "type": "string"
+    },
+    "request_state": {
+      "type": "string",
+      "enum": [
+        "none",
+        "open",
+        "closed_false_alarm",
+        "resolved"
+      ],
+      "default": "none",
+      "description": "Trip-level request state. 'open' means a bystander raised it and it has not been closed. The dispatch detail lives on Incident/DispatchOffer \u2014 this is only the trip's own single-request latch."
+    },
+    "open_incident_id": {
+      "type": "string",
+      "description": "The one Incident this trip's card opened. Its presence is what makes every later tap a JOIN, never a second request."
+    },
+    "request_ref": {
+      "type": "string",
+      "description": "Short human receipt reference shown to the bystander. Carries no patient data."
+    },
+    "request_opened_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was first raised. Drives the ten-minute bounded wait on the public page."
+    },
+    "opened_by": {
+      "type": "string",
+      "enum": [
+        "bystander",
+        "care_team"
+      ]
+    },
+    "bystander_location_source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "address",
+        "none"
+      ],
+      "description": "'none' is an explicit, stored fact \u2014 the stranger chose not to share \u2014 not a missing value."
+    },
+    "bystander_latitude": {
+      "type": "number"
+    },
+    "bystander_longitude": {
+      "type": "number"
+    },
+    "bystander_address": {
+      "type": "string",
+      "description": "A single plain-text address the bystander typed. Never geocoded into a coordinate we would then treat as precise."
+    },
+    "bystander_location_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "bystander_location_note": {
+      "type": "string",
+      "description": "e.g. 'bystander location not provided' \u2014 kept as text so the record reads plainly later."
+    },
+    "traveller_latitude": {
+      "type": "number"
+    },
+    "traveller_longitude": {
+      "type": "number"
+    },
+    "traveller_location_label": {
+      "type": "string"
+    },
+    "traveller_location_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "traveller_location_source": {
+      "type": "string",
+      "enum": [
+        "last_confirmed",
+        "none"
+      ],
+      "default": "none"
+    },
+    "destination_state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed"
+      ],
+      "default": "pending",
+      "description": "Dispatch does not start until the care team confirms which address the driver is sent to."
+    },
+    "destination_latitude": {
+      "type": "number"
+    },
+    "destination_longitude": {
+      "type": "number"
+    },
+    "destination_label": {
+      "type": "string"
+    },
+    "destination_basis": {
+      "type": "string",
+      "enum": [
+        "traveller_location",
+        "bystander_location",
+        "manual"
+      ],
+      "description": "Which of the two reported places the care team chose, so the driver's instructions can say who reported it."
+    },
+    "destination_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "destination_confirmed_by": {
+      "type": "string"
+    },
+    "closure_reason_code": {
+      "type": "string",
+      "description": "From FALSE_ALARM_REASONS. Required, and the near-miss record is built from it."
+    },
+    "closure_contact_party": {
+      "type": "string",
+      "enum": [
+        "traveller",
+        "guardian",
+        "none"
+      ]
+    },
+    "closure_contact_method": {
+      "type": "string"
+    },
+    "closure_contact_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closure_notes": {
+      "type": "string"
+    },
+    "near_miss": {
+      "type": "boolean",
+      "default": false,
+      "description": "A false alarm is not nothing. It is usually a traveller who did not understand how the card works \u2014 which is a card you can fix."
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_by": {
+      "type": "string"
+    },
+    "scan_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_scan_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "trip_id",
+    "patient_first_name",
+    "country_code",
+    "language",
+    "emergency_number",
+    "trip_ends_at",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

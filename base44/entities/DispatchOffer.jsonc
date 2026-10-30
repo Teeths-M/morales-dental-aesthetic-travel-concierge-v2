@@ -1,7 +1,7 @@
 {
   "name": "DispatchOffer",
   "type": "object",
-  "description": "One sequential offer of an incident to one responder. The engine guarantees at most ONE row per incident is in OFFERED status at any moment (asserted by countLiveOffers); a job is never broadcast to the pool. ranking fields are snapshotted at offer time \u2014 verification_tier, eta_seconds and whether that ETA was actually declared by the partner or is unknown \u2014 so a later ranking is explainable rather than reconstructed. expires_at drives the 90-second timer; an expired offer is moved to EXPIRED by sweepDispatchOffers and the next ranked responder is offered. offer_token is the unguessable handle a responder uses to accept or decline without an app login (the token IS the authorization; do not reuse it across incidents).",
+  "description": "One sequential offer of an incident to one responder. The engine guarantees at most ONE row per incident is in OFFERED status at any moment (asserted by countLiveOffers); a job is never broadcast to the pool. ranking fields are snapshotted at offer time \u2014 verification_tier, eta_seconds and whether that ETA was actually declared by the partner or is unknown \u2014 so a later ranking is explainable rather than reconstructed. expires_at drives the 90-second timer; an expired offer is moved to EXPIRED by sweepDispatchOffers and the next ranked responder is offered. offer_token is the unguessable handle a responder uses to accept or decline without an app login (the token IS the authorization; do not reuse it across incidents). The arrival lifecycle is deliberately three separate facts, never one: accepted_at (he said yes), arrived_at (a GPS check-in reached the server and passed proximity validation), and in_person_safety_confirmed_at (he actually looked at the traveller and reported what he saw). A driver tapping 'arrived' from a mile out must never produce an arrived_at, because arrived_at is the timestamp the record is judged on later. arrival_deadline_at starts at accepted_at \u2014 never at offered_at, because the ETA only begins to exist when the driver says yes \u2014 and uses max(10 minutes, half the quoted ETA) capped at 25. When it passes without a validated arrival, the offer is marked missed and superseded but KEEPS status ACCEPTED: the accepting driver is tracked, never erased, and a new offer goes out beside him.",
   "properties": {
     "incident_id": {
       "type": "string"
@@ -102,6 +102,117 @@
     },
     "decline_reason": {
       "type": "string"
+    },
+    "accepted_eta_seconds": {
+      "type": "number",
+      "description": "The ETA actually in force when he accepted \u2014 his own quoted time if he supplied one at that moment, otherwise the partner's declared response time. Never a guess."
+    },
+    "arrival_buffer_seconds": {
+      "type": "number",
+      "description": "max(10 min, half the quoted ETA), capped at 25 min. An unknown ETA gets the buffer only \u2014 erring tight is deliberate."
+    },
+    "arrival_deadline_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "accepted_at + quoted ETA + buffer. Measured from acceptance, never from when the offer went out."
+    },
+    "arrival_deadline_missed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set the moment the deadline passed with no validated arrival. Written once \u2014 the sweep is idempotent."
+    },
+    "arrival_deadline_page_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the care team was paged about this miss, so one miss never pages twice."
+    },
+    "superseded": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once a later offer has been made because this driver did not arrive. The row is kept, still ACCEPTED \u2014 the acceptance happened and erasing it would hide a no-show."
+    },
+    "superseded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "superseded_reason": {
+      "type": "string"
+    },
+    "gps_checkin_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The most recent GPS check-in received, valid or not. The attempt itself is a fact worth keeping."
+    },
+    "gps_checkin_lat": {
+      "type": "number"
+    },
+    "gps_checkin_lng": {
+      "type": "number"
+    },
+    "gps_checkin_distance_m": {
+      "type": "number",
+      "description": "Distance from the confirmed destination at check-in. Stored so a rejected arrival is explainable, never argued about."
+    },
+    "gps_validated": {
+      "type": "boolean",
+      "default": false
+    },
+    "arrived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server-recorded, and only ever written by a GPS check-in that passed proximity validation. A driver's tap alone cannot set this."
+    },
+    "arrival_validation": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "gps_validated",
+        "rejected_out_of_range"
+      ],
+      "default": "pending"
+    },
+    "in_person_safety_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "After arrival, the driver confirming in person beats a phone call \u2014 and he is already there. Recorded separately from arrival."
+    },
+    "in_person_outcome": {
+      "type": "string",
+      "enum": [
+        "traveller_safe",
+        "help_needed",
+        "unknown"
+      ]
+    },
+    "in_person_note": {
+      "type": "string"
+    },
+    "withdrawn_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "withdrawal_reason": {
+      "type": "string",
+      "description": "Why the offer was recalled. Only ever set on a valid false-alarm closure, and only before arrival."
+    },
+    "assignment_fee_amount": {
+      "type": "number",
+      "description": "What this driver is owed for being recalled. A stand-down that pays nothing teaches the pool that a 3am yes is a coin flip."
+    },
+    "assignment_fee_status": {
+      "type": "string",
+      "enum": [
+        "recorded",
+        "not_applicable"
+      ]
+    },
+    "assignment_fee_recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "driver_brief": {
+      "type": "object",
+      "description": "Snapshot of exactly what the driver was told: the confirmed destination, and BOTH reported addresses with who reported each and when. Kept so the instruction can be reconstructed rather than remembered."
     }
   },
   "required": [

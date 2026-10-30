@@ -1,0 +1,41 @@
+{
+  "name": "Trip Card Arrival Deadline Sweep",
+  "description": "Every 5 minutes (the platform's minimum schedule gap): breaches any ACCEPTED dispatch offer whose arrival deadline has passed without a GPS-validated arrival, keeps the accepting driver tracked as superseded, pages the human care team, and reopens dispatch to the next ranked responder. Also deletes trip-card scan rows past their 24-hour retention boundary. NOTE: because the platform cannot schedule below 5 minutes, a missed deadline can wait up to ~5 minutes before the next driver is offered. The function accepts an X-Cron-Secret header, so an external 1-minute scheduler can be pointed at it for tighter resolution.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "trip_card_arrival_deadline_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sweepTripArrivalDeadlines",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
