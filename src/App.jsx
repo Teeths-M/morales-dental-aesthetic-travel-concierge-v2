@@ -41,7 +41,7 @@ const PageLoader = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background">
+    <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#060B16' }}>
       <div className="flex flex-col items-center gap-4 px-6 text-center">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-2xl"
@@ -52,12 +52,13 @@ const PageLoader = () => {
         <div className="w-8 h-8 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
         {showHint && (
           <div className="mt-2 max-w-xs">
-            <p className="text-sm text-muted-foreground mb-3">
+            <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
               This is taking a while — you may be offline and this page hasn't been saved for offline use yet.
             </p>
             <a
               href="/offline"
-              className="inline-block text-sm font-semibold underline text-primary"
+              className="inline-block text-sm font-semibold underline"
+              style={{ color: '#D4AF37' }}
             >
               Go to Offline Mode instead
             </a>

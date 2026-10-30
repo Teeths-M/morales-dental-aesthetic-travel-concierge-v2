@@ -32,6 +32,17 @@
     <meta name="theme-color" content="#060B16" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>M-Care — The Golden Standard for Medical Travel</title>
+    <!-- First paint. Until the stylesheet and React's first render arrive there
+         was literally nothing on the page, so the browser painted the window
+         white — and the app's own body background (#F7F8F7) kept it white while
+         the bundle loaded. On a landing page that is deep navy, that reads as a
+         white screen on every reload. `#root:empty` applies only while React has
+         rendered nothing at all and stops matching the instant it does, so this
+         can never linger behind the app. -->
+    <style>
+      html { background-color: #060B16; }
+      #root:empty { min-height: 100vh; background-color: #060B16; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

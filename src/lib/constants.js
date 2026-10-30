@@ -316,6 +316,11 @@ export const AUDIT_EVENTS = {
 // ── Public Bypass Paths (render without waiting for auth) ─────────────────────
 // Keep in sync with the auth check in App.jsx's AuthenticatedApp component.
 export const PUBLIC_BYPASS_PATHS = [
+  // The landing page has no session, no data and no gate: it is a photograph
+  // and three sentences. Waiting for the auth round-trip before painting it
+  // meant every load of "/" sat on a near-white loader for as long as the
+  // check took (up to the 10s timeout) — the white screen people kept seeing.
+  '/',
   '/offline', '/offline-guide', '/emergency-manifest', '/emergency-access',
   '/emergency', '/guardian', '/survey', '/feedback', '/luggage',
   '/check-in', '/vault/share', '/passport-vault', '/share-location',
