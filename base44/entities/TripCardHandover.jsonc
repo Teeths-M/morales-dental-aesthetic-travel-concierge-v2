@@ -1,0 +1,111 @@
+{
+  "name": "TripCardHandover",
+  "type": "object",
+  "description": "One physical handover of a laminated card from a human to the traveller. This is deliberately NOT the printed acknowledgement: the traveller's 'I've printed and packed my card' is their own claim about their own paper and stays in the safety layer, while a handover is an event a partner performed. It exists so a Trinidad handover partner has a single action that says 'I put a card in their hand', scoped to that moment, and nothing that tells a driver whether the traveller did their homework. Created only by the backend function, which is why create is admin-only here.",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "trip_card_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "partner_name": {
+      "type": "string"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "security_agency",
+        "doctor",
+        "care_team",
+        "other"
+      ]
+    },
+    "partner_id": {
+      "type": "string"
+    },
+    "handed_over_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recorded_by": {
+      "type": "string",
+      "description": "The authenticated user who recorded it \u2014 a partner, or the care team taking their call."
+    },
+    "card_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Which printed references changed hands. References only; never a token."
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "trip_card_id",
+    "handed_over_at",
+    "partner_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

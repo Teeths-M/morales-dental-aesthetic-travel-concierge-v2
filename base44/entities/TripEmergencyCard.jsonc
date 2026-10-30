@@ -1,11 +1,11 @@
 {
   "name": "TripEmergencyCard",
   "type": "object",
-  "description": "One printed QR card for one trip, and the single emergency request that card can open. This row is both the card (token binding, language, live expiry) and the trip's request record, because there is exactly one card and at most one open request per trip \u2014 splitting them would let the two disagree. The token is signed and emergency-only: it can open or rejoin this trip's request and nothing else. expires_at is always trip_ends_at + 24h, and trip_ends_at is extended whenever the real trip moves, so a delayed flight or an extended recovery never kills a card while the traveller is still in the country. patient_first_name is the ONLY identity ever rendered on the public page \u2014 never a surname, never a procedure, never a contact. The two addresses are kept apart on purpose: bystander_location_* is what a stranger reported, traveller_location_* is the last confirmed position we held. Neither is silently merged, and dispatch waits for the care team to pick which one the driver is sent to (destination_basis).",
+  "description": "One trip's printed card SET, and the single emergency request that set can open. This row is the trip-level record \u2014 the cards themselves are TripCardInstance rows, because revocation had to become per-card. A traveller who loses one card can now replace exactly that card; only a stolen one is revoked. The token is signed and emergency-only: it can open or rejoin this trip's request and nothing else. expires_at is always trip_ends_at + 24h, and trip_ends_at is extended whenever the real trip moves, so a delayed flight or an extended recovery never kills a card while the traveller is still in the country. Card set is issued from the trip-pack workflow only, after the booking is confirmed AND payment captured \u2014 a card minted off a status flag but never delivered is a live token with nobody carrying it. Issuance is idempotent: a resend looks the cards up, it never mints new ones. patient_first_name is the ONLY identity ever rendered on the public page \u2014 never a surname, never a procedure, never a contact. The two addresses are kept apart on purpose: bystander_location_* is what a stranger reported, traveller_location_* is the last confirmed position we held. Neither is silently merged, and dispatch waits for the care team to pick which one the driver is sent to (destination_basis).",
   "properties": {
     "trip_id": {
       "type": "string",
-      "description": "The trip this card belongs to. The token is bound to it and to nothing else."
+      "description": "The trip this card set belongs to. The tokens are bound to it and to nothing else."
     },
     "case_id": {
       "type": "string",
@@ -49,10 +49,21 @@
     },
     "emergency_number": {
       "type": "string",
-      "description": "The trip country's real emergency number, snapshotted onto the card so the public page never has to look anything up."
+      "description": "The number the public pages dial. Kept in step with local_mcare_number so every existing page reads one field."
     },
     "emergency_number_label": {
       "type": "string"
+    },
+    "local_mcare_number": {
+      "type": "string",
+      "description": "The trip-country number printed LARGE on the card face and dialled by a bystander. This is M-Care's own local number, not the emergency services number: a Venezuelan stranger on a prepaid phone either cannot reach a foreign toll-free or will not trust it. Issuance blocks when this is absent \u2014 a card that prints no number is a card that helps no one."
+    },
+    "local_mcare_number_label": {
+      "type": "string"
+    },
+    "local_whatsapp_number": {
+      "type": "string",
+      "description": "WhatsApp is an ACTION on the scanned page, never a second code on the card. A card with two QR codes makes a panicking stranger choose, and half of them choose wrong."
     },
     "trip_ends_at": {
       "type": "string",
@@ -75,7 +86,7 @@
     },
     "token_id": {
       "type": "string",
-      "description": "Identifies the printed token so a card can be revoked without invalidating every other card."
+      "description": "Legacy single-card handle, retained so pre-existing rows still load. New issuance writes per-card handles on TripCardInstance."
     },
     "issued_at": {
       "type": "string",
@@ -86,7 +97,8 @@
     },
     "revoked": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "Set only when the WHOLE set is dead (trip cancelled, set replaced). Per-card revocation lives on TripCardInstance."
     },
     "revoked_reason": {
       "type": "string"
@@ -100,7 +112,7 @@
         "resolved"
       ],
       "default": "none",
-      "description": "Trip-level request state. 'open' means a bystander raised it and it has not been closed. The dispatch detail lives on Incident/DispatchOffer \u2014 this is only the trip's own single-request latch."
+      "description": "Trip-level request state. 'open' means a bystander raised it and it has not been closed, whichever card they scanned. The dispatch detail lives on Incident/DispatchOffer \u2014 this is only the trip's own single-request latch."
     },
     "open_incident_id": {
       "type": "string",
@@ -245,6 +257,60 @@
     "last_scan_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "card_set_version": {
+      "type": "number",
+      "default": 1,
+      "description": "Incremented when the set is replaced for an itinerary change, so a stale printed sheet is recognisably stale."
+    },
+    "card_set_issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "active_instance_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Live cards on this trip. Capped at three: without a cap, 'lost' becomes an unlimited print button."
+    },
+    "printed_acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "description": "The traveller's one-line acknowledgement, 'I've printed and packed my card'. This is the ONLY evidence the safety layer is in a pocket, which is why it is shown to the traveller and the care team and never to trip partners."
+    },
+    "printed_acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "printed_acknowledged_by": {
+      "type": "string"
+    },
+    "readiness_due_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "72 hours before the first flight. The trigger that keeps the readiness check from being a screen nobody opens."
+    },
+    "readiness_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "readiness_cycle_key": {
+      "type": "string",
+      "description": "trip + readiness due hour. Makes the reminder fire once per readiness cycle, so a retried sweep cannot page twice."
+    },
+    "issuance_blocked_reason": {
+      "type": "string",
+      "enum": [
+        "missing_local_number",
+        "module_disabled",
+        "booking_not_confirmed",
+        "payment_not_captured",
+        "active_instance_cap_exceeded"
+      ]
+    },
+    "pdf_generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the print sheet was last rendered. The PDF is regenerated from the stored tokens on demand, so a resend is deterministic rather than a second mint."
     }
   },
   "required": [

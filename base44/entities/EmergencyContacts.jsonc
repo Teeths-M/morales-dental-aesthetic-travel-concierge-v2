@@ -37,7 +37,7 @@
     "has_human_safety_partner": {
       "type": "boolean",
       "default": false,
-      "description": "Whether a real, vendor-contracted human safety-monitoring/dispatch partner exists for this country (a service that can relay to local emergency dispatch). Must default to false and only ever be set true by an admin, once a real partner relationship and legal/compliance review exist. Read by routeTier2Emergency only to choose which honest message to send to Morales' own admin — no code path may use this field to place an automated call or message to police, ambulance, or any partner service."
+      "description": "Whether a real, vendor-contracted human safety-monitoring/dispatch partner exists for this country (a service that can relay to local emergency dispatch). Must default to false and only ever be set true by an admin, once a real partner relationship and legal/compliance review exist. Read by routeTier2Emergency only to choose which honest message to send to Morales' own admin \u2014 no code path may use this field to place an automated call or message to police, ambulance, or any partner service."
     },
     "languages_supported": {
       "type": "array",
@@ -45,7 +45,24 @@
         "type": "string"
       },
       "default": [],
-      "description": "Languages a human responder in this country can be expected to communicate in. Informational context surfaced in the Tier 2 emergency packet only — never gates any automated action."
+      "description": "Languages a human responder in this country can be expected to communicate in. Informational context surfaced in the Tier 2 emergency packet only \u2014 never gates any automated action."
+    },
+    "mcare_local_number": {
+      "type": "string",
+      "description": "M-Care's own reachable number IN this country \u2014 the one printed large on the trip card face. It has to be a real local number that answers at 3am: a bystander on a prepaid phone cannot reach a foreign toll-free, or will not trust it if they can. Absent, trip card issuance for this country BLOCKS and raises a care-team task; the card is never quietly printed without a number."
+    },
+    "mcare_local_number_label": {
+      "type": "string",
+      "description": "How to describe that number to a local, e.g. 'M-Care Venezuela, 24 hours'."
+    },
+    "mcare_whatsapp_number": {
+      "type": "string",
+      "description": "WhatsApp number a bystander can tap from the scanned page. Never printed as a second code on the card itself."
+    },
+    "mcare_local_number_verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a human last confirmed the number actually answers. A number nobody has rung is a guess with a country code."
     }
   },
   "required": [

@@ -7,6 +7,7 @@ import ErrorState from '@/components/ui-system/ErrorState';
 import TripCardDestinations from '@/components/tripCard/TripCardDestinations';
 import TripCardClosureForm from '@/components/tripCard/TripCardClosureForm';
 import TripCardOffers from '@/components/tripCard/TripCardOffers';
+import TripCardSetSection from '@/components/tripCard/TripCardSetSection';
 import { CheckCircle2, ScanLine, History, AlertTriangle } from 'lucide-react';
 
 const STATE_LABEL = {
@@ -100,6 +101,8 @@ export default function AdminTripCardDetail() {
         {card.country_code} · {String(card.language || '').toUpperCase()} · {card.emergency_number} · expires{' '}
         {card.expires_at ? new Date(card.expires_at).toLocaleString() : '—'}
       </p>
+
+      <TripCardSetSection tripCardId={card.id} />
 
       {card.request_state === 'open' && (
         <div className="mt-5">

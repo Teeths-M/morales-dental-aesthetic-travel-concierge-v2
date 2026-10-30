@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { BackButton } from '@/components/nav/BackButton';
 import LoadingState from '@/components/ui-system/LoadingState';
+import TripCardSetPanel from '@/components/tripCard/TripCardSetPanel';
 
 // Partner-submitted free-text URL fields (e.g. travel_agency.website_url) have
 // no server-side scheme validation — only allow rendering http(s) links as a
@@ -589,6 +590,9 @@ export default function TripOverview() {
                   </div>
                 </div>
               )}
+
+              {/* Printed emergency card set — the only evidence the safety layer is in a pocket */}
+              <TripCardSetPanel />
 
               {/* Contact Support CTA */}
               {/* @ts-ignore — shadcn Card forwardRef type omits children */}

@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       return htmlResponse(renderNeutralPage({ lang: 'en', emergencyNumber: '', reason: 'invalid' }));
     }
 
-    const { card, error } = await loadCardByToken(base44, token);
+    const { card, instance, error } = await loadCardByToken(base44, token);
 
     if (error || !card) {
       return htmlResponse(renderNeutralPage({
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       }));
     }
 
-    const result = await openOrJoinRequest(base44, card, now);
+    const result = await openOrJoinRequest(base44, card, now, instance);
     const live = result.card || card;
 
     if (result.outcome === 'throttled') {

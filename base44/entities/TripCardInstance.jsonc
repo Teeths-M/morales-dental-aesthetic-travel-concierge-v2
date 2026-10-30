@@ -1,0 +1,177 @@
+{
+  "name": "TripCardInstance",
+  "type": "object",
+  "description": "One physical card in a trip's card set. A trip is issued two of these, and each one carries its OWN revocable, trip-scoped, emergency-only signed token. That separation is the whole point: revocation used to kill the set, so a traveller who lost one card had to revoke both and go cardless until a new pack landed. Here, a stolen instance is revoked alone, a lost instance stays live (a dropped card that a stranger picks up and scans is the product working, not a breach \u2014 the token can only raise an emergency, and a false alarm costs one assignment fee), and only that instance is replaced. Tokens are stored, not re-derived: a resend of the trip pack is a lookup of these rows, never a new mint, so the card already printed stays valid. expires_at mirrors the trip record's live expiry, which follows the ACTUAL trip end. short_ref is printed on the face in place of any identity.",
+  "properties": {
+    "trip_card_id": {
+      "type": "string",
+      "description": "The TripEmergencyCard this instance belongs to. One trip-level record holds the single-request latch; these are the cards in hands."
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised for RLS \u2014 the traveller may read their own card instances."
+    },
+    "short_ref": {
+      "type": "string",
+      "description": "The printed reference, e.g. 'MC-7F2A91'. Derived from token_id so it is stable and needs no second source of truth."
+    },
+    "token_id": {
+      "type": "string",
+      "description": "Unguessable identifier carried in the signed token and used for per-instance throttling."
+    },
+    "token": {
+      "type": "string",
+      "description": "The signed emergency-only token. Stored so a reprint or a pack resend is a lookup, never a fresh mint \u2014 otherwise asking for the itinerary again would kill the card already in a wallet."
+    },
+    "card_url": {
+      "type": "string",
+      "description": "The exact URL encoded in the QR. Carries ONLY the signed token: no name, no trip, no medical, itinerary or payment data."
+    },
+    "label": {
+      "type": "string",
+      "enum": [
+        "card_1",
+        "card_2",
+        "replacement"
+      ],
+      "default": "card_1",
+      "description": "Which slot this card fills. Two initial cards; anything later is a replacement."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked"
+      ],
+      "default": "active",
+      "description": "Only these two. A card reported lost STAYS active; only stolen or an explicit revoke moves it off."
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "issued_by": {
+      "type": "string"
+    },
+    "issued_reason": {
+      "type": "string",
+      "enum": [
+        "initial",
+        "itinerary_change",
+        "lost_replacement",
+        "stolen_replacement",
+        "care_team_reissue"
+      ],
+      "default": "initial"
+    },
+    "replaces_instance_id": {
+      "type": "string",
+      "description": "For a replacement, the instance it stands in for \u2014 so the hand count stays explainable."
+    },
+    "reported_lost_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The traveller said they lost it. The card still works: a dropped card is usually the product doing its job."
+    },
+    "reported_stolen_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_reason": {
+      "type": "string",
+      "enum": [
+        "reported_stolen",
+        "lost_limit_reached",
+        "itinerary_change",
+        "trip_cancelled",
+        "care_team_revoke"
+      ]
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Mirror of the trip record's live expiry: actual trip end + 24h. Refreshed forward whenever the trip moves."
+    },
+    "scan_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_scan_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handed_over_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set only when a human physically placed this card in the traveller's hand. Separate from printed status on purpose."
+    }
+  },
+  "required": [
+    "trip_card_id",
+    "trip_id",
+    "token_id",
+    "token",
+    "short_ref",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

@@ -60,7 +60,8 @@ export default function AdminTripCards() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Trip cards</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            One printed card per trip. A stranger scans it, and one request opens for that trip.
+            Two printed cards per trip, issued with the pack. A stranger scans either one and a single request
+            opens for that trip.
           </p>
         </div>
         <button
@@ -102,9 +103,20 @@ export default function AdminTripCards() {
                 <StateChip state={card.request_state} />
               </div>
               <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
-                {card.country_code} · {String(card.language || '').toUpperCase()} · {card.emergency_number} · expires{' '}
+                {card.country_code} · {String(card.language || '').toUpperCase()} ·{' '}
+                {card.local_mcare_number || card.emergency_number} · expires{' '}
                 {card.expires_at ? new Date(card.expires_at).toLocaleDateString() : '—'}
                 {card.scan_count ? ` · ${card.scan_count} scan${card.scan_count === 1 ? '' : 's'}` : ''}
+              </p>
+              <p className="mt-0.5 text-[10.5px] font-medium">
+                {card.printed_acknowledged ? (
+                  <span className="text-primary">Card printed and packed</span>
+                ) : (
+                  <span className="text-accent">Printed card not confirmed</span>
+                )}
+                {card.issuance_blocked_reason && (
+                  <span className="text-destructive"> · blocked: {String(card.issuance_blocked_reason).replace(/_/g, ' ')}</span>
+                )}
               </p>
             </div>
             <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground" />

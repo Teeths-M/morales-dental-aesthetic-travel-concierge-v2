@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       return htmlResponse(renderNeutralPage({ lang: 'en', emergencyNumber: '', reason: 'invalid' }));
     }
 
-    const { card, error } = await loadCardByToken(base44, token);
+    const { card, instance, error } = await loadCardByToken(base44, token);
 
     if (error || !card) {
       // Indistinguishable for invalid, revoked and unconfigured: the caller
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       // The location choice stays available on reload until the stranger has
       // actually answered it, so the picker is never lost by a page refresh.
       if (card.request_state === 'open' && !card.bystander_location_source) {
-        await logScan(base44, card, 'scan', 'receipt viewed, location not answered');
+        await logScan(base44, card, 'scan', 'receipt viewed, location not answered', null, instance);
         return htmlResponse(renderLocationPage({
           lang: card.language,
           actionUrl: `${APP_URL}/functions/tripCardLocation`,
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       }
 
       const status = await computeStatus(base44, card, now);
-      await logScan(base44, card, 'scan', `receipt viewed (${status.key})`);
+      await logScan(base44, card, 'scan', `receipt viewed (${status.key})`, null, instance);
 
       return htmlResponse(renderStatusPage({
         lang: card.language,
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     }
 
     // No request yet: the one screen, nothing else.
-    await logScan(base44, card, 'scan', 'card viewed, no action');
+    await logScan(base44, card, 'scan', 'card viewed, no action', null, instance);
 
     return htmlResponse(renderHelpPage({
       lang: card.language,

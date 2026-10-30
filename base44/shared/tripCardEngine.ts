@@ -61,6 +61,8 @@ function refFor(): string {
 
 export interface LoadedCard {
   card: any | null;
+  /** The specific printed card that was scanned. Revoked per card, not per trip. */
+  instance: any | null;
   error: 'invalid' | 'expired' | 'revoked' | 'not_configured' | null;
 }
 
@@ -75,10 +77,36 @@ export async function loadCardByToken(base44: any, token: string): Promise<Loade
   try {
     payload = await verifyTripCardToken(token);
   } catch {
-    return { card: null, error: 'not_configured' };
+    return { card: null, instance: null, error: 'not_configured' };
   }
-  if (!payload) return { card: null, error: 'invalid' };
+  if (!payload) return { card: null, instance: null, error: 'invalid' };
 
+  // The INSTANCE is the authority on whether this particular printed card still
+  // works. Revoking one card in a traveller's hand must not touch the other, so
+  // the token names an instance and the instance says live or dead.
+  const instRows = await base44.asServiceRole.entities.TripCardInstance
+    .filter({ token_id: payload.card_id }, '-issued_at', 1)
+    .catch(() => []);
+  const instance = (Array.isArray(instRows) ? instRows : [])[0] || null;
+
+  if (instance) {
+    const card = await base44.asServiceRole.entities.TripEmergencyCard
+      .get(instance.trip_card_id)
+      .catch(() => null);
+
+    if (!card) return { card: null, instance, error: 'invalid' };
+    if (card.revoked) return { card, instance, error: 'revoked' };
+    if (instance.status !== 'active') return { card, instance, error: 'revoked' };
+
+    const refreshed = await refreshExpiry(base44, card);
+    if (new Date(refreshed.expires_at).getTime() <= Date.now()) {
+      return { card: refreshed, instance, error: 'expired' };
+    }
+
+    return { card: refreshed, instance, error: null };
+  }
+
+  // Rows issued before the set model carry a single token on the trip record.
   const rows = await base44.asServiceRole.entities.TripEmergencyCard
     .filter({ trip_id: payload.trip_id }, '-created_date', 5)
     .catch(() => []);
@@ -87,15 +115,15 @@ export async function loadCardByToken(base44: any, token: string): Promise<Loade
     (r) => r.trip_id === payload.trip_id && (!r.token_id || r.token_id === payload.card_id || r.id === payload.card_id),
   ) || (rows as any[])[0];
 
-  if (!card) return { card: null, error: 'invalid' };
-  if (card.revoked) return { card, error: 'revoked' };
+  if (!card) return { card: null, instance: null, error: 'invalid' };
+  if (card.revoked) return { card, instance: null, error: 'revoked' };
 
   const refreshed = await refreshExpiry(base44, card);
   if (new Date(refreshed.expires_at).getTime() <= Date.now()) {
-    return { card: refreshed, error: 'expired' };
+    return { card: refreshed, instance: null, error: 'expired' };
   }
 
-  return { card: refreshed, error: null };
+  return { card: refreshed, instance: null, error: null };
 }
 
 /**
@@ -116,7 +144,10 @@ export async function refreshExpiry(base44: any, card: any): Promise<any> {
   });
 
   const expires = expiresAtForTripEnd(derived.tripEnd);
-  if (derived.tripEnd === card.trip_ends_at && expires === card.expires_at) return card;
+  if (derived.tripEnd === card.trip_ends_at && expires === card.expires_at) {
+    await syncInstanceExpiry(base44, card.id, expires);
+    return card;
+  }
 
   const movedForward = new Date(derived.tripEnd).getTime() > new Date(card.trip_ends_at || 0).getTime();
 
@@ -141,7 +172,26 @@ export async function refreshExpiry(base44: any, card: any): Promise<any> {
     });
   }
 
-  return updated || { ...card, trip_ends_at: derived.tripEnd, expires_at: expires };
+  const live = updated || { ...card, trip_ends_at: derived.tripEnd, expires_at: expires };
+  await syncInstanceExpiry(base44, card.id, expires);
+  return live;
+}
+
+/**
+ * The cards in a wallet follow the trip too. A delayed flight extends the trip,
+ * and every printed card has to extend with it — otherwise a card that was valid
+ * at the airport is dead by the time the flight actually lands.
+ */
+async function syncInstanceExpiry(base44: any, tripCardId: string, expires: string): Promise<void> {
+  const rows = await base44.asServiceRole.entities.TripCardInstance
+    .filter({ trip_card_id: tripCardId }, '-issued_at', 20)
+    .catch(() => []);
+  for (const inst of (Array.isArray(rows) ? rows : [])) {
+    if (inst.expires_at === expires) continue;
+    await base44.asServiceRole.entities.TripCardInstance
+      .update(inst.id, { expires_at: expires })
+      .catch(() => {});
+  }
 }
 
 export async function issueCardRow(base44: any, params: {
@@ -203,10 +253,21 @@ export async function issueCardRow(base44: any, params: {
  * scan rows and starting a NEW request, and none at all for joining one that
  * already exists. A fifth person tapping reaches the same live request.
  */
-export async function logScan(base44: any, card: any, kind: string, outcome: string, incidentId?: string | null): Promise<boolean> {
+export async function logScan(
+  base44: any,
+  card: any,
+  kind: string,
+  outcome: string,
+  incidentId?: string | null,
+  instance?: any | null,
+): Promise<boolean> {
+  // Per-instance throttle, which is the whole reason instances exist: one card
+  // being hammered must not spend another card's allowance.
+  const key = instance?.token_id || card.token_id || card.id;
+
   const allowed = await checkRateLimit(
     base44,
-    `tripcard:scan:${card.token_id || card.id}`,
+    `tripcard:scan:${key}`,
     SCAN_LOG_WINDOW_SECONDS,
     SCAN_LOG_MAX,
   );
@@ -216,13 +277,20 @@ export async function logScan(base44: any, card: any, kind: string, outcome: str
   await base44.asServiceRole.entities.TripEmergencyScan.create({
     card_id: card.id,
     trip_id: card.trip_id,
-    token_id: card.token_id || null,
+    token_id: key,
     incident_id: incidentId || card.open_incident_id || null,
     kind,
     outcome: String(outcome || '').slice(0, 200),
     at: now.toISOString(),
     purge_after: new Date(now.getTime() + SCAN_RETENTION_MS).toISOString(),
   }).catch(() => {});
+
+  if (instance?.id) {
+    await base44.asServiceRole.entities.TripCardInstance.update(instance.id, {
+      scan_count: Number(instance.scan_count || 0) + 1,
+      last_scan_at: now.toISOString(),
+    }).catch(() => {});
+  }
 
   await base44.asServiceRole.entities.TripEmergencyCard.update(card.id, {
     scan_count: Number(card.scan_count || 0) + 1,
@@ -307,7 +375,12 @@ export async function pageHumans(base44: any, incident: any, policy: any, messag
  * decides which one survives — the loser suppresses itself and dispatches
  * nobody, exactly as the rest of the engine already does.
  */
-export async function openOrJoinRequest(base44: any, card: any, now: string): Promise<OpenResult> {
+export async function openOrJoinRequest(
+  base44: any,
+  card: any,
+  now: string,
+  instance?: any | null,
+): Promise<OpenResult> {
   // The latch is per TRIP, not per printed card. A traveller issued a second
   // card must never end up with two live requests.
   const sameTrip = await base44.asServiceRole.entities.TripEmergencyCard
@@ -317,7 +390,7 @@ export async function openOrJoinRequest(base44: any, card: any, now: string): Pr
   if (tripOpen && tripOpen.id !== card.id) {
     const existing = await base44.asServiceRole.entities.Incident.get(tripOpen.open_incident_id).catch(() => null);
     if (existing && existing.status !== 'RESOLVED') {
-      await logScan(base44, card, 'join', 'joined the trip\'s open request', existing.id);
+      await logScan(base44, card, 'join', 'joined the trip\'s open request', existing.id, instance);
       return { outcome: 'joined', card: { ...card, ...tripOpen }, incident: existing };
     }
   }
@@ -326,7 +399,7 @@ export async function openOrJoinRequest(base44: any, card: any, now: string): Pr
     const existing = await base44.asServiceRole.entities.Incident.get(card.open_incident_id).catch(() => null);
     if (existing && existing.status !== 'RESOLVED') {
       // A join is never throttled. This is the help that already exists.
-      await logScan(base44, card, 'join', 'joined the open request', existing.id);
+      await logScan(base44, card, 'join', 'joined the open request', existing.id, instance);
       return { outcome: 'joined', card, incident: existing };
     }
     return { outcome: 'rejoin_closed', card, incident: existing };
@@ -339,12 +412,12 @@ export async function openOrJoinRequest(base44: any, card: any, now: string): Pr
   // Only the CREATION of a new request is throttled.
   const allowed = await checkRateLimit(
     base44,
-    `tripcard:create:${card.token_id || card.id}`,
+    `tripcard:create:${instance?.token_id || card.token_id || card.id}`,
     CREATE_WINDOW_SECONDS,
     CREATE_MAX,
   );
   if (!allowed) {
-    await logScan(base44, card, 'blocked_throttle', 'too many new-request attempts');
+    await logScan(base44, card, 'blocked_throttle', 'too many new-request attempts', null, instance);
     return { outcome: 'throttled', card, incident: null };
   }
 
@@ -468,7 +541,7 @@ export async function openOrJoinRequest(base44: any, card: any, now: string): Pr
     return { outcome: 'joined', card: rebound || live, incident: winner };
   }
 
-  await logScan(base44, live, 'tap', 'request opened', incident.id);
+  await logScan(base44, live, 'tap', 'request opened', incident.id, instance);
 
   // Fanout fires at once and never gates dispatch.
   const contacts = await resolveContacts(base44, incident, policy);

@@ -1,0 +1,103 @@
+{
+  "name": "TripCardTask",
+  "type": "object",
+  "description": "A care-team task raised when the card set cannot be issued safely. Two reasons exist, and both are cases where the honest answer is 'stop' rather than 'print something smaller': the trip country has no real local M-care number on its EmergencyContacts record (a card face with no number on it is the one part that must work with no scan, no signal and no app), or the trip has hit its cap of three live instances and further 'lost' replacements need a human. Admin-only: this is an internal queue, never a public statement, and never a substitute for the missing number.",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "trip_card_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "missing_local_number",
+        "active_instance_cap_exceeded",
+        "issuance_blocked"
+      ]
+    },
+    "detail": {
+      "type": "string",
+      "description": "Plain-language explanation for the person picking this up, e.g. which country had no number on file."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "resolved"
+      ],
+      "default": "open"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "reason",
+    "status",
+    "created_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

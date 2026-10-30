@@ -1,0 +1,41 @@
+{
+  "name": "Trip Card Readiness Sweep",
+  "description": "Every 15 minutes: for any trip whose card set is still unacknowledged 72 hours before its first flight, sends the traveller an action-subject email with the PDF ATTACHED, raises an in-app notification, attempts a native push, and messages the person on call (SMS, falling back to email) rather than writing a row into an admin screen nobody opens. Deduplicated per readiness cycle, so a retried sweep cannot chase twice and a moved trip gets one fresh chase. The function accepts X-Cron-Secret, so an external scheduler can drive it at tighter resolution.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/15 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "trip_card_readiness_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sweepTripCardReadiness",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

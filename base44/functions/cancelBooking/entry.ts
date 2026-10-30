@@ -2,6 +2,7 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { guardedStatusUpdate, BOOKING, isTerminal } from '../../shared/bookingState.ts';
 import { z, strictObject, Fields } from '../../shared/validate.ts';
+import { revokeSetForTrip } from '../../shared/tripCardSetEngine.ts';
 
 const CancelBookingSchema = strictObject({
   case_id: Fields.shortText(100),
@@ -74,6 +75,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   } catch {
     return err('This booking cannot be cancelled in its current state.', 409);
   }
+
+  // ── Every card dies with the trip ─────────────────────────────────────────
+  // There is no traveller in the country any more, so no card may open a request.
+  // Cancellation is the one case that revokes the whole set rather than a card.
+  await revokeSetForTrip(base44, case_id, 'trip_cancelled', now).catch(() => {});
 
   // ── Link-only cancellation notice to the patient ───────────────────────────
   if (c.client_email) {
