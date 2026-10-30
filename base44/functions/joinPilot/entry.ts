@@ -12,6 +12,14 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  * what stops a client from writing arbitrary rows straight into the table and
  * skipping this validation. The response deliberately says nothing about who
  * else is on the list, and never echoes back any record ids.
+ *
+ * NOTE ON THE ENTRYPOINT
+ * ----------------------
+ * This file used to be `export default async function (req) { ... }`, which is
+ * NOT an entrypoint on Base44: a function only registers when it calls
+ * Deno.serve(...), so every "join the pilot" submit from the landing page hit
+ * an unregistered runtime and failed. The exports below are plain functions;
+ * the handler is registered by Deno.serve at the bottom.
  */
 
 const EMAIL_RE = /^[^\s@"<>()[\],;:\\]{1,64}@[^\s@."<>()[\],;:\\]{1,190}\.[A-Za-z]{2,24}$/;
@@ -32,7 +40,7 @@ function normaliseSource(raw) {
   return allowed.includes(value) ? value : 'pilot_page';
 }
 
-export default async function (req) {
+Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -71,4 +79,4 @@ export default async function (req) {
       { status: 500 },
     );
   }
-}
+});

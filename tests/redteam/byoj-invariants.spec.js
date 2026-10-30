@@ -83,7 +83,7 @@ test.describe('R1 disclosure is unavoidable and legal-approved', () => {
     expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/did not select, vet, or approve/i);
     expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/cannot control their actions/i);
     expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/cannot guarantee an outcome/i);
-    expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/choosing\s+Morales as your safety net/i);
+    expect(BYOJ_DISCLOSURE_TEXT_NONMEDICAL).toMatch(/choosing\s+M-Care as your safety net/i);
   });
 });
 

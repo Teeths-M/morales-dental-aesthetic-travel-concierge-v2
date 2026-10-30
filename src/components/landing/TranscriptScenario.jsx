@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import McareMark from './McareMark';
-import { MCARE, YOU, OUTCOME, KIND_LABEL } from '@/lib/landingTranscript';
+import { YOU, OUTCOME, KIND_LABEL } from '@/lib/landingTranscript';
 import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS } from './theme';
 
 const TONE = {

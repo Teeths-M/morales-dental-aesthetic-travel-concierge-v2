@@ -453,7 +453,7 @@ test('AUTH: no edge function is reachable without SOME guard', () => {
   //   publicDoctorCheck — the homepage "check your doctor" tool
   //   safeTAssist       — the assistant a patient may reach before signing in
   const EXEMPT = new Set(['publicDoctorCheck', 'safeTAssist']);
-  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|verifyTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|verifyRetellSignature|verifyWebhookSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
+  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|verifyTwilioSignature|constructEvent|stripe-signature|verifyStripeSignature|verifyRetellSignature|verifyWebhookSignature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|x-webhook-secret|DISPATCH_WEBHOOK_SECRET|loadCardByToken|offer_token|createHandler/;
 
   const dir = join(ROOT, 'base44/functions');
   const unguarded = [];
@@ -5832,7 +5832,7 @@ test('VIRTUAL CONSULTATION: getProviderTrustProfile and getProviderTrustTimeline
   expect(timelineSrc, 'concern detail must only ever surface as an aggregate count, never individual report text')
     .not.toMatch(/report\.description/);
   expect(timelineSrc, 'a PatientDataRevision change must be redacted to a generic actor label')
-    .toMatch(/Updated by the Morales team/);
+    .toMatch(/Updated by the M-Care team/);
 });
 
 test('VIRTUAL CONSULTATION: matchDoctorsForProcedure and providerTrustStatus.mapDoctorTrustStatus share one VERIFIED_STATUSES constant', () => {
