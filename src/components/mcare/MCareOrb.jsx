@@ -89,47 +89,15 @@ import CapabilityPill from './msafe-plus/CapabilityPill';
 import LiveSessionBadge from './msafe-plus/LiveSessionBadge';
 import { CAPABILITIES } from './msafePlusConfig';
 
-const GOLD = '#D4AF37';
-const DARK = '#060B16';
-// Round 4 (2026-08-23): the open panel itself went dark, not just the
-// floating button/header. These reuse this app's own established design
-// tokens (CLAUDE.md's Design Tokens section — background/card/border) so
-// the panel matches the rest of the product rather than inventing a new
-// palette. MessageBubble.jsx / SafetyGateCard.jsx / JourneyStageTracker.jsx
-// need none of these — they already source color from Tailwind's semantic
-// `.dark` CSS variables (confirmed in src/index.css), which the panel
-// container's `className="dark"` activates for free.
-const PANEL_BG = '#0C1A1D';
-const CARD_BG = '#111E27';
-const BORDER_DARK = '#2A3F4A';
-const TEXT_LIGHT = '#F3F4F6';
-const TEXT_MUTED_DARK = '#9CA3AF';
-// Mobile "M-Safe" light redesign (2026-08-28) — Portia's reference screenshot.
-// GOLD stays #D4AF37 (reused, not replaced): visually indistinguishable from
-// the screenshot's requested #D6A72E, and reusing it keeps LivingOrb's rings,
-// the launcher button, and every other gold accent in this file consistent
-// with the newly-lightened mobile panel rather than a second, subtly
-// different "gold." Mint/lavender are genuinely new accents, scoped locally
-// to this file (matching this file's own established convention of local hex
-// consts rather than global brandTokens.js) since they're specific to this
-// one redesigned surface.
-const LIGHT_BG = '#F8FAFC';
-const LIGHT_CARD = '#FFFFFF';
-const LIGHT_BORDER = '#E5E7EB';
-const LIGHT_TEXT = '#0F172A';
-const LIGHT_TEXT_MUTED = '#64748B';
-const MINT = '#36DDB2';
-const LAVENDER = '#A78BFA';
-const GOLD_GRADIENT = 'linear-gradient(135deg, #E8C85C, #D4AF37)';
-// Desktop-light "M-Safe+" luxury redesign (2026-08-29) — Portia's reference
-// mockup. Scoped additions used ONLY when `isDesktopPanel && !useDarkTheme`,
-// so dark mode and mobile stay byte-identical to before. Kept file-local
-// (not imported from msafePlusConfig.js's MSAFE_PALETTE) because the exact
-// hex values differ slightly and this avoids that unrelated file's own
-// future edits silently changing this file's colors.
-const DESKTOP_LUXURY_BG = '#F8F7F2';
-const DESKTOP_LUXURY_GOLD = '#D2A93D';
-const DESKTOP_LUXURY_USER_GRADIENT = 'linear-gradient(135deg, #F6E6BE 0%, #EAD08C 100%)';
+// The panel's colour tokens (GOLD, DARK, the light/dark card surfaces, the
+// desktop-luxury variants) live in panelPalette.js — moved there unchanged when
+// the capability rows were extracted, so that component draws from the same
+// values rather than a second copy. See that file for what each one is for.
+import {
+  GOLD, DARK, PANEL_BG, CARD_BG, BORDER_DARK, TEXT_LIGHT, TEXT_MUTED_DARK,
+  LIGHT_BG, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED, MINT, LAVENDER,
+  GOLD_GRADIENT, DESKTOP_LUXURY_BG, DESKTOP_LUXURY_GOLD, DESKTOP_LUXURY_USER_GRADIENT,
+} from './panelPalette';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 const TAGLINE = "I analyze. I protect. I coordinate. I resolve. I've got you.";

@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { friendlyError } from '@/lib/friendlyError';
+import { openChannelConnect } from '@/lib/mcareChannels';
 
 const _languages = ['English', 'Español', 'Français', 'Português'];
 
@@ -125,12 +126,11 @@ function ResetSafetyProfileCard({ onReset, isActiveJourney = false }) {
  * the real SDK source), so no loading state is needed before opening them.
  */
 function ConnectMCareChannelsCard() {
+  // Links come from mcareChannels.js — the same builder the dashboard card
+  // uses, so the two can never point at different agents or open differently.
   const openChannel = (channel) => {
     try {
-      const url = channel === 'whatsapp'
-        ? base44.agents.getWhatsAppConnectURL('m_care')
-        : base44.agents.getTelegramConnectURL('m_care');
-      window.open(url, '_blank', 'noopener,noreferrer');
+      openChannelConnect(channel);
     } catch (err) {
       toast.error("Couldn't open that right now — please try again.");
     }

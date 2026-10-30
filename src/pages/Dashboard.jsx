@@ -40,6 +40,7 @@ import TravelPassCard from '@/components/dashboard/TravelPassCard';
 import CareRoomPanel from '@/components/dashboard/CareRoomPanel';
 import CaseControlCenter from '@/components/dashboard/CaseControlCenter';
 import UpcomingConsultationsCard from '@/components/dashboard/UpcomingConsultationsCard';
+import ConnectChannelsNudgeCard from '@/components/dashboard/ConnectChannelsNudgeCard';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
 import PreDepartureBriefing from '@/components/dashboard/PreDepartureBriefing';
@@ -560,6 +561,11 @@ function DashboardHome({ user, consultations, language }) {
 
       {/* Meet Your Care Team — real virtual-consultation bookings, if any exist. */}
       <UpcomingConsultationsCard userEmail={user?.email} />
+
+      {/* M-Care is also reachable from WhatsApp/Telegram — a traveler who never
+          opens Settings otherwise never finds out. Dismissible and
+          "already connected" both persist on the account. */}
+      <ConnectChannelsNudgeCard />
 
       {/* Journey Status Timeline — Stripe/Apple order-status model */}
       {latestConsultation && (
