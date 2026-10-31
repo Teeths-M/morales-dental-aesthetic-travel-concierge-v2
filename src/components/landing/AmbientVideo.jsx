@@ -31,11 +31,19 @@ import { NAVY } from './theme';
  * the visitor interacts). The film fades in only when a frame is actually
  * rendering, so a stalled load looks like a photograph, never a black box.
  *
+ * PHONES get mobileSrc when one is given: the same film at phone size, no soundtrack, index first (a few MB
+ * instead of tens), because a phone often never starts the full file. And the poster slowly drifts and zooms
+ * (mbientDrift), so there is still motion when a phone blocks video outright, as iPhone Low Power Mode does
+ * until the first tap. 	ouchend is listened for because iOS only counts a lifted finger as a real tap.
+ *
  * Purely decorative — no controls, no captions, hidden from assistive tech.
  * Everything a visitor needs to read lives in the section's own copy.
  */
-export default function AmbientVideo({ src, poster, variant = 'hero', objectPosition = 'center 42%' }) {
+export default function AmbientVideo({ src, mobileSrc = '', poster = '', variant = 'hero', objectPosition = 'center 42%' }) {
   const videoRef = useRef(null);
+  // Chosen once per visit: a phone-width screen gets the light phone film.
+  const [isPhone] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 767px)').matches);
+  const filmSrc = isPhone && mobileSrc ? mobileSrc : src;
   const [reduced, setReduced] = useState(false);
   const [playing, setPlaying] = useState(false);
 
@@ -91,7 +99,7 @@ export default function AmbientVideo({ src, poster, variant = 'hero', objectPosi
 
     // Last resort, and the only path on iOS Low Power Mode: the first
     // interaction anywhere starts it. One-shot, removed as soon as it works.
-    const GESTURES = ['touchstart', 'pointerdown', 'click', 'scroll', 'keydown'];
+    const GESTURES = ['touchstart', 'touchend', 'pointerdown', 'click', 'scroll', 'keydown'];
     const onGesture = () => {
       attempt();
       if (!el.paused) GESTURES.forEach((name) => window.removeEventListener(name, onGesture));
@@ -132,14 +140,18 @@ export default function AmbientVideo({ src, poster, variant = 'hero', objectPosi
             backgroundSize: 'cover',
             backgroundPosition: objectPosition,
             backgroundRepeat: 'no-repeat',
+            // A slow drift and zoom, so the scene still moves when a phone won't play the film.
+            animation: reduced ? 'none' : 'ambientDrift 22s ease-in-out infinite alternate',
+            willChange: 'transform',
           }}
         />
       )}
+      <style>{'@keyframes ambientDrift { from { transform: scale(1.04) translate(0, 0); } to { transform: scale(1.16) translate(-2%, -1.5%); } }'}</style>
 
       <video
         ref={videoRef}
-        src={src}
-        poster={poster}
+        src={filmSrc}
+        poster={poster || undefined}
         muted
         loop
         playsInline

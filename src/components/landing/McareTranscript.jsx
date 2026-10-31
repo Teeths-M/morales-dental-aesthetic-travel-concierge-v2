@@ -1,6 +1,6 @@
 import MSafeDemo from './msafeDemo/MSafeDemo';
 import AmbientVideo from './AmbientVideo';
-import { WHITE, BODY, MUTED, SANS, DEMO_VIDEO } from './theme';
+import { WHITE, BODY, MUTED, SANS, DEMO_VIDEO, DEMO_VIDEO_MOBILE, DEMO_POSTER } from './theme';
 
 /**
  * McareTranscript — the product demonstration, and the only one on the page.
@@ -26,7 +26,7 @@ export default function McareTranscript() {
     >
       {/* The demonstration film runs behind the section, dimmed to a panel so
           the workspace and the small print over it keep their contrast. */}
-      <AmbientVideo src={DEMO_VIDEO} variant="panel" objectPosition="center" />
+      <AmbientVideo src={DEMO_VIDEO} mobileSrc={DEMO_VIDEO_MOBILE} poster={DEMO_POSTER} variant="panel" objectPosition="center" />
 
       <div style={{ position: 'relative', maxWidth: 1040, margin: '0 auto' }}>
         <div style={{ maxWidth: 720 }}>

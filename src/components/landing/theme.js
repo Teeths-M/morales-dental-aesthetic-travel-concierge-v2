@@ -38,6 +38,20 @@ export const DEMO_VIDEO =
 export const PILOT_VIDEO =
   'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/8bf574b87_Lisahappyend.mp4';
 
+/**
+ * Phone versions of the three films, served from the app's own /public folder.
+ * A phone can't start the full films reliably: the hero is a 55 MB, 58-second
+ * ad with sound, and the demo film keeps its index at the END of the file, so a
+ * phone must download all 16 MB before showing a frame. These are the same films
+ * at phone size, no soundtrack (it's muted anyway), index first: 2.7, 2.4 and
+ * 0.5 MB. Computers and tablets keep the originals above.
+ */
+export const HERO_VIDEO_MOBILE = '/video/hero-mobile.mp4';
+export const DEMO_VIDEO_MOBILE = '/video/demo-mobile.mp4';
+export const PILOT_VIDEO_MOBILE = '/video/pilot-mobile.mp4';
+/** Stills for the two films that had none, so a blocked or loading film still shows the scene. */
+export const DEMO_POSTER = '/video/demo-poster.jpg';
+export const PILOT_POSTER = '/video/pilot-poster.jpg';
 /** The two corridor frames. Empty hall, then one distant figure. */
 export const CORRIDOR_EMPTY =
   'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/0e05bf9b3_generated_image.png';

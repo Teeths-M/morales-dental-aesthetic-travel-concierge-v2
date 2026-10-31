@@ -1,6 +1,6 @@
 import JoinPilotForm from './JoinPilotForm';
 import AmbientVideo from './AmbientVideo';
-import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF, PILOT_VIDEO } from './theme';
+import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF, PILOT_VIDEO, PILOT_VIDEO_MOBILE, PILOT_POSTER } from './theme';
 
 /**
  * PilotSection — the closing action, and the honest version of what the pilot is.
@@ -25,7 +25,7 @@ export default function PilotSection() {
     >
       {/* The pilot film sits behind the whole section, dimmed to a panel so the
           form and the small print keep their contrast. */}
-      <AmbientVideo src={PILOT_VIDEO} variant="panel" objectPosition="center 45%" />
+      <AmbientVideo src={PILOT_VIDEO} mobileSrc={PILOT_VIDEO_MOBILE} poster={PILOT_POSTER} variant="panel" objectPosition="center 45%" />
 
       <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
         <p style={{ margin: 0, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD }}>
