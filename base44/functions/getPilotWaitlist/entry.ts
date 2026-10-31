@@ -21,12 +21,12 @@ import { createHandler, ok } from '../../shared/createHandler.ts';
 const MAX_ROWS = 200;
 
 Deno.serve(createHandler(async ({ base44 }) => {
-  const page = await base44.asServiceRole.entities.PilotSignup.filter(
-    {},
-    { sort: '-created_date', limit: MAX_ROWS },
-  );
+  // createHandler's SDK (0.8.31) takes sort and limit as plain arguments. The
+  // newer `{ sort, limit }` options object it was first written with is not
+  // understood by that version, so the list came back empty or failed.
+  const page = await base44.asServiceRole.entities.PilotSignup.filter({}, '-created_date', MAX_ROWS);
 
-  // The SDK returns a page ({items}) when options are passed, an array otherwise.
+  // An array in this SDK; a page ({items}) in newer ones. Accept either.
   const records = Array.isArray(page) ? page : (page?.items ?? []);
 
   const rows = records.map((r: Record<string, any>) => ({

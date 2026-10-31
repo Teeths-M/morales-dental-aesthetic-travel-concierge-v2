@@ -239,6 +239,9 @@ test('PILOT: the waitlist only stores a short plain ad tag, and the admin read i
   const list = read('base44/functions/getPilotWaitlist/entry.ts');
   expect(list, 'the waitlist read must be admin-only').toMatch(/allowedRoles:\s*\['admin',\s*'platform_admin'\]/);
   expect(list, 'and must require a session').toContain('requireAuth: true');
+  // createHandler's SDK takes (query, sort, limit); an options object there silently empties the list.
+  expect(list, 'sort and limit must be plain arguments for this SDK').toContain(".filter({}, '-created_date', MAX_ROWS)");
+  expect(list, 'never the newer options-object form').not.toMatch(/\.filter\(\s*\{\}\s*,\s*\{/);
 
   const entity = read('base44/entities/PilotSignup.jsonc');
   expect(entity, 'clients can never write rows directly').toMatch(/"create":\s*false/);
