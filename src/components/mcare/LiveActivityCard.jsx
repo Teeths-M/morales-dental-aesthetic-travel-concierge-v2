@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react';
 
-const GOLD = '#D4AF37';
-const MINT = '#36DDB2';
-const LIGHT_CARD = '#FFFFFF';
-const LIGHT_BORDER = '#E5E7EB';
-const LIGHT_TEXT = '#0F172A';
-const LIGHT_TEXT_MUTED = '#64748B';
+import { GOLD, MINT, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED, RADIUS } from './panelPalette';
 
 /**
  * LiveActivityCard — the "M-Care is working on this right now" status card
@@ -45,7 +40,7 @@ export default function LiveActivityCard({ visible, orbState, activeRunningTool 
       data-testid="live-activity-card"
       style={{
         display: 'flex', flexDirection: 'column', gap: 0, width: '100%', textAlign: 'left',
-        background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 16,
+        background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: RADIUS.card,
         boxShadow: '0 2px 10px rgba(15,23,42,0.06)', padding: '12px 14px',
         cursor: canExpand ? 'pointer' : 'default',
       }}

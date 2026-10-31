@@ -16,6 +16,11 @@
  */
 export const SITE_MENU_OPEN_EVENT = 'morales-site-menu-open';
 
+// Returns true when the site menu actually opened. The landing page and /pilot
+// don't mount Header at all, so nothing answers there; the event is cancelable
+// and Header calls preventDefault() to say "handled", letting the caller fall
+// back (M-Care closes its panel so the page's own navigation shows) instead of
+// leaving a button that silently does nothing.
 export function emitOpenSiteMenu() {
-  window.dispatchEvent(new CustomEvent(SITE_MENU_OPEN_EVENT));
+  return !window.dispatchEvent(new CustomEvent(SITE_MENU_OPEN_EVENT, { cancelable: true }));
 }

@@ -326,10 +326,12 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
           disabled={disabled}
           title="Record a voice message"
           aria-label="Record a voice message"
+          className="ms-press"
           style={{
-            width: 36, height: 36, borderRadius: idleShape === 'circle' ? '50%' : 12, flexShrink: 0,
-            background: '#F6F7FB',
-            border: '1px solid #E5E7EB',
+            width: 40, height: 40, borderRadius: idleShape === 'circle' ? '50%' : 12, flexShrink: 0,
+            // Follows the panel's theme (it was light even inside the dark panel).
+            background: theme === 'dark' ? '#111E27' : '#F6F7FB',
+            border: `1px solid ${theme === 'dark' ? '#2A3F4A' : '#E5E7EB'}`,
             cursor: disabled ? 'default' : 'pointer',
             opacity: disabled ? 0.5 : 1,
             display: 'flex', alignItems: 'center', justifyContent: 'center',

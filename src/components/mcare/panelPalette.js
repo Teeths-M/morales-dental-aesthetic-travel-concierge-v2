@@ -53,3 +53,41 @@ export const GOLD_GRADIENT = 'linear-gradient(135deg, #E8C85C, #D4AF37)';
 export const DESKTOP_LUXURY_BG = '#F8F7F2';
 export const DESKTOP_LUXURY_GOLD = '#D2A93D';
 export const DESKTOP_LUXURY_USER_GRADIENT = 'linear-gradient(135deg, #F6E6BE 0%, #EAD08C 100%)';
+
+// ── Design upgrade (2026-10-31): one set of meanings, sizes and shapes for
+// every M-Safe surface, so the bottom bar, activity card and panel stop
+// keeping their own copies. ──
+
+// Gold text that stays readable on white (gold #D4AF37 itself is only ~2:1 on
+// white, fine for icons and fills, too faint for words).
+export const GOLD_INK = '#7A5B0E';
+export const GOLD_WASH = 'rgba(212,175,55,0.14)';
+
+// Meaning colours: green = fine, amber = look at this, red = critical only.
+export const POSITIVE = '#16A34A';
+export const POSITIVE_INK = '#15803D';
+export const CAUTION = '#F59E0B';
+export const CAUTION_INK = '#B45309';
+export const CRITICAL = '#DC2626';
+
+// The "M-Safe" wordmark uses the brand serif at every size (Cormorant, loaded
+// in index.css); everything else stays in the system sans.
+export const WORDMARK_FONT = 'var(--font-serif)';
+
+// Type scale for the panel, in px. Nothing a person must read goes below 11.
+export const TYPE = {
+  wordmarkMobile: 23,
+  wordmarkDesktop: 28,
+  subtitle: 12.5,
+  body: 14,
+  chip: 13,
+  meta: 11.5,
+  label: 11,
+};
+
+// Shapes: bubbles and cards are soft rectangles, controls are round.
+export const RADIUS = { bubble: 16, card: 18, pill: 999 };
+
+// Smallest tap target for icon buttons (Apple and Google both ask 44; 40 is
+// the floor used for the dense header row).
+export const TOUCH = 40;

@@ -96,12 +96,19 @@ import { CAPABILITIES } from './msafePlusConfig';
 // values rather than a second copy. See that file for what each one is for.
 import {
   GOLD, DARK, PANEL_BG, CARD_BG, BORDER_DARK, TEXT_LIGHT, TEXT_MUTED_DARK,
-  LIGHT_BG, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED, MINT, LAVENDER,
+  LIGHT_BG, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED,
   GOLD_GRADIENT, DESKTOP_LUXURY_BG, DESKTOP_LUXURY_GOLD, DESKTOP_LUXURY_USER_GRADIENT,
+  GOLD_INK, GOLD_WASH, CAUTION_INK, WORDMARK_FONT, TYPE, RADIUS, TOUCH,
 } from './panelPalette';
+import { orbStateLabel } from '@/lib/orbStateLabel';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 const TAGLINE = "I analyze. I protect. I coordinate. I resolve. I've got you.";
+// Two-column panel from this width up; the stacked full-screen layout below it.
+const PANEL_SPLIT_QUERY = '(min-width: 1024px)';
+// On tablets the stacked layout fills the screen, so its content sits in one
+// readable centred column instead of stretching edge to edge.
+const STACKED_MAX_WIDTH = 760;
 
 // Public pages where all users should see visitor-facing tips
 const PUBLIC_PATHS = new Set(['/', '/discover', '/providers', '/about', '/procedures', '/how-it-works', '/partners']);
@@ -235,14 +242,18 @@ export default function MCareOrb() {
   // "More" overflow popover for the mobile quick-actions row (2026-08-28) —
   // purely local UI state, closed whenever the panel closes.
   const [moreChipsOpen, setMoreChipsOpen] = useState(false);
-  // Widescreen 3-column panel (>= 768px) vs. today's narrow stacked layout
-  // (< 768px) — same matchMedia + change-listener pattern already used
+  // Widescreen two-column panel (>= 1024px) vs. the stacked full-screen layout
+  // (< 1024px) — same matchMedia + change-listener pattern already used
   // throughout this app (LivingOrb.jsx's reducedMotion/canTilt).
+  // The split moved from 768 to 1024 (design upgrade, 2026-10-31): a tablet
+  // got the laptop layout squeezed into a short card ("LIVE SESSIO / N"), and
+  // 1024 is where the site's own Header switches to its phone menu (lg), so
+  // M-Safe's menu button now always has a real menu to open below it.
   const [isDesktopPanel, setIsDesktopPanel] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    () => typeof window !== 'undefined' && window.matchMedia(PANEL_SPLIT_QUERY).matches
   );
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)');
+    const mq = window.matchMedia(PANEL_SPLIT_QUERY);
     const onChange = () => setIsDesktopPanel(mq.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
@@ -2569,37 +2580,64 @@ export default function MCareOrb() {
   // loads Cormorant Garamond, src/index.css) plus the fuller subtitle
   // string — both gated on isDesktopPanel so mobile's copy/font stay
   // byte-identical to before.
+  //
+  // Design upgrade (2026-10-31): one wordmark at every size — the brand serif,
+  // which phones never had (they showed a bold sans, so the product looked like
+  // two products). On the stacked layout the line under the name swaps to
+  // M-Safe's real live state while it is busy ("Thinking…", the running tool's
+  // own label, "Safety note: please read"), the way a messaging app shows
+  // "typing…" under a contact; idle shows the normal name. orbStateLabel only
+  // reads orbState/activeRunningTool, so nothing here is invented.
+  const liveState = orbStateLabel(orbState, activeRunningTool?.display_projection?.active_label);
+  const liveStateColor = !liveState ? null
+    : liveState.tone === 'caution' ? (useDarkTheme ? '#FBBF24' : CAUTION_INK)
+    : (useDarkTheme ? '#E8C85C' : GOLD_INK);
+  const liveStateLine = liveState && (
+    <span role="status" aria-live="polite" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0, maxWidth: '100%', color: liveStateColor, fontWeight: 600 }}>
+      <span aria-hidden="true" className={liveState.tone === 'active' ? 'ms-live-dot' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: liveState.tone === 'caution' ? '#F59E0B' : GOLD }} />
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{liveState.text}</span>
+    </span>
+  );
   const titleSubtitleBlock = (
     <div style={{ minWidth: 0 }}>
-      <p style={{ margin: 0, fontFamily: isDesktopPanel ? 'var(--font-serif)' : undefined, fontSize: isDesktopPanel ? 26 : 17, fontWeight: 700, letterSpacing: '-0.01em', color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.2 }}>
-        M-Safe<span style={{ color: (isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_GOLD : GOLD, fontSize: isDesktopPanel ? 20 : 13, fontWeight: 800, marginLeft: 1 }}>+</span>
+      <p style={{ margin: 0, fontFamily: WORDMARK_FONT, fontSize: isDesktopPanel ? TYPE.wordmarkDesktop : TYPE.wordmarkMobile, fontWeight: 700, letterSpacing: '-0.01em', color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.05 }}>
+        M-Safe<span style={{ color: (isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_GOLD : GOLD, fontSize: isDesktopPanel ? 21 : 18, fontWeight: 700, marginLeft: 1 }}>+</span>
       </p>
-      <p style={{ margin: 0, fontSize: isDesktopPanel ? 13 : 11, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>
-        {isDesktopPanel ? 'M-Care Super Agent • Medical + Travel Concierge' : 'M-Care Super Agent'}
+      <p style={{ margin: '3px 0 0', fontSize: isDesktopPanel ? 13 : TYPE.subtitle, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, minHeight: 17, display: 'flex', minWidth: 0 }}>
+        {isDesktopPanel ? 'M-Care Super Agent • Medical + Travel Concierge' : (liveStateLine || 'M-Care Super Agent')}
       </p>
     </div>
   );
 
   const mutedIconColor = useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED;
+  // One shape for every header control: a round tap target (was a 24px box,
+  // too small to hit reliably), gold wash + gold icon when switched on.
+  const ctrlSize = isDesktopPanel ? 34 : 36;
+  const ctrlBtn = (on = false) => ({
+    width: ctrlSize, height: ctrlSize, borderRadius: '50%', flexShrink: 0, border: 'none', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: on ? GOLD_WASH : 'transparent', color: on ? (useDarkTheme ? GOLD : GOLD_INK) : mutedIconColor,
+  });
+  const ctrlIcon = { width: 18, height: 18 };
   const headerControlsBlock = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, flexShrink: 0, marginRight: -6 }}>
       {isConversationalModeSupported() && (
-        <button onClick={toggleConversationalMode}
+        <button onClick={toggleConversationalMode} className="ms-press ms-ctrl"
           title={conversationalMode ? 'Live conversation on — tap to stop' : 'Start a live voice conversation (best with headphones)'}
           aria-label="Toggle conversation mode" aria-pressed={conversationalMode}
-          style={{ background: conversationalMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: conversationalMode ? GOLD : mutedIconColor, display: 'flex', borderRadius: 8 }}>
-          {conversationalMode ? <PhoneCall style={{ width: 16, height: 16 }} /> : <Phone style={{ width: 16, height: 16 }} />}
+          style={ctrlBtn(conversationalMode)}>
+          {conversationalMode ? <PhoneCall style={ctrlIcon} /> : <Phone style={ctrlIcon} />}
         </button>
       )}
       {isSpeechSupported() && (
-        <button onClick={() => toggleTalkMode()} title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
-          style={{ background: talkMode ? 'rgba(212,175,55,0.14)' : 'none', border: 'none', cursor: 'pointer', padding: 4, color: talkMode ? GOLD : mutedIconColor, display: 'flex', borderRadius: 8 }}>
-          {talkMode ? <Volume2 style={{ width: 16, height: 16 }} /> : <VolumeX style={{ width: 16, height: 16 }} />}
+        <button onClick={() => toggleTalkMode()} className="ms-press ms-ctrl" title={talkMode ? 'Talk mode on — tap to turn off' : 'Talk mode off — tap to turn on'} aria-label="Toggle talk mode" aria-pressed={talkMode}
+          style={ctrlBtn(talkMode)}>
+          {talkMode ? <Volume2 style={ctrlIcon} /> : <VolumeX style={ctrlIcon} />}
         </button>
       )}
       {agentMessages.length > 0 && (
-        <button onClick={startNewJourney} title="New journey" aria-label="New journey" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
-          <RotateCcw style={{ width: 16, height: 16 }} />
+        <button onClick={startNewJourney} className="ms-press ms-ctrl" title="New journey" aria-label="New journey" style={ctrlBtn()}>
+          <RotateCcw style={ctrlIcon} />
         </button>
       )}
       {/* Light/dark toggle — desktop only. Mobile already has its own
@@ -2607,20 +2645,20 @@ export default function MCareOrb() {
           there. Persisted (see desktopLightMode above), not a per-session
           reset. */}
       {isDesktopPanel && (
-        <button onClick={() => setDesktopLightMode(v => !v)} title={desktopLightMode ? 'Switch to dark' : 'Switch to light'} aria-label={desktopLightMode ? 'Switch to dark mode' : 'Switch to light mode'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
-          {desktopLightMode ? <Moon style={{ width: 16, height: 16 }} /> : <Sun style={{ width: 16, height: 16 }} />}
+        <button onClick={() => setDesktopLightMode(v => !v)} className="ms-press ms-ctrl" title={desktopLightMode ? 'Switch to dark' : 'Switch to light'} aria-label={desktopLightMode ? 'Switch to dark mode' : 'Switch to light mode'} style={ctrlBtn()}>
+          {desktopLightMode ? <Moon style={ctrlIcon} /> : <Sun style={ctrlIcon} />}
         </button>
       )}
       {/* Expand/collapse is meaningless once mobile is always full-bleed
           (see the panel sizing below) — shown on desktop only, where the
           centered-card vs. wider-card distinction still applies. */}
       {isDesktopPanel && (
-        <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
-          {expanded ? <Minimize2 style={{ width: 16, height: 16 }} /> : <Maximize2 style={{ width: 16, height: 16 }} />}
+        <button onClick={() => setExpanded(v => !v)} className="ms-press ms-ctrl" title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={ctrlBtn()}>
+          {expanded ? <Minimize2 style={ctrlIcon} /> : <Maximize2 style={ctrlIcon} />}
         </button>
       )}
-      <button onClick={() => setOpen(false)} title="Close" aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: mutedIconColor, display: 'flex', borderRadius: 8 }}>
-        <X style={{ width: 18, height: 18 }} />
+      <button onClick={() => setOpen(false)} className="ms-press ms-ctrl" title="Close" aria-label="Close" style={ctrlBtn()}>
+        <X style={{ width: 20, height: 20 }} />
       </button>
     </div>
   );
@@ -2637,17 +2675,19 @@ export default function MCareOrb() {
   // padding/font/icon/dot size (mobile only, via these consts) closes that
   // gap; desktop reads the exact same values as before (pillPad='4px 10px',
   // pillFont=11, pillIconSize=12, pillDotSize=7), byte-identical.
-  const pillPad = isDesktopPanel ? '4px 10px' : '3px 8px';
-  const pillFont = isDesktopPanel ? 11 : 9.5;
-  const pillIconSize = isDesktopPanel ? 12 : 10;
+  const pillPad = isDesktopPanel ? '4px 10px' : '4px 9px';
+  const pillFont = isDesktopPanel ? 11 : 10;
+  const pillIconSize = isDesktopPanel ? 12 : 11;
   const pillDotSize = isDesktopPanel ? 7 : 6;
   const pillsRowBlock = (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: isDesktopPanel ? 6 : 5, marginTop: 8 }}>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: useDarkTheme ? statusPill.bg : statusPill.bgLight, color: useDarkTheme ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
         <span style={{ width: pillDotSize, height: pillDotSize, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
       </span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: useDarkTheme ? 'rgba(108,71,255,0.16)' : `${LAVENDER}26`, color: useDarkTheme ? '#B4A2FF' : '#6D28D9', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
-        <Sparkles style={{ width: pillIconSize, height: pillIconSize }} /> AI SUPER AGENTIC
+      {/* Brand gold, not purple (design upgrade, 2026-10-31): purple isn't in
+          the M-Care palette and made this pill read as a different product. */}
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: GOLD_WASH, color: useDarkTheme ? '#E8C85C' : GOLD_INK, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <Sparkles style={{ width: pillIconSize, height: pillIconSize, color: GOLD }} /> AI SUPER AGENTIC
       </span>
       {privateMode && (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: useDarkTheme ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.14)', color: useDarkTheme ? '#A5B4FC' : '#4338CA', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -2660,7 +2700,7 @@ export default function MCareOrb() {
         </span>
       )}
       {responseLanguage && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(156,163,175,0.14)', color: '#D1D5DB', borderRadius: 999, padding: isDesktopPanel ? '4px 8px' : '3px 6px', fontSize: isDesktopPanel ? 10 : 9, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', background: useDarkTheme ? 'rgba(156,163,175,0.14)' : 'rgba(148,163,184,0.18)', color: useDarkTheme ? '#D1D5DB' : '#475569', borderRadius: 999, padding: isDesktopPanel ? '4px 8px' : '3px 6px', fontSize: isDesktopPanel ? 10 : 9, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
           {responseLanguage}
         </span>
       )}
@@ -2684,32 +2724,35 @@ export default function MCareOrb() {
   // Mobile (2026-08-28): wrapped in a white card with subtitles, matching the
   // reference screenshot's "floating capability card." Desktop's own inline
   // row (no card, no subtitles) is completely unchanged.
+  //
+  // Design upgrade (2026-10-31): all four in brand gold. Two used to be a pale
+  // mint (#36DDB2 at 80%), barely visible on white, and green is reserved for
+  // "this is fine" states. Labels went from 10/9px to 11.5/10.5px.
   const CAPABILITY_ITEMS = [
-    { icon: Sparkles, label: 'Analyze', subtitle: 'Intelligence', accent: GOLD },
-    { icon: Shield, label: 'Protect', subtitle: 'Safety First', accent: MINT },
-    { icon: Share2, label: 'Coordinate', subtitle: 'Everything', accent: MINT },
-    { icon: CheckCircle2, label: 'Resolve', subtitle: 'Peace of Mind', accent: GOLD },
+    { icon: Sparkles, label: 'Analyze', subtitle: 'Intelligence' },
+    { icon: Shield, label: 'Protect', subtitle: 'Safety First' },
+    { icon: Share2, label: 'Coordinate', subtitle: 'Everything' },
+    { icon: CheckCircle2, label: 'Resolve', subtitle: 'Peace of Mind' },
   ];
   const capabilityItemsRow = (
-    <div style={{ display: 'flex', gap: isDesktopPanel ? 16 : 10, marginTop: isDesktopPanel ? 10 : 0, flexWrap: 'wrap', justifyContent: isDesktopPanel ? 'flex-start' : 'space-between' }}>
-      {CAPABILITY_ITEMS.map(({ icon: Icon, label, subtitle, accent }) => {
+    <div style={{ display: 'flex', gap: isDesktopPanel ? 16 : 8, marginTop: isDesktopPanel ? 10 : 0, flexWrap: 'wrap', justifyContent: isDesktopPanel ? 'flex-start' : 'space-between' }}>
+      {CAPABILITY_ITEMS.map(({ icon: Icon, label, subtitle }) => {
         const active = label === activeCapability;
-        const ringColor = useDarkTheme ? GOLD : accent;
         return (
-          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: isDesktopPanel ? 'none' : 1, minWidth: 0 }}>
+          <div key={label} aria-current={active ? 'step' : undefined} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: isDesktopPanel ? 'none' : 1, minWidth: 0 }}>
             <div style={{
-              width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: active ? `1px solid ${ringColor}` : `1px solid ${ringColor}59`,
-              background: active ? `${ringColor}3D` : `${ringColor}14`,
-              boxShadow: active ? `0 0 8px ${ringColor}88` : 'none',
-              color: useDarkTheme ? (active ? '#F5D97A' : '#C9A227') : (active ? ringColor : `${ringColor}CC`),
-              transition: 'all 0.25s ease',
+              width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: `1px solid ${active ? GOLD : 'rgba(212,175,55,0.42)'}`,
+              background: active ? 'rgba(212,175,55,0.26)' : 'rgba(212,175,55,0.08)',
+              boxShadow: active ? '0 0 0 4px rgba(212,175,55,0.14), 0 0 12px rgba(212,175,55,0.35)' : 'none',
+              color: useDarkTheme ? (active ? '#F5D97A' : '#C9A227') : (active ? GOLD_INK : '#A07A12'),
+              transition: 'background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
             }}>
-              <Icon style={{ width: 15, height: 15 }} />
+              <Icon style={{ width: 16, height: 16 }} />
             </div>
-            <span style={{ fontSize: 10, color: useDarkTheme ? (active ? '#F5D97A' : TEXT_MUTED_DARK) : LIGHT_TEXT, fontWeight: active ? 700 : 600, textAlign: 'center' }}>{label}</span>
+            <span style={{ fontSize: isDesktopPanel ? 11 : 11.5, color: useDarkTheme ? (active ? '#F5D97A' : TEXT_MUTED_DARK) : LIGHT_TEXT, fontWeight: active ? 700 : 600, textAlign: 'center' }}>{label}</span>
             {!isDesktopPanel && (
-              <span style={{ fontSize: 9, color: LIGHT_TEXT_MUTED, textAlign: 'center', lineHeight: 1.1 }}>{subtitle}</span>
+              <span style={{ fontSize: 10.5, color: LIGHT_TEXT_MUTED, textAlign: 'center', lineHeight: 1.15 }}>{subtitle}</span>
             )}
           </div>
         );
@@ -2717,7 +2760,7 @@ export default function MCareOrb() {
     </div>
   );
   const capabilityRowBlock = isDesktopPanel ? capabilityItemsRow : (
-    <div style={{ marginTop: 8, width: '100%', background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.06)', padding: '10px 8px' }}>
+    <div style={{ marginTop: 8, width: '100%', background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: RADIUS.card, boxShadow: '0 2px 12px rgba(15,23,42,0.06)', padding: '10px 8px' }}>
       {capabilityItemsRow}
     </div>
   );
@@ -2731,9 +2774,9 @@ export default function MCareOrb() {
   // as before.
   const desktopCapabilityPillsRow = (
     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
-      {CAPABILITY_ITEMS.map(({ icon: Icon, label, accent }) => {
+      {CAPABILITY_ITEMS.map(({ icon: Icon, label }) => {
         const active = label === activeCapability;
-        const ringColor = useDarkTheme ? GOLD : accent;
+        const ringColor = GOLD;
         return (
           <div key={label} style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999,
@@ -2750,6 +2793,18 @@ export default function MCareOrb() {
     </div>
   );
 
+  // One shortcut-chip style for every layout (it was 12px grey-icon chips on
+  // laptops and 12px gold-icon chips on phones): 40px tall, 13px label, gold
+  // icon, press/hover feedback via the ms-press/ms-chip classes below.
+  /** @type {React.CSSProperties} */
+  const chipStyle = {
+    display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 40, padding: '0 12px',
+    border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? CARD_BG : LIGHT_CARD,
+    borderRadius: RADIUS.pill, fontSize: TYPE.chip, fontWeight: 600, color: useDarkTheme ? '#E5E7EB' : LIGHT_TEXT,
+    cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: useDarkTheme ? 'none' : '0 1px 3px rgba(15,23,42,0.06)',
+  };
+  const chipIconStyle = { width: 15, height: 15, color: GOLD, flexShrink: 0 };
+
   // The big scrolling area (journey tracker + greeting/messages/journey
   // events/typing/offline banner) plus the interrupted-intent chip and smart
   // suggestions — identical in both layouts. The input bar is deliberately
@@ -2761,7 +2816,9 @@ export default function MCareOrb() {
         <JourneyStageTracker messages={agentMessages} />
       )}
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: useDarkTheme ? DARK : LIGHT_BG }}>
+      {/* Stacked layout: side padding grows on tablets so the conversation stays a readable centred column
+          (STACKED_MAX_WIDTH); on phones it is the same 14px as before. */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isDesktopPanel ? '14px 14px' : `16px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2))`, display: 'flex', flexDirection: 'column', gap: 12, background: useDarkTheme ? DARK : LIGHT_BG }}>
         {chatEmpty && !agentLoading && (
           <>
             {/* A small decorative "•••" accent above the greeting, echoing
@@ -2776,9 +2833,11 @@ export default function MCareOrb() {
                 ))}
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
-              <McareAvatar size={32} />
-              <p style={{ margin: 0, fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: useDarkTheme ? CARD_BG : LIGHT_CARD, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: 14, padding: '10px 12px', maxWidth: '85%', boxShadow: useDarkTheme ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
+            {/* Same avatar size, corner, padding and 14px text as every reply bubble (MessageBubble), so the
+                first message doesn't look like it came from a different product. */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 4 }}>
+              <McareAvatar size={28} />
+              <p style={{ margin: 0, fontSize: TYPE.body, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: useDarkTheme ? CARD_BG : LIGHT_CARD, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: RADIUS.bubble, padding: '12px 16px', maxWidth: '85%', boxShadow: useDarkTheme ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
                 {(() => {
                   const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
                   return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
@@ -2791,11 +2850,10 @@ export default function MCareOrb() {
                 gated to the empty state — see quickChipsRowBlock below the
                 input bar, so nothing renders twice here on mobile. */}
             {isDesktopPanel && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 42 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 36 }}>
                 {quickChips.map(c => (
-                  <button key={c.label} onClick={c.run}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, background: useDarkTheme ? CARD_BG : LIGHT_CARD, borderRadius: 999, padding: '6px 12px', fontSize: 12, color: useDarkTheme ? '#D1D5DB' : LIGHT_TEXT, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    <c.icon style={{ width: 14, height: 14 }} /> {c.label}
+                  <button key={c.label} onClick={c.run} className="ms-press ms-chip" style={chipStyle}>
+                    <c.icon style={chipIconStyle} /> {c.label}
                   </button>
                 ))}
               </div>
@@ -2923,20 +2981,22 @@ export default function MCareOrb() {
             (not re-themed to gold) so it stays distinct from the brand
             accent and reads as "pay attention," matching this app's
             established amber = warning convention elsewhere. */}
+        {/* Light screens get their own amber treatment: the dark-panel colours (cream text on a brown wash)
+            were close to invisible on the white phone panel, at exactly the moment the warning matters. */}
         {!isOnline && (
-          <div style={{ borderRadius: 14, border: '1px solid rgba(253,230,138,0.35)', background: 'rgba(120,53,15,0.25)', padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div role="status" style={{ borderRadius: RADIUS.bubble, border: `1px solid ${useDarkTheme ? 'rgba(253,230,138,0.35)' : '#FCD34D'}`, background: useDarkTheme ? 'rgba(120,53,15,0.25)' : '#FFFBEB', padding: '12px 14px' }}>
+            <div style={{ fontSize: TYPE.label, fontWeight: 700, color: useDarkTheme ? '#FBBF24' : CAUTION_INK, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>
               {t('guide.offline_badge')}
             </div>
             {offlineArtifact ? (
               <>
-                <p style={{ margin: '0 0 6px', fontSize: 12.5, color: '#FDE9C7' }}>
+                <p style={{ margin: '0 0 6px', fontSize: 13, color: useDarkTheme ? '#FDE9C7' : '#78350F' }}>
                   Here's what I already prepared before the connection dropped:
                 </p>
                 <InlineQrBlock label={offlineArtifact.label} dest={offlineArtifact.dest} />
               </>
             ) : (
-              <p style={{ margin: 0, fontSize: 12.5, color: '#FDE9C7' }}>
+              <p style={{ margin: 0, fontSize: 13, color: useDarkTheme ? '#FDE9C7' : '#78350F' }}>
                 I don't have anything saved for you yet this session. Ask me for directions or a QR code the next time you're connected, and I'll have it ready if you go offline again.
               </p>
             )}
@@ -2958,26 +3018,33 @@ export default function MCareOrb() {
           unlike desktop's own inline row rendered above). Same real
           quickChips array/handlers, just the first 3 plus a "More" reveal
           for the rest — matches the reference screenshot's 4-pill layout. */}
+      {/* Design upgrade (2026-10-31): "More" is pinned at the right so it is always on screen (it used to sit
+          past the edge on every phone, with "My Journey" cut in half and no sign the row scrolled). The three
+          shortcuts scroll in their own lane, which fades at its edge to show there is more to swipe. */}
       {!isDesktopPanel && !keyboardOpen && (
-        <div style={{ position: 'relative', flexShrink: 0, padding: '8px 14px 0', background: LIGHT_BG }}>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
-            {quickChips.slice(0, 3).map(c => (
-              <button key={c.label} onClick={c.run}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, border: `1px solid ${LIGHT_BORDER}`, background: LIGHT_CARD, borderRadius: 999, padding: '7px 13px', fontSize: 12, fontWeight: 600, color: LIGHT_TEXT, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(15,23,42,0.05)' }}>
-                <c.icon style={{ width: 14, height: 14, color: GOLD }} /> {c.label}
-              </button>
-            ))}
-            <button onClick={() => setMoreChipsOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, border: `1px solid ${LIGHT_BORDER}`, background: LIGHT_CARD, borderRadius: 999, padding: '7px 13px', fontSize: 12, fontWeight: 600, color: LIGHT_TEXT_MUTED, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(15,23,42,0.05)' }}>
-              More {moreChipsOpen ? <ChevronUp style={{ width: 13, height: 13 }} /> : <ChevronDown style={{ width: 13, height: 13 }} />}
+        <div style={{ position: 'relative', flexShrink: 0, padding: `6px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 2px`, background: LIGHT_BG }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* The lane sizes to its chips (flex 0 1 auto) so "More" sits right after them when there is room,
+                and shrinks to scroll when there isn't. Its 18px right padding is exactly the faded strip, so the
+                fade only ever covers a chip that is really cut off. */}
+            <div className="ms-chip-scroll" style={{ flex: '0 1 auto', minWidth: 0, display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', padding: '2px 18px 2px 1px', WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 18px), transparent)', maskImage: 'linear-gradient(to right, #000 calc(100% - 18px), transparent)' }}>
+              {quickChips.slice(0, 3).map(c => (
+                <button key={c.label} onClick={c.run} className="ms-press ms-chip" style={chipStyle}>
+                  <c.icon style={chipIconStyle} /> {c.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setMoreChipsOpen(v => !v)} className="ms-press ms-chip" aria-expanded={moreChipsOpen}
+              style={{ ...chipStyle, gap: 4, padding: '0 12px', color: moreChipsOpen ? GOLD_INK : LIGHT_TEXT_MUTED, background: moreChipsOpen ? GOLD_WASH : LIGHT_CARD }}>
+              More {moreChipsOpen ? <ChevronUp style={{ width: 14, height: 14 }} /> : <ChevronDown style={{ width: 14, height: 14 }} />}
             </button>
           </div>
           {moreChipsOpen && (
-            <div style={{ marginTop: 8, background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: 14, boxShadow: '0 4px 16px rgba(15,23,42,0.08)', overflow: 'hidden' }}>
-              {moreChips.map(c => (
-                <button key={c.label} onClick={() => { setMoreChipsOpen(false); c.run(); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', border: 'none', borderBottom: `1px solid ${LIGHT_BORDER}`, background: 'none', padding: '10px 14px', fontSize: 13, color: LIGHT_TEXT, cursor: 'pointer' }}>
-                  <c.icon style={{ width: 15, height: 15, color: GOLD, flexShrink: 0 }} /> {c.label}
+            <div style={{ marginTop: 8, background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: RADIUS.bubble, boxShadow: '0 6px 20px rgba(15,23,42,0.10)', overflow: 'hidden' }}>
+              {moreChips.map((c, idx) => (
+                <button key={c.label} onClick={() => { setMoreChipsOpen(false); c.run(); }} className="ms-row"
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 46, textAlign: 'left', border: 'none', borderBottom: idx === moreChips.length - 1 ? 'none' : `1px solid ${LIGHT_BORDER}`, background: 'none', padding: '0 16px', fontSize: TYPE.body, fontWeight: 500, color: LIGHT_TEXT, cursor: 'pointer' }}>
+                  <c.icon style={{ ...chipIconStyle, width: 16, height: 16 }} /> {c.label}
                 </button>
               ))}
             </div>
@@ -2990,12 +3057,28 @@ export default function MCareOrb() {
   // Input — "clean, floating input bar," full-width across the very bottom
   // of the panel on desktop (per the widescreen layout ask), and the last
   // element of the single stacked column on mobile — same JSX either way.
+  //
+  // Design upgrade (2026-10-31): one composer shape everywhere — a rounded
+  // pill field, round attach/mic/send buttons (phones had square ones), a gold
+  // ring while typing. The stacked layout's bar keeps 14px under it so the
+  // bottom bar's raised orb (lifted 10px) never overlaps the field (it did by
+  // a few px).
+  const inputFieldStyle = {
+    width: '100%', minHeight: 44, boxSizing: 'border-box',
+    background: useDarkTheme ? CARD_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG),
+    border: `1px solid ${inputFocused ? GOLD : (useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}40` : LIGHT_BORDER))}`,
+    boxShadow: inputFocused ? '0 0 0 3px rgba(212,175,55,0.18)' : 'none',
+    borderRadius: 22, padding: '10px 16px', fontSize: isDesktopPanel ? TYPE.body : 16,
+    color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+  };
+  const canSend = !!input.trim() && !agentSending;
   const inputBarBlock = (
-    <div style={{ padding: '10px 14px', borderTop: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}33` : LIGHT_BORDER)}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: useDarkTheme ? PANEL_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_CARD) }}>
+    <div style={{ padding: isDesktopPanel ? '10px 14px' : `8px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) ${keyboardOpen ? 8 : 14}px`, borderTop: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}33` : LIGHT_BORDER)}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: useDarkTheme ? PANEL_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_CARD) }}>
       <AddImageMenu
         variant="icon"
         menuTheme={useDarkTheme ? 'dark' : 'light'}
-        shape={isDesktopPanel ? 'circle' : 'square'}
+        shape="circle"
         onDeviceFile={handleFileSelect}
         onVaultClick={() => vaultRef.current?.open()}
         onLocationClick={handleLocationMenuClick}
@@ -3008,7 +3091,7 @@ export default function MCareOrb() {
         <GhostTextOverlay
           typedText={input}
           suggestion={ghostSuggestion}
-          matchStyle={{ borderRadius: 12, padding: isDesktopPanel ? '8px 12px' : '10px 14px', fontSize: isDesktopPanel ? 13 : 16, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT }}
+          matchStyle={{ borderRadius: 22, padding: '10px 16px', fontSize: isDesktopPanel ? TYPE.body : 16, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT }}
         />
         <input
           ref={chatInputRef}
@@ -3023,8 +3106,9 @@ export default function MCareOrb() {
           // The phone keyboard's return key reads "send", like a messaging app.
           enterKeyHint="send"
           // 16px on phones: iPhone zooms the whole page into any text box smaller than that, which pushed the send
-          // button off-screen and broke the layout. Desktop keeps its 13px.
-          style={{ width: '100%', background: useDarkTheme ? CARD_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG), border: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}40` : LIGHT_BORDER)}`, borderRadius: 12, padding: isDesktopPanel ? '8px 12px' : '10px 14px', fontSize: isDesktopPanel ? 13 : 16, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
+          // button off-screen and broke the layout. Desktop keeps its smaller size.
+          aria-label="Message M-Safe"
+          style={inputFieldStyle}
         />
       </div>
       {isOnline && !conversationalMode && (
@@ -3033,13 +3117,13 @@ export default function MCareOrb() {
           onSend={handleVoiceMessage}
           onError={handleVoiceMessageError}
           theme={useDarkTheme ? 'dark' : 'light'}
-          idleShape={isDesktopPanel ? 'circle' : 'square'}
+          idleShape="circle"
         />
       )}
-      <button onClick={() => sendAgentMessage()} disabled={!input.trim() || agentSending}
-        style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: input.trim() && !agentSending ? ((isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_GOLD : GOLD) : (useDarkTheme ? BORDER_DARK : LIGHT_BORDER), border: 'none', cursor: input.trim() && !agentSending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+      <button onClick={() => sendAgentMessage()} disabled={!canSend} aria-label="Send message" className={canSend ? 'ms-press' : undefined}
+        style={{ width: TOUCH, height: TOUCH, borderRadius: '50%', flexShrink: 0, background: canSend ? ((isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_GOLD : GOLD) : (useDarkTheme ? BORDER_DARK : LIGHT_BORDER), border: 'none', cursor: canSend ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: canSend ? '0 2px 10px rgba(212,175,55,0.35)' : 'none', transition: 'background 0.2s ease, box-shadow 0.2s ease' }}
       >
-        <Send style={{ width: 16, height: 16, color: input.trim() && !agentSending ? '#0C1A1D' : (useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED) }} />
+        <Send style={{ width: 17, height: 17, color: canSend ? '#0C1A1D' : (useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED) }} />
       </button>
     </div>
   );
@@ -3286,7 +3370,7 @@ export default function MCareOrb() {
                     {useDarkTheme ? desktopCapabilityPillsRow : (
                       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
                         {CAPABILITIES.map(cap => (
-                          <CapabilityPill key={cap.id} label={cap.label} icon={cap.icon} onClick={() => sendAgentMessage(cap.intent)} />
+                          <CapabilityPill key={cap.id} label={cap.label} icon={cap.icon} active={cap.label === activeCapability} onClick={() => sendAgentMessage(cap.intent)} />
                         ))}
                       </div>
                     )}
@@ -3299,8 +3383,11 @@ export default function MCareOrb() {
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${useDarkTheme ? BORDER_DARK : `${DESKTOP_LUXURY_GOLD}33`}`, flexShrink: 0 }}>
                     <McareAvatar size={28} />
-                    <span style={{ fontSize: 14, fontWeight: 700, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, whiteSpace: 'nowrap' }}>
-                      M-Safe <span style={{ fontWeight: 400, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED }}>• M-Care Super Agent</span>
+                    {/* The part after the name swaps to the real live state while M-Safe is busy (see liveState). */}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, fontSize: 14, fontWeight: 700, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, whiteSpace: 'nowrap' }}>
+                      <span style={{ flexShrink: 0 }}>M-Safe</span>
+                      <span style={{ fontWeight: 400, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, flexShrink: 0 }}>•</span>
+                      {liveStateLine || <span style={{ fontWeight: 400, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, overflow: 'hidden', textOverflow: 'ellipsis' }}>M-Care Super Agent</span>}
                     </span>
                     {useDarkTheme ? standaloneStatusPill : <LiveSessionBadge />}
                     <div style={{ marginLeft: 'auto' }}>{headerControlsBlock}</div>
@@ -3322,20 +3409,23 @@ export default function MCareOrb() {
                   bell reusing the exact real hasUnseenJourneyEvent signal the
                   floating launcher button's own dot already uses. Respects the
                   iPhone notch since the panel is now full-bleed. */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', paddingTop: 'calc(10px + env(safe-area-inset-top, 0px))', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD }}>
-                <button onClick={emitOpenSiteMenu} aria-label="Open menu" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', color: LIGHT_TEXT }}>
+              {/* Menu button: on pages without the site header (the landing page and /pilot, where every ad QR
+                  lands) nothing answers the open-menu signal, so it closes the chat instead and the page's own
+                  navigation shows (emitOpenSiteMenu returns false when unanswered). */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `6px max(8px, calc((100% - ${STACKED_MAX_WIDTH + 12}px) / 2))`, paddingTop: 'calc(6px + env(safe-area-inset-top, 0px))', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD }}>
+                <button onClick={() => { if (!emitOpenSiteMenu()) setOpen(false); }} aria-label="Open menu" className="ms-press ms-ctrl" style={{ ...ctrlBtn(), width: TOUCH, height: TOUCH, color: LIGHT_TEXT }}>
                   <Menu style={{ width: 22, height: 22 }} />
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/morales-m-mark.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                    <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', color: LIGHT_TEXT }}>M-CARE</span>
-                    <span style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.08em', color: LIGHT_TEXT_MUTED, textTransform: 'uppercase' }}>AI Medical Travel Concierge</span>
+                  <img src="/morales-m-mark.png" alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', color: LIGHT_TEXT }}>M-CARE</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', color: LIGHT_TEXT_MUTED, textTransform: 'uppercase' }}>AI Medical Travel Concierge</span>
                   </div>
                 </div>
-                <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); markJourneyEventsSeen(); }} aria-label="Notifications" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex', color: LIGHT_TEXT }}>
-                  <Bell style={{ width: 20, height: 20 }} />
-                  {hasUnseenJourneyEvent && <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', background: GOLD, border: '1.5px solid #FFFFFF' }} />}
+                <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); markJourneyEventsSeen(); }} aria-label={hasUnseenJourneyEvent ? 'Notifications, new update' : 'Notifications'} className="ms-press ms-ctrl" style={{ ...ctrlBtn(), width: TOUCH, height: TOUCH, position: 'relative', color: LIGHT_TEXT }}>
+                  <Bell style={{ width: 21, height: 21 }} />
+                  {hasUnseenJourneyEvent && <span style={{ position: 'absolute', top: 7, right: 8, width: 9, height: 9, borderRadius: '50%', background: GOLD, border: '2px solid #FFFFFF' }} />}
                 </button>
               </div>
 
@@ -3349,8 +3439,8 @@ export default function MCareOrb() {
               {/* While the keyboard is up the hero steps aside (like a native chat app) so the conversation keeps
                   the little space left; it comes straight back when the keyboard closes. */}
               {!keyboardOpen && (
-              <div style={{ padding: !chatEmpty ? '10px 16px' : '12px 14px 10px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <div style={{ padding: `10px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2))`, borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flexShrink: 0 }}>
                     <LivingOrb state={orbState} size={!chatEmpty ? 56 : 72} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                   </div>
@@ -3361,7 +3451,7 @@ export default function MCareOrb() {
                     </div>
                     {pillsRowBlock}
                     {chatEmpty && (
-                      <p style={{ margin: '6px 0 0', fontSize: 11, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
+                      <p style={{ margin: '6px 0 0', fontSize: TYPE.meta, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
                     )}
                   </div>
                 </div>
@@ -3391,6 +3481,22 @@ export default function MCareOrb() {
         @keyframes orbBubbleIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
         @keyframes mcareBackdropIn { from { opacity:0; } to { opacity:1; } }
         @keyframes mcarePanelIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }
+        /* Design upgrade (2026-10-31): one touch response for every M-Safe control. Hover/focus rules use
+           !important only because the controls' base colours are inline styles. */
+        .ms-press { transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        .ms-press:active { transform: scale(0.96); }
+        .ms-press:focus-visible, .ms-row:focus-visible { outline: 2px solid ${GOLD}; outline-offset: 2px; }
+        .ms-ctrl:hover { background-color: rgba(212,175,55,0.12) !important; }
+        .ms-chip:hover { border-color: rgba(212,175,55,0.65) !important; box-shadow: 0 2px 10px rgba(212,175,55,0.16) !important; }
+        .ms-row:hover, .ms-row:active { background-color: rgba(212,175,55,0.08) !important; }
+        .ms-chip-scroll::-webkit-scrollbar { display: none; }
+        .ms-live-dot { animation: msLiveDot 1.6s ease-in-out infinite; }
+        @keyframes msLiveDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+        @media (prefers-reduced-motion: reduce) {
+          .ms-press { transition: none; }
+          .ms-press:active { transform: none; }
+          .ms-live-dot { animation: none; }
+        }
       `}</style>
 
       <LocationPermissionGate

@@ -872,9 +872,14 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
                       type="button"
                       onClick={() => onChoice(c)}
                       className={chipBase}
+                      // A border can't use a gradient, and the M-Care panel passes a gold gradient as `accent`, so
+                      // these rendered plain grey; with no accent they fell back to an off-brand purple. Solid accents
+                      // still colour the chip; anything else gets the brand gold outline (2026-10-31).
                       style={isUser
                         ? { borderColor: 'rgba(255,255,255,0.45)', color: '#fff', background: 'rgba(255,255,255,0.14)' }
-                        : { borderColor: accent || '#6C47FF', color: accent || '#6C47FF', background: 'transparent' }}
+                        : (typeof accent === 'string' && !accent.includes('gradient'))
+                          ? { borderColor: accent, color: accent, background: 'transparent' }
+                          : { borderColor: 'rgba(212,175,55,0.7)', background: 'rgba(212,175,55,0.06)', minHeight: 34 }}
                     >
                       {c}
                     </button>

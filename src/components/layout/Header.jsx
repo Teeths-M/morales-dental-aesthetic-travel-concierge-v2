@@ -48,7 +48,8 @@ export default function Header() {
   // site's real nav tray, mirroring exactly what this hamburger button
   // already does when tapped directly, rather than duplicating a second menu.
   useEffect(() => {
-    const onOpenSiteMenu = () => setIsMobileOpen(true);
+    // preventDefault() tells the sender the menu really opened (see emitOpenSiteMenu).
+    const onOpenSiteMenu = (e) => { e.preventDefault(); setIsMobileOpen(true); };
     window.addEventListener(SITE_MENU_OPEN_EVENT, onOpenSiteMenu);
     return () => window.removeEventListener(SITE_MENU_OPEN_EVENT, onOpenSiteMenu);
   }, []);

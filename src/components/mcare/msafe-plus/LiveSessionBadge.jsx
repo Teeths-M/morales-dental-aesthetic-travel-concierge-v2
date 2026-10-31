@@ -5,8 +5,10 @@ import { MSAFE_PALETTE as C } from '../msafePlusConfig';
 // "LIVE SESSION" text, centered under the capability row.
 export default function LiveSessionBadge() {
   return (
+    // whitespace-nowrap + flex-shrink-0: in a narrow header row the label used
+    // to break into "LIVE SESSIO / N".
     <div
-      className="msafe-live inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+      className="msafe-live inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 whitespace-nowrap flex-shrink-0"
       style={{
         background: C.mintBg,
       }}
