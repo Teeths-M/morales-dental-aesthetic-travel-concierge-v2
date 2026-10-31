@@ -17,8 +17,7 @@
     {
       "entity_name": "CaseRecord",
       "allowed_operations": [
-        "read",
-        "update"
+        "read"
       ]
     },
     {

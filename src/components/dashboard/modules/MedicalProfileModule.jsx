@@ -154,16 +154,13 @@ export default function MedicalProfileModule() {
         cultural_preferences: cultural.join(', ')         || undefined,
       };
 
-      if (caseRecord?.id) {
-        await base44.entities.CaseRecord.update(caseRecord.id, updatePayload);
-      } else if (user?.email) {
-        // No case yet — create a minimal case record to hold this data
-        await base44.entities.CaseRecord.create({
-          client_email: user.email,
-          client_name:  personalInfo.full_name || user.full_name || '',
-          procedures:   [],
-          status:       'Submitted',
-          ...updatePayload,
+      // Saved through the server: a patient's browser can't write CaseRecord
+      // directly. With no case yet, the server makes a minimal one.
+      if (caseRecord?.id || user?.email) {
+        await base44.functions.invoke('updateMyCaseRecord', {
+          action: 'save_medical_profile',
+          case_id: caseRecord?.id || undefined,
+          profile: updatePayload,
         });
       }
     },

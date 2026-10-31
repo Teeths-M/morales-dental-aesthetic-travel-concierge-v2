@@ -58,7 +58,20 @@ Deno.serve(async (req) => {
         const planType = session.metadata?.plan_type;
         const feeType = session.metadata?.fee_type;
 
-        if (feeType === 'consultation_fee_49') {
+        if (session.metadata?.deposit_type === 'consultation_deposit_60') {
+          // $60 slot-hold deposit after a declined package payment. Recorded
+          // and flagged for the coordinator; it never advances the case.
+          await handleSlotHoldDepositPaid(base44, {
+            event_id: event.id,
+            event_type: event.type,
+            case_id: caseId,
+            stripe_session_id: session.id,
+            stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+            amount_total: session.amount_total / 100,
+            currency: session.currency,
+            raw_metadata: session.metadata || {},
+          });
+        } else if (feeType === 'consultation_fee_49') {
           // Handle consultation fee payment
           await handleConsultationFeePaid(base44, {
             event_id: event.id,
@@ -95,6 +108,7 @@ Deno.serve(async (req) => {
         const pi = obj;
         const feeTypePi = pi.metadata?.fee_type;
         if (feeTypePi === 'consultation_fee_49') break; // handled by checkout.session.completed
+        if (pi.metadata?.deposit_type === 'consultation_deposit_60') break; // handled by checkout.session.completed
         // Pass case_id even if missing — handlePackagePaymentSuccess will reject with audit log
         await handlePackagePaymentSuccess(base44, {
           event_id: event.id,
@@ -142,12 +156,17 @@ Deno.serve(async (req) => {
           stripe_payment_intent_id: piId, status: 'succeeded'
         });
         const refundedCaseId = priorTxns[0]?.case_id;
+        // A refunded $60 slot-hold deposit doesn't mean the package was
+        // refunded. A $49 consultation fee is keyed by its consultation id, so
+        // there may be no case record at all; updating one that doesn't exist
+        // used to throw and make Stripe retry the event for days.
+        const isSlotHold = priorTxns[0]?.metadata?.deposit_type === 'consultation_deposit_60';
         if (refundedCaseId) {
           // Guard: never modify financial fields on a completed case
           const refundFreshCase = await base44.asServiceRole.entities.CaseRecord.get(refundedCaseId).catch(() => null);
           if (refundFreshCase?.is_finalized) {
             console.warn(`[stripePaymentWebhook] Attempted to update finalized case ${refundedCaseId} on refund — skipping`);
-          } else {
+          } else if (refundFreshCase && !refundFreshCase.is_finalized && !isSlotHold) {
             await base44.asServiceRole.entities.CaseRecord.update(refundedCaseId, {
               payment_status: 'Refunded',
             });
@@ -418,6 +437,7 @@ async function handlePackagePaymentSuccess(base44, {
         payment_type:      cascadePaymentType,
         amount_paid:       amount_total,
         stripe_payment_id: stripe_payment_intent_id || stripe_session_id,
+        internal_secret:   Deno.env.get('CRON_SECRET'),
       }).catch(() => {}),
     ]);
   }
@@ -556,5 +576,110 @@ async function handleConsultationFeePaid(base44, {
         }
       }
     } catch (_) { /* non-blocking — main payment flow already succeeded */ }
+  }
+}
+
+// ── $60 slot-hold deposit ────────────────────────────────────────────────────
+// Offered by DeclineDepositDialog when a patient's bank declines a large
+// package charge (generateConsultationDepositLink). It holds their slot while
+// they clear the main payment with their bank. It's recorded and flagged for
+// the coordinator, and nothing else: the package itself is still unpaid, so
+// this never changes the case's booking or package payment state and never
+// starts the partner cascade. Before this handler existed the deposit fell
+// through to the package handler and was rejected as an unknown plan.
+async function handleSlotHoldDepositPaid(base44, {
+  event_id, event_type, case_id, stripe_session_id, stripe_payment_intent_id,
+  amount_total, currency, raw_metadata,
+}) {
+  const now = new Date().toISOString();
+
+  if (isDemoPayment(raw_metadata)) {
+    await base44.asServiceRole.entities.PaymentTransaction.create({
+      case_id: case_id || null,
+      stripe_session_id,
+      stripe_payment_intent_id,
+      stripe_event_id: event_id,
+      event_id, event_type,
+      status: 'succeeded_skipped_demo',
+      raw_amount: amount_total,
+      currency: currency || 'usd',
+      metadata: { deposit_type: 'consultation_deposit_60', is_demo: true, workflow_advanced: false },
+      processed_at: now,
+      created_at: now,
+    });
+    return;
+  }
+
+  // The same payment can arrive as two Stripe events. Record it once.
+  if (stripe_payment_intent_id) {
+    const existingPI = await base44.asServiceRole.entities.PaymentTransaction.filter({
+      stripe_payment_intent_id,
+      status: 'succeeded',
+    });
+    if (existingPI.length > 0) return;
+  }
+
+  const caseRecord = case_id
+    ? await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null)
+    : null;
+
+  await base44.asServiceRole.entities.PaymentTransaction.create({
+    case_id: case_id || null,
+    client_email: caseRecord?.client_email || '',
+    stripe_session_id,
+    stripe_payment_intent_id,
+    stripe_event_id: event_id,
+    event_id, event_type,
+    status: 'succeeded',
+    raw_amount: amount_total,
+    currency: currency || 'usd',
+    metadata: {
+      deposit_type: 'consultation_deposit_60',
+      slot_hold: true,
+      workflow_advanced: false,
+      original_amount_attempted: raw_metadata.original_amount_attempted || null,
+    },
+    processed_at: now,
+    created_at: now,
+  });
+
+  if (stripe_session_id) {
+    const pendingTxns = await base44.asServiceRole.entities.PaymentTransaction.filter({
+      stripe_session_id, status: 'session_created',
+    });
+    for (const t of pendingTxns) {
+      await base44.asServiceRole.entities.PaymentTransaction.update(t.id, {
+        status: 'succeeded', processed_at: now,
+      });
+    }
+  }
+
+  if (caseRecord && !caseRecord.is_finalized) {
+    await base44.asServiceRole.entities.CaseRecord.update(case_id, {
+      timeline_log: [
+        ...(caseRecord.timeline_log || []),
+        {
+          timestamp: now,
+          action: 'slot_hold_deposit_paid',
+          details: 'Slot-hold deposit received after the bank declined the package charge. The package itself is still unpaid; coordinator to follow up with bank-approval steps.',
+        },
+      ],
+    }).catch(() => {});
+  }
+
+  const adminEmail = Deno.env.get('ADMIN_EMAIL');
+  if (adminEmail) {
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      from_name: 'Morales Medical — Payments',
+      to: adminEmail,
+      subject: 'Slot-hold deposit received — follow-up needed',
+      body: linkOnlyEmail({
+        title: 'Slot-hold deposit received',
+        line: 'A patient placed a slot-hold deposit after their bank declined the full package charge. The package is still unpaid. Open the admin portal to follow up with bank-approval steps.',
+        ctaUrl: `${APP_URL}/admin`,
+        ctaLabel: 'Open Admin Portal',
+        from: 'stripePaymentWebhook',
+      }),
+    }).catch(() => {});
   }
 }

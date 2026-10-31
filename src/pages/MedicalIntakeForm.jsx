@@ -525,29 +525,18 @@ export default function MedicalIntakeForm() {
 
         if (isBlocked) {
           try {
-            const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 1);
-            if (cases.length > 0) {
-              const caseRecord = cases[0];
-              await base44.entities.CaseRecord.update(caseRecord.id, {
-                status: 'Admin-Review',
-                timeline_log: [
-                  ...(caseRecord.timeline_log || []),
-                  {
-                    timestamp: new Date().toISOString(),
-                    action: 'high_risk_hold',
-                    details: `Case held for Senior Medical Review — medical history disclosed after procedure selection: ${violations[0].pairLabel}. ${violations[0].reason}`,
-                  },
-                ],
-              });
-              base44.functions.invoke('notifySlackHighRisk', { case_id: caseRecord.id }).catch(() => {});
-            }
+            // The server re-runs this same safety check from the saved
+            // consultation, holds the latest case at Admin-Review, and alerts
+            // the medical team. A patient's browser can't write CaseRecord, and
+            // the alert needs the server's internal key.
             // No CaseRecord yet? The high_risk_medical_review flag written above
             // is enough — iq200Pipeline's create action holds new CaseRecords at
             // Admin-Review and notifies Slack itself when that flag is set.
+            await base44.functions.invoke('updateMyCaseRecord', { action: 'place_high_risk_hold', consultation_id: existing.id });
           } catch {
-            // A CaseRecord lookup/update failure must never block the intake
-            // save that already succeeded above — the Consultation flag is the
-            // durable source of truth either way.
+            // A hold failure must never block the intake save that already
+            // succeeded above — the Consultation flag is the durable source of
+            // truth either way.
           }
         }
       } else {

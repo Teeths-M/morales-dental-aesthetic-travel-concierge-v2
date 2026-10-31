@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
  * processPaymentCascade
@@ -42,7 +43,15 @@ async function sendSms(to: string, message: string) {
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { case_id, payment_type, amount_paid, stripe_payment_id } = await body();
+  const { case_id, payment_type, amount_paid, stripe_payment_id, internal_secret } = await body();
+  // SECURITY: only the Stripe webhook (which passes the internal key) or an
+  // admin may start the paid-journey cascade. The recorded-payment check below
+  // was the only gate before, and a caller who had paid a 25% or 50% deposit
+  // passed it while claiming payment_type 'balance', which marked the case paid
+  // in full and dispatched every partner.
+  if (!(await internalOrAdminAuthorized(internal_secret, base44))) {
+    return err('Forbidden', 403);
+  }
   if (!case_id || !payment_type) return err('case_id and payment_type are required');
 
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);

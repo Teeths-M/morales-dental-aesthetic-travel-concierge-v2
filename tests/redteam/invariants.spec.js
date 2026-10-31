@@ -2051,9 +2051,16 @@ test('SAFETY: MedicalIntakeForm re-checks an already-selected procedure combo an
   // iq200Pipeline's create-time gate holds a not-yet-created CaseRecord too.
   expect(form, 'a RED result must set high_risk_medical_review on the consultation')
     .toContain('high_risk_medical_review = true');
-  expect(form, 'an already-existing CaseRecord must be paused to Admin-Review')
-    .toMatch(/CaseRecord\.update\([\s\S]{0,60}status:\s*'Admin-Review'/);
-  expect(form, 'a human must be alerted — notifySlackHighRisk must be invoked')
+  // The hold and the alert now happen on the server (updateMyCaseRecord's
+  // place_high_risk_hold): a patient's browser can't write CaseRecord.status,
+  // and the browser's own notifySlackHighRisk call had been refused since that
+  // function became internal-only. PAYMENT INTEGRITY below checks the server.
+  expect(form, 'an already-existing CaseRecord must be paused to Admin-Review, via the server')
+    .toMatch(/invoke\('updateMyCaseRecord',\s*\{\s*action:\s*'place_high_risk_hold'/);
+  const holdFn = strip(read('base44/functions/updateMyCaseRecord/entry.ts'));
+  expect(holdFn, 'the server places the Admin-Review hold through the booking guard')
+    .toContain('guardedStatusUpdate(base44, c.id, BOOKING.ADMIN_REVIEW');
+  expect(holdFn, 'a human must be alerted — notifySlackHighRisk must be invoked')
     .toContain("notifySlackHighRisk");
 
   // Never automate the resolution — no payment/refund/re-quote action anywhere
@@ -6395,4 +6402,354 @@ test('PARTNER DORMANCY: subject_type is declared consistently in both the entity
     expect(entity, `DataFreshnessReview.jsonc's subject_type enum must contain '${value}'`).toContain(`"${value}"`);
     expect(freshnessTs, `freshness.ts's ReviewFlag subject_type union must contain '${value}'`).toContain(`'${value}'`);
   }
+});
+
+// ---- Payment & case integrity: who may write payment and case records, the
+// paid-journey cascade gate, the two checkout paths that silently failed, and
+// the escrow release lookup. Uses this file's existing `test`, `expect`, `read`,
+// `ROOT`, `join`, `readFileSync`, `readdirSync`, and `existsSync` helpers.
+
+// Comment stripper that keeps line breaks, so code checks never match prose.
+const piStrip = (s) => s
+  .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+  .replace(/^[ \t]*\/\/.*$/gm, '');
+
+// Parse an entity's .jsonc (comments and trailing commas allowed).
+const piEntity = (name) => {
+  const raw = read(`base44/entities/${name}.jsonc`);
+  let out = '';
+  let inStr = false;
+  for (let i = 0; i < raw.length; i += 1) {
+    const c = raw[i];
+    if (inStr) {
+      out += c;
+      if (c === '\\') { out += raw[i + 1]; i += 1; } else if (c === '"') inStr = false;
+    } else if (c === '"') {
+      inStr = true; out += c;
+    } else if (raw.startsWith('//', i)) {
+      const j = raw.indexOf('\n', i); i = j === -1 ? raw.length : j - 1;
+    } else if (raw.startsWith('/*', i)) {
+      const j = raw.indexOf('*/', i); i = j === -1 ? raw.length : j + 1;
+    } else {
+      out += c;
+    }
+  }
+  return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
+};
+
+// True only for a rule that admits nobody but admin / platform_admin.
+const piAdminOnly = (rule) => {
+  if (!rule) return false;
+  const clauses = rule.$or || [rule];
+  return clauses.length > 0 && clauses.every((c) => c && Object.keys(c).length === 1
+    && c.user_condition && Object.keys(c.user_condition).length === 1
+    && ['admin', 'platform_admin'].includes(c.user_condition.role));
+};
+
+// Index of the bracket that closes the one at `i` (string-aware).
+const piMatch = (t, i) => {
+  let depth = 0;
+  let q = null;
+  for (let j = i; j < t.length; j += 1) {
+    const c = t[j];
+    if (q) {
+      if (c === '\\') { j += 1; continue; }
+      if (c === q) q = null;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') q = c;
+    else if ('({['.includes(c)) depth += 1;
+    else if (')}]'.includes(c)) { depth -= 1; if (depth === 0) return j; }
+  }
+  return -1;
+};
+
+// Top-level keys of an object literal source '{ ... }'.
+const piKeys = (obj) => {
+  const inner = obj.slice(1, -1);
+  const parts = [];
+  let depth = 0;
+  let q = null;
+  let start = 0;
+  for (let i = 0; i < inner.length; i += 1) {
+    const c = inner[i];
+    if (q) {
+      if (c === '\\') { i += 1; continue; }
+      if (c === q) q = null;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') q = c;
+    else if ('({['.includes(c)) depth += 1;
+    else if (')}]'.includes(c)) depth -= 1;
+    else if (c === ',' && depth === 0) { parts.push(inner.slice(start, i)); start = i + 1; }
+  }
+  parts.push(inner.slice(start));
+  return parts.map((p) => p.trim()).filter((p) => p && !p.startsWith('...'))
+    .map((p) => (p.match(/^['"]?([A-Za-z_$][\w$]*)['"]?\s*(?::|$)/) || [null, `?${p.slice(0, 20)}`])[1]);
+};
+
+test('PAYMENT INTEGRITY: payment and case records can only be written by trusted server code', () => {
+  // Before: a signed-in user could create PaymentTransaction rows (the only
+  // proof processPaymentCascade checked), mark their own ConsultationFee paid,
+  // and edit any field on their own CaseRecord, price and payment status
+  // included. Base44 rules can't limit a write to certain fields.
+  const pt = piEntity('PaymentTransaction').rls;
+  expect(piAdminOnly(pt.create), 'PaymentTransaction create must be admin-only').toBe(true);
+  expect(piAdminOnly(pt.update), 'PaymentTransaction update must be admin-only').toBe(true);
+
+  const fee = piEntity('ConsultationFee').rls;
+  expect(piAdminOnly(fee.create), 'ConsultationFee create must be admin-only').toBe(true);
+  expect(piAdminOnly(fee.update), 'ConsultationFee update must be admin-only').toBe(true);
+
+  const cr = piEntity('CaseRecord').rls;
+  expect(piAdminOnly(cr.create), 'CaseRecord create must be admin-only').toBe(true);
+  expect(piAdminOnly(cr.update), 'CaseRecord update must be admin-only').toBe(true);
+  // Patients and doctors still read their own cases.
+  expect(JSON.stringify(cr.read)).toContain('data.client_email');
+  expect(JSON.stringify(cr.read)).toContain('data.doctor_email');
+
+  // No browser code writes these tables except two admin-only screens.
+  const ADMIN_SCREENS = new Set([
+    'src/components/admin/CaseDetailDrawer.jsx',
+    'src/components/admin/FallbackCrisisAlert.jsx',
+  ]);
+  const offenders = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) { walk(rel); continue; }
+      if (!/\.(jsx?|tsx?)$/.test(e.name)) continue;
+      const code = piStrip(read(rel));
+      if (/entities\.(PaymentTransaction|ConsultationFee|CaseRecord)\.(create|update|delete)\(/.test(code)
+        && !ADMIN_SCREENS.has(rel)) offenders.push(rel);
+    }
+  };
+  walk('src');
+  expect(offenders, `browser code writing payment/case tables: ${offenders.join(', ')}`).toEqual([]);
+
+  // The M-Care agent runs as the patient, so it reads cases but can't write them.
+  const agent = JSON.parse(read('base44/agents/m_care.jsonc'));
+  const caseGrant = agent.tool_configs.find((t) => t.entity_name === 'CaseRecord');
+  expect(caseGrant?.allowed_operations, 'M-Care may read CaseRecord only').toEqual(['read']);
+});
+
+test('PAYMENT INTEGRITY: updateMyCaseRecord checks ownership and writes only its own short field lists', () => {
+  const src = read('base44/functions/updateMyCaseRecord/entry.ts');
+  const code = piStrip(src);
+  expect(code).toContain('createHandler(');
+  expect(code, 'must require a signed-in caller').toContain('requireAuth: true');
+  expect(code, 'must validate the body against a strict schema').toContain('bodySchema: BodySchema');
+  expect(code, 'a case must belong to the caller').toContain('c.client_email !== email');
+  expect(code, 'a consultation must belong to the caller').toContain('consultation.email !== email');
+
+  // Money, partner, and safety-result fields are never written here.
+  for (const field of [
+    'payment_status', 'final_package_price', 'base_cost', 'amount_paid', 'amount_remaining',
+    'safe_t_result', 'is_finalized', 'doctor_email', 'doctor_id', 'proposal_token',
+    'stripe_customer_id', 'stripe_payment_id', 'deposit_option',
+  ]) {
+    expect(code, `updateMyCaseRecord must never write ${field}`).not.toContain(field);
+  }
+
+  // The only status change is the safety hold, through the booking guard.
+  const statusWrites = code.match(/\bstatus\s*:/g) || [];
+  expect(statusWrites.length, 'one status write: the new minimal case starts at Submitted').toBe(1);
+  expect(code).toContain('status: BOOKING.SUBMITTED');
+  expect(code).toContain('guardedStatusUpdate(base44, c.id, BOOKING.ADMIN_REVIEW');
+
+  // The checklist keeps the stored item text; only `completed` comes from the browser.
+  expect(code).toContain('return { ...item, completed: flag };');
+});
+
+test('PAYMENT INTEGRITY: the post-intake RED hold is placed by the server, from the stored consultation', () => {
+  const fn = piStrip(read('base44/functions/updateMyCaseRecord/entry.ts'));
+  const hold = fn.slice(fn.indexOf("data.action === 'place_high_risk_hold'"));
+  expect(hold, 're-derives procedures from the stored consultation').toContain('consultation.selected_procedures');
+  expect(hold, 'uses the same name map as the browser').toContain('toSafetyEngineName');
+  expect(hold, 'runs the real deterministic engine').toContain('getViolations(items, conditions)');
+  expect(hold.indexOf('getViolations('), 'checks before any write')
+    .toBeLessThan(hold.indexOf('guardedStatusUpdate('));
+  expect(hold, 'alerts a human with the internal key').toMatch(
+    /'notifySlackHighRisk',\s*\{[^}]*internal_secret:\s*Deno\.env\.get\('CRON_SECRET'\)/,
+  );
+  expect(fn, 'never touches payment or refund state').not.toMatch(/payment_status|refund|requestDoctorQuotes/i);
+
+  const form = piStrip(read('src/pages/MedicalIntakeForm.jsx'));
+  expect(form).toMatch(/invoke\('updateMyCaseRecord',\s*\{\s*action:\s*'place_high_risk_hold'/);
+  expect(form, 'the browser no longer writes the case itself').not.toContain('CaseRecord.update(');
+});
+
+test('PAYMENT INTEGRITY: only the Stripe webhook or an admin can start the paid-journey cascade', () => {
+  const cascade = piStrip(read('base44/functions/processPaymentCascade/entry.ts'));
+  expect(cascade).toContain("from '../../shared/internalAuth.ts'");
+  const gate = cascade.indexOf('await internalOrAdminAuthorized(internal_secret, base44)');
+  expect(gate, 'the internal/admin gate must exist').toBeGreaterThan(-1);
+  expect(gate, 'the gate runs before the case is even read')
+    .toBeLessThan(cascade.indexOf('CaseRecord.get(case_id)'));
+
+  const hook = piStrip(read('base44/functions/stripePaymentWebhook/entry.ts'));
+  const call = hook.slice(hook.indexOf("'processPaymentCascade'"), hook.indexOf("'processPaymentCascade'") + 400);
+  expect(call, 'the webhook must pass the internal key').toContain("internal_secret:   Deno.env.get('CRON_SECRET')");
+});
+
+test('PAYMENT INTEGRITY: every PaymentTransaction status written anywhere is a declared value', () => {
+  // The webhook wrote three statuses the entity never listed, so those records
+  // (rejected, demo, and amount-mismatch payments) may never have saved.
+  const allowed = new Set(piEntity('PaymentTransaction').properties.status.enum);
+  const files = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) { if (e.name !== '_shared') walk(rel); continue; }
+      if (rel.endsWith('.ts')) files.push(rel);
+    }
+  };
+  walk('base44/functions');
+  walk('base44/shared');
+
+  const bad = [];
+  for (const rel of files) {
+    const code = piStrip(read(rel));
+    const re = /PaymentTransaction\.(create|update)\(/g;
+    let m;
+    while ((m = re.exec(code))) {
+      const open = code.indexOf('(', m.index + m[0].length - 1);
+      const end = piMatch(code, open);
+      const call = code.slice(open, end + 1);
+      for (const s of call.matchAll(/\bstatus\s*:\s*'([a-z_]+)'/g)) {
+        if (!allowed.has(s[1])) bad.push(`${rel}: '${s[1]}'`);
+      }
+    }
+  }
+  expect(bad, `undeclared PaymentTransaction statuses: ${bad.join(', ')}`).toEqual([]);
+});
+
+test('PAYMENT INTEGRITY: every browser call sends only fields its strict server schema accepts', () => {
+  // A strict schema answers 400 to any unexpected field before the function
+  // runs. The $49 consultation-fee modal sent `method`, and the $60 slot-hold
+  // dialog sent `client_email` and `client_name`, so both always failed.
+  const schemaKeys = {};
+  const fnDir = join(ROOT, 'base44/functions');
+  for (const name of readdirSync(fnDir)) {
+    const p = join(fnDir, name, 'entry.ts');
+    if (name.startsWith('_') || !existsSync(p)) continue;
+    const code = piStrip(readFileSync(p, 'utf8'));
+    if (!code.includes('strictObject(') || !/bodySchema\s*:|\bvalidate\(/.test(code)) continue;
+    const keys = new Set();
+    const re = /strictObject\(\s*\{/g;
+    let m;
+    while ((m = re.exec(code))) {
+      const open = code.indexOf('{', m.index);
+      piKeys(code.slice(open, piMatch(code, open) + 1)).forEach((k) => keys.add(k));
+    }
+    schemaKeys[name] = keys;
+  }
+
+  const bad = [];
+  let checked = 0;
+  const walk = (dir) => {
+    for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) { walk(rel); continue; }
+      if (!/\.jsx?$/.test(e.name)) continue;
+      const code = piStrip(read(rel));
+      const re = /functions\.invoke\(\s*['"](\w+)['"]\s*,\s*\{/g;
+      let m;
+      while ((m = re.exec(code))) {
+        const keys = schemaKeys[m[1]];
+        if (!keys) continue;
+        const open = m.index + m[0].length - 1;
+        const sent = piKeys(code.slice(open, piMatch(code, open) + 1));
+        checked += 1;
+        const extra = sent.filter((k) => !keys.has(k));
+        if (extra.length) bad.push(`${rel} -> ${m[1]}: ${extra.join(', ')}`);
+      }
+    }
+  };
+  walk('src');
+  expect(checked, 'the sweep must actually find calls to check').toBeGreaterThan(20);
+  expect(bad, `fields a strict schema will reject: ${bad.join(' | ')}`).toEqual([]);
+});
+
+test('PAYMENT INTEGRITY: the $49 fee modal offers only real card checkout', () => {
+  const modal = piStrip(read('src/components/booking/ConsultationFeeModal.jsx'));
+  // PayPal and Wipay had no backend: the server always made a Stripe card
+  // session and those buttons treated that reply as a finished payment.
+  expect(modal).not.toMatch(/paypal|wipay/i);
+  expect(modal).toContain('<StripePaymentForm');
+});
+
+test('PAYMENT INTEGRITY: the $60 slot-hold deposit is recorded without advancing the case', () => {
+  const hook = piStrip(read('base44/functions/stripePaymentWebhook/entry.ts'));
+  expect(hook, 'checkout completion routes the deposit to its own handler')
+    .toMatch(/deposit_type === 'consultation_deposit_60'\)\s*\{[\s\S]{0,200}handleSlotHoldDepositPaid\(/);
+  expect(hook, 'the payment_intent event for the deposit is not treated as a package payment')
+    .toContain("if (pi.metadata?.deposit_type === 'consultation_deposit_60') break;");
+
+  const start = hook.indexOf('async function handleSlotHoldDepositPaid');
+  expect(start).toBeGreaterThan(-1);
+  const end = hook.indexOf('\nasync function ', start + 10);
+  const helper = hook.slice(start, end === -1 ? undefined : end);
+  expect(helper, 'never changes the package payment status').not.toContain('payment_status');
+  expect(helper, 'never starts the partner cascade').not.toContain('processPaymentCascade');
+  // Writes only: the payment record gets a success status, the case gets
+  // nothing but a timeline note. (Lookups like filter() aren't writes.)
+  const writes = (entity) => {
+    const out = [];
+    const re = new RegExp(`${entity}\\.(create|update)\\(`, 'g');
+    let w;
+    while ((w = re.exec(helper))) {
+      const open = helper.indexOf('(', w.index + w[0].length - 1);
+      out.push(helper.slice(open, piMatch(helper, open) + 1));
+    }
+    return out;
+  };
+  const paymentStatuses = writes('PaymentTransaction')
+    .flatMap((call) => [...call.matchAll(/\bstatus\s*:\s*([^,\n}]+)/g)].map((s) => s[1].trim()));
+  expect(paymentStatuses.length).toBeGreaterThan(0);
+  expect(
+    paymentStatuses.every((s) => ["'succeeded'", "'succeeded_skipped_demo'"].includes(s)),
+    `payment-record statuses only: ${paymentStatuses.join(', ')}`,
+  ).toBe(true);
+  const caseWrites = writes('CaseRecord');
+  expect(caseWrites.length, 'the case gets a timeline note').toBeGreaterThan(0);
+  for (const call of caseWrites) {
+    expect(call, 'the case write carries no status of any kind').not.toMatch(/\bstatus\s*:/);
+  }
+
+  const link = piStrip(read('base44/functions/generateConsultationDepositLink/entry.ts'));
+  expect(link, 'success returns to the token-keyed proposal portal').toContain('/portal/proposal/${encodeURIComponent(token)}');
+  expect(link, 'never builds the old dead checkout path').not.toContain('/portal/hub/checkout/');
+
+  // A refund of the deposit, or of the $49 fee (keyed by consultation id),
+  // must not mark a whole case refunded or crash on a missing case.
+  expect(hook).toContain('if (refundFreshCase && !refundFreshCase.is_finalized && !isSlotHold)');
+});
+
+test('PAYMENT INTEGRITY: escrow release looks up holds by the real case id', () => {
+  const src = piStrip(read('base44/functions/releaseEscrowPayment/entry.ts'));
+  expect(src).toContain('const holdCaseId = trip.case_id || case_id;');
+  expect(src).toMatch(/EscrowHold\.filter\(\{\s*case_id: holdCaseId,/);
+  // Still re-verifies the handshake before moving anything.
+  expect(src.indexOf("trip.handshake_status?.[String(hsNum)] !== true"))
+    .toBeLessThan(src.indexOf('EscrowHold.filter('));
+});
+
+test('PAYMENT INTEGRITY: no server function writes a case, payment or fee record as the signed-in caller', () => {
+  // CaseRecord, PaymentTransaction and ConsultationFee are server-write-only. A function that writes them with the
+  // caller-scoped client (base44.entities...) fails once the lock is published, often silently inside a .catch.
+  // requestCompanionPackage did exactly that and was missed by the original 04 draft.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  const bad = [];
+  const scan = (dir, pick) => {
+    for (const name of readdirSync(join(ROOT, dir))) {
+      const file = pick(name);
+      if (!file || !existsSync(join(ROOT, dir, file))) continue;
+      const src = strip(read(join(dir, file)));
+      if (/(?<!asServiceRole)\.entities\.(CaseRecord|PaymentTransaction|ConsultationFee)\??\.(create|update|bulkCreate)\(/.test(src)) bad.push(join(dir, file));
+    }
+  };
+  scan('base44/functions', (n) => (n.startsWith('_') ? null : join(n, 'entry.ts')));
+  scan('base44/shared', (n) => (n.endsWith('.ts') ? n : null));
+  expect(bad, `write these as the server (asServiceRole) after an ownership check: ${bad.join(', ')}`).toEqual([]);
 });

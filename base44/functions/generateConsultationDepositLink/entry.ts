@@ -56,13 +56,15 @@ Deno.serve(createHandler(async ({ req }) => {
     const stripe = new Stripe(stripeKey);
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
-    // Build success/cancel URLs
-    const successUrl = case_id
-      ? `${appUrl}/portal/proposal/${case_id}?deposit=success&type=consultation_deposit`
-      : `${appUrl}/consultation-success?deposit=success`;
-    const cancelUrl = case_id
-      ? `${appUrl}/portal/hub/checkout/${case_id}?deposit=cancelled`
-      : `${appUrl}/booking`;
+    // Build success/cancel URLs. The proposal portal is keyed by the case's
+    // proposal token, not its id, and the checkout route is /portal-hub/.
+    const token = caseRecord.proposal_token;
+    const successUrl = token
+      ? `${appUrl}/portal/proposal/${encodeURIComponent(token)}?deposit=success&type=consultation_deposit`
+      : `${appUrl}/dashboard?deposit=success`;
+    const cancelUrl = token
+      ? `${appUrl}/portal/proposal/${encodeURIComponent(token)}?deposit=cancelled`
+      : `${appUrl}/portal-hub/checkout/${encodeURIComponent(case_id)}?deposit=cancelled`;
 
     const session = await stripe.checkout.sessions.create({
       payment_intent_data: {

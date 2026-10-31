@@ -133,7 +133,7 @@ Rules: never invent a new preparation step; never state a specific fasting time 
     const updated = items.map((it, i) => (i === index ? { ...it, completed: !it.completed } : it));
     setItems(updated);
     try {
-      await base44.entities.CaseRecord.update(caseId, { pre_op_checklist: updated });
+      await base44.functions.invoke('updateMyCaseRecord', { action: 'save_prep_checklist', case_id: caseId, pre_op_checklist: updated });
     } catch {
       setItems(items); // revert on failure
       toast.error("Couldn't save that — please try again.");

@@ -508,6 +508,7 @@ export default function PaymentCheckout() {
         onClose={() => setShowDeclineDialog(false)}
         caseRecord={caseRecord}
         originalAmount={declinedAmount}
+        proposalToken={proposalToken || caseRecord?.proposal_token}
       />
     </>
   );

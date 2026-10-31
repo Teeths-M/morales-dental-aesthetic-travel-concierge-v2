@@ -37,9 +37,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const activeCase = cases[0];
     if (!activeCase) return Response.json({ error: 'No active case found' }, { status: 404 });
 
+    // CaseRecord is server-write-only (04 Payment Integrity), so these saves run as the server. Safe:
+    // activeCase was looked up by the caller's own email above, and only companion fields are written.
     // ── Cancel path ───────────────────────────────────────────────────────────
     if (action === 'cancel') {
-      await base44.entities.CaseRecord.update(activeCase.id, {
+      await base44.asServiceRole.entities.CaseRecord.update(activeCase.id, {
         companion_package_requested: false,
         companion_package_fee: 0,
         companion_status: 'not_requested',
@@ -60,7 +62,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const country: string = activeCase.procedure_country || activeCase.destination_country || '';
     const now = new Date().toISOString();
 
-    await base44.entities.CaseRecord.update(activeCase.id, {
+    await base44.asServiceRole.entities.CaseRecord.update(activeCase.id, {
       companion_package_requested: true,
       companion_package_fee: 650,
       companion_status: 'searching_companions',

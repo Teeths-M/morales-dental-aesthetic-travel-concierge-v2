@@ -6,7 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { useModalA11y } from '@/hooks/useModalA11y';
 import { friendlyError, safeError } from '@/lib/friendlyError';
 
-export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, originalAmount }) {
+export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, originalAmount, proposalToken = null }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const dialogRef = useModalA11y({ isOpen, onClose });
@@ -15,11 +15,13 @@ export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, orig
     setIsProcessing(true);
     setError(null);
     try {
+      // Only the fields the server accepts: anything else is refused before the
+      // function runs. The server reads the email from the case itself, and the
+      // patient's name is never sent to Stripe.
       const res = await base44.functions.invoke('generateConsultationDepositLink', {
-        case_id: caseRecord?.id || null,
-        client_email: caseRecord?.client_email || '',
-        client_name: caseRecord?.client_name || '',
+        case_id: caseRecord?.id,
         original_amount: originalAmount,
+        proposal_token: proposalToken || caseRecord?.proposal_token || undefined,
       });
 
       if (!res.data?.success || !res.data?.payment_url) {

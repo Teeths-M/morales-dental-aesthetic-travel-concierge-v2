@@ -55,11 +55,20 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
     const primary = contacts.find(c => c.isPrimary) || contacts[0];
     if (!primary) return;
     setSaving(true);
-    await base44.entities.CaseRecord.update(caseRecord.id, {
-      emergency_contact: `${primary.name}${primary.relationship ? ` (${primary.relationship})` : ''}`,
-      emergency_contact_number: primary.phone,
-      emergency_contact_email: primary.email || '',
-    });
+    try {
+      await base44.functions.invoke('updateMyCaseRecord', {
+        action: 'set_emergency_contact',
+        case_id: caseRecord.id,
+        emergency_contact: `${primary.name}${primary.relationship ? ` (${primary.relationship})` : ''}`,
+        emergency_contact_number: primary.phone,
+        emergency_contact_email: primary.email || '',
+      });
+    } catch (_) {
+      // The contacts are still saved on this device. Let the patient try again
+      // rather than leaving the button spinning.
+      setSaving(false);
+      return;
+    }
 
     // Companion Network Alerts: everyone past the primary also syncs, so the
     // real escalation ladder (escalateSoloCheckIn) can cascade through the

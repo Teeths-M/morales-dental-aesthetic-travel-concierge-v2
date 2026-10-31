@@ -26,6 +26,25 @@
       "type": "string",
       "description": "e.g. checkout.session.completed, payment_intent.succeeded, consultation_fee.session_created"
     },
+    "stripe_event_id": {
+      "type": "string",
+      "description": "Stripe event id. The webhook's idempotency key: a second delivery of the same event is skipped."
+    },
+    "amount_paid": {
+      "type": "number",
+      "description": "On a flagged_amount_mismatch record: what Stripe charged."
+    },
+    "expected_amount": {
+      "type": "number",
+      "description": "On a flagged_amount_mismatch record: the case's own package price."
+    },
+    "requires_manual_review": {
+      "type": "boolean"
+    },
+    "flagged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -33,7 +52,10 @@
         "succeeded",
         "failed",
         "refunded",
-        "cancelled"
+        "cancelled",
+        "failed_validation",
+        "succeeded_skipped_demo",
+        "flagged_amount_mismatch"
       ],
       "default": "session_created"
     },
@@ -83,9 +105,18 @@
       ]
     },
     "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     },
     "update": {
       "$or": [

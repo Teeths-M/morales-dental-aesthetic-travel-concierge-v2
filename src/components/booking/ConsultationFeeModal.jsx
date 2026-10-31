@@ -19,7 +19,6 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
         email: form.email,
         procedure: form.procedure_interest,
         destination: form.preferred_date,
-        method: 'stripe'
       });
 
       const data = response.data;
@@ -75,113 +74,13 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
   );
 }
 
-function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, handlePaymentSuccess }) {
-  const [error, setError] = useState(null);
-
-  const handlePayPalPayment = async (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    try {
-      const response = await base44.functions.invoke('chargeConsultationFee', {
-        consultation_id: form.consultation_id,
-        email: form.email,
-        procedure: form.procedure_interest,
-        destination: form.preferred_date,
-        method: 'paypal'
-      });
-      
-      if (response.data.success) {
-        if (handlePaymentSuccess) {
-          await handlePaymentSuccess(response.data);
-        } else {
-          onSuccess(response.data);
-        }
-      }
-    } catch (err) {
-      setError(friendlyError(err, 'We could not complete your payment. No money has been taken — check your card details and try again.', 'ConsultationFeeModal'));
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handlePayPalPayment} className="space-y-4">
-      <div className="p-4 border border-blue-200 rounded-xl bg-blue-50 flex items-center justify-center">
-        <span className="text-3xl font-semibold text-blue-600">P</span>
-      </div>
-      {error && (
-        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-red-700">{error}</p>
-        </div>
-      )}
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={onCancel} disabled={isProcessing} className="flex-1">
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isProcessing} className="flex-1 bg-blue-600 hover:bg-blue-700">
-          {isProcessing ? 'Processing...' : 'Pay with PayPal'}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, handlePaymentSuccess }) {
-  const [error, setError] = useState(null);
-
-  const handleWipayPayment = async (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    try {
-      const response = await base44.functions.invoke('chargeConsultationFee', {
-        consultation_id: form.consultation_id,
-        email: form.email,
-        procedure: form.procedure_interest,
-        destination: form.preferred_date,
-        method: 'wipay'
-      });
-      
-      if (response.data.success) {
-        if (handlePaymentSuccess) {
-          await handlePaymentSuccess(response.data);
-        } else {
-          onSuccess(response.data);
-        }
-      }
-    } catch (err) {
-      setError(friendlyError(err, 'We could not complete your payment. No money has been taken — check your card details and try again.', 'ConsultationFeeModal'));
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleWipayPayment} className="space-y-4">
-      <div className="p-4 border border-orange-200 rounded-xl bg-orange-50 flex items-center justify-center">
-        <span className="text-2xl font-semibold text-orange-600">WIPAY</span>
-      </div>
-      {error && (
-        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-red-700">{error}</p>
-        </div>
-      )}
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={onCancel} disabled={isProcessing} className="flex-1">
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isProcessing} className="flex-1 bg-orange-600 hover:bg-orange-700">
-          {isProcessing ? 'Processing...' : 'Pay with Wipay'}
-        </Button>
-      </div>
-    </form>
-  );
-}
+// PayPal and Wipay forms were removed: nothing in the backend charged either
+// one. chargeConsultationFee always created a Stripe card session, and those
+// two forms treated its reply as a finished payment. Add them back only with a
+// real PayPal or Wipay integration behind them.
 
 export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel }) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('stripe');
   const { clearCart } = useCart();
 
   // Generate proposal redirect URL after successful payment
@@ -253,44 +152,9 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
           ))}
         </div>
 
-        {/* Payment method tabs */}
-        <div style={{ marginBottom: 16 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Pay with</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-            {[
-              { id: 'stripe', label: 'Card', icon: '💳' },
-              { id: 'paypal', label: 'PayPal', icon: '🅿️' },
-              { id: 'wipay',  label: 'Wipay',  icon: '💰' },
-            ].map(m => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setPaymentMethod(m.id)}
-                style={{
-                  padding: '10px 8px', borderRadius: 12, cursor: 'pointer',
-                  background: paymentMethod === m.id ? `rgba(212,175,55,0.14)` : 'rgba(255,255,255,0.04)',
-                  border: `1.5px solid ${paymentMethod === m.id ? `rgba(212,175,55,0.6)` : BORDER}`,
-                  color: paymentMethod === m.id ? GOLD : 'rgba(255,255,255,0.5)',
-                  fontSize: 12, fontWeight: 700, textAlign: 'center', transition: 'all 0.15s',
-                }}
-              >
-                <div style={{ fontSize: 18, marginBottom: 3 }}>{m.icon}</div>
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Payment forms */}
-        {paymentMethod === 'stripe' && (
-          <StripePaymentForm form={form} onSuccess={onSuccess} onCancel={onCancel} isProcessing={isProcessing} setIsProcessing={setIsProcessing} clearCart={clearCart} handlePaymentSuccess={handlePaymentSuccess} />
-        )}
-        {paymentMethod === 'paypal' && (
-          <PayPalPaymentForm form={form} onSuccess={onSuccess} onCancel={onCancel} isProcessing={isProcessing} setIsProcessing={setIsProcessing} handlePaymentSuccess={handlePaymentSuccess} />
-        )}
-        {paymentMethod === 'wipay' && (
-          <WipayPaymentForm form={form} onSuccess={onSuccess} onCancel={onCancel} isProcessing={isProcessing} setIsProcessing={setIsProcessing} handlePaymentSuccess={handlePaymentSuccess} />
-        )}
+        {/* Card only. PayPal and Wipay buttons used to sit here, but no
+            backend charged either one (see the note above this component). */}
+        <StripePaymentForm form={form} onSuccess={onSuccess} onCancel={onCancel} isProcessing={isProcessing} setIsProcessing={setIsProcessing} clearCart={clearCart} handlePaymentSuccess={handlePaymentSuccess} />
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
           <Lock style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.25)' }} />

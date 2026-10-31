@@ -35,19 +35,14 @@ export default function LocationSharingCard({ caseRecord, onChange }) {
 
   if (!caseId) return null;
 
+  // The server stamps the times and writes only the consent fields.
   const persist = async (granted) => {
-    const now = new Date().toISOString();
-    await base44.entities.CaseRecord.update(caseId, granted
-      ? {
-        location_tracking_consent: true,
-        location_tracking_consent_at: now,
-        location_tracking_consent_version: LOCATION_CONSENT_VERSION,
-        location_tracking_revoked_at: null,
-      }
-      : {
-        location_tracking_consent: false,
-        location_tracking_revoked_at: now,
-      });
+    await base44.functions.invoke('updateMyCaseRecord', {
+      action: 'set_location_consent',
+      case_id: caseId,
+      granted,
+      consent_version: LOCATION_CONSENT_VERSION,
+    });
   };
 
   const enable = async () => {

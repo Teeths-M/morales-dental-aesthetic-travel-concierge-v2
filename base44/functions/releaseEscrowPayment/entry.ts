@@ -60,18 +60,24 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     return err('Checkpoint not confirmed — escrow release refused.', 403);
   }
 
+  // EscrowHold rows are keyed by the CaseRecord id (processPaymentCascade),
+  // but completeHandshake passes the TravelRequest id as `case_id`. Look the
+  // holds up by the trip's linked case. Before this no hold ever matched, so no
+  // partner was ever marked paid or told a payment had been released.
+  const holdCaseId = trip.case_id || case_id;
+
   // Find EscrowHold records triggered by this handshake
   const holds = await base44.asServiceRole.entities.EscrowHold.filter({
-    case_id, release_trigger_hs: hsNum, status: 'held',
+    case_id: holdCaseId, release_trigger_hs: hsNum, status: 'held',
   }).catch(() => []);
 
   if (!holds || holds.length === 0) {
     return ok({ skipped: true, reason: 'No held escrow records for this handshake' });
   }
 
-  const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
+  const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(holdCaseId).catch(() => null);
   const patientName = caseRecord?.client_name || 'Patient';
-  const caseRef     = case_id.slice(-8).toUpperCase();
+  const caseRef     = holdCaseId.slice(-8).toUpperCase();
   const hsLabel     = HS_LABELS[hsNum] || `HS${hsNum}`;
   const now         = new Date().toISOString();
 
@@ -135,7 +141,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     tasks.push(base44.asServiceRole.entities.AuditLog.create({
       event_type:   'escrow_payment_released',
       actor_id:     'system', actor_role: 'system', actor_name: 'M-Care Escrow Engine',
-      resource_type:'EscrowHold', resource_id: hold.id, case_id,
+      resource_type:'EscrowHold', resource_id: hold.id, case_id: holdCaseId,
       sensitive:    true, timestamp: now,
       details: { partner_type: hold.partner_type, amount: hold.amount_held_usd, handshake: hsNum, stripe_transfer_id: stripeTransferId },
     }));
