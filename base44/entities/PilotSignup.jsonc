@@ -1,7 +1,7 @@
 {
   "name": "PilotSignup",
   "type": "object",
-  "description": "One person asking to join the Morales pilot. Deliberately minimal: an email address and where they asked from. No name, no phone, no procedure, no clinical detail is collected on a public marketing page \u2014 the pilot list exists to invite someone to a conversation later, so it should hold nothing that would matter if it leaked. Writes happen only through the joinPilot backend function as service role, which validates and de-duplicates; the create rule is closed so a client cannot bypass that. Admin-only reads.",
+  "description": "One person asking to join the M-Care pilot. Deliberately minimal: an email address, an optional phone number, and where they asked from. No name, no procedure, no clinical detail is collected on a public marketing page \u2014 the pilot list exists to invite someone to a conversation later, so it should hold nothing that would matter if it leaked. Writes happen only through the joinPilot backend function as service role, which validates and de-duplicates; the create rule is closed so a client cannot bypass that. Admin-only reads.",
   "properties": {
     "email": {
       "type": "string",
@@ -13,7 +13,8 @@
       "enum": [
         "landing_hero",
         "landing_greeting",
-        "pilot_page"
+        "pilot_page",
+        "mcare_chat"
       ],
       "default": "pilot_page",
       "description": "Which surface the person asked from \u2014 useful for knowing whether the greeting helps or just interrupts."
@@ -21,6 +22,10 @@
     "campaign": {
       "type": "string",
       "description": "Which ad, card or post the person scanned: the ?src= tag on the /pilot link (for example ad29 or card). Short tag only, so the waiting list shows which ad actually brings people in."
+    },
+    "phone": {
+      "type": "string",
+      "description": "Optional. Digits, with a leading + when given, typed into the M-Care chat after scanning an ad (added 2026-10-30 at Portia's request: email and phone). Only used to tell the person about the pilot."
     },
     "status": {
       "type": "string",

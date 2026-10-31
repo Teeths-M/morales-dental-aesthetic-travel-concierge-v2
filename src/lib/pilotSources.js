@@ -6,4 +6,4 @@
  * two lists drift apart. A source value the schema rejects would otherwise fail
  * silently, and the signup would look saved when it was not.
  */
-export const PILOT_SOURCES = ['landing_hero', 'landing_greeting', 'pilot_page'];
+export const PILOT_SOURCES = ['landing_hero', 'landing_greeting', 'pilot_page', 'mcare_chat'];

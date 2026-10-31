@@ -32,6 +32,7 @@ Deno.serve(createHandler(async ({ base44 }) => {
   const rows = records.map((r: Record<string, any>) => ({
     id: r.id,
     email: r.email,
+    phone: r.phone || '',
     status: r.status || 'waiting',
     source: r.source || 'pilot_page',
     // Which ad, card or post they scanned (the ?src= tag on the /pilot link).

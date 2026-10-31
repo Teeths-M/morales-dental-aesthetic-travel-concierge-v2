@@ -247,6 +247,23 @@ test('PILOT: the waitlist only stores a short plain ad tag, and the admin read i
   expect(entity, 'clients can never write rows directly').toMatch(/"create":\s*false/);
 });
 
+test('PILOT: the scan-an-ad chat sign-up saves only through joinPilot, phone normalised, never via the AI', () => {
+  const join = read('base44/functions/joinPilot/entry.ts');
+  expect(join, 'a phone must be reduced to 7-15 digits before storing').toContain('digits.length < 7 || digits.length > 15');
+  expect(join, 'the phone goes through the normaliser, never straight from the body').toContain('normalisePhone(body?.phone)');
+  expect(join, 'an existing saved phone is never overwritten').toContain('!existing[0].phone');
+
+  const orb = read('src/components/mcare/MCareOrb.jsx');
+  const start = orb.indexOf('if (pilotCaptureRef.current.armed');
+  expect(start, 'the pilot capture branch exists in sendAgentMessage').toBeGreaterThan(-1);
+  const block = orb.slice(start, orb.indexOf('parseMcareCommand(q)', start));
+  expect(block, 'contact details are saved by calling joinPilot').toContain("base44.functions.invoke('joinPilot'");
+  expect(block, 'tagged as the chat source').toContain("source: 'mcare_chat'");
+  expect(block, 'the branch returns before the message can reach the agent').toContain('return;');
+  expect(block, 'never written to the agent conversation').not.toContain('addMessage');
+  expect(block, 'never written as a raw entity').not.toContain('entities.PilotSignup');
+});
+
 test('COMMS: the link-only helper enforces the on-platform promise', () => {
   expect(read('base44/functions/_shared/notify.ts')).toContain('nothing private is sent by email');
 });

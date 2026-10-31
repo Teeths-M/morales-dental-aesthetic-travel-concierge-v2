@@ -36,7 +36,7 @@ function normaliseEmail(raw) {
 }
 
 function normaliseSource(raw) {
-  const allowed = ['landing_hero', 'landing_greeting', 'pilot_page'];
+  const allowed = ['landing_hero', 'landing_greeting', 'pilot_page', 'mcare_chat'];
   const value = String(raw ?? '').trim();
   return allowed.includes(value) ? value : 'pilot_page';
 }
@@ -46,6 +46,15 @@ function normaliseSource(raw) {
 function normaliseCampaign(raw) {
   const value = String(raw ?? '').trim().toLowerCase();
   return /^[a-z0-9_-]{1,40}$/.test(value) ? value : '';
+}
+
+// Optional phone number (the M-Care chat asks for email and phone). Kept only if it holds 7 to 15 digits, stored as
+// digits with a leading + when given; anything else is dropped rather than stored.
+function normalisePhone(raw) {
+  const value = String(raw ?? '').trim();
+  const digits = value.replace(/\D/g, '');
+  if (digits.length < 7 || digits.length > 15) return '';
+  return (value.startsWith('+') ? '+' : '') + digits;
 }
 
 Deno.serve(async (req) => {
@@ -75,7 +84,13 @@ Deno.serve(async (req) => {
       .filter({ email }, '-created_date', 1)
       .catch(() => []);
 
+    const phone = normalisePhone(body?.phone);
+
     if (Array.isArray(existing) && existing.length > 0) {
+      // Someone already on the list who now adds a phone number: keep it, never overwrite one already saved.
+      if (phone && !existing[0].phone) {
+        await base44.asServiceRole.entities.PilotSignup.update(existing[0].id, { phone }).catch(() => {});
+      }
       // Same calm answer as a first-time signup. Telling someone "you already
       // asked" is both unnecessary and a small privacy leak about their own
       // history to anyone who mistypes a stranger's address.
@@ -86,6 +101,7 @@ Deno.serve(async (req) => {
       email,
       source: normaliseSource(body?.source),
       campaign: normaliseCampaign(body?.campaign) || undefined,
+      phone: phone || undefined,
       status: 'waiting',
     });
 

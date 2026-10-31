@@ -74,6 +74,7 @@ import { detectWakePhrase } from '@/lib/wakePhrase';
 import { armSurroundingAwareness, disarmSurroundingAwareness } from '@/lib/surroundingAwareness';
 import { useMcarePreferences } from '@/hooks/useMcarePreferences';
 import { detectDistressSignal, distressWelfarePrompt } from '@/lib/distressDetection';
+import { PILOT_CHAT_GREETING, PILOT_CHAT_SAVED, PILOT_CHAT_NEED_EMAIL, PILOT_CHAT_FAILED, extractPilotContact, cleanCampaignTag } from '@/lib/pilotChatCapture';
 import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguageDetect';
 import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 import { useJourneyEvents } from '@/hooks/useJourneyEvents';
@@ -1284,14 +1285,28 @@ export default function MCareOrb() {
   // within the app afterward never re-forces the panel open. Skipped on a
   // quiet route — those pages deliberately suppress the orb regardless.
   const autoOpenedRef = useRef(false);
+  // ?mcare=pilot (the QR code at the end of an ad, e.g. /?mcare=pilot&src=ad29) opens the same panel with M-Care
+  // speaking first: thanks for scanning, I'm in building mode, drop your email and phone. sendAgentMessage then
+  // catches the reply and saves it through joinPilot (scripted, never the AI), tagged with the ad.
+  // The exchange lives in its own list, never in agentMessages: a signed-in visitor's saved conversation and every
+  // subscription tick replace agentMessages wholesale, which would wipe the greeting the moment it appeared.
+  const pilotCaptureRef = useRef({ armed: false, campaign: '', phone: '' });
+  const [pilotMessages, setPilotMessages] = useState([]);
+  const chatEmpty = agentMessages.length === 0 && pilotMessages.length === 0;
   useEffect(() => {
     if (autoOpenedRef.current || isQuietRoute) return;
-    if (new URLSearchParams(search).get('mcare') === 'open') {
+    const params = new URLSearchParams(search);
+    const mode = params.get('mcare');
+    if (mode === 'open' || mode === 'pilot') {
       autoOpenedRef.current = true;
       setOpen(true);
       setDismissed(true);
       setStruggleHint(null);
       markJourneyEventsSeen();
+      if (mode === 'pilot') {
+        pilotCaptureRef.current = { armed: true, campaign: cleanCampaignTag(params.get('src')), phone: '' };
+        setPilotMessages([{ role: 'assistant', content: PILOT_CHAT_GREETING, created_date: new Date().toISOString() }]);
+      }
     }
   }, [search, isQuietRoute]);
 
@@ -1411,7 +1426,7 @@ export default function MCareOrb() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [agentMessages, journeyEvents]);
+  }, [agentMessages, journeyEvents, pilotMessages]);
 
   // Speaking state right after a new assistant message lands. When Talk Mode
   // is off (default), this is byte-identical to the original honest fake
@@ -1908,6 +1923,33 @@ export default function MCareOrb() {
       setInput('');
       handleDistressSignal(distressSignal, q);
       return;
+    }
+
+    // Pilot sign-up after scanning an ad (?mcare=pilot): a message holding an email or phone number is saved
+    // through joinPilot and answered with a fixed line, never sent to the AI. Anything else (a question) still
+    // goes to the real agent below, and the capture stays armed until an email is saved.
+    if (pilotCaptureRef.current.armed && !fileUrls?.length) {
+      const { email, phone } = extractPilotContact(q);
+      if (email || phone) {
+        setInput('');
+        const say = (role, content) => setPilotMessages(prev => [...prev, { role, content, created_date: new Date().toISOString() }]);
+        say('user', q);
+        const cap = pilotCaptureRef.current;
+        if (phone) cap.phone = phone;
+        if (!email) {
+          say('assistant', PILOT_CHAT_NEED_EMAIL);
+          return;
+        }
+        try {
+          const res = await base44.functions.invoke('joinPilot', { email, phone: cap.phone, source: 'mcare_chat', campaign: cap.campaign });
+          if (!res?.data?.ok) throw new Error('not saved');
+          pilotCaptureRef.current = { armed: false, campaign: '', phone: '' };
+          say('assistant', PILOT_CHAT_SAVED);
+        } catch {
+          say('assistant', PILOT_CHAT_FAILED);
+        }
+        return;
+      }
     }
 
     // Deterministic, client-side Voice & Privacy command layer — exact-phrase
@@ -2668,7 +2710,7 @@ export default function MCareOrb() {
       )}
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, background: useDarkTheme ? DARK : LIGHT_BG }}>
-        {agentMessages.length === 0 && !agentLoading && (
+        {chatEmpty && !agentLoading && (
           <>
             {/* A small decorative "•••" accent above the greeting, echoing
                 the reference image's own mark — desktop-only so the mobile
@@ -2709,7 +2751,7 @@ export default function MCareOrb() {
           </>
         )}
 
-        {agentLoading && agentMessages.length === 0 && (
+        {agentLoading && chatEmpty && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
             <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
             <span style={{ fontSize: 12, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontStyle: 'italic' }}>
@@ -2758,6 +2800,18 @@ export default function MCareOrb() {
               onRespond={sendAgentMessage}
               revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
               extraAudioUrl={voiceReplyAudioUrls[i]} />
+          </motion.div>
+        ))}
+
+        {/* The scan-an-ad pilot sign-up (?mcare=pilot) — its own list, after the real conversation, so neither the
+            saved conversation loading in nor a subscription tick can wipe it, and agentMessages' indices are untouched. */}
+        {pilotMessages.map((m, i) => (
+          <motion.div key={`pilot-${i}`}
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <MessageBubble message={m} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
           </motion.div>
         ))}
 
@@ -3222,7 +3276,7 @@ export default function MCareOrb() {
               <div style={{ padding: agentMessages.length > 0 ? '10px 16px' : '12px 14px 10px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <div style={{ flexShrink: 0 }}>
-                    <LivingOrb state={orbState} size={agentMessages.length > 0 ? 56 : 72} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
+                    <LivingOrb state={orbState} size={!chatEmpty ? 56 : 72} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
@@ -3230,12 +3284,12 @@ export default function MCareOrb() {
                       {headerControlsBlock}
                     </div>
                     {pillsRowBlock}
-                    {agentMessages.length === 0 && (
+                    {chatEmpty && (
                       <p style={{ margin: '6px 0 0', fontSize: 11, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
                     )}
                   </div>
                 </div>
-                {agentMessages.length === 0 && capabilityRowBlock}
+                {chatEmpty && capabilityRowBlock}
               </div>
 
               {chatMain}
