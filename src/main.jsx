@@ -6,6 +6,11 @@ import '@/index.css'
 import { syncPauseFromServer, isSystemPaused, applyPauseIntercept } from '@/lib/systemPause'
 import { queryClientInstance } from '@/lib/query-client'
 import { installGlobalErrorCapture } from '@/lib/globalErrorCapture'
+import { initInstallPrompt } from '@/lib/installPrompt'
+
+// Chrome offers "install this app" once, early; hold it so /start can show a
+// real one-tap "Save M-Care to your phone" button.
+initInstallPrompt()
 
 // ── Sentry Error Tracking (Production Only) ──────────────────────────────────
 

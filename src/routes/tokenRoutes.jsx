@@ -23,6 +23,7 @@ const ConfirmEmail       = lazy(() => import('@/pages/ConfirmEmail'));
 const DoctorOutreachOptOut = lazy(() => import('@/pages/DoctorOutreachOptOut'));
 const ShareLiveLocation  = lazy(() => import('@/pages/ShareLiveLocation'));
 const CovertSosEvidenceView = lazy(() => import('@/pages/CovertSosEvidenceView'));
+const StartNow           = lazy(() => import('@/pages/StartNow'));
 const DispatchOfferResponse = lazy(() => import('@/pages/DispatchOfferResponse'));
 
 export const tokenRoutes = (
@@ -44,6 +45,8 @@ export const tokenRoutes = (
     <Route key="doctor-outreach-opt-out" path="/doctor-outreach-opt-out/:token" element={<ErrorBoundary><DoctorOutreachOptOut /></ErrorBoundary>} />
     <Route key="share-location" path="/share-location/:token" element={<ErrorBoundary><ShareLiveLocation /></ErrorBoundary>} />
     <Route key="sos-evidence" path="/sos-evidence/:token" element={<ErrorBoundary><CovertSosEvidenceView /></ErrorBoundary>} />
+    {/* "Start now": where the QR at the end of each ad, a card's NFC sticker, or a post's link lands. No site header, like a tap-to-open venue page. */}
+    <Route key="start" path="/start" element={<ErrorBoundary><StartNow /></ErrorBoundary>} />
     {/* Responder dispatch offers — the unguessable token in the URL is the credential. */}
     <Route key="dispatch-offer" path="/dispatch-offer/:token" element={<ErrorBoundary><DispatchOfferResponse /></ErrorBoundary>} />
   </>

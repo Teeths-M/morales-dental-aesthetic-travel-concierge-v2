@@ -333,6 +333,8 @@ export const PUBLIC_BYPASS_PATHS = [
   // Agent) can access them without hitting the PageLoader or auth gate.
   '/doctor-signup', '/partner-signup', '/companion-signup',
   '/security-signup', '/local-doctor-signup',
+  // "Start now": where an ad's QR code, a card's NFC sticker or a post's link lands.
+  '/start',
 ];
 
 // ── Feature Flags ────────────────────────────────────────────────────────────
