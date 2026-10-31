@@ -6770,3 +6770,98 @@ test('PAYMENT INTEGRITY: no server function writes a case, payment or fee record
   scan('base44/shared', (n) => (n.endsWith('.ts') ? n : null));
   expect(bad, `write these as the server (asServiceRole) after an ownership check: ${bad.join(', ')}`).toEqual([]);
 });
+
+// ---- Account security: which role an account can get, what each role can
+// read, and who can write audit entries. Uses this file's existing `test`,
+// `expect`, `read`, `ROOT`, `join`, `readdirSync`, and `existsSync` helpers.
+
+const acctStrip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+// The "rls" block of an entity file, parsed. Entity files may carry comments
+// elsewhere, so only this block is cut out (string-aware) and parsed.
+function acctRlsOf(text) {
+  const key = text.indexOf('"rls"');
+  if (key === -1) return {};
+  const start = text.indexOf('{', key);
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inString) {
+      if (c === '\\') i++;
+      else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') inString = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) {
+      const body = text.slice(start, i + 1).replace(/\/\/[^\n]*/g, '').replace(/,(\s*[}\]])/g, '$1');
+      return JSON.parse(body);
+    }
+  }
+  return {};
+}
+
+test('ACCOUNT SECURITY: no data rule grants access by a role anyone can give themselves', () => {
+  // Anyone can get these roles: "user" by signing up, and the rest by
+  // finishing a public onboarding flow, before any verification. A rule that
+  // grants access by one of them alone is open to everyone. Scope it to the
+  // record's own owner instead, for example data.doctor_email.
+  const roleSync = read('base44/shared/roleSync.ts');
+  const selfService = [...roleSync.matchAll(/\{ role: '([a-z_]+)', entity:/g)].map((m) => m[1]);
+  expect(selfService.length, 'roleSync.ts must list the self-service roles').toBeGreaterThan(0);
+  const openRoles = new Set([...selfService, 'user']);
+
+  const offenders = [];
+  for (const file of readdirSync(join(ROOT, 'base44', 'entities')).filter((f) => f.endsWith('.jsonc'))) {
+    const rls = acctRlsOf(read(`base44/entities/${file}`));
+    for (const [op, rule] of Object.entries(rls)) {
+      for (const m of JSON.stringify(rule).matchAll(/"role":"([a-z_]+)"/g)) {
+        if (openRoles.has(m[1])) offenders.push(`${file.replace('.jsonc', '')}.${op} (role ${m[1]})`);
+      }
+    }
+  }
+  expect(offenders, `rules open to a self-service role: ${offenders.join(', ')}`).toEqual([]);
+});
+
+test('ACCOUNT SECURITY: syncTenantRole takes the role from the onboarding flow, never from the request', () => {
+  const entry = acctStrip(read('base44/functions/syncTenantRole/entry.ts'));
+  expect(entry, 'the role decision must come from the shared, tested rules')
+    .toMatch(/resolveRequestedRole\(\{\s*isAdmin,/);
+  expect(entry, 'the request must never pick the role directly').not.toMatch(/membership\.user_role\s*\|\|/);
+  expect(entry, 'a linked record is only written when it belongs to the account being synced')
+    .toMatch(/isAdmin \|\| sameEmail\(record\.email, membership\.user_email\)/);
+  expect(entry, 'TenantMembership repair stays admin-only').toMatch(/membership\.id && isAdmin/);
+  expect(entry, 'an admin role must never be overwritten here').toMatch(/keepsExistingRole\(previousRole, isAdmin\)/);
+  expect(entry, 'every real role change goes into the audit log').toMatch(/event_type:\s*'role_changed'/);
+
+  const rules = acctStrip(read('base44/shared/roleSync.ts'));
+  const table = rules.slice(rules.indexOf('export const SELF_SERVICE'), rules.indexOf('export const SELF_SERVICE_ROLES'));
+  for (const role of ['admin', 'platform_admin', 'clinical_reviewer', 'local_doctor']) {
+    expect(table, `${role} must never be self-service`).not.toMatch(new RegExp(`role: '${role}'`));
+  }
+});
+
+test('ACCOUNT SECURITY: audit entries can only be written by the server', () => {
+  const auditEntity = read('base44/entities/AuditLog.jsonc');
+  const create = JSON.stringify(acctRlsOf(auditEntity).create);
+  expect(create, 'a signed-in user must not be able to create audit rows directly').not.toContain('{{user.id}}');
+  expect(create, 'audit rows are created by admins or the server only').toMatch(/"role":"admin"/);
+  expect(auditEntity, 'role changes need their own event type').toContain('"role_changed"');
+
+  // Clients log through logAuditEvent, which derives the actor from the
+  // session. A role change is written by the server only, so a client must
+  // never be able to log one.
+  const allowlist = read('base44/functions/logAuditEvent/entry.ts');
+  expect(allowlist, 'role_changed must not be client-loggable').not.toMatch(/'role_changed'/);
+
+  const userScoped = [];
+  for (const name of readdirSync(join(ROOT, 'base44', 'functions'))) {
+    if (!existsSync(join(ROOT, 'base44', 'functions', name, 'entry.ts'))) continue;
+    const src = acctStrip(read(`base44/functions/${name}/entry.ts`));
+    for (const m of src.matchAll(/AuditLog\s*\.\s*create\s*\(/g)) {
+      if (!/asServiceRole/.test(src.slice(Math.max(0, m.index - 80), m.index))) userScoped.push(name);
+    }
+  }
+  expect(userScoped, `these write audit rows without server access: ${userScoped.join(', ')}`).toEqual([]);
+});

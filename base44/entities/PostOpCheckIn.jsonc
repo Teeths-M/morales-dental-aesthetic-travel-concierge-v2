@@ -82,7 +82,7 @@
         { "data.patient_email": "{{user.email}}" },
         { "user_condition": { "role": "admin" } },
         { "user_condition": { "role": "platform_admin" } },
-        { "user_condition": { "role": "doctor" } }
+        { "data.doctor_email": "{{user.email}}" }
       ]
     },
     "create": { "user_condition": { "id": "{{user.id}}" } },

@@ -168,11 +168,6 @@
         },
         {
           "user_condition": {
-            "role": "companion"
-          }
-        },
-        {
-          "user_condition": {
             "role": "admin"
           }
         },

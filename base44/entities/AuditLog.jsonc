@@ -86,7 +86,8 @@
         "covert_sos_evidence_captured",
         "covert_sos_evidence_accessed",
         "tier2_emergency_packet_assembled",
-        "tier2_emergency_routed"
+        "tier2_emergency_routed",
+        "role_changed"
       ]
     },
     "actor_id": {
@@ -159,9 +160,18 @@
       ]
     },
     "create": {
-      "user_condition": {
-        "id": "{{user.id}}"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     },
     "update": {
       "user_condition": {
