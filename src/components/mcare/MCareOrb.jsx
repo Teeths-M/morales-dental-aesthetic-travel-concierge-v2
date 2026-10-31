@@ -74,7 +74,7 @@ import { detectWakePhrase } from '@/lib/wakePhrase';
 import { armSurroundingAwareness, disarmSurroundingAwareness } from '@/lib/surroundingAwareness';
 import { useMcarePreferences } from '@/hooks/useMcarePreferences';
 import { detectDistressSignal, distressWelfarePrompt } from '@/lib/distressDetection';
-import { PILOT_CHAT_GREETING, PILOT_CHAT_SAVED, PILOT_CHAT_NEED_EMAIL, PILOT_CHAT_FAILED, PILOT_CHAT_CLOSE_DELAY_MS, extractPilotContact, cleanCampaignTag } from '@/lib/pilotChatCapture';
+import { pilotChatCopy, PILOT_CHAT_NEED_EMAIL, PILOT_CHAT_FAILED, PILOT_CHAT_CLOSE_DELAY_MS, extractPilotContact, cleanCampaignTag } from '@/lib/pilotChatCapture';
 import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguageDetect';
 import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 import { useJourneyEvents } from '@/hooks/useJourneyEvents';
@@ -1325,22 +1325,24 @@ export default function MCareOrb() {
   // catches the reply and saves it through joinPilot (scripted, never the AI), tagged with the ad.
   // The exchange lives in its own list, never in agentMessages: a signed-in visitor's saved conversation and every
   // subscription tick replace agentMessages wholesale, which would wipe the greeting the moment it appeared.
-  const pilotCaptureRef = useRef({ armed: false, campaign: '', phone: '' });
+  // ?mcare=partner (a partner ad, e.g. ad 30) is the same capture in words for partners; both save to the waiting
+  // list tagged with the ad, and both end on a green tick.
+  const pilotCaptureRef = useRef({ armed: false, campaign: '', phone: '', kind: 'pilot' });
   const [pilotMessages, setPilotMessages] = useState([]);
   const chatEmpty = agentMessages.length === 0 && pilotMessages.length === 0;
   useEffect(() => {
     if (autoOpenedRef.current || isQuietRoute) return;
     const params = new URLSearchParams(search);
     const mode = params.get('mcare');
-    if (mode === 'open' || mode === 'pilot') {
+    if (mode === 'open' || mode === 'pilot' || mode === 'partner') {
       autoOpenedRef.current = true;
       setOpen(true);
       setDismissed(true);
       setStruggleHint(null);
       markJourneyEventsSeen();
-      if (mode === 'pilot') {
-        pilotCaptureRef.current = { armed: true, campaign: cleanCampaignTag(params.get('src')), phone: '' };
-        setPilotMessages([{ role: 'assistant', content: PILOT_CHAT_GREETING, created_date: new Date().toISOString() }]);
+      if (mode === 'pilot' || mode === 'partner') {
+        pilotCaptureRef.current = { armed: true, campaign: cleanCampaignTag(params.get('src')), phone: '', kind: mode };
+        setPilotMessages([{ role: 'assistant', content: pilotChatCopy(mode).greeting, created_date: new Date().toISOString() }]);
       }
     }
   }, [search, isQuietRoute]);
@@ -1978,8 +1980,10 @@ export default function MCareOrb() {
         try {
           const res = await base44.functions.invoke('joinPilot', { email, phone: cap.phone, source: 'mcare_chat', campaign: cap.campaign });
           if (!res?.data?.ok) throw new Error('not saved');
-          pilotCaptureRef.current = { armed: false, campaign: '', phone: '' };
-          say('assistant', PILOT_CHAT_SAVED);
+          const copy = pilotChatCopy(cap.kind);
+          pilotCaptureRef.current = { armed: false, campaign: '', phone: '', kind: 'pilot' };
+          // The saved reply carries a green tick under it (rendered with pilotMessages below).
+          setPilotMessages(prev => [...prev, { role: 'assistant', content: copy.saved, savedLabel: copy.savedLabel, created_date: new Date().toISOString() }]);
           // Drop the keyboard so they can read the goodbye, then close the chat on its own, unless they've started
           // typing something else. The scan link's ?mcare=pilot is removed so a refresh doesn't greet them again.
           chatInputRef.current?.blur();
@@ -2860,6 +2864,18 @@ export default function MCareOrb() {
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             <MessageBubble message={m} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
+            {m.savedLabel && (
+              <motion.div
+                role="status"
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 18, delay: 0.15 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 4px 44px', padding: '8px 14px 8px 10px', width: 'fit-content', borderRadius: 999, background: '#DCFCE7', border: '1px solid #86EFAC', color: '#15803D', fontSize: 14, fontWeight: 700 }}
+              >
+                <CheckCircle2 size={20} strokeWidth={2.5} aria-hidden="true" />
+                {m.savedLabel}
+              </motion.div>
+            )}
           </motion.div>
         ))}
 

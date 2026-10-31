@@ -16,6 +16,27 @@ export const PILOT_CHAT_GREETING =
 export const PILOT_CHAT_SAVED =
 	"Nice, you're saved! As soon as I'm ready, I'm yours. Take care for now. Safety shouldn't stop at the border.";
 
+// Partners scan a partner ad (/?mcare=partner&src=ad30): the same capture, in words for a doctor, driver, travel
+// agent, companion or security team instead of a traveler. Saved to the same waiting list, tagged with the ad.
+export const PARTNER_CHAT_GREETING =
+	"Hey, thanks for scanning! I'm M-Care. I'm building a network of verified partners: doctors, drivers, travel agents, " +
+	"companions and security teams. Drop your email and phone number here and I'll add you to the partner list. " +
+	"I'll only use them to get you started.";
+
+export const PARTNER_CHAT_SAVED =
+	"You're on the partner list! I'll be in touch soon to get you verified. Safety shouldn't stop at the border.";
+
+/**
+ * The words for one scan-an-ad sign-up.
+ * @param {'pilot'|'partner'} kind
+ * @returns {{ greeting: string, saved: string, savedLabel: string }}
+ */
+export function pilotChatCopy(kind) {
+	return kind === 'partner'
+		? { greeting: PARTNER_CHAT_GREETING, saved: PARTNER_CHAT_SAVED, savedLabel: "You're on the partner list" }
+		: { greeting: PILOT_CHAT_GREETING, saved: PILOT_CHAT_SAVED, savedLabel: "You're on the pilot list" };
+}
+
 export const PILOT_CHAT_NEED_EMAIL = "Got your number. What's your email? I need it to add you to the list.";
 
 export const PILOT_CHAT_FAILED = "That didn't save on my side. Could you send your email again?";

@@ -1,5 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { extractPilotContact, cleanCampaignTag } from '../src/lib/pilotChatCapture.js';
+import { extractPilotContact, cleanCampaignTag, pilotChatCopy } from '../src/lib/pilotChatCapture.js';
+
+describe('pilotChatCopy', () => {
+	it('speaks to partners after a partner ad, asking for email and phone', () => {
+		const c = pilotChatCopy('partner');
+		expect(c.greeting).toMatch(/partner list/);
+		expect(c.greeting).toMatch(/email/);
+		expect(c.greeting).toMatch(/phone/);
+		expect(c.savedLabel).toBe("You're on the partner list");
+	});
+	it('speaks to travelers by default', () => {
+		const c = pilotChatCopy('pilot');
+		expect(c.greeting).toMatch(/pilot list/);
+		expect(c.savedLabel).toBe("You're on the pilot list");
+		expect(pilotChatCopy(undefined).greeting).toBe(c.greeting);
+	});
+	it('ends both on the slogan', () => {
+		expect(pilotChatCopy('partner').saved).toMatch(/Safety shouldn't stop at the border\.$/);
+		expect(pilotChatCopy('pilot').saved).toMatch(/Safety shouldn't stop at the border\.$/);
+	});
+});
 
 describe('extractPilotContact', () => {
 	it('finds both an email and a phone number in one message', () => {
