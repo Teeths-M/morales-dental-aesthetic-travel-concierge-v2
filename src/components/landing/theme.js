@@ -27,14 +27,17 @@ export const SERIF = 'Georgia, "Times New Roman", serif';
 export const SANS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif';
 
 /**
- * The hero film. NOT USED right now: it is ad 23 with its captions burned in, so
- * behind the heading it showed the same question a second time in giant letters.
- * The hero shows CorridorScene instead. To bring a film back, export it with no
- * on-screen words (and a matching phone version), then put AmbientVideo back in
- * LandingHero.jsx.
+ * The hero film: a wordless 18.8-second loop cut from ad 23's real footage (free
+ * Pixabay clips, posed by models, never presented as M-Care customers). Night to
+ * gold: a hotel corridor, awake in bed, a night drive, a doctor, two hands meeting
+ * at sunset, a plane wing at sunrise, then back to the corridor so the loop has no
+ * visible seam. 1920x1080, no sound, index first, 2.2 MB (the captioned ad it
+ * replaces was 55 MB). Background films must never contain words: the old hero
+ * was the finished ad, so its captions repeated the headline behind the heading.
  */
-export const HERO_VIDEO =
-  'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/54fd2ace2_23-WhoWouldKnow58s.mp4';
+export const HERO_VIDEO = '/video/hero-film.mp4';
+/** First frame of the hero film, shown while it loads or when a phone blocks video. */
+export const HERO_POSTER = '/video/hero-film-poster.jpg';
 
 /** The demonstration film — the ground behind the M-Safe workspace. */
 export const DEMO_VIDEO =
@@ -46,13 +49,13 @@ export const PILOT_VIDEO =
 
 /**
  * Phone versions of the three films, served from the app's own /public folder.
- * A phone can't start the full films reliably: the hero is a 55 MB, 58-second
- * ad with sound, and the demo film keeps its index at the END of the file, so a
- * phone must download all 16 MB before showing a frame. These are the same films
- * at phone size, no soundtrack (it's muted anyway), index first: 2.7, 2.4 and
- * 0.5 MB. Computers and tablets keep the originals above.
+ * A phone can't start the full films reliably: the demo film keeps its index at
+ * the END of the file, so a phone must download all 16 MB before showing a frame.
+ * These are the same films at phone size, no soundtrack, index first. The hero's
+ * phone version is its own upright 720x1280 cut (each shot re-framed for a tall
+ * screen), 0.9 MB. Demo 2.4 MB, pilot 0.5 MB. Computers keep the originals above.
  */
-export const HERO_VIDEO_MOBILE = '/video/hero-mobile.mp4';
+export const HERO_VIDEO_MOBILE = '/video/hero-film-mobile.mp4';
 export const DEMO_VIDEO_MOBILE = '/video/demo-mobile.mp4';
 export const PILOT_VIDEO_MOBILE = '/video/pilot-mobile.mp4';
 /** Stills for the two films that had none, so a blocked or loading film still shows the scene. */

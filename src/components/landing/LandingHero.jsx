@@ -1,27 +1,24 @@
-import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import CorridorScene from './CorridorScene';
-import { WHITE, BODY, RED, GOLD, SANS, MUTED } from './theme';
+import AmbientVideo from './AmbientVideo';
+import { WHITE, BODY, RED, GOLD, SANS, MUTED, HERO_VIDEO, HERO_VIDEO_MOBILE, HERO_POSTER } from './theme';
 
 /**
  * LandingHero — the question, and the answer.
  *
- * Behind the question: an empty hotel corridor at night that drifts slowly, and
- * as the visitor scrolls, one person appears walking toward them. That is the
- * answer told in pictures ("Someone would"), with no words in the image.
+ * Behind the question, a wordless film already playing when the page opens: one
+ * night abroad turning to morning. It goes cold blue (a hotel corridor, awake in
+ * bed, a night drive) to M-Care gold (a doctor, two hands meeting, a wing at
+ * sunrise), which tells "who would know? Someone would" in pictures.
  *
- * Background pictures here must never contain text. The hero used to play ad 23,
- * whose captions are burned in, so the headline showed twice: once as giant grey
- * film captions, once as the real heading. Swap a film back in only once it has
- * been exported without its words (see HERO_VIDEO in theme.js).
+ * Background films must never contain words. The hero used to play the finished
+ * ad 23, whose captions are burned in, so the headline showed twice. This film is
+ * cut from the same footage with every word left out (see HERO_VIDEO in theme.js).
  *
  * One question, one answer, one line of support, one action.
  */
 export default function LandingHero() {
-  const sectionRef = useRef(null);
   return (
     <section
-      ref={sectionRef}
       className="landing-hero"
       style={{
         position: 'relative',
@@ -32,7 +29,7 @@ export default function LandingHero() {
         fontFamily: SANS,
       }}
     >
-      <CorridorScene sectionRef={sectionRef} />
+      <AmbientVideo src={HERO_VIDEO} mobileSrc={HERO_VIDEO_MOBILE} poster={HERO_POSTER} variant="hero" />
 
       <div
         style={{
