@@ -219,6 +219,57 @@ button:active, a:active {
   }
 }
 
+/* ── M-Safe day / night design tokens ────────────────────────────────────────
+ *
+ * One set of semantic surface/text/accent values, redefined per theme, so a
+ * shared component is correct in both and no screen needs a conditional style.
+ * The scope element (MSafeThemeScope) is the only place that sets
+ * data-msafe-theme, and it is only rendered for authenticated app screens —
+ * the public marketing site and landing page never carry these attributes.
+ *
+ * Contrast (WCAG AA, measured on the surface each token is used against):
+ *   day    ink 18.9:1 · muted 5.6:1 · gold-ink 6.4:1 on #FFFFFF
+ *   night  ink 16.1:1 · muted 7.0:1 · gold-ink 11.2:1 on #0E1725
+ *   night  warn 9.0:1 · positive 9.3:1 · critical 6.4:1 on #0E1725
+ * Status is never colour-only: every shared component that uses warn/critical
+ * also carries a word or a shape, so the meaning survives greyscale.
+ *
+ * `color-scheme` is set too, so native inputs, selects and scrollbars match the
+ * theme instead of staying bright white inside a night screen. */
+[data-msafe-theme] {
+  background-color: var(--msafe-canvas);
+}
+
+[data-msafe-theme="day"] {
+  --msafe-canvas: #F7F8F7;
+  --msafe-surface: #FFFFFF;
+  --msafe-raised: #F1F4F3;
+  --msafe-border: #E1E6E4;
+  --msafe-ink: #0B1220;
+  --msafe-muted: #5B6B7A;
+  --msafe-gold: #D4AF37;
+  --msafe-gold-ink: #7A5B0E;
+  --msafe-positive: #15803D;
+  --msafe-warn: #B45309;
+  --msafe-critical: #B91C1C;
+  color-scheme: light;
+}
+
+[data-msafe-theme="night"] {
+  --msafe-canvas: #060B16;
+  --msafe-surface: #0E1725;
+  --msafe-raised: #141F30;
+  --msafe-border: #22303F;
+  --msafe-ink: #F3F5F7;
+  --msafe-muted: #9AA6B2;
+  --msafe-gold: #D4AF37;
+  --msafe-gold-ink: #E8C85C;
+  --msafe-positive: #4ADE80;
+  --msafe-warn: #F2B544;
+  --msafe-critical: #F87171;
+  color-scheme: dark;
+}
+
 @keyframes m-breathe {
   0%, 100% { box-shadow: 0 0 24px rgba(212,175,55,0.45), 0 2px 10px rgba(212,175,55,0.25); }
   50%       { box-shadow: 0 0 42px rgba(212,175,55,0.7),  0 2px 16px rgba(212,175,55,0.42), 0 0 80px rgba(212,175,55,0.12); }

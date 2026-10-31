@@ -49,6 +49,21 @@ module.exports = {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
+        // M-Safe day/night tokens (src/index.css). Values are already-colour CSS
+        // variables, so they are mapped directly rather than through hsl().
+        msafe: {
+          canvas: 'var(--msafe-canvas)',
+          surface: 'var(--msafe-surface)',
+          raised: 'var(--msafe-raised)',
+          border: 'var(--msafe-border)',
+          ink: 'var(--msafe-ink)',
+          muted: 'var(--msafe-muted)',
+          gold: 'var(--msafe-gold)',
+          'gold-ink': 'var(--msafe-gold-ink)',
+          positive: 'var(--msafe-positive)',
+          warn: 'var(--msafe-warn)',
+          critical: 'var(--msafe-critical)'
+        },
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',

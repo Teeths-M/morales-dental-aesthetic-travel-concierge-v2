@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { PlatformModeProvider } from '@/context/PlatformModeContext';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { MobileThemeProvider } from '@/context/MobileThemeContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AccountDeletedNotice from '@/components/AccountDeletedNotice';
 import ScrollToTop from './components/ScrollToTop';
@@ -139,12 +140,17 @@ function App() {
           <QueryClientProvider client={queryClientInstance}>
             <PlatformModeProvider>
               <NotificationProvider>
-                <AuthenticatedApp />
-                <Toaster />
-                {/* 18 components fire toasts via sonner's toast() — without this
-                    mount those calls render nothing (the ui/toaster above only
-                    serves the useToast system) */}
-                <SonnerToaster theme="dark" position="top-right" richColors />
+                {/* Day/night goes around the whole authenticated app so a theme
+                    change never remounts a page or interrupts a conversation —
+                    it only swaps the attribute the tokens hang from. */}
+                <MobileThemeProvider>
+                  <AuthenticatedApp />
+                  <Toaster />
+                  {/* 18 components fire toasts via sonner's toast() — without this
+                      mount those calls render nothing (the ui/toaster above only
+                      serves the useToast system) */}
+                  <SonnerToaster theme="dark" position="top-right" richColors />
+                </MobileThemeProvider>
               </NotificationProvider>
             </PlatformModeProvider>
           </QueryClientProvider>

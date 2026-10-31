@@ -29,6 +29,14 @@ export const DEFAULT_MCARE_PREFS = {
   // both persist, so the card doesn't nag on the next device.
   channelsCardHidden: false,
   channelsConnected: false,
+  // Appearance (MobileThemeContext). Lives in this same bundle on purpose: it is
+  // an existing authenticated profile preference, so the day/night choice
+  // follows the traveller to another device with no new entity or endpoint.
+  // 'auto' is the documented default.
+  themeMode: 'auto',
+  // Only ever set when a traveller explicitly chose a zone. Null means "not
+  // chosen" — never inferred from approximate location.
+  themeTimezone: null,
 };
 
 /**
@@ -46,6 +54,12 @@ export function normalizePrefs(stored) {
     wakePhraseOfferAnswered: !!stored.wakePhraseOfferAnswered,
     channelsCardHidden: !!stored.channelsCardHidden,
     channelsConnected: !!stored.channelsConnected,
+    // Carried through normalizePrefs so a save from any other surface (a Talk
+    // Mode toggle in the orb, the dashboard card) cannot silently drop the
+    // appearance choice — this function rebuilds the bundle, so a field it does
+    // not name is a field it erases.
+    themeMode: ['auto', 'light', 'dark'].includes(stored.themeMode) ? stored.themeMode : DEFAULT_MCARE_PREFS.themeMode,
+    themeTimezone: typeof stored.themeTimezone === 'string' && stored.themeTimezone ? stored.themeTimezone : null,
   };
 }
 

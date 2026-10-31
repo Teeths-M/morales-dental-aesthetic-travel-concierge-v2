@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { friendlyError } from '@/lib/friendlyError';
 import { openChannelConnect } from '@/lib/mcareChannels';
+import ThemePreferenceControl from '@/components/mobile/ThemePreferenceControl';
 
 const _languages = ['English', 'Español', 'Français', 'Português'];
 
@@ -355,6 +356,11 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
         <h2 className="text-lg font-semibold text-slate-800">{labels.settings}</h2>
         <p className="text-xs text-slate-400 mt-0.5">{labels.manageAccount}</p>
       </div>
+
+      {/* Appearance — day/night, following local time of the trip or your own
+          choice. Placed first because it changes what every screen below looks
+          like, so it should be findable without scrolling. */}
+      <ThemePreferenceControl />
 
       {/* Account */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">

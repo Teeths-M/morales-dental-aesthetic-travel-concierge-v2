@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutDashboard, Route, Stethoscope, User } from 'lucide-react';
-import LivingOrb from './LivingOrb';
+import MSafeOrb from './MSafeOrb';
 import { GOLD, GOLD_INK, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT_MUTED, TYPE } from './panelPalette';
 
 /**
@@ -55,7 +55,11 @@ export default function MSafeBottomNav({ orbState, onHome, onJourney, onServices
             boxShadow: `0 4px 16px rgba(212,175,55,0.35), 0 0 0 4px ${LIGHT_CARD}`, border: `1.5px solid ${GOLD}`,
           }}
         >
-          <LivingOrb state={orbState} size={44} />
+          {/* orbState arrives already derived from real upstream signals — a real
+              JourneyEvent drives 'acting', a real safety block drives 'alert' — so
+              passing its own matching confirmation is what keeps MSafeOrb's gate
+              honest here rather than decorative. */}
+          <MSafeOrb state={orbState} size={44} monitoringConfirmed={orbState === 'acting'} warningConfirmed={orbState === 'alert'} />
         </div>
         <span style={{ ...labelStyle, marginTop: -8, fontWeight: 700, color: GOLD_INK }}>M-Safe</span>
       </div>

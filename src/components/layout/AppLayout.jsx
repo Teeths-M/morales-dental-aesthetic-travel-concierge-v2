@@ -22,9 +22,22 @@ import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 import MCareOrb from '@/components/mcare/MCareOrb';
 import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
 import ProximityWatcher from './ProximityWatcher';
+import MSafeThemeScope from '@/components/mobile/MSafeThemeScope';
 
 // Paths where the onboarding wizard should never appear
 const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/doctor-signup', '/companion-signup', '/security-signup', '/local-doctor-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
+
+// The public marketing website. AppLayout also wraps these routes, but the
+// day/night theme must never reach them: this app's landing page is a deliberate
+// dark cinematic design of its own, and scope protection is explicit in the
+// brief. Signed-out visitors are excluded too, so nothing about the public site
+// changes.
+const MARKETING_PATHS = new Set([
+  '/', '/pilot', '/discover', '/providers', '/procedures', '/about',
+  '/how-it-works', '/partners', '/terms', '/privacy',
+]);
+const isMarketingPath = (path) =>
+  MARKETING_PATHS.has(path) || path.startsWith('/procedures/') || path.startsWith('/providers/');
 
 export default function AppLayout() {
   const { user } = useAuth();
@@ -37,6 +50,10 @@ export default function AppLayout() {
   // where every "Join the pilot" button lands, so it must look like the page the
   // visitor just came from, not the full app's old MORALES chrome.
   const isCinematicLanding = pathname === '/' || pathname === '/pilot';
+
+  // Where the day/night theme is allowed to apply: signed-in app screens only,
+  // never the public marketing site or the cinematic landing page.
+  const appliesTheme = !!user && !isCinematicLanding && !isMarketingPath(pathname);
 
   // Covert SOS — mounted at the LAYOUT so the 5-tap gesture and the
   // MORALESHELP keyword work on every page. SoloCheckInSettings tells patients
@@ -149,7 +166,7 @@ export default function AppLayout() {
         />
       )}
 
-      <div className="min-h-screen flex flex-col">
+      <MSafeThemeScope active={appliesTheme} className="min-h-screen flex flex-col">
         <OfflineBanner />
         {!isCinematicLanding && <Header />}
         <main className={`flex-1 ${isCinematicLanding ? '' : 'pt-[56px] sm:pt-[72px]'} ${user && !isAdmin ? 'pb-[70px] lg:pb-0' : ''}`}>
@@ -186,7 +203,7 @@ export default function AppLayout() {
 
         {/* Global notification stack — suppressed on demo pages */}
         {!isDemo && <GlobalNotificationStack />}
-      </div>
+      </MSafeThemeScope>
     </BiometricGate>
   );
 }
