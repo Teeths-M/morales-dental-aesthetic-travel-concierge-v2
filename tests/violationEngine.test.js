@@ -148,7 +148,7 @@ describe('user-facing copy', () => {
   });
 
   it('redirects repliers into the app', () => {
-    expect(REPLY_REDIRECT_MESSAGE).toMatch(/log in to the Morales app/i);
+    expect(REPLY_REDIRECT_MESSAGE).toMatch(/log in to the M-Care app/i);
   });
 });
 

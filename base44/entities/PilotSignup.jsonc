@@ -18,6 +18,10 @@
       "default": "pilot_page",
       "description": "Which surface the person asked from \u2014 useful for knowing whether the greeting helps or just interrupts."
     },
+    "campaign": {
+      "type": "string",
+      "description": "Which ad, card or post the person scanned: the ?src= tag on the /pilot link (for example ad29 or card). Short tag only, so the waiting list shows which ad actually brings people in."
+    },
     "status": {
       "type": "string",
       "enum": [

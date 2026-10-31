@@ -139,7 +139,8 @@ describe('pilot signup — client and schema agree', () => {
 
   it('requires an email and collects nothing clinical', () => {
     expect(entity.required).toContain('email');
-    expect(Object.keys(entity.properties).sort()).toEqual(['email', 'invited_at', 'note', 'source', 'status']);
+    // campaign is the ad/card tag from the QR link (e.g. "ad29"): marketing, not personal or clinical.
+    expect(Object.keys(entity.properties).sort()).toEqual(['campaign', 'email', 'invited_at', 'note', 'source', 'status']);
   });
 
   it('closes direct client writes so validation cannot be bypassed', () => {

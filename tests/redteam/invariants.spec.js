@@ -231,6 +231,19 @@ test('M RESCUE: trackSignupAbandon is public-but-validated, and SignupProgress h
   expect(entity, 'create must be admin-only (service-role writes bypass this, the client never should)').toMatch(/"create"[\s\S]{0,120}"role":\s*"(admin|platform_admin)"/);
 });
 
+test('PILOT: the waitlist only stores a short plain ad tag, and the admin read is admin-only', () => {
+  const join = read('base44/functions/joinPilot/entry.ts');
+  expect(join, 'the ?src= ad tag must be reduced to a short plain tag before storing').toContain("/^[a-z0-9_-]{1,40}$/.test(value) ? value : ''");
+  expect(join, 'the tag goes through the normaliser, never straight from the body').toContain('campaign: normaliseCampaign(body?.campaign)');
+
+  const list = read('base44/functions/getPilotWaitlist/entry.ts');
+  expect(list, 'the waitlist read must be admin-only').toMatch(/allowedRoles:\s*\['admin',\s*'platform_admin'\]/);
+  expect(list, 'and must require a session').toContain('requireAuth: true');
+
+  const entity = read('base44/entities/PilotSignup.jsonc');
+  expect(entity, 'clients can never write rows directly').toMatch(/"create":\s*false/);
+});
+
 test('COMMS: the link-only helper enforces the on-platform promise', () => {
   expect(read('base44/functions/_shared/notify.ts')).toContain('nothing private is sent by email');
 });

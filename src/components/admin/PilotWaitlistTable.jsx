@@ -72,7 +72,7 @@ export default function PilotWaitlistTable({ rows }) {
               <span style={{ marginLeft: 'auto' }}><StatusPill status={row.status} /></span>
             </div>
             <p style={{ margin: '8px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.45)' }}>
-              {formatDate(row.created_date)} · {SOURCE_LABEL[row.source] || row.source}
+              {formatDate(row.created_date)} · {SOURCE_LABEL[row.source] || row.source}{row.campaign ? ` · ${row.campaign}` : ''}
             </p>
           </div>
         ))}
@@ -125,7 +125,7 @@ export default function PilotWaitlistTable({ rows }) {
             <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)' }}>{formatDate(row.created_date)}</span>
             <span><StatusPill status={row.status} /></span>
             <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)' }}>
-              {SOURCE_LABEL[row.source] || row.source}
+              {SOURCE_LABEL[row.source] || row.source}{row.campaign ? ` · ${row.campaign}` : ''}
             </span>
           </div>
         ))}

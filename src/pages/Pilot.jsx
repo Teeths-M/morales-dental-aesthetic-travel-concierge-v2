@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import McareMark from '@/components/landing/McareMark';
 import JoinPilotForm from '@/components/landing/JoinPilotForm';
 import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF } from '@/components/landing/theme';
@@ -11,6 +11,10 @@ import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF } from '@/componen
  * only appears once the server reports the record was actually stored.
  */
 export default function Pilot() {
+  // The QR code at the end of each ad links to /pilot?src=adNN, so the waiting
+  // list can show which ad (or card, or post) brought each person in.
+  const [params] = useSearchParams();
+  const campaign = (params.get('src') || '').slice(0, 40);
   return (
     <div style={{ background: '#060B16', minHeight: '100vh', fontFamily: SANS }}>
       <div
@@ -50,7 +54,7 @@ export default function Pilot() {
         </p>
 
         <div style={{ marginTop: 30, maxWidth: 480 }}>
-          <JoinPilotForm source="pilot_page" autoFocus />
+          <JoinPilotForm source="pilot_page" campaign={campaign} autoFocus />
         </div>
 
         <div

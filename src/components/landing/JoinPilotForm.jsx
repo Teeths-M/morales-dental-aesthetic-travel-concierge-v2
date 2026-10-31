@@ -9,7 +9,7 @@ import { GOLD, WHITE, MUTED, HAIRLINE, RED } from './theme';
  * de-duplicates server-side; nothing here reports success unless the server
  * confirmed the record was stored, so the confirmation can be trusted.
  */
-export default function JoinPilotForm({ source = 'pilot_page', onDone, autoFocus = false }) {
+export default function JoinPilotForm({ source = 'pilot_page', campaign = '', onDone, autoFocus = false }) {
   const [email, setEmail] = useState('');
   const [phase, setPhase] = useState('idle'); // idle | sending | done
   const [error, setError] = useState('');
@@ -28,7 +28,7 @@ export default function JoinPilotForm({ source = 'pilot_page', onDone, autoFocus
     setError('');
 
     try {
-      const res = await base44.functions.invoke('joinPilot', { email: value, source });
+      const res = await base44.functions.invoke('joinPilot', { email: value, source, campaign });
       if (res?.data?.ok) {
         setPhase('done');
         onDone?.(res.data);

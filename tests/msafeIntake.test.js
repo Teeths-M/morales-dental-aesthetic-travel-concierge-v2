@@ -59,7 +59,7 @@ describe('buildIntakeStages', () => {
   it('shows the verified badge once the licence is actually verified', () => {
     const verified = { ...DOCTOR, license_verification_status: 'verified' };
     const [provider, safety] = buildIntakeStages({ doctor: verified, clinic: CLINIC });
-    expect(provider.card.badge.label).toBe('Verified by Morales');
+    expect(provider.card.badge.label).toBe('Verified by M-Care');
     expect(safety.card.badge.label).toBe('Cleared to book');
     expect(rowValue(safety, 'Booking')).toBe('Open');
   });

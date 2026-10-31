@@ -41,6 +41,13 @@ function normaliseSource(raw) {
   return allowed.includes(value) ? value : 'pilot_page';
 }
 
+// Which ad, card or post they scanned (the ?src= tag, e.g. ad29). Only a short
+// plain tag is kept; anything else is dropped rather than stored.
+function normaliseCampaign(raw) {
+  const value = String(raw ?? '').trim().toLowerCase();
+  return /^[a-z0-9_-]{1,40}$/.test(value) ? value : '';
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -78,6 +85,7 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.PilotSignup.create({
       email,
       source: normaliseSource(body?.source),
+      campaign: normaliseCampaign(body?.campaign) || undefined,
       status: 'waiting',
     });
 
