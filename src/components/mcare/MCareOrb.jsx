@@ -74,7 +74,7 @@ import { detectWakePhrase } from '@/lib/wakePhrase';
 import { armSurroundingAwareness, disarmSurroundingAwareness } from '@/lib/surroundingAwareness';
 import { useMcarePreferences } from '@/hooks/useMcarePreferences';
 import { detectDistressSignal, distressWelfarePrompt } from '@/lib/distressDetection';
-import { PILOT_CHAT_GREETING, PILOT_CHAT_SAVED, PILOT_CHAT_NEED_EMAIL, PILOT_CHAT_FAILED, extractPilotContact, cleanCampaignTag } from '@/lib/pilotChatCapture';
+import { PILOT_CHAT_GREETING, PILOT_CHAT_SAVED, PILOT_CHAT_NEED_EMAIL, PILOT_CHAT_FAILED, PILOT_CHAT_CLOSE_DELAY_MS, extractPilotContact, cleanCampaignTag } from '@/lib/pilotChatCapture';
 import { detectSpokenLanguage, recognitionLocaleFor } from '@/lib/spokenLanguageDetect';
 import { useActiveCaseRecord } from '@/hooks/useActiveCaseRecord';
 import { useJourneyEvents } from '@/hooks/useJourneyEvents';
@@ -247,6 +247,41 @@ export default function MCareOrb() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+
+  // Phone keyboard fit (2026-10-31). The mobile panel used to be a fixed 100dvh, which does not shrink when the
+  // on-screen keyboard opens (iOS never resizes the layout for it, Android Chrome no longer does by default), so
+  // the keyboard covered the composer and the page behind showed through. The panel now follows the *visible*
+  // area (window.visualViewport), so the composer sits right on top of the keyboard the way a native chat app's
+  // does, and the page behind is locked so it can't scroll underneath. Mobile only; desktop is unchanged.
+  const [mobileViewport, setMobileViewport] = useState({ height: null, offsetTop: 0, keyboardOpen: false });
+  useEffect(() => {
+    if (!open || isDesktopPanel || typeof window === 'undefined') return undefined;
+    const vv = window.visualViewport;
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY;
+    const prev = { htmlOverflow: html.style.overflow, bodyOverflow: body.style.overflow };
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    const update = () => {
+      if (!vv) return;
+      // The keyboard takes a big bite out of the visible height; a few pixels of browser toolbar moving does not.
+      setMobileViewport({ height: vv.height, offsetTop: vv.offsetTop, keyboardOpen: window.innerHeight - vv.height > 120 });
+    };
+    update();
+    vv?.addEventListener('resize', update);
+    vv?.addEventListener('scroll', update);
+    return () => {
+      vv?.removeEventListener('resize', update);
+      vv?.removeEventListener('scroll', update);
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      // iOS scrolls the page to reveal a focused field; put it back where it was when the chat opened.
+      window.scrollTo(0, scrollY);
+      setMobileViewport({ height: null, offsetTop: 0, keyboardOpen: false });
+    };
+  }, [open, isDesktopPanel]);
+  const keyboardOpen = !isDesktopPanel && mobileViewport.keyboardOpen;
   // Light-mode option for the desktop panel (2026-08-29, mentor feedback:
   // "a bit dark, should have a light mode too"). Desktop was hardcoded to
   // the app's dark tokens (`className="dark"`); mobile already has a real
@@ -1945,6 +1980,19 @@ export default function MCareOrb() {
           if (!res?.data?.ok) throw new Error('not saved');
           pilotCaptureRef.current = { armed: false, campaign: '', phone: '' };
           say('assistant', PILOT_CHAT_SAVED);
+          // Drop the keyboard so they can read the goodbye, then close the chat on its own, unless they've started
+          // typing something else. The scan link's ?mcare=pilot is removed so a refresh doesn't greet them again.
+          chatInputRef.current?.blur();
+          setTimeout(() => {
+            const el = chatInputRef.current;
+            if (el && (el.value || document.activeElement === el)) return;
+            setOpen(false);
+            const params = new URLSearchParams(window.location.search);
+            params.delete('mcare');
+            params.delete('src');
+            const rest = params.toString();
+            navigate({ pathname: window.location.pathname, search: rest ? `?${rest}` : '' }, { replace: true });
+          }, PILOT_CHAT_CLOSE_DELAY_MS);
         } catch {
           say('assistant', PILOT_CHAT_FAILED);
         }
@@ -2894,7 +2942,7 @@ export default function MCareOrb() {
           unlike desktop's own inline row rendered above). Same real
           quickChips array/handlers, just the first 3 plus a "More" reveal
           for the rest — matches the reference screenshot's 4-pill layout. */}
-      {!isDesktopPanel && (
+      {!isDesktopPanel && !keyboardOpen && (
         <div style={{ position: 'relative', flexShrink: 0, padding: '8px 14px 0', background: LIGHT_BG }}>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
             {quickChips.slice(0, 3).map(c => (
@@ -2944,7 +2992,7 @@ export default function MCareOrb() {
         <GhostTextOverlay
           typedText={input}
           suggestion={ghostSuggestion}
-          matchStyle={{ borderRadius: 12, padding: '8px 12px', fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT }}
+          matchStyle={{ borderRadius: 12, padding: isDesktopPanel ? '8px 12px' : '10px 14px', fontSize: isDesktopPanel ? 13 : 16, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT }}
         />
         <input
           ref={chatInputRef}
@@ -2954,8 +3002,13 @@ export default function MCareOrb() {
           onFocus={() => setInputFocused(true)}
           onBlur={() => setInputFocused(false)}
           onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
-          placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : "Ask M-Safe anything...") : t('guide.placeholder_offline')}
-          style={{ width: '100%', background: useDarkTheme ? CARD_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG), border: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}40` : LIGHT_BORDER)}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
+          // Phones get a shorter hint so it isn't cut off at 16px on a narrow screen.
+          placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? "Uploading…" : (isDesktopPanel ? "Ask M-Safe anything..." : "Message M-Safe")) : t('guide.placeholder_offline')}
+          // The phone keyboard's return key reads "send", like a messaging app.
+          enterKeyHint="send"
+          // 16px on phones: iPhone zooms the whole page into any text box smaller than that, which pushed the send
+          // button off-screen and broke the layout. Desktop keeps its 13px.
+          style={{ width: '100%', background: useDarkTheme ? CARD_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG), border: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}40` : LIGHT_BORDER)}`, borderRadius: 12, padding: isDesktopPanel ? '8px 12px' : '10px 14px', fontSize: isDesktopPanel ? 13 : 16, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative' }}
         />
       </div>
       {isOnline && !conversationalMode && (
@@ -3009,7 +3062,11 @@ export default function MCareOrb() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
           style={{
-            position: 'fixed', inset: 0, zIndex: 9001,
+            position: 'fixed', zIndex: 9001,
+            // Phone: pinned to the visible area (see mobileViewport above) so the keyboard never covers it.
+            ...(!isDesktopPanel && mobileViewport.height
+              ? { top: mobileViewport.offsetTop, left: 0, right: 0, height: mobileViewport.height }
+              : { inset: 0 }),
             // Desktop-light: a soft ivory/gold wash instead of the plain
             // dark scrim, per the "full-screen softly blurred luxury
             // interior background" spec — a zero-dependency CSS gradient,
@@ -3048,7 +3105,7 @@ export default function MCareOrb() {
             display: 'flex', flexDirection: 'column',
             height: isDesktopPanel
               ? (expanded ? '92vh' : 'min(80vh, 640px)')
-              : '100dvh',
+              : (mobileViewport.height ? `${mobileViewport.height}px` : '100dvh'),
             overflow: 'hidden' }}>
 
           {isDesktopPanel ? (
@@ -3273,7 +3330,10 @@ export default function MCareOrb() {
                   area below actually gets most of the screen, matching every
                   real chat app's own convention of not permanently reserving
                   a "hero" once you're mid-conversation. */}
-              <div style={{ padding: agentMessages.length > 0 ? '10px 16px' : '12px 14px 10px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
+              {/* While the keyboard is up the hero steps aside (like a native chat app) so the conversation keeps
+                  the little space left; it comes straight back when the keyboard closes. */}
+              {!keyboardOpen && (
+              <div style={{ padding: !chatEmpty ? '10px 16px' : '12px 14px 10px', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <div style={{ flexShrink: 0 }}>
                     <LivingOrb state={orbState} size={!chatEmpty ? 56 : 72} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
@@ -3291,16 +3351,19 @@ export default function MCareOrb() {
                 </div>
                 {chatEmpty && capabilityRowBlock}
               </div>
+              )}
 
               {chatMain}
               {inputBarBlock}
-              <MSafeBottomNav
-                orbState={orbState}
-                onHome={() => setOpen(false)}
-                onJourney={() => { navigate('/dashboard/journey'); setOpen(false); }}
-                onServices={() => quickChips.find(c => c.label === 'Find Doctors')?.run()}
-                onProfile={() => { navigate('/dashboard'); setOpen(false); }}
-              />
+              {!keyboardOpen && (
+                <MSafeBottomNav
+                  orbState={orbState}
+                  onHome={() => setOpen(false)}
+                  onJourney={() => { navigate('/dashboard/journey'); setOpen(false); }}
+                  onServices={() => quickChips.find(c => c.label === 'Find Doctors')?.run()}
+                  onProfile={() => { navigate('/dashboard'); setOpen(false); }}
+                />
+              )}
             </>
           )}
         </motion.div>

@@ -20,6 +20,9 @@ export const PILOT_CHAT_NEED_EMAIL = "Got your number. What's your email? I need
 
 export const PILOT_CHAT_FAILED = "That didn't save on my side. Could you send your email again?";
 
+// After "you're saved", the chat stays open long enough to read the goodbye, then closes itself.
+export const PILOT_CHAT_CLOSE_DELAY_MS = 4500;
+
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,24}/;
 // A run of digits with the usual separators, optionally starting with +. Counted as a phone number only if it
 // holds 7 to 15 digits (the international maximum), so a year or a short code isn't mistaken for one.
