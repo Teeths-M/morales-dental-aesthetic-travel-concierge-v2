@@ -2,6 +2,7 @@ import LandingNav from '@/components/landing/LandingNav';
 import LandingHero from '@/components/landing/LandingHero';
 import McareTranscript from '@/components/landing/McareTranscript';
 import PilotSection from '@/components/landing/PilotSection';
+import LandingFooter from '@/components/landing/LandingFooter';
 import McareGreeting from '@/components/landing/McareGreeting';
 import { NAVY, MUTED } from '@/components/landing/theme';
 
@@ -53,6 +54,8 @@ export default function Home() {
           clinical outcomes.
         </p>
       </div>
+
+      <LandingFooter />
 
       {/* M-Care greets once per session and asks for an email — nothing more. */}
       <McareGreeting />

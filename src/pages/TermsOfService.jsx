@@ -1,4 +1,5 @@
 import React from 'react';
+import { CONTACT_EMAIL } from '@/lib/constants';
 
 const SECTIONS = [
   {
@@ -46,7 +47,7 @@ export default function TermsOfService() {
 
         <p className="text-xs text-white/30 mt-12 pt-6 border-t border-white/10">
           Questions about these terms? Contact us at{' '}
-          <a href="mailto:info@moralesconcierge.com" className="text-white/50 underline">info@moralesconcierge.com</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-white/50 underline">{CONTACT_EMAIL}</a>.
         </p>
       </div>
     </div>

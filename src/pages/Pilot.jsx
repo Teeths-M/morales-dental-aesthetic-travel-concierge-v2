@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
-import McareMark from '@/components/landing/McareMark';
+import LandingNav from '@/components/landing/LandingNav';
+import LandingFooter from '@/components/landing/LandingFooter';
 import JoinPilotForm from '@/components/landing/JoinPilotForm';
 import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF } from '@/components/landing/theme';
 
@@ -9,6 +10,10 @@ import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF } from '@/componen
  * One field, one honest explanation of what the pilot is, and a working submit
  * against the joinPilot function. No invented success state: the confirmation
  * only appears once the server reports the record was actually stored.
+ *
+ * Same header and footer as the landing page (AppLayout hides the app's own
+ * Header and Footer on this route), so the visitor who taps "Join the pilot"
+ * arrives somewhere that looks like where they just were.
  */
 export default function Pilot() {
   // The QR code at the end of each ad links to /pilot?src=adNN, so the waiting
@@ -16,27 +21,26 @@ export default function Pilot() {
   const [params] = useSearchParams();
   const campaign = (params.get('src') || '').slice(0, 40);
   return (
-    <div style={{ background: '#060B16', minHeight: '100vh', fontFamily: SANS }}>
+    <div style={{ background: '#060B16', minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: SANS }}>
+      <LandingNav hideJoin />
       <div
         style={{
+          flex: 1,
+          width: '100%',
           maxWidth: 640,
           margin: '0 auto',
-          padding: 'clamp(48px, 10vh, 96px) clamp(20px, 5vw, 32px) clamp(64px, 10vh, 112px)',
+          // Clears the fixed LandingNav (about 66px plus the phone's top inset).
+          padding:
+            'calc(76px + env(safe-area-inset-top, 0px) + clamp(24px, 6vh, 64px)) clamp(20px, 5vw, 32px) clamp(64px, 10vh, 112px)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <McareMark size={40} />
-          <div>
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: WHITE }}>M-Care</p>
-            <p style={{ margin: 0, fontSize: 11.5, letterSpacing: '0.08em', color: MUTED }}>
-              M-CARE CARE CONCIERGE
-            </p>
-          </div>
-        </div>
+        <p style={{ margin: 0, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD }}>
+          Invitation only
+        </p>
 
         <h1
           style={{
-            margin: 'clamp(28px, 5vh, 44px) 0 0',
+            margin: '14px 0 0',
             fontFamily: SERIF,
             fontSize: 'clamp(1.9rem, 5vw, 2.8rem)',
             fontWeight: 600,
@@ -84,15 +88,13 @@ export default function Pilot() {
           </div>
         </div>
 
-        <div style={{ marginTop: 34, display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'center' }}>
+        <div style={{ marginTop: 34 }}>
           <Link to="/" style={{ fontSize: 13.5, color: GOLD, textDecoration: 'none', fontWeight: 600 }}>
             ← Back to the story
           </Link>
-          <Link to="/login" style={{ fontSize: 13.5, color: MUTED, textDecoration: 'none' }}>
-            Sign in
-          </Link>
         </div>
       </div>
+      <LandingFooter />
     </div>
   );
 }

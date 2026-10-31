@@ -1,5 +1,6 @@
 import React from 'react';
 import { SUBPROCESSORS, DATA_CONSENT_VERSION } from '@/components/consent/DataProcessingConsent';
+import { CONTACT_EMAIL } from '@/lib/constants';
 
 // Prose sections. The subprocessor list and the international-transfer note are
 // rendered separately below so the "who we share with" promise the consent
@@ -90,7 +91,7 @@ export default function PrivacyPolicy() {
 
         <p className="text-xs text-white/30 mt-12 pt-6 border-t border-white/10">
           Questions about this policy, or want to exercise your data rights? Contact us at{' '}
-          <a href="mailto:info@moralesconcierge.com" className="text-white/50 underline">info@moralesconcierge.com</a>,
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-white/50 underline">{CONTACT_EMAIL}</a>,
           or <a href="/request-account-deletion" className="text-white/50 underline">request account deletion</a> directly.
         </p>
       </div>

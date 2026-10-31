@@ -1,19 +1,27 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import AmbientVideo from './AmbientVideo';
-import { WHITE, BODY, RED, GOLD, SANS, MUTED, HERO_VIDEO, HERO_VIDEO_MOBILE, CORRIDOR_EMPTY } from './theme';
+import CorridorScene from './CorridorScene';
+import { WHITE, BODY, RED, GOLD, SANS, MUTED } from './theme';
 
 /**
  * LandingHero — the question, and the answer.
  *
- * The first screen is now a film that starts itself the moment the page loads:
- * a visitor lands, and something is already happening behind the question.
- * Everything else that used to live here has been removed — no stage labels, no
- * second CTA, no oversized numerals, no feature strip. One question, one
- * answer, one line of support, one action.
+ * Behind the question: an empty hotel corridor at night that drifts slowly, and
+ * as the visitor scrolls, one person appears walking toward them. That is the
+ * answer told in pictures ("Someone would"), with no words in the image.
+ *
+ * Background pictures here must never contain text. The hero used to play ad 23,
+ * whose captions are burned in, so the headline showed twice: once as giant grey
+ * film captions, once as the real heading. Swap a film back in only once it has
+ * been exported without its words (see HERO_VIDEO in theme.js).
+ *
+ * One question, one answer, one line of support, one action.
  */
 export default function LandingHero() {
+  const sectionRef = useRef(null);
   return (
     <section
+      ref={sectionRef}
       className="landing-hero"
       style={{
         position: 'relative',
@@ -24,7 +32,7 @@ export default function LandingHero() {
         fontFamily: SANS,
       }}
     >
-      <AmbientVideo src={HERO_VIDEO} mobileSrc={HERO_VIDEO_MOBILE} poster={CORRIDOR_EMPTY} variant="hero" />
+      <CorridorScene sectionRef={sectionRef} />
 
       <div
         style={{

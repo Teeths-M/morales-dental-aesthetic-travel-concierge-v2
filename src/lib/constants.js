@@ -390,6 +390,11 @@ export const PLATFORM_PRICING = {
   PARTNER_NETWORK_FEE: 0.05,
 };
 
+// ── Public Contact ───────────────────────────────────────────────────────────
+// The one address shown to visitors (site footer, landing footer, privacy,
+// terms, account deletion). Change it here when M-Care has a business inbox.
+export const CONTACT_EMAIL = 'theonmorales@gmail.com';
+
 // ── Default Values ───────────────────────────────────────────────────────────
 export const DEFAULTS = {
   MARKUP_PERCENTAGE: 35,

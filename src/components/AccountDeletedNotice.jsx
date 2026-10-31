@@ -1,4 +1,5 @@
 import React from 'react';
+import { CONTACT_EMAIL } from '@/lib/constants';
 
 const AccountDeletedNotice = () => {
   return (
@@ -16,8 +17,8 @@ const AccountDeletedNotice = () => {
             book with M-Care again, please contact us.
           </p>
           <div className="p-4 bg-slate-50 rounded-md text-sm text-slate-600">
-            <a href="mailto:info@moralesconcierge.com" className="text-slate-700 underline">
-              info@moralesconcierge.com
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-slate-700 underline">
+              {CONTACT_EMAIL}
             </a>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { CONTACT_EMAIL } from '@/lib/constants';
 
 /**
  * The web-accessible account-deletion request path (Google Play requires
@@ -98,7 +99,7 @@ export default function RequestAccountDeletion() {
 
         <p className="text-xs text-white/30 mt-10 pt-6 border-t border-white/10">
           Questions? Contact us at{' '}
-          <a href="mailto:info@moralesconcierge.com" className="text-white/50 underline">info@moralesconcierge.com</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-white/50 underline">{CONTACT_EMAIL}</a>.
         </p>
       </div>
     </div>

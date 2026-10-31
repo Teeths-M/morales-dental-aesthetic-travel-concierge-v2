@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Award, Heart, Headphones, CheckCircle } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, CONTACT_EMAIL } from '@/lib/constants';
 import { useTranslation } from '@/i18n';
 
 export default function Footer() {
@@ -104,9 +104,10 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-sm mb-4 text-background/90">{t('footer.contact_heading')}</h4>
             <div className="space-y-2.5">
-              <a href="mailto:info@moralesconcierge.com" className="block text-sm text-background/50 hover:text-background/80 transition-colors">info@moralesconcierge.com</a>
-              <a href="tel:+18005550199" className="block text-sm text-background/50 hover:text-background/80 transition-colors">+1 (800) 555-0199</a>
-              <p className="text-sm text-background/50">{t('footer.hours')}</p>
+              {/* Email only. The phone line and office hours that sat here were
+                  placeholders (a 555 number, which reads as fake); bring a phone
+                  back only when there is a real line someone answers. */}
+              <a href={`mailto:${CONTACT_EMAIL}`} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{CONTACT_EMAIL}</a>
             </div>
           </div>
         </div>

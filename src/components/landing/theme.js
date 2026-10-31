@@ -26,7 +26,13 @@ export const CARD = 'rgba(255,255,255,0.04)';
 export const SERIF = 'Georgia, "Times New Roman", serif';
 export const SANS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif';
 
-/** The hero film — full-bleed, muted, looping behind the question. */
+/**
+ * The hero film. NOT USED right now: it is ad 23 with its captions burned in, so
+ * behind the heading it showed the same question a second time in giant letters.
+ * The hero shows CorridorScene instead. To bring a film back, export it with no
+ * on-screen words (and a matching phone version), then put AmbientVideo back in
+ * LandingHero.jsx.
+ */
 export const HERO_VIDEO =
   'https://media.base44.com/videos/public/6a01c1305c540b75f24dd373/54fd2ace2_23-WhoWouldKnow58s.mp4';
 

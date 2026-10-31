@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CORRIDOR_EMPTY, CORRIDOR_FIGURE, NAVY } from './theme';
 
 /**
@@ -17,10 +17,16 @@ import { CORRIDOR_EMPTY, CORRIDOR_FIGURE, NAVY } from './theme';
  * 2. Under prefers-reduced-motion there is no listener at all. The figure is
  *    simply already there at a readable opacity, so the scene still makes sense
  *    without any motion.
+ *
+ * Both frames sit inside one slowly drifting layer, so the first screen is never
+ * a frozen photograph, and the two frames always stay lined up for the cross-fade.
  */
 export default function CorridorScene({ sectionRef }) {
   const figureRef = useRef(null);
   const dimRef = useRef(null);
+  const [reduced] = useState(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+  );
 
   useEffect(() => {
     // Second frame is loaded eagerly after mount so the reveal never stutters
@@ -33,7 +39,7 @@ export default function CorridorScene({ sectionRef }) {
 
     if (reduce) {
       if (figureRef.current) figureRef.current.style.opacity = '0.5';
-      if (dimRef.current) dimRef.current.style.opacity = '0.62';
+      if (dimRef.current) dimRef.current.style.opacity = '0.38';
       return undefined;
     }
 
@@ -61,8 +67,10 @@ export default function CorridorScene({ sectionRef }) {
         figureRef.current.style.transform = `scale(${1 + eased * 0.05})`;
       }
       if (dimRef.current) {
-        // 0.80 → 0.52: the corridor brightens as you descend into it.
-        dimRef.current.style.opacity = String(0.8 - eased * 0.28);
+        // 0.50 → 0.26: the corridor brightens as you descend into it. The
+        // left-side gradient below still holds the headline's contrast; this
+        // layer only sets how much of the corridor itself shows.
+        dimRef.current.style.opacity = String(0.5 - eased * 0.24);
       }
     };
 
@@ -82,6 +90,7 @@ export default function CorridorScene({ sectionRef }) {
     };
   }, [sectionRef]);
 
+  /** @type {React.CSSProperties} */
   const layer = {
     position: 'absolute',
     inset: 0,
@@ -92,27 +101,37 @@ export default function CorridorScene({ sectionRef }) {
 
   return (
     <div aria-hidden="true" style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: NAVY }}>
-      {/* The empty corridor. Always present. */}
-      <div style={{ ...layer, backgroundImage: `url(${CORRIDOR_EMPTY})` }} />
-
-      {/* The same corridor, one figure further down it. Cross-faded in on scroll. */}
+      <style>{'@keyframes corridorDrift { from { transform: scale(1.03) translate(0, 0); } to { transform: scale(1.1) translate(-1.5%, -1%); } }'}</style>
       <div
-        ref={figureRef}
         style={{
-          ...layer,
-          backgroundImage: `url(${CORRIDOR_FIGURE})`,
-          opacity: 0,
-          transformOrigin: 'center 45%',
-          transition: 'opacity 0.15s linear',
-          willChange: 'opacity, transform',
+          position: 'absolute',
+          inset: 0,
+          animation: reduced ? 'none' : 'corridorDrift 26s ease-in-out infinite alternate',
+          willChange: 'transform',
         }}
-      />
+      >
+        {/* The empty corridor. Always present. */}
+        <div style={{ ...layer, backgroundImage: `url(${CORRIDOR_EMPTY})` }} />
+
+        {/* The same corridor, one figure further down it. Cross-faded in on scroll. */}
+        <div
+          ref={figureRef}
+          style={{
+            ...layer,
+            backgroundImage: `url(${CORRIDOR_FIGURE})`,
+            opacity: 0,
+            transformOrigin: 'center 45%',
+            transition: 'opacity 0.15s linear',
+            willChange: 'opacity, transform',
+          }}
+        />
+      </div>
 
       {/* Darkness. Lifts as the scene develops, but never enough to cost the
           white text its contrast. */}
       <div
         ref={dimRef}
-        style={{ position: 'absolute', inset: 0, background: NAVY, opacity: 0.8 }}
+        style={{ position: 'absolute', inset: 0, background: NAVY, opacity: 0.5 }}
       />
 
       {/* Vignette — pulls the eye down the centre of the corridor and stops the

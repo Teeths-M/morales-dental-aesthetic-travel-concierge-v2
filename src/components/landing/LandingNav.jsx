@@ -9,8 +9,11 @@ import McareMark from './McareMark';
  *
  * Fixed rather than in flow so it can stay quiet over the corridor as the page
  * moves; it only acquires a backdrop once there is text underneath it.
+ *
+ * hideJoin: the pilot page passes it, since a "Join the pilot" button that links
+ * to the page you're already on is noise.
  */
-export default function LandingNav() {
+export default function LandingNav({ hideJoin = false }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -66,22 +69,24 @@ export default function LandingNav() {
         >
           Sign in
         </Link>
-        <Link
-          to="/pilot"
-          style={{
-            display: 'inline-block',
-            padding: '9px 16px',
-            borderRadius: 8,
-            background: GOLD,
-            color: '#060B16',
-            fontSize: 13,
-            fontWeight: 700,
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Join the pilot
-        </Link>
+        {!hideJoin && (
+          <Link
+            to="/pilot"
+            style={{
+              display: 'inline-block',
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: GOLD,
+              color: '#060B16',
+              fontSize: 13,
+              fontWeight: 700,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Join the pilot
+          </Link>
+        )}
       </nav>
     </header>
   );

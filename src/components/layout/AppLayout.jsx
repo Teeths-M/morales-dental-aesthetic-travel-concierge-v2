@@ -31,12 +31,12 @@ export default function AppLayout() {
   const { pathname } = useLocation();
   useGeoAutoAlign();
 
-  // The landing page is a full-bleed cinematic scene with its own minimal
-  // navigation (LandingNav). The shared Header and Footer stay exactly as they
-  // are on every other route — on this one route only they would sit on top of
-  // the corridor photograph and turn a quiet first impression into a product
-  // chrome. LandingNav carries the sign-in and pilot links, so nothing is lost.
-  const isCinematicLanding = pathname === '/';
+  // The landing page and the pilot page are one experience with their own
+  // minimal navigation (LandingNav) and slim footer (LandingFooter). The shared
+  // Header and Footer stay exactly as they are on every other route. /pilot is
+  // where every "Join the pilot" button lands, so it must look like the page the
+  // visitor just came from, not the full app's old MORALES chrome.
+  const isCinematicLanding = pathname === '/' || pathname === '/pilot';
 
   // Covert SOS — mounted at the LAYOUT so the 5-tap gesture and the
   // MORALESHELP keyword work on every page. SoloCheckInSettings tells patients
