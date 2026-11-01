@@ -27,7 +27,10 @@ const ITEMS = [
   { key: 'event',    label: 'Event', icon: CalendarDays, color: '#f44336', unsupported: 'M-Care doesn’t support events.' },
 ];
 
-export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationClick = null, disabled, uploading, variant = 'default', onUnsupported, menuTheme = 'dark', shape = 'square' }) {
+export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationClick = null, disabled, uploading, variant = 'default', onUnsupported, menuTheme = 'dark', shape = 'square', triggerIcon = null }) {
+  // triggerIcon (2026-11-01): the M-Safe phone screen shows a paperclip, as in
+  // Portia's mockup. Without it the trigger keeps its upload arrow.
+  const TriggerIcon = triggerIcon || Upload;
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const fileRef = useRef(null);
@@ -110,7 +113,7 @@ export default function AddImageMenu({ onDeviceFile, onVaultClick, onLocationCli
         {uploading ? (
           <div className={`w-4 h-4 border-2 rounded-full animate-spin ${glass ? 'border-white/25 border-t-white' : light ? 'border-[#D4AF37]/30 border-t-[#D4AF37]' : 'border-primary/30 border-t-primary'}`} />
         ) : (
-          <Upload className="w-4 h-4" />
+          <TriggerIcon className={triggerIcon ? 'w-5 h-5' : 'w-4 h-4'} />
         )}
         {variant === 'default' && <span className="text-[11px] font-medium leading-none">Attach</span>}
       </button>

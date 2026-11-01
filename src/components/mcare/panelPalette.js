@@ -70,9 +70,39 @@ export const CAUTION = '#F59E0B';
 export const CAUTION_INK = '#B45309';
 export const CRITICAL = '#DC2626';
 
-// The "M-Safe" wordmark uses the brand serif at every size (Cormorant, loaded
-// in index.css); everything else stays in the system sans.
-export const WORDMARK_FONT = 'var(--font-serif)';
+// The "M-Safe" wordmark: a heavy sans at every size, as in Portia's north-star
+// mockup (2026-11-01; it was the brand serif from Oct 31). The brand serif
+// stays for the small "M-CARE / MEDICAL TRAVEL SAFETY" logo text.
+export const WORDMARK_FONT = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+export const BRAND_SERIF = 'var(--font-serif)';
+
+// Night look for the M-Safe screen (north-star redesign, 2026-11-01). Same
+// values as the app's own day/night theme, [data-msafe-theme="night"] in
+// src/index.css (Portia's Base44 session, commit 787811cd), so there is one
+// navy palette, not two. tests/destinationBackdrops.test.js fails if they drift.
+export const NIGHT = {
+  canvas: '#060B16',
+  surface: '#0E1725',
+  raised: '#141F30',
+  border: '#22303F',
+  ink: '#F3F5F7',
+  muted: '#9AA6B2',
+  goldInk: '#E8C85C',
+  positive: '#4ADE80',
+  warn: '#F2B544',
+  critical: '#F87171',
+};
+
+// Frosted glass for cards that sit over the country photo: NIGHT.surface with
+// transparency, plus a thin gold edge.
+export const GLASS = {
+  card: 'rgba(14,23,37,0.62)',
+  cardStrong: 'rgba(14,23,37,0.86)',
+  edge: 'rgba(212,175,55,0.24)',
+  hairline: 'rgba(255,255,255,0.09)',
+  blur: 'blur(16px) saturate(140%)',
+  shadow: '0 12px 32px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.06)',
+};
 
 // Type scale for the panel, in px. Nothing a person must read goes below 11.
 export const TYPE = {

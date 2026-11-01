@@ -20,7 +20,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
-import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, Sparkles, Share2, CheckCircle2, Menu, Bell, ChevronDown, ChevronUp, Sun, Moon, Newspaper } from 'lucide-react';
+import { Send, RotateCcw, Maximize2, Minimize2, X, LogIn, Stethoscope, Briefcase, Luggage, Siren, FileText, Volume2, VolumeX, Phone, PhoneCall, Shield, ShieldCheck, ScanSearch, MapPin, Handshake, Headphones, Paperclip, ChevronRight, CheckCircle2, Bell, Sun, Moon, Newspaper } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VoiceMessageRecorder from './VoiceMessageRecorder';
 import LocationPermissionGate from './LocationPermissionGate';
@@ -28,7 +28,6 @@ import LivingOrb from './LivingOrb';
 import InterruptedIntentChip from './InterruptedIntentChip';
 import LiveActivityCard from './LiveActivityCard';
 import MSafeBottomNav from './MSafeBottomNav';
-import { emitOpenSiteMenu } from '@/lib/openSiteMenuEvent';
 import MessageBubble, { InlineQrBlock } from '@/components/mcare-agent/MessageBubble';
 import JourneyStageTracker from '@/components/mcare-agent/JourneyStageTracker';
 import AddImageMenu from '@/components/mcare-agent/AddImageMenu';
@@ -90,6 +89,10 @@ import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
 import CapabilityPill from './msafe-plus/CapabilityPill';
 import LiveSessionBadge from './msafe-plus/LiveSessionBadge';
 import { CAPABILITIES } from './msafePlusConfig';
+import CountryBackdrop from './CountryBackdrop';
+import MSafeWelcomeCard from './MSafeWelcomeCard';
+import { countryCodeFrom, countryLabel, flagEmoji, deviceShowsFlagEmoji } from '@/lib/destinationBackdrops';
+import { welcomeCopy, pickLatestAlert, savedPlacesFrom, timeAgo } from '@/lib/msafeWelcome';
 
 // The panel's colour tokens (GOLD, DARK, the light/dark card surfaces, the
 // desktop-luxury variants) live in panelPalette.js — moved there unchanged when
@@ -99,12 +102,13 @@ import {
   GOLD, DARK, PANEL_BG, CARD_BG, BORDER_DARK, TEXT_LIGHT, TEXT_MUTED_DARK,
   LIGHT_BG, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED,
   GOLD_GRADIENT, DESKTOP_LUXURY_BG, DESKTOP_LUXURY_GOLD, DESKTOP_LUXURY_USER_GRADIENT,
-  GOLD_INK, GOLD_WASH, CAUTION_INK, WORDMARK_FONT, TYPE, RADIUS, TOUCH,
+  GOLD_INK, GOLD_WASH, CAUTION_INK, WORDMARK_FONT, BRAND_SERIF, NIGHT, GLASS, TYPE, RADIUS, TOUCH,
 } from './panelPalette';
 import { orbStateLabel } from '@/lib/orbStateLabel';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
-const TAGLINE = "I analyze. I protect. I coordinate. I resolve. I've got you.";
+// North-star redesign (2026-11-01): the mockup's line under the LIVE pill.
+const TAGLINE = 'Safe travels, always.';
 // Two-column panel from this width up; the stacked full-screen layout below it.
 const PANEL_SPLIT_QUERY = '(min-width: 1024px)';
 // On tablets the stacked layout fills the screen, so its content sits in one
@@ -243,6 +247,9 @@ export default function MCareOrb() {
   // "More" overflow popover for the mobile quick-actions row (2026-08-28) —
   // purely local UI state, closed whenever the panel closes.
   const [moreChipsOpen, setMoreChipsOpen] = useState(false);
+  // True while a voice note is being recorded on the phone screen, so the
+  // message box steps aside and the recording strip gets the whole bar.
+  const [recordingVoice, setRecordingVoice] = useState(false);
   // Widescreen two-column panel (>= 1024px) vs. the stacked full-screen layout
   // (< 1024px) — same matchMedia + change-listener pattern already used
   // throughout this app (LivingOrb.jsx's reducedMotion/canTilt).
@@ -318,7 +325,10 @@ export default function MCareOrb() {
   useEffect(() => {
     try { localStorage.setItem('morales_mcare_desktop_light', desktopLightMode ? '1' : '0'); } catch { /* best-effort */ }
   }, [desktopLightMode]);
-  const useDarkTheme = isDesktopPanel && !desktopLightMode;
+  // North-star redesign (2026-11-01): the phone and tablet screen is always the
+  // dark navy look from Portia's mockup (it's the first thing a QR scan shows);
+  // only the laptop layout keeps its light/dark switch.
+  const useDarkTheme = isDesktopPanel ? !desktopLightMode : true;
   // Talk Mode — off by default, opt-in only. See the "Honest speaking pulse"
   // effect below: when off, behavior is byte-identical to before this was
   // added. { messageIndex, revealedWordCount, totalWordCount } while a
@@ -383,7 +393,7 @@ export default function MCareOrb() {
   // this is attached once per mount rather than on every message.
   // prefs aliased to locationPrefs — `prefs` is already bound to
   // useMcarePreferences()'s object elsewhere in this file.
-  const { bestLocation, gpsLocation, isLoading: locationLoading, requestGPS, gpsStatus, gpsErrorCode, prefs: locationPrefs } = useAutoLocation();
+  const { ipLocation, bestLocation, gpsLocation, isLoading: locationLoading, requestGPS, gpsStatus, gpsErrorCode, prefs: locationPrefs } = useAutoLocation();
   const [showLocationGate, setShowLocationGate] = useState(false);
   // Session-lifetime only (not persisted) — a fresh page load always gets
   // one proactive ask, matching "M-Care should always know where the
@@ -1482,8 +1492,12 @@ export default function MCareOrb() {
   }, [open, dismissed, isQuietRoute, struggleHint, tipIdx, tips.length]);
 
   useEffect(() => {
+    // Phone and tablet before a conversation (north-star redesign): stay at the
+    // top, so the hero and the welcome, or a scanned ad's first sign-up message,
+    // are what people see first. Once there's a conversation, follow the newest.
+    if (!isDesktopPanel && agentMessages.length === 0 && pilotMessages.length <= 1) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [agentMessages, journeyEvents, pilotMessages]);
+  }, [agentMessages, journeyEvents, pilotMessages, isDesktopPanel]);
 
   // Speaking state right after a new assistant message lands. When Talk Mode
   // is off (default), this is byte-identical to the original honest fake
@@ -2561,6 +2575,45 @@ export default function MCareOrb() {
   if (canBecomePartner) { quickChips.push({ label: 'Become a partner', icon: Briefcase, run: () => { setOpen(false); navigate('/partner-signup'); } }); moreChips.push(quickChips[quickChips.length - 1]); }
   if (!isAuthenticated) { quickChips.push({ label: 'Sign in to book', icon: LogIn, run: () => base44.auth.redirectToLogin(window.location.pathname) }); moreChips.push(quickChips[quickChips.length - 1]); }
 
+  // ── North-star redesign (2026-11-01): what the phone screen knows, all real. ──
+  // The visitor's country comes from their own connection (useAutoLocation's
+  // approximate IP lookup), the trip from their CaseRecord. "At destination"
+  // only when both are known and match, so "Welcome to Brazil!" is never said
+  // to someone who isn't there.
+  const visitorCountryCode = countryCodeFrom(ipLocation, bestLocation);
+  const visitorCountryName = countryLabel(visitorCountryCode, ipLocation?.country || bestLocation?.country || '');
+  const tripCountryCode = countryCodeFrom(activeCaseRecord?.procedure_country);
+  const hasTrip = !!activeCaseRecord?.id;
+  const atDestination = hasTrip && !!tripCountryCode && tripCountryCode === visitorCountryCode;
+  const tripLabel = tripCountryCode ? countryLabel(tripCountryCode, activeCaseRecord?.procedure_country || '') : (activeCaseRecord?.procedure_country || '');
+  const unseenJourneyCount = journeyEvents.filter(e => e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt).length;
+  const welcome = welcomeCopy({
+    atDestination, hasTrip, tripLabel,
+    countryName: visitorCountryName,
+    flag: deviceShowsFlagEmoji() ? flagEmoji(visitorCountryCode) : '',
+    firstName: user?.full_name?.trim()?.split(/\s+/)[0] || '',
+  });
+  const latestAlertEvent = pickLatestAlert(journeyEvents);
+  const welcomeAlert = latestAlertEvent ? { text: latestAlertEvent.message_text, ago: timeAgo(latestAlertEvent.created_date) } : null;
+  const welcomePlaces = savedPlacesFrom(activeCaseRecord);
+
+  // The phone screen's three shortcuts, as in the mockup: View Map (your real
+  // device location on a map), Safety Check, and Talk live (M-Care's real live
+  // voice mode; "Ask Jarvis" in the mockup is Marvel's name). Find Doctors and
+  // My Journey move into More; Services in the bottom bar still opens Find
+  // Doctors. The laptop layout keeps quickChips as it was.
+  const stackedChips = [
+    { label: 'View Map', icon: MapPin, run: () => triggerExactMapView() },
+    { label: 'Safety Check', icon: ShieldCheck, run: () => sendAgentMessage('Run a safety check for my procedure') },
+  ];
+  if (isConversationalModeSupported()) {
+    stackedChips.push({ label: conversationalMode ? 'Live now' : 'Talk live', icon: Headphones, run: toggleConversationalMode, active: conversationalMode });
+  }
+  const stackedMoreChips = [
+    ...quickChips.filter(c => c.label === 'Find Doctors' || c.label === 'My Journey'),
+    ...moreChips,
+  ];
+
   const currentTip = struggleHint || tips[tipIdx];
 
   // Header status pill reflects live / paused / offline (preserves prior state
@@ -2686,30 +2739,54 @@ export default function MCareOrb() {
   // pillFont=11, pillIconSize=12, pillDotSize=7), byte-identical.
   const pillPad = isDesktopPanel ? '4px 10px' : '4px 9px';
   const pillFont = isDesktopPanel ? 11 : 10;
-  const pillIconSize = isDesktopPanel ? 12 : 11;
   const pillDotSize = isDesktopPanel ? 7 : 6;
+  // Phone and tablet hero (the laptop shows standaloneStatusPill instead).
+  // North-star redesign (2026-11-01): one glowing status pill, as in the
+  // mockup. "LIVE • Trip active" only when the traveler really is in their
+  // trip's destination country (atDestination above), and then it opens their
+  // journey; otherwise the usual LIVE SESSION / PAUSED / OFFLINE. The decorative
+  // AI SUPER AGENTIC pill is gone; the subtitle says "AI" now.
+  const liveNow = !paused && isOnline;
+  const stackedStatusText = liveNow && atDestination ? 'LIVE • Trip active' : statusPill.text;
+  /** @type {React.CSSProperties} */
+  const statusPillStyle = {
+    display: 'inline-flex', alignItems: 'center', gap: 8, color: statusPill.fg,
+    // The state's tint over dark glass, so it reads over any country photo.
+    background: `linear-gradient(${statusPill.bg}, ${statusPill.bg}), rgba(6,11,22,0.72)`,
+    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+    border: `1px solid ${statusPill.dot}80`, borderRadius: 999, padding: '6px 12px', fontSize: 13, fontWeight: 700,
+    whiteSpace: 'nowrap', boxShadow: `0 0 18px ${statusPill.dot}2E`,
+  };
+  const statusPillInner = (
+    <>
+      <span aria-hidden="true" className={liveNow ? 'ms-live-dot' : undefined} style={{ width: 9, height: 9, borderRadius: '50%', background: statusPill.dot, boxShadow: `0 0 8px ${statusPill.dot}` }} />
+      <span>{stackedStatusText}</span>
+      {liveNow && atDestination && <ChevronRight aria-hidden="true" style={{ width: 16, height: 16 }} />}
+    </>
+  );
+  const smallPillStyle = { display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 999, padding: '4px 10px', fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap' };
   const pillsRowBlock = (
-    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: isDesktopPanel ? 6 : 5, marginTop: 8 }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: useDarkTheme ? statusPill.bg : statusPill.bgLight, color: useDarkTheme ? statusPill.fg : statusPill.fgLight, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
-        <span style={{ width: pillDotSize, height: pillDotSize, borderRadius: '50%', background: statusPill.dot }} /> {statusPill.text}
-      </span>
-      {/* Brand gold, not purple (design upgrade, 2026-10-31): purple isn't in
-          the M-Care palette and made this pill read as a different product. */}
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: GOLD_WASH, color: useDarkTheme ? '#E8C85C' : GOLD_INK, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
-        <Sparkles style={{ width: pillIconSize, height: pillIconSize, color: GOLD }} /> AI SUPER AGENTIC
-      </span>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 }}>
+      {liveNow && atDestination ? (
+        <button type="button" onClick={() => { navigate('/dashboard/journey'); setOpen(false); }} className="ms-press"
+          aria-label="Trip active. Open my journey" style={{ ...statusPillStyle, cursor: 'pointer' }}>
+          {statusPillInner}
+        </button>
+      ) : (
+        <span style={statusPillStyle}>{statusPillInner}</span>
+      )}
       {privateMode && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: useDarkTheme ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.14)', color: useDarkTheme ? '#A5B4FC' : '#4338CA', borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
-          <Shield style={{ width: pillIconSize, height: pillIconSize }} /> PRIVATE
+        <span style={{ ...smallPillStyle, background: 'rgba(99,102,241,0.18)', color: '#C7D2FE' }}>
+          <Shield style={{ width: 12, height: 12 }} /> PRIVATE
         </span>
       )}
       {voiceStatusText && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(212,175,55,0.14)', color: GOLD, borderRadius: 999, padding: pillPad, fontSize: pillFont, fontWeight: 600, whiteSpace: 'nowrap' }}>
+        <span style={{ ...smallPillStyle, background: 'rgba(212,175,55,0.16)', color: NIGHT.goldInk }}>
           {voiceStatusText}
         </span>
       )}
       {responseLanguage && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', background: useDarkTheme ? 'rgba(156,163,175,0.14)' : 'rgba(148,163,184,0.18)', color: useDarkTheme ? '#D1D5DB' : '#475569', borderRadius: 999, padding: isDesktopPanel ? '4px 8px' : '3px 6px', fontSize: isDesktopPanel ? 10 : 9, fontWeight: 600, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+        <span style={{ ...smallPillStyle, background: 'rgba(255,255,255,0.08)', color: NIGHT.ink, textTransform: 'uppercase' }}>
           {responseLanguage}
         </span>
       )}
@@ -2737,39 +2814,42 @@ export default function MCareOrb() {
   // Design upgrade (2026-10-31): all four in brand gold. Two used to be a pale
   // mint (#36DDB2 at 80%), barely visible on white, and green is reserved for
   // "this is fine" states. Labels went from 10/9px to 11.5/10.5px.
+  // Icons match the north-star mockup (2026-11-01): a scan for Analyze, a
+  // checked shield for Protect, a map pin for Coordinate, a handshake for Resolve.
   const CAPABILITY_ITEMS = [
-    { icon: Sparkles, label: 'Analyze', subtitle: 'Intelligence' },
-    { icon: Shield, label: 'Protect', subtitle: 'Safety First' },
-    { icon: Share2, label: 'Coordinate', subtitle: 'Everything' },
-    { icon: CheckCircle2, label: 'Resolve', subtitle: 'Peace of Mind' },
+    { icon: ScanSearch, label: 'Analyze', subtitle: 'Intelligence' },
+    { icon: ShieldCheck, label: 'Protect', subtitle: 'Safety First' },
+    { icon: MapPin, label: 'Coordinate', subtitle: 'Everything' },
+    { icon: Handshake, label: 'Resolve', subtitle: 'Peace of Mind' },
   ];
+  // Phone and tablet only (the laptop uses desktopCapabilityPillsRow below).
+  // North-star redesign (2026-11-01): frosted navy glass with a gold edge,
+  // thin dividers, gold-outlined icons, as in the mockup.
   const capabilityItemsRow = (
-    <div style={{ display: 'flex', gap: isDesktopPanel ? 16 : 8, marginTop: isDesktopPanel ? 10 : 0, flexWrap: 'wrap', justifyContent: isDesktopPanel ? 'flex-start' : 'space-between' }}>
-      {CAPABILITY_ITEMS.map(({ icon: Icon, label, subtitle }) => {
+    <div style={{ display: 'flex' }}>
+      {CAPABILITY_ITEMS.map(({ icon: Icon, label, subtitle }, i) => {
         const active = label === activeCapability;
         return (
-          <div key={label} aria-current={active ? 'step' : undefined} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: isDesktopPanel ? 'none' : 1, minWidth: 0 }}>
+          <div key={label} aria-current={active ? 'step' : undefined} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '2px 4px', borderLeft: i ? `1px solid ${GLASS.hairline}` : 'none' }}>
             <div style={{
-              width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: `1px solid ${active ? GOLD : 'rgba(212,175,55,0.42)'}`,
-              background: active ? 'rgba(212,175,55,0.26)' : 'rgba(212,175,55,0.08)',
-              boxShadow: active ? '0 0 0 4px rgba(212,175,55,0.14), 0 0 12px rgba(212,175,55,0.35)' : 'none',
-              color: useDarkTheme ? (active ? '#F5D97A' : '#C9A227') : (active ? GOLD_INK : '#A07A12'),
+              width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: `1.5px solid ${active ? GOLD : 'rgba(212,175,55,0.62)'}`,
+              background: active ? 'rgba(212,175,55,0.2)' : 'rgba(212,175,55,0.04)',
+              boxShadow: active ? '0 0 0 4px rgba(212,175,55,0.12), 0 0 16px rgba(212,175,55,0.45)' : 'none',
+              color: active ? '#F5D97A' : GOLD,
               transition: 'background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
             }}>
-              <Icon style={{ width: 16, height: 16 }} />
+              <Icon style={{ width: 19, height: 19 }} />
             </div>
-            <span style={{ fontSize: isDesktopPanel ? 11 : 11.5, color: useDarkTheme ? (active ? '#F5D97A' : TEXT_MUTED_DARK) : LIGHT_TEXT, fontWeight: active ? 700 : 600, textAlign: 'center' }}>{label}</span>
-            {!isDesktopPanel && (
-              <span style={{ fontSize: 10.5, color: LIGHT_TEXT_MUTED, textAlign: 'center', lineHeight: 1.15 }}>{subtitle}</span>
-            )}
+            <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#F5D97A' : NIGHT.ink, textAlign: 'center', lineHeight: 1.15 }}>{label}</span>
+            <span style={{ fontSize: 11.5, color: NIGHT.muted, textAlign: 'center', lineHeight: 1.15 }}>{subtitle}</span>
           </div>
         );
       })}
     </div>
   );
-  const capabilityRowBlock = isDesktopPanel ? capabilityItemsRow : (
-    <div style={{ marginTop: 8, width: '100%', background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: RADIUS.card, boxShadow: '0 2px 12px rgba(15,23,42,0.06)', padding: '10px 8px' }}>
+  const capabilityRowBlock = (
+    <div style={{ marginTop: 14, width: '100%', boxSizing: 'border-box', background: GLASS.card, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur, border: `1px solid ${GLASS.edge}`, borderRadius: 24, boxShadow: GLASS.shadow, padding: '14px 6px 12px' }}>
       {capabilityItemsRow}
     </div>
   );
@@ -2813,6 +2893,107 @@ export default function MCareOrb() {
     cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: useDarkTheme ? 'none' : '0 1px 3px rgba(15,23,42,0.06)',
   };
   const chipIconStyle = { width: 15, height: 15, color: GOLD, flexShrink: 0 };
+  // Phone and tablet chips (north-star redesign, 2026-11-01): dark glass with a
+  // gold outline; an active one (Talk live while on) fills with gold wash.
+  // Sized so all three fit across a 390 px phone, as in the mockup.
+  /** @type {React.CSSProperties} */
+  const stackedChipStyle = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: '1 0 auto', minHeight: 44,
+    // Text and padding shrink a little on the narrowest phones so all three still fit.
+    padding: '0 clamp(7px, 2.4vw, 12px)', fontSize: 'clamp(12.5px, 3.6vw, 13.5px)',
+    border: '1.5px solid rgba(212,175,55,0.72)', background: 'rgba(14,23,37,0.72)', borderRadius: RADIUS.pill,
+    fontWeight: 600, color: NIGHT.ink, cursor: 'pointer', whiteSpace: 'nowrap',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.25)',
+  };
+  const stackedChipActive = { background: 'rgba(212,175,55,0.18)', borderColor: GOLD, color: NIGHT.goldInk };
+
+  // ── Phone and tablet header and hero (north-star redesign, 2026-11-01) ──
+  // The big hero (robot on its gold rings, M-Safe+, status pill, tagline,
+  // capability card) scrolls with the welcome card before a conversation
+  // starts; once there are messages a slim robot-and-name row stays pinned
+  // instead, so the robot's listening/speaking states stay in view.
+  const heroExpanded = agentMessages.length === 0;
+  const HERO_TEXT_SHADOW = '0 1px 10px rgba(0,0,0,0.55)';
+  const headerIconBtn = (extra = {}) => ({ ...ctrlBtn(), width: TOUCH, height: TOUCH, color: NIGHT.ink, ...extra });
+  const robotProps = {
+    state: orbState, flashToken: bargeInFlashToken, inputFocused, activityOverride: testActivityOverride,
+    gazeOverride: testGazeOverride, blinkTrigger: testBlinkTrigger,
+    amplitude: testAmplitude != null ? testAmplitude : speakingAmplitude,
+  };
+  const stackedWordmark = (size) => (
+    <p style={{ margin: 0, fontFamily: WORDMARK_FONT, fontSize: size, fontWeight: 800, letterSpacing: '-0.02em', color: NIGHT.ink, lineHeight: 1.05, textShadow: HERO_TEXT_SHADOW }}>
+      M-Safe<span style={{ color: GOLD, marginLeft: 2 }}>+</span>
+    </p>
+  );
+  const stackedSubtitle = (size) => (
+    <p style={{ margin: '5px 0 0', fontSize: size, color: NIGHT.ink, minHeight: Math.round(size * 1.3), display: 'flex', minWidth: 0, textShadow: HERO_TEXT_SHADOW }}>
+      {liveStateLine || 'Your AI Travel Companion'}
+    </p>
+  );
+  const stackedHeader = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0, padding: `6px max(10px, calc((100% - ${STACKED_MAX_WIDTH + 12}px) / 2))`, paddingTop: 'calc(8px + env(safe-area-inset-top, 0px))' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <img src="/morales-m-mark.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 10px rgba(212,175,55,0.35))' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.08, minWidth: 0 }}>
+          <span style={{ fontFamily: BRAND_SERIF, fontSize: 20, fontWeight: 700, letterSpacing: '0.16em', color: NIGHT.ink, textShadow: HERO_TEXT_SHADOW }}>M-CARE</span>
+          <span style={{ fontFamily: BRAND_SERIF, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.17em', color: GOLD, textTransform: 'uppercase', whiteSpace: 'nowrap', textShadow: HERO_TEXT_SHADOW }}>Medical Travel Safety</span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', marginRight: -4, flexShrink: 0 }}>
+        {isSpeechSupported() && (
+          <button onClick={() => toggleTalkMode()} className="ms-press ms-ctrl" title={talkMode ? 'Reading replies aloud, tap to stop' : 'Read replies aloud'} aria-label="Toggle talk mode" aria-pressed={talkMode}
+            style={headerIconBtn(talkMode ? { background: GOLD_WASH, color: GOLD } : {})}>
+            {talkMode ? <Volume2 style={ctrlIcon} /> : <VolumeX style={ctrlIcon} />}
+          </button>
+        )}
+        {agentMessages.length > 0 && (
+          <button onClick={startNewJourney} className="ms-press ms-ctrl" title="New journey" aria-label="New journey" style={headerIconBtn()}>
+            <RotateCcw style={ctrlIcon} />
+          </button>
+        )}
+        <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); markJourneyEventsSeen(); }}
+          aria-label={unseenJourneyCount ? `Notifications, ${unseenJourneyCount} new` : 'Notifications'} className="ms-press ms-ctrl" style={headerIconBtn({ position: 'relative' })}>
+          <Bell style={{ width: 23, height: 23 }} />
+          {unseenJourneyCount > 0 && (
+            <span aria-hidden="true" style={{ position: 'absolute', top: 2, right: 1, minWidth: 18, height: 18, padding: '0 5px', boxSizing: 'border-box', borderRadius: 999, background: '#EF4444', color: '#FFFFFF', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${NIGHT.canvas}` }}>
+              {unseenJourneyCount > 9 ? '9+' : unseenJourneyCount}
+            </span>
+          )}
+        </button>
+        <button onClick={() => setOpen(false)} className="ms-press ms-ctrl" title="Close" aria-label="Close" style={headerIconBtn()}>
+          <X style={{ width: 22, height: 22 }} />
+        </button>
+      </div>
+    </div>
+  );
+  const stackedHero = (
+    <div style={{ marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ flexShrink: 0, width: 128, display: 'flex', justifyContent: 'center' }}>
+          <LivingOrb {...robotProps} size={122} naturalAspect />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {stackedWordmark(32)}
+          {stackedSubtitle(16)}
+          {pillsRowBlock}
+          <p style={{ margin: '10px 0 0', fontSize: 15, fontStyle: 'italic', color: 'rgba(243,245,247,0.9)', textShadow: HERO_TEXT_SHADOW }}>{TAGLINE}</p>
+        </div>
+      </div>
+      {capabilityRowBlock}
+    </div>
+  );
+  const stackedCompactHero = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, padding: `0 max(16px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 10px` }}>
+      <div style={{ flexShrink: 0 }}>
+        <LivingOrb {...robotProps} size={54} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {stackedWordmark(22)}
+        {stackedSubtitle(14)}
+        {pillsRowBlock}
+      </div>
+    </div>
+  );
 
   // The big scrolling area (journey tracker + greeting/messages/journey
   // events/typing/offline banner) plus the interrupted-intent chip and smart
@@ -2827,7 +3008,15 @@ export default function MCareOrb() {
 
       {/* Stacked layout: side padding grows on tablets so the conversation stays a readable centred column
           (STACKED_MAX_WIDTH); on phones it is the same 14px as before. */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isDesktopPanel ? '14px 14px' : `16px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2))`, display: 'flex', flexDirection: 'column', gap: 12, background: useDarkTheme ? DARK : LIGHT_BG }}>
+      {/* Phone and tablet: transparent, so the country photo fixed behind the top of the screen shows through
+          while the hero and messages scroll over it. */}
+      <div style={{
+        flex: 1, minHeight: 0, overflowY: 'auto', padding: isDesktopPanel ? '14px 14px' : `${heroExpanded ? 4 : 12}px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 22px`,
+        display: 'flex', flexDirection: 'column', gap: 12, background: !isDesktopPanel ? 'transparent' : (useDarkTheme ? DARK : LIGHT_BG),
+        // A soft fade where the scrolling content meets the shortcut chips, instead of a hard cut.
+        ...(!isDesktopPanel ? { WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)', maskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)' } : {}),
+      }}>
+        {!isDesktopPanel && heroExpanded && !keyboardOpen && stackedHero}
         {chatEmpty && !agentLoading && (
           <>
             {/* A small decorative "•••" accent above the greeting, echoing
@@ -2843,16 +3032,29 @@ export default function MCareOrb() {
               </div>
             )}
             {/* Same avatar size, corner, padding and 14px text as every reply bubble (MessageBubble), so the
-                first message doesn't look like it came from a different product. */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 4 }}>
-              <McareAvatar size={28} />
-              <p style={{ margin: 0, fontSize: TYPE.body, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: useDarkTheme ? CARD_BG : LIGHT_CARD, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: RADIUS.bubble, padding: '12px 16px', maxWidth: '85%', boxShadow: useDarkTheme ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
-                {(() => {
-                  const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
-                  return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
-                })()}
-              </p>
-            </div>
+                first message doesn't look like it came from a different product. The phone screen shows the
+                north-star welcome card instead (MSafeWelcomeCard: real alerts and saved places only). */}
+            {isDesktopPanel ? (
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 4 }}>
+                <McareAvatar size={28} />
+                <p style={{ margin: 0, fontSize: TYPE.body, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: useDarkTheme ? CARD_BG : LIGHT_CARD, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: RADIUS.bubble, padding: '12px 16px', maxWidth: '85%', boxShadow: useDarkTheme ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
+                  {(() => {
+                    const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
+                    return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
+                  })()}
+                </p>
+              </div>
+            ) : (
+              <MSafeWelcomeCard
+                title={welcome.title}
+                body={welcome.body}
+                timeLabel={new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                hasTrip={hasTrip}
+                alert={welcomeAlert}
+                places={welcomePlaces}
+                onOpenPlaces={welcomePlaces.length ? () => sendAgentMessage('Show my hotel and clinic on the map') : null}
+              />
+            )}
             {/* Desktop keeps its original empty-state chip row (all chips,
                 inline). Mobile (2026-08-28) shows its persistent 3-chip +
                 "More" row instead — always visible above the composer, not
@@ -2973,7 +3175,7 @@ export default function MCareOrb() {
             LiveActivityCard.jsx's own header comment). Desktop keeps its
             existing minimal row, completely unchanged. */}
         {!isDesktopPanel && (
-          <LiveActivityCard visible={!!(agentSending || activeRunningTool)} orbState={orbState} activeRunningTool={activeRunningTool} />
+          <LiveActivityCard theme="night" visible={!!(agentSending || activeRunningTool)} orbState={orbState} activeRunningTool={activeRunningTool} />
         )}
         {isDesktopPanel && (agentSending || activeRunningTool) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
@@ -3030,34 +3232,30 @@ export default function MCareOrb() {
       {/* Design upgrade (2026-10-31): "More" is pinned at the right so it is always on screen (it used to sit
           past the edge on every phone, with "My Journey" cut in half and no sign the row scrolled). The three
           shortcuts scroll in their own lane, which fades at its edge to show there is more to swipe. */}
+      {/* North-star redesign (2026-11-01): the mockup's three gold-outlined dark chips across the row. Everything
+          else (Find Doctors, My Journey, Emergency Help, Visa Help, Medical Research, partner sign-up, sign in)
+          is one tap away under Services in the bottom bar, which opens this same list. On the narrowest phones
+          the lane scrolls, and its edge fades to show it. */}
       {!isDesktopPanel && !keyboardOpen && (
-        <div style={{ position: 'relative', flexShrink: 0, padding: `6px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 2px`, background: LIGHT_BG }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {/* The lane sizes to its chips (flex 0 1 auto) so "More" sits right after them when there is room,
-                and shrinks to scroll when there isn't. Its 18px right padding is exactly the faded strip, so the
-                fade only ever covers a chip that is really cut off. */}
-            <div className="ms-chip-scroll" style={{ flex: '0 1 auto', minWidth: 0, display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', padding: '2px 18px 2px 1px', WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 18px), transparent)', maskImage: 'linear-gradient(to right, #000 calc(100% - 18px), transparent)' }}>
-              {quickChips.slice(0, 3).map(c => (
-                <button key={c.label} onClick={c.run} className="ms-press ms-chip" style={chipStyle}>
-                  <c.icon style={chipIconStyle} /> {c.label}
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setMoreChipsOpen(v => !v)} className="ms-press ms-chip" aria-expanded={moreChipsOpen}
-              style={{ ...chipStyle, gap: 4, padding: '0 12px', color: moreChipsOpen ? GOLD_INK : LIGHT_TEXT_MUTED, background: moreChipsOpen ? GOLD_WASH : LIGHT_CARD }}>
-              More {moreChipsOpen ? <ChevronUp style={{ width: 14, height: 14 }} /> : <ChevronDown style={{ width: 14, height: 14 }} />}
-            </button>
-          </div>
+        <div style={{ position: 'relative', flexShrink: 0, padding: `6px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 2px` }}>
           {moreChipsOpen && (
-            <div style={{ marginTop: 8, background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: RADIUS.bubble, boxShadow: '0 6px 20px rgba(15,23,42,0.10)', overflow: 'hidden' }}>
-              {moreChips.map((c, idx) => (
+            <div id="msafe-services-list" style={{ marginBottom: 8, background: GLASS.cardStrong, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur, border: `1px solid ${GLASS.edge}`, borderRadius: RADIUS.card, boxShadow: GLASS.shadow, overflow: 'hidden' }}>
+              {stackedMoreChips.map((c, idx) => (
                 <button key={c.label} onClick={() => { setMoreChipsOpen(false); c.run(); }} className="ms-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 46, textAlign: 'left', border: 'none', borderBottom: idx === moreChips.length - 1 ? 'none' : `1px solid ${LIGHT_BORDER}`, background: 'none', padding: '0 16px', fontSize: TYPE.body, fontWeight: 500, color: LIGHT_TEXT, cursor: 'pointer' }}>
-                  <c.icon style={{ ...chipIconStyle, width: 16, height: 16 }} /> {c.label}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 48, textAlign: 'left', border: 'none', borderBottom: idx === stackedMoreChips.length - 1 ? 'none' : `1px solid ${GLASS.hairline}`, background: 'none', padding: '0 16px', fontSize: 15, fontWeight: 500, color: NIGHT.ink, cursor: 'pointer' }}>
+                  <c.icon style={{ width: 17, height: 17, color: GOLD, flexShrink: 0 }} /> {c.label}
                 </button>
               ))}
             </div>
           )}
+          <div className="ms-chip-scroll" style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', padding: '2px 1px' }}>
+            {stackedChips.map(c => (
+              <button key={c.label} onClick={c.run} className="ms-press ms-chip" aria-pressed={c.active ? true : undefined}
+                style={{ ...stackedChipStyle, ...(c.active ? stackedChipActive : null) }}>
+                <c.icon style={{ width: 16, height: 16, color: GOLD, flexShrink: 0 }} /> {c.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </>
@@ -3082,7 +3280,87 @@ export default function MCareOrb() {
     transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
   };
   const canSend = !!input.trim() && !agentSending;
-  const inputBarBlock = (
+
+  // Phone and tablet composer (north-star redesign, 2026-11-01): one frosted
+  // pill holding the paperclip, the text box and a gold disc that is the mic
+  // while the box is empty and the send button once there's text, as in the
+  // mockup. While a voice note records, the recording strip takes the whole bar.
+  const showMic = isOnline && !conversationalMode && !input.trim();
+  const stackedComposer = (
+    <div style={{ padding: `6px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) ${keyboardOpen ? 8 : 14}px`, flexShrink: 0 }}>
+      <div style={recordingVoice ? { display: 'flex', alignItems: 'center', gap: 8, minHeight: 58 } : {
+        display: 'flex', alignItems: 'center', gap: 4, minHeight: 58, boxSizing: 'border-box',
+        background: GLASS.cardStrong, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
+        border: `1px solid ${inputFocused ? GOLD : 'rgba(255,255,255,0.14)'}`,
+        boxShadow: inputFocused ? '0 0 0 3px rgba(212,175,55,0.18)' : GLASS.shadow,
+        borderRadius: 999, padding: '6px 6px 6px 8px', transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+      }}>
+        {!recordingVoice && (
+          <AddImageMenu
+            variant="icon"
+            menuTheme="dark"
+            shape="circle"
+            triggerIcon={Paperclip}
+            onDeviceFile={handleFileSelect}
+            onVaultClick={() => vaultRef.current?.open()}
+            onLocationClick={handleLocationMenuClick}
+            onUnsupported={(msg) => toast({ title: 'Attach', description: msg })}
+            disabled={agentSending || agentUploading}
+            uploading={agentUploading}
+          />
+        )}
+        <MCareVaultUpload ref={vaultRef} hideTrigger onVaulted={handleVaulted} />
+        {!recordingVoice && (
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+            <GhostTextOverlay
+              typedText={input}
+              suggestion={ghostSuggestion}
+              matchStyle={{ borderRadius: 0, padding: '10px 6px', fontSize: 16, color: NIGHT.ink }}
+            />
+            <input
+              ref={chatInputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
+              placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? 'Uploading…' : 'Message M-Safe…') : t('guide.placeholder_offline')}
+              enterKeyHint="send"
+              aria-label="Message M-Safe"
+              // 16px: iPhone zooms the page into any text box smaller than that.
+              style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', padding: '10px 6px', fontSize: 16, color: NIGHT.ink, position: 'relative' }}
+            />
+          </div>
+        )}
+        {showMic ? (
+          <VoiceMessageRecorder
+            disabled={agentSending || agentUploading}
+            onSend={handleVoiceMessage}
+            onError={handleVoiceMessageError}
+            theme="dark"
+            idleShape="circle"
+            idleVariant="gold"
+            onRecordingChange={setRecordingVoice}
+          />
+        ) : (
+          <button onClick={() => sendAgentMessage()} disabled={!canSend} aria-label="Send message" className={canSend ? 'ms-press' : undefined}
+            style={{
+              width: 46, height: 46, borderRadius: '50%', flexShrink: 0, border: 'none', cursor: canSend ? 'pointer' : 'default',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: canSend ? 'radial-gradient(circle at 35% 30%, #F6DE8A, #D4AF37 55%, #B8912A)' : 'rgba(255,255,255,0.08)',
+              boxShadow: canSend ? '0 0 0 1px rgba(255,255,255,0.18) inset, 0 4px 18px rgba(212,175,55,0.45)' : 'none',
+              transition: 'background 0.2s ease, box-shadow 0.2s ease',
+            }}
+          >
+            <Send style={{ width: 19, height: 19, color: canSend ? '#0A1020' : NIGHT.muted }} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const inputBarBlock = !isDesktopPanel ? stackedComposer : (
     <div style={{ padding: isDesktopPanel ? '10px 14px' : `8px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) ${keyboardOpen ? 8 : 14}px`, borderTop: `1px solid ${useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}33` : LIGHT_BORDER)}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, background: useDarkTheme ? PANEL_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_CARD) }}>
       <AddImageMenu
         variant="icon"
@@ -3207,7 +3485,24 @@ export default function MCareOrb() {
             width: isDesktopPanel
               ? (expanded ? 'min(1500px, 98vw)' : 'min(1306px, 96vw)')
               : '100vw',
-            background: useDarkTheme ? PANEL_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG),
+            // Phone and tablet: the north-star navy canvas. The shared bubbles,
+            // safety cards and journey tracker draw from the app's colour
+            // variables, so they're pointed at the same navy here (NIGHT in
+            // panelPalette.js) instead of the app's default teal-dark.
+            ...(!isDesktopPanel ? {
+              '--background': '221 57% 5%',
+              '--foreground': '210 20% 96%',
+              '--card': '217 45% 10%',
+              '--card-foreground': '210 20% 96%',
+              '--popover': '217 45% 10%',
+              '--popover-foreground': '210 20% 96%',
+              '--secondary': '216 41% 13%',
+              '--muted': '216 41% 13%',
+              '--muted-foreground': '210 13% 65%',
+              '--border': '211 30% 19%',
+              '--input': '211 30% 19%',
+            } : {}),
+            background: !isDesktopPanel ? NIGHT.canvas : (useDarkTheme ? PANEL_BG : DESKTOP_LUXURY_BG),
             border: !isDesktopPanel ? 'none' : `1px solid ${useDarkTheme ? BORDER_DARK : `${DESKTOP_LUXURY_GOLD}33`}`,
             borderRadius: isDesktopPanel ? 16 : 0,
             boxShadow: !isDesktopPanel ? 'none' : (useDarkTheme ? `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)` : `0 24px 64px rgba(15,23,42,0.10), 0 0 0 1px rgba(210,169,61,0.14)`),
@@ -3408,78 +3703,34 @@ export default function MCareOrb() {
               {inputBarBlock}
             </>
           ) : (
-            <>
-              {/* Mobile M-Safe redesign (2026-08-28), matching Portia's reference
-                  screenshot as the source of truth for the mobile experience.
-                  Section 1 — a new top header row: hamburger (dispatches the real
-                  site nav's open event, see openSiteMenuEvent.js/Header.jsx),
-                  centered wordmark (reusing the app's own real
-                  /morales-m-mark.png asset, relabeled — no new image), and a
-                  bell reusing the exact real hasUnseenJourneyEvent signal the
-                  floating launcher button's own dot already uses. Respects the
-                  iPhone notch since the panel is now full-bleed. */}
-              {/* Menu button: on pages without the site header (the landing page and /pilot, where every ad QR
-                  lands) nothing answers the open-menu signal, so it closes the chat instead and the page's own
-                  navigation shows (emitOpenSiteMenu returns false when unanswered). */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `6px max(8px, calc((100% - ${STACKED_MAX_WIDTH + 12}px) / 2))`, paddingTop: 'calc(6px + env(safe-area-inset-top, 0px))', borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD }}>
-                <button onClick={() => { if (!emitOpenSiteMenu()) setOpen(false); }} aria-label="Open menu" className="ms-press ms-ctrl" style={{ ...ctrlBtn(), width: TOUCH, height: TOUCH, color: LIGHT_TEXT }}>
-                  <Menu style={{ width: 22, height: 22 }} />
-                </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/morales-m-mark.png" alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-                    <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', color: LIGHT_TEXT }}>M-CARE</span>
-                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', color: LIGHT_TEXT_MUTED, textTransform: 'uppercase' }}>AI Medical Travel Concierge</span>
-                  </div>
-                </div>
-                <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); markJourneyEventsSeen(); }} aria-label={hasUnseenJourneyEvent ? 'Notifications, new update' : 'Notifications'} className="ms-press ms-ctrl" style={{ ...ctrlBtn(), width: TOUCH, height: TOUCH, position: 'relative', color: LIGHT_TEXT }}>
-                  <Bell style={{ width: 21, height: 21 }} />
-                  {hasUnseenJourneyEvent && <span style={{ position: 'absolute', top: 7, right: 8, width: 9, height: 9, borderRadius: '50%', background: GOLD, border: '2px solid #FFFFFF' }} />}
-                </button>
+            // Phone and tablet, north-star redesign (2026-11-01, Portia's mockup):
+            // the visitor's country photo is fixed behind the top of the screen
+            // and everything scrolls over it. Header (logo, read-aloud, new
+            // journey, notifications, close) stays put. Before a conversation the
+            // big hero scrolls with the welcome card (see chatMain); during one, a
+            // slim robot-and-name row is pinned under the header. While the
+            // keyboard is up the hero, shortcut chips and bottom bar step aside.
+            <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+              <div aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: heroExpanded ? 'clamp(440px, 70%, 820px)' : 'min(260px, 40%)', pointerEvents: 'none', zIndex: 0, transition: 'height 0.35s ease' }}>
+                <CountryBackdrop code={visitorCountryCode} />
               </div>
-
-              {/* The full hero — big robot, tagline, capability card — only
-                  earns its screen space before a real conversation exists.
-                  Once agentMessages is non-empty, it collapses to a compact
-                  identity row (small robot + name/pills only) so the chat
-                  area below actually gets most of the screen, matching every
-                  real chat app's own convention of not permanently reserving
-                  a "hero" once you're mid-conversation. */}
-              {/* While the keyboard is up the hero steps aside (like a native chat app) so the conversation keeps
-                  the little space left; it comes straight back when the keyboard closes. */}
-              {!keyboardOpen && (
-              <div style={{ padding: `10px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2))`, borderBottom: `1px solid ${LIGHT_BORDER}`, flexShrink: 0, background: LIGHT_CARD, transition: 'padding 0.2s ease' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <div style={{ flexShrink: 0 }}>
-                    <LivingOrb state={orbState} size={!chatEmpty ? 56 : 72} flashToken={bargeInFlashToken} inputFocused={inputFocused} activityOverride={testActivityOverride} gazeOverride={testGazeOverride} blinkTrigger={testBlinkTrigger} amplitude={testAmplitude != null ? testAmplitude : speakingAmplitude} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                      {titleSubtitleBlock}
-                      {headerControlsBlock}
-                    </div>
-                    {pillsRowBlock}
-                    {chatEmpty && (
-                      <p style={{ margin: '6px 0 0', fontSize: TYPE.meta, color: LIGHT_TEXT_MUTED, lineHeight: 1.4 }}>{TAGLINE}</p>
-                    )}
-                  </div>
-                </div>
-                {chatEmpty && capabilityRowBlock}
+              <div style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                {stackedHeader}
+                {!heroExpanded && !keyboardOpen && stackedCompactHero}
+                {chatMain}
+                {inputBarBlock}
+                {!keyboardOpen && (
+                  <MSafeBottomNav
+                    orbState={orbState}
+                    onHome={() => setOpen(false)}
+                    onJourney={() => { navigate('/dashboard/journey'); setOpen(false); }}
+                    onServices={() => setMoreChipsOpen(v => !v)}
+                    servicesOpen={moreChipsOpen}
+                    onProfile={() => { navigate('/dashboard'); setOpen(false); }}
+                  />
+                )}
               </div>
-              )}
-
-              {chatMain}
-              {inputBarBlock}
-              {!keyboardOpen && (
-                <MSafeBottomNav
-                  orbState={orbState}
-                  onHome={() => setOpen(false)}
-                  onJourney={() => { navigate('/dashboard/journey'); setOpen(false); }}
-                  onServices={() => quickChips.find(c => c.label === 'Find Doctors')?.run()}
-                  onProfile={() => { navigate('/dashboard'); setOpen(false); }}
-                />
-              )}
-            </>
+            </div>
           )}
         </motion.div>
         </motion.div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react';
 
-import { GOLD, MINT, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED, RADIUS } from './panelPalette';
+import { GOLD, MINT, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED, RADIUS, NIGHT, GLASS } from './panelPalette';
 
 /**
  * LiveActivityCard — the "M-Care is working on this right now" status card
@@ -21,9 +21,16 @@ import { GOLD, MINT, LIGHT_CARD, LIGHT_BORDER, LIGHT_TEXT, LIGHT_TEXT_MUTED, RAD
  * minimal row already uses) rather than re-derived here from orbState alone,
  * so this card's visibility never drifts from that established behavior.
  */
-export default function LiveActivityCard({ visible, orbState, activeRunningTool }) {
+export default function LiveActivityCard({ visible, orbState, activeRunningTool, theme = 'light' }) {
   const [expanded, setExpanded] = useState(false);
   if (!visible) return null;
+  // theme='night' (north-star redesign, 2026-11-01): the same card in the dark
+  // navy glass the M-Safe phone screen now uses. 'light' keeps the old look.
+  const night = theme === 'night';
+  const cardBg = night ? GLASS.cardStrong : LIGHT_CARD;
+  const cardBorder = night ? GLASS.edge : LIGHT_BORDER;
+  const titleColor = night ? NIGHT.ink : LIGHT_TEXT;
+  const mutedColor = night ? NIGHT.muted : LIGHT_TEXT_MUTED;
 
   const toolLabel = activeRunningTool?.display_projection?.active_label;
   const title = toolLabel || (orbState === 'thinking' ? 'Thinking it through…' : 'Working on it…');
@@ -40,8 +47,8 @@ export default function LiveActivityCard({ visible, orbState, activeRunningTool 
       data-testid="live-activity-card"
       style={{
         display: 'flex', flexDirection: 'column', gap: 0, width: '100%', textAlign: 'left',
-        background: LIGHT_CARD, border: `1px solid ${LIGHT_BORDER}`, borderRadius: RADIUS.card,
-        boxShadow: '0 2px 10px rgba(15,23,42,0.06)', padding: '12px 14px',
+        background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: RADIUS.card,
+        boxShadow: night ? GLASS.shadow : '0 2px 10px rgba(15,23,42,0.06)', padding: '12px 14px',
         cursor: canExpand ? 'pointer' : 'default',
       }}
     >
@@ -53,23 +60,23 @@ export default function LiveActivityCard({ visible, orbState, activeRunningTool 
           <Loader2 className="animate-spin" style={{ width: 18, height: 18, color: GOLD }} />
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: LIGHT_TEXT, lineHeight: 1.3 }}>{title}</p>
-          <p style={{ margin: '2px 0 0', fontSize: 11.5, color: LIGHT_TEXT_MUTED, lineHeight: 1.3 }}>{subtitle}</p>
+          <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: titleColor, lineHeight: 1.3 }}>{title}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 11.5, color: mutedColor, lineHeight: 1.3 }}>{subtitle}</p>
         </div>
         <span style={{
-          flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(54,221,178,0.14)',
-          color: '#0D9C7A', borderRadius: 999, padding: '3px 9px', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+          flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, background: night ? 'rgba(74,222,128,0.14)' : 'rgba(54,221,178,0.14)',
+          color: night ? NIGHT.positive : '#0D9C7A', borderRadius: 999, padding: '3px 9px', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: MINT }} /> LIVE
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: night ? NIGHT.positive : MINT }} /> LIVE
         </span>
         {canExpand && (expanded
-          ? <ChevronDown style={{ width: 15, height: 15, color: LIGHT_TEXT_MUTED, flexShrink: 0 }} />
-          : <ChevronRight style={{ width: 15, height: 15, color: LIGHT_TEXT_MUTED, flexShrink: 0 }} />)}
+          ? <ChevronDown style={{ width: 15, height: 15, color: mutedColor, flexShrink: 0 }} />
+          : <ChevronRight style={{ width: 15, height: 15, color: mutedColor, flexShrink: 0 }} />)}
       </div>
       {expanded && canExpand && (
         <pre style={{
-          margin: '10px 0 0', padding: 8, fontSize: 10.5, background: '#F8FAFC', border: `1px solid ${LIGHT_BORDER}`,
-          borderRadius: 8, overflowX: 'auto', color: LIGHT_TEXT_MUTED, maxHeight: 140,
+          margin: '10px 0 0', padding: 8, fontSize: 10.5, background: night ? NIGHT.surface : '#F8FAFC', border: `1px solid ${night ? NIGHT.border : LIGHT_BORDER}`,
+          borderRadius: 8, overflowX: 'auto', color: mutedColor, maxHeight: 140,
         }}>
           {detail ? JSON.stringify(detail, null, 2) : 'No further detail available yet.'}
         </pre>

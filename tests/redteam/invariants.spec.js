@@ -6929,3 +6929,28 @@ test('ACCOUNT ACTIVITY: every account event is recorded where it happens, and on
   expect(handler, 'pausing safety check-ins must be recorded, after the pause really happened')
     .toMatch(/SoloCheckIn\.updateMany[\s\S]*auditService\.log\(\{\s*event_type: paused \? 'safety_monitoring_paused' : 'safety_monitoring_resumed'/);
 });
+
+// ---- North-star M-Safe phone screen (2026-11-01): the country photo and the
+// welcome card show only real things. Portia's mockup had an invented
+// "police activity near Copacabana" alert; M-Care has no street-incident feed.
+const nsStrip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+test('NORTH STAR: the M-Safe welcome card shows only real alerts and only welcomes travelers to the country they are in', () => {
+  const lib = nsStrip(read('src/lib/msafeWelcome.js'));
+  const card = nsStrip(read('src/components/mcare/MSafeWelcomeCard.jsx'));
+  const orb = read('src/components/mcare/MCareOrb.jsx');
+  for (const invented of ['Copacabana', 'police', 'areas to avoid']) {
+    expect(lib, `${invented} must never be written into the welcome`).not.toMatch(new RegExp(invented, 'i'));
+    expect(card, `${invented} must never be written into the welcome card`).not.toMatch(new RegExp(invented, 'i'));
+  }
+  // An alert is only ever a real high or critical update M-Care sent.
+  expect(lib).toMatch(/const ALERT_PRIORITIES = new Set\(\['high', 'critical'\]\)/);
+  expect(orb).toMatch(/const latestAlertEvent = pickLatestAlert\(journeyEvents\)/);
+  // "Welcome to <country>!" only when the traveler's trip country is where they are.
+  expect(orb).toMatch(/const atDestination = hasTrip && !!tripCountryCode && tripCountryCode === visitorCountryCode/);
+  const welcomeAt = lib.indexOf('Welcome to ');
+  expect(welcomeAt).toBeGreaterThan(-1);
+  expect(lib.slice(Math.max(0, welcomeAt - 160), welcomeAt)).toMatch(/if \(atDestination && countryName\)/);
+  // The mockup's "Ask Jarvis" is Marvel's name; the button is "Talk live".
+  expect(nsStrip(orb)).not.toMatch(/['"`]Ask Jarvis/);
+});

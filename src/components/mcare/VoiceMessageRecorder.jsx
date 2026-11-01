@@ -78,7 +78,11 @@ function explainMicError(e) {
   return 'Could not access the microphone. ' + (e?.message || 'Please check your device settings.');
 }
 
-export default function VoiceMessageRecorder({ onSend, onError, disabled = false, theme = 'dark', idleShape = 'square' }) {
+export default function VoiceMessageRecorder({ onSend, onError, disabled = false, theme = 'dark', idleShape = 'square', idleVariant = 'default', onRecordingChange = null }) {
+  // idleVariant='gold' (north-star redesign, 2026-11-01): the idle mic is a
+  // filled gold disc, as in Portia's mockup. onRecordingChange(recording) lets
+  // the caller hide its text box while the recording strip is showing. Both
+  // are optional; without them every existing caller looks and behaves as before.
   // theme='light' (mobile M-Safe redesign, 2026-08-28): swaps only the
   // "recording" active-state pill's hardcoded dark CARD/BORDER/text colors
   // for light equivalents — the idle mic button is already gold-on-light
@@ -109,6 +113,15 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
   const pausedAccumRef = useRef(0);
   const pauseStartRef = useRef(null);
   const pausedRef = useRef(false); // mirrors `paused` state for use inside the onLevel callback closure
+  const onRecordingChangeRef = useRef(onRecordingChange);
+  useEffect(() => { onRecordingChangeRef.current = onRecordingChange; }, [onRecordingChange]);
+  useEffect(() => {
+    onRecordingChangeRef.current?.(recording);
+    // If this control disappears mid-recording (the screen closes, the
+    // connection drops), say so, so the caller never stays stuck hiding its
+    // text box.
+    return () => { if (recording) onRecordingChangeRef.current?.(false); };
+  }, [recording]);
 
   const clearTimers = () => {
     if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
@@ -327,7 +340,13 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
           title="Record a voice message"
           aria-label="Record a voice message"
           className="ms-press"
-          style={{
+          style={idleVariant === 'gold' ? {
+            width: 46, height: 46, borderRadius: '50%', flexShrink: 0, border: 'none',
+            background: 'radial-gradient(circle at 35% 30%, #F6DE8A, #D4AF37 55%, #B8912A)',
+            boxShadow: '0 0 0 1px rgba(255,255,255,0.18) inset, 0 4px 18px rgba(212,175,55,0.45)',
+            cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          } : {
             width: 40, height: 40, borderRadius: idleShape === 'circle' ? '50%' : 12, flexShrink: 0,
             // Follows the panel's theme (it was light even inside the dark panel).
             background: theme === 'dark' ? '#111E27' : '#F6F7FB',
@@ -338,7 +357,9 @@ export default function VoiceMessageRecorder({ onSend, onError, disabled = false
             transition: 'background 0.2s',
           }}
         >
-          <Mic style={{ width: 16, height: 16, color: GOLD }} />
+          {idleVariant === 'gold'
+            ? <Mic style={{ width: 21, height: 21, color: '#0A1020', strokeWidth: 2.2 }} />
+            : <Mic style={{ width: 16, height: 16, color: GOLD }} />}
         </button>
       ) : (
         <div
