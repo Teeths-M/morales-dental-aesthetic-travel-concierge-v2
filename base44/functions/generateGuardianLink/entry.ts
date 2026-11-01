@@ -1,4 +1,5 @@
 ﻿import { createHandler } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 function generateToken(length = 32) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -37,6 +38,35 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       shared_data_scope: data_scope || ['case_status', 'journey_stage', 'location'],
       created_at: now.toISOString()
     });
+
+    // Hash-chained audit entry: who was given access, for how long, and to
+    // what, so "I didn't share that" can be answered. Best-effort; it never
+    // stops the link from being created.
+    try {
+      await base44.asServiceRole.entities.AuditLog.create({
+        event_type: 'guardian_access_granted',
+        actor_id: user.id,
+        actor_role: user.role || 'user',
+        actor_name: user.full_name || '',
+        actor_email: user.email || '',
+        resource_type: 'GuardianSession',
+        resource_id: session.id,
+        // Empty when no name was given, so the activity list says "a family
+        // member" in the reader's own language instead of English.
+        resource_name: guardian_name || '',
+        case_id,
+        details: {
+          expires_at: expiresAt,
+          shared: session.shared_data_scope || data_scope || ['case_status', 'journey_stage', 'location'],
+          emailed: !!guardian_email,
+        },
+        sensitive: false,
+        timestamp: now.toISOString(),
+        prev_hash: await computePrevHash(base44),
+      });
+    } catch (auditError) {
+      console.error('generateGuardianLink: audit entry failed (the link was still created):', auditError);
+    }
 
     const appUrl = Deno.env.get('APP_URL') || 'https://app.moralesmedical.com';
     const guardianUrl = `${appUrl}/guardian/${token}`;

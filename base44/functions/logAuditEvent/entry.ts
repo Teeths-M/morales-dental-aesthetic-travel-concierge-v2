@@ -63,6 +63,8 @@ const ALLOWED_EVENT_TYPES = new Set([
   'provider_booking_suspension_cleared',
   'medical_evidence_approved',
   'medical_evidence_rejected',
+  'safety_monitoring_paused',
+  'safety_monitoring_resumed',
 ]);
 
 async function sha256(text: string): Promise<string> {

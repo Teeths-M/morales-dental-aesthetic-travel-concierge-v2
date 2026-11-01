@@ -87,7 +87,12 @@
         "covert_sos_evidence_accessed",
         "tier2_emergency_packet_assembled",
         "tier2_emergency_routed",
-        "role_changed"
+        "role_changed",
+        "profile_updated",
+        "contact_phone_changed",
+        "guardian_access_granted",
+        "safety_monitoring_paused",
+        "safety_monitoring_resumed"
       ]
     },
     "actor_id": {

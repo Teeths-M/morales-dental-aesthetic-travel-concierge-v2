@@ -85,6 +85,7 @@ import { detectExactMapViewIntent } from '@/lib/exactMapViewIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 import { describeAccuracy } from '@/lib/mapLinks';
 import { isSandboxed } from '@/lib/isSandboxed';
+import { auditService } from '@/lib/services/auditService';
 import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
 import CapabilityPill from './msafe-plus/CapabilityPill';
 import LiveSessionBadge from './msafe-plus/LiveSessionBadge';
@@ -659,6 +660,14 @@ export default function MCareOrb() {
           { $unset: { pause_until: '' } }
         );
       }
+      // Hash-chained audit entry, written only once the pause really
+      // happened, so pausing the safety check-ins can always be traced.
+      auditService.log({
+        event_type: paused ? 'safety_monitoring_paused' : 'safety_monitoring_resumed',
+        resource_type: 'User',
+        resource_id: user.id || '',
+        details: paused ? { paused_for_days: 30 } : {},
+      }).catch(() => {});
     } catch { /* best-effort; the preference flag still reflects the user's intent */ }
   }, [user]);
 

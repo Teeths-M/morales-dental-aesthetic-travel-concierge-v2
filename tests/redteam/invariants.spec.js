@@ -6865,3 +6865,67 @@ test('ACCOUNT SECURITY: audit entries can only be written by the server', () => 
   }
   expect(userScoped, `these write audit rows without server access: ${userScoped.join(', ')}`).toEqual([]);
 });
+
+// ---- Account activity trail: changes to an account are recorded, and the
+// Settings page has no controls that don't do anything. Uses this file's
+// existing `test`, `expect`, and `read` helpers.
+
+const actStrip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+test('ACCOUNT ACTIVITY: the Settings page has no switch or button that does nothing', () => {
+  // A two-factor switch, a change-password button, and consent and
+  // notification checkboxes used to be saved only in the browser. Nothing
+  // read them, so turning one off changed nothing. Sign-in is through Google,
+  // and consent is recorded with each booking.
+  const settings = actStrip(read('src/components/dashboard/modules/SettingsModule.jsx'));
+  for (const fake of ['morales_mfa', 'morales_consents', 'morales_notifications', 'setMfa', 'toggleConsent', 'toggleNotif', 'changePassword']) {
+    expect(settings, `${fake} must stay gone`).not.toContain(fake);
+  }
+  expect(settings, 'profile changes must go through updateMyProfile, so they are always recorded')
+    .not.toMatch(/base44\.auth\.updateMe\(/);
+  expect(settings).toMatch(/invoke\('updateMyProfile'/);
+});
+
+test('ACCOUNT ACTIVITY: a profile change is saved as the user, then recorded, and never stores the phone number', () => {
+  const fn = actStrip(read('base44/functions/updateMyProfile/entry.ts'));
+  expect(fn).toMatch(/requireAuth:\s*true/);
+  const saveAt = fn.indexOf('base44.auth.updateMe(patch)');
+  const auditAt = fn.indexOf('asServiceRole.entities.AuditLog.create(');
+  expect(saveAt, 'the change is made with the user\'s own session').toBeGreaterThan(-1);
+  expect(auditAt, 'the audit entry is written by the server').toBeGreaterThan(saveAt);
+  expect(fn, 'the audit entry keeps only the last two digits').toMatch(/phone_before: lastTwoDigits\(me\.phone\)/);
+  expect(fn, 'the security email must be link-only').toMatch(/body: linkOnlyEmail\(/);
+
+  const pattern = (src) => (src.match(/const PHONE_PATTERN = (\/.*\/);/) || [])[1];
+  const page = read('src/components/dashboard/modules/SettingsModule.jsx');
+  expect(pattern(fn), 'the server must check the phone format').toBeTruthy();
+  expect(pattern(page), 'the page and the server must use the same phone rule').toBe(pattern(fn));
+});
+
+test('ACCOUNT ACTIVITY: every account event is recorded where it happens, and only the server writes most of them', () => {
+  const entity = read('base44/entities/AuditLog.jsonc');
+  const activity = read('src/lib/accountActivity.js');
+  const listed = [...activity.slice(0, activity.indexOf('];')).matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+  expect(listed.length).toBe(6);
+  for (const type of listed) expect(entity, `${type} must be in AuditLog's event list`).toContain(`"${type}"`);
+
+  // Only Private Mode is logged from the app's screens. The rest are written
+  // by server functions, so a client can never log a fake one.
+  const allowlist = read('base44/functions/logAuditEvent/entry.ts');
+  for (const type of ['safety_monitoring_paused', 'safety_monitoring_resumed']) expect(allowlist).toContain(`'${type}'`);
+  for (const type of ['profile_updated', 'contact_phone_changed', 'guardian_access_granted', 'role_changed']) {
+    expect(allowlist, `${type} must not be client-loggable`).not.toContain(`'${type}'`);
+  }
+
+  const guardian = actStrip(read('base44/functions/generateGuardianLink/entry.ts'));
+  const ownerCheck = guardian.indexOf("'Case not found or access denied'");
+  const grantAudit = guardian.indexOf("event_type: 'guardian_access_granted'");
+  expect(grantAudit, 'sharing a journey must be recorded').toBeGreaterThan(-1);
+  expect(grantAudit, 'and only after the ownership check').toBeGreaterThan(ownerCheck);
+  expect(guardian.slice(grantAudit - 400, grantAudit)).toMatch(/asServiceRole\.entities\.AuditLog\.create/);
+
+  const orb = actStrip(read('src/components/mcare/MCareOrb.jsx'));
+  const handler = orb.slice(orb.indexOf('const handlePrivateModeToggle'), orb.indexOf('const handlePrivateModeToggle') + 1600);
+  expect(handler, 'pausing safety check-ins must be recorded, after the pause really happened')
+    .toMatch(/SoloCheckIn\.updateMany[\s\S]*auditService\.log\(\{\s*event_type: paused \? 'safety_monitoring_paused' : 'safety_monitoring_resumed'/);
+});
