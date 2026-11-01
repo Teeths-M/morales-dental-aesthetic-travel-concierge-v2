@@ -25,6 +25,7 @@ const ShareLiveLocation  = lazy(() => import('@/pages/ShareLiveLocation'));
 const CovertSosEvidenceView = lazy(() => import('@/pages/CovertSosEvidenceView'));
 const StartNow           = lazy(() => import('@/pages/StartNow'));
 const DispatchOfferResponse = lazy(() => import('@/pages/DispatchOfferResponse'));
+const EmergencyResponse    = lazy(() => import('@/pages/EmergencyResponse'));
 
 export const tokenRoutes = (
   <>
@@ -49,5 +50,7 @@ export const tokenRoutes = (
     <Route key="start" path="/start" element={<ErrorBoundary><StartNow /></ErrorBoundary>} />
     {/* Responder dispatch offers — the unguessable token in the URL is the credential. */}
     <Route key="dispatch-offer" path="/dispatch-offer/:token" element={<ErrorBoundary><DispatchOfferResponse /></ErrorBoundary>} />
+    {/* Emergency incident for a responder or guardian — the token in the URL is the credential, no login. */}
+    <Route key="respond" path="/respond/:token" element={<ErrorBoundary><EmergencyResponse /></ErrorBoundary>} />
   </>
 );

@@ -131,6 +131,25 @@ export async function sendEmail(
   }
 }
 
+/**
+ * Stands a row down on the channel that originally reached it. Reusing the same
+ * channel matters: a driver reached by SMS will not read an email, and telling
+ * nobody is how a pool learns that a 3am yes goes unanswered.
+ */
+export async function sendRowStandDown(
+  base44: any,
+  row: any,
+  message: string,
+): Promise<{ ok: boolean; error?: string; provider_ref?: string }> {
+  const to = row?.recipient_ref;
+  if (!to) return { ok: false, error: 'No contact address on the original alert.' };
+  if (row.channel === 'sms') return sendSms(String(to), message);
+  if (row.channel === 'email') {
+    return sendEmail(base44, String(to), 'M-Care — stand down', message);
+  }
+  return { ok: false, error: `No stand-down channel for ${row.channel}.` };
+}
+
 // ── Row drafts ───────────────────────────────────────────────────────────────
 
 export interface RecipientDraft {

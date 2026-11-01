@@ -1,0 +1,41 @@
+{
+  "name": "Emergency Incident Acknowledgement Sweep",
+  "description": "Every 5 minutes: finds any emergency recipient row whose acknowledgement deadline passed with no human response, records it as TIMED_OUT, marks the incident as escalated for acknowledgement timeout, and pages the care team once with the whole list. Idempotent \u2014 a timeout is written once, so a repeated pass cannot page the on-call twice for the same silence. The function also accepts X-Cron-Secret, so an external tighter scheduler can drive it.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "emergency_incident_acknowledgement_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sweepIncidentAcknowledgements",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
