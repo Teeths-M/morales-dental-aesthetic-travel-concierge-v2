@@ -87,7 +87,9 @@ export const clientRoutes = (
       <Route path="/my-quotes"                   element={<ErrorBoundary><MyQuotes /></ErrorBoundary>} />
       <Route path="/nominate-doctor"             element={<ErrorBoundary><NominateDoctor /></ErrorBoundary>} />
       <Route path="/invite-provider"             element={<ErrorBoundary><InviteProvider /></ErrorBoundary>} />
-      <Route path="/m-care"                      element={<ErrorBoundary><MCareAgent /></ErrorBoundary>} />
+      {/* The older full-page M-Care screen, kept for its list of past conversations. /m-care itself is now
+          M-Care's own full-screen app (publicRoutes.jsx). */}
+      <Route path="/m-care/history"              element={<ErrorBoundary><MCareAgent /></ErrorBoundary>} />
       <Route path="/traveler-guardian"           element={<ErrorBoundary><TravelerGuardian /></ErrorBoundary>} />
       <Route path="/consult/:doctorId"                        element={<ErrorBoundary><BookVirtualConsultation /></ErrorBoundary>} />
       <Route path="/consultation/:consultationId/room"         element={<ErrorBoundary><VirtualConsultationRoom /></ErrorBoundary>} />

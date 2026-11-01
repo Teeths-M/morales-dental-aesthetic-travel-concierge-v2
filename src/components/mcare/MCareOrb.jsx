@@ -114,6 +114,10 @@ const PANEL_SPLIT_QUERY = '(min-width: 1024px)';
 // On tablets the stacked layout fills the screen, so its content sits in one
 // readable centred column instead of stretching edge to edge.
 const STACKED_MAX_WIDTH = 760;
+// The page behind the laptop panel on the standalone /m-care screen, where there is no website to dim: the app's
+// navy, or the light panel's ivory warming to a soft gold at the edges.
+const STANDALONE_PAGE_DARK = 'radial-gradient(circle at 50% 20%, #0F1B2E 0%, #060B16 65%)';
+const STANDALONE_PAGE_LIGHT = 'radial-gradient(circle at 50% 25%, #FFFFFF 0%, #F8F7F2 45%, #ECE5D3 100%)';
 
 // Public pages where all users should see visitor-facing tips
 const PUBLIC_PATHS = new Set(['/', '/discover', '/providers', '/about', '/procedures', '/how-it-works', '/partners']);
@@ -150,7 +154,9 @@ const TIPS_KEYS = {
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function MCareOrb() {
+// standalone: M-Care's own full-screen app (/m-care, pages/MCareApp.jsx). The same panel, always open, as the
+// whole page: no website underneath, no click-outside-to-close, and Close leaves the screen instead of hiding it.
+export default function MCareOrb({ standalone = false } = {}) {
   const { t, i18n }       = useTranslation();
   const { toast }         = useToast();
   const { user }          = useAuth();
@@ -199,7 +205,19 @@ export default function MCareOrb() {
 
   const [tipIdx,     setTipIdx]     = useState(0);
   const [showBubble, setShowBubble] = useState(false);
-  const [open,       setOpen]       = useState(false);
+  const [openState,  setOpen]       = useState(false);
+  // On the standalone screen the panel is the page, so it is always open; any of the panel's own
+  // setOpen(false) calls are harmless there, and leaving is closePanel's job (see below).
+  const open = standalone || openState;
+  // Close: the overlay hides; the standalone screen goes back to the page the visitor came from inside the app,
+  // or to the home page when M-Care was the first thing opened (a QR scan, a shared link, a home-screen icon),
+  // where there is no page to go back to. history.state.idx is React Router's own position in this tab's history.
+  const closePanel = useCallback(() => {
+    if (!standalone) { setOpen(false); return; }
+    const idx = window.history.state?.idx;
+    if (typeof idx === 'number' && idx > 0) navigate(-1);
+    else navigate('/');
+  }, [standalone, navigate]);
   const [input,      setInput]      = useState('');
   // VoiceMessageRecorder (WhatsApp-style voice notes) has no onRecordingChange
   // equivalent to VoiceInputButton's, so nothing sets this true anymore — it
@@ -301,6 +319,10 @@ export default function MCareOrb() {
     };
   }, [open, isDesktopPanel]);
   const keyboardOpen = !isDesktopPanel && mobileViewport.keyboardOpen;
+  // Very little room above the keyboard (a phone on its side, or a small phone): the header and the journey
+  // tracker step aside as well, so the conversation and the message box keep the space instead of being pushed
+  // off the bottom of the screen.
+  const compactKeyboard = keyboardOpen && (mobileViewport.height ?? Infinity) < 360;
   // Light-mode option for the desktop panel (2026-08-29, mentor feedback:
   // "a bit dark, should have a light mode too"). Desktop was hardcoded to
   // the app's dark tokens (`className="dark"`); mobile already has a real
@@ -360,6 +382,7 @@ export default function MCareOrb() {
   const [privateMode, setPrivateMode] = useState(false);
   const [responseLanguage, setResponseLanguage] = useState(null);
   const bottomRef = useRef(null);
+  const chatScrollRef = useRef(null);
   const vaultRef = useRef(null);
   const responseLanguageRef = useRef(null);
   const chatInputRef = useRef(null);
@@ -1499,6 +1522,16 @@ export default function MCareOrb() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [agentMessages, journeyEvents, pilotMessages, isDesktopPanel]);
 
+  // The keyboard opening makes the conversation shorter; keep the newest message in view, the way a messaging app
+  // does (same before-a-conversation exception as above). Sets the list's own scroll position rather than calling
+  // scrollIntoView, which on an iPhone can also scroll the page under the keyboard.
+  useEffect(() => {
+    if (!keyboardOpen) return;
+    if (agentMessages.length === 0 && pilotMessages.length <= 1) return;
+    const el = chatScrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [keyboardOpen, mobileViewport.height]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Speaking state right after a new assistant message lands. When Talk Mode
   // is off (default), this is byte-identical to the original honest fake
   // pulse — a fixed 1800ms timer, no audio, since there's no real TTS signal
@@ -1949,11 +1982,12 @@ export default function MCareOrb() {
   const offlineArtifact = !isOnline ? findLastMapOrQrToken(agentMessages) : null;
 
   useEffect(() => {
-    if (!open) return;
+    // The overlay closes on Escape; the standalone screen ignores it (Escape mid-sentence must not leave the page).
+    if (!open || standalone) return;
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, standalone]);
 
   const paused = isSystemPaused();
 
@@ -2020,6 +2054,7 @@ export default function MCareOrb() {
           setPilotMessages(prev => [...prev, { role: 'assistant', content: copy.saved, savedLabel: copy.savedLabel, created_date: new Date().toISOString() }]);
           // Drop the keyboard so they can read the goodbye, then close the chat on its own, unless they've started
           // typing something else. The scan link's ?mcare=pilot is removed so a refresh doesn't greet them again.
+          // On the standalone screen there is nothing behind to reveal, so it just stays on M-Care, minus the link.
           chatInputRef.current?.blur();
           setTimeout(() => {
             const el = chatInputRef.current;
@@ -2714,12 +2749,13 @@ export default function MCareOrb() {
       {/* Expand/collapse is meaningless once mobile is always full-bleed
           (see the panel sizing below) — shown on desktop only, where the
           centered-card vs. wider-card distinction still applies. */}
-      {isDesktopPanel && (
+      {/* The standalone screen is always full size, so it has nothing to expand into. */}
+      {isDesktopPanel && !standalone && (
         <button onClick={() => setExpanded(v => !v)} className="ms-press ms-ctrl" title={expanded ? 'Collapse' : 'Expand'} aria-label={expanded ? 'Collapse' : 'Expand'} style={ctrlBtn()}>
           {expanded ? <Minimize2 style={ctrlIcon} /> : <Maximize2 style={ctrlIcon} />}
         </button>
       )}
-      <button onClick={() => setOpen(false)} className="ms-press ms-ctrl" title="Close" aria-label="Close" style={ctrlBtn()}>
+      <button onClick={closePanel} className="ms-press ms-ctrl" title="Close" aria-label="Close" style={ctrlBtn()}>
         <X style={{ width: 20, height: 20 }} />
       </button>
     </div>
@@ -2960,7 +2996,7 @@ export default function MCareOrb() {
             </span>
           )}
         </button>
-        <button onClick={() => setOpen(false)} className="ms-press ms-ctrl" title="Close" aria-label="Close" style={headerIconBtn()}>
+        <button onClick={closePanel} className="ms-press ms-ctrl" title="Close" aria-label="Close" style={headerIconBtn()}>
           <X style={{ width: 22, height: 22 }} />
         </button>
       </div>
@@ -3002,7 +3038,7 @@ export default function MCareOrb() {
   // single full-width row under the whole 3-column area on desktop.
   const chatMain = (
     <>
-      {agentMessages.length > 0 && (
+      {agentMessages.length > 0 && !compactKeyboard && (
         <JourneyStageTracker messages={agentMessages} />
       )}
 
@@ -3010,8 +3046,10 @@ export default function MCareOrb() {
           (STACKED_MAX_WIDTH); on phones it is the same 14px as before. */}
       {/* Phone and tablet: transparent, so the country photo fixed behind the top of the screen shows through
           while the hero and messages scroll over it. */}
-      <div style={{
-        flex: 1, minHeight: 0, overflowY: 'auto', padding: isDesktopPanel ? '14px 14px' : `${heroExpanded ? 4 : 12}px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 22px`,
+      {/* overscroll-behavior: contain keeps a fling at the top or bottom of the conversation from scrolling
+          anything outside it. */}
+      <div ref={chatScrollRef} style={{
+        flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: isDesktopPanel ? '14px 14px' : `${heroExpanded ? 4 : 12}px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 22px`,
         display: 'flex', flexDirection: 'column', gap: 12, background: !isDesktopPanel ? 'transparent' : (useDarkTheme ? DARK : LIGHT_BG),
         // A soft fade where the scrolling content meets the shortcut chips, instead of a hard cut.
         ...(!isDesktopPanel ? { WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)', maskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)' } : {}),
@@ -3275,6 +3313,9 @@ export default function MCareOrb() {
     background: useDarkTheme ? CARD_BG : (isDesktopPanel ? DESKTOP_LUXURY_BG : LIGHT_BG),
     border: `1px solid ${inputFocused ? GOLD : (useDarkTheme ? BORDER_DARK : (isDesktopPanel ? `${DESKTOP_LUXURY_GOLD}40` : LIGHT_BORDER))}`,
     boxShadow: inputFocused ? '0 0 0 3px rgba(212,175,55,0.18)' : 'none',
+    // The same glow, handed to the .ms-composer-input rule: that rule has to use !important to beat the app-wide
+    // ring, which would otherwise strip this field's own glow along with it.
+    '--ms-composer-glow': '0 0 0 3px rgba(212,175,55,0.18)',
     borderRadius: 22, padding: '10px 16px', fontSize: isDesktopPanel ? TYPE.body : 16,
     color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, outline: 'none', position: 'relative',
     transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
@@ -3291,8 +3332,11 @@ export default function MCareOrb() {
       <div style={recordingVoice ? { display: 'flex', alignItems: 'center', gap: 8, minHeight: 58 } : {
         display: 'flex', alignItems: 'center', gap: 4, minHeight: 58, boxSizing: 'border-box',
         background: GLASS.cardStrong, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
-        border: `1px solid ${inputFocused ? GOLD : 'rgba(255,255,255,0.14)'}`,
-        boxShadow: inputFocused ? '0 0 0 3px rgba(212,175,55,0.18)' : GLASS.shadow,
+        // The one focus ring for the message box: a thin gold edge and a soft glow on the whole pill, for touch and
+        // keyboard alike. The box inside skips the app-wide ring (.ms-composer-input), which used to draw a second,
+        // thick gold rectangle inside this one.
+        border: `1px solid ${inputFocused ? 'rgba(212,175,55,0.85)' : 'rgba(255,255,255,0.14)'}`,
+        boxShadow: inputFocused ? `0 0 0 3px rgba(212,175,55,0.14), ${GLASS.shadow}` : GLASS.shadow,
         borderRadius: 999, padding: '6px 6px 6px 8px', transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
       }}>
         {!recordingVoice && (
@@ -3328,6 +3372,7 @@ export default function MCareOrb() {
               placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? 'Uploading…' : 'Message M-Safe…') : t('guide.placeholder_offline')}
               enterKeyHint="send"
               aria-label="Message M-Safe"
+              className="ms-composer-input"
               // 16px: iPhone zooms the page into any text box smaller than that.
               style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', padding: '10px 6px', fontSize: 16, color: NIGHT.ink, position: 'relative' }}
             />
@@ -3395,6 +3440,8 @@ export default function MCareOrb() {
           // 16px on phones: iPhone zooms the whole page into any text box smaller than that, which pushed the send
           // button off-screen and broke the layout. Desktop keeps its smaller size.
           aria-label="Message M-Safe"
+          // Focus shows as this field's own gold edge and glow (inputFieldStyle), not the app-wide ring as well.
+          className="ms-composer-input"
           style={inputFieldStyle}
         />
       </div>
@@ -3439,11 +3486,29 @@ export default function MCareOrb() {
         </div>
       )}
 
+      {/* ── Phone and tablet: a solid layer of the panel's own navy under it, filling the whole screen ──
+          The panel is pinned to the visible area above the keyboard (mobileViewport). On an iPhone, Safari floats
+          its address pill and the up/down/done bar in see-through glass between that area and the keyboard, and
+          the website underneath showed through the gap. This layer is what shows there now. */}
+      <AnimatePresence>
+      {open && !isDesktopPanel && (
+        <motion.div
+          key="msafe-underlay"
+          aria-hidden="true"
+          initial={standalone ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, minHeight: '100lvh', zIndex: 9001, background: NIGHT.canvas }}
+        />
+      )}
+      </AnimatePresence>
+
       {/* ── M-Safe chat panel ── */}
       <AnimatePresence>
       {open && (
         <motion.div
-          onClick={() => setOpen(false)}
+          onClick={standalone ? undefined : () => setOpen(false)}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -3463,10 +3528,14 @@ export default function MCareOrb() {
             // avoid the exact risk already flagged for /m-care's own
             // MSafeWorkspace.jsx background). Dark mode and mobile keep the
             // original plain scrim exactly as before.
-            background: (isDesktopPanel && !useDarkTheme)
-              ? 'radial-gradient(circle at 50% 30%, rgba(248,247,242,0.55), rgba(210,169,61,0.20) 55%, rgba(15,23,42,0.45) 100%)'
-              : 'rgba(15,23,42,0.45)',
-            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isDesktopPanel ? 16 : 0,
+            // The standalone screen has no website behind it to dim, so this layer is the page itself: solid,
+            // nothing to blur.
+            background: standalone
+              ? (isDesktopPanel ? (useDarkTheme ? STANDALONE_PAGE_DARK : STANDALONE_PAGE_LIGHT) : NIGHT.canvas)
+              : (isDesktopPanel && !useDarkTheme)
+                ? 'radial-gradient(circle at 50% 30%, rgba(248,247,242,0.55), rgba(210,169,61,0.20) 55%, rgba(15,23,42,0.45) 100%)'
+                : 'rgba(15,23,42,0.45)',
+            backdropFilter: standalone ? 'none' : 'blur(4px)', WebkitBackdropFilter: standalone ? 'none' : 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isDesktopPanel ? 16 : 0,
           }}
         >
         <motion.div
@@ -3483,7 +3552,7 @@ export default function MCareOrb() {
             // true full-screen framing — no card margin, no rounded corners,
             // `expanded` becomes a no-op there (nothing left to expand into).
             width: isDesktopPanel
-              ? (expanded ? 'min(1500px, 98vw)' : 'min(1306px, 96vw)')
+              ? ((expanded || standalone) ? 'min(1500px, 98vw)' : 'min(1306px, 96vw)')
               : '100vw',
             // Phone and tablet: the north-star navy canvas. The shared bubbles,
             // safety cards and journey tracker draw from the app's colour
@@ -3508,7 +3577,7 @@ export default function MCareOrb() {
             boxShadow: !isDesktopPanel ? 'none' : (useDarkTheme ? `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,175,55,0.08)` : `0 24px 64px rgba(15,23,42,0.10), 0 0 0 1px rgba(210,169,61,0.14)`),
             display: 'flex', flexDirection: 'column',
             height: isDesktopPanel
-              ? (expanded ? '92vh' : 'min(80vh, 640px)')
+              ? ((expanded || standalone) ? '92vh' : 'min(80vh, 640px)')
               : (mobileViewport.height ? `${mobileViewport.height}px` : '100dvh'),
             overflow: 'hidden' }}>
 
@@ -3714,15 +3783,22 @@ export default function MCareOrb() {
               <div aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: heroExpanded ? 'clamp(440px, 70%, 820px)' : 'min(260px, 40%)', pointerEvents: 'none', zIndex: 0, transition: 'height 0.35s ease' }}>
                 <CountryBackdrop code={visitorCountryCode} />
               </div>
-              <div style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-                {stackedHeader}
+              {/* The side padding keeps everything clear of the notch when the phone is on its side (zero upright). */}
+              <div style={{ position: 'relative', zIndex: 1, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)' }}>
+                {/* With very little room above the keyboard the header steps aside; the spacer keeps the conversation
+                    clear of the status bar in a home-screen install, where the page runs under it. */}
+                {compactKeyboard
+                  ? <div aria-hidden="true" style={{ height: 'env(safe-area-inset-top, 0px)', flexShrink: 0 }} />
+                  : stackedHeader}
                 {!heroExpanded && !keyboardOpen && stackedCompactHero}
                 {chatMain}
                 {inputBarBlock}
                 {!keyboardOpen && (
                   <MSafeBottomNav
                     orbState={orbState}
-                    onHome={() => setOpen(false)}
+                    // In the overlay, Home closes M-Care back to the page; the standalone screen has no page under
+                    // it, so Home goes to the home page (the bar's four outer buttons are all ways out of M-Safe).
+                    onHome={standalone ? () => navigate('/') : () => setOpen(false)}
                     onJourney={() => { navigate('/dashboard/journey'); setOpen(false); }}
                     onServices={() => setMoreChipsOpen(v => !v)}
                     servicesOpen={moreChipsOpen}
@@ -3746,6 +3822,11 @@ export default function MCareOrb() {
         .ms-press { transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; -webkit-tap-highlight-color: transparent; }
         .ms-press:active { transform: scale(0.96); }
         .ms-press:focus-visible, .ms-row:focus-visible { outline: 2px solid ${GOLD}; outline-offset: 2px; }
+        /* The message box. Browsers count every tap into a text field as :focus-visible, so the app-wide ring in
+           index.css drew a thick gold rectangle plus a dark halo inside the composer, on top of the composer's own
+           gold focus edge. The composer's edge and glow are this box's focus ring, for keyboard users too, so the
+           box itself skips the app-wide one. !important only because that rule uses it. */
+        .ms-composer-input:focus-visible { outline: none !important; box-shadow: var(--ms-composer-glow, none) !important; }
         .ms-ctrl:hover { background-color: rgba(212,175,55,0.12) !important; }
         .ms-chip:hover { border-color: rgba(212,175,55,0.65) !important; box-shadow: 0 2px 10px rgba(212,175,55,0.16) !important; }
         .ms-row:hover, .ms-row:active { background-color: rgba(212,175,55,0.08) !important; }

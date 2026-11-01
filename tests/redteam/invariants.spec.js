@@ -6974,3 +6974,25 @@ test('EMERGENCY ALERT LINKS: a link code only ever opens its own alert, and only
   expect(upd).toMatch(/patch\.escalated_to = \(isCareTeam && b\.escalated_to\)/);
   expect(upd).not.toMatch(/patch\.escalated_to = b\.escalated_to/);
 });
+
+// ---- M-Care's own full-screen app (2026-11-01): /m-care is the M-Care panel as the whole page. Two M-Cares at
+// once would mean two live conversations listening and talking over each other; the message box's focus must never
+// simply disappear; and on a phone the website must never show through the gap Safari leaves above the keyboard.
+test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focus, and no website shows through on a phone', () => {
+  const layout = nsStrip(read('src/components/layout/AppLayout.jsx'));
+  expect(layout).toMatch(/const isStandaloneMcare = pathname === '\/m-care'/);
+  expect(layout, 'the layout must not mount its own floating M-Care on /m-care')
+    .toMatch(/\{!isDemo && !isStandaloneMcare && <MCareOrb \/>\}/);
+  expect(nsStrip(read('src/pages/MCareApp.jsx'))).toMatch(/<MCareOrb standalone \/>/);
+  expect(nsStrip(read('src/routes/publicRoutes.jsx')), '/m-care must be public: someone who scans a QR code has no account')
+    .toMatch(/path="\/m-care"\s+element=\{<ErrorBoundary><MCareApp \/>/);
+
+  const orb = read('src/components/mcare/MCareOrb.jsx');
+  // The message box skips the app-wide focus ring only because the composer draws its own, from real focus.
+  expect(orb).toMatch(/\.ms-composer-input:focus-visible \{ outline: none !important; box-shadow: var\(--ms-composer-glow, none\) !important; \}/);
+  expect(orb).toMatch(/border: `1px solid \$\{inputFocused \? 'rgba\(212,175,55,0\.85\)'/);
+  expect(orb).toMatch(/onFocus=\{\(\) => setInputFocused\(true\)\}/);
+  // The phone underlay: the panel's own navy fills the whole screen under it.
+  expect(orb).toMatch(/key="msafe-underlay"/);
+  expect(orb).toMatch(/minHeight: '100lvh', zIndex: 9001, background: NIGHT\.canvas/);
+});

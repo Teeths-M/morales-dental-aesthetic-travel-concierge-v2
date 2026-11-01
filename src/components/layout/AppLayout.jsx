@@ -51,6 +51,12 @@ export default function AppLayout() {
   // visitor just came from, not the full app's old MORALES chrome.
   const isCinematicLanding = pathname === '/' || pathname === '/pilot';
 
+  // M-Care's own full-screen app (/m-care, pages/MCareApp.jsx): the chat is the whole page. No site header, footer,
+  // tab bar, offline strip or pull-to-refresh, and no second floating M-Care (the page renders its own, always
+  // open). Everything that works in the background stays: the biometric lock, covert SOS, offline sync and the
+  // safety alerts below. /m-care/history (the older screen with past conversations) keeps the normal layout.
+  const isStandaloneMcare = pathname === '/m-care';
+
   // Where the day/night theme is allowed to apply: signed-in app screens only,
   // never the public marketing site or the cinematic landing page.
   const appliesTheme = !!user && !isCinematicLanding && !isMarketingPath(pathname);
@@ -110,7 +116,9 @@ export default function AppLayout() {
     return () => unregisterHandshake();
   }, [user?.email]);
 
-  const suppressOnboarding = NO_ONBOARDING_PATHS.some(p => pathname.startsWith(p));
+  // The first-time wizard waits for the next app screen rather than covering M-Care's own (M-Care onboards in
+  // conversation anyway).
+  const suppressOnboarding = isStandaloneMcare || NO_ONBOARDING_PATHS.some(p => pathname.startsWith(p));
   const [showOnboarding, setShowOnboarding] = useState(
     () => !suppressOnboarding && !!user && !isOnboardingComplete()
   );
@@ -147,7 +155,7 @@ export default function AppLayout() {
     [queryClient]
   );
   const { pullDistance, refreshing } = usePullToRefresh(handlePullRefresh, {
-    enabled: !!user && !isAdmin,
+    enabled: !!user && !isAdmin && !isStandaloneMcare,
   });
 
   return (
@@ -167,18 +175,19 @@ export default function AppLayout() {
       )}
 
       <MSafeThemeScope active={appliesTheme} className="min-h-screen flex flex-col">
-        <OfflineBanner />
-        {!isCinematicLanding && <Header />}
-        <main className={`flex-1 ${isCinematicLanding ? '' : 'pt-[56px] sm:pt-[72px]'} ${user && !isAdmin ? 'pb-[70px] lg:pb-0' : ''}`}>
-          {user && !isAdmin && (
+        {!isStandaloneMcare && <OfflineBanner />}
+        {!isCinematicLanding && !isStandaloneMcare && <Header />}
+        <main className={`flex-1 ${(isCinematicLanding || isStandaloneMcare) ? '' : 'pt-[56px] sm:pt-[72px]'} ${user && !isAdmin && !isStandaloneMcare ? 'pb-[70px] lg:pb-0' : ''}`}>
+          {user && !isAdmin && !isStandaloneMcare && (
             <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
           )}
           <Outlet />
         </main>
-        {!isCinematicLanding && <Footer />}
+        {!isCinematicLanding && !isStandaloneMcare && <Footer />}
 
-        {/* M-Care — hidden on demo pages so judges see a clean experience */}
-        {!isDemo && <MCareOrb />}
+        {/* M-Care — hidden on demo pages so judges see a clean experience, and on /m-care, whose page renders
+            its own full-screen M-Care (two at once would mean two conversations listening and talking). */}
+        {!isDemo && !isStandaloneMcare && <MCareOrb />}
 
         {/* Patient-facing floating elements — hidden on admin pages */}
         {!isAdmin && (
@@ -193,8 +202,9 @@ export default function AppLayout() {
             {user && <FloatingCheckInAlert user={user} />}
             {user && <GlobalEventBroadcaster user={user} />}
 
-            {/* Mobile primary nav — hidden at lg:+ where DashboardSidebar's desktop rail takes over */}
-            {user && <BottomTabBar />}
+            {/* Mobile primary nav — hidden at lg:+ where DashboardSidebar's desktop rail takes over, and on
+                M-Care's own screen, which has its own bottom bar */}
+            {user && !isStandaloneMcare && <BottomTabBar />}
           </>
         )}
 

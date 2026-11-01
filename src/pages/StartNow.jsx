@@ -69,7 +69,7 @@ export default function StartNow() {
 				</div>
 
 				<div style={{ display: 'grid', gap: 10, marginTop: 28 }}>
-					<Row icon={MessageCircle} title="Talk to M-Care now" sub="Ask anything about a trip or a procedure" onClick={() => navigate('/?mcare=open')} />
+					<Row icon={MessageCircle} title="Talk to M-Care now" sub="Ask anything about a trip or a procedure" onClick={() => navigate('/m-care')} />
 					<Row icon={Mail} title="Join the pilot" sub="Be first when your spot opens" to={pilotLink} />
 					<Row
 						icon={Smartphone}
