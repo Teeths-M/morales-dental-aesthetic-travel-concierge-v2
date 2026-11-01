@@ -17,6 +17,15 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const isCareTeam = user?.role === 'admin' || user?.role === 'platform_admin';
   const now = new Date().toISOString();
 
+  // A responder's link code is the credential for exactly one alert. Look it up
+  // once, so it can be checked against whichever alert ends up loaded.
+  let tokenRow: any = null;
+  if (b?.ack_token) {
+    const links = await base44.asServiceRole.entities.IncidentNotification
+      .filter({ ack_token: String(b.ack_token) }, '-created_date', 1).catch(() => []);
+    tokenRow = links?.[0] || null;
+  }
+
   let incident: any = null;
   if (b?.incident_id) {
     const rows = await base44.asServiceRole.entities.Incident
@@ -26,20 +35,24 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   // A responder holding an ack_token may see the incident they were called to,
   // and nothing else — no other incidents, no other people.
-  if (!incident && b?.ack_token) {
-    const links = await base44.asServiceRole.entities.IncidentNotification
-      .filter({ ack_token: String(b.ack_token) }, '-created_date', 1).catch(() => []);
-    if (links?.[0]) {
-      const rows = await base44.asServiceRole.entities.Incident
-        .filter({ id: links[0].incident_id }, '-created_date', 1).catch(() => []);
-      incident = rows?.[0] || null;
-    }
+  if (!incident && tokenRow) {
+    const rows = await base44.asServiceRole.entities.Incident
+      .filter({ id: tokenRow.incident_id }, '-created_date', 1).catch(() => []);
+    incident = rows?.[0] || null;
   }
 
   if (!incident) return err('Alert not found.', 404);
 
-  const ownsIncident = incident.patient_email === user?.email || incident.patient_id === user?.id;
-  if (!isCareTeam && !ownsIncident && !b?.ack_token) {
+  // Ownership needs a signed-in user and a real value to match, so an alert
+  // with a blank owner field is never readable by someone with no account.
+  const ownsIncident = !!user && (
+    (!!incident.patient_email && incident.patient_email === user.email) ||
+    (!!incident.patient_id && incident.patient_id === user.id)
+  );
+  // The link code must belong to THIS alert. Before this check, sending any
+  // alert's ID with any code at all, even a made-up one, was let through.
+  const tokenMatches = !!tokenRow && tokenRow.incident_id === incident.id;
+  if (!isCareTeam && !ownsIncident && !tokenMatches) {
     return err('You do not have access to this alert.', 403);
   }
 
@@ -100,7 +113,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     viewer: {
       is_care_team: Boolean(isCareTeam),
       is_patient: Boolean(ownsIncident),
-      is_responder: Boolean(b?.ack_token) && !isCareTeam && !ownsIncident,
+      is_responder: tokenMatches && !isCareTeam && !ownsIncident,
     },
   });
 }, { name: 'getEmergencyIncident', requireAuth: false }));

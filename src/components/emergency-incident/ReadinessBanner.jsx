@@ -1,7 +1,5 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle2, Phone, ShieldAlert } from 'lucide-react';
-import MSafeCard from '@/components/mobile/MSafeCard';
-import MSafeText from '@/components/mobile/MSafeText';
 import { capabilityCopy, toneSurface, toneText } from '@/lib/emergencyIncidentUi';
 
 /**

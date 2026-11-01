@@ -92,7 +92,9 @@ Deno.serve(createHandler(async ({ base44, user, body, req }) => {
   }
   if (to === 'ESCALATED') {
     patch.escalated_at = now;
-    patch.escalated_to = b.escalated_to || Deno.env.get('ADMIN_EMAIL') || null;
+    // Only the care team may name who an escalation goes to. Someone holding a
+    // responder link always escalates to the duty coordinator.
+    patch.escalated_to = (isCareTeam && b.escalated_to) || Deno.env.get('ADMIN_EMAIL') || null;
     patch.acknowledgement_state = 'escalated';
     patch.escalation_note = b.reason || null;
   }

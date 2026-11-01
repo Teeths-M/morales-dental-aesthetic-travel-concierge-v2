@@ -6954,3 +6954,23 @@ test('NORTH STAR: the M-Safe welcome card shows only real alerts and only welcom
   // The mockup's "Ask Jarvis" is Marvel's name; the button is "Talk live".
   expect(nsStrip(orb)).not.toMatch(/['"`]Ask Jarvis/);
 });
+
+// ---- Emergency alert links (2026-11-01): a responder's link code opens only
+// the alert it was sent for. Found while merging the Builder's incident work:
+// any alert ID plus any code at all, even a made-up one, used to be let in.
+test('EMERGENCY ALERT LINKS: a link code only ever opens its own alert, and only the care team picks who an escalation goes to', () => {
+  const get = nsStrip(read('base44/functions/getEmergencyIncident/entry.ts'));
+  expect(get, 'the link code must be checked against the alert actually loaded')
+    .toMatch(/const tokenMatches = !!tokenRow && tokenRow\.incident_id === incident\.id/);
+  expect(get).toMatch(/if \(!isCareTeam && !ownsIncident && !tokenMatches\)/);
+  expect(get, 'the mere presence of a code must never be enough').not.toMatch(/&& !b\?\.ack_token\)/);
+  expect(get, 'an alert with a blank owner must not match someone with no account')
+    .toMatch(/const ownsIncident = !!user && \(/);
+  expect(get).toMatch(/is_responder: tokenMatches/);
+
+  const upd = nsStrip(read('base44/functions/updateIncidentRecipientState/entry.ts'));
+  // A row is found by its own code, or by ID only for the care team.
+  expect(upd).toMatch(/if \(b\.recipient_id && isCareTeam\)/);
+  expect(upd).toMatch(/patch\.escalated_to = \(isCareTeam && b\.escalated_to\)/);
+  expect(upd).not.toMatch(/patch\.escalated_to = b\.escalated_to/);
+});
