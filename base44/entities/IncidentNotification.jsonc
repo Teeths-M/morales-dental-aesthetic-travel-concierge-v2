@@ -1,7 +1,7 @@
 {
   "name": "IncidentNotification",
   "type": "object",
-  "description": "One row per party per channel for an incident's notification fanout. All rows are created QUEUED at trigger time and fired in parallel \u2014 delivery of one never gates another, and none of them ever gate dispatch. Each row carries its OWN independent status: QUEUED, SENT, DELIVERED, ACKNOWLEDGED or FAILED. SENT means the provider accepted the message and nothing more; only a real provider delivery receipt or a human acknowledgement may move it to DELIVERED/ACKNOWLEDGED, enforced by canAdvanceNotification. A row with neither a phone nor an email is still created with channel 'app' so an unreachable party is a VISIBLE gap rather than a silently missing row.",
+  "description": "One row per party per channel for an incident's notification fanout \u2014 and the app's authoritative per-recipient, per-channel record (this IS the incident-recipient status record; extending it rather than adding a parallel table keeps one source of truth). All rows are created QUEUED at trigger time and fired in parallel \u2014 delivery of one never gates another, and none of them ever gate dispatch. Each row carries its OWN independent status: QUEUED, SENT, DELIVERED, ACKNOWLEDGED, ACCEPTED, EN_ROUTE, ARRIVED, FAILED, TIMED_OUT or ESCALATED. SENT means the provider accepted the message and nothing more; only a real provider delivery receipt or a human acknowledgement may advance it, enforced by canAdvanceRecipient in shared/emergencyIncident.ts. The responder states (ACCEPTED / EN_ROUTE / ARRIVED) exist so a security team's own progress is recorded on the row that contacted them, and they can only be written by the server from an authorised, assignment-checked action \u2014 never by a client or a status flag. acknowledgement_deadline_at is set server-side from policy, and a passed deadline without an acknowledgement is recorded as TIMED_OUT and escalated to a human, never quietly left as 'sent'. The message provenance fields (language, template key, template version, original and translated text, translation_state) record exactly what was said and in which approved wording; where no approved template exists the row is marked human_required rather than machine-translated into an emergency.",
   "properties": {
     "incident_id": {
       "type": "string"
@@ -41,6 +41,21 @@
       "type": "string",
       "description": "Phone or email actually targeted. Stored so the record shows who was really contacted."
     },
+    "recipient_id": {
+      "type": "string",
+      "description": "The responder/agency record id when this row reaches an assigned team, so an acknowledgement can be checked against the actual assignment rather than a claimed one."
+    },
+    "authorization": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "guardian_consent",
+        "care_team",
+        "assigned_responder",
+        "policy_emergency_number"
+      ],
+      "description": "Why this recipient was allowed to be told. Written by the server at fanout; a row without it is a visible authorization gap rather than an assumed consent."
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -48,7 +63,12 @@
         "SENT",
         "DELIVERED",
         "ACKNOWLEDGED",
-        "FAILED"
+        "ACCEPTED",
+        "EN_ROUTE",
+        "ARRIVED",
+        "FAILED",
+        "TIMED_OUT",
+        "ESCALATED"
       ],
       "default": "QUEUED"
     },
@@ -68,6 +88,20 @@
       "type": "string",
       "format": "date-time"
     },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the responder accepted the assignment. Written only by an assignment-checked server action."
+    },
+    "en_route_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "arrived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server-recorded arrival. A client tap alone cannot set this \u2014 arrival is validated against the assignment and the destination the traveller confirmed."
+    },
     "failed_at": {
       "type": "string",
       "format": "date-time"
@@ -83,6 +117,97 @@
       "type": "boolean",
       "default": true,
       "description": "True for the t=0 fanout. Unresolved dispatch later pages the care team with additional rows rather than cancelling these \u2014 the standing notifications stay live."
+    },
+    "ack_token": {
+      "type": "string",
+      "description": "Unguessable handle a contacted responder uses to acknowledge, accept or report en-route without an app login. The token IS the authorization for exactly this row and nothing else; it is never reused across incidents."
+    },
+    "acknowledgement_deadline_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server-derived from the dispatch policy's acknowledgement window. Client-supplied deadlines are ignored."
+    },
+    "acknowledgement_state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "acknowledged",
+        "timed_out",
+        "escalated",
+        "not_required"
+      ],
+      "default": "pending",
+      "description": "'not_required' exists so an informational row (the patient's own copy) is never counted as an unanswered responder."
+    },
+    "timed_out_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "escalated_to": {
+      "type": "string",
+      "description": "The coordinator or escalation contact the timeout was handed to."
+    },
+    "escalation_note": {
+      "type": "string"
+    },
+    "fallback_attempted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When an approved fallback contact was tried after the deadline. Recorded separately so 'we tried' and 'they answered' stay distinguishable."
+    },
+    "fallback_result": {
+      "type": "string"
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_attempt_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "message_language": {
+      "type": "string",
+      "description": "ISO code of the wording actually sent to this recipient."
+    },
+    "template_key": {
+      "type": "string",
+      "description": "Which approved copy template produced the message. There is no free-composed emergency text."
+    },
+    "template_version": {
+      "type": "number",
+      "description": "Version of that approved template, frozen at send time so a later edit cannot rewrite what someone was told."
+    },
+    "message_original": {
+      "type": "string",
+      "description": "The English wording sent (or the source wording before translation)."
+    },
+    "message_translated": {
+      "type": "string",
+      "description": "The wording actually delivered in the recipient's language. Absent when the message stayed in English."
+    },
+    "translation_state": {
+      "type": "string",
+      "enum": [
+        "approved_template",
+        "english_fallback",
+        "human_required",
+        "human_handled"
+      ],
+      "description": "How the wording was produced. 'human_required' means no approved template covered this language, so a person must handle the call \u2014 no machine translation is used on an emergency message."
+    },
+    "status_source": {
+      "type": "string",
+      "enum": [
+        "server",
+        "provider_receipt",
+        "human"
+      ],
+      "description": "What wrote the current status. 'provider_receipt' is the only evidence that counts as delivered; 'human' is an acknowledgement by a person."
     }
   },
   "required": [

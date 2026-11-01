@@ -1,7 +1,7 @@
 {
   "name": "Incident",
   "type": "object",
-  "description": "A single emergency incident opened by the deterministic dispatch engine. No model creates, advances or closes one of these \u2014 every transition is written by openIncident, respondToDispatchOffer or sweepDispatchOffers, each of which is a pure state machine over the fields here. dedupe_key is the idempotency anchor: a duplicate trigger inside the same time bucket resolves to the SAME incident and must never open a second dispatch. policy_snapshot freezes the per-country policy in force at trigger time, so an incident can always be explained later even after the policy changes. This record deliberately contains no financial fields: a failed dispatch moves people, never funds.",
+  "description": "A single emergency incident opened by the deterministic dispatch engine \u2014 and the ONE authoritative incident record. No parallel incident system exists: the operational-layer fields added for readiness and integrity live here so an incident can never be open in two places at once. No model creates, advances or closes one of these; every transition is written by a server function that validates it against the state machine in shared/emergencyIncident.ts. dedupe_key remains the idempotency anchor: a duplicate trigger inside the same time bucket resolves to the SAME incident and must never open a second dispatch. confirmation_state records that a human explicitly confirmed the alert \u2014 a transcribed sentence or a model's reading of one never sets it. The location_* block keeps source, capture time, accuracy and a derived freshness verdict so a precise fix from forty minutes ago is never presented as a live position, and a missing position never blocks creation. response_capability is the honest answer to 'is external security response actually happening': it is 'unavailable' by default, 'unconfirmed' when a message went out but nobody acknowledged it, and only 'confirmed' when a two-person-approved SecurityReadinessProfile covers the destination and an authorised recipient acknowledged. response_blockers names every reason it is not confirmed. policy_snapshot freezes the per-country policy in force at trigger time. This record deliberately contains no financial fields: a failed dispatch moves people, never funds.",
   "properties": {
     "patient_id": {
       "type": "string",
@@ -53,6 +53,10 @@
       "type": "string",
       "description": "Caller-supplied idempotency reference (e.g. an offline packet id) so a retried request is recognisable."
     },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Derived server-side from the patient, the explicit confirmation and a short time bucket. A replayed confirmation (an offline flush arriving twice) resolves to this same incident and never opens a second one."
+    },
     "dedupe_key": {
       "type": "string",
       "description": "patient_id:trip:type:time-bucket. Two triggers sharing this key are the same incident."
@@ -72,6 +76,29 @@
       "default": "OPEN",
       "description": "Advanced only through canTransitionIncident's table in shared/incidentDispatch.ts."
     },
+    "confirmation_state": {
+      "type": "string",
+      "enum": [
+        "pending_confirmation",
+        "confirmed"
+      ],
+      "default": "pending_confirmation",
+      "description": "An incident only escalates once this is 'confirmed'. Set exclusively by confirmEmergencyIncident from an explicit human action \u2014 never by speech interpretation, a model, or a status flag."
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server time of the explicit confirmation. Distinct from triggered_at, which may come from an offline queue."
+    },
+    "confirmation_method": {
+      "type": "string",
+      "enum": [
+        "in_app_explicit",
+        "pin_session",
+        "care_team"
+      ],
+      "description": "How the human confirmed. 'care_team' means a named coordinator confirmed on the traveller's behalf, recorded so it is never mistaken for a self-trigger."
+    },
     "country_code": {
       "type": "string",
       "description": "ISO-2 country used to select the policy and the emergency number."
@@ -84,6 +111,41 @@
     },
     "location_label": {
       "type": "string"
+    },
+    "location_source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "network",
+        "manual",
+        "none"
+      ],
+      "default": "none",
+      "description": "'network' is IP-derived and may be tens of kilometres out; 'manual' is what a person typed and has no accuracy at all. Neither may be labelled or treated as live GPS."
+    },
+    "location_captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the position was actually measured on the device \u2014 never the time the server received it."
+    },
+    "location_accuracy_m": {
+      "type": "number",
+      "description": "Stated radius of uncertainty in metres. Absent means unknown, not perfect."
+    },
+    "location_freshness": {
+      "type": "string",
+      "enum": [
+        "current",
+        "stale",
+        "unknown",
+        "unavailable"
+      ],
+      "default": "unavailable",
+      "description": "Derived at evaluation time from age against the configured freshness threshold. Recomputed rather than trusted, so a stale fix can never keep its 'current' label."
+    },
+    "location_freshness_evaluated_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "clinical_risk_flags": {
       "type": "array",
@@ -101,6 +163,53 @@
       "default": false,
       "description": "True when no active policy existed for this country. The incident still opens and still notifies the internal care team; dispatch goes straight to UNRESOLVED with reason 'no_policy'. A visible config gap, never a silent failure."
     },
+    "response_capability": {
+      "type": "string",
+      "enum": [
+        "unavailable",
+        "unconfirmed",
+        "confirmed"
+      ],
+      "default": "unavailable",
+      "description": "What the traveller is told. Defaults to 'unavailable' and is only ever raised by a server evaluation. A sent message cannot raise it \u2014 only a two-person-approved readiness profile covering the destination plus an authorised recipient acknowledgement can."
+    },
+    "response_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Plain-language reasons the response is not confirmed (no approved team, destination outside coverage, team off duty, no authorised contact, no configured channel, acknowledgement timed out). Printed verbatim rather than summarised into a vague warning."
+    },
+    "readiness_profile_id": {
+      "type": "string",
+      "description": "The SecurityReadinessProfile evaluated for this incident, so the answer can be explained later even after the profile is superseded."
+    },
+    "readiness_evaluated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "acknowledgement_deadline_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the assigned responders' acknowledgement window closes. Derived from policy, never supplied by a client."
+    },
+    "acknowledgement_timeout_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the timeout was actually detected by the sweep \u2014 kept separately from the deadline so a late sweep is visible."
+    },
+    "acknowledgement_timeout_recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "escalated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the incident was handed to an authorised human coordinator because nobody acknowledged."
+    },
+    "escalation_reason": {
+      "type": "string"
+    },
     "duplicate_of": {
       "type": "string",
       "description": "When this record lost the concurrent-trigger tiebreak, the id of the incident that survived."
@@ -111,7 +220,9 @@
         "pool_exhausted",
         "max_offers_reached",
         "no_policy",
-        "no_eligible_responders"
+        "no_eligible_responders",
+        "no_operational_coverage",
+        "acknowledgement_timeout"
       ]
     },
     "resolved_at": {
@@ -120,6 +231,41 @@
     },
     "resolved_by": {
       "type": "string"
+    },
+    "closed_reason": {
+      "type": "string",
+      "enum": [
+        "resolved_safe",
+        "false_alarm",
+        "handover",
+        "cancelled_by_traveller",
+        "care_team_closed"
+      ],
+      "description": "Why the incident stopped being active. There is no path that deletes an incident: closing records this, a time and an actor, and every recipient row is preserved."
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_by": {
+      "type": "string"
+    },
+    "closure_notes": {
+      "type": "string"
+    },
+    "handover_to": {
+      "type": "string",
+      "description": "The named coordinator or team that took ownership when the traveller handed the incident over. The incident stays open until that owner closes it."
+    },
+    "history_preserved": {
+      "type": "boolean",
+      "default": true,
+      "description": "Always true. Stated in the record so 'nothing was deleted' is a property of the data rather than a promise in a document."
+    },
+    "schema_version": {
+      "type": "number",
+      "default": 2,
+      "description": "2 = operational-layer fields present. Legacy rows stay at their original shape and are read with defaults; the migration is additive only."
     },
     "triggered_at": {
       "type": "string",
@@ -155,6 +301,9 @@
         },
         {
           "data.patient_id": "{{user.id}}"
+        },
+        {
+          "data.handover_to": "{{user.email}}"
         },
         {
           "user_condition": {

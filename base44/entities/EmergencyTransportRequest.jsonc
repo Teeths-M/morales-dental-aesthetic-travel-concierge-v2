@@ -1,0 +1,235 @@
+{
+  "name": "EmergencyTransportRequest",
+  "type": "object",
+  "description": "The transport half of an incident \u2014 deliberately a separate record from the incident itself and from the recipient rows, because 'a driver is coming' and 'a security team was alerted' fail independently. A request only exists after the TRAVELLER has selected and confirmed a destination: nobody chooses where an injured person is taken on their behalf. state is a validated, server-written sequence (REQUESTED \u2192 OFFERED \u2192 ACCEPTED \u2192 EN_ROUTE \u2192 ARRIVED, with UNAVAILABLE, FAILED and CANCELLED as terminal alternatives), and the words used on screen follow it literally: a request is never 'secured' because it was sent, or because an offer went out, or because a portal row exists. When a driver is actually assigned through the existing partner portal, this record LINKS to the existing RecoveryTransportRequest (recovery_transport_request_id) instead of creating a second driver assignment \u2014 one driver record, one ride. A request that is stood down is cancelled, never deleted, so a failed search for transport stays visible in the incident's history.",
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "description": "The incident this request belongs to. One active request per incident at a time; a superseded request is cancelled and kept."
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for RLS \u2014 the traveller reads their own transport record."
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string",
+      "enum": [
+        "traveller",
+        "care_team"
+      ],
+      "description": "'care_team' is recorded when a coordinator raised it during a handover, so the record never implies the traveller chose the destination themselves."
+    },
+    "destination_label": {
+      "type": "string",
+      "description": "Where the traveller asked to be taken, as they chose it."
+    },
+    "destination_address": {
+      "type": "string"
+    },
+    "destination_latitude": {
+      "type": "number"
+    },
+    "destination_longitude": {
+      "type": "number"
+    },
+    "destination_source": {
+      "type": "string",
+      "enum": [
+        "traveller_selected",
+        "traveller_typed",
+        "care_team_confirmed"
+      ],
+      "description": "How the destination came to exist. A suggested option the traveller tapped is 'traveller_selected'; a typed address is not geocoded into a precision it does not have."
+    },
+    "destination_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Server-recorded confirmation by the traveller. No driver may be offered a request whose destination is unconfirmed."
+    },
+    "destination_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "destination_confirmed_by": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "REQUESTED",
+        "OFFERED",
+        "ACCEPTED",
+        "EN_ROUTE",
+        "ARRIVED",
+        "UNAVAILABLE",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "default": "REQUESTED",
+      "description": "Advanced only through canTransitionTransport in shared/emergencyIncident.ts. ACCEPTED means a named driver took the job \u2014 not that a driver was asked."
+    },
+    "state_source": {
+      "type": "string",
+      "enum": [
+        "server",
+        "driver_portal",
+        "gps_checkin",
+        "care_team"
+      ],
+      "description": "What wrote the current state. A traveller-facing 'driver accepted' must trace to 'driver_portal', never to a server default."
+    },
+    "offered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "offer_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "An unanswered offer stops being live. It is not an acceptance, and the screen says so."
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "driver_phone": {
+      "type": "string"
+    },
+    "driver_source": {
+      "type": "string",
+      "enum": [
+        "portal_assignment",
+        "care_team",
+        "none"
+      ],
+      "default": "none",
+      "description": "'portal_assignment' means the existing driver portal assigned him; 'care_team' means a coordinator arranged it by phone and is accountable for it."
+    },
+    "recovery_transport_request_id": {
+      "type": "string",
+      "description": "Link to the existing RecoveryTransportRequest once a real driver dispatch exists \u2014 the ride, the driver's GPS token and the arrival geofence all stay in that one system rather than being duplicated here."
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "en_route_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "arrived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server-recorded arrival, validated against the confirmed destination. A driver's own tap from a mile out cannot set this."
+    },
+    "unavailable_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancel_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "transition_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from_state": {
+            "type": "string"
+          },
+          "to_state": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Every transition with its time, actor and source. Appended, never rewritten, so the ride can be explained later."
+    }
+  },
+  "required": [
+    "incident_id",
+    "patient_email",
+    "destination_label",
+    "state"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

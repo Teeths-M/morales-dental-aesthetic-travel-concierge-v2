@@ -44,6 +44,7 @@ const TrustScan               = lazy(() => import('@/pages/TrustScan'));
 const TrustProfile            = lazy(() => import('@/pages/TrustProfile'));
 const IncidentRecovery        = lazy(() => import('@/pages/IncidentRecovery'));
 const Surroundings            = lazy(() => import('@/pages/Surroundings'));
+const EmergencyResponse       = lazy(() => import('@/pages/EmergencyResponse'));
 
 const CHECKOUT_ROLES = [
   ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
@@ -94,6 +95,8 @@ export const clientRoutes = (
       <Route path="/trustscan"                     element={<ErrorBoundary><TrustScan /></ErrorBoundary>} />
       <Route path="/trust-profile"                 element={<ErrorBoundary><TrustProfile /></ErrorBoundary>} />
       <Route path="/incident/:id"                  element={<ErrorBoundary><IncidentRecovery /></ErrorBoundary>} />
+      <Route path="/emergency-response"            element={<ErrorBoundary><EmergencyResponse /></ErrorBoundary>} />
+      <Route path="/emergency-response/:incidentId" element={<ErrorBoundary><EmergencyResponse /></ErrorBoundary>} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>

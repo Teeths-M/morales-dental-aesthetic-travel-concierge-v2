@@ -1,0 +1,273 @@
+{
+  "name": "SecurityReadinessProfile",
+  "type": "object",
+  "description": "One destination's claim that M-Care actually has an operational security response there \u2014 and the record that decides whether the word 'confirmed' may ever appear on a traveller's screen. Nothing here is a marketing statement: each profile names a real team, the areas it covers, the hours it is staffed, an authorised human contact, the channels that genuinely reach them, an escalation contact, and the response time the team itself assumes. A profile is only usable when its status is 'approved', its validity has not lapsed, the incident's destination falls inside coverage, the moment of the incident falls inside an on-duty window in the team's own timezone, and an authorised contact and at least one configured channel exist. TWO-PERSON APPROVAL is structural, not advisory: a proposal is created by one administrator and requires approval by a DIFFERENT administrator, enforced in manageSecurityReadiness \u2014 the proposer can never be the approver, and a profile can never approve itself by being edited. Every change is versioned: superseding a profile writes a new row and leaves the old one readable, so an incident evaluated under v3 can still be explained after v4 exists. The default state of any destination with no approved profile is simply 'no operational coverage' \u2014 the app says so plainly instead of implying a response.",
+  "properties": {
+    "country_code": {
+      "type": "string",
+      "description": "ISO-2 country this profile governs. Coverage is resolved by country, then by area label."
+    },
+    "country_name": {
+      "type": "string"
+    },
+    "coverage_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The cities, districts or regions the team actually covers, as a human would name them. An incident outside every listed area is OUTSIDE COVERAGE, however close it looks on a map."
+    },
+    "coverage_notes": {
+      "type": "string",
+      "description": "Where coverage stops and what happens at the edge, in plain language."
+    },
+    "agency_id": {
+      "type": "string",
+      "description": "Link to the SecurityAgency record when the team is an onboarded partner. Absent for a directly contracted team that has no portal account."
+    },
+    "agency_name": {
+      "type": "string"
+    },
+    "team_label": {
+      "type": "string",
+      "description": "The team as the control room refers to it, e.g. 'POS Night Response Unit'. Shown to the traveller only when readiness is confirmed."
+    },
+    "operational_hours": {
+      "type": "string",
+      "description": "Human-readable staffing statement, e.g. '18:00-06:00 daily'. Kept alongside on_duty_windows so what a coordinator reads and what the code evaluates cannot drift apart silently."
+    },
+    "on_duty_windows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri",
+                "sat",
+                "sun"
+              ]
+            }
+          },
+          "start": {
+            "type": "string",
+            "description": "HH:MM, 24-hour, in the team's own timezone."
+          },
+          "end": {
+            "type": "string",
+            "description": "HH:MM. An end earlier than the start wraps past midnight."
+          }
+        }
+      },
+      "description": "The windows in which someone is genuinely on duty. Outside these, the profile is still approved but the response is not available \u2014 a 24/7 claim that only covers nights is exactly what this field exists to prevent."
+    },
+    "timezone": {
+      "type": "string",
+      "description": "IANA zone of the team. On-duty checks are made in the team's clock, never the traveller's home clock."
+    },
+    "authorized_contact_name": {
+      "type": "string"
+    },
+    "authorized_contact_role": {
+      "type": "string"
+    },
+    "authorized_contact_phone": {
+      "type": "string"
+    },
+    "authorized_contact_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "contact_verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a human last confirmed this contact actually answers. An unverified contact is a blocker: a number nobody has rung is a guess with a country code."
+    },
+    "contact_verified_by": {
+      "type": "string"
+    },
+    "communication_channels": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "sms",
+          "whatsapp",
+          "email",
+          "voice",
+          "portal"
+        ]
+      },
+      "description": "Channels that genuinely reach this team. An empty list is a blocker \u2014 the incident can be recorded but no response can be claimed."
+    },
+    "channel_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "escalation_contact_name": {
+      "type": "string",
+      "description": "The human the care team calls when this team does not acknowledge. Required for approval: an escalation path with no name is not a path."
+    },
+    "escalation_contact_phone": {
+      "type": "string"
+    },
+    "escalation_contact_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "escalation_procedure": {
+      "type": "string",
+      "description": "What a coordinator actually does when the acknowledgement deadline passes, written before it is needed."
+    },
+    "response_time_assumption_minutes": {
+      "type": "number",
+      "description": "The response time the team itself assumes. Labelled as an assumption wherever it is shown \u2014 never presented as a measured or guaranteed time."
+    },
+    "staffing_notes": {
+      "type": "string"
+    },
+    "escalation_tested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this escalation path was last exercised end to end. Approval requires it: an untested procedure is a document, not a capability."
+    },
+    "escalation_test_notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_approval",
+        "approved",
+        "suspended",
+        "expired"
+      ],
+      "default": "draft",
+      "description": "Only 'approved' may ever produce a confirmed response. Suspension is available instantly and needs no second approval, because stopping a claim must never be harder than making one."
+    },
+    "suspended_reason": {
+      "type": "string"
+    },
+    "proposed_by": {
+      "type": "string",
+      "description": "The administrator who entered this profile. Cannot also approve it."
+    },
+    "proposed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "approver_email": {
+            "type": "string"
+          },
+          "approved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Every approval, with who and when. Approval by the proposer is refused in code, so two-person approval is a property of the data rather than a convention."
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Operational readiness expires. Past this date the profile stops producing a confirmed response until it is re-approved, so a capability cannot be claimed indefinitely on one old sign-off."
+    },
+    "review_interval_days": {
+      "type": "number",
+      "default": 30
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Incremented when a profile is superseded. Old versions stay readable."
+    },
+    "supersedes_profile_id": {
+      "type": "string"
+    },
+    "superseded_by_profile_id": {
+      "type": "string"
+    },
+    "is_current": {
+      "type": "boolean",
+      "default": true,
+      "description": "Exactly one current profile per country+coverage set. A superseded row keeps its history and stops being evaluated."
+    }
+  },
+  "required": [
+    "country_code",
+    "team_label",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}
