@@ -54,6 +54,23 @@ export function minorToInput(amountMinor, currency = 'USD') {
   return (amountMinor / 100).toFixed(2);
 }
 
+/**
+ * Typed decimal → integer minor units, by string arithmetic only.
+ *
+ * parseFloat("0.29") * 100 is 28.999999999999996, and rounding that is how a
+ * price ends up a cent out. Splitting on the decimal point keeps every digit an
+ * integer, so the value that reaches the server is exactly what was typed.
+ * Returns undefined for anything that is not a plain amount.
+ */
+export function inputToMinor(input) {
+  const raw = String(input ?? '').trim().replace(/[,\s]/g, '');
+  if (!raw) return undefined;
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(raw);
+  if (!match) return undefined;
+  const [, whole, fraction = ''] = match;
+  return Number(whole) * 100 + Number((fraction + '00').slice(0, 2));
+}
+
 /** Mirrors base44/shared/partnerCatalogue.ts::derivePricingStatus. */
 export function deriveStatus(card, now = new Date()) {
   const stored = card?.pricing_status || 'PARTNER_SUBMITTED';

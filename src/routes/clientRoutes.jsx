@@ -33,6 +33,7 @@ const MedicalIntakeForm      = lazy(() => import('@/pages/MedicalIntakeForm'));
 const EmergencyMedCard       = lazy(() => import('@/pages/EmergencyMedCard'));
 const DischargePaperReader   = lazy(() => import('@/pages/DischargePaperReader'));
 const MyQuotes               = lazy(() => import('@/pages/MyQuotes'));
+const PartnerOffers          = lazy(() => import('@/pages/PartnerOffers'));
 const NominateDoctor         = lazy(() => import('@/pages/NominateDoctor'));
 const InviteProvider         = lazy(() => import('@/pages/InviteProvider'));
 const MCareAgent             = lazy(() => import('@/pages/MCareAgent'));
@@ -85,6 +86,7 @@ export const clientRoutes = (
       <Route path="/medical-intake"              element={<ErrorBoundary><MedicalIntakeForm /></ErrorBoundary>} />
       <Route path="/discharge-reader"            element={<ErrorBoundary><DischargePaperReader /></ErrorBoundary>} />
       <Route path="/my-quotes"                   element={<ErrorBoundary><MyQuotes /></ErrorBoundary>} />
+      <Route path="/partner-offers"              element={<ErrorBoundary><PartnerOffers /></ErrorBoundary>} />
       <Route path="/nominate-doctor"             element={<ErrorBoundary><NominateDoctor /></ErrorBoundary>} />
       <Route path="/invite-provider"             element={<ErrorBoundary><InviteProvider /></ErrorBoundary>} />
       {/* The older full-page M-Care screen, kept for its list of past conversations. /m-care itself is now

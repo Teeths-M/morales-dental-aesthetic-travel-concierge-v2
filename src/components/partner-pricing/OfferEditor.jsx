@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { CATEGORY_OPTIONS, GOLD, minorToInput, unitsForCategory } from '@/lib/partnerPricing';
+import { CATEGORY_OPTIONS, GOLD, inputToMinor, minorToInput, unitsForCategory } from '@/lib/partnerPricing';
+import PackageComponentsField from '@/components/partner-pricing/PackageComponentsField';
 
 /**
  * OfferEditor — one screen that creates or edits a service AND its price.
@@ -33,6 +34,13 @@ export default function OfferEditor({ service, card, onClose, onSaved }) {
     availability_status: card?.availability_status || 'unknown',
     review_interval_days: card?.review_interval_days || 30,
     reminder_cadence: card?.reminder_cadence || 'weekly',
+    package_components: (service?.package_components || []).map((component) => ({
+      label: component.label || '',
+      component_state: component.component_state || 'included',
+      amount: component.amount_minor === undefined || component.amount_minor === null
+        ? ''
+        : minorToInput(component.amount_minor, component.currency || card?.currency || 'USD'),
+    })),
   }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -68,6 +76,18 @@ export default function OfferEditor({ service, card, onClose, onSaved }) {
         country: form.country,
         city: form.city,
         is_package: form.is_package,
+        // amount_minor only exists on an included component. An 'unpriced' one
+        // is sent with no amount at all, so it can never be summed as a zero.
+        package_components: form.is_package
+          ? form.package_components
+            .filter((component) => component.label.trim())
+            .map((component) => ({
+              label: component.label.trim(),
+              component_state: component.component_state,
+              amount_minor: component.component_state === 'included' ? inputToMinor(component.amount) : undefined,
+              currency: form.currency,
+            }))
+          : [],
         cancellation_terms: form.cancellation_terms,
         publish: true,
       });
@@ -175,6 +195,14 @@ export default function OfferEditor({ service, card, onClose, onSaved }) {
             <input type="checkbox" checked={form.is_package} onChange={set('is_package')} />
             This offer bundles several components (flight, hotel, transfers)
           </label>
+
+          {form.is_package && (
+            <PackageComponentsField
+              value={form.package_components}
+              currency={form.currency}
+              onChange={(rows) => setForm((prev) => ({ ...prev, package_components: rows }))}
+            />
+          )}
 
           {error && (
             <p className="rounded-lg border px-3 py-2 text-[11.5px] text-rose-300" style={{ borderColor: 'rgba(244,63,94,0.35)', background: 'rgba(244,63,94,0.08)' }}>

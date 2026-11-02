@@ -31,6 +31,7 @@ const FEATURE_CATEGORIES = [
       { label: 'Travel Booking', path: '/travel-intake', icon: Plane, desc: 'Flights, hotels, transfers' },
       { label: 'Trip Overview', path: '/trip-overview', icon: MapPin, desc: 'View itinerary & partners' },
       { label: 'Visa Assistance', path: '/visa-assist', icon: MapPin, desc: 'Requirements & guides' },
+      { label: 'Partner Offers', path: '/partner-offers', icon: Plane, desc: 'Prices from our network' },
       { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, desc: 'Trip details' },
     ]
   },
