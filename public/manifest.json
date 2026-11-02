@@ -2,7 +2,7 @@
   "name": "M-Care Medical Travel Safety",
   "short_name": "M-Care",
   "description": "Premium medical travel concierge with secure vault",
-  "start_url": "/",
+  "start_url": "/m-care",
   "display": "standalone",
   "background_color": "#060B16",
   "theme_color": "#060B16",

@@ -1346,10 +1346,13 @@ test('UX: the guide orb never nags — no unbounded tip carousel, quiet on data-
   expect(cap, 'a MAX_TIP_ROTATIONS cap must exist').not.toBeNull();
   expect(Number(cap[1]), 'the cap must stay small').toBeLessThanOrEqual(5);
 
-  // And the data-entry routes must be excluded from the unprompted bubble.
+  // And the data-entry routes must be excluded from the unprompted bubble. The list lives in mcareDeepLink.js
+  // (shared with AppLayout's ?mcare= redirect, 2026-11-01), and the orb must still take its quiet check from it.
+  const quiet = read('src/lib/mcareDeepLink.js');
   for (const route of ['/booking', '/intake', '/checkout', '/emergency']) {
-    expect(code, `${route} must be a quiet route for the orb`).toContain(`'${route}'`);
+    expect(quiet, `${route} must be a quiet route for the orb`).toContain(`'${route}'`);
   }
+  expect(code, 'the orb must use the shared quiet-route list').toMatch(/const isQuietRoute = isMcareQuietRoute\(pathname\);/);
   expect(code, 'the quiet-route check must gate the auto-open effect')
     .toMatch(/if \(!pastHero \|\| isQuietRoute\) return;/);
 });
@@ -6979,7 +6982,9 @@ test('EMERGENCY ALERT LINKS: a link code only ever opens its own alert, and only
 // once would mean two live conversations listening and talking over each other; the message box's focus must never
 // simply disappear; and on a phone the website must never show through the gap Safari leaves above the keyboard.
 test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focus, and no website shows through on a phone', () => {
-  const layout = nsStrip(read('src/components/layout/AppLayout.jsx'));
+  // Strips only JSX ({/* */}) and line comments: nsStrip would read the "/demo/*" in one of AppLayout's line comments
+  // as the start of a block comment and throw away the code after it.
+  const layout = read('src/components/layout/AppLayout.jsx').replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/^\s*\/\/.*$/gm, '');
   expect(layout).toMatch(/const isStandaloneMcare = pathname === '\/m-care'/);
   expect(layout, 'the layout must not mount its own floating M-Care on /m-care')
     .toMatch(/\{!isDemo && !isStandaloneMcare && <MCareOrb \/>\}/);
@@ -6990,9 +6995,20 @@ test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focu
   const orb = read('src/components/mcare/MCareOrb.jsx');
   // The message box skips the app-wide focus ring only because the composer draws its own, from real focus.
   expect(orb).toMatch(/\.ms-composer-input:focus-visible \{ outline: none !important; box-shadow: var\(--ms-composer-glow, none\) !important; \}/);
-  expect(orb).toMatch(/border: `1px solid \$\{inputFocused \? 'rgba\(212,175,55,0\.85\)'/);
+  expect(orb).toMatch(/border: `1px solid \$\{inputFocused \? 'rgba\(212,175,55,0\.6\)'/);
   expect(orb).toMatch(/onFocus=\{\(\) => setInputFocused\(true\)\}/);
   // The phone underlay: the panel's own navy fills the whole screen under it.
   expect(orb).toMatch(/key="msafe-underlay"/);
   expect(orb).toMatch(/minHeight: '100lvh', zIndex: 9001, background: NIGHT\.canvas/);
+
+  // A layer can't reach the strip an iPhone shows above the keyboard, so while M-Care covers a phone over a page,
+  // the page is hidden and the background is navy: MCareOrb marks <html>, index.css acts on the mark, and the page
+  // is marked in AppLayout (never on /m-care, where M-Care itself sits inside <main> and would be hidden too).
+  expect(nsStrip(orb)).toMatch(/if \(!open \|\| isDesktopPanel \|\| standalone\) return undefined;\s*const html = document\.documentElement;\s*html\.setAttribute\('data-mcare-cover', ''\);/);
+  const css = read('src/index.css');
+  expect(css).toMatch(/html\[data-mcare-cover\] \[data-mcare-behind\] \{\s*visibility: hidden !important;/);
+  expect(css).toMatch(/html\[data-mcare-cover\] body \{\s*background: #060B16 !important;/);
+  expect(layout).toMatch(/data-mcare-behind=\{isStandaloneMcare \? undefined : ''\}/);
+  // ?mcare=… links (the ads' QR codes) open the full-screen M-Care, keeping their query string.
+  expect(layout).toMatch(/if \(!isStandaloneMcare && mcareDeepLinkMode\(search\) && !isMcareQuietRoute\(pathname\)\) \{\s*return <Navigate to=\{\{ pathname: '\/m-care', search \}\} replace \/>;/);
 });

@@ -337,3 +337,23 @@ button:active, a:active {
     transition: outline-offset 0.12s ease;
   }
 }
+
+/* ── M-Care covering a phone screen ─────────────────────────────────────────
+ *
+ * MCareOrb marks <html> with data-mcare-cover while its panel fills a phone or
+ * tablet screen over a page. Nothing of that page may paint then. With the
+ * keyboard up, iPhone Safari pans the visible area to the bottom of the frame
+ * fixed layers attach to, and the strip under its see-through address and
+ * up/down bars shows whatever lies below that frame: no layer can cover it.
+ * So the page (AppLayout's [data-mcare-behind]) is hidden rather than covered,
+ * and the page's own background, white by default, becomes the panel's navy.
+ * visibility, unlike display, keeps the page's layout and scroll position
+ * exactly as they were for when M-Care closes.
+ */
+html[data-mcare-cover],
+html[data-mcare-cover] body {
+  background: #060B16 !important;
+}
+html[data-mcare-cover] [data-mcare-behind] {
+  visibility: hidden !important;
+}

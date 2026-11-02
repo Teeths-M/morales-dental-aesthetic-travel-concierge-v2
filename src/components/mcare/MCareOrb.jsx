@@ -105,6 +105,7 @@ import {
   GOLD_INK, GOLD_WASH, CAUTION_INK, WORDMARK_FONT, BRAND_SERIF, NIGHT, GLASS, TYPE, RADIUS, TOUCH,
 } from './panelPalette';
 import { orbStateLabel } from '@/lib/orbStateLabel';
+import { isMcareQuietRoute, mcareDeepLinkMode } from '@/lib/mcareDeepLink';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 // North-star redesign (2026-11-01): the mockup's line under the LIVE pill.
@@ -318,6 +319,17 @@ export default function MCareOrb({ standalone = false } = {}) {
       setMobileViewport({ height: null, offsetTop: 0, keyboardOpen: false });
     };
   }, [open, isDesktopPanel]);
+  // While the phone panel fills the screen over a page, mark <html> so index.css hides that page and paints the
+  // background navy (html[data-mcare-cover] there). Layers alone can't do it on an iPhone: with the keyboard up,
+  // Safari pans the visible area to the bottom of the frame that fixed layers attach to, and the strip under its
+  // see-through address and up/down bars then shows the page from below that frame, where no layer reaches. The
+  // standalone /m-care has no page behind it (MCareApp paints the background navy itself), so it doesn't mark.
+  useEffect(() => {
+    if (!open || isDesktopPanel || standalone) return undefined;
+    const html = document.documentElement;
+    html.setAttribute('data-mcare-cover', '');
+    return () => html.removeAttribute('data-mcare-cover');
+  }, [open, isDesktopPanel, standalone]);
   const keyboardOpen = !isDesktopPanel && mobileViewport.keyboardOpen;
   // Very little room above the keyboard (a phone on its side, or a small phone): the header and the journey
   // tracker step aside as well, so the conversation and the message box keep the space instead of being pushed
@@ -1359,12 +1371,9 @@ export default function MCareOrb({ standalone = false } = {}) {
     return () => window.removeEventListener('scroll', check);
   }, [isHomepage]);
 
-  const QUIET_ROUTES = [
-    '/booking', '/intake', '/travel-intake', '/medical-intake',
-    '/checkout', '/payment', '/passport-vault', '/vault',
-    '/emergency', '/sos', '/safe-t',
-  ];
-  const isQuietRoute = QUIET_ROUTES.some(p => pathname.startsWith(p));
+  // The quiet pages (a booking or payment in progress, the emergency screens) live in mcareDeepLink.js, shared with
+  // AppLayout, which uses the same list when it sends ?mcare=… links to the full-screen /m-care.
+  const isQuietRoute = isMcareQuietRoute(pathname);
 
   // Deep-link auto-open — ?mcare=open on any public page opens the panel on
   // load with no click needed, for sharing a direct "land straight in the
@@ -1386,8 +1395,8 @@ export default function MCareOrb({ standalone = false } = {}) {
   useEffect(() => {
     if (autoOpenedRef.current || isQuietRoute) return;
     const params = new URLSearchParams(search);
-    const mode = params.get('mcare');
-    if (mode === 'open' || mode === 'pilot' || mode === 'partner') {
+    const mode = mcareDeepLinkMode(search);
+    if (mode) {
       autoOpenedRef.current = true;
       setOpen(true);
       setDismissed(true);
@@ -3335,8 +3344,9 @@ export default function MCareOrb({ standalone = false } = {}) {
         // The one focus ring for the message box: a thin gold edge and a soft glow on the whole pill, for touch and
         // keyboard alike. The box inside skips the app-wide ring (.ms-composer-input), which used to draw a second,
         // thick gold rectangle inside this one.
-        border: `1px solid ${inputFocused ? 'rgba(212,175,55,0.85)' : 'rgba(255,255,255,0.14)'}`,
-        boxShadow: inputFocused ? `0 0 0 3px rgba(212,175,55,0.14), ${GLASS.shadow}` : GLASS.shadow,
+        // 60% gold still reads at better than 3:1 against the navy pill, the contrast a focus edge needs.
+        border: `1px solid ${inputFocused ? 'rgba(212,175,55,0.6)' : 'rgba(255,255,255,0.14)'}`,
+        boxShadow: inputFocused ? `0 0 0 2px rgba(212,175,55,0.10), ${GLASS.shadow}` : GLASS.shadow,
         borderRadius: 999, padding: '6px 6px 6px 8px', transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
       }}>
         {!recordingVoice && (

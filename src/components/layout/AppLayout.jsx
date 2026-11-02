@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import Footer from './Footer';
 import Header from './Header';
@@ -23,6 +23,7 @@ import MCareOrb from '@/components/mcare/MCareOrb';
 import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
 import ProximityWatcher from './ProximityWatcher';
 import MSafeThemeScope from '@/components/mobile/MSafeThemeScope';
+import { mcareDeepLinkMode, isMcareQuietRoute } from '@/lib/mcareDeepLink';
 
 // Paths where the onboarding wizard should never appear
 const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/doctor-signup', '/companion-signup', '/security-signup', '/local-doctor-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
@@ -41,7 +42,7 @@ const isMarketingPath = (path) =>
 
 export default function AppLayout() {
   const { user } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   useGeoAutoAlign();
 
   // The landing page and the pilot page are one experience with their own
@@ -158,6 +159,13 @@ export default function AppLayout() {
     enabled: !!user && !isAdmin && !isStandaloneMcare,
   });
 
+  // A ?mcare=… link (an ad's QR code, a shared link) opens M-Care's own full-screen screen, query string kept so a
+  // pilot or partner scan still gets its sign-up greeting and ad tag. It used to open M-Care over the page it named,
+  // which loaded the whole website (films and all) behind it on a phone. Pages where M-Care keeps quiet are left be.
+  if (!isStandaloneMcare && mcareDeepLinkMode(search) && !isMcareQuietRoute(pathname)) {
+    return <Navigate to={{ pathname: '/m-care', search }} replace />;
+  }
+
   return (
     <BiometricGate>
       <CursorSpotlight />
@@ -175,15 +183,20 @@ export default function AppLayout() {
       )}
 
       <MSafeThemeScope active={appliesTheme} className="min-h-screen flex flex-col">
-        {!isStandaloneMcare && <OfflineBanner />}
-        {!isCinematicLanding && !isStandaloneMcare && <Header />}
-        <main className={`flex-1 ${(isCinematicLanding || isStandaloneMcare) ? '' : 'pt-[56px] sm:pt-[72px]'} ${user && !isAdmin && !isStandaloneMcare ? 'pb-[70px] lg:pb-0' : ''}`}>
-          {user && !isAdmin && !isStandaloneMcare && (
-            <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
-          )}
-          <Outlet />
-        </main>
-        {!isCinematicLanding && !isStandaloneMcare && <Footer />}
+        {/* The page itself. While M-Care fills a phone screen over it, index.css hides this (html[data-mcare-cover])
+            so none of the page can show around M-Care; display: contents leaves the layout exactly as if this
+            wrapper weren't here. Not marked on /m-care, where M-Care is the page and sits inside <main>. */}
+        <div data-mcare-behind={isStandaloneMcare ? undefined : ''} style={{ display: 'contents' }}>
+          {!isStandaloneMcare && <OfflineBanner />}
+          {!isCinematicLanding && !isStandaloneMcare && <Header />}
+          <main className={`flex-1 ${(isCinematicLanding || isStandaloneMcare) ? '' : 'pt-[56px] sm:pt-[72px]'} ${user && !isAdmin && !isStandaloneMcare ? 'pb-[70px] lg:pb-0' : ''}`}>
+            {user && !isAdmin && !isStandaloneMcare && (
+              <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
+            )}
+            <Outlet />
+          </main>
+          {!isCinematicLanding && !isStandaloneMcare && <Footer />}
+        </div>
 
         {/* M-Care — hidden on demo pages so judges see a clean experience, and on /m-care, whose page renders
             its own full-screen M-Care (two at once would mean two conversations listening and talking). */}
