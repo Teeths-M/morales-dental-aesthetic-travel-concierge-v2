@@ -115,6 +115,8 @@ const PANEL_SPLIT_QUERY = '(min-width: 1024px)';
 // On tablets the stacked layout fills the screen, so its content sits in one
 // readable centred column instead of stretching edge to edge.
 const STACKED_MAX_WIDTH = 760;
+// Input types that never bring up the on-screen keyboard (see the phone keyboard fit below).
+const NON_TEXT_INPUTS = new Set(['button', 'checkbox', 'radio', 'range', 'file', 'submit', 'reset', 'image', 'color', 'hidden']);
 // The page behind the laptop panel on the standalone /m-care screen, where there is no website to dim: the app's
 // navy, or the light panel's ivory warming to a soft gold at the edges.
 const STANDALONE_PAGE_DARK = 'radial-gradient(circle at 50% 20%, #0F1B2E 0%, #060B16 65%)';
@@ -301,17 +303,43 @@ export default function MCareOrb({ standalone = false } = {}) {
     const prev = { htmlOverflow: html.style.overflow, bodyOverflow: body.style.overflow };
     html.style.overflow = 'hidden';
     body.style.overflow = 'hidden';
+    // Is the keyboard up? It can only be while a text field has focus. Comparing the visible height with
+    // window.innerHeight (the old test) fails on an iPhone: Safari reports innerHeight as the shrunken height while
+    // the keyboard is open, so the screen never made room and the conversation was squeezed to a sliver. So: a text
+    // field has focus, and either this is a touch screen (where focus brings the keyboard up, so the screen makes
+    // room as it slides in rather than when it lands) or the visible area is clearly shorter than the tallest it has
+    // been with no field focused (the screen without a keyboard; re-measured when the phone turns on its side).
+    const typingInField = () => {
+      const el = document.activeElement;
+      if (!el) return false;
+      if (el.isContentEditable || el.tagName === 'TEXTAREA') return true;
+      return el.tagName === 'INPUT' && !NON_TEXT_INPUTS.has((el.getAttribute('type') || 'text').toLowerCase());
+    };
+    const touchScreen = window.matchMedia('(pointer: coarse)').matches;
+    let fullHeight = vv ? vv.height : window.innerHeight;
+    let lastWidth = vv ? vv.width : window.innerWidth;
     const update = () => {
       if (!vv) return;
-      // The keyboard takes a big bite out of the visible height; a few pixels of browser toolbar moving does not.
-      setMobileViewport({ height: vv.height, offsetTop: vv.offsetTop, keyboardOpen: window.innerHeight - vv.height > 120 });
+      if (Math.abs(vv.width - lastWidth) > 40) { lastWidth = vv.width; fullHeight = vv.height; }
+      const typing = typingInField();
+      if (!typing) fullHeight = Math.max(fullHeight, vv.height);
+      const keyboardOpen = typing && (touchScreen || fullHeight - vv.height > 120);
+      setMobileViewport({ height: vv.height, offsetTop: vv.offsetTop, keyboardOpen });
     };
+    // Focus has moved by the time a deferred update runs, so document.activeElement is the field gaining it (or none).
+    let focusTimer = 0;
+    const onFocusChange = () => { clearTimeout(focusTimer); focusTimer = setTimeout(update, 0); };
     update();
     vv?.addEventListener('resize', update);
     vv?.addEventListener('scroll', update);
+    document.addEventListener('focusin', onFocusChange);
+    document.addEventListener('focusout', onFocusChange);
     return () => {
+      clearTimeout(focusTimer);
       vv?.removeEventListener('resize', update);
       vv?.removeEventListener('scroll', update);
+      document.removeEventListener('focusin', onFocusChange);
+      document.removeEventListener('focusout', onFocusChange);
       html.style.overflow = prev.htmlOverflow;
       body.style.overflow = prev.bodyOverflow;
       // iOS scrolls the page to reveal a focused field; put it back where it was when the chat opened.
@@ -331,9 +359,9 @@ export default function MCareOrb({ standalone = false } = {}) {
     return () => html.removeAttribute('data-mcare-cover');
   }, [open, isDesktopPanel, standalone]);
   const keyboardOpen = !isDesktopPanel && mobileViewport.keyboardOpen;
-  // Very little room above the keyboard (a phone on its side, or a small phone): the header and the journey
-  // tracker step aside as well, so the conversation and the message box keep the space instead of being pushed
-  // off the bottom of the screen.
+  // Very little room above the keyboard (a phone on its side, or a small phone): the header steps aside as well
+  // (the journey tracker already does whenever the keyboard is up), so the conversation and the message box keep
+  // the space instead of being pushed off the bottom of the screen.
   const compactKeyboard = keyboardOpen && (mobileViewport.height ?? Infinity) < 360;
   // Light-mode option for the desktop panel (2026-08-29, mentor feedback:
   // "a bit dark, should have a light mode too"). Desktop was hardcoded to
@@ -3047,7 +3075,8 @@ export default function MCareOrb({ standalone = false } = {}) {
   // single full-width row under the whole 3-column area on desktop.
   const chatMain = (
     <>
-      {agentMessages.length > 0 && !compactKeyboard && (
+      {/* While typing on a phone the journey tracker steps aside too, so the conversation keeps the space. */}
+      {agentMessages.length > 0 && !keyboardOpen && (
         <JourneyStageTracker messages={agentMessages} />
       )}
 
