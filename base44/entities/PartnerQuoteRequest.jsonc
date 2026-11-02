@@ -1,0 +1,198 @@
+{
+  "name": "PartnerQuoteRequest",
+  "type": "object",
+  "description": "One traveller-initiated request for a firm quote on a specific offer, and the honest trail of what actually happened to it. Created only after the traveller has SEEN the exact minimum details being shared and explicitly consented \u2014 details_shared is a frozen copy of precisely those fields, so what was agreed is not re-derived later. state advances only through the server's own transitions: PREPARED \u2192 SENT \u2192 DELIVERED/FAILED \u2192 ACKNOWLEDGED \u2192 QUOTE_RECEIVED \u2192 QUOTE_CONFIRMED, with DECLINED, EXPIRED and HUMAN_ESCALATION as terminal alternatives. 'SENT' means a provider accepted the message; it is never shown as 'delivered' or 'partner responded'. traveler_decision is the traveller's own decision on the returned quote \u2014 accepting it starts the existing booking route and never charges, reserves or purchases anything by itself. idempotency_key stops a double tap from becoming two requests, so a partner is never asked the same question twice.",
+  "properties": {
+    "request_ref": {
+      "type": "string",
+      "description": "Short human reference shown to both sides, e.g. QR-4F2A91. Carries no patient data."
+    },
+    "rate_card_id": {
+      "type": "string"
+    },
+    "service_id": {
+      "type": "string"
+    },
+    "partner_id": {
+      "type": "string"
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "partner_type": {
+      "type": "string"
+    },
+    "traveler_email": {
+      "type": "string",
+      "format": "email",
+      "description": "The traveller who consented. RLS anchor for their own view."
+    },
+    "traveler_name": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Set only when this request legitimately belongs to a case the traveller owns. Never required for an ordinary price enquiry."
+    },
+    "details_shared": {
+      "type": "object",
+      "description": "Exactly the fields the traveller approved for sharing \u2014 dates, traveller count, nights, requested components, and an optional note. Deliberately excludes medical detail, diagnosis, passport or document data."
+    },
+    "consent_given_by": {
+      "type": "string"
+    },
+    "consent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "PREPARED",
+        "SENT",
+        "DELIVERED",
+        "ACKNOWLEDGED",
+        "QUOTE_RECEIVED",
+        "QUOTE_CONFIRMED",
+        "DECLINED",
+        "FAILED",
+        "HUMAN_ESCALATION",
+        "EXPIRED"
+      ],
+      "default": "PREPARED"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "email",
+        "whatsapp",
+        "sms",
+        "portal"
+      ]
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "delivered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provider_ref": {
+      "type": "string"
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_attempt_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure_detail": {
+      "type": "string"
+    },
+    "partner_response_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "traveler_decision": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined"
+      ],
+      "default": "pending"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "quoted_amount_minor": {
+      "type": "integer"
+    },
+    "quoted_currency": {
+      "type": "string"
+    },
+    "quoted_valid_until": {
+      "type": "string",
+      "format": "date"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "traveler + rate card + a stable hash of the shared details. A repeated submit resolves to this same row."
+    },
+    "audit_trail": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Appended, never rewritten, so the request can be explained later."
+    }
+  },
+  "required": [
+    "rate_card_id",
+    "partner_email",
+    "traveler_email",
+    "state",
+    "consent_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.traveler_email": "{{user.email}}"
+        },
+        {
+          "data.partner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

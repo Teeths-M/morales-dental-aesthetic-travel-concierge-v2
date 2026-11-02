@@ -42,6 +42,7 @@ const PortalTravelAgency     = lazy(() => import('@/pages/PortalTravelAgency'));
 const PortalChauffeur        = lazy(() => import('@/pages/PortalChauffeur'));
 const PortalDoctor           = lazy(() => import('@/pages/PortalDoctor'));
 const ClientProposalPortal   = lazy(() => import('@/pages/ClientProposalPortal'));
+const PartnerPricing         = lazy(() => import('@/pages/PartnerPricing'));
 
 const PARTNER_REVIEW_ROLES = [
   ROLES.TRAVEL_AGENCY, ROLES.TAXI_SERVICE, ROLES.COMPANION,
@@ -105,6 +106,7 @@ export const partnerRoutes = (
 
       <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={PARTNER_REVIEW_ROLES} /></ErrorBoundary>}>
         <Route path="/partner-portal"              element={<ErrorBoundary><PartnerPortal /></ErrorBoundary>} />
+        <Route path="/partner-pricing"             element={<ErrorBoundary><PartnerPricing /></ErrorBoundary>} />
         <Route path="/partner-reviews"             element={<ErrorBoundary><PartnerReviews /></ErrorBoundary>} />
       </Route>
     </Route>

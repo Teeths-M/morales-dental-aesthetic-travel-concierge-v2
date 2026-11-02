@@ -1,0 +1,213 @@
+{
+  "name": "PartnerService",
+  "type": "object",
+  "description": "One service or package a partner publishes to the Morales network \u2014 the catalogue record, deliberately separate from its price. A service holds what it IS (category, route, location, capacity, what a package is composed of); a PartnerRateCard holds what it COSTS, whether it is available, and how fresh that price is. Splitting them is what lets a partner keep one service while revising its price many times without the service being duplicated, and it is why a service can exist with no usable price at all. partner_id/partner_type/partner_email are written by the server from the caller's own authenticated partner record \u2014 never accepted from a client \u2014 so a partner cannot publish under another partner's identity. Publishing an offer never changes verification status: this record says nothing about whether the partner is verified, and nothing here may be read as an endorsement. clinic_procedure services carry medical_disclaimer_applies so a price can never be read as clinical suitability or a guaranteed final treatment cost.",
+  "properties": {
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "security_agency",
+        "doctor",
+        "hotel",
+        "tour_guide",
+        "clinic"
+      ],
+      "description": "Which existing partner record this service belongs to."
+    },
+    "partner_id": {
+      "type": "string",
+      "description": "Id of the owning TravelAgency/TaxiService/Companion/SecurityAgency/Doctor record. Server-derived."
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalised owner email \u2014 the RLS anchor and the only identity M-Care contacts about this offer."
+    },
+    "partner_display_name": {
+      "type": "string",
+      "description": "Partner's own business name, copied for display so a traveller never sees an internal id."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "flight",
+        "package",
+        "lodging",
+        "transfer",
+        "chauffeur_hourly",
+        "companion_care",
+        "tour",
+        "security",
+        "clinic_procedure"
+      ],
+      "description": "Drives which pricing units and which category-specific fields are meaningful."
+    },
+    "name": {
+      "type": "string",
+      "description": "What the service is, in the partner's own words, e.g. 'New York travel package'."
+    },
+    "description": {
+      "type": "string"
+    },
+    "origin_label": {
+      "type": "string",
+      "description": "Departure point for a route-based service. Free text as the partner wrote it \u2014 never geocoded into a precision it does not have."
+    },
+    "destination_label": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "location_label": {
+      "type": "string",
+      "description": "The single line shown on a card, e.g. 'Port of Spain \u2192 New York'."
+    },
+    "is_package": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when this service is composed of components. A package total may only ever sum components explicitly marked included AND priced."
+    },
+    "package_components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "service_id": {
+            "type": "string",
+            "description": "Optional link to another PartnerService this component refers to."
+          },
+          "component_state": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "unpriced"
+            ],
+            "description": "'unpriced' is explicit: a component exists but has no price, so the package total must not treat it as free."
+          },
+          "amount_minor": {
+            "type": "integer",
+            "description": "Component price in minor units of the currency below, only meaningful when included."
+          },
+          "currency": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "duration_nights_min": {
+      "type": "number"
+    },
+    "duration_nights_max": {
+      "type": "number"
+    },
+    "capacity_min": {
+      "type": "number"
+    },
+    "capacity_max": {
+      "type": "number"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditions": {
+      "type": "string",
+      "description": "Booking conditions the traveller must read, e.g. minimum stay or advance notice."
+    },
+    "cancellation_terms": {
+      "type": "string"
+    },
+    "medical_disclaimer_applies": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for clinic_procedure. The price is informational: never clinical suitability, approval, or a guaranteed final treatment cost."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "paused",
+        "withdrawn",
+        "suspended"
+      ],
+      "default": "draft",
+      "description": "'suspended' is set only by an administrator, and only with an audit record. A partner cannot suspend itself out of a moderation hold."
+    },
+    "missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Named gaps (e.g. 'rate card', 'valid_until') so the partner can close them while calm."
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "partner_type",
+    "partner_id",
+    "partner_email",
+    "category",
+    "name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.partner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

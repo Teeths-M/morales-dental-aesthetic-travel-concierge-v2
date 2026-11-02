@@ -1,0 +1,117 @@
+{
+  "name": "PartnerPricingReminder",
+  "type": "object",
+  "description": "The durable outbox row for one price-reconfirmation reminder \u2014 written BEFORE any message is attempted, which is what makes the sweep retry-safe. cycle_key (rate card + the review cycle it belongs to) is the idempotency anchor: a retried or overlapping sweep resolves to this same row instead of sending the partner the same question twice. status records what actually happened rather than what was intended \u2014 'queued' until a send is attempted, 'sent' only when a provider accepted it, 'failed' with its reason, 'suppressed' when quiet hours or a paused offer meant no message was appropriate. A reminder never changes the price itself; the partner's own confirmation or the freshness sweep does that.",
+  "properties": {
+    "rate_card_id": {
+      "type": "string"
+    },
+    "partner_id": {
+      "type": "string"
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "cycle_key": {
+      "type": "string",
+      "description": "rate_card_id + review-cycle timestamp. Unique per card per cycle."
+    },
+    "due_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "sent",
+        "failed",
+        "suppressed",
+        "acknowledged"
+      ],
+      "default": "queued"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "email",
+        "portal"
+      ]
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_attempt_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure_detail": {
+      "type": "string"
+    },
+    "suppressed_reason": {
+      "type": "string",
+      "enum": [
+        "quiet_hours",
+        "offer_not_active",
+        "already_confirmed"
+      ],
+      "description": "Why no message was sent in this cycle \u2014 recorded rather than silently skipped."
+    },
+    "deferred_for_quiet_hours": {
+      "type": "boolean",
+      "default": false
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the partner confirmed (or the offer stopped being reviewable), closing this reminder."
+    }
+  },
+  "required": [
+    "rate_card_id",
+    "partner_email",
+    "cycle_key",
+    "due_at",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.partner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

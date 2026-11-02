@@ -1,0 +1,97 @@
+{
+  "name": "RateCardVersion",
+  "type": "object",
+  "description": "An immutable snapshot of one PartnerRateCard as it stood before a material change \u2014 written by the server immediately BEFORE the live row is updated, never after. Its only job is to make the past readable: a quote issued against version 3 must still be explainable once the partner is on version 7. snapshot holds the exact terms (amount, currency, unit, inclusions, exclusions, validity, availability) that were live at that moment, frozen as a copy rather than a reference, because the referenced fields change. Rows are never updated or deleted; a correction is a new version. Contains no patient data at all \u2014 only commercial terms and who changed them.",
+  "properties": {
+    "rate_card_id": {
+      "type": "string"
+    },
+    "service_id": {
+      "type": "string"
+    },
+    "partner_id": {
+      "type": "string"
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "version": {
+      "type": "number",
+      "description": "The version number this snapshot represents (i.e. the version that was live before the change)."
+    },
+    "change_kind": {
+      "type": "string",
+      "enum": [
+        "created",
+        "price_updated",
+        "terms_updated",
+        "reconfirmed",
+        "availability_updated",
+        "paused",
+        "resumed",
+        "withdrawn",
+        "admin_suspended",
+        "admin_reinstated",
+        "admin_note"
+      ]
+    },
+    "previous_amount_minor": {
+      "type": "integer"
+    },
+    "snapshot": {
+      "type": "object",
+      "description": "Frozen copy of the commercial terms at this version \u2014 amount_minor, currency, pricing_unit, price_kind, inclusions, exclusions, taxes, availability, validity, conditions."
+    },
+    "changed_by": {
+      "type": "string"
+    },
+    "changed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "rate_card_id",
+    "version",
+    "change_kind",
+    "changed_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.partner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}
