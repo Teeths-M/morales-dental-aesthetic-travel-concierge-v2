@@ -15,7 +15,7 @@ const MUTE_KEY = 'msafe_plus_muted';
 // Where each control actually goes. The screen is a launcher: the conversation
 // itself lives in the live session, and the safety surfaces are the real ones.
 const ROUTES = {
-  map: '/nearby-help',
+  map: '/nearby',
   check: '/safe-t',
   home: '/',
   journey: '/trip-overview',
@@ -77,7 +77,7 @@ export default function MSafePlus() {
           muted={muted}
           onToggleMute={toggleMute}
           onOpenAlerts={() => navigate('/dashboard')}
-          onClose={() => navigate('/')}
+          onClose={() => navigate('/welcome')}
         />
 
         <div className="mt-5">

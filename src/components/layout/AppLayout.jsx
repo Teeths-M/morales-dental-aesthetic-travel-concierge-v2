@@ -58,7 +58,12 @@ export default function AppLayout() {
   // safety alerts below. /m-care/history (the older screen with past conversations) keeps the normal layout.
   // /m-care/live is the same full-screen app (opened from the companion's voice,
   // type and history controls), so it gets the identical chrome-free treatment.
-  const isStandaloneMcare = pathname === '/m-care'
+  // "/" is the M-Safe+ home screen now (the design's bottom bar makes it the
+  // app's Home tab), so it gets the same chrome-free treatment: no site header,
+  // footer, tab bar, floating M-Care or onboarding wizard over it.
+  const isStandaloneMcare = pathname === '/'
+    || pathname === '/m-care'
+    || pathname === '/m-safe'
     || pathname === '/m-care/live'
     || pathname === '/m-care/companion';
 
