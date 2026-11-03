@@ -221,7 +221,7 @@ export default function AppLayout() {
                 capability no longer earns its own screen space. */}
             <HeartNotificationCenter user={user} />
             {user && <GuardianTicker />}
-            {user && <FloatingCheckInAlert user={user} />}
+            {user && !isStandaloneMcare && <FloatingCheckInAlert user={user} />}
             {user && <GlobalEventBroadcaster user={user} />}
 
             {/* Mobile primary nav — hidden at lg:+ where DashboardSidebar's desktop rail takes over, and on

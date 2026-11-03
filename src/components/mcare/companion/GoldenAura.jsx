@@ -12,7 +12,7 @@ export default function GoldenAura({ children, reduced = false }) {
   return (
     <div
       className="relative w-full overflow-hidden"
-      style={{ background: `radial-gradient(120% 80% at 50% 0%, #070C14 0%, ${C.bg} 45%, ${C.bgDeep} 100%)` }}
+      style={{ background: `radial-gradient(120% 80% at 50% 0%, ${C.bg} 0%, ${C.bg} 45%, ${C.bgDeep} 100%)` }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Broad amber bloom behind the ring */}

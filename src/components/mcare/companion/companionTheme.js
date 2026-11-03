@@ -7,8 +7,8 @@
  * language. Nothing outside this folder should import from here.
  */
 export const C = {
-  bg: '#05080C',
-  bgDeep: '#03050A',
+  bg: '#020D1C',
+  bgDeep: '#010916',
 
   gold: '#D4A860',
   goldLight: '#F8D58C',

@@ -7,6 +7,7 @@ import SafetyAlertCard from '@/components/mcare/companion/SafetyAlertCard';
 import SavedPlacesCard from '@/components/mcare/companion/SavedPlacesCard';
 import CompanionControls from '@/components/mcare/companion/CompanionControls';
 import PreviewBadge, { PreviewNoticeSheet } from '@/components/mcare/companion/PreviewNoticeSheet';
+import '@/components/mcare/companion/companion.css';
 
 const COAST_IMAGE =
   'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/4cf3d9907_generated_image.png';
@@ -22,7 +23,7 @@ const PREVIEW = {
   alertTail: 'Consider alternative routes.',
   placesTitle: 'Your Saved Places',
   placesSubtitle: '4 destinations • 2 areas to avoid',
-  status: "I'll keep an eye on your surroundings and alert you if anything changes. 💛",
+  status: "I'll keep an eye on your surroundings and alert you if anything changes. ♡",
 };
 
 /**
@@ -71,12 +72,12 @@ export default function MCareCompanion() {
           color: C.text,
           background: 'transparent',
         }}
-        className="relative mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col px-5"
+        className="companion-screen relative mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col px-5"
       >
         <div style={{ paddingTop: 'calc(16px + env(safe-area-inset-top))' }} />
 
         {/* Wordmark + the honest label for what this screen is */}
-        <div className="flex flex-col items-center gap-3">
+        <div className="companion-wordmark relative flex flex-col items-center gap-3">
           <h1
             style={{
               margin: 0,
@@ -94,12 +95,12 @@ export default function MCareCompanion() {
         </div>
 
         {/* The ring */}
-        <div className="mt-1 flex justify-center">
-          <GoldenRing state="idle" size={232} reduced={reduced} />
+        <div className="companion-ring flex justify-center">
+          <GoldenRing state="idle" size={320} reduced={reduced} />
         </div>
 
         {/* Greeting */}
-        <div className="-mt-1 text-center">
+        <div className="companion-greeting text-center">
           <h2
             style={{
               margin: 0,
@@ -127,7 +128,7 @@ export default function MCareCompanion() {
         </div>
 
         {/* Cards */}
-        <div className="mt-5 flex flex-col gap-2.5">
+        <div className="companion-cards mt-4 flex flex-col gap-3">
           <SafetyAlertCard
             title={PREVIEW.alertTitle}
             body={PREVIEW.alertBody}
