@@ -91,10 +91,7 @@ const MinorHelp                = lazy(() => import('@/pages/MinorHelp'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-    {/* The M-Safe+ home screen IS the app's opening screen — the bottom bar in
-        the design makes it the app's Home tab, so it belongs on "/". The
-        cinematic marketing page keeps its own address at /welcome. */}
-    <Route path="/"               element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
+    <Route path="/"               element={<ErrorBoundary><Home /></ErrorBoundary>} />
     <Route path="/welcome"        element={<ErrorBoundary><Home /></ErrorBoundary>} />
     <Route path="/discover"       element={<ErrorBoundary><Discover /></ErrorBoundary>} />
     <Route path="/providers"      element={<ErrorBoundary><Providers /></ErrorBoundary>} />
@@ -119,8 +116,8 @@ export const publicRoutes = (
     {/* Pilot waiting list — the destination of every "Join the pilot" on the
         landing page. Public, one field, writes through joinPilot. */}
     <Route path="/pilot"          element={<ErrorBoundary><Pilot /></ErrorBoundary>} />
-    {/* M-Care's own full-screen app: the M-Care chat as the whole page, nothing of the website behind it. Public
-        like the floating M-Care (a QR scan has no account); a signed-in visitor gets their own conversation. */}
+    {/* The standalone M-Care app (mobile): the golden-ring companion as the whole page, nothing of the website
+        behind it. Public like the floating M-Care (a QR scan has no account). */}
     <Route path="/m-care"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
     <Route path="/m-safe"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
     {/* The golden-ring companion, kept at its own address so the earlier screen
