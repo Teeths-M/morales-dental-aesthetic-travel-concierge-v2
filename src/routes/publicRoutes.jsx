@@ -24,6 +24,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import AppLayout from '@/components/layout/AppLayout';
 
 const Home          = lazy(() => import('@/pages/Home'));
+const HomeEntry     = lazy(() => import('@/pages/HomeEntry'));
 const Discover      = lazy(() => import('@/pages/Discover'));
 const Providers     = lazy(() => import('@/pages/Providers'));
 const ProviderDetail = lazy(() => import('@/pages/ProviderDetail'));
@@ -91,7 +92,8 @@ const MinorHelp                = lazy(() => import('@/pages/MinorHelp'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-    <Route path="/"               element={<ErrorBoundary><Home /></ErrorBoundary>} />
+    {/* Website home page; the installed mobile app opens on the M-Care companion instead. */}
+    <Route path="/"               element={<ErrorBoundary><HomeEntry /></ErrorBoundary>} />
     <Route path="/welcome"        element={<ErrorBoundary><Home /></ErrorBoundary>} />
     <Route path="/discover"       element={<ErrorBoundary><Discover /></ErrorBoundary>} />
     <Route path="/providers"      element={<ErrorBoundary><Providers /></ErrorBoundary>} />
