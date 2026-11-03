@@ -81,6 +81,7 @@ const MReconDemo               = lazy(() => import('@/pages/MReconDemo'));
 const McareIntroDemo           = lazy(() => import('@/pages/McareIntroDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const Pilot                    = lazy(() => import('@/pages/Pilot'));
+const MCareCompanion           = lazy(() => import('@/pages/MCareCompanion'));
 const MCareApp                 = lazy(() => import('@/pages/MCareApp'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
 // Minor reunification — token-gated, no login. Both pages are inert until the
@@ -116,7 +117,10 @@ export const publicRoutes = (
     <Route path="/pilot"          element={<ErrorBoundary><Pilot /></ErrorBoundary>} />
     {/* M-Care's own full-screen app: the M-Care chat as the whole page, nothing of the website behind it. Public
         like the floating M-Care (a QR scan has no account); a signed-in visitor gets their own conversation. */}
-    <Route path="/m-care"         element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
+    <Route path="/m-care"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
+    {/* The live companion itself — the full M-Care app on the same agent, conversation, voice,
+        history and safety flows. /m-care opens it from its voice, type and history controls. */}
+    <Route path="/m-care/live"    element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
     <Route path="/deep-perfection" element={<ErrorBoundary><DeepPerfection /></ErrorBoundary>} />
     <Route path="/onboarding"     element={<ErrorBoundary><OnboardingEducation /></ErrorBoundary>} />
     <Route path="/travel-concierge" element={<ErrorBoundary><TravelConcierge /></ErrorBoundary>} />
