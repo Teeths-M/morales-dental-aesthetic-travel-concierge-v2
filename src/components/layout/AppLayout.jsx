@@ -58,7 +58,9 @@ export default function AppLayout() {
   // safety alerts below. /m-care/history (the older screen with past conversations) keeps the normal layout.
   // /m-care/live is the same full-screen app (opened from the companion's voice,
   // type and history controls), so it gets the identical chrome-free treatment.
-  const isStandaloneMcare = pathname === '/m-care' || pathname === '/m-care/live';
+  const isStandaloneMcare = pathname === '/m-care'
+    || pathname === '/m-care/live'
+    || pathname === '/m-care/companion';
 
   // Where the day/night theme is allowed to apply: signed-in app screens only,
   // never the public marketing site or the cinematic landing page.

@@ -81,6 +81,7 @@ const MReconDemo               = lazy(() => import('@/pages/MReconDemo'));
 const McareIntroDemo           = lazy(() => import('@/pages/McareIntroDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const Pilot                    = lazy(() => import('@/pages/Pilot'));
+const MSafePlus                = lazy(() => import('@/pages/MSafePlus'));
 const MCareCompanion           = lazy(() => import('@/pages/MCareCompanion'));
 const MCareApp                 = lazy(() => import('@/pages/MCareApp'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
@@ -117,7 +118,10 @@ export const publicRoutes = (
     <Route path="/pilot"          element={<ErrorBoundary><Pilot /></ErrorBoundary>} />
     {/* M-Care's own full-screen app: the M-Care chat as the whole page, nothing of the website behind it. Public
         like the floating M-Care (a QR scan has no account); a signed-in visitor gets their own conversation. */}
-    <Route path="/m-care"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
+    <Route path="/m-care"         element={<ErrorBoundary><MSafePlus /></ErrorBoundary>} />
+    {/* The golden-ring companion, kept at its own address so the earlier screen
+        is still reachable rather than silently replaced. */}
+    <Route path="/m-care/companion" element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
     {/* The live companion itself — the full M-Care app on the same agent, conversation, voice,
         history and safety flows. /m-care opens it from its voice, type and history controls. */}
     <Route path="/m-care/live"    element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
