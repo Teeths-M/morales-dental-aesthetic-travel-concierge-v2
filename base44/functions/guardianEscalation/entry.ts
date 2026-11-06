@@ -79,13 +79,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }
 
     await base44.asServiceRole.entities.AuditLog.create({
-      event_type:   'guardian_soft_ping',
-      entity_type:  'Consultation',
-      entity_id:    consultation_id,
-      performed_by: 'system:guardian',
-      metadata:     { strike, reason, anomaly_score, context_note },
-      created_at:   now,
-      prev_hash:    await computePrevHash(base44),
+      event_type:    'guardian_soft_ping',
+      actor_id:      'system',
+      actor_role:    'system',
+      actor_name:    'Morales Guardian',
+      resource_type: 'Consultation',
+      resource_id:   consultation_id,
+      details:       { strike, reason, anomaly_score, context_note },
+      sensitive:     true,
+      timestamp:     now,
+      prev_hash:     await computePrevHash(base44),
     }).catch(() => {});
 
     return ok({ action: 'soft_ping', strike });
@@ -108,13 +111,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }
 
     await base44.asServiceRole.entities.AuditLog.create({
-      event_type:   'guardian_checkin_request',
-      entity_type:  'Consultation',
-      entity_id:    consultation_id,
-      performed_by: 'system:guardian',
-      metadata:     { strike, reason, anomaly_score, context_note },
-      created_at:   now,
-      prev_hash:    await computePrevHash(base44),
+      event_type:    'guardian_checkin_request',
+      actor_id:      'system',
+      actor_role:    'system',
+      actor_name:    'Morales Guardian',
+      resource_type: 'Consultation',
+      resource_id:   consultation_id,
+      details:       { strike, reason, anomaly_score, context_note },
+      sensitive:     true,
+      timestamp:     now,
+      prev_hash:     await computePrevHash(base44),
     }).catch(() => {});
 
     return ok({ action: 'check_in_requested', strike });
@@ -141,13 +147,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     // Admin alert
     await base44.asServiceRole.entities.AuditLog.create({
-      event_type:   'guardian_escalation_critical',
-      entity_type:  'Consultation',
-      entity_id:    consultation_id,
-      performed_by: 'system:guardian',
-      metadata:     { strike, reason, anomaly_score, context_note, requires_human_review: true },
-      created_at:   now,
-      prev_hash:    await computePrevHash(base44),
+      event_type:    'guardian_escalation_critical',
+      actor_id:      'system',
+      actor_role:    'system',
+      actor_name:    'Morales Guardian',
+      resource_type: 'Consultation',
+      resource_id:   consultation_id,
+      details:       { strike, reason, anomaly_score, context_note, requires_human_review: true },
+      sensitive:     true,
+      timestamp:     now,
+      prev_hash:     await computePrevHash(base44),
     }).catch(() => {});
 
     // In-app critical notification

@@ -84,6 +84,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // ── 1. AuditLog — covert SOS event ───────────────────────────────────────
   await base44.asServiceRole.entities.AuditLog.create({
     event_type:   'covert_sos_triggered',
+    actor_id:     user?.id || 'unknown',
+    actor_role:   user?.role || 'user',
     actor_email:  user?.email || 'unknown',
     resource_id:  resolvedCaseId || '',
     case_id:      resolvedCaseId || '',

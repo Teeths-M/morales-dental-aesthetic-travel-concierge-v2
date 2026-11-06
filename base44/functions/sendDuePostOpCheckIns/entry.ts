@@ -70,6 +70,8 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
 
   await base44.asServiceRole.entities.AuditLog.create({
     event_type:  'post_op_checkin_notifications_sent',
+    actor_id:    'system',
+    actor_role:  'system',
     actor_email: 'system',
     resource_id: 'batch',
     details:     { checked: pending.length, due: due.length, sent: sent.length, failed: failed.length },

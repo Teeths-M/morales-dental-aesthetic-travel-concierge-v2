@@ -70,13 +70,16 @@ export async function sendGuardianCheckIn(
   }).catch(() => {});
 
   await base44.asServiceRole.entities.AuditLog.create({
-    event_type:   'guardian_check_in_sent',
-    entity_type:  'Consultation',
-    entity_id:    consultation_id,
-    performed_by: 'system:guardian',
-    metadata:     { reason, token, phone_suffix: cons.phone?.slice(-4) || 'xxxx' },
-    created_at:   now,
-    prev_hash:    await computePrevHash(base44),
+    event_type:    'guardian_check_in_sent',
+    actor_id:      'system',
+    actor_role:    'system',
+    actor_name:    'Morales Guardian',
+    resource_type: 'Consultation',
+    resource_id:   consultation_id,
+    details:       { reason, token, phone_suffix: cons.phone?.slice(-4) || 'xxxx' },
+    sensitive:     false,
+    timestamp:     now,
+    prev_hash:     await computePrevHash(base44),
   }).catch(() => {});
 
   return { sent: true, token, reason };

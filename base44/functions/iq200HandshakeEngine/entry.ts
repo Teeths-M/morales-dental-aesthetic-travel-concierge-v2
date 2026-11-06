@@ -18,7 +18,7 @@ const TOUCHPOINTS = [
 
 const WINDOW_MINUTES = 15;
 
-Deno.serve(createHandler(async ({ req }) => {
+Deno.serve(createHandler(async ({ req, user }) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
@@ -52,6 +52,7 @@ Deno.serve(createHandler(async ({ req }) => {
       // Use the closest valid enum value: 'handshake_created'.
       await base44.asServiceRole.entities.AuditLog.create({
         event_type: 'handshake_created',
+        actor_id: user?.id || 'system',
         resource_type: 'digital_handshake',
         case_id,
         details: { touchpoints_created: created.length, total: TOUCHPOINTS.length },
@@ -132,6 +133,7 @@ Deno.serve(createHandler(async ({ req }) => {
         resource_type: 'digital_handshake',
         resource_id: hs.id,
         case_id,
+        actor_id: user?.id || 'system',
         actor_role: partner_role || 'system',
         actor_name: partner_name || 'System',
         details: {
@@ -192,6 +194,7 @@ Deno.serve(createHandler(async ({ req }) => {
           // BUG-R9-04 FIX: use valid enum value 'role_escalation_attempt' (closest match for contingency)
           await base44.asServiceRole.entities.AuditLog.create({
             event_type: 'role_escalation_attempt',
+            actor_id: user?.id || 'system',
             resource_type: 'digital_handshake',
             resource_id: hs.id,
             case_id,

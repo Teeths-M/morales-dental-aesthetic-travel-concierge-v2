@@ -7105,3 +7105,322 @@ test('PARTNER PRICING: only a live listing reaches travellers, M-Care only reads
   // A quiet-hours reminder doesn't block the cycle: only queued/sent/failed/acknowledged rows do.
   expect(sweep).toMatch(/existing\.some\(\(r\) => \['queued', 'sent', 'failed', 'acknowledged'\]\.includes\(r\.status\)\)/);
 });
+
+// ---- Audit log: every entry the code writes can actually be saved, and
+// every entry links to the one before it the same way. Base44 rejects an
+// AuditLog entry whose event type isn't on the entity's list, so an
+// unlisted type silently loses the entry, or fails the whole request when
+// nothing catches the error. Uses this file's existing `test`, `expect`,
+// `read`, `ROOT`, `join`, `readdirSync`, and `existsSync` helpers.
+
+// Comments are blanked rather than removed, so line numbers in failure
+// messages still match the file.
+const alStrip = (s) => s
+  .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
+  .replace(/^[ \t]*\/\/.*$/gm, '');
+
+// Every server source file that can write audit entries.
+function alServerFiles() {
+  const files = [];
+  for (const name of readdirSync(join(ROOT, 'base44', 'functions'))) {
+    if (name.startsWith('_')) continue;
+    const rel = `base44/functions/${name}/entry.ts`;
+    if (existsSync(join(ROOT, rel))) files.push(rel);
+  }
+  for (const name of readdirSync(join(ROOT, 'base44', 'shared'))) {
+    if (name.endsWith('.ts')) files.push(`base44/shared/${name}`);
+  }
+  return files;
+}
+
+function alAppFiles(dir = 'src', out = []) {
+  for (const entry of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) alAppFiles(rel, out);
+    else if (/\.(js|jsx|ts|tsx)$/.test(entry.name)) out.push(rel);
+  }
+  return out;
+}
+
+// A string list in the entity file, by key: "enum" (the event types) or
+// "required" (the fields every entry must have).
+function alEntityList(key) {
+  const entity = read('base44/entities/AuditLog.jsonc');
+  const at = entity.indexOf(`"${key}"`);
+  const list = entity.slice(entity.indexOf('[', at), entity.indexOf(']', at));
+  return new Set([...list.matchAll(/"([a-z0-9_]+)"/g)].map((m) => m[1]));
+}
+
+function alAllowed() {
+  const src = read('base44/functions/logAuditEvent/entry.ts');
+  const start = src.indexOf('ALLOWED_EVENT_TYPES = new Set([');
+  return new Set([...src.slice(start, src.indexOf(']);', start)).matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]));
+}
+
+// The index just past the string or comment starting at text[i], or i when
+// none starts there.
+function alSkip(text, i) {
+  const c = text[i];
+  if (c === '/' && text[i + 1] === '/') {
+    const end = text.indexOf('\n', i);
+    return end === -1 ? text.length : end;
+  }
+  if (c === '/' && text[i + 1] === '*') {
+    const end = text.indexOf('*/', i + 2);
+    return end === -1 ? text.length : end + 2;
+  }
+  if (c === "'" || c === '"' || c === '`') {
+    for (let j = i + 1; j < text.length; j++) {
+      if (text[j] === '\\') j++;
+      else if (text[j] === c) return j + 1;
+    }
+    return text.length;
+  }
+  return i;
+}
+
+// The object literal that opens at src[open].
+function alObjectAt(src, open) {
+  let depth = 0;
+  for (let i = open; i < src.length;) {
+    const next = alSkip(src, i);
+    if (next !== i) { i = next; continue; }
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}' && --depth === 0) return src.slice(open, i + 1);
+    i++;
+  }
+  return '';
+}
+
+// The top-level entries of an object literal: { key, value } for each
+// property, { spread: true } for `...other`. Comments are dropped.
+function alEntries(obj) {
+  const parts = [];
+  let part = '';
+  let depth = 0;
+  for (let i = 1; i < obj.length - 1;) {
+    const next = alSkip(obj, i);
+    if (next !== i) {
+      if (obj[i] !== '/') part += obj.slice(i, next);
+      i = next;
+      continue;
+    }
+    const c = obj[i];
+    if ('([{'.includes(c)) depth++;
+    else if (')]}'.includes(c)) depth--;
+    if (c === ',' && depth === 0) {
+      parts.push(part);
+      part = '';
+    } else {
+      part += c;
+    }
+    i++;
+  }
+  parts.push(part);
+  return parts.map((p) => p.trim()).filter(Boolean).map((p) => {
+    if (p.startsWith('...')) return { spread: true };
+    const m = p.match(/^([A-Za-z_$][\w$]*)\s*(?::\s*([\s\S]*))?$/);
+    return m ? { key: m[1], value: m[2] === undefined ? m[1] : m[2].trim() } : {};
+  });
+}
+
+const alKeys = (obj) => new Set(alEntries(obj).map((e) => e.key).filter(Boolean));
+const alSpreads = (obj) => alEntries(obj).some((e) => e.spread);
+const alEventExpr = (obj) => (alEntries(obj).find((e) => e.key === 'event_type') || {}).value || null;
+
+// The event types an expression can produce, or null when the type is built
+// at runtime. A literal that is only compared against (action === 'clear')
+// isn't produced, and in a ternary only the branches are.
+function alTypesOf(expr) {
+  let e = expr
+    .replace(/[\w$.?)\]]+\s*[!=]==?\s*(['"`])[^'"`]*\1/g, '')
+    .replace(/(['"`])[^'"`]*\1\s*[!=]==?\s*[\w$.?]+/g, '');
+  if (/`[^`]*\$\{/.test(e)) return null;
+  const question = e.search(/\?(?![.?])/);
+  if (question !== -1) e = e.slice(question + 1);
+  const literals = [...e.matchAll(/(['"`])([a-z0-9_]+)\1/g)].map((m) => m[2]);
+  const rest = e
+    .replace(/(['"`])[a-z0-9_]*\1/g, '')
+    .replace(/&&|\|\||!/g, ' ')
+    .replace(/[\w$.]+\s*\?(?![.?])/g, '')
+    .replace(/[\s:()]/g, '');
+  return literals.length && !rest ? literals : null;
+}
+
+// An AuditLog.create or bulkCreate call, written any way: plain,
+// AuditLog?.create(, AuditLog.create?.(, or entities['AuditLog'].create(.
+// The first version only matched the plain form and missed two writes.
+const AL_WRITE_CALL = /(?:\bAuditLog|\[\s*['"]AuditLog['"]\s*\])\s*\??\.\s*(create|bulkCreate)\s*(?:\?\.\s*)?\(\s*/g;
+
+// Every audit write in the server code: AuditLog.create calls, and
+// logTrustScanEvent calls (which write through trustScanAudit.ts).
+function alServerWrites() {
+  const writes = [];
+  for (const rel of alServerFiles()) {
+    const src = alStrip(read(rel));
+    for (const m of src.matchAll(AL_WRITE_CALL)) {
+      const open = m.index + m[0].length;
+      const line = src.slice(0, m.index).split('\n').length;
+      const obj = src[open] === '{' ? alObjectAt(src, open) : null;
+      writes.push({ rel, line, kind: 'create', obj, arg: obj ? '' : src.slice(open, open + 40).split(/[\s),]/)[0] });
+    }
+    for (const m of src.matchAll(/\blogTrustScanEvent\s*\(\s*[\w$.]+\s*,\s*\{/g)) {
+      const line = src.slice(0, m.index).split('\n').length;
+      writes.push({ rel, line, kind: 'trustscan', obj: alObjectAt(src, m.index + m[0].length - 1) });
+    }
+  }
+  return writes;
+}
+
+// Event types chosen at runtime, with every value each one can take. A new
+// one fails the first test below until it's added here.
+const AL_COMPUTED_TYPES = {
+  'base44/functions/checkRecoveryAnomaly/entry.ts': ['recovery_anomaly_warning', 'recovery_anomaly_escalate'],
+  'base44/functions/confirmPINReset/entry.ts': ['vault_pin_reset', 'emergency_pin_reset'],
+  'base44/functions/verifyDoctorBackground/entry.ts': [
+    'background_check_passed', 'background_check_failed',
+    'background_check_manual_override', 'background_check_returned_to_queue',
+  ],
+  'base44/functions/verifyDoctorIdentity/entry.ts': [
+    'identity_check_passed', 'identity_check_failed',
+    'identity_check_manual_override', 'identity_check_returned_to_queue',
+  ],
+  'base44/functions/verifyDoctorLicense/entry.ts': [
+    'license_check_passed', 'license_check_failed',
+    'license_check_manual_override', 'license_check_returned_to_queue',
+  ],
+};
+
+// These two write what their callers pass: logAuditEvent checks it against
+// its own allowlist (tested below), and trustScanAudit.ts's callers are
+// checked as logTrustScanEvent writes.
+const AL_PASS_THROUGH = ['base44/functions/logAuditEvent/entry.ts', 'base44/shared/trustScanAudit.ts'];
+
+test('AUDIT LOG: every event type the code writes is on the AuditLog list', () => {
+  // The scan has to see every way a write can be spelled, or it passes
+  // without checking the ones it can't see.
+  for (const call of [
+    'AuditLog.create({', 'AuditLog?.create({', 'AuditLog.create?.({', 'AuditLog?.create?.({',
+    "entities['AuditLog'].create({", 'AuditLog.bulkCreate([',
+  ]) {
+    expect(call.match(new RegExp(AL_WRITE_CALL.source)), `the scan must recognise ${call}`).not.toBeNull();
+  }
+
+  const listed = alEntityList('enum');
+  const writes = alServerWrites();
+  // There are well over a hundred today; a scan that finds almost none has
+  // stopped working, and would pass without checking anything.
+  expect(writes.length, 'the scan must find the audit writes').toBeGreaterThan(100);
+  const missing = [];
+  const unreviewed = [];
+  for (const w of writes) {
+    if (AL_PASS_THROUGH.includes(w.rel)) continue;
+    const where = `${w.rel}:${w.line}`;
+    const expr = w.obj ? alEventExpr(w.obj) : null;
+    const types = expr ? alTypesOf(expr) : null;
+    if (types) {
+      for (const t of types) if (!listed.has(t)) missing.push(`${t} (${where})`);
+    } else if (AL_COMPUTED_TYPES[w.rel]) {
+      for (const t of AL_COMPUTED_TYPES[w.rel]) if (!listed.has(t)) missing.push(`${t} (${where})`);
+    } else {
+      unreviewed.push(where);
+    }
+  }
+  expect(missing, `add these to AuditLog's event_type list: ${missing.join(', ')}`).toEqual([]);
+  expect(unreviewed, `these build the event type at runtime; list every value in AL_COMPUTED_TYPES: ${unreviewed.join(', ')}`)
+    .toEqual([]);
+
+  // The reviewed list must match the code: each value is really written,
+  // and no branch writes one that isn't on the list.
+  for (const [rel, values] of Object.entries(AL_COMPUTED_TYPES)) {
+    const src = alStrip(read(rel));
+    for (const v of values) {
+      const prefix = v.slice(0, v.lastIndexOf('_') + 1);
+      const asLiteral = src.includes(`'${v}'`);
+      const asTemplate = src.includes(`\`${prefix}\${`) && src.includes(`'${v.slice(prefix.length)}'`);
+      expect(asLiteral || asTemplate, `${rel} no longer writes ${v}`).toBe(true);
+    }
+    for (const m of src.matchAll(/\bauditAction\s*=\s*'([a-z0-9_]+)'/g)) {
+      expect(values, `${rel} writes ${m[1]}; add it to AL_COMPUTED_TYPES and the AuditLog list`).toContain(m[1]);
+    }
+  }
+});
+
+test('AUDIT LOG: logAuditEvent only allows listed event types, and every caller sends one it allows', () => {
+  const listed = alEntityList('enum');
+  const allowed = alAllowed();
+  expect(allowed.size).toBeGreaterThan(0);
+  for (const t of allowed) expect(listed.has(t), `logAuditEvent allows ${t}, which AuditLog doesn't list`).toBe(true);
+
+  const rejected = [];
+  const callers = /(?:functions\s*\.\s*invoke\s*\(\s*['"]logAuditEvent['"]\s*,\s*\{|auditService\s*\.\s*log\s*\(\s*\{)/g;
+  for (const rel of [...alServerFiles(), ...alAppFiles()]) {
+    if (rel === 'src/lib/services/auditService.js') continue;
+    const src = alStrip(read(rel));
+    for (const m of src.matchAll(callers)) {
+      const where = `${rel}:${src.slice(0, m.index).split('\n').length}`;
+      const expr = alEventExpr(alObjectAt(src, m.index + m[0].length - 1));
+      const types = expr ? alTypesOf(expr) : null;
+      if (!types) rejected.push(`${where} (event type built at runtime)`);
+      else for (const t of types) if (!allowed.has(t)) rejected.push(`${t} (${where})`);
+    }
+  }
+  expect(rejected, `logAuditEvent rejects these: ${rejected.join(', ')}`).toEqual([]);
+});
+
+test('AUDIT LOG: every server audit write has the required fields and a chain link', () => {
+  expect([...alEntityList('required')].sort()).toEqual(['actor_id', 'event_type', 'timestamp']);
+  const notFields = ['entity_type', 'entity_id', 'performed_by', 'metadata', 'created_at', 'related_id', 'target_email'];
+  const problems = [];
+  for (const w of alServerWrites()) {
+    const where = `${w.rel}:${w.line}`;
+    if (!w.obj) {
+      // Only trustScanAudit.ts builds its entry first; its payload is
+      // checked by name below.
+      if (w.rel !== 'base44/shared/trustScanAudit.ts') problems.push(`${where} builds its entry elsewhere (${w.arg})`);
+      continue;
+    }
+    if (alSpreads(w.obj)) continue;
+    const keys = alKeys(w.obj);
+    const need = w.kind === 'trustscan' ? ['event_type', 'actor_id'] : ['event_type', 'actor_id', 'timestamp', 'prev_hash'];
+    for (const k of need) if (!keys.has(k)) problems.push(`${where} has no ${k}`);
+    for (const k of notFields) if (keys.has(k)) problems.push(`${where} uses ${k}, which isn't an AuditLog field`);
+  }
+  expect(problems, problems.join('; ')).toEqual([]);
+
+  const trust = alStrip(read('base44/shared/trustScanAudit.ts'));
+  const payload = alKeys(alObjectAt(trust, trust.indexOf('{', trust.indexOf('const payload ='))));
+  for (const k of ['event_type', 'actor_id', 'timestamp', 'prev_hash']) {
+    expect(payload.has(k), `trustScanAudit.ts payload has no ${k}`).toBe(true);
+  }
+});
+
+test('AUDIT LOG: every entry links to the previous one the way verifyAuditChain checks it', () => {
+  // Both checkers hash the previous entry as stored...
+  for (const rel of ['base44/functions/verifyAuditChain/entry.ts', 'base44/functions/validateAuditLogChain/entry.ts']) {
+    expect(alStrip(read(rel)), `${rel} must hash the previous entry as stored`).toMatch(/sha256\(JSON\.stringify\(/);
+  }
+  const helper = alStrip(read('base44/shared/auditHashChain.ts'));
+  expect(helper).toMatch(/AuditLog\.list\('-timestamp', 1\)/);
+  expect(helper).toMatch(/JSON\.stringify\(lastEntries\[0\]\)/);
+
+  // ...and so does every writer: through computePrevHash, or the same steps
+  // written out.
+  const offenders = new Set();
+  for (const w of alServerWrites()) {
+    if (w.kind !== 'create') continue;
+    const src = alStrip(read(w.rel));
+    const usesHelper = src.includes('computePrevHash(');
+    const sameSteps = /AuditLog\.list\('-timestamp',\s*1\)/.test(src) && src.includes('JSON.stringify(');
+    if (!usesHelper && !sameSteps) offenders.add(w.rel);
+  }
+  expect([...offenders], 'these link entries some other way').toEqual([]);
+
+  // TrustScan entries used to link with a different, field-joined hash, so
+  // the checkers reported every one of them as a broken link.
+  const trust = alStrip(read('base44/shared/trustScanAudit.ts'));
+  expect(trust).toMatch(/const prevHash = await computePrevHash\(/);
+  expect(trust).toMatch(/prev_hash: prevHash/);
+  expect(trust).not.toMatch(/\$\{prev\.prev_hash\}\|/);
+  expect(trust).not.toMatch(/list\('-created_date'/);
+});

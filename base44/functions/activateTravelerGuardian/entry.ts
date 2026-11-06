@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 // ── activateTravelerGuardian ──────────────────────────────────────────────────
 // Turns on "Traveler Guardian" mode for a case: schedules the six milestone
@@ -165,6 +166,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         details: { action: 'traveler_guardian_activated', milestones_scheduled: created.length },
         sensitive: false,
         timestamp: now.toISOString(),
+        prev_hash: await computePrevHash(base44),
       });
     } catch (_) { /* best-effort */ }
 

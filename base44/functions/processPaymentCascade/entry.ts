@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
 
 /**
@@ -259,6 +260,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       actor_name: 'M-Care Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, sensitive: false, timestamp: new Date().toISOString(),
       details: { payment_type, amount_paid: amountPaid, cascaded, new_status: newPaymentStatus },
+      prev_hash: await computePrevHash(base44),
     })
   );
 

@@ -37,6 +37,8 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // ── 1. Audit log — creates a tamper-evident chain entry ──────────────────
   await base44.asServiceRole.entities.AuditLog.create({
     event_type:   'procedure_stacking_blocked',
+    // A public form with no session: the visitor is known only by the email they gave.
+    actor_id:     'anonymous',
     actor_role:   'patient',
     actor_email:  patient_email || 'anonymous',
     actor_name:   patient_name  || 'Anonymous Patient',

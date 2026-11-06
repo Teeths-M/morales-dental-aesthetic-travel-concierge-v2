@@ -58,6 +58,8 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   // ── 2. Audit trail — best-effort, must never block the handoff ───────────
   await base44.asServiceRole.entities.AuditLog.create({
     event_type: 'intake_human_escalation',
+    // A public form with no session: the visitor is known only by the email they gave.
+    actor_id: 'anonymous',
     actor_role: 'patient',
     actor_email: user_email,
     actor_name: user_name || 'Prospective Patient',

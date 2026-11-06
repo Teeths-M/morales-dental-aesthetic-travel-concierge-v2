@@ -152,8 +152,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const goldenMPrevHash = await computePrevHash(base44);
   tasks.push(base44.asServiceRole.entities.AuditLog.create({
     event_type: 'golden_m_notification_sent',
-    related_id: trip_id,
+    actor_id: 'system',
+    actor_role: 'system',
+    actor_name: 'Morales Automation',
+    resource_type: 'TravelRequest',
+    resource_id: trip_id,
+    case_id: trip?.case_id || '',
     details: { client_name: clientName, duration, procedures },
+    sensitive: false,
+    timestamp: new Date().toISOString(),
     prev_hash: goldenMPrevHash,
   }).catch(() => {}));
 

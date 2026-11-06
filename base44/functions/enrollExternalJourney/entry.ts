@@ -1,5 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { BYOJ_PLANS, BYOJ_DISCLOSURE_VERSION } from '../../shared/byoj.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 // ── enrollExternalJourney (Bring Your Own Journey) ────────────────────────────
 // Turns a verified external itinerary into a protected journey.
@@ -86,6 +87,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   try {
     await base44.asServiceRole.entities.AuditLog.create({
       event_type: 'byoj_enrolled',
+      actor_id: user?.id || 'system',
       actor_email: user?.email || journey.patient_email,
       resource_type: 'external_journey',
       resource_id: external_journey_id,
@@ -93,6 +95,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       details: { plan, disclosure_version: BYOJ_DISCLOSURE_VERSION, escalated },
       sensitive: true,
       timestamp: nowISO,
+      prev_hash: await computePrevHash(base44),
     });
   } catch (_) { /* audit is best-effort */ }
 

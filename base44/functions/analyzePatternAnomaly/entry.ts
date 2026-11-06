@@ -71,18 +71,21 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (action === 'escalated') {
     // Audit trail
     await base44.asServiceRole.entities.AuditLog.create({
-      event_type:   'pattern_escalation',
-      entity_type:  'BehavioralProfile',
-      entity_id:    profile.id,
-      performed_by: 'system:medguard',
-      metadata: {
+      event_type:    'pattern_escalation',
+      actor_id:      'system',
+      actor_role:    'system',
+      actor_name:    'MedGuard Pattern Intelligence',
+      resource_type: 'BehavioralProfile',
+      resource_id:   profile.id,
+      case_id:       case_id || profile.case_id || '',
+      details: {
         anomaly_score,
         anomaly_reason,
         nudge_count: nudgeCount,
-        case_id:     case_id || profile.case_id,
       },
-      created_at: now,
-      prev_hash: await computePrevHash(base44),
+      sensitive:     true,
+      timestamp:     now,
+      prev_hash:     await computePrevHash(base44),
     }).catch(() => {});
 
     // Email the case guardian if we have one

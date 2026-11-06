@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 // ── processTwilioHandshake — Twilio SMS Webhook ───────────────────────────────
 // Handles inbound SMS confirmations from drivers, destination staff, and patients.
@@ -153,6 +154,7 @@ Deno.serve(async (req) => {
         },
         sensitive: true,
         timestamp: now,
+        prev_hash: await computePrevHash(base44),
       });
 
       if (adminEmail) {
@@ -191,6 +193,7 @@ Deno.serve(async (req) => {
       details: { checkpoint_id: checkpointId, from_phone: fromPhone, message_sid: messageSid },
       sensitive: false,
       timestamp: now,
+      prev_hash: await computePrevHash(base44),
     });
 
     const typeLabel = (h.handshake_type || 'checkpoint').replace(/_/g, ' ');

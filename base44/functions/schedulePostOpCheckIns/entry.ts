@@ -72,6 +72,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // Audit log
   await base44.asServiceRole.entities.AuditLog.create({
     event_type:  'post_op_checkins_scheduled',
+    actor_id:    user?.id || 'system',
     actor_email: user?.email || 'system',
     resource_id: case_id,
     details:     { days_scheduled: created, patient_email: patientEmail, procedure },

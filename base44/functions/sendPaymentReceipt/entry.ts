@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 const BRAND   = 'M-Care Medical Travel Safety';
 const GOLD    = '#D4AF37';
@@ -161,6 +162,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       actor_name: 'M-Care Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, sensitive: false, timestamp: new Date().toISOString(),
       details: { receipt_number: receiptNumber, amount_paid: amountPaid, vault_id: vaultId },
+      prev_hash: await computePrevHash(base44),
     })
   );
 

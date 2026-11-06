@@ -1,5 +1,6 @@
 ﻿import { createHandler } from '../../shared/createHandler.ts';
 import { sanitizePromptInput } from '../../shared/sanitizePromptInput.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { z, strictObject, validate, Fields } from '../../shared/validate.ts';
 
 // Action-multiplexed body — z.discriminatedUnion instead of createHandler's
@@ -223,13 +224,21 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         duration_seconds: durationSeconds
       });
 
-      // Log audit event
-      await base44.asServiceRole.functions.invoke('logAuditEvent', {
+      // Hash-chained audit entry. Best-effort: the session has already ended,
+      // so a failure here never turns that into an error.
+      await base44.asServiceRole.entities.AuditLog.create({
         event_type: 'walkie_talkie_session_ended',
+        actor_id: user?.id || 'system',
+        actor_role: user?.role || 'user',
+        actor_name: user?.full_name || user?.email || '',
+        actor_email: user?.email || '',
         resource_type: 'WalkieTalkieSession',
         resource_id: session[0].id,
-        details: { duration_seconds: durationSeconds, message_count: session[0].message_count }
-      });
+        details: { duration_seconds: durationSeconds, message_count: session[0].message_count },
+        sensitive: false,
+        timestamp: endedAt.toISOString(),
+        prev_hash: await computePrevHash(base44),
+      }).catch((auditError) => console.error('[walkieTalkieTranslate] audit entry failed:', auditError));
 
       return Response.json({ success: true, duration_seconds: durationSeconds });
     }

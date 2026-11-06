@@ -81,6 +81,10 @@ ${note ? `<tr><td>Patient note</td><td>${note}</td></tr>` : ''}
 
   await base44.asServiceRole.entities.AuditLog.create({
     event_type:  'post_op_checkin_submitted',
+    // Sent from the emailed check-in link, without signing in. The record id
+    // says which link; the token itself is never logged.
+    actor_id:    `checkin_link_${rec.id}`,
+    actor_role:  'patient',
     actor_email: rec.patient_email,
     resource_id: rec.case_id,
     details:     { day: rec.day, rating, pain_level, needs_doctor_followup: needsFollowup, concerns },

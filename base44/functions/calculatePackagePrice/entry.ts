@@ -1,5 +1,6 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 /**
  * calculatePackagePrice
@@ -88,6 +89,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       package_price_full: packagePriceFull, package_price_terms: packagePriceTerms,
       first_installment: packagePriceFirstInstall,
     },
+    prev_hash: await computePrevHash(base44),
   });
 
   // Auto-fire Pay Now email

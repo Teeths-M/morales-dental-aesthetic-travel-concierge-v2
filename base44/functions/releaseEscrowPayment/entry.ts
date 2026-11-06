@@ -1,5 +1,6 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 /**
  * releaseEscrowPayment — Airbnb Escrow Release Model
@@ -144,6 +145,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       resource_type:'EscrowHold', resource_id: hold.id, case_id: holdCaseId,
       sensitive:    true, timestamp: now,
       details: { partner_type: hold.partner_type, amount: hold.amount_held_usd, handshake: hsNum, stripe_transfer_id: stripeTransferId },
+      prev_hash: await computePrevHash(base44),
     }));
 
     released.push({ partner_type: hold.partner_type, amount: hold.amount_held_usd });

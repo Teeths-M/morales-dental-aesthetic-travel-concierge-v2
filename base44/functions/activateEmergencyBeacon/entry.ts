@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 /**
  * activateEmergencyBeacon
@@ -30,19 +31,33 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const beaconId = crypto.randomUUID();
   const coords   = fmtCoord(numLat, numLon);
 
-  // Log audit event
-  await base44.asServiceRole?.entities?.AuditLog?.create({
-    event_type:    'EMERGENCY_BEACON_ACTIVATED',
-    case_id:       case_id || null,
-    lat:           numLat,
-    lon:           numLon,
-    accuracy_m:    accuracy ? Number(accuracy) : null,
-    device_id:     device_id || null,
-    relay_count:   relay_count ? Number(relay_count) : 0,
-    offline_queued: !!offline_queued,
-    beacon_id:     beaconId,
-    timestamp:     now,
-  }).catch(() => {});
+  // Log audit event. Best-effort: nothing about the audit entry may ever stop
+  // the alert below from going out.
+  try {
+    await base44.asServiceRole.entities.AuditLog.create({
+      event_type:    'emergency_beacon_activated',
+      // The beacon can be relayed offline from a device with no sign-in, so
+      // the device is the actor.
+      actor_id:      device_id ? `device_${String(device_id).slice(0, 64)}` : 'emergency_beacon',
+      actor_role:    'emergency_beacon',
+      actor_name:    'Emergency Mesh Beacon',
+      resource_type: 'CaseRecord',
+      resource_id:   case_id || '',
+      case_id:       case_id || '',
+      details: {
+        beacon_id:      beaconId,
+        lat:            numLat,
+        lon:            numLon,
+        accuracy_m:     accuracy ? Number(accuracy) : null,
+        device_id:      device_id || null,
+        relay_count:    relay_count ? Number(relay_count) : 0,
+        offline_queued: !!offline_queued,
+      },
+      sensitive:     true,
+      timestamp:     now,
+      prev_hash:     await computePrevHash(base44),
+    });
+  } catch (_) { /* best-effort */ }
 
   // Stamp the case record
   if (case_id) {

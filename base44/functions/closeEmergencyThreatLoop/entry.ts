@@ -16,6 +16,7 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -115,12 +116,21 @@ Deno.serve(createHandler(async ({ req }) => {
     } catch (_) {}
 
     // ── 5. Audit log ──────────────────────────────────────────────────────────
-    await base44.functions.invoke('logAuditEvent', {
+    // Written directly: logAuditEvent needs a signed-in session, and this runs
+    // on an emergency PIN session instead.
+    await base44.asServiceRole.entities.AuditLog.create({
       event_type: 'emergency_threat_loop_closed',
-      performed_by: userEmail,
-      target_email: userEmail,
-      metadata: { case_id: caseId, safe_location: safe_location || '', incident_ref: incidentRef, notes: notes || '' },
+      actor_id: sessionResult.session.user_id || 'emergency_pin_user',
+      actor_role: 'emergency_pin',
+      actor_name: 'Emergency PIN session',
+      actor_email: userEmail,
+      resource_type: 'CaseRecord',
+      resource_id: caseId,
+      case_id: caseId,
+      details: { safe_location: safe_location || '', incident_ref: incidentRef, notes: notes || '' },
+      sensitive: true,
       timestamp: now.toISOString(),
+      prev_hash: await computePrevHash(base44),
     }).catch(() => {});
 
     // ── 6. Admin incident report email ────────────────────────────────────────

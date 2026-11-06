@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../../shared/createHandler.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const { image_base64, image_url, language = 'en' } = await body();
@@ -72,13 +73,21 @@ Rules:
     },
   });
 
-  // Persist for audit trail (non-blocking)
-  base44.asServiceRole.entities.AuditLog?.create?.({
-    user_id: user?.id,
-    event_type: 'discharge_paper_read',
-    metadata: { language, has_restrictions: (result?.restrictions?.length ?? 0) > 0 },
-    timestamp: new Date().toISOString(),
-  }).catch(() => {});
+  // Audit trail. Awaited, so the entry isn't lost when the function ends, but
+  // best-effort: a failure here never fails the reading.
+  try {
+    await base44.asServiceRole.entities.AuditLog.create({
+      event_type: 'discharge_paper_read',
+      actor_id: user?.id || 'unknown',
+      actor_role: user?.role || 'user',
+      actor_email: user?.email || '',
+      resource_type: 'DischargePaper',
+      details: { language, has_restrictions: (result?.restrictions?.length ?? 0) > 0 },
+      sensitive: true,
+      timestamp: new Date().toISOString(),
+      prev_hash: await computePrevHash(base44),
+    });
+  } catch (_) { /* best-effort */ }
 
   return ok({
     success: true,

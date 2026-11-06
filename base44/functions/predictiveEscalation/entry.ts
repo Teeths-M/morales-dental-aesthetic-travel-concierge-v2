@@ -22,6 +22,7 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../../shared/cronAuth.ts';
+import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 
 Deno.serve(async (req) => {
@@ -106,12 +107,20 @@ Deno.serve(async (req) => {
         }
 
         // Audit log
-        await base44.functions.invoke('logAuditEvent', {
-          event_type:   'predictive_escalation_fired',
-          performed_by: 'system',
-          target_email: checkin.patient_email || '',
-          metadata:     { case_id: checkin.case_id, mins_until_due: minsUntilDue, signals },
-          timestamp:    now.toISOString(),
+        // Written directly: this runs on a schedule, with no signed-in session
+        // for logAuditEvent to check.
+        await base44.asServiceRole.entities.AuditLog.create({
+          event_type:    'predictive_escalation_fired',
+          actor_id:      'system',
+          actor_role:    'system',
+          actor_name:    'iQ200 Predictive Engine',
+          resource_type: 'SoloCheckIn',
+          resource_id:   checkin.id,
+          case_id:       checkin.case_id || '',
+          details:       { patient_email: checkin.patient_email || '', mins_until_due: minsUntilDue, signals },
+          sensitive:     true,
+          timestamp:     now.toISOString(),
+          prev_hash:     await computePrevHash(base44),
         }).catch(() => {});
 
         // The pre-alert above only ever reached admin/coordinator -- the
