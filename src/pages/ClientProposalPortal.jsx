@@ -6,6 +6,8 @@ import { CheckCircle2, Shield, Sparkles, Lock, AlertCircle, Plane } from 'lucide
 import PortalQRCode from '@/components/portal/PortalQRCode';
 import { Button } from '@/components/ui/button';
 import ClinicStatusGate from '@/components/trust/ClinicStatusGate';
+import WithdrawalWaiverConsent from '@/components/checkout/WithdrawalWaiverConsent';
+import { buildWaiverPayload, requiresWithdrawalWaiver } from '@/lib/withdrawalWaiver';
 
 function fmt(n) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0); }
 
@@ -32,7 +34,8 @@ export default function ClientProposalPortal() {
   const [depositChoice, setDepositChoice] = useState(null);
   const [paying, setPaying] = useState(false);
   const [paySuccess, _setPaySuccess] = useState(false);
-  const [_payError, setPayError] = useState(null);
+  const [payError, setPayError] = useState(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
   // Time-of-action clinic gate: only an ENFORCED block prevents payment. Soft-launch
   // (CLINIC_GATE_ENFORCE off), loading, and errors show a label but never block.
   const [clinicHardBlock, setClinicHardBlock] = useState(false);
@@ -74,6 +77,7 @@ export default function ClientProposalPortal() {
         case_id: caseData.id,
         deposit_option: depositChoice,
         proposal_token: cleanToken,
+        withdrawal_waiver: buildWaiverPayload('package_payment', waiverAccepted),
       });
       if (res.data?.success && res.data?.payment_url) {
         window.location.href = res.data.payment_url;
@@ -252,6 +256,8 @@ export default function ClientProposalPortal() {
               </button>
             ))}
 
+            <WithdrawalWaiverConsent flow="package_payment" id="withdrawal-waiver-proposal" tone="dark" checked={waiverAccepted} onChange={setWaiverAccepted} />
+
             {/* Time-of-action clinic verification before payment (fail-safe). */}
             {(caseData.doctor_email || caseData.procedure_country) && (
               <ClinicStatusGate
@@ -264,7 +270,7 @@ export default function ClientProposalPortal() {
 
             <Button
               onClick={handlePayment}
-              disabled={!depositChoice || paying || clinicHardBlock}
+              disabled={!depositChoice || paying || clinicHardBlock || (requiresWithdrawalWaiver('package_payment') && !waiverAccepted)}
               className="w-full py-3 font-semibold rounded-xl text-sm"
               style={{ background: depositChoice && !clinicHardBlock ? 'linear-gradient(135deg, #C5A059, #a8863c)' : undefined, color: depositChoice && !clinicHardBlock ? '#022C22' : undefined }}
             >
@@ -272,8 +278,13 @@ export default function ClientProposalPortal() {
               {clinicHardBlock ? 'Clinic status unconfirmed — payment paused' : paying ? 'Processing...' : depositChoice ? `Confirm Payment — ${fmt(paymentOptions.find(o => o.key === depositChoice)?.amount)}` : 'Select a Payment Plan'}
             </Button>
 
+            {/* This page's error messages used to be set but never shown. */}
+            {payError && (
+              <p role="alert" className="text-center text-xs text-red-300">{payError}</p>
+            )}
+
             <p className="text-center text-[10px] text-white/30 flex items-center justify-center gap-1">
-              <Shield className="w-3 h-3" /> Secured by Stripe · HIPAA Compliant
+              <Shield className="w-3 h-3" /> Secured by Stripe
             </p>
           </div>
         )}

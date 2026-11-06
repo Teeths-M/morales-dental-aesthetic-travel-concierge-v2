@@ -15,12 +15,17 @@ import Stripe from 'npm:stripe@17.0.0';
 import { getViolations } from '../../shared/procedureCompatibility.ts';
 import { createHandler } from '../../shared/createHandler.ts';
 import { z, strictObject, validate, Fields } from '../../shared/validate.ts';
+import { checkWithdrawalWaiver, requiresWithdrawalWaiver, WITHDRAWAL_WAIVER_VERSION } from '../../shared/withdrawalWaiver.ts';
 
 const PaymentLinkSchema = strictObject({
   case_id: Fields.shortText(100),
   deposit_option: z.enum(['Full', '50%', '25%']),
   proposal_token: z.string().trim().max(200).optional(),
   amount: z.coerce.number().optional(),
+  withdrawal_waiver: strictObject({
+    accepted: z.boolean(),
+    version: z.string().trim().max(60),
+  }).optional(),
 });
 
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
@@ -59,7 +64,7 @@ Deno.serve(createHandler(async ({ req }) => {
     const rawBody = await req.json().catch(() => ({}));
     const validated = validate(PaymentLinkSchema, rawBody);
     if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
-    const { case_id, deposit_option, proposal_token, amount: clientAmountRaw } = validated.data;
+    const { case_id, deposit_option, proposal_token, amount: clientAmountRaw, withdrawal_waiver } = validated.data;
 
     // Fetch case
     const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
@@ -96,6 +101,10 @@ Deno.serve(createHandler(async ({ req }) => {
       }
     }
 
+    // EU/UK cancellation-right box (base44/shared/withdrawalWaiver.ts).
+    const waiver = checkWithdrawalWaiver('package_payment', withdrawal_waiver);
+    if (!waiver.ok) return Response.json({ error: waiver.error }, { status: 400 });
+
     // RATE LIMIT: 10 payment link requests per hour, keyed by user when logged in,
     // otherwise by the case itself (an anonymous token-holder has no user.id to key on).
     const rateLimitKey = user ? `${user.id}:generateStripePaymentLink` : `${case_id}:generateStripePaymentLink`;
@@ -108,7 +117,10 @@ Deno.serve(createHandler(async ({ req }) => {
       deposit_option,
       status: 'session_created',
     });
-    if (existingTxns.length > 0) {
+    // An open session made before the box was ticked for this wording can't be reused.
+    const reusable = existingTxns.length > 0 && (!requiresWithdrawalWaiver('package_payment')
+      || existingTxns[0].metadata?.withdrawal_waiver_version === WITHDRAWAL_WAIVER_VERSION);
+    if (reusable) {
       const stripe = new Stripe(stripeKey);
       try {
         const session = await stripe.checkout.sessions.retrieve(existingTxns[0].stripe_session_id);
@@ -152,6 +164,7 @@ Deno.serve(createHandler(async ({ req }) => {
           client_email: caseRecord.client_email,
           plan_type: planType,
           deposit_option,
+          ...waiver.metadata,
         }
       },
       line_items: [{
@@ -179,6 +192,7 @@ Deno.serve(createHandler(async ({ req }) => {
         plan_type: planType,
         deposit_option,
         client_email: caseRecord.client_email,
+        ...waiver.metadata,
       },
       expires_at: Math.floor(Date.now() / 1000) + 3600,
     });
@@ -194,7 +208,7 @@ Deno.serve(createHandler(async ({ req }) => {
       deposit_option,
       raw_amount: amountDue,
       currency: 'usd',
-      metadata: { plan_type: planType },
+      metadata: { plan_type: planType, ...waiver.metadata },
       created_at: new Date().toISOString(),
     });
 

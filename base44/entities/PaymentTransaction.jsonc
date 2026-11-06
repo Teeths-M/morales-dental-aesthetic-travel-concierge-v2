@@ -55,7 +55,11 @@
         "cancelled",
         "failed_validation",
         "succeeded_skipped_demo",
-        "flagged_amount_mismatch"
+        "flagged_amount_mismatch",
+        "disputed",
+        "dispute_won",
+        "dispute_lost",
+        "dispute_closed"
       ],
       "default": "session_created"
     },

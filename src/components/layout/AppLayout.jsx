@@ -20,6 +20,7 @@ import { initGlobalSyncListener, registerSyncQueue } from '@/lib/offlineSyncCont
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 import MCareOrb from '@/components/mcare/MCareOrb';
+import { useAgeGateAccountSync } from '@/hooks/useAgeGateAccountSync';
 import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
 import ProximityWatcher from './ProximityWatcher';
 import MSafeThemeScope from '@/components/mobile/MSafeThemeScope';
@@ -44,6 +45,7 @@ export default function AppLayout() {
   const { user } = useAuth();
   const { pathname, search } = useLocation();
   useGeoAutoAlign();
+  useAgeGateAccountSync(user);
 
   // The landing page and the pilot page are one experience with their own
   // minimal navigation (LandingNav) and slim footer (LandingFooter). The shared

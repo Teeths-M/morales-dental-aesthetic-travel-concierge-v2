@@ -10,12 +10,14 @@
  * 2. Register this function's URL as a Stripe webhook endpoint
  *    (Stripe Dashboard → Developers → Webhooks → Add endpoint)
  *    Events to subscribe: checkout.session.completed, payment_intent.succeeded,
- *                         payment_intent.payment_failed, charge.refunded
+ *                         payment_intent.payment_failed, charge.refunded,
+ *                         charge.dispute.created, charge.dispute.closed
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { linkOnlyEmail } from '../../shared/notify.ts';
 import { verifyStripeSignature } from '../../shared/verifyStripeSignature.ts';
+import { DISPUTE_FREEZES_ESCROW, disputeOutcome, shouldResumeEscrow, closedDisputeStatus, pauseMarker } from '../../shared/disputePolicy.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -186,6 +188,16 @@ Deno.serve(async (req) => {
           processed_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
         });
+        break;
+      }
+
+      case 'charge.dispute.created': {
+        await handleDisputeOpened(base44, event);
+        break;
+      }
+
+      case 'charge.dispute.closed': {
+        await handleDisputeClosed(base44, event);
         break;
       }
 
@@ -681,5 +693,186 @@ async function handleSlotHoldDepositPaid(base44, {
         from: 'stripePaymentWebhook',
       }),
     }).catch(() => {});
+  }
+}
+
+// ── Disputes (chargebacks) ───────────────────────────────────────────────────
+// A patient's bank can dispute a card payment. While a dispute is open the bank
+// holds the money back from Morales's Stripe balance. With
+// DISPUTE_FREEZES_ESCROW on, that case's partner payouts that haven't gone out
+// yet are paused until the dispute is decided (base44/shared/disputePolicy.ts),
+// and an admin is told to submit evidence in Stripe before the deadline.
+// Nothing here changes the patient's booking, care, or any safety service.
+
+async function findDisputedPayment(base44, dispute) {
+  let piId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : null;
+  if (!piId && typeof dispute.charge === 'string') {
+    // Some disputes only name the charge. Ask Stripe which payment it was.
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (stripeKey) {
+      try {
+        const r = await fetch(`https://api.stripe.com/v1/charges/${dispute.charge}`, {
+          headers: { 'Authorization': `Bearer ${stripeKey}` },
+        });
+        if (r.ok) {
+          const charge = await r.json();
+          piId = typeof charge.payment_intent === 'string' ? charge.payment_intent : null;
+        }
+      } catch (_) { /* recorded without a case below */ }
+    }
+  }
+  if (!piId) return { piId: null, original: null };
+  const rows = await base44.asServiceRole.entities.PaymentTransaction.filter({
+    stripe_payment_intent_id: piId, status: 'succeeded',
+  }).catch(() => []);
+  return { piId, original: rows[0] || null };
+}
+
+async function noteDisputeOnCase(base44, caseId, action, details) {
+  if (!caseId) return;
+  const c = await base44.asServiceRole.entities.CaseRecord.get(caseId).catch(() => null);
+  if (!c || c.is_finalized) return;
+  await base44.asServiceRole.entities.CaseRecord.update(caseId, {
+    timeline_log: [...(c.timeline_log || []), { timestamp: new Date().toISOString(), action, details }],
+  }).catch(() => {});
+}
+
+async function emailAdminAboutDispute(base44, { title, line, ctaUrl = 'https://dashboard.stripe.com/disputes', ctaLabel = 'Open Stripe Disputes' }) {
+  const adminEmail = Deno.env.get('ADMIN_EMAIL');
+  if (!adminEmail) return;
+  await base44.asServiceRole.integrations.Core.SendEmail({
+    from_name: 'Morales Medical — Payments',
+    to: adminEmail,
+    subject: title,
+    body: linkOnlyEmail({ title, line, ctaUrl, ctaLabel, from: 'stripePaymentWebhook' }),
+  }).catch(() => {});
+}
+
+async function handleDisputeOpened(base44, event) {
+  const dispute = event.data.object;
+  const now = new Date().toISOString();
+  const { piId, original } = await findDisputedPayment(base44, dispute);
+  const caseId = original?.case_id || null;
+
+  // Pause only payouts still waiting. One already sent can't be pulled back here.
+  let paused = 0;
+  if (DISPUTE_FREEZES_ESCROW && caseId) {
+    const holds = await base44.asServiceRole.entities.EscrowHold.filter({ case_id: caseId, status: 'held' }).catch(() => []);
+    for (const h of holds) {
+      const done = await base44.asServiceRole.entities.EscrowHold.update(h.id, {
+        status: 'disputed',
+        release_notes: `${h.release_notes ? `${h.release_notes} ` : ''}Paused ${now}: card payment disputed ${pauseMarker(dispute.id)}.`,
+      }).then(() => true).catch(() => false);
+      if (done) paused += 1;
+    }
+  }
+
+  await base44.asServiceRole.entities.PaymentTransaction.create({
+    case_id: caseId,
+    client_email: original?.client_email || '',
+    stripe_payment_intent_id: piId,
+    stripe_event_id: event.id,
+    event_id: event.id,
+    event_type: event.type,
+    status: 'disputed',
+    raw_amount: (dispute.amount || 0) / 100,
+    currency: dispute.currency || 'usd',
+    metadata: {
+      dispute_id: dispute.id,
+      dispute_reason: dispute.reason || null,
+      dispute_status: dispute.status || null,
+      evidence_due_by: dispute.evidence_details?.due_by
+        ? new Date(dispute.evidence_details.due_by * 1000).toISOString()
+        : null,
+      escrow_holds_paused: paused,
+    },
+    processed_at: now,
+    created_at: now,
+  });
+
+  await noteDisputeOnCase(base44, caseId, 'payment_disputed',
+    `Card payment disputed (${dispute.id}). ${paused} partner payout(s) paused. Care and travel continue unchanged.`);
+
+  if (paused > 0) {
+    await emailAdminAboutDispute(base44, {
+      title: 'A card payment was disputed',
+      line: 'A patient\'s bank opened a chargeback. That case\'s partner payouts are paused until it is decided. Submit evidence in the Stripe dashboard before its deadline; missing the deadline loses the dispute.',
+    });
+  } else {
+    await emailAdminAboutDispute(base44, {
+      title: 'A card payment was disputed',
+      line: 'A patient\'s bank opened a chargeback. Submit evidence in the Stripe dashboard before its deadline; missing the deadline loses the dispute.',
+    });
+  }
+}
+
+async function handleDisputeClosed(base44, event) {
+  const dispute = event.data.object;
+  const now = new Date().toISOString();
+  const outcome = disputeOutcome(dispute.status);
+  const { piId, original } = await findDisputedPayment(base44, dispute);
+  const caseId = original?.case_id || null;
+
+  // Resume only the holds this dispute paused. A hold paused for another
+  // reason (a disputed companion expense) keeps waiting for a person.
+  let resumed = 0;
+  if (caseId && shouldResumeEscrow(outcome)) {
+    const marker = pauseMarker(dispute.id);
+    const holds = await base44.asServiceRole.entities.EscrowHold.filter({ case_id: caseId, status: 'disputed' }).catch(() => []);
+    for (const h of holds) {
+      if (!String(h.release_notes || '').includes(marker)) continue;
+      const done = await base44.asServiceRole.entities.EscrowHold.update(h.id, {
+        status: 'held',
+        release_notes: `${h.release_notes} Resumed ${now}: dispute closed (${outcome}).`,
+      }).then(() => true).catch(() => false);
+      if (done) resumed += 1;
+    }
+  }
+
+  await base44.asServiceRole.entities.PaymentTransaction.create({
+    case_id: caseId,
+    client_email: original?.client_email || '',
+    stripe_payment_intent_id: piId,
+    stripe_event_id: event.id,
+    event_id: event.id,
+    event_type: event.type,
+    status: closedDisputeStatus(outcome),
+    raw_amount: (dispute.amount || 0) / 100,
+    currency: dispute.currency || 'usd',
+    metadata: {
+      dispute_id: dispute.id,
+      dispute_status: dispute.status || null,
+      outcome,
+      escrow_holds_resumed: resumed,
+    },
+    processed_at: now,
+    created_at: now,
+  });
+
+  await noteDisputeOnCase(base44, caseId, 'payment_dispute_closed',
+    `Card payment dispute ${dispute.id} closed (${outcome}). ${resumed} paused payout(s) resumed.`);
+
+  if (outcome === 'won') {
+    await emailAdminAboutDispute(base44, {
+      title: 'A disputed payment was decided in our favour',
+      line: 'Stripe closed a chargeback in our favour. That case\'s paused partner payouts are waiting for their trip checkpoints again. Release by hand any payout whose checkpoint passed during the pause.',
+    });
+  } else if (outcome === 'lost') {
+    await emailAdminAboutDispute(base44, {
+      title: 'A disputed payment was lost',
+      line: 'Stripe closed a chargeback against us. That case\'s partner payouts stay paused. Decide in the admin portal whether to pay partners for work already done.',
+      ctaUrl: `${APP_URL}/admin`,
+      ctaLabel: 'Open Admin Portal',
+    });
+  } else if (outcome === 'inquiry_closed') {
+    await emailAdminAboutDispute(base44, {
+      title: 'A payment inquiry closed',
+      line: 'A bank inquiry about a payment closed without becoming a chargeback. That case\'s paused partner payouts are waiting for their trip checkpoints again.',
+    });
+  } else {
+    await emailAdminAboutDispute(base44, {
+      title: 'A payment dispute closed',
+      line: 'Stripe closed a payment dispute with a result this app doesn\'t recognise. Check it in the Stripe dashboard.',
+    });
   }
 }

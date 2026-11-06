@@ -2,6 +2,7 @@
 import Stripe from 'npm:stripe@17.0.0';
 import { createHandler } from '../../shared/createHandler.ts';
 import { z, strictObject, validate, Fields } from '../../shared/validate.ts';
+import { checkWithdrawalWaiver, requiresWithdrawalWaiver, WITHDRAWAL_WAIVER_VERSION } from '../../shared/withdrawalWaiver.ts';
 
 const DEPOSIT_AMOUNT = 60;
 
@@ -9,6 +10,10 @@ const DepositLinkSchema = strictObject({
   case_id: Fields.shortText(100),
   original_amount: z.coerce.number().optional(),
   proposal_token: Fields.shortText(200).optional(),
+  withdrawal_waiver: strictObject({
+    accepted: z.boolean(),
+    version: z.string().trim().max(60),
+  }).optional(),
 });
 
 Deno.serve(createHandler(async ({ req }) => {
@@ -23,7 +28,7 @@ Deno.serve(createHandler(async ({ req }) => {
     const rawBody = await req.json().catch(() => ({}));
     const validated = validate(DepositLinkSchema, rawBody);
     if (!validated.ok) return Response.json({ error: validated.message }, { status: 400 });
-    const { case_id, original_amount, proposal_token } = validated.data;
+    const { case_id, original_amount, proposal_token, withdrawal_waiver } = validated.data;
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) {
@@ -49,6 +54,10 @@ Deno.serve(createHandler(async ({ req }) => {
     if (!isAdmin && !isOwner && !tokenMatch) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
     }
+
+    // EU/UK cancellation-right box (base44/shared/withdrawalWaiver.ts).
+    const waiver = checkWithdrawalWaiver('slot_hold_deposit', withdrawal_waiver);
+    if (!waiver.ok) return Response.json({ error: waiver.error }, { status: 400 });
 
     // Derive client_email from the case record — never trust caller-supplied value
     const client_email = caseRecord.client_email;
@@ -78,6 +87,7 @@ Deno.serve(createHandler(async ({ req }) => {
           deposit_type: 'consultation_deposit_60',
           original_amount_attempted: String(original_amount || 0),
           primary_auth_failed: 'true',
+          ...waiver.metadata,
         }
       },
       line_items: [
@@ -102,6 +112,7 @@ Deno.serve(createHandler(async ({ req }) => {
         deposit_type: 'consultation_deposit_60',
         original_amount_attempted: String(original_amount || 0),
         primary_auth_failed: 'true',
+        ...waiver.metadata,
       },
       expires_at: Math.floor(Date.now() / 1000) + 3600,
     });
@@ -117,7 +128,7 @@ Deno.serve(createHandler(async ({ req }) => {
           status: 'session_created',
           raw_amount: DEPOSIT_AMOUNT,
           currency: 'usd',
-          metadata: { deposit_type: 'consultation_deposit_60', original_amount_attempted: original_amount || 0 },
+          metadata: { deposit_type: 'consultation_deposit_60', original_amount_attempted: original_amount || 0, ...waiver.metadata },
           created_at: new Date().toISOString(),
         });
       } catch (_) { /* non-fatal — webhook will still confirm */ }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { startGoogleSignIn } from '@/lib/startSignIn';
 
 const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
@@ -57,7 +57,7 @@ export default function SignupAuthGate({ isOpen, redirectPath, title, message, o
         </div>
 
         <button
-          onClick={() => base44.auth.loginWithProvider('google', redirectPath)}
+          onClick={() => startGoogleSignIn(redirectPath)}
           style={{
             width: '100%', padding: '14px 20px', borderRadius: 14, cursor: 'pointer', marginBottom: 10,
             background: '#fff', border: 'none',

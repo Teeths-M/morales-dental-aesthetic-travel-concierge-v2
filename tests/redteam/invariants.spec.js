@@ -7725,3 +7725,158 @@ test('CONVERSATION RESTORE: a signed-in traveller\'s last M-Care conversation lo
   // A conversation the traveller started by typing while this loads is kept, never replaced by the older one.
   expect(loader).toMatch(/setAgentConversation\(\(prev\) => prev \|\| convos\[0\]\);/);
 });
+
+// ---- Legal fixes: the self-hosted font, a neutral age check before sign-in,
+// the EU/UK cancellation-right box at checkout, and card-dispute handling.
+// Uses this file's `test`, `expect`, `read`, `ROOT`, `join`, `readdirSync` and
+// `existsSync`, plus piStrip / piEntity / piMatch from the PAYMENT INTEGRITY
+// block above (folder 04 is applied first).
+
+const lfWalk = (dir, exts, out = []) => {
+  for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+    const rel = `${dir}/${e.name}`;
+    if (e.isDirectory()) lfWalk(rel, exts, out);
+    else if (exts.some((x) => e.name.endsWith(x))) out.push(rel);
+  }
+  return out;
+};
+
+test('LEGAL FIXES: no page loads anything from Google Fonts', () => {
+  // Loading fonts from Google sent each visitor's IP address to Google before
+  // they had agreed to anything (LG Muenchen I, 3 O 17493/20).
+  const html = read('index.html');
+  expect(html).not.toMatch(/fonts\.(googleapis|gstatic)\.com/);
+  const csp = html.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/)?.[1] || '';
+  expect(csp, 'fonts only from the app itself').toContain("font-src 'self';");
+
+  const offenders = lfWalk('src', ['.css', '.js', '.jsx', '.html'])
+    .filter((rel) => /fonts\.(googleapis|gstatic)\.com/.test(read(rel)));
+  expect(offenders, `Google Fonts still referenced in: ${offenders.join(', ')}`).toEqual([]);
+
+  const css = read('src/index.css');
+  const faces = [...css.matchAll(/@font-face\s*\{[^}]*\}/g)].map((m) => m[0]);
+  expect(faces.length, 'one rule per language subset').toBe(5);
+  for (const face of faces) {
+    expect(face).toContain("font-family: 'Cormorant Garamond'");
+    const url = face.match(/url\('\.\/([^']+)'\)/)?.[1];
+    expect(url, 'served from the app').toBeTruthy();
+    expect(existsSync(join(ROOT, 'src', url)), `${url} must exist`).toBe(true);
+  }
+  expect(existsSync(join(ROOT, 'src/assets/fonts/cormorant-garamond/OFL.txt')), 'the font license ships with it').toBe(true);
+});
+
+test('LEGAL FIXES: every way into an account passes the date-of-birth check first', () => {
+  // Only Login.jsx (after the check) and startSignIn.js (which sends an
+  // unchecked device to /login) may start a sign-in.
+  const ALLOWED = new Set(['src/pages/Login.jsx', 'src/lib/startSignIn.js']);
+  const starters = lfWalk('src', ['.js', '.jsx'])
+    .filter((rel) => piStrip(read(rel)).includes('loginWithProvider('))
+    .filter((rel) => !ALLOWED.has(rel));
+  expect(starters, `sign-in started without the age check in: ${starters.join(', ')}`).toEqual([]);
+
+  const login = piStrip(read('src/pages/Login.jsx'));
+  expect(login).toContain('<AgeGate onPass={() => setAgePassed(true)} />');
+  expect(login, 'the sign-in options render only after the check')
+    .toMatch(/\{agePassed \? \(<>\s*<form onSubmit=\{handleSendCode\}>/);
+  for (const fn of ['const handleSendCode', 'const handleGoogle']) {
+    const i = login.indexOf(fn);
+    expect(login.slice(i, i + 160), `${fn} re-checks before signing in`).toContain('if (!hasPassedAgeGate())');
+  }
+
+  const start = piStrip(read('src/lib/startSignIn.js'));
+  expect(start.indexOf('hasPassedAgeGate()')).toBeGreaterThan(-1);
+  expect(start.indexOf('hasPassedAgeGate()')).toBeLessThan(start.indexOf('loginWithProvider('));
+});
+
+test('LEGAL FIXES: the age check is neutral and keeps no date of birth', () => {
+  // FTC COPPA guidance: no hint of the cutoff, and a generic message when
+  // someone is too young.
+  const gate = piStrip(read('src/components/auth/AgeGate.jsx'));
+  expect(gate, 'the screen never uses the minimum age itself').not.toContain('MIN_ACCOUNT_AGE');
+  const visible = [
+    ...[...gate.matchAll(/>([^<>{}]+)</g)].map((m) => m[1]),
+    ...[...gate.matchAll(/setError\('([^']*)'\)/g)].map((m) => m[1]),
+    ...[...gate.matchAll(/(?:placeholder|aria-label)="([^"]*)"/g)].map((m) => m[1]),
+  ].join(' ');
+  expect(visible.length).toBeGreaterThan(40);
+  expect(visible, 'no age, cutoff, or number on screen')
+    .not.toMatch(/years? old|or older|at least|minimum|too young|under|over|\d/i);
+
+  const lib = piStrip(read('src/lib/ageGate.js'));
+  const remember = lib.slice(lib.indexOf('export function rememberAgeGate'));
+  const saved = remember.slice(remember.indexOf('JSON.stringify({'), remember.indexOf('}))') + 3);
+  expect(saved, 'only the result, its time, and the minimum age are saved')
+    .toMatch(/JSON\.stringify\(\{\s*status,\s*at: [^,]+,\s*min_age: MIN_ACCOUNT_AGE,\s*\}\)\)/);
+
+  const sync = piStrip(read('src/hooks/useAgeGateAccountSync.js'));
+  expect(sync).toContain('updateMe({ age_gate_passed_at: saved.at, age_gate_min_age: saved.minAge })');
+  expect(sync).not.toMatch(/date_of_birth|dob/i);
+});
+
+test('LEGAL FIXES: a checkout that needs the cancellation-right box cannot be paid without it', () => {
+  for (const [fn, flow] of [
+    ['generateStripePaymentLink', 'package_payment'],
+    ['chargeConsultationFee', 'consultation_fee'],
+    ['generateConsultationDepositLink', 'slot_hold_deposit'],
+  ]) {
+    const src = piStrip(read(`base44/functions/${fn}/entry.ts`));
+    const check = src.indexOf(`checkWithdrawalWaiver('${flow}', withdrawal_waiver)`);
+    expect(check, `${fn} checks the box`).toBeGreaterThan(-1);
+    expect(check, `${fn} checks before making a Stripe session`).toBeLessThan(src.indexOf('stripe.checkout.sessions.create('));
+    expect(src).toContain('if (!waiver.ok) return Response.json({ error: waiver.error }, { status: 400 });');
+    expect((src.match(/\.\.\.waiver\.metadata/g) || []).length, `${fn} records it on the payment, session and record`).toBe(3);
+  }
+
+  for (const [file, flow] of [
+    ['src/pages/PaymentCheckout.jsx', 'package_payment'],
+    ['src/pages/ClientProposalPortal.jsx', 'package_payment'],
+    ['src/components/booking/ConsultationFeeModal.jsx', 'consultation_fee'],
+    ['src/components/checkout/DeclineDepositDialog.jsx', 'slot_hold_deposit'],
+  ]) {
+    const src = piStrip(read(file));
+    expect(src, `${file}: unticked by default`).toContain('const [waiverAccepted, setWaiverAccepted] = useState(false);');
+    expect(src, `${file}: sends the acknowledgment`).toContain(`buildWaiverPayload('${flow}', waiverAccepted)`);
+    expect(src, `${file}: shows the box`).toContain(`<WithdrawalWaiverConsent flow="${flow}"`);
+    expect(src, `${file}: the pay button waits for it`).toContain(`(requiresWithdrawalWaiver('${flow}') && !waiverAccepted)`);
+  }
+});
+
+test("LEGAL FIXES: a card dispute pauses partner payouts, never the patient's care", () => {
+  const raw = read('base44/functions/stripePaymentWebhook/entry.ts');
+  expect(raw, 'the setup note lists the dispute events').toContain('charge.dispute.created, charge.dispute.closed');
+  const hook = piStrip(raw);
+  expect(hook).toContain("case 'charge.dispute.created':");
+  expect(hook).toContain("case 'charge.dispute.closed':");
+
+  const handlers = hook.slice(hook.indexOf('async function findDisputedPayment'));
+  expect(handlers, 'never touches the package payment status').not.toContain('payment_status');
+  expect(handlers, 'never moves the booking').not.toContain('guardedStatusUpdate');
+  const re = /CaseRecord\.update\(/g;
+  let m;
+  let caseWrites = 0;
+  while ((m = re.exec(handlers))) {
+    const open = handlers.indexOf('(', m.index + m[0].length - 1);
+    expect(handlers.slice(open, piMatch(handlers, open) + 1), 'case writes are timeline notes only')
+      .not.toMatch(/\bstatus\s*:/);
+    caseWrites += 1;
+  }
+  expect(caseWrites).toBeGreaterThan(0);
+
+  expect(handlers, 'pauses only payouts still waiting')
+    .toMatch(/DISPUTE_FREEZES_ESCROW && caseId[\s\S]{0,200}EscrowHold\.filter\(\{ case_id: caseId, status: 'held' \}\)/);
+  expect(handlers, "resumes only this dispute's holds, and only once the money is safe")
+    .toMatch(/shouldResumeEscrow\(outcome\)[\s\S]{0,300}status: 'disputed'[\s\S]{0,200}includes\(marker\)/);
+
+  const statuses = piEntity('PaymentTransaction').properties.status.enum;
+  for (const s of ['disputed', 'dispute_won', 'dispute_lost', 'dispute_closed']) {
+    expect(statuses, `PaymentTransaction status ${s}`).toContain(s);
+  }
+});
+
+test('LEGAL FIXES: payment screens make no HIPAA claim', () => {
+  // Stripe has no health-data agreement with Morales (the app's own payment
+  // code says so), so a HIPAA badge on a payment screen can't be backed up.
+  for (const file of ['src/components/booking/ConsultationFeeModal.jsx', 'src/pages/ClientProposalPortal.jsx']) {
+    expect(read(file), file).not.toMatch(/HIPAA/i);
+  }
+});

@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useCart } from '@/context/CartContext';
 import { friendlyError } from '@/lib/friendlyError';
+import WithdrawalWaiverConsent from '@/components/checkout/WithdrawalWaiverConsent';
+import { buildWaiverPayload, requiresWithdrawalWaiver } from '@/lib/withdrawalWaiver';
 
 function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, clearCart, handlePaymentSuccess }) {
   const [error, setError] = useState(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
 
   const handleStripePayment = async (e) => {
     e.preventDefault();
@@ -19,6 +22,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
         email: form.email,
         procedure: form.procedure_interest,
         destination: form.preferred_date,
+        withdrawal_waiver: buildWaiverPayload('consultation_fee', waiverAccepted),
       });
 
       const data = response.data;
@@ -56,6 +60,8 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
       <div className="p-4 border border-slate-200 rounded-xl bg-slate-50">
         <p className="text-sm text-slate-600">Redirecting to secure Stripe payment...</p>
       </div>
+      <WithdrawalWaiverConsent flow="consultation_fee" id="withdrawal-waiver-fee" tone="dark" checked={waiverAccepted} onChange={setWaiverAccepted} />
+
       {error && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
@@ -66,7 +72,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
         <Button variant="outline" onClick={onCancel} disabled={isProcessing} className="flex-1">
           Cancel
         </Button>
-        <Button type="submit" disabled={isProcessing} className="flex-1">
+        <Button type="submit" disabled={isProcessing || (requiresWithdrawalWaiver('consultation_fee') && !waiverAccepted)} className="flex-1">
           {isProcessing ? 'Redirecting...' : 'Pay $49 — Secure Checkout →'}
         </Button>
       </div>
@@ -158,7 +164,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
           <Lock style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.25)' }} />
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>Secured by Stripe · HIPAA Compliant · SSL Encrypted</span>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>Secured by Stripe · SSL Encrypted</span>
         </div>
       </motion.div>
     </div>

@@ -11,6 +11,8 @@ import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard } f
 import CurrencySelector from '@/components/ui-system/CurrencySelector';
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter';
 import DeclineDepositDialog from '@/components/checkout/DeclineDepositDialog';
+import WithdrawalWaiverConsent from '@/components/checkout/WithdrawalWaiverConsent';
+import { buildWaiverPayload, requiresWithdrawalWaiver } from '@/lib/withdrawalWaiver';
 import { toast } from 'sonner';
 
 // Timeout wrapper — prevents payment UI from hanging forever
@@ -30,6 +32,7 @@ export default function PaymentCheckout() {
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [declinedAmount, setDeclinedAmount] = useState(null);
   const [error, setError] = useState(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
   const { selectedCode, setSelectedCode, formatLocal } = useCurrencyConverter();
 
   // Extract token from URL query param
@@ -101,6 +104,7 @@ export default function PaymentCheckout() {
       const paymentRes = await withTimeout(base44.functions.invoke('generateStripePaymentLink', {
         case_id: caseRecord.id, deposit_option: depositOption,
         proposal_token: token,
+        withdrawal_waiver: buildWaiverPayload('package_payment', waiverAccepted),
       }));
 
       if (!paymentRes.data?.success) {
@@ -464,11 +468,13 @@ export default function PaymentCheckout() {
               <span className="text-sm font-medium">Secure payment via Stripe</span>
             </div>
 
+            <WithdrawalWaiverConsent flow="package_payment" id="withdrawal-waiver-package" checked={waiverAccepted} onChange={setWaiverAccepted} />
+
             {/* Checkout Button */}
             <Button
               size="lg"
               className="w-full gap-2"
-              disabled={!selectedPlan || selectPlanMutation.isPending}
+              disabled={!selectedPlan || selectPlanMutation.isPending || (requiresWithdrawalWaiver('package_payment') && !waiverAccepted)}
               onClick={() => selectPlanMutation.mutate(selectedPlan)}
             >
               {selectPlanMutation.isPending ? 'Processing...' : 'Proceed to Secure Checkout'}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { startGoogleSignIn } from '@/lib/startSignIn';
 import { ROUTES } from '@/lib/constants';
 import { CALM } from '@/lib/brandTokens';
 
@@ -69,7 +69,7 @@ export default function AuthGateStep({
         type="button"
         onClick={() => {
           preserveDraft();
-          base44.auth.loginWithProvider('google', redirectPath);
+          startGoogleSignIn(redirectPath);
         }}
         style={{
           width: '100%',

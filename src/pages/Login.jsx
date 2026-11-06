@@ -7,6 +7,8 @@ import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 import { friendlyError } from '@/lib/friendlyError';
 import { useStruggleDetector } from '@/hooks/useStruggleDetector';
 import { emitStruggleHint } from '@/lib/struggleHint';
+import AgeGate from '@/components/auth/AgeGate';
+import { hasPassedAgeGate } from '@/lib/ageGate';
 
 // Login splits: LEFT form uses the CALM decision palette (light + teal), the
 // RIGHT brand panel keeps the dark dramatic showcase (Product Principle #5:
@@ -103,6 +105,8 @@ export default function Login() {
   const [phoneFailCount, setPhoneFailCount] = useState(0);
   const [otpFailCount,   setOtpFailCount]   = useState(0);
   const { country: ipCountry } = useIpGeolocation();
+  // The date-of-birth check runs before anything that can create an account.
+  const [agePassed, setAgePassed] = useState(() => hasPassedAgeGate());
 
   // Struggle-aware M-Care Guide: deterministic, no AI, no network — see
   // src/hooks/useStruggleDetector.js. Each fires at most once per step.
@@ -141,6 +145,7 @@ export default function Login() {
 
   const handleSendCode = async (e) => {
     e?.preventDefault();
+    if (!hasPassedAgeGate()) { setAgePassed(false); return; }
     if (!phone.trim()) { setError('Please enter your phone number'); return; }
     setError('');
     setLoading(true);
@@ -175,6 +180,7 @@ export default function Login() {
   };
 
   const handleGoogle = () => {
+    if (!hasPassedAgeGate()) { setAgePassed(false); return; }
     setGoogleLoading(true);
     base44.auth.loginWithProvider('google', redirectTo);
   };
@@ -195,7 +201,7 @@ export default function Login() {
 
       <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: TEXT, letterSpacing: '-0.02em' }}>Welcome</h1>
       <p style={{ margin: '0 0 32px', fontSize: 14, color: TEXT_SOFT }}>
-        Enter your phone number to sign in
+        {agePassed ? 'Enter your phone number to sign in' : 'First, one quick question'}
       </p>
 
       {error && (
@@ -204,6 +210,7 @@ export default function Login() {
         </div>
       )}
 
+      {agePassed ? (<>
       <form onSubmit={handleSendCode}>
         <div style={{ marginBottom: 20 }}>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SOFT, marginBottom: 6, letterSpacing: '0.04em' }}>
@@ -267,6 +274,10 @@ export default function Login() {
           Create account <UserPlus style={{ width: 13, height: 13 }} />
         </Link>
       </p>
+
+      </>) : (
+        <AgeGate onPass={() => setAgePassed(true)} />
+      )}
 
       {/* Judges panel */}
       <div style={{ marginTop: 28, padding: '16px 18px', borderRadius: 14, background: `${GOLD}0A`, border: `1px solid ${GOLD}25` }}>

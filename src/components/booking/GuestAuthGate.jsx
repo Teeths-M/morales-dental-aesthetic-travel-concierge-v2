@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { startGoogleSignIn } from '@/lib/startSignIn';
 
 const _GOLD  = '#D4AF37';
 const _DARK  = '#060B16';
@@ -33,7 +33,7 @@ export default function GuestAuthGate({ isOpen, form, step, onCancel }) {
       localStorage.setItem('morales_guest_booking_draft', JSON.stringify(serializable));
       localStorage.setItem('morales_guest_booking_step', String(step));
     } catch (_) {}
-    base44.auth.loginWithProvider('google', '/booking');
+    startGoogleSignIn('/booking');
   };
 
   const handlePhoneSignIn = () => {

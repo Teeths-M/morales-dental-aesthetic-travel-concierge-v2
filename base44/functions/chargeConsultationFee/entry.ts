@@ -9,12 +9,17 @@
 import { createHandler } from '../../shared/createHandler.ts';
 import Stripe from 'npm:stripe@17.0.0';
 import { z, strictObject, Fields } from '../../shared/validate.ts';
+import { checkWithdrawalWaiver, requiresWithdrawalWaiver, WITHDRAWAL_WAIVER_VERSION } from '../../shared/withdrawalWaiver.ts';
 
 const ChargeFeeSchema = strictObject({
   consultation_id: z.string().trim().max(100).optional(),
   email: Fields.email(),
   procedure: z.string().max(200).optional().default(''),
   destination: z.string().max(200).optional().default(''),
+  withdrawal_waiver: strictObject({
+    accepted: z.boolean(),
+    version: z.string().trim().max(60),
+  }).optional(),
 });
 
 // Sanitize text fields — strip HTML tags to prevent stored XSS
@@ -82,7 +87,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       }, { status: 503 });
     }
 
-    const { consultation_id, email, procedure, destination } = await body();
+    const { consultation_id, email, procedure, destination, withdrawal_waiver } = await body();
     if (!email) return Response.json({ error: 'email is required' }, { status: 400 });
     if (!isValidEmail(email)) return Response.json({ error: 'Invalid email address' }, { status: 400 });
     const sanitizedProcedure = sanitizeText(procedure, 200);
@@ -114,13 +119,20 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       });
     }
 
+    // EU/UK cancellation-right box (base44/shared/withdrawalWaiver.ts).
+    const waiver = checkWithdrawalWaiver('consultation_fee', withdrawal_waiver);
+    if (!waiver.ok) return Response.json({ error: waiver.error }, { status: 400 });
+
     // Re-use open Stripe session if one already exists
     const pendingTxns = await base44.asServiceRole.entities.PaymentTransaction.filter({
       user_id: user.id,
       event_type: 'consultation_fee.session_created',
       status: 'session_created',
     });
-    if (pendingTxns.length > 0) {
+    // An open session made before the box was ticked for this wording can't be reused.
+    const reusable = pendingTxns.length > 0 && (!requiresWithdrawalWaiver('consultation_fee')
+      || pendingTxns[0].metadata?.withdrawal_waiver_version === WITHDRAWAL_WAIVER_VERSION);
+    if (reusable) {
       const stripe = new Stripe(stripeKey);
       try {
         const session = await stripe.checkout.sessions.retrieve(pendingTxns[0].stripe_session_id);
@@ -140,6 +152,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
           user_id: user.id,
           client_email: email,
           fee_type: 'consultation_fee_49',
+          ...waiver.metadata,
         }
       },
       line_items: [{
@@ -162,6 +175,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         user_id: user.id,
         client_email: email,
         fee_type: 'consultation_fee_49',
+        ...waiver.metadata,
       },
       expires_at: Math.floor(Date.now() / 1000) + 3600,
     });
@@ -188,7 +202,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       status: 'session_created',
       raw_amount: 49,
       currency: 'usd',
-      metadata: { fee_record_id: feeRecord.id, fee_type: 'consultation_fee_49' },
+      metadata: { fee_record_id: feeRecord.id, fee_type: 'consultation_fee_49', ...waiver.metadata },
       created_at: new Date().toISOString(),
     });
 

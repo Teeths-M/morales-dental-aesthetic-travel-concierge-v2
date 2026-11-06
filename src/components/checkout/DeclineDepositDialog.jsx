@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useModalA11y } from '@/hooks/useModalA11y';
 import { friendlyError, safeError } from '@/lib/friendlyError';
+import WithdrawalWaiverConsent from '@/components/checkout/WithdrawalWaiverConsent';
+import { buildWaiverPayload, requiresWithdrawalWaiver } from '@/lib/withdrawalWaiver';
 
 export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, originalAmount, proposalToken = null }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
   const dialogRef = useModalA11y({ isOpen, onClose });
 
   const handleAuthorizeDeposit = async () => {
@@ -21,6 +24,7 @@ export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, orig
       const res = await base44.functions.invoke('generateConsultationDepositLink', {
         case_id: caseRecord?.id,
         original_amount: originalAmount,
+        withdrawal_waiver: buildWaiverPayload('slot_hold_deposit', waiverAccepted),
         proposal_token: proposalToken || caseRecord?.proposal_token || undefined,
       });
 
@@ -105,6 +109,8 @@ export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, orig
                 </div>
               </div>
 
+              <WithdrawalWaiverConsent flow="slot_hold_deposit" id="withdrawal-waiver-deposit" checked={waiverAccepted} onChange={setWaiverAccepted} />
+
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                   {error}
@@ -116,7 +122,7 @@ export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, orig
             <div className="px-6 pb-6 flex flex-col gap-3">
               <Button
                 onClick={handleAuthorizeDeposit}
-                disabled={isProcessing}
+                disabled={isProcessing || (requiresWithdrawalWaiver('slot_hold_deposit') && !waiverAccepted)}
                 className="w-full gap-2 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0 py-3 h-auto"
               >
                 {isProcessing ? (
