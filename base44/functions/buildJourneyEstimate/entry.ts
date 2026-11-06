@@ -212,6 +212,23 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   for (const service of services as any[]) {
     if (!service) continue;
+
+    // Only a live listing can be priced: a draft (partner not approved yet), paused, withdrawn or suspended one
+    // is shown as not offered, never with its price.
+    if (service.status !== 'active') {
+      serviceLines.push({
+        category: service.category,
+        status: 'unpriced',
+        amount_minor: null,
+        currency: null,
+        partner_name: service.partner_display_name || null,
+        pricing_status: null,
+        source_note: `${service.name} is not currently offered.`,
+        last_confirmed_at: null,
+      });
+      continue;
+    }
+
     const card = bestCardFor(service.id);
 
     if (!card) {

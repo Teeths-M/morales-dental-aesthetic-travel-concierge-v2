@@ -102,6 +102,11 @@ jobs:
             # its own 24h/1h/device-test windows are each gated on their own
             # idempotent flag.
             call sweepVirtualConsultationReminders
+            # Partner price freshness: relabels stale/expired prices and sends one "is this price still right?"
+            # reminder per price per review cycle. Base44's own workflow also runs it every 6h, but this function
+            # only accepts the cron secret or an admin session, which that workflow may not carry; this is the run
+            # that's known to be allowed. Safe to overlap: the earliest queued reminder is the only one that sends.
+            call sweepPartnerRateFreshness
           elif [ "$IS_SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
             # 6-hourly slot: rate-limit bucket cleanup (pure DB hygiene, per its own header comment).
             call purgeRateLimitBuckets
@@ -158,6 +163,7 @@ jobs:
               call checkStalledSignups
               call checkAbandonedBookings
               call sweepVirtualConsultationReminders
+              call sweepPartnerRateFreshness
               call runIncidentEvidenceOrchestrator
               call runEvidenceWatchOrchestrator '{"scope":"full"}'
               call runEvidenceWatchOrchestrator '{"scope":"recalls_only"}'

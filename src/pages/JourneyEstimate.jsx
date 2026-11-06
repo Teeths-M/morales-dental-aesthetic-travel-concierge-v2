@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import EstimateLine from '@/components/estimate/EstimateLine';
-import PriceKindBadge from '@/components/estimate/PriceKindBadge';
 
 const GOLD = '#D4AF37';
 const INK = '#F3F5F7';
@@ -126,7 +125,7 @@ export default function JourneyEstimate() {
           to="/"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, textDecoration: 'none' }}
         >
-          <ArrowLeft size={15} /> Back
+          <ArrowLeft size="15" /> Back
         </Link>
 
         <h1 style={{ margin: '18px 0 0', fontSize: 27, fontWeight: 700, letterSpacing: '-0.02em' }}>
@@ -194,7 +193,7 @@ export default function JourneyEstimate() {
 
           {loadingOffers && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, color: MUTED, fontSize: 13 }}>
-              <Loader2 size={15} className="animate-spin" /> Checking partner offers…
+              <Loader2 size="15" className="animate-spin" /> Checking partner offers…
             </div>
           )}
 
@@ -247,7 +246,7 @@ export default function JourneyEstimate() {
                         <span style={{ fontSize: 14, fontWeight: 650, color: offer.amount_display ? GOLD : MUTED }}>
                           {offer.amount_display || 'Quote only'}
                         </span>
-                        {isSelected ? <Check size={16} color={GOLD} /> : null}
+                        {isSelected ? <Check size="16" color={GOLD} /> : null}
                       </span>
                     </button>
                   );
@@ -269,7 +268,7 @@ export default function JourneyEstimate() {
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
-          {building ? <Loader2 size={16} className="animate-spin" /> : null}
+          {building ? <Loader2 size="16" className="animate-spin" /> : null}
           {building ? 'Building your estimate…' : 'Build itemized estimate'}
         </button>
 

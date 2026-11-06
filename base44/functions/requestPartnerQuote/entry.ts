@@ -35,6 +35,12 @@ function requestRef(): string {
   return `QR-${out}`;
 }
 
+// The traveller's note, the requested services and the listing's own name are typed text: escape them so nothing
+// typed can add links or markup to the email a partner receives.
+const escapeHtml = (value: unknown) => String(value)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 function partnerEmailBody(input: {
   serviceName: string;
   partnerName: string;
@@ -44,8 +50,10 @@ function partnerEmailBody(input: {
 }): string {
   const rows = Object.entries(input.details)
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
-    .map(([key, value]) => `<li style="margin-bottom:6px;"><strong style="text-transform:capitalize;">${key.replace(/_/g, ' ')}:</strong> ${String(value).slice(0, 400)}</li>`)
+    .map(([key, value]) => `<li style="margin-bottom:6px;"><strong style="text-transform:capitalize;">${key.replace(/_/g, ' ')}:</strong> ${escapeHtml(String(value).slice(0, 400))}</li>`)
     .join('');
+  const serviceName = escapeHtml(input.serviceName);
+  const partnerName = escapeHtml(input.partnerName);
 
   return `<!doctype html><html><body style="margin:0;padding:24px;background:#f7f8f7;font-family:Arial,Helvetica,sans-serif;">
   <table width="100%" cellspacing="0" cellpadding="0"><tr><td align="center">
@@ -56,8 +64,8 @@ function partnerEmailBody(input: {
   <tr><td style="padding:24px;">
     <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#060b16;">New customer quote request</p>
     <p style="margin:0 0 16px;font-size:14px;color:#5b6b7a;line-height:1.6;">
-      ${input.partnerName ? `${input.partnerName}, a` : 'A'} traveller is asking for a firm price on
-      <strong>${input.serviceName}</strong>. Reference ${input.ref}.
+      ${partnerName ? `${partnerName}, a` : 'A'} traveller is asking for a firm price on
+      <strong>${serviceName}</strong>. Reference ${input.ref}.
     </p>
     <p style="margin:0 0 6px;font-size:13px;color:#060b16;font-weight:700;">What they asked for</p>
     <ul style="margin:0 0 18px;padding-left:18px;font-size:13px;color:#060b16;line-height:1.6;">${rows || '<li>No extra details provided.</li>'}</ul>
@@ -118,6 +126,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const card = await base44.asServiceRole.entities.PartnerRateCard.get(rateCardId).catch(() => null);
   if (!card) return err('That offer is no longer available.', 404);
   if (card.status !== 'active') return err('This offer is not currently open for requests.', 409);
+
+  // The listing must be live as well, or a traveller's trip details would be emailed to a partner who isn't
+  // approved yet (a price is 'active' as soon as it's saved; its listing only goes live for an approved partner).
+  const service = await base44.asServiceRole.entities.PartnerService.get(card.service_id).catch(() => null);
+  if (!service || service.status !== 'active') return err('This offer is not currently open for requests.', 409);
 
   const status = derivePricingStatus(card);
   if (status === 'EXPIRED' || status === 'WITHDRAWN') {

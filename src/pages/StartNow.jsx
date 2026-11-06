@@ -4,6 +4,7 @@ import { MessageCircle, Mail, Smartphone, PlayCircle, ChevronRight, Check } from
 import robotSrc from '@/assets/m-safe-robot-transparent.webp';
 import { WHITE, BODY, MUTED, HAIRLINE, GOLD, RED, SANS, SERIF } from '@/components/landing/theme';
 import { canPromptInstall, onInstallAvailability, promptInstall, isInstalledApp } from '@/lib/installPrompt';
+import { MCARE_LIVE_PATH } from '@/lib/mcareDeepLink';
 
 /**
  * StartNow (/start) — where every "start now" lands: the QR code at the end of
@@ -69,7 +70,7 @@ export default function StartNow() {
 				</div>
 
 				<div style={{ display: 'grid', gap: 10, marginTop: 28 }}>
-					<Row icon={MessageCircle} title="Talk to M-Care now" sub="Ask anything about a trip or a procedure" onClick={() => navigate('/m-care')} />
+					<Row icon={MessageCircle} title="Talk to M-Care now" sub="Ask anything about a trip or a procedure" onClick={() => navigate(MCARE_LIVE_PATH)} />
 					<Row icon={Mail} title="Join the pilot" sub="Be first when your spot opens" to={pilotLink} />
 					<Row
 						icon={Smartphone}

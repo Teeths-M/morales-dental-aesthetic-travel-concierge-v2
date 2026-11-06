@@ -118,7 +118,7 @@ export default function PainMap() {
           to="/dashboard"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, textDecoration: 'none' }}
         >
-          <ArrowLeft size={15} /> Dashboard
+          <ArrowLeft size="15" /> Dashboard
         </Link>
 
         <h1 style={{ margin: '18px 0 0', fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em' }}>
@@ -262,7 +262,7 @@ export default function PainMap() {
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            {saving && <Loader2 size={15} className="animate-spin" />}
+            {saving && <Loader2 size="15" className="animate-spin" />}
             {saving
               ? 'Saving…'
               : selected.length === 0
@@ -282,7 +282,7 @@ export default function PainMap() {
 
           {loading && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, color: MUTED, fontSize: 13 }}>
-              <Loader2 size={15} className="animate-spin" /> Loading…
+              <Loader2 size="15" className="animate-spin" /> Loading…
             </div>
           )}
 

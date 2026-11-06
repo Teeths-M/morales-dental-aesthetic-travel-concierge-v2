@@ -23,7 +23,7 @@ import MCareOrb from '@/components/mcare/MCareOrb';
 import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
 import ProximityWatcher from './ProximityWatcher';
 import MSafeThemeScope from '@/components/mobile/MSafeThemeScope';
-import { mcareDeepLinkMode, isMcareQuietRoute } from '@/lib/mcareDeepLink';
+import { mcareDeepLinkMode, isMcareQuietRoute, MCARE_LIVE_PATH } from '@/lib/mcareDeepLink';
 
 // Paths where the onboarding wizard should never appear
 const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/doctor-signup', '/companion-signup', '/security-signup', '/local-doctor-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
@@ -164,11 +164,12 @@ export default function AppLayout() {
     enabled: !!user && !isAdmin && !isStandaloneMcare,
   });
 
-  // A ?mcare=… link (an ad's QR code, a shared link) opens M-Care's own full-screen screen, query string kept so a
-  // pilot or partner scan still gets its sign-up greeting and ad tag. It used to open M-Care over the page it named,
-  // which loaded the whole website (films and all) behind it on a phone. Pages where M-Care keeps quiet are left be.
+  // A ?mcare=… link (an ad's QR code, a shared link) opens M-Care's full-screen chat, query string kept so a pilot
+  // or partner scan still gets its sign-up greeting and ad tag. It used to open M-Care over the page it named, which
+  // loaded the whole website (films and all) behind it on a phone. Pages where M-Care keeps quiet are left be.
+  // The chat, not /m-care: /m-care is the companion screen, which has no chat to greet the scan.
   if (!isStandaloneMcare && mcareDeepLinkMode(search) && !isMcareQuietRoute(pathname)) {
-    return <Navigate to={{ pathname: '/m-care', search }} replace />;
+    return <Navigate to={{ pathname: MCARE_LIVE_PATH, search }} replace />;
   }
 
   return (

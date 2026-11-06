@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { mcareDeepLinkMode, MCARE_LIVE_PATH } from '@/lib/mcareDeepLink';
 import { C } from '@/components/mcare/companion/companionTheme';
 import GoldenAura from '@/components/mcare/companion/GoldenAura';
 import GoldenRing from '@/components/mcare/companion/GoldenRing';
@@ -36,6 +37,7 @@ const PREVIEW = {
  */
 export default function MCareCompanion() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [reduced, setReduced] = useState(false);
 
@@ -61,8 +63,12 @@ export default function MCareCompanion() {
     return () => mq.removeEventListener?.('change', apply);
   }, []);
 
-  const openLive = () => navigate('/m-care/live');
+  const openLive = () => navigate(MCARE_LIVE_PATH);
   const openHistory = () => navigate('/m-care/history');
+
+  // An ad's QR code or a shared link (/m-care?mcare=pilot&src=ad31) means "talk to M-Care now": this screen has no
+  // chat, so hand the link, ad tag and all, to the chat that greets the scan and takes the sign-up.
+  if (mcareDeepLinkMode(search)) return <Navigate to={{ pathname: MCARE_LIVE_PATH, search }} replace />;
 
   return (
     <GoldenAura reduced={reduced}>

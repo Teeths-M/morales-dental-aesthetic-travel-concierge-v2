@@ -59,7 +59,8 @@
       "enum": [
         "quiet_hours",
         "offer_not_active",
-        "already_confirmed"
+        "already_confirmed",
+        "duplicate_run"
       ],
       "description": "Why no message was sent in this cycle \u2014 recorded rather than silently skipped."
     },

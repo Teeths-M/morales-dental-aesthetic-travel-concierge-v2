@@ -4325,7 +4325,7 @@ test('AGENTIC ORCHESTRATION: RULE 33 requires a real alternative before giving u
   // regression in THIS pass's own text, not to freeze the count forever.
   const agentConfig = read('base44/agents/m_care.jsonc');
   const parsed = JSON.parse(agentConfig);
-  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(115);
+  expect(parsed.tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(118);
 
   const instructions = parsed.instructions;
 
@@ -4396,7 +4396,7 @@ test('LEARN: analyzeMcarePerformance is cron-authorized, enforces a real minimum
   // AGENTIC ORCHESTRATION test above for the same note) — this assertion
   // exists as a sanity check, not a claim that LEARN itself added anything.
   const agentConfig = read('base44/agents/m_care.jsonc');
-  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(115);
+  expect(JSON.parse(agentConfig).tool_configs.length, 'tool_configs count sanity check (update this number when a real, deliberate new grant lands elsewhere)').toBe(118);
   expect(agentConfig, "RULE 33 must reference checking recallMcareKnowledge for a self-observed pattern before choosing an alternative")
     .toMatch(/a quick recallMcareKnowledge check may surface a real, self-observed pattern/);
 });
@@ -6049,7 +6049,7 @@ test('EVIDENCE MONITORING: this feature grants zero new M-Care agent tools — n
     expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
       .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
   }
-  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(115);
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature is admin-side only and must add zero new grants').toBe(118);
 });
 
 // ── Medical Evidence Watch pipeline ──────────────────────────────────────────
@@ -6196,7 +6196,7 @@ test('MEDICAL EVIDENCE WATCH: only the redacting getEvidenceWatchFeed is granted
     expect(raw, `${entityName} must never be granted as an M-Care agent entity tool`)
       .not.toMatch(new RegExp(`"entity_name"\\s*:\\s*"${entityName}"`));
   }
-  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature adds exactly one new agent grant (getEvidenceWatchFeed)').toBe(115);
+  expect(agentConfig.tool_configs.length, 'tool_configs count sanity check — this feature adds exactly one new agent grant (getEvidenceWatchFeed)').toBe(118);
 
   expect(agentConfig.instructions, 'RULE 40 must exist and tie the new tool to the same no-invented-data and cite-the-source discipline')
     .toMatch(/RULE 40 -- MEDICAL EVIDENCE WATCH[\s\S]{0,1000}per RULE 3[\s\S]{0,200}per RULE 39/);
@@ -6989,8 +6989,12 @@ test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focu
   expect(layout, 'the layout must not mount its own floating M-Care on /m-care')
     .toMatch(/\{!isDemo && !isStandaloneMcare && <MCareOrb \/>\}/);
   expect(nsStrip(read('src/pages/MCareApp.jsx'))).toMatch(/<MCareOrb standalone \/>/);
-  expect(nsStrip(read('src/routes/publicRoutes.jsx')), '/m-care must be public: someone who scans a QR code has no account')
-    .toMatch(/path="\/m-care"\s+element=\{<ErrorBoundary><MCareApp \/>/);
+  // Since 2026-11-03 /m-care is the golden-ring companion and the chat itself lives at /m-care/live. Both stay
+  // public: someone who scans a QR code has no account.
+  const routes = nsStrip(read('src/routes/publicRoutes.jsx'));
+  expect(routes, 'the full-screen chat must be public').toMatch(/path="\/m-care\/live"\s+element=\{<ErrorBoundary><MCareApp \/>/);
+  expect(routes, 'the companion must be public').toMatch(/path="\/m-care"\s+element=\{<ErrorBoundary><MCareCompanion \/>/);
+  expect(nsStrip(read('src/lib/mcareDeepLink.js'))).toMatch(/export const MCARE_LIVE_PATH = '\/m-care\/live';/);
 
   const orb = read('src/components/mcare/MCareOrb.jsx');
   // The message box skips the app-wide focus ring only because the composer draws its own, from real focus.
@@ -7009,8 +7013,14 @@ test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focu
   expect(css).toMatch(/html\[data-mcare-cover\] \[data-mcare-behind\] \{\s*visibility: hidden !important;/);
   expect(css).toMatch(/html\[data-mcare-cover\] body \{\s*background: #060B16 !important;/);
   expect(layout).toMatch(/data-mcare-behind=\{isStandaloneMcare \? undefined : ''\}/);
-  // ?mcare=… links (the ads' QR codes) open the full-screen M-Care, keeping their query string.
-  expect(layout).toMatch(/if \(!isStandaloneMcare && mcareDeepLinkMode\(search\) && !isMcareQuietRoute\(pathname\)\) \{\s*return <Navigate to=\{\{ pathname: '\/m-care', search \}\} replace \/>;/);
+  // ?mcare=… links (the ads' QR codes) open the full-screen chat, keeping their query string (the pilot greeting and
+  // the ad tag live there). Never the companion: it has no chat, so a scan landing there never got its sign-up
+  // (found 2026-11-06, after /m-care became the companion).
+  expect(layout).toMatch(/if \(!isStandaloneMcare && mcareDeepLinkMode\(search\) && !isMcareQuietRoute\(pathname\)\) \{\s*return <Navigate to=\{\{ pathname: MCARE_LIVE_PATH, search \}\} replace \/>;/);
+  // A link straight to /m-care?mcare=… skips that redirect (the companion is a standalone page), so the companion
+  // hands it on itself, before it draws anything.
+  expect(nsStrip(read('src/pages/MCareCompanion.jsx'))).toMatch(/if \(mcareDeepLinkMode\(search\)\) return <Navigate to=\{\{ pathname: MCARE_LIVE_PATH, search \}\} replace \/>;\s*return \(/);
+  expect(nsStrip(read('src/pages/StartNow.jsx')), '/start\'s "Talk to M-Care now" opens the chat').toMatch(/title="Talk to M-Care now"[^\n]*navigate\(MCARE_LIVE_PATH\)/);
 });
 
 test('CHAT ORDER: M-Care draws one timeline in the order things happened, and reads backend times as UTC', () => {
@@ -7030,4 +7040,68 @@ test('CHAT ORDER: M-Care draws one timeline in the order things happened, and re
     expect(c, `${p} reads a backend time with a bare new Date()`).not.toMatch(/new Date\([^)]*(created_date|updated_date)/);
     expect(c, `${p} must read times with serverTimeMs`).toMatch(/serverTimeMs\(/);
   }
+});
+
+test('PARTNER PRICING: only a live listing reaches travellers, M-Care only reads, and partners only touch their own prices', () => {
+  const fn = (name) => nsStrip(read(`base44/functions/${name}/entry.ts`));
+
+  // A price is 'active' the moment a partner saves it, but its listing only goes live once the partner is approved
+  // (managePartnerService publishes for an active partner only). Checking the price alone let a not-yet-approved
+  // partner's price reach travellers, and a quote request email them a traveller's trip details (found 2026-11-06).
+  const search = fn('searchPartnerOffers');
+  expect(search).toMatch(/PartnerService\s*\.filter\(\{ status: 'active' \}/);
+  expect(search.indexOf('.filter((card) => liveServiceIds.has(card.service_id))'), 'the search keeps only live listings, before anything else')
+    .toBeGreaterThan(-1);
+  expect(search.indexOf('liveServiceIds.has')).toBeLessThan(search.indexOf('const offers = page.map'));
+
+  const quote = fn('requestPartnerQuote');
+  const liveCheck = quote.indexOf("if (!service || service.status !== 'active')");
+  expect(liveCheck, 'a quote request checks the listing is live').toBeGreaterThan(-1);
+  expect(liveCheck, 'before any request is created or email sent').toBeLessThan(quote.indexOf('PartnerQuoteRequest.create('));
+  expect(liveCheck).toBeLessThan(quote.indexOf('Core.SendEmail('));
+  expect(quote, 'nothing is sent without the traveller agreeing in the same call').toMatch(/if \(payload\.consent !== true\)/);
+  expect(quote, 'the traveller\'s typed text is escaped in the partner email').toMatch(/escapeHtml\(String\(value\)\.slice\(0, 400\)\)/);
+
+  const estimate = fn('buildJourneyEstimate');
+  expect(estimate.indexOf("if (service.status !== 'active')"), 'an estimate never prices a listing that is not live')
+    .toBeGreaterThan(-1);
+  expect(estimate.indexOf("if (service.status !== 'active')")).toBeLessThan(estimate.indexOf('const card = bestCardFor(service.id)'));
+
+  // A partner edits only their own listing and prices: the partner profile comes from the signed-in email, and every
+  // record named by id is checked against it.
+  for (const name of ['managePartnerRateCard', 'managePartnerService']) {
+    const src = fn(name);
+    expect(src, `${name} finds the partner from the signed-in email`).toMatch(/\.filter\(\{ email: user!\.email \}/);
+    expect(src, `${name} refuses another partner's record`).toMatch(/\.partner_id !== partner\.id\) return err\(/);
+  }
+  expect(fn('respondPartnerQuote')).toMatch(/request\.partner_email !== user!\.email && !isAdmin/);
+  expect(fn('adminPartnerPricing')).toMatch(/allowedRoles: \['admin', 'platform_admin'\]/);
+
+  // M-Care reads the catalogue and never writes it: the search function plus read-only access, and none of the
+  // write paths.
+  const agent = JSON.parse(read('base44/agents/m_care.jsonc')).tool_configs;
+  for (const entity of ['PartnerService', 'PartnerRateCard']) {
+    const grant = agent.find((t) => t.entity_name === entity);
+    expect(grant?.allowed_operations, `M-Care's ${entity} access is read-only`).toEqual(['read']);
+  }
+  for (const entity of ['RateCardVersion', 'PartnerQuoteRequest', 'PartnerQuoteResponse', 'PartnerPricingReminder']) {
+    expect(agent.some((t) => t.entity_name === entity), `M-Care has no access to ${entity}`).toBe(false);
+  }
+  for (const name of ['managePartnerRateCard', 'managePartnerService', 'requestPartnerQuote', 'respondPartnerQuote', 'adminPartnerPricing', 'sweepPartnerRateFreshness']) {
+    expect(agent.some((t) => t.function_name === name), `M-Care is not granted ${name}`).toBe(false);
+  }
+
+  // The freshness sweep runs from the GitHub schedule (Base44's own workflow may not pass its cron lock), and two
+  // overlapping runs send one reminder: after queuing, it looks again and only the earliest queued row sends.
+  const cron = read('.github/workflows/freshness-cron.yml');
+  expect(cron.match(/call sweepPartnerRateFreshness/g)?.length, 'hourly and the manual run').toBe(2);
+  const sweep = fn('sweepPartnerRateFreshness');
+  expect(sweep).toMatch(/if \(!\(await cronAuthorized\(req, base44\)\)\)/);
+  const queueAt = sweep.indexOf("status: 'queued',");
+  const lookAgain = sweep.indexOf('const rows = await cycleRows();');
+  expect(lookAgain, 'looks again after queuing').toBeGreaterThan(queueAt);
+  expect(lookAgain, 'and before sending').toBeLessThan(sweep.indexOf('Core.SendEmail('));
+  expect(sweep).toMatch(/if \(otherAsked \|\| \(first && first\.id !== reminder\.id\)\)/);
+  // A quiet-hours reminder doesn't block the cycle: only queued/sent/failed/acknowledged rows do.
+  expect(sweep).toMatch(/existing\.some\(\(r\) => \['queued', 'sent', 'failed', 'acknowledged'\]\.includes\(r\.status\)\)/);
 });

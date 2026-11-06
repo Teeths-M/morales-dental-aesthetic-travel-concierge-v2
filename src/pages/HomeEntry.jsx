@@ -12,8 +12,10 @@ const Home = lazy(() => import('@/pages/Home'));
  */
 function isStandaloneApp() {
   if (typeof window === 'undefined') return false;
-  if (window.Capacitor?.isNativePlatform?.()) return true;
-  if (window.navigator.standalone === true) return true;
+  // Neither is in the browser's type definitions: Capacitor is the native wrapper's own global, and
+  // navigator.standalone is Safari's flag for a home-screen app.
+  if (/** @type {any} */ (window).Capacitor?.isNativePlatform?.()) return true;
+  if (/** @type {any} */ (window.navigator).standalone === true) return true;
   return ['standalone', 'fullscreen', 'minimal-ui'].some(
     (mode) => window.matchMedia?.(`(display-mode: ${mode})`).matches
   );

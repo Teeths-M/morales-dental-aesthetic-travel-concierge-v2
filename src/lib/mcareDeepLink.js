@@ -1,10 +1,13 @@
 /**
  * M-Care's ?mcare=… links. open is a shared "land straight in the chat" link; pilot and partner are the QR codes at
- * the end of the ads (/?mcare=pilot&src=ad31). They used to open M-Care over whatever page they named. Now that M-Care
- * has its own full-screen screen (/m-care), AppLayout sends them there instead, so nothing of the website loads
- * behind M-Care.
+ * the end of the ads (/?mcare=pilot&src=ad31). They used to open M-Care over whatever page they named. Now they open
+ * M-Care's full-screen chat (MCARE_LIVE_PATH), so nothing of the website loads behind M-Care. /m-care itself is the
+ * companion screen, which has no chat of its own, so it forwards these links to the chat too.
  */
 export const MCARE_DEEP_LINK_MODES = new Set(['open', 'pilot', 'partner']);
+
+/** The full-screen M-Care chat (pages/MCareApp.jsx). Every ?mcare=… link and "Talk to M-Care now" opens it. */
+export const MCARE_LIVE_PATH = '/m-care/live';
 
 // Pages where M-Care stays out of the way (a booking or payment in progress, the emergency screens): the floating
 // M-Care doesn't offer tips there and a ?mcare=… link doesn't take over the page.

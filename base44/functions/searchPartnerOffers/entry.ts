@@ -54,8 +54,21 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     .filter(filters, '-last_updated_at', 200)
     .catch(() => []);
 
+  // The listing has to be live too. A price is 'active' the moment a partner saves it, but its listing stays a
+  // draft until the partner is approved (managePartnerService only publishes for an active partner), so checking
+  // the price alone let a not-yet-approved partner's price reach travellers. Fails closed: a listing that can't be
+  // loaded here is left out, never shown.
+  // Status only: a price keeps the country and category it was saved with, so matching those against the listing
+  // could drop a real offer whose listing was edited since.
+  const liveServices = await base44.asServiceRole.entities.PartnerService
+    .filter({ status: 'active' }, '-last_updated_at', 1000)
+    .then((page: any) => page?.items ?? page ?? [])
+    .catch(() => []);
+  const liveServiceIds = new Set((liveServices as any[]).map((s) => s.id));
+
   const now = new Date();
   const enriched = (cards as any[])
+    .filter((card) => liveServiceIds.has(card.service_id))
     .map((card) => ({ card, status: derivePricingStatus(card, now) }))
     .filter(({ card, status }) => status !== 'WITHDRAWN' && status !== 'EXPIRED')
     .filter(({ status }) => includeNonCurrent || status !== 'STALE' || true)
