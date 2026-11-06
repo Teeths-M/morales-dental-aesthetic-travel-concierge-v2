@@ -84,6 +84,7 @@ const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const Pilot                    = lazy(() => import('@/pages/Pilot'));
 const MCareCompanion           = lazy(() => import('@/pages/MCareCompanion'));
 const MCareApp                 = lazy(() => import('@/pages/MCareApp'));
+const JourneyEstimate          = lazy(() => import('@/pages/JourneyEstimate'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
 // Minor reunification — token-gated, no login. Both pages are inert until the
 // module's feature flag is switched on.
@@ -111,6 +112,8 @@ export const publicRoutes = (
     <Route path="/intake"         element={<ErrorBoundary><ConciergeIntake /></ErrorBoundary>} />
     <Route path="/travel-intake"  element={<ErrorBoundary><TravelIntake /></ErrorBoundary>} />
     <Route path="/protect"        element={<ErrorBoundary><BringYourOwnJourney /></ErrorBoundary>} />
+    {/* Itemized journey estimate — every line carries what is actually known. */}
+    <Route path="/journey-estimate" element={<ErrorBoundary><JourneyEstimate /></ErrorBoundary>} />
     <Route path="/login"          element={<ErrorBoundary><Login /></ErrorBoundary>} />
     <Route path="/consultation"   element={<ConsultationRedirect />} />
     <Route path="/consultation-success" element={<ErrorBoundary><ConsultationSuccess /></ErrorBoundary>} />

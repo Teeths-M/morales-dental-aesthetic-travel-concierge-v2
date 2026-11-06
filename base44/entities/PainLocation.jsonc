@@ -1,0 +1,115 @@
+{
+  "name": "PainLocation",
+  "type": "object",
+  "description": "One place on the body where a traveller reported pain, recorded from the anatomical body map. This is the traveller's own report, not a diagnosis: it records WHERE they pointed, HOW severe it felt to them, and WHEN it started, so a clinician reads the traveller's account rather than an interpretation of it. region_id/region_label come from the body map's fixed region list, so the same point of the body always arrives under the same name and can be compared over time. severity is a 1-10 self-rating and is labelled as such wherever it is shown. A record is never edited into a different body region to 'correct' history: a wrong point is resolved and a new one added, which is why status exists rather than a hard delete.",
+  "properties": {
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Who reported it. The RLS anchor for their own record."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The journey this belongs to, when there is one. Absent for a report made outside a booked journey."
+    },
+    "region_id": {
+      "type": "string",
+      "description": "Stable id from the body map's region list, e.g. 'upper_arm_right' or 'abdomen'."
+    },
+    "region_label": {
+      "type": "string",
+      "description": "How the region is written for a person, e.g. 'Upper arm (right)'. Stored rather than re-derived so an older record still reads correctly if the map's wording changes."
+    },
+    "body_view": {
+      "type": "string",
+      "enum": [
+        "front",
+        "back"
+      ],
+      "description": "Which side of the body map the traveller was looking at. Kept because 'left shoulder, front' and 'left shoulder, back' are different places."
+    },
+    "severity": {
+      "type": "number",
+      "description": "The traveller's own 1-10 rating, never a clinical measurement."
+    },
+    "quality": {
+      "type": "string",
+      "enum": [
+        "sharp",
+        "dull",
+        "aching",
+        "burning",
+        "throbbing",
+        "numbness",
+        "swelling",
+        "stiffness",
+        "other"
+      ],
+      "description": "The traveller's own words for how it feels. 'other' exists so nobody is forced into a description that isn't theirs."
+    },
+    "onset": {
+      "type": "string",
+      "enum": [
+        "today",
+        "this_week",
+        "weeks",
+        "months",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "description": {
+      "type": "string",
+      "description": "Anything the traveller typed in their own words. Kept verbatim."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "resolved"
+      ],
+      "default": "active"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the traveller reported it. Distinct from created_date, which is when the server stored it."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "traveller",
+        "companion",
+        "doctor",
+        "care_team"
+      ],
+      "default": "traveller",
+      "description": "Who entered it. 'traveller' means they pointed at the body map themselves."
+    }
+  },
+  "required": [
+    "patient_email",
+    "region_id",
+    "region_label",
+    "severity",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

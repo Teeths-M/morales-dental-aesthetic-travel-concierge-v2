@@ -45,6 +45,7 @@ const TrustScan               = lazy(() => import('@/pages/TrustScan'));
 const TrustProfile            = lazy(() => import('@/pages/TrustProfile'));
 const IncidentRecovery        = lazy(() => import('@/pages/IncidentRecovery'));
 const Surroundings            = lazy(() => import('@/pages/Surroundings'));
+const PainMap                 = lazy(() => import('@/pages/PainMap'));
 const EmergencyResponse       = lazy(() => import('@/pages/EmergencyResponse'));
 
 const CHECKOUT_ROLES = [
@@ -84,6 +85,8 @@ export const clientRoutes = (
       <Route path="/nightlife-safety"           element={<ErrorBoundary><NightlifeSafetyMode /></ErrorBoundary>} />
       <Route path="/wilderness-safety"           element={<ErrorBoundary><WildernessSafetyMode /></ErrorBoundary>} />
       <Route path="/medical-intake"              element={<ErrorBoundary><MedicalIntakeForm /></ErrorBoundary>} />
+      {/* Anatomical pain map — the traveller's own report of where it hurts. */}
+      <Route path="/body-map"                    element={<ErrorBoundary><PainMap /></ErrorBoundary>} />
       <Route path="/discharge-reader"            element={<ErrorBoundary><DischargePaperReader /></ErrorBoundary>} />
       <Route path="/my-quotes"                   element={<ErrorBoundary><MyQuotes /></ErrorBoundary>} />
       <Route path="/partner-offers"              element={<ErrorBoundary><PartnerOffers /></ErrorBoundary>} />
