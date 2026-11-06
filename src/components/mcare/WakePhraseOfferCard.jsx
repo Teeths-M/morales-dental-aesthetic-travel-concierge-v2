@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mic } from 'lucide-react';
 import { WAKE_OFFER_COPY } from '@/lib/wakePhraseOffer';
+import { TOUCH } from './panelPalette';
 
 const GOLD = '#D4AF37';
 
@@ -11,8 +12,11 @@ const GOLD = '#D4AF37';
  * Presentation only: whether it should appear at all is decided by
  * shouldOfferWakePhrase (wakePhraseOffer.js), and what the answers do belongs
  * to MCareOrb, which owns the real prefs and the conversation.
+ *
+ * inset lines it up under the greeting's avatar (the laptop panel); without it the card is full width, like the
+ * phone screen's welcome card above it.
  */
-export default function WakePhraseOfferCard({ dark = false, onTurnOn, onDismiss, busy = false }) {
+export default function WakePhraseOfferCard({ dark = false, onTurnOn = () => {}, onDismiss = () => {}, busy = false, inset = true }) {
   const cardBg = dark ? '#111E27' : '#FFFFFF';
   const border = dark ? '#2A3F4A' : '#E5E7EB';
   const titleColor = dark ? '#F3F4F6' : '#0F172A';
@@ -23,8 +27,8 @@ export default function WakePhraseOfferCard({ dark = false, onTurnOn, onDismiss,
       role="group"
       aria-label={WAKE_OFFER_COPY.title}
       style={{
-        marginLeft: 42,
-        maxWidth: 380,
+        marginLeft: inset ? 42 : 0,
+        maxWidth: inset ? 380 : '100%',
         background: cardBg,
         border: `1px solid ${border}`,
         borderRadius: 14,
@@ -64,7 +68,8 @@ export default function WakePhraseOfferCard({ dark = false, onTurnOn, onDismiss,
           style={{
             border: 'none',
             borderRadius: 999,
-            padding: '6px 14px',
+            minHeight: TOUCH,
+            padding: '6px 16px',
             fontSize: 11.5,
             fontWeight: 700,
             color: '#060B16',
@@ -82,7 +87,8 @@ export default function WakePhraseOfferCard({ dark = false, onTurnOn, onDismiss,
           style={{
             border: 'none',
             background: 'transparent',
-            padding: '6px 2px',
+            minHeight: TOUCH,
+            padding: '6px 8px',
             fontSize: 11.5,
             fontWeight: 600,
             color: bodyColor,

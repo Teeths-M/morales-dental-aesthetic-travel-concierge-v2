@@ -69,6 +69,9 @@ import {
   createGenerationGuard,
 } from '@/lib/conversationStateMachine';
 import { parseMcareCommand } from '@/lib/voiceCommands';
+import { shouldOfferWakePhrase, wakeOfferPatch } from '@/lib/wakePhraseOffer';
+import { prefsFromUser } from '@/lib/mcarePreferences';
+import WakePhraseOfferCard from './WakePhraseOfferCard';
 import { detectWakePhrase } from '@/lib/wakePhrase';
 import { armSurroundingAwareness, disarmSurroundingAwareness } from '@/lib/surroundingAwareness';
 import { useMcarePreferences } from '@/hooks/useMcarePreferences';
@@ -166,6 +169,22 @@ export default function MCareOrb({ standalone = false } = {}) {
   const { toast }         = useToast();
   const { user }          = useAuth();
   const { prefs, update: updatePrefs } = useMcarePreferences();
+
+  // The one-time "Hey M-Care" offer (wakePhraseOffer.js, WakePhraseOfferCard.jsx), shown under the greeting while
+  // the chat is empty. Asked once per account: either answer is saved. prefs fill in a moment after the account
+  // loads, so the saved copy on the account is checked too, or someone who already answered would see it flash.
+  // Not on the standalone screen: the wake-phrase listener only runs while this panel is closed, and the
+  // standalone panel never closes, so the feature can't work there. Hidden the instant either button is tapped.
+  const [wakeOfferAnswered, setWakeOfferAnswered] = useState(false);
+  const savedPrefs = prefsFromUser(user);
+  const wakeOfferVisible = !standalone && !wakeOfferAnswered && shouldOfferWakePhrase({
+    user,
+    prefs: {
+      wakePhraseEnabled: prefs.wakePhraseEnabled || savedPrefs.wakePhraseEnabled,
+      wakePhraseOfferAnswered: prefs.wakePhraseOfferAnswered || savedPrefs.wakePhraseOfferAnswered,
+    },
+    supported: isConversationalModeSupported(),
+  });
   // Proactive M-Care layer — polls JourneyEvent (real records a scheduled
   // function wrote, e.g. a departure-countdown milestone or journey
   // completion) for the patient's active case. Rendered as its own block
@@ -693,6 +712,17 @@ export default function MCareOrb({ standalone = false } = {}) {
   const [agentMessages, setAgentMessages] = useState([]);
   const [agentSending, setAgentSending] = useState(false);
   const [agentLoading, setAgentLoading] = useState(false);
+
+  // An answer to the "Hey M-Care" offer: saved either way so it is never asked again. "Turn on" gets the same
+  // confirmation as saying "enable wake phrase" (read from voiceCommands, so the wording and its stated limits can't
+  // drift), as M-Care's reply, the way a spoken command's confirmation already appears.
+  const answerWakeOffer = (turnOn) => {
+    setWakeOfferAnswered(true);
+    updatePrefs(wakeOfferPatch(turnOn));
+    if (!turnOn) return;
+    const confirm = parseMcareCommand('enable wake phrase')?.confirmText;
+    if (confirm) setAgentMessages((prev) => [...prev, { role: 'assistant', content: confirm }]);
+  };
 
   useEffect(() => { agentMessagesRef.current = agentMessages; }, [agentMessages]);
   useEffect(() => { responseLanguageRef.current = responseLanguage; }, [responseLanguage]);
@@ -1263,23 +1293,32 @@ export default function MCareOrb({ standalone = false } = {}) {
     return () => { document.body.style.overflow = prevOverflow; };
   }, [open]);
 
-  // Load the user's existing M-Care conversation when they first open the orb.
+  // Load the user's existing M-Care conversation when they first open the orb. Once per account: the ref records
+  // whose conversation was asked for. This used to re-run on its own agentLoading flag, so setting the flag re-ran
+  // the effect, which cancelled the first run, and the answer was then thrown away and the flag never cleared: a
+  // signed-in traveller sat on the "Welcome back" loading line, with no greeting or welcome card, and their last
+  // conversation never came back (from Aug 6 until found 2026-11-06). A conversation the traveller already started
+  // by typing while this loads is kept, never replaced by the older one; "New journey" stays new.
+  const conversationLoadedForRef = useRef(null);
   useEffect(() => {
-    if (!open || !isAuthenticated || agentConversation || agentLoading) return;
-    let mounted = true;
+    if (!isAuthenticated) conversationLoadedForRef.current = null;
+  }, [isAuthenticated]);
+  useEffect(() => {
+    const who = user?.id || user?.email || null;
+    if (!open || !isAuthenticated || !who || agentConversation || conversationLoadedForRef.current === who) return;
+    conversationLoadedForRef.current = who;
     setAgentLoading(true);
     base44.agents.listConversations({ agent_name: AGENT_NAME })
-      .then(convos => {
-        if (!mounted) return;
+      .then((convos) => {
+        if (conversationLoadedForRef.current !== who) return; // signed out or switched account meanwhile
         if (convos && convos.length > 0) {
-          setAgentConversation(convos[0]);
-          setAgentMessages(convos[0].messages || []);
+          setAgentConversation((prev) => prev || convos[0]);
+          setAgentMessages((prev) => (prev.length ? prev : (convos[0].messages || [])));
         }
       })
       .catch(() => {})
-      .finally(() => { if (mounted) setAgentLoading(false); });
-    return () => { mounted = false; };
-  }, [open, isAuthenticated, agentConversation, agentLoading]);
+      .finally(() => setAgentLoading(false));
+  }, [open, isAuthenticated, agentConversation, user?.id, user?.email]);
 
   // Proactively ask for precise location the moment M-Care opens, rather
   // than only reactively after a wrong IP-approximate answer or waiting for
@@ -3149,6 +3188,14 @@ export default function MCareOrb({ standalone = false } = {}) {
                 alert={welcomeAlert}
                 places={welcomePlaces}
                 onOpenPlaces={welcomePlaces.length ? () => sendAgentMessage('Show my hotel and clinic on the map') : null}
+              />
+            )}
+            {wakeOfferVisible && (
+              <WakePhraseOfferCard
+                dark={useDarkTheme}
+                inset={isDesktopPanel}
+                onTurnOn={() => answerWakeOffer(true)}
+                onDismiss={() => answerWakeOffer(false)}
               />
             )}
             {/* Desktop keeps its original empty-state chip row (all chips,

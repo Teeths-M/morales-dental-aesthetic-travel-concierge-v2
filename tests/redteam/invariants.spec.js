@@ -7665,3 +7665,63 @@ test('COMPARISON TABLE: redrawing a comparison table can never trigger doctor ou
   expect(sendIdx, 'the outreach email must still exist for real searches').toBeGreaterThan(-1);
   expect(skipIdx, 'skip_outreach must be checked before the outreach email is sent').toBeLessThan(sendIdx);
 });
+
+test('JARVIS WAVE 1: the WhatsApp/Telegram connect links are built in exactly one place', () => {
+  // Settings and the dashboard card both offer these links. If each built its own, they would drift apart.
+  const lib = read('src/lib/mcareChannels.js');
+  expect(lib).toMatch(/getWhatsAppConnectURL\(MCARE_AGENT_NAME\)/);
+  expect(lib).toMatch(/getTelegramConnectURL\(MCARE_AGENT_NAME\)/);
+  for (const file of ['src/components/dashboard/modules/SettingsModule.jsx', 'src/components/dashboard/ConnectChannelsNudgeCard.jsx']) {
+    const src = nsStrip(read(file));
+    expect(src, `${file} must use the shared openChannelConnect`).toMatch(/openChannelConnect\(/);
+    expect(src, `${file} must not build connect links itself`).not.toMatch(/get(WhatsApp|Telegram)ConnectURL\(/);
+  }
+});
+
+test('JARVIS WAVE 1: saving M-Care preferences merges onto the latest saved copy first', () => {
+  // M-Care's panel and the dashboard card both save the one preferences bundle. Starting from a stale local copy
+  // would let one quietly undo the other (dismissing the card could switch the wake phrase back off).
+  const src = read('src/lib/mcarePreferences.js');
+  const body = src.slice(src.indexOf('export async function saveMcarePrefs'));
+  const readAt = body.indexOf('base44.auth.me()');
+  const writeAt = body.indexOf('base44.auth.updateMe(');
+  expect(readAt, 'reads the latest saved preferences').toBeGreaterThan(-1);
+  expect(readAt, 'before writing them').toBeLessThan(writeAt);
+  expect(body.slice(0, writeAt)).toMatch(/const merged = \{ \.\.\.normalizePrefs\(latest\), \.\.\.patch \};/);
+});
+
+test('JARVIS WAVE 1: the wake phrase is never on by default, and the first-open offer only turns it on from a tap', () => {
+  expect(read('src/lib/mcarePreferences.js'), 'the wake phrase defaults to off').toMatch(/wakePhraseEnabled: false,/);
+
+  const offer = read('src/lib/wakePhraseOffer.js');
+  expect(offer).toMatch(/if \(!user \|\| !prefs \|\| !supported\) return false;/);
+  expect(offer, 'asked once').toMatch(/if \(prefs\[WAKE_OFFER_ANSWERED_KEY\]\) return false;/);
+
+  const orb = nsStrip(read('src/components/mcare/MCareOrb.jsx'));
+  expect(orb, 'the listener still only arms when the traveller turned it on').toMatch(/const shouldArm = prefs\.wakePhraseEnabled/);
+  // Shown only where it can work: the listener runs while this panel is closed, and the standalone panel never
+  // closes. The saved copy on the account is checked too, so someone who already answered never sees it flash.
+  expect(orb).toMatch(/const wakeOfferVisible = !standalone && !wakeOfferAnswered && shouldOfferWakePhrase\(\{/);
+  expect(orb).toMatch(/wakePhraseOfferAnswered: prefs\.wakePhraseOfferAnswered \|\| savedPrefs\.wakePhraseOfferAnswered,/);
+  expect(orb, 'the card renders only when the rule allows it').toMatch(/\{wakeOfferVisible && \(\s*<WakePhraseOfferCard/);
+  const handler = orb.slice(orb.indexOf('const answerWakeOffer'), orb.indexOf('const answerWakeOffer') + 600);
+  expect(handler, 'either answer is saved').toMatch(/updatePrefs\(wakeOfferPatch\(turnOn\)\);/);
+  expect(handler, 'the confirmation is the spoken command\'s own').toMatch(/parseMcareCommand\('enable wake phrase'\)/);
+});
+
+test('CONVERSATION RESTORE: a signed-in traveller\'s last M-Care conversation loads, and the loading line always clears', () => {
+  // The loader used to re-run on its own agentLoading flag: setting the flag re-ran the effect, which cancelled the
+  // first run, so the answer was thrown away and the flag never cleared. Signed-in travellers sat on the loading
+  // line with no greeting, and their conversation never came back (Aug 6 to Nov 6).
+  const orb = nsStrip(read('src/components/mcare/MCareOrb.jsx'));
+  const start = orb.indexOf('const conversationLoadedForRef = useRef(null);');
+  expect(start, 'the loader is guarded per account').toBeGreaterThan(-1);
+  const loader = orb.slice(start, start + 1600);
+  expect(loader).toMatch(/base44\.agents\.listConversations\(\{ agent_name: AGENT_NAME \}\)/);
+  expect(loader, 'the loading flag clears however the call ends').toMatch(/\.finally\(\(\) => setAgentLoading\(false\)\);/);
+  const deps = loader.match(/\}, \[([^\]]*)\]\);\s*$/m) || loader.match(/\}, \[(open, isAuthenticated, agentConversation[^\]]*)\]\);/);
+  expect(deps, 'the loader effect has a dependency list').toBeTruthy();
+  expect(deps[1], 'it must not re-run on its own loading flag').not.toMatch(/agentLoading/);
+  // A conversation the traveller started by typing while this loads is kept, never replaced by the older one.
+  expect(loader).toMatch(/setAgentConversation\(\(prev\) => prev \|\| convos\[0\]\);/);
+});
