@@ -8,6 +8,7 @@ import OutreachDraftCard from '@/components/mcare/OutreachDraftCard';
 import McareAvatar from '@/components/mcare-agent/McareAvatar';
 import ProviderStatusBadge from '@/components/mcare-agent/ProviderStatusBadge';
 import DriverMapWidget from '@/components/mcare-agent/DriverMapWidget';
+import ComparisonTable from '@/components/mcare-agent/ComparisonTable';
 import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink, buildOfflineGeoUri, buildGoogleMapsLocationUrl } from '@/lib/mapLinks';
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
@@ -132,6 +133,21 @@ const extractDoctorMedia = (raw) => {
   const text = raw.replace(match[0], '').trim();
   const type = match[2].trim().toLowerCase() === 'video' ? 'video' : 'image';
   return { text, doctorMedia: { name: match[1].trim(), type, url: match[3].trim() } };
+};
+
+// Extract a {{comparetable:PROCEDURE_NAME}} token M-Care emits after a real
+// matchDoctorsForProcedure call returns 2+ matches and the traveler asks to
+// compare them or see a table (see RULE 42). Single-occurrence, mirroring
+// extractMedia's shape -- one reply needs at most one comparison table. The
+// UI never builds the comparison from this text; ComparisonTable fetches the
+// real match data itself and renders it, so the token only ever names which
+// procedure to compare doctors for.
+const extractComparisonTable = (raw) => {
+  if (!raw) return { text: '', comparisonProcedure: null };
+  const match = raw.match(/\{\{comparetable:([\s\S]*?)\}\}/);
+  if (!match) return { text: raw.trim(), comparisonProcedure: null };
+  const text = raw.replace(match[0], '').trim();
+  return { text, comparisonProcedure: match[1].trim() };
 };
 
 // Extract a {{drivermap:REQUEST_ID}} token M-Care emits at the end of a ride
@@ -835,7 +851,8 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
           const { text: t3a, shareLink } = extractShareLink(t3z);
           const { text: t3b, media } = extractMedia(t3a);
           const { text: t3c, doctorMedia } = extractDoctorMedia(t3b);
-          const { text: t3d, driverMap } = extractDriverMap(t3c);
+          const { text: t3c2, comparisonProcedure } = extractComparisonTable(t3c);
+          const { text: t3d, driverMap } = extractDriverMap(t3c2);
           const { text: t3e, trustScan } = extractTrustScan(t3d);
           const { text: t4, providerStatuses } = extractProviderStatus(t3e);
           // Final safety net: anything {{...}}-shaped that survived every
@@ -924,6 +941,7 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
               )}
               {media && <ProcedureMediaCard query={media} />}
               {doctorMedia && <DoctorMediaCard name={doctorMedia.name} type={doctorMedia.type} url={doctorMedia.url} />}
+              {comparisonProcedure && <ComparisonTable procedureName={comparisonProcedure} />}
               {driverMap && <DriverMapWidget transportId={driverMap} />}
               {trustScan && (
                 <div className="mt-2 flex flex-wrap gap-1.5">

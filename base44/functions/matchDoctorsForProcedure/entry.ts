@@ -67,7 +67,7 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { procedure_interest, client_email, client_id } = await req.json();
+    const { procedure_interest, client_email, client_id, skip_outreach } = await req.json();
 
     if (!procedure_interest) {
       return Response.json({ error: 'Procedure interest required' }, { status: 400 });
@@ -91,6 +91,16 @@ Deno.serve(createHandler(async ({ req }) => {
 
     // If no doctors found, trigger email outreach
     if (matchedDoctors.length === 0) {
+      // Display-only callers (ComparisonTable redrawing a chat table) pass
+      // skip_outreach: true. Redrawing a table must never email doctors, so
+      // return the empty result before any outreach runs.
+      if (skip_outreach === true) {
+        return Response.json({
+          matched_doctors: [],
+          outreach_sent: false,
+          message: `No doctors found for ${procedure_interest}.`
+        });
+      }
       // PERFORMANCE: Bounded query — prevents full-table scan
       const relatedSpecialties = await base44.entities.DoctorSpecialty.list('-created_date', 500);
       

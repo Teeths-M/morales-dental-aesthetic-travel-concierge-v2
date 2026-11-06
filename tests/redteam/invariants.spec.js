@@ -7591,3 +7591,77 @@ test('RECORD INTEGRITY: the doctor portal\'s question is saved by the server, af
   const update = fn.slice(write, fn.indexOf('});', write));
   expect(update, 'the stage stays where it is').not.toMatch(/\bstage\s*:/);
 });
+
+// ---- Comparison tables in M-Care chat (RULE 42, the {{comparetable:...}}
+// token). Uses this file's existing `test`, `expect`, and `read` helpers.
+
+test('COMPARISON TABLE: ComparisonTable renders only real matchDoctorsForProcedure data, never a fabricated row or a price', () => {
+  // The {{comparetable:PROCEDURE_NAME}} token (RULE 42) deliberately never
+  // asks the LLM to format table data itself -- ComparisonTable re-fetches
+  // the real matchDoctorsForProcedure result live and renders whatever comes
+  // back, which is what structurally guarantees RULE 3 (no invented data)
+  // for a multi-row result. This test pins that the component actually does
+  // that, rather than a hardcoded fixture, and never renders a price.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = strip(read('src/components/mcare-agent/ComparisonTable.jsx'));
+
+  expect(src, 'ComparisonTable must invoke the real matchDoctorsForProcedure function')
+    .toMatch(/functions\.invoke\(\s*['"]matchDoctorsForProcedure['"]/);
+
+  // The base44.functions.invoke unwrap bug (it resolves to the raw axios
+  // response, not the JSON body) has bitten this exact app more than once --
+  // row data must come from the unwrapped .data body, never the bare result.
+  expect(src, 'ComparisonTable must read the invoke response via .data, not the raw result')
+    .toMatch(/res\??\.data/);
+  expect(src, 'row data must come from matched_doctors on the unwrapped response body')
+    .toMatch(/body\?\.matched_doctors/);
+
+  // No hardcoded doctor-shaped literal array anywhere in the component --
+  // every row must be traceable to the real fetched response, never a
+  // fixture/placeholder that could silently ship as if it were real data.
+  expect(src, 'ComparisonTable must never hardcode a doctor-shaped literal array')
+    .not.toMatch(/\[\s*\{\s*(id|name)\s*:\s*['"]/);
+
+  // matchDoctorsForProcedure never returns a price (price only ever exists
+  // per-quote, on a separate DoctorQuote record) -- rendering one here would
+  // be exactly the kind of invented figure RULE 3 forbids.
+  expect(src.toLowerCase(), 'ComparisonTable must never render a price/cost figure')
+    .not.toMatch(/\bprice\b|\bcost\b|total_usd/);
+});
+
+test('COMPARISON TABLE: RULE 42 requires a real prior multi-doctor match before the comparetable token is emitted, and adds zero new tool_configs grants', () => {
+  const agentConfig = read('base44/agents/m_care.jsonc');
+  const mcareData = JSON.parse(agentConfig);
+
+  expect(mcareData.instructions, 'RULE 42 must exist').toContain('RULE 42 -- COMPARISON TABLES');
+  expect(mcareData.instructions, 'RULE 42 must require 2+ real matched doctors before emitting the token')
+    .toMatch(/2 or more matched doctors/);
+  expect(mcareData.instructions, 'RULE 42 must forbid emitting the token without a genuine prior match')
+    .toMatch(/Never emit this token without a genuine multi-doctor match/);
+  expect(mcareData.instructions, 'RULE 42 must disclose the table has no price data')
+    .toMatch(/This has no price data/);
+
+  // The comparetable token is plain text the model already has everything it
+  // needs to emit (it just names a procedure) -- not a new function/entity
+  // grant, so this feature must add zero new tool_configs entries.
+  // 118 is the real count on 2026-11-06 (115 on 2026-10-17, then 3 read-only partner-pricing tools); re-check before merging.
+  expect(mcareData.tool_configs.length, 'RULE 42 (comparison tables) must add zero new tool_configs grants').toBe(118);
+});
+
+test('COMPARISON TABLE: redrawing a comparison table can never trigger doctor outreach emails or send the patient email', () => {
+  // matchDoctorsForProcedure emails up to 50 doctors when it finds no match.
+  // ComparisonTable re-runs the match only to draw a table, so it must pass
+  // skip_outreach: true and must not send the patient's email at all, and
+  // the function must honor skip_outreach before any outreach email can run.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const comp = strip(read('src/components/mcare-agent/ComparisonTable.jsx'));
+  expect(comp, 'ComparisonTable must pass skip_outreach: true').toMatch(/skip_outreach:\s*true/);
+  expect(comp, 'ComparisonTable must never send the patient email').not.toMatch(/client_email/);
+
+  const fn = read('base44/functions/matchDoctorsForProcedure/entry.ts');
+  const skipIdx = fn.indexOf('skip_outreach === true');
+  const sendIdx = fn.indexOf('SendEmail(');
+  expect(skipIdx, 'matchDoctorsForProcedure must check skip_outreach').toBeGreaterThan(-1);
+  expect(sendIdx, 'the outreach email must still exist for real searches').toBeGreaterThan(-1);
+  expect(skipIdx, 'skip_outreach must be checked before the outreach email is sent').toBeLessThan(sendIdx);
+});
