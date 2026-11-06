@@ -21,6 +21,11 @@ describe('timeAgo', () => {
     expect(timeAgo(hoursAgo(50), NOW)).toBe('2 days ago');
     expect(timeAgo('not a date', NOW)).toBe('');
   });
+
+  it('reads a backend time (no timezone, UTC) correctly in any timezone', () => {
+    expect(timeAgo('2026-11-01T19:55:00.000000', NOW)).toBe('5 minutes ago');
+    expect(timeAgo('2026-11-01T17:00:00.000000', NOW)).toBe('3 hours ago');
+  });
 });
 
 describe('pickLatestAlert', () => {
@@ -34,6 +39,15 @@ describe('pickLatestAlert', () => {
 
   it('picks the newest real high or critical update from the last week', () => {
     expect(pickLatestAlert(events, NOW)?.id).toBe('b');
+  });
+
+  it('compares backend times (no timezone, UTC) against the clock correctly', () => {
+    // NOW is 20:00 UTC on Nov 1, so the 7-day window opens at 20:00 UTC on Oct 25. Read as local time instead,
+    // Trinidad would let "just outside" in and Istanbul would drop "just inside".
+    const justInside = { id: 'in', priority: 'high', message_text: 'Six days, 22 hours ago.', created_date: '2026-10-25T22:00:00.000000' };
+    const justOutside = { id: 'out', priority: 'critical', message_text: 'Seven days, 2 hours ago.', created_date: '2026-10-25T18:00:00.000000' };
+    expect(pickLatestAlert([justInside], NOW)?.id).toBe('in');
+    expect(pickLatestAlert([justOutside], NOW)).toBeNull();
   });
 
   it('shows nothing when M-Care sent nothing serious', () => {

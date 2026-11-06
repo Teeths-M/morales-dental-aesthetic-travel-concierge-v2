@@ -106,6 +106,8 @@ import {
 } from './panelPalette';
 import { orbStateLabel } from '@/lib/orbStateLabel';
 import { isMcareQuietRoute, mcareDeepLinkMode } from '@/lib/mcareDeepLink';
+import { mergeTimeline } from '@/lib/chatTimeline';
+import { serverTimeMs } from '@/lib/serverTime';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 // North-star redesign (2026-11-01): the mockup's line under the LIVE pill.
@@ -1551,13 +1553,22 @@ export default function MCareOrb({ standalone = false } = {}) {
     return () => clearTimeout(id);
   }, [open, dismissed, isQuietRoute, struggleHint, tipIdx, tips.length]);
 
+  // Scrolls the conversation itself, never the page around it (scrollIntoView can also move the page on an iPhone;
+  // see the keyboard effect below). No target: to the newest message, at the bottom.
+  const scrollChatTo = (target) => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    const top = target ? target.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 12 : el.scrollHeight;
+    el.scrollTo({ top, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     // Phone and tablet before a conversation (north-star redesign): stay at the
     // top, so the hero and the welcome, or a scanned ad's first sign-up message,
     // are what people see first. Once there's a conversation, follow the newest.
     if (!isDesktopPanel && agentMessages.length === 0 && pilotMessages.length <= 1) return;
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [agentMessages, journeyEvents, pilotMessages, isDesktopPanel]);
+    scrollChatTo(null);
+  }, [agentMessages, journeyEvents, pilotMessages, isDesktopPanel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The keyboard opening makes the conversation shorter; keep the newest message in view, the way a messaging app
   // does (same before-a-conversation exception as above). Sets the list's own scroll position rather than calling
@@ -1688,7 +1699,7 @@ export default function MCareOrb({ standalone = false } = {}) {
     if (unseen.length === 0) return;
     // Oldest-unseen-first — a real event actually happened at that time;
     // never skip straight to the newest and silently drop an earlier one.
-    const next = [...unseen].sort((a, b) => new Date(a.created_date) - new Date(b.created_date))[0];
+    const next = [...unseen].sort((a, b) => serverTimeMs(a.created_date) - serverTimeMs(b.created_date))[0];
     spokenJourneyEventIdsRef.current.add(next.id);
     speakAncillary(next.message_text, { rate: 0.9 });
   }, [journeyEvents, talkMode]);
@@ -1938,8 +1949,9 @@ export default function MCareOrb({ standalone = false } = {}) {
   // — the honest way to satisfy "the user shouldn't have to send a message
   // first" without a literal push: they see a dot on the closed orb, open
   // it, and the proactive message is already waiting.
-  const hasUnseenJourneyEvent = journeyEvents.some(e =>
-    e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt);
+  // serverTimeMs reads the backend's timezone-less time as UTC; read directly it was hours off the clock it's
+  // compared with, so a new update could stay "unread" for hours, or (east of UTC) never show as unread at all.
+  const hasUnseenJourneyEvent = journeyEvents.some(e => serverTimeMs(e.created_date) > lastSeenJourneyEventsAt);
 
   // A tool call is genuinely running right now on the last assistant
   // message — the same real signal the TTS-ack effect above derives
@@ -2658,7 +2670,8 @@ export default function MCareOrb({ standalone = false } = {}) {
   const hasTrip = !!activeCaseRecord?.id;
   const atDestination = hasTrip && !!tripCountryCode && tripCountryCode === visitorCountryCode;
   const tripLabel = tripCountryCode ? countryLabel(tripCountryCode, activeCaseRecord?.procedure_country || '') : (activeCaseRecord?.procedure_country || '');
-  const unseenJourneyCount = journeyEvents.filter(e => e.created_date && new Date(e.created_date).getTime() > lastSeenJourneyEventsAt).length;
+  const unseenJourneyEvents = journeyEvents.filter(e => serverTimeMs(e.created_date) > lastSeenJourneyEventsAt);
+  const unseenJourneyCount = unseenJourneyEvents.length;
   const welcome = welcomeCopy({
     atDestination, hasTrip, tripLabel,
     countryName: visitorCountryName,
@@ -3024,7 +3037,14 @@ export default function MCareOrb({ standalone = false } = {}) {
             <RotateCcw style={ctrlIcon} />
           </button>
         )}
-        <button onClick={() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); markJourneyEventsSeen(); }}
+        {/* Journey updates sit in the conversation by time now, so this jumps to the first unread one (or the
+            latest update), not just the bottom. journeyEvents is newest-first. */}
+        <button onClick={() => {
+          const target = unseenJourneyEvents[unseenJourneyEvents.length - 1] || journeyEvents[0];
+          const node = target?.id ? chatScrollRef.current?.querySelector(`[data-journey-event-id="${String(target.id).replace(/["\\]/g, '')}"]`) : null;
+          scrollChatTo(node || null);
+          markJourneyEventsSeen();
+        }}
           aria-label={unseenJourneyCount ? `Notifications, ${unseenJourneyCount} new` : 'Notifications'} className="ms-press ms-ctrl" style={headerIconBtn({ position: 'relative' })}>
           <Bell style={{ width: 23, height: 23 }} />
           {unseenJourneyCount > 0 && (
@@ -3157,7 +3177,20 @@ export default function MCareOrb({ standalone = false } = {}) {
           </div>
         )}
 
-        {agentMessages.map((m, i) => (
+        {/* One timeline, in the order things happened. The conversation with the agent, the scan-an-ad sign-up
+            (?mcare=pilot / partner) and M-Care's journey updates are three separate lists (each declaration says
+            why), and used to be drawn one list after another: after a QR scan every new reply landed above the scan
+            greeting, so the chat read upside down. mergeTimeline interleaves them by time without reordering any
+            list; an agent message keeps its own index i, which revealUpTo and extraAudioUrl are keyed by. */}
+        {mergeTimeline([
+          agentMessages.map((m, i) => ({ kind: 'agent', m, i })),
+          pilotMessages.map((m, i) => ({ kind: 'pilot', m, i })),
+          // journeyEvents comes newest-first; the merge needs each list oldest-first.
+          [...journeyEvents].reverse().map((e) => ({ kind: 'journey', e })),
+        ], (item) => (item.kind === 'journey' ? item.e.created_date : item.m.created_date)).map((item) => {
+          if (item.kind === 'agent') {
+            const { m, i } = item;
+            return (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -3198,11 +3231,14 @@ export default function MCareOrb({ standalone = false } = {}) {
               revealUpTo={revealState && revealState.messageIndex === i ? revealState.revealedWordCount : undefined}
               extraAudioUrl={voiceReplyAudioUrls[i]} />
           </motion.div>
-        ))}
+            );
+          }
 
-        {/* The scan-an-ad pilot sign-up (?mcare=pilot) — its own list, after the real conversation, so neither the
-            saved conversation loading in nor a subscription tick can wipe it, and agentMessages' indices are untouched. */}
-        {pilotMessages.map((m, i) => (
+          // The scan-an-ad sign-up (?mcare=pilot): its own list, so neither the saved conversation loading in nor a
+          // subscription tick can wipe it, and agentMessages' indices are untouched.
+          if (item.kind === 'pilot') {
+            const { m, i } = item;
+            return (
           <motion.div key={`pilot-${i}`}
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -3222,16 +3258,14 @@ export default function MCareOrb({ standalone = false } = {}) {
               </motion.div>
             )}
           </motion.div>
-        ))}
+            );
+          }
 
-        {/* Proactive M-Care updates — real JourneyEvent records, polled
-            every 20s, never spliced into agentMessages (see the hook
-            declarations above for why). Rendered in their own block
-            so real conversation indices (revealUpTo/extraAudioUrl,
-            both keyed by position in agentMessages) are never
-            disturbed. Oldest-first, matching normal chat reading order. */}
-        {[...journeyEvents].reverse().map((e) => (
-          <motion.div key={`je-${e.id}`}
+          // Proactive M-Care updates: real JourneyEvent records, polled every 20s (and live), never spliced into
+          // agentMessages (see the hook declarations above for why). data-journey-event-id lets the bell jump here.
+          const { e } = item;
+          return (
+          <motion.div key={`je-${e.id}`} data-journey-event-id={e.id}
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
@@ -3241,7 +3275,8 @@ export default function MCareOrb({ standalone = false } = {}) {
             </div>
             <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
           </motion.div>
-        ))}
+          );
+        })}
 
         {/* Mobile (2026-08-28): the fuller LiveActivityCard, matching the
             reference screenshot's "Searching & Verifying" card — but title/

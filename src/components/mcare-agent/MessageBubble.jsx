@@ -12,6 +12,7 @@ import { MAP_APPS, orderedMapApps, openInMapsApp, generateMapLink, buildOfflineG
 import { pickMessageReaction } from '@/lib/mcareReactionHeuristic';
 import { downloadQrSvgAsPng } from '@/lib/qrDownload';
 import { generateWaveformBars } from '@/lib/voiceMessageAudio';
+import { serverTimeMs } from '@/lib/serverTime';
 import { base44 } from '@/api/base44Client';
 import { useTranslation } from '@/i18n';
 import { searchProcedures } from '@/components/procedures/ProcedureData';
@@ -778,8 +779,9 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
   // real voice message.
   const isPureVoiceNote = (isUser && fileUrls.length === 1 && isAudioUrl(fileUrls[0])) || (!isUser && !!extraAudioUrl);
   const hasAudioAttachment = !!extraAudioUrl || fileUrls.some(isAudioUrl);
-  const ts = message.created_date || message.timestamp;
-  const time = ts ? new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
+  // serverTimeMs: the backend's times carry no timezone (they're UTC); read directly they showed hours off.
+  const tsMs = serverTimeMs(message.created_date || message.timestamp);
+  const time = Number.isFinite(tsMs) ? new Date(tsMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : null;
   const reaction = isUser && showReaction ? pickMessageReaction(message.content) : null;
   const userBubbleClass = consoleVariant
     ? ''

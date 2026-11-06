@@ -7012,3 +7012,22 @@ test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focu
   // ?mcare=… links (the ads' QR codes) open the full-screen M-Care, keeping their query string.
   expect(layout).toMatch(/if \(!isStandaloneMcare && mcareDeepLinkMode\(search\) && !isMcareQuietRoute\(pathname\)\) \{\s*return <Navigate to=\{\{ pathname: '\/m-care', search \}\} replace \/>;/);
 });
+
+test('CHAT ORDER: M-Care draws one timeline in the order things happened, and reads backend times as UTC', () => {
+  // JSX and line comments only (see the STANDALONE test above for why not nsStrip).
+  const code = (p) => read(p).replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/^\s*\/\/.*$/gm, '');
+  // The conversation, the scan-an-ad sign-up and the journey updates are three lists. Drawn one after another, a QR
+  // scan's greeting sat under every later reply and the chat read upside down (reported 2026-11-01).
+  const orb = code('src/components/mcare/MCareOrb.jsx');
+  expect(orb).toMatch(/\{mergeTimeline\(\[\s*agentMessages\.map\(\(m, i\) => \(\{ kind: 'agent', m, i \}\)\),\s*pilotMessages\.map\(\(m, i\) => \(\{ kind: 'pilot', m, i \}\)\),\s*\[\.\.\.journeyEvents\]\.reverse\(\)\.map\(\(e\) => \(\{ kind: 'journey', e \}\)\),\s*\]/);
+  expect(orb, 'no list may be drawn on its own again').not.toMatch(/\{(agentMessages|pilotMessages)\.map\(\(m, i\) => \(\s*<motion\.div/);
+  expect(orb).not.toMatch(/\{\[\.\.\.journeyEvents\]\.reverse\(\)\.map\(\(e\) => \(\s*<motion\.div/);
+
+  // The backend sends times with no timezone (UTC). new Date() reads those as local time, hours off for anyone outside
+  // UTC, so every place the panel shows, sorts or compares a backend time with the clock goes through serverTimeMs.
+  for (const p of ['src/components/mcare/MCareOrb.jsx', 'src/lib/msafeWelcome.js', 'src/components/mcare-agent/MessageBubble.jsx', 'src/lib/chatTimeline.js']) {
+    const c = code(p);
+    expect(c, `${p} reads a backend time with a bare new Date()`).not.toMatch(/new Date\([^)]*(created_date|updated_date)/);
+    expect(c, `${p} must read times with serverTimeMs`).toMatch(/serverTimeMs\(/);
+  }
+});

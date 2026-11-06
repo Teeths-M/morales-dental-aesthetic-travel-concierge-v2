@@ -7,6 +7,7 @@
  * an alert only when M-Care really sent one (a high or critical JourneyEvent),
  * with its real time, and saved places only when the case has them.
  */
+import { serverTimeMs } from './serverTime.js';
 
 const ALERT_PRIORITIES = new Set(['high', 'critical']);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -19,9 +20,9 @@ export function greetingFor(date = new Date()) {
   return 'Good evening';
 }
 
-/** "just now", "5 minutes ago", "2 hours ago", "3 days ago". '' for a bad date. */
+/** "just now", "5 minutes ago", "2 hours ago", "3 days ago". '' for a bad date. Backend times are read as UTC. */
 export function timeAgo(when, now = new Date()) {
-  const t = new Date(when).getTime();
+  const t = serverTimeMs(when);
   if (Number.isNaN(t)) return '';
   const mins = Math.max(0, Math.round((now.getTime() - t) / 60000));
   if (mins < 1) return 'just now';
@@ -39,10 +40,10 @@ export function pickLatestAlert(events, now = new Date(), maxAgeDays = 7) {
   return events
     .filter((e) => e && ALERT_PRIORITIES.has(e.priority) && typeof e.message_text === 'string' && e.message_text.trim())
     .filter((e) => {
-      const t = new Date(e.created_date).getTime();
+      const t = serverTimeMs(e.created_date);
       return !Number.isNaN(t) && t >= cutoff;
     })
-    .sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime())[0] || null;
+    .sort((a, b) => serverTimeMs(b.created_date) - serverTimeMs(a.created_date))[0] || null;
 }
 
 /** The places saved on the traveler's case, as short labels ("Hotel", "Clinic"). */
