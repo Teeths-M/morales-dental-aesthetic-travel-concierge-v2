@@ -39,7 +39,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
           ai_decision: 'ESCALATED',
           ai_reasoning: `Approval refused — IATA check returned "${iata?.status}". ${reason}`.trim()
         });
-        await base44.entities.AgencyIATAVerification.create({
+        await base44.asServiceRole.entities.AgencyIATAVerification.create({
           agency_id, agency_email: agency.email, agency_name: agency.agency_name,
           iata_code: agency.iata_code,
           iata_is_valid: false,
@@ -80,7 +80,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     };
     await base44.entities.TravelAgency.update(agency_id, update);
 
-    await base44.entities.AgencyIATAVerification.create({
+    await base44.asServiceRole.entities.AgencyIATAVerification.create({
       agency_id, agency_email: agency.email, agency_name: agency.agency_name,
       iata_code: agency.iata_code,
       iata_is_valid: decision === 'approve' ? true : !!iata?.is_valid,

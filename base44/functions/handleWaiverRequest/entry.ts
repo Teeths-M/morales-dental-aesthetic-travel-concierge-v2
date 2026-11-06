@@ -1,5 +1,6 @@
 import { createHandler } from '../../shared/createHandler.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
+import { caseStatusAfterWaiver } from '../../shared/waiverCaseStatus.ts';
 
 function calcAge(dob) {
   if (!dob) return null;
@@ -50,10 +51,13 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         ip_address: ip_address || ''
       });
 
+      // A signature never takes a trip out of a safety hold, and only resumes
+      // a trip that a refusal paused (see waiverCaseStatus.ts).
+      const signedStatus = caseStatusAfterWaiver(caseRecord.status, 'sign');
       await base44.asServiceRole.entities.CaseRecord.update(case_id, {
         waiver_status: 'signed',
         companion_requirement_status: 'companion_declined_with_waiver',
-        status: 'Submitted'
+        ...(signedStatus ? { status: signedStatus } : {}),
       });
 
       await base44.asServiceRole.entities.AuditLog.create({
@@ -96,10 +100,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         waiverId = created.id;
       }
 
-      // STOP coordination — set case status to waiver_refused
+      // Stop coordination: pause the trip, unless it's in a safety hold or
+      // finished, which a waiver never changes (see waiverCaseStatus.ts).
+      const refusedStatus = caseStatusAfterWaiver(caseRecord.status, 'refuse');
       await base44.asServiceRole.entities.CaseRecord.update(case_id, {
         waiver_status: 'refused',
-        status: 'waiver_refused',
+        ...(refusedStatus ? { status: refusedStatus } : {}),
         companion_requirement_status: 'companion_required_pending'
       });
 
@@ -146,9 +152,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         });
       }
 
+      // Reissuing never clears a safety hold; an admin clears that explicitly.
+      const reissuedStatus = caseStatusAfterWaiver(caseRecord.status, 'reissue');
       await base44.asServiceRole.entities.CaseRecord.update(case_id, {
         waiver_status: 'admin_reissued',
-        status: 'Submitted'
+        ...(reissuedStatus ? { status: reissuedStatus } : {}),
       });
 
       await base44.asServiceRole.entities.AuditLog.create({

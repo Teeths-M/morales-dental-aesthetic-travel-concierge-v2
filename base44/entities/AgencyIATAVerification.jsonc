@@ -130,13 +130,21 @@
       ]
     },
     "create": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     },
     "update": {
       "$or": [
-        {
-          "data.agency_email": "{{user.email}}"
-        },
         {
           "user_condition": {
             "role": "admin"

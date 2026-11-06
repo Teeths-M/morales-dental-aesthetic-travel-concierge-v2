@@ -38,8 +38,10 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const expires_at = new Date(now.getTime() + expires_in_hours * 60 * 60 * 1000).toISOString();
     const share_token = await generateShareToken();
 
-    // Create share link
-    const shareLink = await base44.entities.SecureShareLink.create({
+    // Create the share link. Only the server writes these, after the
+    // ownership check above; before, anyone signed in could write a link to
+    // a file they don't own and open it through accessShareLink.
+    const shareLink = await base44.asServiceRole.entities.SecureShareLink.create({
       share_token,
       vault_id,
       passport_token,

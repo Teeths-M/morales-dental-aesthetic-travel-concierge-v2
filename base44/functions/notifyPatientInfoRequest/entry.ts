@@ -22,6 +22,23 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Save the doctor's question on the case's workflow record. The doctor
+    // portal has no sign-in, so its own write of this was always refused, and
+    // it named a stage the record doesn't have. The stage stays as it is.
+    let savedOnWorkflow = false;
+    try {
+      const workflows = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id }, '-created_date', 1);
+      if (workflows?.[0]) {
+        await base44.asServiceRole.entities.WorkflowEvent.update(workflows[0].id, {
+          doctor_notes: String(doctor_question || '').slice(0, 2000),
+          last_update_summary: 'Doctor has requested additional information before confirming.',
+        });
+        savedOnWorkflow = true;
+      }
+    } catch (e) {
+      console.error('[notifyPatientInfoRequest] workflow update failed', e);
+    }
+
     const patientName = escapeHtml(consultation.patient_name || 'Patient');
     const patientEmail = consultation.email;
     const safeQuestion = escapeHtml(doctor_question);
@@ -60,7 +77,7 @@ Deno.serve(createHandler(async ({ req }) => {
           <p style="margin:0;font-weight:700;color:#92400e;margin-bottom:8px">Doctor's Question:</p>
           <p style="margin:0">${safeQuestion}</p>
         </div>
-        <p style="font-size:12px;color:#888">The case stage has been updated to 'info_requested'. Please follow up as needed.</p>
+        <p style="font-size:12px;color:#888">${savedOnWorkflow ? "The question was saved on the case's workflow record." : "The question couldn't be saved on the case's workflow record; please add it there."} Please follow up as needed.</p>
       `,
     });
 

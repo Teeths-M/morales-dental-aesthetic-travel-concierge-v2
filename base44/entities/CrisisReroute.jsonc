@@ -223,15 +223,21 @@
       ]
     },
     "create": {
-      "user_condition": {
-        "authenticated": true
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
     },
     "update": {
       "$or": [
-        {
-          "data.client_email": "{{user.email}}"
-        },
         {
           "user_condition": {
             "role": "admin"

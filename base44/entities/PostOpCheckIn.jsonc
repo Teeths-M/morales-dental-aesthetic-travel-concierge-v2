@@ -85,11 +85,32 @@
         { "data.doctor_email": "{{user.email}}" }
       ]
     },
-    "create": { "user_condition": { "id": "{{user.id}}" } },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
     "update": {
       "$or": [
-        { "data.patient_email": "{{user.email}}" },
-        { "user_condition": { "role": "admin" } }
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
       ]
     },
     "delete": { "user_condition": { "role": "admin" } }

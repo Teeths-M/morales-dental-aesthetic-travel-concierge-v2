@@ -133,16 +133,9 @@ export default function PortalDoctor() {
     if (!infoRequest.trim()) return;
     setSubmitting(true);
     try {
-      // Find the linked WorkflowEvent
-      const workflows = await base44.entities.WorkflowEvent.filter({ consultation_id: caseData?.consultation_id });
-      const workflow = workflows?.[0];
-      if (workflow) {
-        await base44.entities.WorkflowEvent.update(workflow.id, {
-          stage: 'info_requested',
-          doctor_notes: infoRequest,
-          last_update_summary: 'Doctor has requested additional information before confirming.',
-        });
-      }
+      // notifyPatientInfoRequest checks the portal token, saves the question
+      // on the case's workflow record, and emails the patient. This page has
+      // no sign-in, so it can't write the workflow record itself.
       await base44.functions.invoke('notifyPatientInfoRequest', {
         consultation_id: caseData?.consultation_id,
         doctor_question: infoRequest,

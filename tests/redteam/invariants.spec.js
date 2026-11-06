@@ -7424,3 +7424,170 @@ test('AUDIT LOG: every entry links to the previous one the way verifyAuditChain 
   expect(trust).not.toMatch(/\$\{prev\.prev_hash\}\|/);
   expect(trust).not.toMatch(/list\('-created_date'/);
 });
+
+// ---- Record integrity: records only the app's own server writes (check-ins,
+// live locations, waivers, share links, rate limits, verification and
+// concern records, Care Room messages, and more) can no longer be created or
+// changed from someone's browser. Uses this file's existing `test`,
+// `expect`, `read`, `ROOT`, `join`, `readdirSync`, and `existsSync` helpers.
+
+const riStrip = (s) => s
+  .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+  .replace(/^[ \t]*\/\/.*$/gm, '');
+
+// Parse an entity's .jsonc (comments and trailing commas allowed).
+const riEntity = (name) => {
+  const raw = read(`base44/entities/${name}.jsonc`);
+  let out = '';
+  let inStr = false;
+  for (let i = 0; i < raw.length; i += 1) {
+    const c = raw[i];
+    if (inStr) {
+      out += c;
+      if (c === '\\') { out += raw[i + 1]; i += 1; } else if (c === '"') inStr = false;
+    } else if (c === '"') {
+      inStr = true; out += c;
+    } else if (raw.startsWith('//', i)) {
+      const j = raw.indexOf('\n', i); i = j === -1 ? raw.length : j - 1;
+    } else if (raw.startsWith('/*', i)) {
+      const j = raw.indexOf('*/', i); i = j === -1 ? raw.length : j + 1;
+    } else {
+      out += c;
+    }
+  }
+  return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
+};
+
+// True only for a rule that admits nobody but admin / platform_admin.
+const riAdminOnly = (rule) => {
+  if (!rule || typeof rule !== 'object') return false;
+  const clauses = Object.keys(rule).length === 1 && rule.$or ? rule.$or : [rule];
+  return clauses.length > 0 && clauses.every((c) => c && Object.keys(c).length === 1
+    && c.user_condition && Object.keys(c.user_condition).length === 1
+    && ['admin', 'platform_admin'].includes(c.user_condition.role));
+};
+
+const RI_SERVER_ONLY = [
+  'SecureShareLink', 'UserPushSubscription', 'RateLimitBucket', 'LiveLocation', 'ProviderConcernReport',
+  'DoctorVerification', 'WaiverRequest', 'McareKnowledge', 'VerifiedCredential', 'CrisisReroute',
+  'QuoteMessage', 'WorkflowEvent', 'SoloCheckIn', 'RecoverySession', 'RecoveryLog', 'PostOpCheckIn',
+  'DigitalHandshake', 'SafeTProfile', 'ExternalJourney', 'PriceQuote', 'PriceEstimate', 'TravelAddOn',
+  'WaitingList', 'ReputationSurvey', 'SpaceIntelBriefing', 'WalkieTalkieSession', 'PauseEvent',
+  'PerformanceMetric', 'EmailQueue', 'DoctorNomination', 'AgencyIATAVerification', 'DoctorCredentialDocument',
+  'ManualVerificationQueue', 'Case', 'ComplianceChecklist', 'LinguisticProfile', 'DietaryProfile',
+  'MealDelivery', 'MothersTouchAssignment', 'MedicalTravelGroup',
+];
+
+// Admin screens that edit some of these records directly. The admin rule
+// lets them through.
+const RI_ADMIN_SCREENS = {
+  SoloCheckIn: ['src/pages/AdminSoloMonitor.jsx'],
+  McareKnowledge: ['src/pages/AdminMcareKnowledge.jsx'],
+  ManualVerificationQueue: ['src/pages/DoctorVerificationAdmin.jsx'],
+  WorkflowEvent: ['src/components/admin/CaseDetailDrawer.jsx'],
+  // The companion receipt panel tries this write, but companions can't read
+  // the record, so the write is never reached.
+  MothersTouchAssignment: ['src/pages/CompanionDashboard.jsx'],
+};
+
+function riFiles(dir, exts, out = []) {
+  for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+    const rel = `${dir}/${e.name}`;
+    if (e.isDirectory()) {
+      if (e.name !== 'node_modules' && e.name !== '_shared') riFiles(rel, exts, out);
+    } else if (exts.some((x) => e.name.endsWith(x))) out.push(rel);
+  }
+  return out;
+}
+
+const riWrite = (name) => new RegExp(
+  `(asServiceRole\\s*\\.\\s*)?entities(?:\\.|\\[['"])${name}(?:['"]\\])?\\s*\\??\\.\\s*(create|bulkCreate|update)\\s*\\(`, 'g');
+
+test('RECORD INTEGRITY: records only the server writes are created and changed only by admins or the server', () => {
+  for (const name of RI_SERVER_ONLY) {
+    const rls = riEntity(name).rls || {};
+    expect(riAdminOnly(rls.create), `${name}: create must be admin-only`).toBe(true);
+    expect(riAdminOnly(rls.update), `${name}: update must be admin-only`).toBe(true);
+  }
+});
+
+test('RECORD INTEGRITY: no browser code or user-session backend code writes those records', () => {
+  const offenders = [];
+  for (const file of riFiles('src', ['.js', '.jsx', '.ts', '.tsx'])) {
+    const text = riStrip(read(file));
+    for (const name of RI_SERVER_ONLY) {
+      if ((RI_ADMIN_SCREENS[name] || []).includes(file)) continue;
+      for (const m of text.matchAll(riWrite(name))) offenders.push(`${file}: ${name}.${m[2]}`);
+    }
+  }
+  for (const file of [...riFiles('base44/functions', ['.ts']), ...riFiles('base44/shared', ['.ts'])]) {
+    const text = riStrip(read(file));
+    for (const name of RI_SERVER_ONLY) {
+      for (const m of text.matchAll(riWrite(name))) {
+        // A client named for the service role (const sr = base44.asServiceRole)
+        // still counts as the server.
+        const before = text.slice(Math.max(0, m.index - 24), m.index);
+        if (m[1] || /\b(sr|svc|db|admin|service)\s*\.\s*$/.test(before)) continue;
+        offenders.push(`${file}: ${name}.${m[2]} with the caller's own session`);
+      }
+    }
+  }
+  expect(offenders, 'these writes would be refused once the records are server-only').toEqual([]);
+});
+
+test('RECORD INTEGRITY: share links are made only by the server, after the ownership check', () => {
+  const src = riStrip(read('base44/functions/createSecureShareLink/entry.ts'));
+  const owner = src.indexOf('PassportVault.filter({ passport_token, user_email: user.email })');
+  const create = src.indexOf('asServiceRole.entities.SecureShareLink.create(');
+  expect(owner, 'the ownership check must stay').toBeGreaterThan(-1);
+  expect(create, 'the link is created by the server').toBeGreaterThan(owner);
+  const access = riStrip(read('base44/functions/accessShareLink/entry.ts'));
+  expect(access, 'only active links open').toContain('is_active: true');
+});
+
+test('RECORD INTEGRITY: a push subscription is saved only under the signed-in user\'s own account', () => {
+  const fn = riStrip(read('base44/functions/registerPushSubscription/entry.ts'));
+  expect(fn).toContain('requireAuth: true');
+  const schema = fn.slice(fn.indexOf('strictObject({'), fn.indexOf('});', fn.indexOf('strictObject({')));
+  expect(schema, 'the request must not name whose subscription it is').not.toMatch(/user_id|user_email|email/);
+  expect(fn).toContain('user_id: user.id');
+  expect(fn).toContain('user_email: user.email');
+  const hook = riStrip(read('src/hooks/usePushNotifications.js'));
+  expect(hook).toContain("invoke('registerPushSubscription'");
+  expect(hook).not.toMatch(/entities\.UserPushSubscription/);
+});
+
+test('RECORD INTEGRITY: a waiver can never take a trip out of a safety hold', () => {
+  const rule = riStrip(read('base44/shared/waiverCaseStatus.ts'));
+  expect(rule, 'a held or finished trip never moves').toMatch(/current === HOLD_STATE \|\| isTerminal\(current\)\) return null/);
+  const src = riStrip(read('base44/functions/handleWaiverRequest/entry.ts'));
+  // Every status the waiver actions write comes from the rule, never a literal.
+  for (const m of src.matchAll(/CaseRecord\.update\(case_id,\s*\{([\s\S]*?)\}\);/g)) {
+    expect(m[1], 'a waiver must not write a trip status directly').not.toMatch(/\bstatus:\s*['"]/);
+  }
+  for (const action of ['sign', 'refuse', 'reissue']) {
+    expect(src).toContain(`caseStatusAfterWaiver(caseRecord.status, '${action}')`);
+  }
+});
+
+test('RECORD INTEGRITY: M-Care\'s agent only reads these records', () => {
+  const agent = JSON.parse(read('base44/agents/m_care.jsonc'));
+  const grants = Object.fromEntries(agent.tool_configs.filter((t) => t.entity_name).map((t) => [t.entity_name, t.allowed_operations]));
+  for (const name of RI_SERVER_ONLY) {
+    if (grants[name]) expect(grants[name], `M-Care must not write ${name}`).toEqual(['read']);
+  }
+  expect(agent.instructions, 'the platform posts the Care Room handoff, not the agent')
+    .not.toContain('You post the handoff system message');
+});
+
+test('RECORD INTEGRITY: the doctor portal\'s question is saved by the server, after the portal token check', () => {
+  const page = riStrip(read('src/pages/PortalDoctor.jsx'));
+  expect(page, 'the no-login portal must not write the workflow record').not.toMatch(/entities\.WorkflowEvent/);
+  const fn = riStrip(read('base44/functions/notifyPatientInfoRequest/entry.ts'));
+  const check = fn.indexOf('linkedCase.doctor_portal_token !== doctor_portal_token');
+  const write = fn.indexOf('WorkflowEvent.update(');
+  expect(check).toBeGreaterThan(-1);
+  expect(write, 'the workflow is updated only after the token check').toBeGreaterThan(check);
+  const update = fn.slice(write, fn.indexOf('});', write));
+  expect(update, 'the stage stays where it is').not.toMatch(/\bstage\s*:/);
+});

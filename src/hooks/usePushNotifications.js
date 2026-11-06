@@ -40,22 +40,12 @@ export function usePushNotifications(user) {
           applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
         });
 
-        // Limit the DB filter to 1 — we only need to know if a record exists
-        const existing = await base44.entities.UserPushSubscription.filter({ user_id: user.id }, '-created_date', 1);
-        if (existing && existing.length > 0) {
-          await base44.entities.UserPushSubscription.update(existing[0].id, {
-            subscription: JSON.stringify(sub),
-            user_email: user.email,
-            user_agent: navigator.userAgent,
-          });
-        } else {
-          await base44.entities.UserPushSubscription.create({
-            user_id: user.id,
-            user_email: user.email,
-            subscription: JSON.stringify(sub),
-            user_agent: navigator.userAgent,
-          });
-        }
+        // The server saves it under the signed-in account; the browser can't
+        // write push subscriptions itself.
+        await base44.functions.invoke('registerPushSubscription', {
+          subscription: JSON.stringify(sub),
+          user_agent: navigator.userAgent.slice(0, 512),
+        });
       } catch (err) {
         console.warn('Push registration failed:', err);
       }

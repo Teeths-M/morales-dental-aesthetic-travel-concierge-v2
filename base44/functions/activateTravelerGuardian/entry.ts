@@ -143,14 +143,10 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         // will be re-scheduled when the date is set. Mark status pending.
         record.scheduled_time = addDays(now, 365).toISOString();
       }
-      try {
-        const created_rec = await base44.entities.SoloCheckIn.create(record);
-        created.push({ milestone_type: p.type, label: MILESTONE_LABELS[p.type], scheduled_time: record.scheduled_time, id: created_rec.id, note: p.note });
-      } catch (_) {
-        // If user-scope create fails (e.g. partner/admin caller), fall back to service role.
-        const created_rec = await base44.asServiceRole.entities.SoloCheckIn.create(record);
-        created.push({ milestone_type: p.type, label: MILESTONE_LABELS[p.type], scheduled_time: record.scheduled_time, id: created_rec.id, note: p.note });
-      }
+      // Check-ins are written only by the server; the caller's access to this
+      // case was checked above.
+      const created_rec = await base44.asServiceRole.entities.SoloCheckIn.create(record);
+      created.push({ milestone_type: p.type, label: MILESTONE_LABELS[p.type], scheduled_time: record.scheduled_time, id: created_rec.id, note: p.note });
     }
 
     // Audit log the activation.
