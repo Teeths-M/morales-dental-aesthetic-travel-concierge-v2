@@ -324,6 +324,9 @@ export const PUBLIC_BYPASS_PATHS = [
   '/offline', '/offline-guide', '/emergency-manifest', '/emergency-access',
   '/emergency', '/guardian', '/survey', '/feedback', '/luggage',
   '/check-in', '/vault/share', '/passport-vault', '/share-location',
+  // M-Safe+ is a public launcher screen (a QR scan has no account): it must
+  // paint immediately instead of waiting on, or being gated by, the auth check.
+  '/m-care',
   // Responder dispatch offers — reached from an SMS by a partner agency with no
   // account. The offer token is the credential, so the page must render without
   // waiting on (or being redirected by) the auth gate.

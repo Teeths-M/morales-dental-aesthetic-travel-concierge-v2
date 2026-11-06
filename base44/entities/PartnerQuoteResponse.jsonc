@@ -1,0 +1,121 @@
+{
+  "name": "PartnerQuoteResponse",
+  "type": "object",
+  "description": "The partner's own answer to one PartnerQuoteRequest, kept as a separate row rather than a status field because a partner may answer more than once \u2014 'I need the hotel name first', then a price \u2014 and the traveller should see the sequence, not only the last state. A quoted response freezes its own terms (amount, currency, validity, inclusions, exclusions, conditions) at the moment it was given, so a later rate-card edit cannot rewrite a quote that was already shown. response_type 'quoted' is the only shape that carries a price; 'acknowledged', 'info_needed' and 'declined' never do, which is what stops 'acknowledged' from ever being read as a price. Nothing here is written by the traveller \u2014 accepting or declining happens on the request row.",
+  "properties": {
+    "request_id": {
+      "type": "string"
+    },
+    "rate_card_id": {
+      "type": "string"
+    },
+    "partner_id": {
+      "type": "string"
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "traveler_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "response_type": {
+      "type": "string",
+      "enum": [
+        "acknowledged",
+        "info_needed",
+        "declined",
+        "quoted"
+      ]
+    },
+    "amount_minor": {
+      "type": "integer",
+      "description": "Only present on a 'quoted' response. Integer minor units, never a float."
+    },
+    "currency": {
+      "type": "string"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date"
+    },
+    "inclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditions": {
+      "type": "string"
+    },
+    "info_requested": {
+      "type": "string",
+      "description": "What the partner still needs, when response_type is 'info_needed'."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_final": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the partner has given a firm price or declined; further answers remain possible but are additive."
+    }
+  },
+  "required": [
+    "request_id",
+    "partner_email",
+    "response_type",
+    "created_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.partner_email": "{{user.email}}"
+        },
+        {
+          "data.traveler_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

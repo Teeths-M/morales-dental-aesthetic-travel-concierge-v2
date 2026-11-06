@@ -11,6 +11,7 @@ import { ADMIN_ROLES } from '@/lib/roles';
 
 const SimpleAdminDashboard      = lazy(() => import('@/pages/SimpleAdminDashboard'));
 const AdminPartners             = lazy(() => import('@/pages/AdminPartners'));
+const AdminPartnerPricing       = lazy(() => import('@/pages/AdminPartnerPricing'));
 const AdminImports              = lazy(() => import('@/pages/AdminImports'));
 const DoctorLicenseVerification = lazy(() => import('@/pages/DoctorLicenseVerification'));
 const DoctorVerificationAdmin   = lazy(() => import('@/pages/DoctorVerificationAdmin'));
@@ -65,6 +66,7 @@ export const adminRoutes = (
   <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
       <Route path="/admin"                           element={<ErrorBoundary><SimpleAdminDashboard /></ErrorBoundary>} />
       <Route path="/admin/partners"                  element={<ErrorBoundary><AdminPartners /></ErrorBoundary>} />
+      <Route path="/admin/partner-pricing"           element={<ErrorBoundary><AdminPartnerPricing /></ErrorBoundary>} />
       <Route path="/admin/imports"                   element={<ErrorBoundary><AdminImports /></ErrorBoundary>} />
       <Route path="/admin/doctor-verification"       element={<ErrorBoundary><DoctorLicenseVerification /></ErrorBoundary>} />
       <Route path="/admin/doctor-verification-queue" element={<ErrorBoundary><DoctorVerificationAdmin /></ErrorBoundary>} />

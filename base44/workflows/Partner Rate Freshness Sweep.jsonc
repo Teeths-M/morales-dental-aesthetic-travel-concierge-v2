@@ -1,0 +1,41 @@
+{
+  "name": "Partner Rate Freshness Sweep",
+  "description": "Every 6 hours: re-derives each active partner rate card's price freshness (a confirmed price whose review deadline passed becomes STALE, a passed validity date becomes EXPIRED) and queues at most one reconfirmation reminder per card per review cycle. The reminder row is written before any send, so a retried or overlapping run cannot ask the same partner the same question twice. Reminders respect the partner's own timezone and quiet hours, and the run is bounded.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 */6 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "partner_rate_freshness_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sweepPartnerRateFreshness",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "name": "PartnerRateCard",
+  "type": "object",
+  "description": "The current commercial offer for one PartnerService \u2014 the record M-Care actually prices a journey from. Money is stored as integer MINOR UNITS (cents) with an ISO currency, never as a float, so no total is ever the product of binary rounding. pricing_status and availability_status are deliberately independent dimensions: a partner can have a current price for a service that is unavailable today, and a verified partner can have a stale price. Neither may be inferred from the other, and neither says anything about credential verification. 'PARTNER_SUBMITTED' means the partner entered a price; only 'CURRENT_PARTNER_CONFIRMED' means they re-affirmed it inside its validity window. STALE and EXPIRED are written by the deterministic freshness sweep, never by a client. This row always holds the CURRENT terms: every material change first snapshots the previous row into an immutable RateCardVersion, so a quote that named v3 can never be read against v4 contents.",
+  "properties": {
+    "service_id": {
+      "type": "string"
+    },
+    "partner_id": {
+      "type": "string"
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "security_agency",
+        "doctor",
+        "hotel",
+        "tour_guide",
+        "clinic"
+      ]
+    },
+    "partner_display_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "service_name": {
+      "type": "string",
+      "description": "Denormalised from the service so a search result and a contract both read correctly without a join."
+    },
+    "is_package": {
+      "type": "boolean",
+      "default": false
+    },
+    "country": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "location_label": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string",
+      "description": "Valid ISO-4217 code, uppercased and validated server-side."
+    },
+    "amount_minor": {
+      "type": "integer",
+      "description": "Base price in minor units of currency. Null is a real answer: 'no price set' \u2014 never zero."
+    },
+    "pricing_unit": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "per_person",
+        "per_night",
+        "per_trip",
+        "per_hour",
+        "per_day",
+        "per_vehicle",
+        "per_package",
+        "starting_from",
+        "quote_required"
+      ]
+    },
+    "price_kind": {
+      "type": "string",
+      "enum": [
+        "firm",
+        "starting_from",
+        "quote_required"
+      ],
+      "description": "'starting_from' is explicitly not a total. 'quote_required' means no number may be shown as a price at all."
+    },
+    "inclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "taxes_and_fees_minor": {
+      "type": "integer"
+    },
+    "taxes_note": {
+      "type": "string"
+    },
+    "additional_charges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "amount_minor": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "min_booking": {
+      "type": "number"
+    },
+    "max_capacity": {
+      "type": "number"
+    },
+    "availability_status": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "available",
+        "limited",
+        "unavailable",
+        "requires_confirmation"
+      ],
+      "default": "unknown"
+    },
+    "pricing_status": {
+      "type": "string",
+      "enum": [
+        "PARTNER_SUBMITTED",
+        "CURRENT_PARTNER_CONFIRMED",
+        "STALE",
+        "EXPIRED",
+        "QUOTE_REQUESTED",
+        "QUOTE_CONFIRMED",
+        "WITHDRAWN"
+      ],
+      "default": "PARTNER_SUBMITTED"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "withdrawn"
+      ],
+      "default": "active",
+      "description": "Offer lifecycle, separate again from price freshness and availability."
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_confirmed_by": {
+      "type": "string"
+    },
+    "next_review_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the partner's own review interval elapses. Past this, the sweep marks the offer STALE \u2014 a current label never survives its own deadline."
+    },
+    "review_interval_days": {
+      "type": "number",
+      "default": 30
+    },
+    "reminder_cadence": {
+      "type": "string",
+      "enum": [
+        "none",
+        "daily",
+        "weekly",
+        "custom"
+      ],
+      "default": "weekly"
+    },
+    "reminder_interval_days": {
+      "type": "number"
+    },
+    "quiet_hours_start": {
+      "type": "string",
+      "description": "HH:MM in the partner's own timezone."
+    },
+    "quiet_hours_end": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string",
+      "description": "IANA zone used for reminder timing, never the server's clock."
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Incremented on every material change; each prior state is retained in RateCardVersion."
+    },
+    "conditions": {
+      "type": "string"
+    },
+    "cancellation_terms": {
+      "type": "string"
+    },
+    "medical_disclaimer_applies": {
+      "type": "boolean",
+      "default": false
+    },
+    "missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "last_updated_by": {
+      "type": "string"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "service_id",
+    "partner_id",
+    "partner_email",
+    "currency",
+    "pricing_unit",
+    "pricing_status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.partner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

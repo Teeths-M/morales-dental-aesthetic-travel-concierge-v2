@@ -523,6 +523,22 @@
     {
       "function_name": "getEvidenceWatchFeed",
       "description": "Returns human-reviewed, admin-approved Medical Evidence Watch findings (new treatments, trials, device approvals, recalls, safety alerts) relevant to medical travel -- real title, evidence stage, plain-language summary, and sources for each. Read-only, no filters. Use per RULE 40: only mention a genuine match to what is being discussed, never invent detail beyond what this returns, and never claim more certainty than the item's own confidence label."
+    },
+    {
+      "function_name": "searchPartnerOffers",
+      "description": "Read-only search of the approved Morales partner catalogue (flights, packages, lodging, transfers, drivers, companions, tours, security, clinic prices) before any external discovery. Pass category, country, city, query or include_non_current. Every result returns THREE SEPARATE facts you must never merge: pricing_status (CURRENT_PARTNER_CONFIRMED = the partner reconfirmed this price inside its validity window; PARTNER_SUBMITTED = they entered it but have not reconfirmed; STALE = its review deadline passed; EXPIRED = no longer valid at any price), availability_status, and partner_verification. A confirmed price never implies availability, and verified credentials never imply a current price. A starts-from price (price_kind 'starting_from') is NOT a total. If a component is 'unpriced' it has no price -- never treat it as free. When results are STALE or PARTNER_SUBMITTED, say so and offer to request a fresh quote rather than presenting the number as current. Never invent an offer, a price, or a partner this tool did not return."
+    },
+    {
+      "entity_name": "PartnerService",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "PartnerRateCard",
+      "allowed_operations": [
+        "read"
+      ]
     }
   ],
   "context_files": [],

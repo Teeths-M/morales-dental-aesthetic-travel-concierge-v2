@@ -24,6 +24,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import AppLayout from '@/components/layout/AppLayout';
 
 const Home          = lazy(() => import('@/pages/Home'));
+const HomeEntry     = lazy(() => import('@/pages/HomeEntry'));
 const Discover      = lazy(() => import('@/pages/Discover'));
 const Providers     = lazy(() => import('@/pages/Providers'));
 const ProviderDetail = lazy(() => import('@/pages/ProviderDetail'));
@@ -81,7 +82,9 @@ const MReconDemo               = lazy(() => import('@/pages/MReconDemo'));
 const McareIntroDemo           = lazy(() => import('@/pages/McareIntroDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const Pilot                    = lazy(() => import('@/pages/Pilot'));
+const MCareCompanion           = lazy(() => import('@/pages/MCareCompanion'));
 const MCareApp                 = lazy(() => import('@/pages/MCareApp'));
+const JourneyEstimate          = lazy(() => import('@/pages/JourneyEstimate'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
 // Minor reunification — token-gated, no login. Both pages are inert until the
 // module's feature flag is switched on.
@@ -90,7 +93,9 @@ const MinorHelp                = lazy(() => import('@/pages/MinorHelp'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-    <Route path="/"               element={<ErrorBoundary><Home /></ErrorBoundary>} />
+    {/* Website home page; the installed mobile app opens on the M-Care companion instead. */}
+    <Route path="/"               element={<ErrorBoundary><HomeEntry /></ErrorBoundary>} />
+    <Route path="/welcome"        element={<ErrorBoundary><Home /></ErrorBoundary>} />
     <Route path="/discover"       element={<ErrorBoundary><Discover /></ErrorBoundary>} />
     <Route path="/providers"      element={<ErrorBoundary><Providers /></ErrorBoundary>} />
     <Route path="/providers/:id"  element={<ErrorBoundary><ProviderDetail /></ErrorBoundary>} />
@@ -107,6 +112,8 @@ export const publicRoutes = (
     <Route path="/intake"         element={<ErrorBoundary><ConciergeIntake /></ErrorBoundary>} />
     <Route path="/travel-intake"  element={<ErrorBoundary><TravelIntake /></ErrorBoundary>} />
     <Route path="/protect"        element={<ErrorBoundary><BringYourOwnJourney /></ErrorBoundary>} />
+    {/* Itemized journey estimate — every line carries what is actually known. */}
+    <Route path="/journey-estimate" element={<ErrorBoundary><JourneyEstimate /></ErrorBoundary>} />
     <Route path="/login"          element={<ErrorBoundary><Login /></ErrorBoundary>} />
     <Route path="/consultation"   element={<ConsultationRedirect />} />
     <Route path="/consultation-success" element={<ErrorBoundary><ConsultationSuccess /></ErrorBoundary>} />
@@ -114,9 +121,16 @@ export const publicRoutes = (
     {/* Pilot waiting list — the destination of every "Join the pilot" on the
         landing page. Public, one field, writes through joinPilot. */}
     <Route path="/pilot"          element={<ErrorBoundary><Pilot /></ErrorBoundary>} />
-    {/* M-Care's own full-screen app: the M-Care chat as the whole page, nothing of the website behind it. Public
-        like the floating M-Care (a QR scan has no account); a signed-in visitor gets their own conversation. */}
-    <Route path="/m-care"         element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
+    {/* The standalone M-Care app (mobile): the golden-ring companion as the whole page, nothing of the website
+        behind it. Public like the floating M-Care (a QR scan has no account). */}
+    <Route path="/m-care"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
+    <Route path="/m-safe"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
+    {/* The golden-ring companion, kept at its own address so the earlier screen
+        is still reachable rather than silently replaced. */}
+    <Route path="/m-care/companion" element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
+    {/* The live companion itself — the full M-Care app on the same agent, conversation, voice,
+        history and safety flows. /m-care opens it from its voice, type and history controls. */}
+    <Route path="/m-care/live"    element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
     <Route path="/deep-perfection" element={<ErrorBoundary><DeepPerfection /></ErrorBoundary>} />
     <Route path="/onboarding"     element={<ErrorBoundary><OnboardingEducation /></ErrorBoundary>} />
     <Route path="/travel-concierge" element={<ErrorBoundary><TravelConcierge /></ErrorBoundary>} />
