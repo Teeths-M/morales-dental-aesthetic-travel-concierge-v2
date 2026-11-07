@@ -85,6 +85,7 @@ import { buildLocationContextBlock, buildSandboxLocationMessage, buildGpsFallbac
 import { detectLocationConsentIntent } from '@/lib/locationConsentIntent';
 import { detectExactMapViewIntent } from '@/lib/exactMapViewIntent';
 import { findLastMapOrQrToken } from '@/lib/offlinePrep';
+import { buildFirstOpenGreeting, pickGreetingIndex, readLastGreetingIndex, rememberGreetingIndex, hasChattedOnThisDevice, rememberHasChatted } from '@/lib/firstOpenGreeting';
 import { describeAccuracy } from '@/lib/mapLinks';
 import { isSandboxed } from '@/lib/isSandboxed';
 import { auditService } from '@/lib/services/auditService';
@@ -113,6 +114,8 @@ import { mergeTimeline } from '@/lib/chatTimeline';
 import { serverTimeMs } from '@/lib/serverTime';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
+// How long after the first-open greeting is chosen its country sentence may still be added (see firstOpenGreeting).
+const FIRST_OPEN_COUNTRY_WAIT_MS = 2500;
 // North-star redesign (2026-11-01): the mockup's line under the LIVE pill.
 const TAGLINE = 'Safe travels, always.';
 // Two-column panel from this width up; the stacked full-screen layout below it.
@@ -167,7 +170,7 @@ const TIPS_KEYS = {
 export default function MCareOrb({ standalone = false } = {}) {
   const { t, i18n }       = useTranslation();
   const { toast }         = useToast();
-  const { user }          = useAuth();
+  const { user, authChecked } = useAuth();
   const { prefs, update: updatePrefs } = useMcarePreferences();
 
   // The one-time "Hey M-Care" offer (wakePhraseOffer.js, WakePhraseOfferCard.jsx), shown under the greeting while
@@ -727,6 +730,52 @@ export default function MCareOrb({ standalone = false } = {}) {
   useEffect(() => { agentMessagesRef.current = agentMessages; }, [agentMessages]);
   useEffect(() => { responseLanguageRef.current = responseLanguage; }, [responseLanguage]);
   useEffect(() => { agentSendingRef.current = agentSending; }, [agentSending]);
+
+  // First-open greeting (Jarvis vision piece 34, backlog thread 18). A
+  // signed-out visitor who hasn't sent a message from this device yet gets
+  // one of six warm opening lines instead of the standard one, never the
+  // same line twice in a row, plus the country their IP address points to
+  // when it's known (src/lib/firstOpenGreeting.js). It's decided once per
+  // open, before the panel paints. It waits for the sign-in check, so a
+  // signed-in traveler never sees "first time here" while that loads; when
+  // the panel opens before the check finishes (a link that opens M-Care on
+  // page load), it's decided the moment the check does. The country is left
+  // out if location is paused or Private Mode is on.
+  const [firstOpenGreeting, setFirstOpenGreeting] = useState(null);
+  const firstOpenDecidedRef = useRef(false);
+  React.useLayoutEffect(() => {
+    if (!open) {
+      firstOpenDecidedRef.current = false;
+      setFirstOpenGreeting(null);
+      return;
+    }
+    if (firstOpenDecidedRef.current || !authChecked) return;
+    firstOpenDecidedRef.current = true;
+    if (user || hasChattedOnThisDevice()) return;
+    const index = pickGreetingIndex(readLastGreetingIndex());
+    rememberGreetingIndex(index);
+    const country = (!locationPrefs.locationPaused && !privateMode) ? (ipLocation?.country ?? null) : null;
+    setFirstOpenGreeting({ index, country, decidedAt: Date.now() });
+  }, [open, authChecked]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The full-screen M-Care (where every QR scan lands) usually decides the
+  // greeting before the IP lookup comes back. If the country arrives within
+  // FIRST_OPEN_COUNTRY_WAIT_MS of that, it's added once; later than that it's
+  // left out, so the line never changes while someone is reading it.
+  useEffect(() => {
+    if (!firstOpenGreeting || firstOpenGreeting.country) return;
+    if (locationPrefs.locationPaused || privateMode) return;
+    const country = ipLocation?.country;
+    if (!country || Date.now() - firstOpenGreeting.decidedAt > FIRST_OPEN_COUNTRY_WAIT_MS) return;
+    setFirstOpenGreeting((g) => (g && !g.country ? { ...g, country } : g));
+  }, [ipLocation?.country]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hasChattedRef = useRef(false);
+  useEffect(() => {
+    if (hasChattedRef.current) return;
+    if (agentMessages.some(m => m?.role === 'user')) {
+      hasChattedRef.current = true;
+      rememberHasChatted();
+    }
+  }, [agentMessages]);
 
   // Hydrate persisted preferences once per session so a returning user keeps
   // their Talk Mode, Private Mode, and language choices.
@@ -2711,12 +2760,17 @@ export default function MCareOrb({ standalone = false } = {}) {
   const tripLabel = tripCountryCode ? countryLabel(tripCountryCode, activeCaseRecord?.procedure_country || '') : (activeCaseRecord?.procedure_country || '');
   const unseenJourneyEvents = journeyEvents.filter(e => serverTimeMs(e.created_date) > lastSeenJourneyEventsAt);
   const unseenJourneyCount = unseenJourneyEvents.length;
-  const welcome = welcomeCopy({
+  const welcomeBase = welcomeCopy({
     atDestination, hasTrip, tripLabel,
     countryName: visitorCountryName,
     flag: deviceShowsFlagEmoji() ? flagEmoji(visitorCountryCode) : '',
     firstName: user?.full_name?.trim()?.split(/\s+/)[0] || '',
   });
+  // A brand-new signed-out visitor gets one of the six first-open lines as the welcome card's text (see the
+  // first-open greeting above). The card names its speaker "M-Care", so the line does too.
+  const welcome = (!user && !hasTrip && firstOpenGreeting)
+    ? { ...welcomeBase, body: buildFirstOpenGreeting({ ...firstOpenGreeting, name: 'M-Care' }) }
+    : welcomeBase;
   const latestAlertEvent = pickLatestAlert(journeyEvents);
   const welcomeAlert = latestAlertEvent ? { text: latestAlertEvent.message_text, ago: timeAgo(latestAlertEvent.created_date) } : null;
   const welcomePlaces = savedPlacesFrom(activeCaseRecord);
@@ -3175,7 +3229,10 @@ export default function MCareOrb({ standalone = false } = {}) {
                 <p style={{ margin: 0, fontSize: TYPE.body, color: useDarkTheme ? TEXT_LIGHT : LIGHT_TEXT, lineHeight: 1.55, background: useDarkTheme ? CARD_BG : LIGHT_CARD, border: `1px solid ${useDarkTheme ? BORDER_DARK : LIGHT_BORDER}`, borderRadius: RADIUS.bubble, padding: '12px 16px', maxWidth: '85%', boxShadow: useDarkTheme ? 'none' : '0 2px 8px rgba(15,23,42,0.05)' }}>
                   {(() => {
                     const firstName = user?.full_name?.trim()?.split(/\s+/)[0];
-                    return firstName ? `Welcome back, ${firstName}. ${GREETING}` : GREETING;
+                    if (firstName) return `Welcome back, ${firstName}. ${GREETING}`;
+                  // 'M-Safe' is the name this panel shows (see GREETING above).
+                  if (!user && firstOpenGreeting) return buildFirstOpenGreeting({ ...firstOpenGreeting, name: 'M-Safe' });
+                  return GREETING;
                   })()}
                 </p>
               </div>

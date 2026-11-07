@@ -863,7 +863,7 @@
     // ── Receipt Storage ───────────────────────────────────────────────────────
     "receipt_vault_id": {
       "type": "string",
-      "description": "PassportVault record ID where the payment receipt is stored"
+      "description": "ID of the most recent payment receipt: a PaymentReceipt record. Receipts issued before PaymentReceipt existed point at a PassportVault record instead."
     },
     "receipt_html": {
       "type": "string",

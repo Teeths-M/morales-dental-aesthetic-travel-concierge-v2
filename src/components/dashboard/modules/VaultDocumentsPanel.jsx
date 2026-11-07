@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 import MedicationsPanel from './MedicationsPanel';
+import PaymentReceiptsCard from '@/components/dashboard/PaymentReceiptsCard';
 
 // Replaces the old DocumentsModule mockup (a hardcoded requiredDocs array
 // wired to nothing real). Reads live VaultDocument rows created by the
@@ -58,6 +59,7 @@ export default function VaultDocumentsPanel() {
 
   return (
     <div className="space-y-6">
+      <PaymentReceiptsCard />
       <MedicationsPanel />
 
       <div className="flex items-center justify-between">

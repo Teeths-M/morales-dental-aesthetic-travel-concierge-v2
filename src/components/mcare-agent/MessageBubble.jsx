@@ -17,6 +17,7 @@ import { serverTimeMs } from '@/lib/serverTime';
 import { base44 } from '@/api/base44Client';
 import { useTranslation } from '@/i18n';
 import { searchProcedures } from '@/components/procedures/ProcedureData';
+import { flattenMarkdownTables } from '@/lib/markdownTables';
 
 const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 
@@ -220,10 +221,11 @@ const extractMapUrls = (text) => {
   return found;
 };
 
-// Strip markdown emphasis markers so chat reads as clean plain text.
+// Strip markdown emphasis markers so chat reads as clean plain text. Tables
+// become one readable line per row first (see src/lib/markdownTables.js).
 const stripMd = (s) => {
   if (!s) return s;
-  return s
+  return flattenMarkdownTables(s)
     .replace(/```([\s\S]*?)```/g, (_, c) => c.replace(/^\n/, ''))
     .replace(/`([^`\n]+)`/g, '$1')
     .replace(/^\s*([-*_])\1{2,}\s*$/gm, '')   // horizontal rules
@@ -954,7 +956,7 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
                   </a>
                 </div>
               )}
-              {!isUser && text && typeof revealUpTo !== 'number' && !hasAudioAttachment && <SpeakButton text={text} language={i18n.language} />}
+              {!isUser && text && typeof revealUpTo !== 'number' && !hasAudioAttachment && <SpeakButton text={stripMd(text)} language={i18n.language} />}
               {mapUrls.length > 0 && !maps && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {mapUrls.map((u, i) => {

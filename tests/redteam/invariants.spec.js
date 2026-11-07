@@ -8073,3 +8073,114 @@ test('PHONE LOCK: the covert SOS texts the family on the real field, and no real
   const banner = read('src/components/solo/SoloCheckInBanner.jsx');
   expect(banner).toMatch(/\{import\.meta\.env\.DEV && \(locStatus === 'none' \|\| locStatus === 'ip_geo'\) && \(/);
 });
+
+// ---- Chat tables: markdown tables in M-Care replies are shown and spoken as
+// readable lines, never as raw pipes. Uses this file's existing `test`,
+// `expect`, and `read` helpers.
+
+test('CHAT TABLES: the chat bubble, Talk Mode, and the Listen button all flatten markdown tables first', () => {
+  const bubble = read('src/components/mcare-agent/MessageBubble.jsx');
+  const start = bubble.indexOf('const stripMd = (s) => {');
+  expect(start, 'stripMd must exist').toBeGreaterThan(-1);
+  expect(bubble.slice(start, start + 200), 'stripMd must flatten tables before its other clean-up')
+    .toMatch(/return flattenMarkdownTables\(s\)/);
+  expect(bubble, 'the Listen button must get the cleaned text, not raw markdown')
+    .toMatch(/<SpeakButton text=\{stripMd\(text\)\}/);
+
+  const talk = read('src/lib/talkMode.js');
+  const fn = talk.indexOf('export function extractSpeakableText');
+  expect(fn, 'extractSpeakableText must exist').toBeGreaterThan(-1);
+  expect(talk.slice(fn, fn + 500), 'Talk Mode must flatten tables before speaking')
+    .toMatch(/let out = flattenMarkdownTables\(raw\)/);
+});
+
+// ---- First-open greeting: the six rotating opening lines for a new visitor
+// (Jarvis vision, piece 34) and the country sentence (backlog thread 18).
+// Uses this file's existing `test`, `expect`, and `read` helpers.
+
+test('FIRST-OPEN GREETING: only a signed-out visitor who has not chatted here sees it, and returning travelers are untouched', () => {
+  const orb = read('src/components/mcare/MCareOrb.jsx');
+
+  const start = orb.indexOf('const firstOpenDecidedRef = useRef(false);');
+  expect(start, 'the first-open decision block must exist').toBeGreaterThan(-1);
+  const block = orb.slice(start, start + 2500);
+  expect(block, 'it must wait until sign-in status is known, so a signed-in traveler never sees "first time here" while auth loads')
+    .toMatch(/if \(firstOpenDecidedRef\.current \|\| !authChecked\) return;/);
+  expect(block, 'signed-in travelers and anyone who has chatted on this device are not new')
+    .toMatch(/if \(user \|\| hasChattedOnThisDevice\(\)\) return;/);
+  expect(block, 'a device stops counting as new once a real message was sent from it')
+    .toMatch(/m\?\.role === 'user'[\s\S]{0,120}rememberHasChatted\(\)/);
+
+  const named = orb.indexOf('if (firstName) return `Welcome back, ${firstName}. ${GREETING}`;');
+  const firstOpen = orb.indexOf('if (!user && firstOpenGreeting) return buildFirstOpenGreeting(');
+  expect(named, 'the "Welcome back" greeting for a named traveler must stay').toBeGreaterThan(-1);
+  expect(firstOpen, 'the first-open greeting must require a signed-out visitor at render time too').toBeGreaterThan(-1);
+  expect(named, 'a named traveler must be checked first, so they always get "Welcome back"').toBeLessThan(firstOpen);
+
+  expect(orb, "the phone's welcome card must use a first-open line only for a signed-out visitor with no trip")
+    .toContain('const welcome = (!user && !hasTrip && firstOpenGreeting)');
+});
+
+test("FIRST-OPEN GREETING: the location sentence names the country only, stays hedged, and respects the traveler's privacy settings", () => {
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const lib = strip(read('src/lib/firstOpenGreeting.js'));
+  expect(lib, 'the greeting must never mention a city, region, or coordinates').not.toMatch(/\b(city|region|latitude|longitude)\b/);
+  expect(lib, 'an IP address is approximate, so the sentence must stay hedged').toContain("It looks like you're in ");
+
+  const orb = read('src/components/mcare/MCareOrb.jsx');
+  const start = orb.indexOf('const firstOpenDecidedRef = useRef(false);');
+  const block = orb.slice(start, start + 1500);
+  expect(block, 'the country must come from the IP lookup only')
+    .toMatch(/const country = \(!locationPrefs\.locationPaused && !privateMode\)\s*\?\s*\(ipLocation\?\.country \?\? null\)\s*:\s*null;/);
+  expect(block, 'the greeting block must not read a city').not.toMatch(/\.city\b/);
+
+  const late = orb.indexOf("if (!country || Date.now() - firstOpenGreeting.decidedAt > FIRST_OPEN_COUNTRY_WAIT_MS) return;");
+  expect(late, 'a country that arrives late is only added within a short wait, so the line never changes while being read').toBeGreaterThan(-1);
+  expect(orb.slice(late - 300, late), 'a late country must respect paused location and Private Mode too')
+    .toMatch(/if \(locationPrefs\.locationPaused \|\| privateMode\) return;/);
+});
+
+// ---- Payment receipts: only the server writes them, a patient reads only
+// their own, the text message carries no payment detail, and the app never
+// renders the emailed HTML. Uses this file's existing `test`, `expect`, and
+// `read` helpers.
+
+const rcStrip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+
+test('PAYMENT RECEIPTS: only the server can write a receipt, and a patient reads only their own', () => {
+  const { rls } = JSON.parse(read('base44/entities/PaymentReceipt.jsonc'));
+  expect(JSON.stringify(rls.read)).toContain('{"data.client_email":"{{user.email}}"}');
+  for (const op of ['create', 'update']) {
+    const rule = JSON.stringify(rls[op]);
+    expect(rule, `no signed-in user may ${op} a receipt`).not.toContain('{{user');
+    expect(rule, `only admins and the server may ${op} a receipt`).toMatch(/"role":"admin"/);
+  }
+  expect(rls.delete, 'a receipt is a financial record; only a platform admin may delete one')
+    .toEqual({ user_condition: { role: 'platform_admin' } });
+});
+
+test('PAYMENT RECEIPTS: the receipt is saved by the server, texted link-only, and kept out of the passport vault', () => {
+  const fn = rcStrip(read('base44/functions/sendPaymentReceipt/entry.ts'));
+  expect(fn).toMatch(/asServiceRole\.entities\.PaymentReceipt\.create\(\{/);
+  expect(fn, 'that vault decrypts every file, so an unencrypted receipt there can never be opened')
+    .not.toMatch(/PassportVault/);
+
+  const at = fn.indexOf('sendSms(');
+  expect(at, 'the patient is texted').toBeGreaterThan(-1);
+  const sms = fn.slice(at, at + 400);
+  expect(sms, 'the text goes through linkOnlySms, so no amount or name can slip in')
+    .toMatch(/^sendSms\(c\.client_phone, linkOnlySms\(\{/);
+  expect(sms, 'and links to where the receipt is shown').toMatch(/url: `\$\{APP_URL\}\/dashboard\/documents`/);
+  expect(fn, 'the email\'s button goes to the same place').toMatch(/href="\$\{APP_URL\}\/dashboard\/documents"/);
+});
+
+test('PAYMENT RECEIPTS: the app only reads receipts, and offers the emailed HTML as a download only', () => {
+  const card = rcStrip(read('src/components/dashboard/PaymentReceiptsCard.jsx'));
+  expect(card).toMatch(/entities\.PaymentReceipt\.filter\(\{ client_email: user\.email \}/);
+  expect(card).not.toMatch(/PaymentReceipt\.(create|update|delete)\(/);
+  expect(card, 'the emailed copy is never rendered as live HTML').not.toMatch(/dangerouslySetInnerHTML|srcDoc|innerHTML/);
+
+  const panel = read('src/components/dashboard/modules/VaultDocumentsPanel.jsx');
+  expect(panel, 'receipts show on the Documents page that the email and the text link to')
+    .toMatch(/<PaymentReceiptsCard \/>/);
+});

@@ -1,0 +1,112 @@
+{
+  "name": "PaymentReceipt",
+  "type": "object",
+  "description": "One official receipt per successful payment, written only by sendPaymentReceipt on the server. The patient can read their own receipts (shown under Documents); nobody can create or change one from the app. receipt_html is the exact copy that was emailed.",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string",
+      "description": "The patient's email. Read access is scoped to it."
+    },
+    "receipt_number": {
+      "type": "string"
+    },
+    "case_ref": {
+      "type": "string",
+      "description": "The short case reference printed on the receipt."
+    },
+    "procedures": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "payment_type": {
+      "type": "string",
+      "description": "full_pay for a full payment, terms for a deposit."
+    },
+    "amount_paid": {
+      "type": "number",
+      "description": "In US dollars, as printed on the receipt."
+    },
+    "balance_remaining": {
+      "type": "number",
+      "description": "In US dollars. 0 when paid in full."
+    },
+    "next_due_date": {
+      "type": "string"
+    },
+    "stripe_payment_id": {
+      "type": "string"
+    },
+    "receipt_html": {
+      "type": "string",
+      "description": "The full receipt, exactly as emailed. Offered as a download, never shown as live HTML in the app."
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "client_email",
+    "receipt_number",
+    "receipt_html",
+    "issued_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

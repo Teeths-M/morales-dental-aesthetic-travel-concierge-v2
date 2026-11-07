@@ -12,6 +12,8 @@
  * browser's own speechSynthesis global.
  */
 
+import { flattenMarkdownTables } from '@/lib/markdownTables';
+
 export function isSpeechSupported() {
   return typeof window !== 'undefined'
     && 'speechSynthesis' in window
@@ -65,7 +67,7 @@ export function extractSpeakableText(raw) {
     ? choicesMatch[1].split('|').map((s) => cleanChoiceLabel(s)).filter(Boolean)
     : [];
 
-  let out = raw
+  let out = flattenMarkdownTables(raw)
     .replace(/\{\{choices:[\s\S]*?\}\}/g, '')
     .replace(/\{\{maps:[^|]*\|[\s\S]*?\}\}/g, '')
     .replace(/\{\{qr:[^|]*\|[\s\S]*?\}\}/g, '')

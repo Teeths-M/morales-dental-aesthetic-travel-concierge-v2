@@ -1,5 +1,7 @@
 ﻿import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { internalOrAdminAuthorized } from '../../shared/internalAuth.ts';
+import { sendSms } from '../../shared/twilioSms.ts';
+import { linkOnlySms } from '../../shared/notify.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 
 const BRAND   = 'M-Care Medical Travel Safety';
@@ -62,10 +64,10 @@ function receiptHtml({ clientName, clientEmail, caseRef, receiptNumber, procedur
   </div>
 
   <p style="margin:0 0 20px;font-size:13px;color:#64746d;line-height:1.6;text-align:center;">
-    This receipt has been saved to your secure M-Care Vault. You can access it anytime via your dashboard.
+    A copy is saved in your M-Care account. You can open it anytime under Documents.
   </p>
   <div style="text-align:center;">
-    <a href="${APP_URL}/dashboard/documents" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-size:13px;font-weight:700;">View My Vault →</a>
+    <a href="${APP_URL}/dashboard/documents" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-size:13px;font-weight:700;">View My Receipts →</a>
   </div>
   <p style="margin:24px 0 0;font-size:13px;color:#64746d;line-height:1.6;text-align:center;">
     Keep this receipt for your records. Questions? Reach your concierge on WhatsApp.
@@ -131,42 +133,57 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     body: html,
   }));
 
-  // Store receipt in PassportVault
-  let vaultId: string | null = null;
+  // Text the patient too, for anyone who doesn't read email. Link-only: the
+  // amount and the details stay in the app.
+  if (c.client_phone) {
+    tasks.push(sendSms(c.client_phone, linkOnlySms({
+      line: 'Your M-Care payment went through, and your receipt is ready.',
+      url: `${APP_URL}/dashboard/documents`,
+      from: 'sendPaymentReceipt',
+    })));
+  }
+
+  // The copy the patient opens in the app, under Documents. Only the server
+  // writes these. It replaces the old copy in the passport vault: that vault
+  // decrypts every file with the patient's password, and receipts were saved
+  // there unencrypted, so they could never be opened.
+  let receiptId: string | null = null;
   try {
-    const encoder  = new TextEncoder();
-    const bytes    = encoder.encode(html);
-    const b64      = btoa(String.fromCharCode(...bytes));
-    const vaultEntry = await base44.asServiceRole.entities.PassportVault.create({
-      passport_token:    `REC_${receiptNumber}`,
-      user_email:        c.client_email,
-      document_type:     'payment_reference',
-      encrypted_file_uri: `data:text/html;base64,${b64}`,
-      file_name:         `Receipt_${receiptNumber}.html`,
-      mime_type:         'text/html',
-      file_size_bytes:   bytes.length,
-      status:            'active',
-      uploaded_at:       new Date().toISOString(),
-      is_emergency_accessible: false,
+    const receipt = await base44.asServiceRole.entities.PaymentReceipt.create({
+      case_id,
+      client_email:      c.client_email,
+      receipt_number:    receiptNumber,
+      case_ref:          caseRef,
+      procedures,
+      destination:       c.procedure_country || 'Your destination',
+      payment_type:      payment_type || 'full_pay',
+      amount_paid:       amountPaid,
+      balance_remaining: balanceRem,
+      next_due_date:     c.next_payment_due || '',
+      stripe_payment_id: stripe_payment_id || '',
+      receipt_html:      html,
+      issued_at:         new Date().toISOString(),
     });
-    vaultId = vaultEntry?.id ?? null;
-  } catch (_) {}
+    receiptId = receipt?.id ?? null;
+  } catch (saveError) {
+    console.error('[sendPaymentReceipt] could not save the receipt for the app:', saveError);
+  }
 
   tasks.push(
     base44.asServiceRole.entities.CaseRecord.update(case_id, {
-      receipt_vault_id: vaultId || undefined,
+      receipt_vault_id: receiptId || undefined,
       receipt_html:     html,
     }),
     base44.asServiceRole.entities.AuditLog.create({
       event_type: 'payment_receipt_issued', actor_id: 'system', actor_role: 'system',
       actor_name: 'M-Care Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, sensitive: false, timestamp: new Date().toISOString(),
-      details: { receipt_number: receiptNumber, amount_paid: amountPaid, vault_id: vaultId },
+      details: { receipt_number: receiptNumber, amount_paid: amountPaid, receipt_id: receiptId, sms_attempted: !!c.client_phone },
       prev_hash: await computePrevHash(base44),
     })
   );
 
   await Promise.allSettled(tasks);
 
-  return ok({ receipt_number: receiptNumber, sent_to: c.client_email, vault_id: vaultId });
+  return ok({ receipt_number: receiptNumber, sent_to: c.client_email, receipt_id: receiptId, sms_attempted: !!c.client_phone });
 }, { name: 'sendPaymentReceipt', requireAuth: false }));
