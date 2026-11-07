@@ -3920,17 +3920,16 @@ test('RIDE DISPATCH: requestOnDemandRide and notifyGuardianNow stay structurally
     .toMatch(/role === 'admin'/);
 });
 
-test('COMPANION NETWORK: EmergencyContact is patient-scoped, the cascade widens only at the 3h tier, and the guardian-session bug is fixed for good', () => {
+test('COMPANION NETWORK: EmergencyContact is patient-read and server-written, the cascade widens only at the 3h tier, and the guardian-session bug is fixed for good', () => {
   // EmergencyContact holds contacts #2+ for the Companion Network Alerts
-  // cascade — a patient must own their own case's contacts (read/write), not
-  // wide open, matching GuardianSession's established RLS shape.
-  const entity = read('base44/entities/EmergencyContact.jsonc');
-  const scopedToPatient = (op) => new RegExp(
-    `"${op}"\\s*:\\s*\\{\\s*"\\$or"\\s*:\\s*\\[\\s*\\{\\s*"data\\.patient_email"\\s*:\\s*"\\{\\{user\\.email\\}\\}"`
-  );
-  for (const op of ['read', 'create', 'update', 'delete']) {
-    expect(entity, `EmergencyContact.${op} must be scoped to the owning patient (or admin), not wide open`)
-      .toMatch(scopedToPatient(op));
+  // cascade. The patient reads their own; only the server writes (Phone Lock
+  // part 2), so who M-Care tells in an emergency can't be changed from the
+  // browser without updateMyCaseRecord's Face ID check.
+  const rules = JSON.parse(read('base44/entities/EmergencyContact.jsonc')).rls;
+  expect(JSON.stringify(rules.read), 'the patient reads their own contacts').toContain('data.patient_email');
+  for (const op of ['create', 'update', 'delete']) {
+    expect(JSON.stringify(rules[op]), `EmergencyContact.${op} must be server-only`).not.toContain('data.');
+    expect(JSON.stringify(rules[op])).toContain('"role":"admin"');
   }
 
   const src = read('base44/functions/escalateSoloCheckIn/entry.ts');
@@ -3981,13 +3980,15 @@ test('COMPANION NETWORK: EmergencyContact is patient-scoped, the cascade widens 
   expect(helperSrc, 'emergencyContacts.ts must not itself send email/SMS — that stays in escalateSoloCheckIn')
     .not.toMatch(/SendEmail|api\.twilio\.com/);
 
-  // The frontend sync must stay a direct client entity write scoped to the
-  // owning patient's own contacts, never touching another case's rows.
+  // The panel sends the whole ranked list through updateMyCaseRecord, which
+  // writes the rows as the server for the caller's own case, with the
+  // patient_email taken from the session, never the request.
   const panelSrc = read('src/components/emergency/PersonalEmergencyContactsPanel.jsx');
-  expect(panelSrc, 'PersonalEmergencyContactsPanel must sync non-primary contacts to EmergencyContact')
-    .toContain('base44.entities.EmergencyContact.create');
-  expect(panelSrc, 'the synced patient_email must come from the component\'s own userEmail prop, never a caller-suppliable field')
-    .toMatch(/patient_email:\s*userEmail/);
+  expect(panelSrc, 'the panel must not write EmergencyContact rows itself').not.toMatch(/entities\.EmergencyContact\.(create|update|delete)/);
+  expect(panelSrc, 'the panel sends the extra contacts with the primary').toMatch(/extra_contacts: extras/);
+  const ucr = read('base44/functions/updateMyCaseRecord/entry.ts');
+  expect(ucr).toMatch(/asServiceRole\.entities\.EmergencyContact\.create\(\{[\s\S]*?patient_email: email,/);
+  expect(ucr, 'the ExtraContact shape must not accept a patient_email').not.toMatch(/const ExtraContact = strictObject\(\{[^}]*patient_email/);
 });
 
 test('DRIVER LIVE MAP: the {{drivermap:...}} token is actually emitted, its cron reminder is actually scheduled, and RecoveryTransportRequest.update stays admin-only', () => {
@@ -6909,14 +6910,13 @@ test('ACCOUNT ACTIVITY: every account event is recorded where it happens, and on
   const entity = read('base44/entities/AuditLog.jsonc');
   const activity = read('src/lib/accountActivity.js');
   const listed = [...activity.slice(0, activity.indexOf('];')).matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
-  expect(listed.length).toBe(6);
+  expect(listed.length).toBe(10);
   for (const type of listed) expect(entity, `${type} must be in AuditLog's event list`).toContain(`"${type}"`);
 
-  // Only Private Mode is logged from the app's screens. The rest are written
-  // by server functions, so a client can never log a fake one.
-  const allowlist = read('base44/functions/logAuditEvent/entry.ts');
-  for (const type of ['safety_monitoring_paused', 'safety_monitoring_resumed']) expect(allowlist).toContain(`'${type}'`);
-  for (const type of ['profile_updated', 'contact_phone_changed', 'guardian_access_granted', 'role_changed']) {
+  // Every account event is written by a server function, so a client can never
+  // log a fake one. (Private Mode moved to setPrivateMode in Phone Lock part 2.)
+  const allowlist = actStrip(read('base44/functions/logAuditEvent/entry.ts'));
+  for (const type of listed) {
     expect(allowlist, `${type} must not be client-loggable`).not.toContain(`'${type}'`);
   }
 
@@ -6929,8 +6929,14 @@ test('ACCOUNT ACTIVITY: every account event is recorded where it happens, and on
 
   const orb = actStrip(read('src/components/mcare/MCareOrb.jsx'));
   const handler = orb.slice(orb.indexOf('const handlePrivateModeToggle'), orb.indexOf('const handlePrivateModeToggle') + 1600);
-  expect(handler, 'pausing safety check-ins must be recorded, after the pause really happened')
-    .toMatch(/SoloCheckIn\.updateMany[\s\S]*auditService\.log\(\{\s*event_type: paused \? 'safety_monitoring_paused' : 'safety_monitoring_resumed'/);
+  expect(handler, 'Private Mode goes through the server').toMatch(/invoke\('setPrivateMode'/);
+  expect(orb, 'the browser no longer writes check-ins itself').not.toMatch(/entities\.SoloCheckIn\.update/);
+  const pm = actStrip(read('base44/functions/setPrivateMode/entry.ts'));
+  const updateAt = pm.indexOf('asServiceRole.entities.SoloCheckIn');
+  const auditAt = pm.indexOf("event_type: paused ? 'safety_monitoring_paused' : 'safety_monitoring_resumed'");
+  expect(updateAt, "setPrivateMode pauses the caller's own check-ins").toBeGreaterThan(-1);
+  expect(pm).toMatch(/filter\(\{ user_email: email, status: 'pending' \}/);
+  expect(auditAt, 'pausing safety check-ins must be recorded, after the pause really happened').toBeGreaterThan(updateAt);
 });
 
 // ---- North-star M-Safe phone screen (2026-11-01): the country photo and the
@@ -7288,6 +7294,11 @@ const AL_COMPUTED_TYPES = {
   'base44/functions/verifyDoctorLicense/entry.ts': [
     'license_check_passed', 'license_check_failed',
     'license_check_manual_override', 'license_check_returned_to_queue',
+  ],
+  // recordLockEvent(event): the LockEvent type lists every value it can take.
+  'base44/shared/passkeys.ts': [
+    'phone_lock_enabled', 'phone_lock_device_added', 'phone_lock_device_removed',
+    'phone_lock_disabled', 'phone_lock_reset',
   ],
 };
 
@@ -8258,4 +8269,100 @@ test('UX SIGNALS: the server re-checks the breadcrumb trail before storing it', 
 
   const entry = uxStrip(read('base44/functions/reportIncident/entry.ts'));
   expect(entry, 'reportIncident must pass the trail through to the shared helper').toMatch(/breadcrumbs,\s*\n\s*\}\);/);
+});
+
+// ---- Phone Lock, part 2 (2026-11-07): the Face ID / fingerprint lock. Help never locks; the actions that switch
+// help off, change who is told in an emergency, or share a private file need a fresh check the server verifies.
+const plStrip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+
+test('PHONE LOCK PART 2: passkeys and their challenges are server-only records', () => {
+  for (const name of ['PasskeyCredential', 'PasskeyChallenge']) {
+    const rules = JSON.parse(read(`base44/entities/${name}.jsonc`)).rls;
+    for (const op of ['read', 'create', 'update', 'delete']) {
+      const rule = JSON.stringify(rules[op]);
+      expect(rule, `${name}.${op} must be admin-only`).toContain('"role":"admin"');
+      expect(rule, `${name}.${op} must not let a traveler or anyone else in`).not.toMatch(/data\.|"id":/);
+    }
+  }
+});
+
+test('PHONE LOCK PART 2: every check is real, single-use and needs the owner, and a failed lookup refuses the action', () => {
+  const src = plStrip(read('base44/shared/passkeys.ts'));
+  // Both verifications demand Face ID / a fingerprint, not just a tap.
+  expect(src.match(/requireUserVerification: true/g)?.length, 'registration and every check require the owner').toBe(2);
+  expect(src).toMatch(/userVerification: 'required'/);
+  // The challenge is burned before the signature is checked, so a check can't be replayed.
+  const take = src.slice(src.indexOf('async function takeChallenge'));
+  expect(take.slice(0, take.indexOf('return { row, problem }'))).toMatch(/PasskeyChallenge\.update\(row\.id, \{ used_at:/);
+  const verify = src.slice(src.indexOf('export async function verifyPasskeyAssertion'));
+  expect(verify.indexOf('takeChallenge(')).toBeLessThan(verify.indexOf('verifyAuthenticationResponse('));
+  expect(verify, 'a counter that went backwards is refused').toMatch(/counterAcceptable\(/);
+  // The gate: no lock passes straight through; a lock needs a step-up for this exact action; a lookup error refuses.
+  const gate = src.slice(src.indexOf('export async function requireFreshPasskey'), src.indexOf('// ── Records'));
+  expect(gate).toMatch(/catch \(e\)[\s\S]*?status: 503/);
+  expect(gate).toMatch(/if \(!creds\.length\) return \{ ok: true, enrolled: false \};/);
+  expect(gate).toMatch(/purpose: 'step_up', action \}/);
+  const lookup = src.slice(src.indexOf('export async function activePasskeys'), src.indexOf('export const publicDevice'));
+  expect(lookup, 'activePasskeys must throw on a failed lookup, not answer "no lock"').not.toMatch(/\.catch\(/);
+});
+
+test('PHONE LOCK PART 2: each action that switches help off or shares a file is behind the check', () => {
+  const gated = [
+    ['base44/functions/createSecureShareLink/entry.ts', 'share_document', 'SecureShareLink.create('],
+    ['base44/functions/updateMyCaseRecord/entry.ts', 'change_emergency_contacts', 'CaseRecord.update(c.id, patch)'],
+    ['base44/functions/setPrivateMode/entry.ts', 'pause_safety_checkins', 'SoloCheckIn.update('],
+    ['base44/functions/resolveEmergencyIncident/entry.ts', 'close_emergency_alert', 'Incident.update(incident.id, patch)'],
+    ['base44/functions/updateMyProfile/entry.ts', 'change_phone', 'base44.auth.updateMe(patch)'],
+    ['base44/functions/managePasskeys/entry.ts', 'add_device', 'beginRegistration('],
+    ['base44/functions/managePasskeys/entry.ts', 'remove_device', 'removePasskeys('],
+  ];
+  for (const [file, action, write] of gated) {
+    const src = plStrip(read(file));
+    const actionAt = src.indexOf(`'${action}'`);
+    expect(actionAt, `${file} must check '${action}'`).toBeGreaterThan(-1);
+    expect(src.slice(actionAt - 120, actionAt), `${file} must pass '${action}' to requireFreshPasskey`).toMatch(/requireFreshPasskey\(base44, /);
+    expect(src.indexOf(write, actionAt), `${file} must check '${action}' before it writes`).toBeGreaterThan(actionAt);
+    expect(src.slice(actionAt, actionAt + 300), `${file} must stop when the check fails`).toMatch(/if \(!gate\.ok\) return gate\.response;/);
+  }
+  // Only switching help off asks: resuming Private Mode, a handover and the care team never do.
+  expect(plStrip(read('base44/functions/setPrivateMode/entry.ts'))).toMatch(/if \(paused\) \{\s*const gate = await requireFreshPasskey/);
+  expect(plStrip(read('base44/functions/resolveEmergencyIncident/entry.ts'))).toMatch(/if \(closes && !isCareTeam\) \{\s*const gate/);
+});
+
+test('PHONE LOCK PART 2: withdrawing location-sharing consent stays one tap', () => {
+  const ucr = plStrip(read('base44/functions/updateMyCaseRecord/entry.ts'));
+  const branch = ucr.slice(ucr.indexOf("if (data.action === 'set_location_consent')"), ucr.indexOf("if (data.action === 'save_medical_profile')"));
+  expect(branch.length).toBeGreaterThan(100);
+  expect(branch).not.toMatch(/requireFreshPasskey/);
+  expect(plStrip(read('base44/shared/passkeyRules.ts'))).not.toMatch(/'[a-z_]*location[a-z_]*'/);
+});
+
+test('PHONE LOCK PART 2: help never locks', () => {
+  const rules = read('src/lib/appLock.js');
+  for (const p of ["'/emergency'", "'/emergency-response'", "'/emergency-access'", "'/offline'", "'/check-in'", "'/respond'"]) {
+    expect(rules, `${p} must never lock`).toContain(p);
+  }
+  const screen = plStrip(read('src/components/security/PhoneLockScreen.jsx'));
+  expect(screen, 'SOS is on the lock screen').toMatch(/<SOSDropdown /);
+  expect(screen, 'the emergency page is one tap away').toContain('href="/emergency"');
+  const lockZ = Number(screen.match(/zIndex: (\d+)/)[1]);
+  const alertZ = Number(read('src/components/solo/FloatingCheckInAlert.jsx').match(/z-\[(\d+)\]/)[1]);
+  const codeZ = Number(read('src/components/solo/useCheckInCodePrompt.jsx').match(/z-\[(\d+)\]/)[1]);
+  expect(alertZ, 'a check-in reminder shows on top of the lock').toBeGreaterThan(lockZ);
+  expect(codeZ, 'and so does its code prompt').toBeGreaterThan(lockZ);
+  const layout = plStrip(read('src/components/layout/AppLayout.jsx'));
+  expect(layout, 'the check-in alert never waits for an unlock').toMatch(/\{user && !isStandaloneMcare && <FloatingCheckInAlert user=\{user\} \/>\}/);
+  expect(layout, 'the old gate is gone').not.toMatch(/BiometricGate/);
+});
+
+test('PHONE LOCK PART 2: lock-screen previews stay plain, and a sign-out leaves nothing private behind', () => {
+  const push = plStrip(read('base44/functions/sendPushNotification/entry.ts'));
+  expect(push).toMatch(/PasskeyCredential[\s\S]*?shownBody = urgent \?/);
+  expect(push, 'the payload carries the plain preview').toMatch(/title: shownTitle, body: shownBody/);
+  for (const file of ['src/components/layout/Header.jsx', 'src/components/layout/AdminLayout.jsx', 'src/pages/DoctorDashboard.jsx',
+    'src/pages/CompanionDashboard.jsx', 'src/pages/SecurityAgencyDashboard.jsx']) {
+    const src = read(file);
+    expect(src, `${file}'s sign-out must clear the phone first`).toContain('signOutAndClear(');
+    expect(src, `${file} must not sign out without clearing`).not.toMatch(/base44\.auth\.logout\(/);
+  }
 });

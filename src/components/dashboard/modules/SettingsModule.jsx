@@ -10,6 +10,9 @@ import RecentAccountActivity from '@/components/dashboard/RecentAccountActivity'
 import { friendlyError } from '@/lib/friendlyError';
 import { openChannelConnect } from '@/lib/mcareChannels';
 import ThemePreferenceControl from '@/components/mobile/ThemePreferenceControl';
+import PhoneLockCard from '@/components/security/PhoneLockCard';
+import { clearPrivateDeviceData } from '@/lib/deviceDataCleanup';
+import { callWithFaceCheck, phoneLockErrorMessage } from '@/lib/phoneLock';
 
 const _languages = ['English', 'Español', 'Français', 'Português'];
 
@@ -201,6 +204,8 @@ function DeleteMyAccountCard({ email }) {
       if (!res.data?.success) {
         throw new Error(res.data?.error || 'Deletion failed.');
       }
+      // The account is gone, so nothing private of it stays on this phone either.
+      clearPrivateDeviceData();
       await logout(false);
       navigate('/');
     } catch (err) {
@@ -322,14 +327,17 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
     setSaving(true);
     try {
       // The server makes the same updateMe() call as the signed-in user, and
-      // records the change in the audit log. See updateMyProfile.
-      await base44.functions.invoke('updateMyProfile', { full_name: fullName, phone: phone.trim() });
+      // records the change in the audit log. See updateMyProfile. With the Face
+      // ID lock on, a new phone number asks for Face ID or a fingerprint first.
+      await callWithFaceCheck('change_phone', (step_up) => base44.functions.invoke('updateMyProfile', {
+        full_name: fullName, phone: phone.trim(), ...(step_up ? { step_up } : {}),
+      }));
       setSaved(true);
       setActivityRefresh((n) => n + 1);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save settings:', err);
-      toast.error('Failed to save settings. Please try again.');
+      toast.error(phoneLockErrorMessage(err, 'Failed to save settings. Please try again.'));
     } finally {
       setSaving(false);
     }
@@ -412,6 +420,9 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
           </a>
         </div>
       </div>
+
+      {/* The Face ID / fingerprint lock (Phone Lock) */}
+      <PhoneLockCard />
 
       {/* Recent account activity, from the account owner's own audit-log entries */}
       <RecentAccountActivity lang={appLanguage} refreshKey={activityRefresh} />

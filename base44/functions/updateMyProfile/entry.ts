@@ -2,6 +2,7 @@ import { createHandler, ok } from '../../shared/createHandler.ts';
 import { strictObject, z } from '../../shared/validate.ts';
 import { computePrevHash } from '../../shared/auditHashChain.ts';
 import { linkOnlyEmail } from '../../shared/notify.ts';
+import { requireFreshPasskey } from '../../shared/passkeys.ts';
 
 /**
  * updateMyProfile — how a signed-in user changes their own name or contact
@@ -27,6 +28,7 @@ const BodySchema = strictObject({
   phone: z.string().trim().max(32)
     .refine((v) => v === '' || PHONE_PATTERN.test(v), 'phone: use digits, spaces, and + ( ) - only')
     .optional(),
+  step_up: z.object({ challenge_id: z.string().max(100), response: z.object({}).passthrough() }).optional(),
 });
 
 function lastTwoDigits(phone: unknown): string {
@@ -35,7 +37,7 @@ function lastTwoDigits(phone: unknown): string {
 }
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-  const { full_name, phone } = await body();
+  const { full_name, phone, step_up } = await body();
   const me = user!;
 
   const patch: Record<string, string> = {};
@@ -43,6 +45,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (typeof phone === 'string' && phone !== (me.phone || '')) patch.phone = phone;
   const changed = Object.keys(patch);
   if (!changed.length) return ok({ success: true, changed });
+
+  // A new contact phone is how an account gets taken over, so with the Face ID lock on it needs a fresh check.
+  // (Base44 also lets a signed-in browser change the phone directly, which this can't stop; the email below still
+  // goes out for changes made here.)
+  if (changed.includes('phone')) {
+    const gate = await requireFreshPasskey(base44, me, 'change_phone', step_up);
+    if (!gate.ok) return gate.response;
+  }
 
   await base44.auth.updateMe(patch);
 

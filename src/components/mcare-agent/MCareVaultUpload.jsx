@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
-import { encryptFileWithPassword, storeVaultKey } from '@/lib/vaultEncryption';
+import { encryptFileWithPassword, storeVaultKey, VAULT_PASSWORD_MIN_LENGTH } from '@/lib/vaultEncryption';
 import { friendlyError } from '@/lib/friendlyError';
 
 // Document types a partner can vault from the M-Care chat.
@@ -94,7 +94,7 @@ const MCareVaultUpload = forwardRef(function MCareVaultUpload({ onVaulted, hideT
 
   const handleUpload = async () => {
     if (!file) { setError('Please choose a file.'); return; }
-    if (!password || password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    if (!password || password.length < VAULT_PASSWORD_MIN_LENGTH) { setError(`Password must be at least ${VAULT_PASSWORD_MIN_LENGTH} characters. A short phrase is easiest to remember.`); return; }
     if (password !== confirmPw) { setError('Passwords do not match.'); return; }
     if (!navigator.onLine) { setError('Upload requires an internet connection.'); return; }
 
@@ -239,7 +239,7 @@ const MCareVaultUpload = forwardRef(function MCareVaultUpload({ onVaulted, hideT
                   This encrypts your document on your device. You'll need it to decrypt later. We cannot recover it if lost.
                 </p>
                 <div className="grid grid-cols-2 gap-2.5">
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 chars" />
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={`At least ${VAULT_PASSWORD_MIN_LENGTH} characters`} />
                   <Input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="Confirm" />
                 </div>
               </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { UserPlus, Trash2, Phone, Mail, Star, StarOff, Check, Pencil, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { callWithFaceCheck, phoneLockErrorMessage } from '@/lib/phoneLock';
 
 const STORAGE_KEY = (email) => `morales_emergency_contacts_${email}`;
 
@@ -20,6 +21,7 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
   const [form, setForm] = useState(null); // null = closed, {} = new, {id} = editing
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState(false);
+  const [syncError, setSyncError] = useState('');
 
   useEffect(() => {
     if (userEmail) setContacts(load(userEmail));
@@ -55,45 +57,31 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
     const primary = contacts.find(c => c.isPrimary) || contacts[0];
     if (!primary) return;
     setSaving(true);
+    setSyncError('');
+    // One save, as the server: the primary on the case, and everyone after it in order (Companion Network Alerts,
+    // escalateSoloCheckIn's 3h tier tells them all). With the Face ID lock on, this asks for Face ID first, because
+    // it changes who M-Care tells in an emergency.
+    const extras = contacts.filter(c => c.id !== primary.id).map(c => ({
+      name: c.name,
+      relationship: c.relationship || '',
+      phone: c.phone,
+      email: c.email || '',
+    }));
     try {
-      await base44.functions.invoke('updateMyCaseRecord', {
+      await callWithFaceCheck('change_emergency_contacts', (step_up) => base44.functions.invoke('updateMyCaseRecord', {
         action: 'set_emergency_contact',
         case_id: caseRecord.id,
         emergency_contact: `${primary.name}${primary.relationship ? ` (${primary.relationship})` : ''}`,
         emergency_contact_number: primary.phone,
         emergency_contact_email: primary.email || '',
-      });
-    } catch (_) {
-      // The contacts are still saved on this device. Let the patient try again
-      // rather than leaving the button spinning.
+        extra_contacts: extras,
+        ...(step_up ? { step_up } : {}),
+      }));
+    } catch (error) {
+      // The contacts are still saved on this device. Say why, and let the patient try again.
+      setSyncError(phoneLockErrorMessage(error, "Your contacts weren't synced. They're still saved on this phone; try again."));
       setSaving(false);
       return;
-    }
-
-    // Companion Network Alerts: everyone past the primary also syncs, so the
-    // real escalation ladder (escalateSoloCheckIn) can cascade through the
-    // whole ranked network at its 3h tier, not just the one primary contact.
-    // Replace-all — lists are small (1-4 contacts) and this is a low-frequency
-    // manual sync, nothing else references a row's id that a replace would orphan.
-    try {
-      const nonPrimary = contacts.filter(c => c.id !== primary.id);
-      const existing = await base44.entities.EmergencyContact.filter({ case_id: caseRecord.id }).catch(() => []);
-      await Promise.allSettled((existing || []).map(row => base44.entities.EmergencyContact.delete(row.id)));
-      await Promise.allSettled(nonPrimary.map((c, i) =>
-        base44.entities.EmergencyContact.create({
-          case_id: caseRecord.id,
-          patient_email: userEmail,
-          name: c.name,
-          relationship: c.relationship || '',
-          phone: c.phone,
-          email: c.email || '',
-          priority: i + 2, // primary always owns priority 1
-          created_at: new Date().toISOString(),
-        })
-      ));
-    } catch (_) {
-      // Non-blocking — the primary sync above already succeeded; the ranked
-      // network is an enhancement, never a reason to show the sync as failed.
     }
 
     setSaving(false);
@@ -217,6 +205,7 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
           <Button size="sm" className="text-xs h-8 bg-blue-600 hover:bg-blue-700 shrink-0" onClick={handleSyncToCase} disabled={saving}>
             {savedMsg ? <><Check className="w-3.5 h-3.5 mr-1" /> Saved!</> : saving ? 'Saving…' : 'Sync to Journey'}
           </Button>
+          {syncError && <p role="alert" className="basis-full text-xs text-red-600">{syncError}</p>}
         </div>
       )}
     </div>

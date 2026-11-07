@@ -13,6 +13,10 @@
  *   - writes only its own short, fixed list of fields,
  *   - never touches money, partner, or safety-result fields.
  *
+ * Changing the emergency contacts changes who M-Care tells in an emergency, so a traveler with the Face ID lock
+ * confirms it with a fresh check (requireFreshPasskey). Turning live location sharing off never needs one:
+ * withdrawing consent must stay as easy as giving it, and the phone stops sharing the moment it's tapped anyway.
+ *
  * The high-risk hold is the one action that changes the booking status, and
  * only ever to the Admin-Review safety hold. It re-runs the deterministic safety
  * engine from the stored Consultation rather than trusting the browser's result,
@@ -23,9 +27,21 @@ import { z, strictObject } from '../../shared/validate.ts';
 import { getViolations } from '../../shared/procedureCompatibility.ts';
 import { toSafetyEngineName } from '../../shared/procedureSafetyNameMap.ts';
 import { guardedStatusUpdate, BOOKING } from '../../shared/bookingState.ts';
+import { requireFreshPasskey } from '../../shared/passkeys.ts';
 
 const text = (max: number) => z.string().trim().max(max);
 const id = () => z.string().trim().min(1, 'Required').max(100);
+
+// A fresh Face ID / fingerprint check (passkeys.ts), sent by a traveler who has the lock on.
+const StepUp = z.object({ challenge_id: z.string().max(100), response: z.object({}).passthrough() }).optional();
+
+// The contacts after the primary one, in order (EmergencyContact rows 2, 3, ...).
+const ExtraContact = strictObject({
+  name: text(200),
+  relationship: text(100).optional(),
+  phone: text(40),
+  email: text(254).optional(),
+});
 
 // The medical-profile fields the patient's own Medical Profile screen edits.
 // Same list MedicalProfileModule.jsx always wrote, nothing more.
@@ -59,6 +75,9 @@ const BodySchema = z.discriminatedUnion('action', [
     emergency_contact: text(300),
     emergency_contact_number: text(40),
     emergency_contact_email: text(254),
+    // Optional so an older app version that only syncs the primary keeps working; when sent, it replaces the list.
+    extra_contacts: z.array(ExtraContact).max(10).optional(),
+    step_up: StepUp,
   }),
   strictObject({
     action: z.literal('set_location_consent'),
@@ -110,17 +129,50 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     return ok({ pre_op_checklist: merged });
   }
 
-  // ── Primary emergency contact ──────────────────────────────────────────────
+  // ── Emergency contacts: the primary, and the ranked list after it ─────────
+  // Who M-Care tells in an emergency, so a traveler with the Face ID lock confirms the change first.
   if (data.action === 'set_emergency_contact') {
     const c = await getOwnedCase(base44, data.case_id, email);
     if (!c) return err('Case not found', 404);
+    const gate = await requireFreshPasskey(base44, user, 'change_emergency_contacts', data.step_up);
+    if (!gate.ok) return gate.response;
     const patch = {
       emergency_contact: data.emergency_contact,
       emergency_contact_number: data.emergency_contact_number,
       emergency_contact_email: data.emergency_contact_email,
     };
     await base44.asServiceRole.entities.CaseRecord.update(c.id, patch);
-    return ok(patch);
+
+    // The contacts after the primary (escalateSoloCheckIn's 3h tier tells them all). Replace-all: the list is small
+    // and nothing else points at a row's id. Written as the server; the browser can no longer write these rows.
+    let extras_saved: number | null = null;
+    if (Array.isArray(data.extra_contacts)) {
+      const existing = await base44.asServiceRole.entities.EmergencyContact
+        .filter({ case_id: c.id }, 'priority', 50).catch(() => []);
+      for (const row of existing || []) {
+        await base44.asServiceRole.entities.EmergencyContact.delete(row.id).catch(() => {});
+      }
+      extras_saved = 0;
+      const now = new Date().toISOString();
+      for (const [i, x] of data.extra_contacts.entries()) {
+        try {
+          await base44.asServiceRole.entities.EmergencyContact.create({
+            case_id: c.id,
+            patient_email: email,
+            name: x.name,
+            relationship: x.relationship || '',
+            phone: x.phone,
+            email: x.email || '',
+            priority: i + 2, // the primary always owns priority 1
+            created_at: now,
+          });
+          extras_saved++;
+        } catch (e) {
+          console.error('[updateMyCaseRecord] an extra emergency contact was not saved:', (e as Error)?.message);
+        }
+      }
+    }
+    return ok({ ...patch, extras_saved });
   }
 
   // ── Live location consent: turn on or off ──────────────────────────────────

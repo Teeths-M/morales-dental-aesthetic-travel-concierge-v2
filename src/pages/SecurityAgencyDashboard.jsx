@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Shield, CheckCircle, Clock, AlertCircle, ToggleLeft, ToggleRight, Phone, MapPin, Users, Zap, Star, LogOut, Siren, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { signOutAndClear } from '@/lib/deviceDataCleanup';
 import { useQuery } from '@tanstack/react-query';
 
 const STATUS_CONFIG = {
@@ -187,7 +188,7 @@ export default function SecurityAgencyDashboard() {
           <Button onClick={() => window.location.href = '/security-signup'} className="w-full bg-slate-800 hover:bg-slate-900 text-white">
             Register Now
           </Button>
-          <Button variant="outline" className="w-full mt-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+          <Button variant="outline" className="w-full mt-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => signOutAndClear()}>
             <LogOut className="w-4 h-4 mr-2" /> Logout
           </Button>
         </div>
@@ -223,7 +224,7 @@ export default function SecurityAgencyDashboard() {
                 <Star className="w-3.5 h-3.5" /> Reviews
               </button>
             </Link>
-            <button onClick={() => base44.auth.logout()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors">
+            <button onClick={() => signOutAndClear()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors">
               <LogOut className="w-3.5 h-3.5" /> Logout
             </button>
           </div>

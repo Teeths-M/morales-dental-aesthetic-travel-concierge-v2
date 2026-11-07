@@ -63,8 +63,8 @@ const ALLOWED_EVENT_TYPES = new Set([
   'provider_booking_suspension_cleared',
   'medical_evidence_approved',
   'medical_evidence_rejected',
-  'safety_monitoring_paused',
-  'safety_monitoring_resumed',
+  // safety_monitoring_paused / _resumed are no longer listed: setPrivateMode writes them as the server, after the
+  // pause really happened, so a browser can't log a fake one.
 ]);
 
 async function sha256(text: string): Promise<string> {

@@ -1,7 +1,7 @@
 {
   "name": "EmergencyContact",
   "type": "object",
-  "description": "Ranked, non-primary emergency contacts for a case's safety-alert cascade (priority 2+). The primary contact stays on CaseRecord's emergency_contact/emergency_contact_number/emergency_contact_email fields, unchanged — this entity only ever holds contact #2 and beyond, synced from PersonalEmergencyContactsPanel.jsx and read by escalateSoloCheckIn via shared/emergencyContacts.ts's getOrderedCaseContacts().",
+  "description": "Ranked, non-primary emergency contacts for a case's safety-alert cascade (priority 2+). The primary contact stays on CaseRecord's emergency_contact/emergency_contact_number/emergency_contact_email fields, unchanged — this entity only ever holds contact #2 and beyond, saved by updateMyCaseRecord's set_emergency_contact action (as the server, after a Face ID check when the traveler has the lock on) and read by escalateSoloCheckIn via shared/emergencyContacts.ts's getOrderedCaseContacts(). The traveler can read their own; only the server writes, so nobody can change who is told in an emergency from the browser.",
   "properties": {
     "case_id": {
       "type": "string",
@@ -67,9 +67,6 @@
     "create": {
       "$or": [
         {
-          "data.patient_email": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -84,9 +81,6 @@
     "update": {
       "$or": [
         {
-          "data.patient_email": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -100,9 +94,6 @@
     },
     "delete": {
       "$or": [
-        {
-          "data.patient_email": "{{user.email}}"
-        },
         {
           "user_condition": {
             "role": "admin"

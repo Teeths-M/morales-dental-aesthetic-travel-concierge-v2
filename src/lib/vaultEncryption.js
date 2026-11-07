@@ -9,6 +9,11 @@
  * - Decryption is performed entirely in-browser.
  */
 
+// New vault passwords must be at least this long. A copy saved for offline use can be guessed at on a computer
+// with no limit on tries if someone copies it off a stolen phone, so length is the real protection. Documents
+// encrypted before this keep the password they were made with.
+export const VAULT_PASSWORD_MIN_LENGTH = 10;
+
 const KEY_STORE_PREFIX = 'vault_key_';
 const SALT_STORE_PREFIX = 'vault_salt_';
 

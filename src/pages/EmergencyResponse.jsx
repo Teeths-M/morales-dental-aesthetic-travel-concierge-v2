@@ -11,6 +11,7 @@ import LocationIntegrityCard from '@/components/emergency-incident/LocationInteg
 import RecipientStatusList from '@/components/emergency-incident/RecipientStatusList';
 import TransportPanel from '@/components/emergency-incident/TransportPanel';
 import ClosurePanel from '@/components/emergency-incident/ClosurePanel';
+import { callWithFaceCheck, phoneLockErrorMessage } from '@/lib/phoneLock';
 
 const DESTINATIONS = [
   { label: 'Nearest hospital', detail: 'We confirm which one with you' },
@@ -165,18 +166,21 @@ export default function EmergencyResponse() {
         });
         setNotice('Handed to a coordinator. The incident stays open until they close it.');
       } else {
-        const res = await base44.functions.invoke('resolveEmergencyIncident', {
+        // Standing an alert down switches help off, so with the Face ID lock on it asks for Face ID first. If that
+        // doesn't go through, the alert stays open.
+        const res = await callWithFaceCheck('close_emergency_alert', (step_up) => base44.functions.invoke('resolveEmergencyIncident', {
           incident_id: incident.id,
           action: 'close',
           reason: key,
           notes: note,
-        });
+          ...(step_up ? { step_up } : {}),
+        }));
         const stood = res.data?.stood_down || 0;
         setNotice(`Closed. ${stood > 0 ? `${stood} responder(s) were told to stand down.` : 'No one needed standing down.'}`);
       }
       await load();
     } catch (e) {
-      setNotice(e?.response?.data?.error || 'This could not be closed. Try again, or call the care team.');
+      setNotice(phoneLockErrorMessage(e, 'This could not be closed. Try again, or call the care team.') + ' The alert is still open.');
     } finally {
       setBusy(false);
     }

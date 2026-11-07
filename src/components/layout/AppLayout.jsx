@@ -9,7 +9,9 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
 import OfflineBanner from './OfflineBanner';
 import { useAuth } from '@/lib/AuthContext';
-import BiometricGate from '@/components/security/BiometricGate';
+import PhoneLockScreen from '@/components/security/PhoneLockScreen';
+import { useAppLock } from '@/hooks/useAppLock';
+import { isLockExemptPath } from '@/lib/appLock';
 import GuardianTicker from '@/components/guardian/GuardianTicker';
 import FloatingCheckInAlert from '@/components/solo/FloatingCheckInAlert';
 import GlobalNotificationStack from '@/components/notifications/GlobalNotificationStack';
@@ -47,6 +49,11 @@ export default function AppLayout() {
   useGeoAutoAlign();
   useAgeGateAccountSync(user);
 
+  // The Face ID / fingerprint lock (Phone Lock). Emergency pages never lock; nothing else unmounts while locked, so
+  // check-ins, alerts and offline sync keep running underneath the lock screen.
+  const phoneLock = useAppLock(user);
+  const lockCovers = (phoneLock.locked || phoneLock.checking) && !isLockExemptPath(pathname);
+
   // The landing page and the pilot page are one experience with their own
   // minimal navigation (LandingNav) and slim footer (LandingFooter). The shared
   // Header and Footer stay exactly as they are on every other route. /pilot is
@@ -56,7 +63,7 @@ export default function AppLayout() {
 
   // M-Care's own full-screen app (/m-care, pages/MCareApp.jsx): the chat is the whole page. No site header, footer,
   // tab bar, offline strip or pull-to-refresh, and no second floating M-Care (the page renders its own, always
-  // open). Everything that works in the background stays: the biometric lock, covert SOS, offline sync and the
+  // open). Everything that works in the background stays: the Face ID lock, covert SOS, offline sync and the
   // safety alerts below. /m-care/history (the older screen with past conversations) keeps the normal layout.
   // /m-care/live is the same full-screen app (opened from the companion's voice,
   // type and history controls), so it gets the identical chrome-free treatment.
@@ -175,7 +182,15 @@ export default function AppLayout() {
   }
 
   return (
-    <BiometricGate>
+    <>
+      {lockCovers && (
+        <PhoneLockScreen
+          user={user}
+          credentialIds={phoneLock.credentialIds}
+          checking={!phoneLock.locked && phoneLock.checking}
+          onUnlocked={phoneLock.markUnlocked}
+        />
+      )}
       <CursorSpotlight />
 
       {/* System Pause banner — visible on admin pages, and on the one demo page
@@ -218,7 +233,8 @@ export default function AppLayout() {
                 (M-Care already has real triggerSOS/searchNearbyPlaces tool
                 access), so a redundant floating shortcut duplicating chat
                 capability no longer earns its own screen space. */}
-            <HeartNotificationCenter user={user} />
+            {/* Its toasts can carry message text and sit above the lock screen, so they wait until it's unlocked. */}
+            {!lockCovers && <HeartNotificationCenter user={user} />}
             {user && <GuardianTicker />}
             {user && !isStandaloneMcare && <FloatingCheckInAlert user={user} />}
             {user && <GlobalEventBroadcaster user={user} />}
@@ -229,12 +245,12 @@ export default function AppLayout() {
           </>
         )}
 
-        {/* Proximity nudge — fires when user walks past a saved Nearby POI */}
-        <ProximityWatcher />
+        {/* Proximity nudge — fires when user walks past a saved Nearby POI. Names a place, so not over the lock. */}
+        {!lockCovers && <ProximityWatcher />}
 
         {/* Global notification stack — suppressed on demo pages */}
         {!isDemo && <GlobalNotificationStack />}
       </MSafeThemeScope>
-    </BiometricGate>
+    </>
   );
 }

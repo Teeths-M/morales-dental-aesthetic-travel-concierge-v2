@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
+import { signOutAndClear } from '@/lib/deviceDataCleanup';
 import { validateFile } from '@/lib/validateFile';
 import { UPLOAD_PRESETS } from '@/lib/constants';
 import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert, Heart, Stethoscope, Phone, DollarSign, CheckCircle2 } from 'lucide-react';
@@ -303,7 +304,7 @@ export default function DoctorDashboard() {
               <Link to="/partner-reviews" className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-secondary/20 flex items-center gap-1.5">
                 <Star className="w-4 h-4 text-amber-500" /> My Reviews
               </Link>
-              <button onClick={() => base44.auth.logout()} className="px-4 py-2 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 flex items-center gap-1.5">
+              <button onClick={() => signOutAndClear()} className="px-4 py-2 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 flex items-center gap-1.5">
                 <LogOut className="w-4 h-4" /> Logout
               </button>
             </div>

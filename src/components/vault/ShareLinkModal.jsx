@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Share2, Copy, CheckCircle2, X, Link as LinkIcon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { callWithFaceCheck, phoneLockErrorMessage } from '@/lib/phoneLock';
 
 const PURPOSES = [
   { value: 'embassy',   label: '🏛️ Embassy' },
@@ -48,16 +49,18 @@ export default function ShareLinkModal({ isOpen, vault, onClose }) {
   const handleCreate = async () => {
     setIsCreating(true); setError(null);
     try {
-      const res = await base44.functions.invoke('createSecureShareLink', {
+      // A share link lets the file leave the account, so with the Face ID lock on it asks for Face ID first.
+      const res = await callWithFaceCheck('share_document', (step_up) => base44.functions.invoke('createSecureShareLink', {
         vault_id: vault.id,
         passport_token: vault.passport_token,
         purpose,
         expires_in_hours: expiryHours,
         max_access_count: maxAccess,
-      });
+        ...(step_up ? { step_up } : {}),
+      }));
       setShareUrl(res.data.share_url);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create share link.');
+      setError(phoneLockErrorMessage(err, 'Failed to create share link.'));
     } finally {
       setIsCreating(false);
     }

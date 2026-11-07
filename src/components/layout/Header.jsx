@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { base44 } from '@/api/base44Client';
+import { signOutAndClear } from '@/lib/deviceDataCleanup';
 import { LayoutDashboard, Settings, LogOut, Stethoscope, ClipboardList, HelpCircle, Handshake, House } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import ModeToggle from '@/components/home/ModeToggle';
@@ -109,7 +109,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     setIsUserMenuOpen(false);
-    await base44.auth.logout();
+    await signOutAndClear();
     window.location.reload();
   };
 
@@ -403,7 +403,7 @@ export default function Header() {
                   </Link>
                 )}
                 <button
-                  onClick={async () => { await base44.auth.logout(); setIsMobileOpen(false); window.location.reload(); }}
+                  onClick={async () => { await signOutAndClear(); setIsMobileOpen(false); window.location.reload(); }}
                   className="flex items-center gap-3 min-h-[48px] px-2 rounded-xl text-base font-medium text-left text-red-400/80 hover:bg-red-500/5"
                 >
                   <LogOut className="w-4.5 h-4.5" /> Sign Out

@@ -88,7 +88,7 @@ import { findLastMapOrQrToken } from '@/lib/offlinePrep';
 import { buildFirstOpenGreeting, pickGreetingIndex, readLastGreetingIndex, rememberGreetingIndex, hasChattedOnThisDevice, rememberHasChatted } from '@/lib/firstOpenGreeting';
 import { describeAccuracy } from '@/lib/mapLinks';
 import { isSandboxed } from '@/lib/isSandboxed';
-import { auditService } from '@/lib/services/auditService';
+import { callWithFaceCheck, phoneLockErrorMessage } from '@/lib/phoneLock';
 import { hasActiveSafetyAlert } from '@/lib/safetyGateStatus';
 import CapabilityPill from './msafe-plus/CapabilityPill';
 import LiveSessionBadge from './msafe-plus/LiveSessionBadge';
@@ -796,34 +796,27 @@ export default function MCareOrb({ standalone = false } = {}) {
   useEffect(() => { if (hydratedPrefsRef.current) updatePrefs({ talkMode }); }, [talkMode]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (hydratedPrefsRef.current) updatePrefs({ privateMode }); }, [privateMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Private Mode pauses/resumes the user's active solo check-ins so the
-  // existing runSilentSafetyEscalation engine genuinely stops watching them
-  // (it already skips check-ins whose pause_until is in the future).
+  // Private Mode pauses/resumes the user's own pending solo check-ins, as the server (setPrivateMode), which also
+  // writes the audit entry once the pause really happened. The browser used to pause them itself; since check-ins
+  // became server-write-only that write was refused and swallowed, so nothing was paused. Pausing switches help
+  // off, so with the Face ID lock on it asks for Face ID first; if that check doesn't go through, Private Mode is
+  // switched back off and nothing is paused. Resuming never asks.
   const handlePrivateModeToggle = useCallback(async (paused) => {
     if (!user?.email) return;
     try {
-      if (paused) {
-        const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await base44.entities.SoloCheckIn.updateMany(
-          { user_email: user.email, status: 'pending' },
-          { $set: { pause_until: future } }
-        );
-      } else {
-        await base44.entities.SoloCheckIn.updateMany(
-          { user_email: user.email, status: 'pending' },
-          { $unset: { pause_until: '' } }
-        );
-      }
-      // Hash-chained audit entry, written only once the pause really
-      // happened, so pausing the safety check-ins can always be traced.
-      auditService.log({
-        event_type: paused ? 'safety_monitoring_paused' : 'safety_monitoring_resumed',
-        resource_type: 'User',
-        resource_id: user.id || '',
-        details: paused ? { paused_for_days: 30 } : {},
-      }).catch(() => {});
-    } catch { /* best-effort; the preference flag still reflects the user's intent */ }
-  }, [user]);
+      await callWithFaceCheck('pause_safety_checkins', (step_up) => base44.functions.invoke('setPrivateMode', {
+        paused, ...(step_up ? { step_up } : {}),
+      }));
+    } catch (error) {
+      if (!paused) return; // resuming is best-effort; the check-ins resume on their own schedule anyway
+      setPrivateMode(false);
+      updatePrefs({ privateMode: false });
+      setAgentMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `Private Mode is still off, so your safety check-ins are still running. ${phoneLockErrorMessage(error, "I couldn't pause them just now. Try again in a moment.")}`,
+      }]);
+    }
+  }, [user, updatePrefs]);
 
   // Writes a voice-command action to the tamper-evident audit chain via the
   // existing logAuditEvent function. Best-effort and silent — a failed log

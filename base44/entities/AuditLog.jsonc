@@ -170,7 +170,12 @@
         "rescue_card_replaced",
         "rescue_card_used",
         "checkin_code_set",
-        "checkin_duress_code_used"
+        "checkin_duress_code_used",
+        "phone_lock_enabled",
+        "phone_lock_device_added",
+        "phone_lock_device_removed",
+        "phone_lock_disabled",
+        "phone_lock_reset"
       ]
     },
     "actor_id": {

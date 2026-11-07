@@ -1,0 +1,65 @@
+{
+  "name": "PasskeyChallenge",
+  "type": "object",
+  "description": "A one-time random value the server hands out before a Face ID / fingerprint check (base44/shared/passkeys.ts). The phone signs it, and the server accepts that signature once, within 3 minutes, for the one purpose and action it was issued for. A step-up challenge issued for, say, sharing a document can't be used to turn off Private Mode or the lock. Admin-only: only the server reads or writes these.",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "The traveler it was issued to, lowercased."
+    },
+    "challenge": {
+      "type": "string",
+      "description": "The random value, base64url."
+    },
+    "purpose": {
+      "type": "string",
+      "enum": ["register", "unlock", "step_up"]
+    },
+    "action": {
+      "type": "string",
+      "description": "For a step_up challenge, the one action it unlocks (passkeyRules.ts STEP_UP_ACTIONS)."
+    },
+    "rp_id": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set the first time anyone tries to use it, whether the check passes or not. A used challenge is never accepted again."
+    }
+  },
+  "required": ["user_email", "challenge", "purpose", "rp_id", "origin", "expires_at"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    }
+  }
+}

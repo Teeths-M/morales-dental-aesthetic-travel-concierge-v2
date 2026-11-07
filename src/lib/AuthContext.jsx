@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { ROLES } from '@/lib/constants';
+import { clearPrivateDeviceData } from '@/lib/deviceDataCleanup';
 
 const AuthContext = createContext();
 
@@ -213,6 +214,8 @@ export const AuthProvider = ({ children }) => {
       // session-revocation primitive exists in the SDK, so this is how a still-logged-in
       // device (or a second tab/device) discovers it, next time it checks in.
       if (currentUser?.account_deletion_requested_at) {
+        // The account is gone, so nothing private of it stays on this phone either.
+        clearPrivateDeviceData();
         await logout(false);
         setUser(null);
         setIsAuthenticated(false);

@@ -8,7 +8,8 @@
  *   profile_updated, contact_phone_changed  updateMyProfile
  *   role_changed                            syncTenantRole
  *   guardian_access_granted                 generateGuardianLink
- *   safety_monitoring_paused / _resumed     MCareOrb (Private Mode)
+ *   safety_monitoring_paused / _resumed     setPrivateMode (M-Care's Private Mode)
+ *   phone_lock_*                            managePasskeys (the Face ID lock)
  */
 
 export const ACCOUNT_EVENT_TYPES = [
@@ -18,6 +19,10 @@ export const ACCOUNT_EVENT_TYPES = [
   'guardian_access_granted',
   'safety_monitoring_paused',
   'safety_monitoring_resumed',
+  'phone_lock_enabled',
+  'phone_lock_device_added',
+  'phone_lock_device_removed',
+  'phone_lock_disabled',
 ];
 
 const TEXT = {
@@ -30,6 +35,10 @@ const TEXT = {
     guardian_access_granted_unnamed: 'You shared your journey with a family member',
     safety_monitoring_paused: 'Your safety check-ins were paused',
     safety_monitoring_resumed: 'Your safety check-ins were turned back on',
+    phone_lock_enabled: 'The Face ID lock was turned on',
+    phone_lock_device_added: 'A phone was added to your Face ID lock',
+    phone_lock_device_removed: 'A phone was removed from your Face ID lock',
+    phone_lock_disabled: 'The Face ID lock was turned off',
   },
   es: {
     profile_updated: 'Se cambiaron los datos de tu perfil',
@@ -40,6 +49,10 @@ const TEXT = {
     guardian_access_granted_unnamed: 'Compartiste tu viaje con un familiar',
     safety_monitoring_paused: 'Se pausaron tus controles de seguridad',
     safety_monitoring_resumed: 'Se reactivaron tus controles de seguridad',
+    phone_lock_enabled: 'Se activó el bloqueo con Face ID',
+    phone_lock_device_added: 'Se agregó un teléfono a tu bloqueo con Face ID',
+    phone_lock_device_removed: 'Se quitó un teléfono de tu bloqueo con Face ID',
+    phone_lock_disabled: 'Se desactivó el bloqueo con Face ID',
   },
   fr: {
     profile_updated: 'Les informations de votre profil ont été modifiées',
@@ -50,6 +63,10 @@ const TEXT = {
     guardian_access_granted_unnamed: 'Vous avez partagé votre voyage avec un proche',
     safety_monitoring_paused: 'Vos points de contrôle de sécurité ont été mis en pause',
     safety_monitoring_resumed: 'Vos points de contrôle de sécurité ont été réactivés',
+    phone_lock_enabled: 'Le verrouillage par Face ID a été activé',
+    phone_lock_device_added: 'Un téléphone a été ajouté à votre verrouillage par Face ID',
+    phone_lock_device_removed: 'Un téléphone a été retiré de votre verrouillage par Face ID',
+    phone_lock_disabled: 'Le verrouillage par Face ID a été désactivé',
   },
   pt: {
     profile_updated: 'Os dados do seu perfil foram alterados',
@@ -60,6 +77,10 @@ const TEXT = {
     guardian_access_granted_unnamed: 'Você compartilhou sua viagem com um familiar',
     safety_monitoring_paused: 'Seus check-ins de segurança foram pausados',
     safety_monitoring_resumed: 'Seus check-ins de segurança foram reativados',
+    phone_lock_enabled: 'O bloqueio com Face ID foi ativado',
+    phone_lock_device_added: 'Um telefone foi adicionado ao seu bloqueio com Face ID',
+    phone_lock_device_removed: 'Um telefone foi removido do seu bloqueio com Face ID',
+    phone_lock_disabled: 'O bloqueio com Face ID foi desativado',
   },
 };
 
@@ -99,6 +120,10 @@ export function describeAccountEvent(entry, lang = 'en') {
     case 'contact_phone_changed':
     case 'safety_monitoring_paused':
     case 'safety_monitoring_resumed':
+    case 'phone_lock_enabled':
+    case 'phone_lock_device_added':
+    case 'phone_lock_device_removed':
+    case 'phone_lock_disabled':
       return t[entry.event_type];
     case 'role_changed': {
       const role = Object.prototype.hasOwnProperty.call(roles, details.to) ? roles[details.to] : null;

@@ -43,7 +43,23 @@ Deno.serve(createHandler(async ({ req }) => {
     // narrating a real M-Care moment (trip handshake, recovery check-ins)
     // pass '/mcare-logo.png' so the OS notification visibly matches the same
     // identity the patient already talks to in the chat panel.
-    const payload = JSON.stringify({ title, body, url: url || '/admin', urgent: urgent || false, tag: tag || 'morales', icon });
+    // A traveler with the Face ID lock on (passkeys.ts) gets a plain preview: a phone shows push text on its lock
+    // screen, where anyone holding it can read it. The full message is in M-Care once they unlock.
+    let shownTitle = title;
+    let shownBody = body;
+    const targetEmail = String(user_email || subs[0]?.user_email || '').trim().toLowerCase();
+    if (targetEmail) {
+      const lock = await base44.asServiceRole.entities.PasskeyCredential
+        .filter({ user_email: targetEmail, status: 'active' }, '-created_date', 1)
+        .catch(() => null);
+      // If the lock can't be checked, keep the preview plain rather than risk showing private text.
+      if (lock === null || lock.length) {
+        shownTitle = 'M-Care';
+        shownBody = urgent ? 'Something needs your attention in M-Care.' : 'M-Care has an update for you.';
+      }
+    }
+
+    const payload = JSON.stringify({ title: shownTitle, body: shownBody, url: url || '/admin', urgent: urgent || false, tag: tag || 'morales', icon });
     const results = { sent: [], failed: [] };
 
     for (const sub of subs) {

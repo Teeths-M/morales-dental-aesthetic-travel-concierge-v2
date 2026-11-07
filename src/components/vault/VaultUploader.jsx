@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
-import { encryptFileWithPassword, storeVaultKey } from '@/lib/vaultEncryption';
+import { encryptFileWithPassword, storeVaultKey, VAULT_PASSWORD_MIN_LENGTH } from '@/lib/vaultEncryption';
 import { friendlyError } from '@/lib/friendlyError';
 import { UPLOAD_PRESETS } from '@/lib/constants';
 
@@ -88,8 +88,8 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
     const file = selectedFile || fileRef.current?.files[0];
     if (!file) { setError('Please select a file.'); return; }
 
-    if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!password || password.length < VAULT_PASSWORD_MIN_LENGTH) {
+      setError(`Password must be at least ${VAULT_PASSWORD_MIN_LENGTH} characters. A short phrase is easiest to remember.`);
       return;
     }
 
@@ -439,7 +439,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="Min 6 characters"
+                  placeholder={`At least ${VAULT_PASSWORD_MIN_LENGTH} characters`}
                   className="mt-1.5 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:ring-1 focus:ring-white/20"
                 />
               </div>

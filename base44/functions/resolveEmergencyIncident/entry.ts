@@ -2,6 +2,7 @@ import { createHandler, ok, err } from '../../shared/createHandler.ts';
 import { appendAudit } from '../../shared/incidentEngine.ts';
 import { closureClosesIncident, isValidClosureReason } from '../../shared/emergencyIncident.ts';
 import { standDownMessage, sendRowStandDown, TEMPLATE_STAND_DOWN } from '../../shared/emergencyIncidentNotify.ts';
+import { requireFreshPasskey } from '../../shared/passkeys.ts';
 
 /**
  * resolveEmergencyIncident — closes or hands over, and never deletes.
@@ -67,6 +68,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (!isCareTeam && !owns) return err('You do not have access to this alert.', 403);
 
   const closes = closureClosesIncident(reason);
+
+  // A traveler standing down their own alert switches help off, so with the Face ID lock on they confirm it first.
+  // The care team never needs this. A failed or missing check leaves the alert open: more help, never less.
+  if (closes && !isCareTeam) {
+    const gate = await requireFreshPasskey(base44, user, 'close_emergency_alert', b?.step_up);
+    if (!gate.ok) return gate.response;
+  }
+
   const patch: any = {
     closed_reason: reason,
     closure_notes: b.notes ? String(b.notes).slice(0, 1000) : null,

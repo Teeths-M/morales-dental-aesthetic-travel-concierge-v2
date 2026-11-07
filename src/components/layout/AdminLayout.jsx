@@ -5,7 +5,7 @@ import {
   DollarSign, User, Shield, FileText, CreditCard, AlertTriangle,
   LogOut, ChevronLeft, Globe, ShieldAlert, RefreshCw, Inbox,
 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { signOutAndClear } from '@/lib/deviceDataCleanup';
 import SystemPauseToggle, { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 
 const GOLD   = '#D4AF37';
@@ -139,7 +139,7 @@ function SidebarContent({ location, onClose = null }) {
         </Link>
 
         <button
-          onClick={() => base44.auth.logout()}
+          onClick={() => signOutAndClear()}
           style={{
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '9px 12px', borderRadius: 10, width: '100%',

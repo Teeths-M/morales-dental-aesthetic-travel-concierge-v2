@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
+import { signOutAndClear } from '@/lib/deviceDataCleanup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
@@ -515,7 +516,7 @@ export default function CompanionDashboard() {
             <Button onClick={() => window.location.href = '/companion-signup'}>
               Create Profile
             </Button>
-            <Button variant="outline" className="mt-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+            <Button variant="outline" className="mt-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => signOutAndClear()}>
               <LogOut className="w-4 h-4 mr-2" /> Logout
             </Button>
           </CardContent>
@@ -559,7 +560,7 @@ export default function CompanionDashboard() {
                 </>
               )}
             </Button>
-            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => signOutAndClear()}>
               <LogOut className="w-4 h-4" />
             </Button>
           </div>

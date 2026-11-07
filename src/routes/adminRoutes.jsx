@@ -52,6 +52,7 @@ const AdminIntelligenceReport  = lazy(() => import('@/pages/AdminIntelligenceRep
 const AdminMcareKnowledge      = lazy(() => import('@/pages/AdminMcareKnowledge'));
 const AdminProcedureKnowledge  = lazy(() => import('@/pages/AdminProcedureKnowledge'));
 const AdminVaultDocumentReview = lazy(() => import('@/pages/AdminVaultDocumentReview'));
+const AdminPhoneLock = lazy(() => import('@/pages/AdminPhoneLock'));
 const AdminIncidentEvidence    = lazy(() => import('@/pages/AdminIncidentEvidence'));
 const AdminEvidenceWatch       = lazy(() => import('@/pages/AdminEvidenceWatch'));
 const IncidentConsole           = lazy(() => import('@/pages/IncidentConsole'));
@@ -106,6 +107,7 @@ export const adminRoutes = (
       <Route path="/admin/mcare-knowledge"         element={<ErrorBoundary><AdminMcareKnowledge /></ErrorBoundary>} />
       <Route path="/admin/procedure-knowledge"     element={<ErrorBoundary><AdminProcedureKnowledge /></ErrorBoundary>} />
       <Route path="/admin/vault-document-review"   element={<ErrorBoundary><AdminVaultDocumentReview /></ErrorBoundary>} />
+      <Route path="/admin/phone-lock"              element={<ErrorBoundary><AdminPhoneLock /></ErrorBoundary>} />
       <Route path="/admin/incident-evidence"       element={<ErrorBoundary><AdminIncidentEvidence /></ErrorBoundary>} />
       <Route path="/admin/evidence-watch"          element={<ErrorBoundary><AdminEvidenceWatch /></ErrorBoundary>} />
       <Route path="/admin/incidents"                element={<ErrorBoundary><IncidentConsole /></ErrorBoundary>} />
