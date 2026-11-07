@@ -6,6 +6,7 @@ import '@/index.css'
 import { syncPauseFromServer, isSystemPaused, applyPauseIntercept } from '@/lib/systemPause'
 import { queryClientInstance } from '@/lib/query-client'
 import { installGlobalErrorCapture } from '@/lib/globalErrorCapture'
+import { installUxSignals } from '@/lib/uxSignals'
 import { initInstallPrompt } from '@/lib/installPrompt'
 
 // Chrome offers "install this app" once, early; hold it so /start can show a
@@ -20,17 +21,16 @@ if (SENTRY_DSN && import.meta.env.PROD) {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
+    // No session replay. It would record what patients see on screen
+    // (medical history, safety answers, passport uploads), and replay tools
+    // are the target of active California wiretapping (CIPA) lawsuits.
+    // Decided against for as long as the app handles patient data; a
+    // red-team test keeps it out.
     integrations: [
       Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
     ],
     tracesSampleRate: 0.2, // 20% sampling for free tier
     enableTracing: true,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
     beforeSend(event, hint) {
       if (import.meta.env.DEV) {
         return null;
@@ -59,6 +59,11 @@ if (import.meta.env.PROD && SENTRY_DSN) {
 // environment via addEventListener, which coexists safely with the
 // window.onerror/onunhandledrejection property assignments above.
 installGlobalErrorCapture();
+
+// The breadcrumb trail every incident report carries, plus rage-click
+// reports. It records page changes and which controls were clicked, never
+// text, typed values, or anything else on screen: see src/lib/breadcrumbs.js.
+installUxSignals();
 
 // ── Service Worker Cleanup (Dev Only) ────────────────────────────────────────
 // Must complete BEFORE React mounts — stale SW cache can serve old JS with a

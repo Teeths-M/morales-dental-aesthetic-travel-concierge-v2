@@ -89,13 +89,21 @@ const AUTOMATION_CATEGORIES = [
 ];
 
 const SEVERITIES = ['critical', 'high', 'medium', 'low'] as const;
+
+// Every ReliabilityIncident source except "ux_signal", which is a usability
+// signal such as a rage click, not an error. A red-team test keeps this list
+// in step with the entity's own source list, so no real error is left out.
+const ERROR_SOURCES = [
+  'frontend', 'api', 'database', 'auth', 'payment', 'ai_workflow',
+  'file_upload', 'timeout', 'third_party', 'booking', 'consultation',
+];
 type Severity = (typeof SEVERITIES)[number];
 
 Deno.serve(createHandler(async ({ base44 }) => {
   const sinceIso = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
   const recent = await base44.asServiceRole.entities.ReliabilityIncident
-    .filter({}, '-created_date', 500)
+    .filter({ source: { $in: ERROR_SOURCES } }, '-created_date', 500)
     .catch(() => []);
 
   const rows = Array.isArray(recent) ? recent : [];

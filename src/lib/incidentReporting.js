@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react';
 import { base44 } from '@/api/base44Client';
+import { getBreadcrumbs, redactPath } from '@/lib/breadcrumbs';
 
 const SESSION_KEY = 'morales_incident_session_id';
 
@@ -29,7 +30,7 @@ function getSentryEventId() {
   }
 }
 
-/** Collision-resistant, coordination-free reference ID — not sequential. Mirrors the server-side generator in base44/functions/_shared/incidentReporting.ts. */
+/** Collision-resistant, coordination-free reference ID — not sequential. Mirrors the server-side generator in base44/shared/incidentReporting.ts. */
 export function generateIncidentCode() {
   const year = new Date().getFullYear();
   const timePart = Date.now().toString(36).toUpperCase();
@@ -62,14 +63,17 @@ export function reportIncident({
     severity,
     source,
     feature,
-    page: page || (typeof window !== 'undefined' ? window.location.pathname : undefined),
+    // Private link tokens and record ids in the path become ":id".
+    page: redactPath(page || (typeof window !== 'undefined' ? window.location.pathname : '')),
     session_id: getSessionId(),
     browser: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
     device: detectDevice(),
     error_message: errorMessage,
     stack_trace: stackTrace,
     user_description: userDescription,
-    sentry_event_id: getSentryEventId(),
+    // A rage click isn't an error, so the last Sentry error has nothing to do with it.
+    sentry_event_id: source === 'ux_signal' ? undefined : getSentryEventId(),
+    breadcrumbs: getBreadcrumbs(),
   }).catch(() => {});
 
   return code;

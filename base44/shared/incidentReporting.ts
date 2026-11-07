@@ -17,6 +17,33 @@ import { renderEmail } from './emailTemplate.ts';
 const INCIDENT_CODE_RE = /^M-\d{4}-[0-9a-z]{4,20}$/i;
 const MAX_DESCRIPTION_LENGTH = 2000;
 
+// The breadcrumb trail a frontend report carries (src/lib/breadcrumbs.js).
+// The browser already keeps it free of anything typed or shown on screen;
+// this re-checks its shape, because anyone can call reportIncident directly.
+const BREADCRUMB_KINDS = new Set(['route', 'click', 'rage_click']);
+const MAX_STORED_BREADCRUMBS = 20;
+const MAX_BREADCRUMB_TARGET = 120;
+
+type Breadcrumb = { t?: string; kind: string; target: string };
+
+export function sanitizeBreadcrumbs(raw: unknown): Breadcrumb[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: Breadcrumb[] = [];
+  for (const item of raw.slice(-MAX_STORED_BREADCRUMBS)) {
+    if (!item || typeof item !== 'object') continue;
+    const { t, kind, target } = item as Record<string, unknown>;
+    if (typeof kind !== 'string' || !BREADCRUMB_KINDS.has(kind)) continue;
+    if (typeof target !== 'string' || !target.trim() || target.includes('@')) continue;
+    const crumb: Breadcrumb = {
+      kind,
+      target: target.trim().slice(0, MAX_BREADCRUMB_TARGET).replace(/\d{3,}/g, '#'),
+    };
+    if (typeof t === 'string' && !Number.isNaN(Date.parse(t))) crumb.t = new Date(t).toISOString();
+    out.push(crumb);
+  }
+  return out.length ? out : undefined;
+}
+
 /** Collision-resistant, coordination-free reference ID — not sequential. Mirrors the client-side generator in src/lib/incidentReporting.js. */
 export function generateIncidentCode(): string {
   const year = new Date().getFullYear();
@@ -41,6 +68,7 @@ export interface ReportIncidentInput {
   apiResponse?: string;
   userDescription?: string;
   sentryEventId?: string;
+  breadcrumbs?: unknown;
 }
 
 export async function reportIncident(input: ReportIncidentInput): Promise<{ incident_code: string } | null> {
@@ -84,6 +112,7 @@ export async function reportIncident(input: ReportIncidentInput): Promise<{ inci
       api_response: input.apiResponse || undefined,
       user_description: userDescription,
       sentry_event_id: input.sentryEventId || undefined,
+      breadcrumbs: sanitizeBreadcrumbs(input.breadcrumbs),
     }).catch(() => {});
 
     if (severity === 'critical' || severity === 'high') {

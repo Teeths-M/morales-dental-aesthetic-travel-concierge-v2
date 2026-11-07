@@ -17,6 +17,7 @@
     },
     "source": {
       "type": "string",
+      "description": "Where the incident came from. \"ux_signal\" is not an error: it's a usability signal such as a rage click (src/lib/uxSignals.js), and it never counts in the public System Health numbers.",
       "enum": [
         "frontend",
         "api",
@@ -28,7 +29,8 @@
         "timeout",
         "third_party",
         "booking",
-        "consultation"
+        "consultation",
+        "ux_signal"
       ]
     },
     "feature": {
@@ -71,6 +73,11 @@
     "sentry_event_id": {
       "type": "string",
       "description": "Cross-reference to the matching Sentry event, if Sentry was initialized when this was captured"
+    },
+    "breadcrumbs": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "What the visitor did just before this, oldest first: up to 20 of {t, kind, target}, where kind is route, click, or rage_click. Never field values, typed text, or button text; private link tokens and ids in paths are replaced with :id. Built in src/lib/breadcrumbs.js and re-checked by sanitizeBreadcrumbs in base44/shared/incidentReporting.ts."
     },
     "root_cause": {
       "type": "string",

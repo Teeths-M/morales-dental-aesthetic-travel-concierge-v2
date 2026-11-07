@@ -13,7 +13,7 @@ import { reportIncident } from '../../shared/incidentReporting.ts';
  *
  * Input: { incident_code, severity?, source?, feature?, page?, session_id?,
  *          browser?, device?, error_message?, stack_trace?, api_response?,
- *          user_description?, sentry_event_id? }
+ *          user_description?, sentry_event_id?, breadcrumbs? }
  * Output: { incident_code }
  */
 
@@ -23,7 +23,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const {
     incident_code, severity, source, feature, page, session_id,
     browser, device, error_message, stack_trace, api_response,
-    user_description, sentry_event_id,
+    user_description, sentry_event_id, breadcrumbs,
   } = await body();
 
   if (!incident_code) return err('incident_code is required');
@@ -52,6 +52,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     apiResponse: api_response,
     userDescription: user_description ? String(user_description).slice(0, MAX_DESCRIPTION_LENGTH) : undefined,
     sentryEventId: sentry_event_id,
+    breadcrumbs,
   });
 
   if (!result) return err('Could not record incident');

@@ -8184,3 +8184,78 @@ test('PAYMENT RECEIPTS: the app only reads receipts, and offers the emailed HTML
   expect(panel, 'receipts show on the Documents page that the email and the text link to')
     .toMatch(/<PaymentReceiptsCard \/>/);
 });
+
+// ---- UX signals: the breadcrumb trail on incident reports, and rage-click
+// reports. Uses this file's existing `test`, `expect`, `read`, `ROOT`,
+// `join`, `readdirSync`, and `existsSync` helpers.
+
+const uxStrip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+function uxCodeFiles(dir) {
+  const out = [];
+  for (const entry of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) out.push(...uxCodeFiles(rel));
+    else if (/\.(js|jsx|ts|tsx)$/.test(entry.name)) out.push(rel);
+  }
+  return out;
+}
+
+test('UX SIGNALS: no session-replay tool is installed or configured anywhere in the app', () => {
+  // Session replay records what's on screen. In this app that means medical
+  // history, safety answers and passport uploads, and replay tools are the
+  // target of active California wiretapping (CIPA) lawsuits. Decided against,
+  // permanently, for as long as the app handles patient data in the browser.
+  const REPLAY = /replayIntegration|replaysSessionSampleRate|replaysOnErrorSampleRate|rrweb|@fullstory|fullstory\.com|hotjar|logrocket|clarity\.ms|smartlook|mouseflow/i;
+  const files = [...uxCodeFiles('src'), 'index.html', 'package.json'];
+  for (const file of files) {
+    expect(read(file), `${file} must not set up session replay`).not.toMatch(REPLAY);
+  }
+});
+
+test('UX SIGNALS: breadcrumbs never read what is on screen or typed', () => {
+  for (const file of ['src/lib/breadcrumbs.js', 'src/lib/uxSignals.js', 'src/lib/rageClick.js']) {
+    const src = uxStrip(read(file));
+    expect(src, `${file} must not read element text or field values`)
+      .not.toMatch(/\.(textContent|innerText|innerHTML|outerHTML|value)\b/);
+    expect(src, `${file} must not read labels, titles, alt text, or placeholders`)
+      .not.toMatch(/aria-label|['"]title['"]|['"]alt['"]|placeholder/);
+  }
+  const reporter = uxStrip(read('src/lib/incidentReporting.js'));
+  expect(reporter, 'incident reports must carry the breadcrumb trail').toMatch(/breadcrumbs:\s*getBreadcrumbs\(\)/);
+  expect(reporter, 'the page path on an incident must have private link tokens removed').toMatch(/page:\s*redactPath\(/);
+});
+
+test('UX SIGNALS: a rage click is a quiet usability signal, never an alert or a public error count', () => {
+  const signals = uxStrip(read('src/lib/uxSignals.js'));
+  expect(signals, 'rage clicks must be reported as ux_signal').toMatch(/source:\s*'ux_signal'/);
+  expect(signals, 'rage clicks must be low severity, so they never send an alert email').toMatch(/severity:\s*'low'/);
+  expect(signals, 'rage-click reports must be capped per page load').toMatch(/reports >= MAX_RAGE_REPORTS_PER_PAGE_LOAD/);
+
+  const summary = uxStrip(read('base44/functions/getSystemHealthSummary/entry.ts'));
+  expect(summary, 'the public counts must only include error sources').toMatch(/source:\s*\{\s*\$in:\s*ERROR_SOURCES\s*\}/);
+  expect(summary, 'the public summary must never read the breadcrumb trail').not.toMatch(/\bbreadcrumbs\b/);
+
+  const listMatch = summary.match(/const ERROR_SOURCES = \[([\s\S]*?)\];/);
+  expect(listMatch, 'ERROR_SOURCES must be a plain list').toBeTruthy();
+  const errorSources = [...listMatch[1].matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
+  const entity = JSON.parse(read('base44/entities/ReliabilityIncident.jsonc'));
+  const entitySources = entity.properties.source.enum.filter((s) => s !== 'ux_signal').sort();
+  expect(entity.properties.source.enum, 'the entity must accept ux_signal').toContain('ux_signal');
+  expect(errorSources, 'ERROR_SOURCES must list every source except ux_signal, so no real error is ever left out')
+    .toEqual(entitySources);
+});
+
+test('UX SIGNALS: the server re-checks the breadcrumb trail before storing it', () => {
+  const shared = uxStrip(read('base44/shared/incidentReporting.ts'));
+  expect(shared, 'the create call must store only the sanitized trail').toMatch(/breadcrumbs:\s*sanitizeBreadcrumbs\(input\.breadcrumbs\)/);
+  const start = shared.indexOf('export function sanitizeBreadcrumbs');
+  expect(start, 'sanitizeBreadcrumbs must exist').toBeGreaterThan(-1);
+  const body = shared.slice(start, start + 1400);
+  expect(body, 'it must cap how many crumbs are stored').toMatch(/raw\.slice\(-MAX_STORED_BREADCRUMBS\)/);
+  expect(body, 'it must only accept known kinds').toMatch(/BREADCRUMB_KINDS\.has\(kind\)/);
+  expect(body, 'it must drop anything that looks like an email address').toMatch(/target\.includes\('@'\)/);
+
+  const entry = uxStrip(read('base44/functions/reportIncident/entry.ts'));
+  expect(entry, 'reportIncident must pass the trail through to the shared helper').toMatch(/breadcrumbs,\s*\n\s*\}\);/);
+});
