@@ -82,7 +82,6 @@ const MReconDemo               = lazy(() => import('@/pages/MReconDemo'));
 const McareIntroDemo           = lazy(() => import('@/pages/McareIntroDemo'));
 const SignupLanding            = lazy(() => import('@/pages/SignupLanding'));
 const Pilot                    = lazy(() => import('@/pages/Pilot'));
-const MCareCompanion           = lazy(() => import('@/pages/MCareCompanion'));
 const MCareApp                 = lazy(() => import('@/pages/MCareApp'));
 const JourneyEstimate          = lazy(() => import('@/pages/JourneyEstimate'));
 const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
@@ -121,15 +120,13 @@ export const publicRoutes = (
     {/* Pilot waiting list — the destination of every "Join the pilot" on the
         landing page. Public, one field, writes through joinPilot. */}
     <Route path="/pilot"          element={<ErrorBoundary><Pilot /></ErrorBoundary>} />
-    {/* The standalone M-Care app (mobile): the golden-ring companion as the whole page, nothing of the website
-        behind it. Public like the floating M-Care (a QR scan has no account). */}
-    <Route path="/m-care"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
-    <Route path="/m-safe"         element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
-    {/* The golden-ring companion, kept at its own address so the earlier screen
-        is still reachable rather than silently replaced. */}
-    <Route path="/m-care/companion" element={<ErrorBoundary><MCareCompanion /></ErrorBoundary>} />
-    {/* The live companion itself — the full M-Care app on the same agent, conversation, voice,
-        history and safety flows. /m-care opens it from its voice, type and history controls. */}
+    {/* M-Care's own app: the Living Ring screen (the golden ring, the conversation and only History, Talk and
+        Type) on the real agent, voice and safety flows, as the whole page with nothing of the website behind it.
+        Public like the floating M-Care (a QR scan has no account). /m-care/live is where every ?mcare= link and
+        "Talk to M-Care now" land; the other addresses are older names for the same screen. */}
+    <Route path="/m-care"         element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
+    <Route path="/m-safe"         element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
+    <Route path="/m-care/companion" element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
     <Route path="/m-care/live"    element={<ErrorBoundary><MCareApp /></ErrorBoundary>} />
     <Route path="/deep-perfection" element={<ErrorBoundary><DeepPerfection /></ErrorBoundary>} />
     <Route path="/onboarding"     element={<ErrorBoundary><OnboardingEducation /></ErrorBoundary>} />

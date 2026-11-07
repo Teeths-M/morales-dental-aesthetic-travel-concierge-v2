@@ -112,6 +112,9 @@ import { orbStateLabel } from '@/lib/orbStateLabel';
 import { isMcareQuietRoute, mcareDeepLinkMode } from '@/lib/mcareDeepLink';
 import { mergeTimeline } from '@/lib/chatTimeline';
 import { serverTimeMs } from '@/lib/serverTime';
+import RingScreen, { RingAvatar } from './ring/RingScreen';
+import { sosOutcomeMessage } from '@/lib/livingRing';
+import { queueSos, flushQueuedSos } from '@/lib/sosQueue';
 const AGENT_NAME = 'm_care';
 const GREETING = "I'm M-Safe, your M-Care Super Agent. I'll get you from \"I want a procedure\" to a safely booked, monitored trip — and I'll never rush you past safety. What procedure are you considering, and where would you like to have it?";
 // How long after the first-open greeting is chosen its country sentence may still be added (see firstOpenGreeting).
@@ -167,7 +170,10 @@ const TIPS_KEYS = {
 // ── Main component ────────────────────────────────────────────────────────────
 // standalone: M-Care's own full-screen app (/m-care, pages/MCareApp.jsx). The same panel, always open, as the
 // whole page: no website underneath, no click-outside-to-close, and Close leaves the screen instead of hiding it.
-export default function MCareOrb({ standalone = false } = {}) {
+// variant="ring" (standalone only): the Living Ring screen (ring/RingScreen.jsx). The golden ring is M-Care's face,
+// with only History, Talk and Type; everything real below (the conversation, voice, safety checks) is unchanged.
+export default function MCareOrb({ standalone = false, variant = 'panel' } = {}) {
+  const ringMode = standalone && variant === 'ring';
   const { t, i18n }       = useTranslation();
   const { toast }         = useToast();
   const { user, authChecked } = useAuth();
@@ -302,7 +308,7 @@ export default function MCareOrb({ standalone = false } = {}) {
   // got the laptop layout squeezed into a short card ("LIVE SESSIO / N"), and
   // 1024 is where the site's own Header switches to its phone menu (lg), so
   // M-Safe's menu button now always has a real menu to open below it.
-  const [isDesktopPanel, setIsDesktopPanel] = useState(
+  const [wideScreen, setIsDesktopPanel] = useState(
     () => typeof window !== 'undefined' && window.matchMedia(PANEL_SPLIT_QUERY).matches
   );
   useEffect(() => {
@@ -311,6 +317,14 @@ export default function MCareOrb({ standalone = false } = {}) {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+  // The ring screen is one centred column at every width, built on the phone layout (its keyboard handling, the
+  // night palette, the frosted message box), so it never takes the laptop's two-column layout.
+  const isDesktopPanel = wideScreen && !ringMode;
+  // Ring screen only: the message box is open in place of the three buttons (Type, or Talk where the browser can't
+  // listen); the SOS from a double tap on Talk is being sent; and doneToken moves when a running task succeeds.
+  const [ringTyping, setRingTyping] = useState(false);
+  const [ringSosSending, setRingSosSending] = useState(false);
+  const [ringDoneToken, setRingDoneToken] = useState(0);
 
   // Phone keyboard fit (2026-10-31). The mobile panel used to be a fixed 100dvh, which does not shrink when the
   // on-screen keyboard opens (iOS never resizes the layout for it, Android Chrome no longer does by default), so
@@ -973,6 +987,65 @@ export default function MCareOrb({ standalone = false } = {}) {
     setAgentMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     if (talkMode) speakAncillary(reply, { rate: 0.9 });
   }, [bestLocation, activeCaseRecord, talkMode, user]);
+
+  // The ring screen's SOS: a double tap on Talk, after a 5-second countdown the traveller could cancel. Sends
+  // triggerSOS with the same payload the distress check uses ('police' also builds the packet for a human on call),
+  // and M-Care says only what triggerSOS actually reported back (sosOutcomeMessage). Offline it is saved to the same
+  // queue as the SOS button and sent when the connection returns (the effect below).
+  const sendRingSos = useCallback(async () => {
+    setRingSosSending(true);
+    base44.functions.invoke('logAuditEvent', {
+      event_type: 'mcare_stage_transition',
+      resource_type: 'mcare_ring_sos',
+      details: { signed_in: !!user?.email, online: navigator.onLine },
+    }).catch(() => {});
+    const lat = bestLocation?.latitude ?? undefined;
+    const lng = bestLocation?.longitude ?? undefined;
+    const locationLabel = [bestLocation?.city, bestLocation?.country].filter(Boolean).join(', ');
+    const payload = {
+      trigger_type: 'police',
+      case_id: activeCaseRecord?.id,
+      patient_email: user?.email,
+      patient_name: user?.full_name || activeCaseRecord?.client_name,
+      patient_phone: activeCaseRecord?.client_phone,
+      latitude: lat,
+      longitude: lng,
+      location_label: locationLabel || 'Unknown',
+      destination_country: activeCaseRecord?.procedure_country || bestLocation?.country,
+      is_silent: false,
+    };
+    let outcome;
+    if (!user?.email) {
+      outcome = { signedIn: false };
+    } else if (!navigator.onLine) {
+      queueSos(payload);
+      outcome = { offline: true };
+    } else {
+      try {
+        const res = await base44.functions.invoke('triggerSOS', payload);
+        outcome = { ok: !res?.data?.error, notifications: res?.data?.notifications_sent || [] };
+      } catch (error) {
+        const status = error?.response?.status;
+        if (status === 429) outcome = { rateLimited: true };
+        else if (!status) { queueSos(payload); outcome = { offline: true }; }
+        else outcome = { ok: false };
+      }
+    }
+    const reply = sosOutcomeMessage(outcome);
+    setRingSosSending(false);
+    setAgentMessages(prev => [...prev, { role: 'assistant', content: reply, created_date: new Date().toISOString() }]);
+    if (talkMode) speakAncillary(reply, { rate: 0.9 });
+  }, [bestLocation, activeCaseRecord, talkMode, user]);
+
+  // An SOS saved while offline goes out when the connection returns (the SOS button does the same; the shared queue
+  // never sends one twice).
+  useEffect(() => {
+    if (!ringMode) return undefined;
+    const flush = () => { if (navigator.onLine) flushQueuedSos((p) => base44.functions.invoke('triggerSOS', p)); };
+    window.addEventListener('online', flush);
+    flush();
+    return () => window.removeEventListener('online', flush);
+  }, [ringMode]);
 
   // A confirmed "Yes" on the agent's own narrated surrounding-awareness
   // offer ({{choices:...}} tap, matched on the exact literal choice text in
@@ -1647,9 +1720,10 @@ export default function MCareOrb({ standalone = false } = {}) {
     // Phone and tablet before a conversation (north-star redesign): stay at the
     // top, so the hero and the welcome, or a scanned ad's first sign-up message,
     // are what people see first. Once there's a conversation, follow the newest.
-    if (!isDesktopPanel && agentMessages.length === 0 && pilotMessages.length <= 1) return;
+    // The ring screen has no hero: its conversation always follows the newest.
+    if (!isDesktopPanel && !ringMode && agentMessages.length === 0 && pilotMessages.length <= 1) return;
     scrollChatTo(null);
-  }, [agentMessages, journeyEvents, pilotMessages, isDesktopPanel]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [agentMessages, journeyEvents, pilotMessages, isDesktopPanel, ringMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The keyboard opening makes the conversation shorter; keep the newest message in view, the way a messaging app
   // does (same before-a-conversation exception as above). Sets the list's own scroll position rather than calling
@@ -2052,6 +2126,28 @@ export default function MCareOrb({ standalone = false } = {}) {
   // safety decision. The orb only ever narrates what the deterministic
   // engine already decided.
   const hasActiveAlert = hasActiveSafetyAlert(agentMessages);
+
+  // Ring screen: a tick in the ring's centre when a task that was running finishes with a success status (never for
+  // a failed one). The tool call is looked up again by its id once it stops running, to read its final status.
+  const prevRunningToolRef = useRef(null);
+  const runningToolKey = activeRunningTool ? (activeRunningTool.id || activeRunningTool.name || 'tool') : null;
+  useEffect(() => {
+    const prevKey = prevRunningToolRef.current;
+    prevRunningToolRef.current = runningToolKey;
+    if (!ringMode || !prevKey || prevKey === runningToolKey) return;
+    for (let i = agentMessages.length - 1; i >= 0; i -= 1) {
+      const call = (agentMessages[i]?.tool_calls || []).find(tc => (tc.id || tc.name || 'tool') === prevKey);
+      if (call) {
+        if (['completed', 'success'].includes(String(call.status || '').toLowerCase())) setRingDoneToken(n => n + 1);
+        break;
+      }
+    }
+  }, [runningToolKey, agentMessages, ringMode]);
+
+  // Ring screen: the message box also opens when it gets focus some other way (a keyboard's Tab key).
+  useEffect(() => {
+    if (ringMode && inputFocused) setRingTyping(true);
+  }, [ringMode, inputFocused]);
 
   // The orb's state, highest priority first: offline overrides everything
   // (nothing else is really "live"); an active safety block is the most
@@ -2556,6 +2652,39 @@ export default function MCareOrb({ standalone = false } = {}) {
       return next;
     });
   };
+
+  // The ring screen's Talk button: one tap starts a live voice conversation (Conversational Mode, which also has
+  // M-Care speak its replies), the next tap ends it, voice replies included. A pure toggle, so the double tap for SOS
+  // (RingScreen) can undo the first tap by calling it again. Where the browser can't listen, Talk opens the message
+  // box instead, which has the voice-note mic.
+  const ringTalk = () => {
+    if (!isConversationalModeSupported()) {
+      setRingTyping(true);
+      chatInputRef.current?.focus();
+      return;
+    }
+    setConversationalMode(v => {
+      const next = !v;
+      if (next) {
+        setTalkMode(true);
+      } else {
+        autoResumeConversationalRef.current = false;
+        setTalkMode(false);
+        stopAllSpeech();
+        setRevealState(null);
+      }
+      return next;
+    });
+  };
+  // Type: the message box opens with the cursor in it, during the tap, so a phone brings up its keyboard.
+  const ringType = () => {
+    setRingTyping(true);
+    chatInputRef.current?.focus();
+  };
+  const closeRingTyping = useCallback(() => {
+    setRingTyping(false);
+    chatInputRef.current?.blur();
+  }, []);
 
   // Talk Mode toggle — turning it ON activates BOTH halves of the voice loop:
   //   • voice OUTPUT: M speaks a short confirmation (also unlocks mobile audio
@@ -3179,10 +3308,16 @@ export default function MCareOrb({ standalone = false } = {}) {
   // suggestions — identical in both layouts. The input bar is deliberately
   // NOT part of this block (see inputBarBlock below) so it can render as a
   // single full-width row under the whole 3-column area on desktop.
+  // The ring screen's replies carry a small golden ring instead of the robot: the ring is M-Care's only face there.
+  const ringAvatar = ringMode ? <RingAvatar /> : null;
+  // The line under the ring: what M-Care is really doing right now (orbStateLabel), or that the device is offline.
+  const ringStatus = orbStateLabel(orbState, activeRunningTool?.display_projection?.active_label)
+    || (!isOnline ? { text: "You're offline", tone: 'caution' } : null);
   const chatMain = (
     <>
-      {/* While typing on a phone the journey tracker steps aside too, so the conversation keeps the space. */}
-      {agentMessages.length > 0 && !keyboardOpen && (
+      {/* While typing on a phone the journey tracker steps aside too, so the conversation keeps the space. The ring
+          screen leaves it out: the ring and the line under it say what M-Care is doing. */}
+      {agentMessages.length > 0 && !keyboardOpen && !ringMode && (
         <JourneyStageTracker messages={agentMessages} />
       )}
 
@@ -3195,10 +3330,13 @@ export default function MCareOrb({ standalone = false } = {}) {
       <div ref={chatScrollRef} style={{
         flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: isDesktopPanel ? '14px 14px' : `${heroExpanded ? 4 : 12}px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 22px`,
         display: 'flex', flexDirection: 'column', gap: 12, background: !isDesktopPanel ? 'transparent' : (useDarkTheme ? DARK : LIGHT_BG),
-        // A soft fade where the scrolling content meets the shortcut chips, instead of a hard cut.
-        ...(!isDesktopPanel ? { WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)', maskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)' } : {}),
+        // A soft fade where the scrolling content meets the shortcut chips, instead of a hard cut. On the ring screen
+        // the conversation also fades out at its top, where it flows up under the ring.
+        ...(ringMode
+          ? { WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 36px, #000 calc(100% - 14px), transparent)', maskImage: 'linear-gradient(to bottom, transparent, #000 36px, #000 calc(100% - 14px), transparent)' }
+          : !isDesktopPanel ? { WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)', maskImage: 'linear-gradient(to bottom, #000 calc(100% - 18px), transparent)' } : {}),
       }}>
-        {!isDesktopPanel && heroExpanded && !keyboardOpen && stackedHero}
+        {!isDesktopPanel && heroExpanded && !keyboardOpen && !ringMode && stackedHero}
         {chatEmpty && !agentLoading && (
           <>
             {/* A small decorative "•••" accent above the greeting, echoing
@@ -3262,12 +3400,23 @@ export default function MCareOrb({ standalone = false } = {}) {
                 ))}
               </div>
             )}
+            {/* The ring screen has only History, Talk and Type at the bottom, so its first next steps are offered
+                here, inside the conversation: the same real shortcuts as the phone screen's. */}
+            {ringMode && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {quickChips.slice(0, 3).map(c => (
+                  <button key={c.label} onClick={c.run} className="ms-press ms-chip" style={stackedChipStyle}>
+                    <c.icon style={{ width: 16, height: 16, color: GOLD, flexShrink: 0 }} /> {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         )}
 
         {agentLoading && chatEmpty && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 0 }}>
-            <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />
+            {ringAvatar || <LivingOrb state={orbState} size={28} flashToken={bargeInFlashToken} />}
             <span style={{ fontSize: 12, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontStyle: 'italic' }}>
               {(() => { const fn = user?.full_name?.trim()?.split(/\s+/)[0]; return fn ? `Welcome back, ${fn}.` : 'Ready when you are.'; })()}
             </span>
@@ -3294,7 +3443,7 @@ export default function MCareOrb({ standalone = false } = {}) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <MessageBubble message={m} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" showReaction
+            <MessageBubble message={m} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar avatar={ringAvatar} showMeta showAssistantMeta assistantMetaLabel={ringMode ? 'M-Care' : 'M-Safe'} showReaction
               onChoice={
                 m.__distressConfirm
                   ? (c) => handleDistressConfirm(c, m.__distressConfirm)
@@ -3341,7 +3490,7 @@ export default function MCareOrb({ standalone = false } = {}) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <MessageBubble message={m} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
+            <MessageBubble message={m} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar avatar={ringAvatar} showMeta showAssistantMeta assistantMetaLabel={ringMode ? 'M-Care' : 'M-Safe'} />
             {m.savedLabel && (
               <motion.div
                 role="status"
@@ -3370,7 +3519,7 @@ export default function MCareOrb({ standalone = false } = {}) {
             <div style={{ fontSize: 10, color: useDarkTheme ? TEXT_MUTED_DARK : LIGHT_TEXT_MUTED, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', paddingLeft: 42, marginBottom: 2 }}>
               M-Care checked in
             </div>
-            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar showMeta showAssistantMeta assistantMetaLabel="M-Safe" />
+            <MessageBubble message={{ role: 'assistant', content: e.message_text, created_date: e.created_date }} accent={(isDesktopPanel && !useDarkTheme) ? DESKTOP_LUXURY_USER_GRADIENT : GOLD_GRADIENT} showAvatar avatar={ringAvatar} showMeta showAssistantMeta assistantMetaLabel={ringMode ? 'M-Care' : 'M-Safe'} />
           </motion.div>
           );
         })}
@@ -3382,7 +3531,7 @@ export default function MCareOrb({ standalone = false } = {}) {
             a hardcoded claim about what's specifically being checked (see
             LiveActivityCard.jsx's own header comment). Desktop keeps its
             existing minimal row, completely unchanged. */}
-        {!isDesktopPanel && (
+        {!isDesktopPanel && !ringMode && (
           <LiveActivityCard theme="night" visible={!!(agentSending || activeRunningTool)} orbState={orbState} activeRunningTool={activeRunningTool} />
         )}
         {isDesktopPanel && (agentSending || activeRunningTool) && (
@@ -3444,7 +3593,7 @@ export default function MCareOrb({ standalone = false } = {}) {
           else (Find Doctors, My Journey, Emergency Help, Visa Help, Medical Research, partner sign-up, sign in)
           is one tap away under Services in the bottom bar, which opens this same list. On the narrowest phones
           the lane scrolls, and its edge fades to show it. */}
-      {!isDesktopPanel && !keyboardOpen && (
+      {!isDesktopPanel && !keyboardOpen && !ringMode && (
         <div style={{ position: 'relative', flexShrink: 0, padding: `6px max(14px, calc((100% - ${STACKED_MAX_WIDTH}px) / 2)) 2px` }}>
           {moreChipsOpen && (
             <div id="msafe-services-list" style={{ marginBottom: 8, background: GLASS.cardStrong, backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur, border: `1px solid ${GLASS.edge}`, borderRadius: RADIUS.card, boxShadow: GLASS.shadow, overflow: 'hidden' }}>
@@ -3540,9 +3689,9 @@ export default function MCareOrb({ standalone = false } = {}) {
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
               onPaste={(e) => handleChatPaste(e, { onFile: handleFileSelect, disabled: agentSending || agentUploading, onError: (msg) => toast({ title: 'Paste', description: msg, variant: 'destructive' }) })}
-              placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? 'Uploading…' : 'Message M-Safe…') : t('guide.placeholder_offline')}
+              placeholder={conversationalMode ? 'Listening…' : isOnline ? (agentUploading ? 'Uploading…' : (ringMode ? 'Message M-Care…' : 'Message M-Safe…')) : t('guide.placeholder_offline')}
               enterKeyHint="send"
-              aria-label="Message M-Safe"
+              aria-label={ringMode ? 'Message M-Care' : 'Message M-Safe'}
               className="ms-composer-input"
               // 16px: iPhone zooms the page into any text box smaller than that.
               style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', padding: '10px 6px', fontSize: 16, color: NIGHT.ink, position: 'relative' }}
@@ -3942,6 +4091,33 @@ export default function MCareOrb({ standalone = false } = {}) {
 
               {inputBarBlock}
             </>
+          ) : ringMode ? (
+            // M-Care's own app as the Living Ring (Nov 7): the ring, the conversation flowing up under it, and only
+            // History, Talk and Type. Everything it shows comes from what M-Care is really doing (see RingScreen).
+            <RingScreen
+              orbState={orbState}
+              toolName={activeRunningTool?.name || null}
+              statusText={ringStatus?.text || ''}
+              statusTone={ringStatus?.tone || 'active'}
+              amplitude={speakingAmplitude}
+              hasConversation={!chatEmpty}
+              busy={!!(agentSending || activeRunningTool || speaking || conversationalMode || recordingVoice || agentUploading || inputFocused || hasActiveAlert)}
+              activityKey={`${agentMessages.length}:${pilotMessages.length}:${journeyEvents.length}`}
+              doneToken={ringDoneToken}
+              talkActive={conversationalMode}
+              talkDelayed={!isConversationalModeSupported()}
+              talkHint={isConversationalModeSupported() ? 'Speak naturally to M-Care' : 'Type, or send a voice note'}
+              typing={ringTyping}
+              canCloseTyping={!input.trim() && !recordingVoice && !agentUploading}
+              onCloseTyping={closeRingTyping}
+              onTalk={ringTalk}
+              onType={ringType}
+              onHistory={() => navigate('/m-care/history')}
+              onSos={sendRingSos}
+              sosSending={ringSosSending}
+              conversation={chatMain}
+              composer={stackedComposer}
+            />
           ) : (
             // Phone and tablet, north-star redesign (2026-11-01, Portia's mockup):
             // the visitor's country photo is fixed behind the top of the screen

@@ -65,8 +65,8 @@ export default function AppLayout() {
   // tab bar, offline strip or pull-to-refresh, and no second floating M-Care (the page renders its own, always
   // open). Everything that works in the background stays: the Face ID lock, covert SOS, offline sync and the
   // safety alerts below. /m-care/history (the older screen with past conversations) keeps the normal layout.
-  // /m-care/live is the same full-screen app (opened from the companion's voice,
-  // type and history controls), so it gets the identical chrome-free treatment.
+  // /m-care/live, /m-safe and /m-care/companion are the same full-screen app (the Living Ring screen), so they get the
+  // identical chrome-free treatment.
   const isStandaloneMcare = pathname === '/m-care'
     || pathname === '/m-safe'
     || pathname === '/m-care/live'

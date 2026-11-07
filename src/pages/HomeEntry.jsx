@@ -7,7 +7,7 @@ const Home = lazy(() => import('@/pages/Home'));
  * "/" — the website's home page, except inside the standalone mobile app.
  *
  * Installed on a phone (the native wrapper, or the home-screen app on iOS and
- * Android), the app opens straight on the M-Care companion instead of the
+ * Android), the app opens straight on M-Care's own screen (the Living Ring) instead of the
  * marketing site. Every browser visit, and every other route, is untouched.
  */
 function isStandaloneApp() {

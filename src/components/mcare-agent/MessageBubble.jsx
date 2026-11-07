@@ -761,9 +761,10 @@ function ToolCallDisplay({ toolCall }) {
 // caller renders the bare timestamp exactly as before. showReaction adds
 // a small emoji tapback on the patient's own message when pickMessageReaction()
 // finds a signal worth reacting to (deterministic, client-side only — see
-// src/lib/mcareReactionHeuristic.js, the agent itself never decides this). All
-// optional → default rendering is unchanged.
-export default function MessageBubble({ message, onRespond, accent = null, accentTextColor = null, showAvatar = false, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined, variant = null }) {
+// src/lib/mcareReactionHeuristic.js, the agent itself never decides this). avatar
+// replaces the default robot avatar when showAvatar is on (M-Care's ring screen
+// shows a small golden ring instead). All optional → default rendering is unchanged.
+export default function MessageBubble({ message, onRespond, accent = null, accentTextColor = null, showAvatar = false, avatar = null, showMeta = false, showAssistantMeta = false, assistantMetaLabel = undefined, showReaction = false, onChoice = null, revealUpTo = undefined, extraAudioUrl = undefined, variant = null }) {
   const { i18n } = useTranslation();
   const isUser = message.role === 'user';
   // variant="console" is the dark M-Care demonstration surface. It only
@@ -813,9 +814,7 @@ export default function MessageBubble({ message, onRespond, accent = null, accen
     : (isUser && accent ? { background: accent, ...(accentTextColor ? { color: accentTextColor } : {}) } : undefined);
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'}>
-      {!isUser && showAvatar && (
-        <McareAvatar size={28} />
-      )}
+      {!isUser && showAvatar && (avatar || <McareAvatar size={28} />)}
       <div className={`relative max-w-[85%] rounded-2xl px-4 py-3 ${userBubbleClass}`} style={userBubbleStyle}>
         {/* Gold viewfinder-style corner bracket — ONE span using two border
             segments that trace the bubble's own rounded corner (radius set

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Shield, Ambulance, Car, EyeOff, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { queueSos, flushQueuedSos } from '@/lib/sosQueue';
 
 const SOS_OPTIONS = [
   { id: 'police', label: 'Local Police', desc: 'Report crime or threat', icon: Shield, color: 'text-blue-700 bg-blue-50 border-blue-200', pulse: 'bg-blue-600' },
@@ -47,20 +48,12 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
     setCountdown(null);
   };
 
-  const SOS_QUEUE_KEY = 'morales_sos_offline_queue';
-
-  // On mount: flush any queued offline SOS requests when connectivity is restored
+  // On mount: flush any queued offline SOS requests when connectivity is restored. The queue is shared with M-Care's
+  // ring screen (src/lib/sosQueue.js), which takes it off the device before sending so the two never send one twice.
   useEffect(() => {
     const flushQueue = async () => {
       if (!navigator.onLine) return;
-      try {
-        const queue = JSON.parse(localStorage.getItem(SOS_QUEUE_KEY) || '[]');
-        if (!queue.length) return;
-        for (const payload of queue) {
-          await base44.functions.invoke('triggerSOS', payload);
-        }
-        localStorage.removeItem(SOS_QUEUE_KEY);
-      } catch (_) {}
+      await flushQueuedSos((payload) => base44.functions.invoke('triggerSOS', payload));
     };
     window.addEventListener('online', flushQueue);
     flushQueue(); // also attempt on initial mount
@@ -97,11 +90,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
 
     if (!navigator.onLine) {
       // Queue for later and show confirmation immediately
-      try {
-        const queue = JSON.parse(localStorage.getItem(SOS_QUEUE_KEY) || '[]');
-        queue.push(payload);
-        localStorage.setItem(SOS_QUEUE_KEY, JSON.stringify(queue));
-      } catch (_) {}
+      queueSos(payload);
       setSending(false);
       setSent({ ...option, queued: true });
       setOpen(false);
@@ -113,11 +102,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
       await base44.functions.invoke('triggerSOS', payload);
     } catch (_) {
       // Network failed mid-request — queue it
-      try {
-        const queue = JSON.parse(localStorage.getItem(SOS_QUEUE_KEY) || '[]');
-        queue.push(payload);
-        localStorage.setItem(SOS_QUEUE_KEY, JSON.stringify(queue));
-      } catch (__) {}
+      queueSos(payload);
     }
 
     setSending(false);

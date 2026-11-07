@@ -6994,12 +6994,13 @@ test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focu
   expect(layout).toMatch(/const isStandaloneMcare = pathname === '\/m-care'/);
   expect(layout, 'the layout must not mount its own floating M-Care on /m-care')
     .toMatch(/\{!isDemo && !isStandaloneMcare && <MCareOrb \/>\}/);
-  expect(nsStrip(read('src/pages/MCareApp.jsx'))).toMatch(/<MCareOrb standalone \/>/);
-  // Since 2026-11-03 /m-care is the golden-ring companion and the chat itself lives at /m-care/live. Both stay
-  // public: someone who scans a QR code has no account.
+  expect(nsStrip(read('src/pages/MCareApp.jsx'))).toMatch(/<MCareOrb standalone variant="ring" \/>/);
+  // Since 2026-11-07 /m-care and /m-care/live are both M-Care's own app, the Living Ring screen (the preview companion
+  // with its sample copy is gone). Both stay public: someone who scans a QR code has no account.
   const routes = nsStrip(read('src/routes/publicRoutes.jsx'));
   expect(routes, 'the full-screen chat must be public').toMatch(/path="\/m-care\/live"\s+element=\{<ErrorBoundary><MCareApp \/>/);
-  expect(routes, 'the companion must be public').toMatch(/path="\/m-care"\s+element=\{<ErrorBoundary><MCareCompanion \/>/);
+  expect(routes, '/m-care must be the same public app').toMatch(/path="\/m-care"\s+element=\{<ErrorBoundary><MCareApp \/>/);
+  expect(routes, 'the preview companion is retired').not.toMatch(/MCareCompanion/);
   expect(nsStrip(read('src/lib/mcareDeepLink.js'))).toMatch(/export const MCARE_LIVE_PATH = '\/m-care\/live';/);
 
   const orb = read('src/components/mcare/MCareOrb.jsx');
@@ -7023,10 +7024,51 @@ test('STANDALONE M-CARE: one M-Care at a time, the message box always shows focu
   // the ad tag live there). Never the companion: it has no chat, so a scan landing there never got its sign-up
   // (found 2026-11-06, after /m-care became the companion).
   expect(layout).toMatch(/if \(!isStandaloneMcare && mcareDeepLinkMode\(search\) && !isMcareQuietRoute\(pathname\)\) \{\s*return <Navigate to=\{\{ pathname: MCARE_LIVE_PATH, search \}\} replace \/>;/);
-  // A link straight to /m-care?mcare=… skips that redirect (the companion is a standalone page), so the companion
-  // hands it on itself, before it draws anything.
-  expect(nsStrip(read('src/pages/MCareCompanion.jsx'))).toMatch(/if \(mcareDeepLinkMode\(search\)\) return <Navigate to=\{\{ pathname: MCARE_LIVE_PATH, search \}\} replace \/>;\s*return \(/);
+  // A link straight to /m-care?mcare=… skips that redirect (/m-care is a standalone page): the app there is the chat
+  // itself, which reads the link's mode as it opens.
+  expect(orb).toMatch(/const mode = mcareDeepLinkMode\(search\);/);
   expect(nsStrip(read('src/pages/StartNow.jsx')), '/start\'s "Talk to M-Care now" opens the chat').toMatch(/title="Talk to M-Care now"[^\n]*navigate\(MCARE_LIVE_PATH\)/);
+});
+
+// ---- The Living Ring (2026-11-07): M-Care's own app is one screen, the golden ring plus History, Talk and Type. A
+// double tap on Talk sends an SOS after a 5-second countdown, so the send must only ever come from that countdown
+// running out, the reply must only claim what triggerSOS reported, and the ring must only show real states.
+test('LIVING RING: the SOS is sent only when the countdown runs out, says only what really happened, and the ring invents nothing', () => {
+  const code = (p) => read(p).replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/^\s*\/\/.*$/gm, '');
+  const ring = code('src/components/mcare/ring/RingScreen.jsx');
+  // The screen only lays things out: it never calls the backend itself.
+  expect(ring).not.toMatch(/base44/);
+  // onSos is called in exactly one place, when the countdown reaches zero.
+  expect(ring.match(/onSos\?\.\(\)/g) || []).toHaveLength(1);
+  expect(ring).toMatch(/if \(sosCount <= 0\) \{\s*setSosCount\(null\);\s*onSos\?\.\(\);/);
+  // Each tap on Talk calls the toggle exactly once, so the second tap of a double tap undoes the first (calling it
+  // twice on the second tap left the microphone on during the countdown: found in the browser check, Nov 7).
+  expect(ring).toMatch(/onTalk\?\.\(\);\s*if \(kind === 'double'\) startSosCountdown\(\);/);
+  // A tap anywhere during the countdown lands on the see-through cancel layer, so it cancels and does nothing else.
+  expect(ring).toMatch(/aria-label=\{`Cancel SOS\. Sending help in \$\{sosCount\} seconds`\}\s*onClick=\{cancelSos\}/);
+  // The ring's centre and state come from the shared rules, never a state of its own.
+  expect(ring).toMatch(/const center = sosActive \? 'sos' : ringCenterFor\(\{ orbState, toolName, justCompleted \}\);/);
+
+  const orb = code('src/components/mcare/MCareOrb.jsx');
+  const sos = orb.slice(orb.indexOf('const sendRingSos = useCallback'), orb.indexOf('const sendRingSos = useCallback') + 2600);
+  expect(sos).toMatch(/trigger_type: 'police'/);
+  expect(sos, 'the reply is built only from what triggerSOS reported').toMatch(/const reply = sosOutcomeMessage\(outcome\);/);
+  expect(sos).toMatch(/notifications: res\?\.data\?\.notifications_sent \|\| \[\]/);
+  // Signed out, triggerSOS can't be sent at all: M-Care says so rather than pretending.
+  expect(sos).toMatch(/if \(!user\?\.email\) \{\s*outcome = \{ signedIn: false \};/);
+  // Offline it is saved to the same queue as the SOS button, which never sends one twice.
+  expect(sos).toMatch(/queueSos\(payload\)/);
+  const sosButton = code('src/components/emergency/SOSDropdown.jsx');
+  expect(sosButton).toMatch(/flushQueuedSos\(/);
+  expect(sosButton, 'the SOS button uses the shared queue, not its own copy').not.toMatch(/localStorage\.(get|set|remove)Item\(SOS_QUEUE_KEY/);
+  const queue = code('src/lib/sosQueue.js');
+  expect(queue).toMatch(/export const SOS_QUEUE_KEY = 'morales_sos_offline_queue';/);
+  expect(queue, 'a flush takes the queue off the device before sending').toMatch(/const queue = takeQueuedSos\(storage\);/);
+
+  // The tick in the ring only follows a task that finished with a success status.
+  expect(orb).toMatch(/if \(\['completed', 'success'\]\.includes\(String\(call\.status \|\| ''\)\.toLowerCase\(\)\)\) setRingDoneToken/);
+  // The ring screen is only ever the standalone app, never the panel that opens over the website.
+  expect(orb).toMatch(/const ringMode = standalone && variant === 'ring';/);
 });
 
 test('CHAT ORDER: M-Care draws one timeline in the order things happened, and reads backend times as UTC', () => {

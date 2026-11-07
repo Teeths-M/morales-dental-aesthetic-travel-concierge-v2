@@ -3,12 +3,13 @@ import MCareOrb from '@/components/mcare/MCareOrb';
 import { NIGHT } from '@/components/mcare/panelPalette';
 
 /**
- * MCareApp (/m-care): M-Care's own full-screen app.
+ * MCareApp (/m-care, /m-care/live): M-Care's own full-screen app, the Living Ring screen.
  *
  * It is the same M-Care panel that opens over every other page (MCareOrb), so it runs on the same agent, the same
- * conversation, voice and Talk Mode, attachments, location sharing and safety flows. Here it is the whole page:
- * always open, nothing of the website rendered behind it (AppLayout leaves out the site's header, footer, tab bar
- * and its own floating M-Care on this path), and Close goes back to where the visitor came from.
+ * conversation, voice and Talk Mode, attachments, location sharing and safety flows. Here it is the whole page as
+ * the ring screen (variant="ring", see components/mcare/ring/RingScreen.jsx): the golden ring is M-Care's face, with
+ * only History, Talk and Type. Nothing of the website is rendered behind it (AppLayout leaves out the site's header,
+ * footer, tab bar and its own floating M-Care on these paths).
  */
 export default function MCareApp() {
   // The browser tab and a home-screen install read "M-Care", and the page under the panel is the app's navy, so an
@@ -27,5 +28,5 @@ export default function MCareApp() {
     };
   }, []);
 
-  return <MCareOrb standalone />;
+  return <MCareOrb standalone variant="ring" />;
 }
