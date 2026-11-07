@@ -12,7 +12,7 @@
 
 export interface Tier2PacketInput {
   case_id?: string | null;
-  source_function: 'triggerSOS' | 'escalateSoloCheckIn';
+  source_function: 'triggerSOS' | 'escalateSoloCheckIn' | 'rescueCard';
   source_event_id?: string;
   trigger_type: string;
   patient_email: string;

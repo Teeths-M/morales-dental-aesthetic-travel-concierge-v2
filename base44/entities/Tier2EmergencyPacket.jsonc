@@ -10,7 +10,8 @@
       "type": "string",
       "enum": [
         "triggerSOS",
-        "escalateSoloCheckIn"
+        "escalateSoloCheckIn",
+        "rescueCard"
       ]
     },
     "source_event_id": {

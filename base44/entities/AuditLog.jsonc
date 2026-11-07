@@ -165,7 +165,10 @@
         "trip_resumed",
         "trip_timings_recalculated",
         "violation_scrubbed",
-        "walkie_talkie_session_ended"
+        "walkie_talkie_session_ended",
+        "rescue_card_created",
+        "rescue_card_replaced",
+        "rescue_card_used"
       ]
     },
     "actor_id": {

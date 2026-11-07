@@ -24,7 +24,9 @@
         "urgent_pickup",
         "silent_sos",
         "panic_call_simulation",
-        "manual"
+        "manual",
+        "wilderness_injury",
+        "covert_gesture"
       ],
       "default": "manual"
     },
@@ -44,7 +46,8 @@
         "dispatched",
         "acknowledged",
         "resolved",
-        "false_alarm"
+        "false_alarm",
+        "dispatching"
       ],
       "default": "triggered"
     },

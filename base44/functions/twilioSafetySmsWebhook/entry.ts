@@ -10,17 +10,46 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHmac } from 'node:crypto';
+import { alertContactsOfSosText, findActiveCaseForSender, handleRescueSms } from '../../shared/rescueCardFlow.ts';
+import { sameStoredPhone } from '../../shared/phoneMatch.ts';
+import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
+import { generateIncidentCode, reportIncident } from '../../shared/incidentReporting.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Escaped, since a reply can now carry characters XML reserves. An empty
+// message sends no reply at all (after a STOP).
 function twimlReply(message) {
+  const safe = String(message || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${message}</Message></Response>`,
+    `<?xml version="1.0" encoding="UTF-8"?><Response>${safe ? `<Message>${safe}</Message>` : ''}</Response>`,
     { status: 200, headers: { 'Content-Type': 'application/xml' } }
   );
+}
+
+// An SOS text that reached nobody must not fail quietly.
+async function reportUnheardSos(base44, kind) {
+  await Promise.race([
+    reportIncident({
+      base44,
+      incidentCode: generateIncidentCode(),
+      severity: 'critical',
+      source: 'api',
+      feature: 'twilioSafetySmsWebhook',
+      errorMessage: `A ${kind} text reached nobody: the care team email failed or ADMIN_EMAIL is not set, and no emergency contact could be reached.`,
+    }),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]).catch(() => {});
+}
+
+// What the traveler sees in M-Care about their own SOS text, true either way.
+function sosJourneyLine(careTeamTold, familyReached) {
+  if (familyReached > 0) return 'We received your SOS text. Our safety team and your emergency contacts have been alerted.';
+  if (careTeamTold) return 'We received your SOS text and alerted our safety team.';
+  return "We received your SOS text, but couldn't reach anyone yet. Please call your local emergency number.";
 }
 
 // M PRINCIPLE — this webhook can mark an active safety escalation "acknowledged"
@@ -105,8 +134,21 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.SoloCheckIn.filter({ user_phone: from, status: 'escalated_3h' }, '-scheduled_time', 5),
     ]);
 
-    const allCheckIns = [...pending, ...esc2h, ...esc3h]
+    let allCheckIns = [...pending, ...esc2h, ...esc3h]
       .sort((a, b) => new Date(b.scheduled_time) - new Date(a.scheduled_time));
+    // The number on a check-in is saved as the traveler typed it
+    // ("868-555-0142"), but Twilio always sends +18685550142, so an exact
+    // match missed every number typed any other way. Compare digits instead.
+    if (allCheckIns.length === 0) {
+      const [p2, e2, e3] = await Promise.all([
+        base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'pending' }, '-scheduled_time', 200).catch(() => []),
+        base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'escalated_2h' }, '-scheduled_time', 200).catch(() => []),
+        base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'escalated_3h' }, '-scheduled_time', 200).catch(() => []),
+      ]);
+      allCheckIns = [...p2, ...e2, ...e3]
+        .filter((c) => sameStoredPhone(c.user_phone, from))
+        .sort((a, b) => new Date(b.scheduled_time) - new Date(a.scheduled_time));
+    }
     const checkIn = allCheckIns[0] || null;
 
     // ── MORALES SOS packet (wilderness offline SOS) ──────────────────────────
@@ -137,9 +179,17 @@ Deno.serve(async (req) => {
 
       await logEntry('received_sos', `MORALES SOS packet: ${packetId} | coords valid: ${validCoords}`, '');
 
+      // Tie the packet to the traveler's trip, so their family is told and
+      // their guardian page shows it. It used to be saved with no trip.
+      const sosCase = await findActiveCaseForSender(base44, from, caseRef).catch(() => null);
+
       // Create SOSEvent
       const sosEventData = {
-        patient_email: from, // phone as fallback — admin will link
+        // The traveler's own email once their trip is found; otherwise the
+        // phone, for the care team to link by hand.
+        patient_email: sosCase?.client_email || from,
+        patient_name: sosCase?.client_name || undefined,
+        case_id: sosCase?.id || undefined,
         patient_phone: from,
         trigger_type: 'wilderness_injury',
         status: 'triggered',
@@ -160,7 +210,8 @@ Deno.serve(async (req) => {
       if (validCoords) {
         try {
           await base44.asServiceRole.entities.LocationBreadcrumb.create({
-            patient_email: from,
+            case_id: sosCase?.id || '',
+            patient_email: sosCase?.client_email || from,
             latitude, longitude,
             accuracy_meters: accuracy,
             source: 'checkin_handshake',
@@ -175,6 +226,7 @@ Deno.serve(async (req) => {
 
       // Notify admin
       const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+      let wildernessCareTeamTold = false;
       if (adminEmail) {
         try {
           const mapsLink = validCoords
@@ -201,10 +253,48 @@ Deno.serve(async (req) => {
               </div>
             </div>`,
           });
+          wildernessCareTeamTold = true;
         } catch (_) {}
       }
 
-      return twimlReply('M-Care SOS received. Rescue escalation started. Stay where you are if safe. Help is being dispatched.');
+      // The traveler's own people too, not only the care team inbox.
+      let wildernessFamilyReached = 0;
+      if (sosCase) {
+        wildernessFamilyReached = await alertContactsOfSosText(base44, sosCase, {
+          latitude: validCoords ? latitude : null,
+          longitude: validCoords ? longitude : null,
+        }).catch(() => 0);
+        await logJourneyEvent(base44, {
+          case_id: sosCase.id,
+          client_email: sosCase.client_email,
+          event_type: 'sos_text_received',
+          source: 'twilioSafetySmsWebhook',
+          message_text: sosJourneyLine(wildernessCareTeamTold, wildernessFamilyReached),
+          priority: 'critical',
+          action_taken: `wilderness SOS text; family reached=${wildernessFamilyReached}`,
+          escalation_occurred: true,
+        });
+      }
+
+      // Say only what really happened.
+      if (!wildernessCareTeamTold && wildernessFamilyReached === 0) {
+        await reportUnheardSos(base44, 'wilderness SOS');
+        return twimlReply('M-Care SOS received, but we could not reach our safety team. Call your local emergency number now.');
+      }
+      return twimlReply('M-Care SOS received. Our safety team has been alerted. Stay where you are if it is safe.');
+    }
+
+    // ── Rescue card: someone helping a traveler whose phone is dead ─────────
+    // A stranger texts the code from the traveler's printed card, or answers
+    // M-Care's questions. rescueCardFlow.ts alerts the traveler's people and
+    // writes the reply. It never touches the check-in below.
+    const rescueReply = await handleRescueSms(base44, { from, body: rawBody, now }).catch((e) => {
+      console.error('[twilioSafetySmsWebhook] rescue handling failed:', e);
+      return null;
+    });
+    if (rescueReply !== null) {
+      await logEntry('rescue_card_message', 'Rescue card text', '');
+      return twimlReply(rescueReply);
     }
 
     // Parse command
@@ -221,7 +311,10 @@ Deno.serve(async (req) => {
 
     // ── SOS / HELP ────────────────────────────────────────────────────────────
     if (isSOS) {
-      const caseId = checkIn?.case_id || '';
+      // With no check-in, find the traveler's trip from their number, so the
+      // SOS is linked to it and their family can be told.
+      const sosCase = checkIn ? null : await findActiveCaseForSender(base44, from).catch(() => null);
+      const caseId = checkIn?.case_id || sosCase?.id || '';
       await logEntry(
         'received_sos',
         isCovertKeyword ? 'COVERT SOS received via SMS (MORALESHELP)' : 'SOS received via SMS',
@@ -231,8 +324,8 @@ Deno.serve(async (req) => {
       // Create SOSEvent immediately
       try {
         if (caseId) {
-          const patientEmail = checkIn?.user_email || from;
-          const patientName = checkIn?.user_name || from;
+          const patientEmail = checkIn?.user_email || sosCase?.client_email || from;
+          const patientName = checkIn?.user_name || sosCase?.client_name || from;
           await base44.asServiceRole.entities.SOSEvent.create({
             case_id: caseId,
             patient_email: patientEmail,
@@ -249,6 +342,7 @@ Deno.serve(async (req) => {
 
       // Notify admin
       const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+      let sosCareTeamTold = false;
       if (adminEmail) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
@@ -257,6 +351,7 @@ Deno.serve(async (req) => {
             subject: `🆘 SOS received via SMS from ${from}`,
             body: `<p><strong>SOS / HELP received via inbound SMS.</strong></p><p>Phone: ${from}</p><p>Case ID: ${caseId || 'Unknown'}</p><p>Time: ${now}</p><p>Immediate human intervention required.</p>`,
           });
+          sosCareTeamTold = true;
         } catch (_) {}
       }
 
@@ -272,9 +367,33 @@ Deno.serve(async (req) => {
       // is that the patient may be under observation, so an explicit "SOS
       // received / help dispatched" on their lock screen could put them in
       // more danger. Escalation above is identical either way.
-      return twimlReply(isCovertKeyword
-        ? 'Thanks for your message. Your M-Care account is up to date.'
-        : 'SOS received. M-Care emergency team has been alerted. Stay where you are. Help is being dispatched.');
+      // With no check-in, the check-in ladder isn't handling this, so the
+      // traveler's own people are told now too.
+      let sosFamilyReached = 0;
+      if (!checkIn && sosCase) {
+        sosFamilyReached = await alertContactsOfSosText(base44, sosCase, {}).catch(() => 0);
+        await logJourneyEvent(base44, {
+          case_id: sosCase.id,
+          client_email: sosCase.client_email,
+          event_type: 'sos_text_received',
+          source: 'twilioSafetySmsWebhook',
+          message_text: sosJourneyLine(sosCareTeamTold, sosFamilyReached),
+          priority: 'critical',
+          action_taken: `SOS text with no check-in; family reached=${sosFamilyReached}`,
+          escalation_occurred: true,
+        });
+      }
+
+      // Say only what really happened. With a check-in, the security step
+      // above really does send help.
+      const anyoneTold = !!checkIn || sosCareTeamTold || sosFamilyReached > 0;
+      if (!anyoneTold) await reportUnheardSos(base44, isCovertKeyword ? 'covert SOS' : 'SOS');
+      if (isCovertKeyword) return twimlReply('Thanks for your message. Your M-Care account is up to date.');
+      if (checkIn) return twimlReply('SOS received. M-Care emergency team has been alerted. Stay where you are. Help is being dispatched.');
+      if (anyoneTold) {
+        return twimlReply('SOS received. The M-Care safety team has been alerted. If you are in danger, call your local emergency number now.');
+      }
+      return twimlReply('SOS received, but we could not reach our safety team. Call your local emergency number now.');
     }
 
     // ── SAFE / CHECKIN ────────────────────────────────────────────────────────

@@ -51,7 +51,9 @@
         "partner_quote_confirmed",
         "emergency_packet_assembled",
         "emergency_human_response_requested",
-        "proactive_brief"
+        "proactive_brief",
+        "rescue_card_used",
+        "sos_text_received"
       ]
     },
     "source": {

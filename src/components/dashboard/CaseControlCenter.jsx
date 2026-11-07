@@ -60,7 +60,7 @@ function RiskSummarySection({ caseId, c }) {
       </div>
       {isLoading ? (
         <p style={{ color: c.sub, fontSize: 12, marginTop: 8 }}>Checking...</p>
-      ) : !data || data.risk_items.length === 0 ? (
+      ) : !Array.isArray(data?.risk_items) || data.risk_items.length === 0 ? (
         <p style={{ color: c.sub, fontSize: 12, marginTop: 8 }}>Nothing to check yet.</p>
       ) : (
         <div>

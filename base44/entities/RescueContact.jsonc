@@ -1,0 +1,107 @@
+{
+  "name": "RescueContact",
+  "type": "object",
+  "description": "One person helping a traveler through their rescue card, by text: what they reported and the messages exchanged (rescueCardFlow.ts). Admin-only. The traveler's guardian page shows what the helper reported through getGuardianViewData, and shows the helper's own number only if the helper agreed to be called.",
+  "properties": {
+    "rescue_card_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The trip whose people were alerted."
+    },
+    "client_email": {
+      "type": "string",
+      "description": "The traveler being helped."
+    },
+    "helper_phone": {
+      "type": "string",
+      "description": "The helper's number, as Twilio reports it. Never shown to the traveler's family unless callback_consent is true."
+    },
+    "channel": {
+      "type": "string",
+      "enum": ["sms"],
+      "default": "sms"
+    },
+    "language": {
+      "type": "string",
+      "description": "The language the helper's replies were written in, besides English."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "closed", "opted_out"],
+      "default": "open",
+      "description": "open: the helper's texts are treated as part of this rescue for 24 hours after their last one. closed: set by the care team. opted_out: the helper texted STOP, so M-Care stopped texting them."
+    },
+    "step": {
+      "type": "string",
+      "enum": ["awaiting_location", "awaiting_awake", "awaiting_callback", "done"],
+      "description": "The question the helper was last asked."
+    },
+    "reported_location": {
+      "type": "string",
+      "description": "Where the helper says the traveler is, in their own words."
+    },
+    "reported_awake": {
+      "type": "string",
+      "enum": ["yes", "no", "unclear"],
+      "description": "Whether the helper says the traveler is awake and able to talk."
+    },
+    "callback_consent": {
+      "type": "boolean",
+      "description": "True only when the helper answered yes to the traveler's family calling them."
+    },
+    "messages": {
+      "type": "array",
+      "description": "The conversation, newest last, capped at the last 40 messages.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "from": { "type": "string", "enum": ["helper", "morales"] },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "alerts": {
+      "type": "object",
+      "description": "Who was reached when the rescue opened."
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_message_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["rescue_card_id", "client_email", "helper_phone", "status", "opened_at"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "platform_admin" }
+    }
+  }
+}

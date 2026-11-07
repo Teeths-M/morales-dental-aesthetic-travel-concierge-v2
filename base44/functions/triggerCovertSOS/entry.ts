@@ -102,17 +102,21 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   // ── 2. Create/update SOS record — skip standard escalation chain,
   //       jump straight to Strike 3 (security dispatch + guardian) ───────────
+  // SOSEvent's own field names. This used gps_lat/gps_lng and other fields
+  // the entity doesn't have, with a type it didn't list, so the record was
+  // never saved. The audit entry above keeps the trigger method and accuracy.
   await base44.asServiceRole.entities.SOSEvent.create({
-    case_id:        resolvedCaseId || '',
-    patient_email:  user?.email || '',
-    patient_name:   patientName,
-    trigger_type:   'covert_gesture',
-    trigger_method,
-    status:         'dispatching',
-    strike:         3,
-    gps_lat,   gps_lng,  accuracy_m,
-    destination,
-    triggered_at:   now,
+    case_id:          resolvedCaseId || '',
+    patient_email:    user?.email || '',
+    patient_name:     patientName,
+    trigger_type:     'covert_gesture',
+    status:           'dispatching',
+    escalation_level: 3,
+    is_silent:        true,
+    latitude:         gps_lat ?? null,
+    longitude:        gps_lng ?? null,
+    location_label:   destination,
+    triggered_at:     now,
   }).catch(() => {});
 
   // ── 3. LiveLocation — real-time position for the guardian view ───────────

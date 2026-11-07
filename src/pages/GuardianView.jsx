@@ -328,7 +328,9 @@ export default function GuardianView() {
     </div>
   );
 
-  const { session, case: caseData, latest_location: loc, location_trail: locationTrail, escalation, wilderness_sos: wildernessSOS, trip_progress: tripProgress, contacts } = data;
+  const { session, case: caseData, latest_location: loc, location_trail: locationTrail, escalation, wilderness_sos: wildernessSOS, trip_progress: tripProgress, contacts, rescue_contacts: rescueContacts } = data;
+  // Someone helping the traveler through their rescue card: never show "safe" over that.
+  const activeRescue = (rescueContacts || []).some((r) => r.status === 'open');
 
   // Build polyline positions from breadcrumb trail (oldest → newest)
   const trailPositions = (locationTrail || []).map(p => [p.lat, p.lng]);
@@ -377,7 +379,7 @@ export default function GuardianView() {
       {/* Suppressed when signal is >15 min stale — do not falsely reassure family
           when the last known position could be minutes or hours out of date.
           An amber "signal lost" warning replaces it instead. */}
-      {!wildernessSOS && !escalation && !isStaleAlert && (
+      {!wildernessSOS && !escalation && !activeRescue && !isStaleAlert && (
         <div style={{
           background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.08))',
           borderBottom: '1px solid rgba(34,197,94,0.3)',
@@ -402,7 +404,7 @@ export default function GuardianView() {
       )}
       {/* Signal-loss banner — replaces the SAFE banner when location is dark >15 min.
           Shows last known position clearly labeled; never claims current safety. */}
-      {!wildernessSOS && !escalation && isStaleAlert && (
+      {!wildernessSOS && !escalation && !activeRescue && isStaleAlert && (
         <div style={{
           background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.06))',
           borderBottom: '1px solid rgba(245,158,11,0.35)',
@@ -432,6 +434,53 @@ export default function GuardianView() {
             isComplete={tripProgress.trip_phase === 'completed'}
           />
         )}
+
+        {/* Rescue card — someone helping this traveler texted their card's code */}
+        {(rescueContacts || []).map((rc) => (
+          <div key={rc.id} className="rounded-2xl border-2 border-red-500 bg-red-900/50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className={`w-6 h-6 text-red-400 flex-shrink-0 mt-0.5 ${rc.status === 'open' ? 'animate-pulse' : ''}`} />
+              <div className="flex-1 text-sm">
+                <p className="font-black text-white uppercase tracking-wide">Someone with {session.patient_name} asked for help</p>
+                <p className="text-red-300 text-xs mt-1">
+                  They used {session.patient_name}'s rescue card to text M-Care. The M-Care safety team has been told.
+                </p>
+                {rc.opened_at && (
+                  <p className="text-red-400 text-xs mt-0.5">
+                    First message: {new Date(rc.opened_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                )}
+                <div className="mt-2 space-y-1 text-xs">
+                  <p><span className="text-slate-400">Where they say {session.patient_name} is: </span>
+                    <span className="text-white font-semibold">{rc.reported_location || 'Not answered yet'}</span></p>
+                  <p><span className="text-slate-400">Awake and able to talk: </span>
+                    <span className="text-white font-semibold">
+                      {rc.reported_awake === 'yes' ? 'Yes' : rc.reported_awake === 'no' ? 'No' : rc.reported_awake === 'unclear' ? 'Unclear, see their message' : 'Not answered yet'}
+                    </span></p>
+                  {rc.latest_helper_message && (
+                    <p><span className="text-slate-400">Their latest message: </span>
+                      <span className="text-white">"{rc.latest_helper_message}"</span></p>
+                  )}
+                </div>
+                {rc.helper_phone ? (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <a href={`tel:${rc.helper_phone}`}
+                      className="inline-flex items-center gap-1.5 text-xs bg-red-800/50 border border-red-600/50 text-red-100 px-3 py-1.5 rounded-lg hover:bg-red-700/50">
+                      <Phone className="w-3.5 h-3.5" /> Call the helper
+                    </a>
+                    <a href={`sms:${rc.helper_phone}`}
+                      className="inline-flex items-center gap-1.5 text-xs bg-slate-800/60 border border-slate-600/50 text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-700/60">
+                      <MessageSquare className="w-3.5 h-3.5" /> Text the helper
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-slate-400 text-xs mt-2">The helper hasn't agreed to share their number.</p>
+                )}
+                {rc.status !== 'open' && <p className="text-slate-500 text-xs mt-2">This conversation has ended.</p>}
+              </div>
+            </div>
+          </div>
+        ))}
 
         {/* Wilderness SOS banner */}
         {wildernessSOS && (
@@ -887,7 +936,9 @@ export default function GuardianView() {
           ) : (
             <div className="px-5 pb-5 text-center py-6">
               <Wifi className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm font-medium">Location not yet shared. The traveler is safe.</p>
+              {/* No location says nothing about how the traveler is: this card also shows during missed check-ins,
+                  an SOS or a rescue, so it never claims they are safe. */}
+              <p className="text-slate-400 text-sm font-medium">Location not yet shared.</p>
               <p className="text-slate-500 text-xs mt-1">When the traveler shares their location, it will appear here automatically.</p>
             </div>
           )}

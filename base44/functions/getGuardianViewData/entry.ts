@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { safeForwardText } from '../../shared/rescueCardText.ts';
 
 // Public-safe guardian data endpoint — no user auth required (link-gated).
 // Always returns HTTP 200 with a `status` field so the frontend can branch
@@ -280,6 +281,34 @@ Deno.serve(createHandler(async ({ req }) => {
       } catch (_) {}
     }
 
+    // Rescue card: someone helping the traveler texted their card's code
+    // (rescueCardFlow.ts). Shown while the conversation is recent. The
+    // helper's own number only when they agreed to be called.
+    let rescueContacts: any[] = [];
+    if (session.case_id) {
+      try {
+        const rows = await base44.asServiceRole.entities.RescueContact.filter(
+          { case_id: session.case_id }, '-opened_at', 5,
+        );
+        const recentCutoff = Date.now() - 48 * 60 * 60 * 1000;
+        rescueContacts = (rows || [])
+          .filter((r: any) => new Date(r.last_message_at || r.opened_at || 0).getTime() >= recentCutoff)
+          .map((r: any) => {
+            const lastHelper = [...(r.messages || [])].reverse().find((m: any) => m.from === 'helper');
+            return {
+              id: r.id,
+              status: r.status,
+              opened_at: r.opened_at || null,
+              last_message_at: r.last_message_at || null,
+              reported_location: r.reported_location ? safeForwardText(r.reported_location, 300) : null,
+              reported_awake: r.reported_awake || null,
+              latest_helper_message: lastHelper ? safeForwardText(lastHelper.text, 300) : null,
+              helper_phone: r.callback_consent === true ? r.helper_phone : null,
+            };
+          });
+      } catch (_) {}
+    }
+
     // Real, actionable contacts — call/text the patient directly, call their
     // doctor, or see the local emergency number, so the guardian can act
     // herself rather than wait on the automatic escalation ladder. Any piece
@@ -326,6 +355,7 @@ Deno.serve(createHandler(async ({ req }) => {
       wilderness_sos: wildernessSOS,
       trip_progress: tripProgress,
       contacts,
+      rescue_contacts: rescueContacts,
     });
   } catch (_) {
     return Response.json({ status: 'error', error: 'Unable to load guardian data. Please try again.' });

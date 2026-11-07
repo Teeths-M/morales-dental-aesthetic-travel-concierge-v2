@@ -37,6 +37,7 @@ import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
 import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
 import JourneyMap from '@/components/dashboard/JourneyMap';
 import TravelPassCard from '@/components/dashboard/TravelPassCard';
+import RescueCardPanel from '@/components/dashboard/RescueCardPanel';
 import CareRoomPanel from '@/components/dashboard/CareRoomPanel';
 import CaseControlCenter from '@/components/dashboard/CaseControlCenter';
 import UpcomingConsultationsCard from '@/components/dashboard/UpcomingConsultationsCard';
@@ -100,6 +101,8 @@ const colorMap = {
   sky:     { bg: 'bg-sky-50',     icon: 'text-sky-700',     hover: 'hover:bg-sky-100'     },
   pink:    { bg: 'bg-pink-50',    icon: 'text-pink-600',    hover: 'hover:bg-pink-100'    },
   red:     { bg: 'bg-red-50',     icon: 'text-red-700',     hover: 'hover:bg-red-100'     },
+  // "Read Discharge Papers" has asked for amber since June 29, with no entry here, which crashed the dashboard.
+  amber:   { bg: 'bg-amber-50',   icon: 'text-amber-700',   hover: 'hover:bg-amber-100'   },
 };
 
 function DashboardHome({ user, consultations, language }) {
@@ -548,6 +551,10 @@ function DashboardHome({ user, consultations, language }) {
           real hotel/clinic address data exists. */}
       <TravelPassCard userEmail={user?.email} />
 
+      {/* M-Safe Rescue Card — a printable card whose QR code texts M-Care for
+          help when the traveler's phone is dead. Only with an active trip. */}
+      <RescueCardPanel userEmail={user?.email} />
+
       {/* 3-Way Care Gate — a secure Care Room (patient <-> doctor <-> M-Care)
           that opens once the case's doctor_confirmation_status flips to
           CONFIRMED (Gate 2/3). Renders nothing before that. */}
@@ -856,7 +863,7 @@ function DashboardHome({ user, consultations, language }) {
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {quickActions.map(({ icon: Icon, label, to, color }) => {
-            const c = colorMap[color];
+            const c = colorMap[color] || colorMap.emerald; // an unknown colour falls back, never crashes the page
             return (
               <Link key={label} to={to}>
                 <div className={`flex flex-col items-center gap-2.5 rounded-xl p-4 py-5 border border-slate-100 min-h-[80px] justify-center ${c.bg} ${c.hover} transition-all cursor-pointer text-center`}>

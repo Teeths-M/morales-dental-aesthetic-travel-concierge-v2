@@ -1,0 +1,67 @@
+{
+  "name": "RescueCard",
+  "type": "object",
+  "description": "A traveler's printed rescue card. If their phone dies, anyone can scan the card's QR code, or type its code, to text the M-Care safety number with only a phone signal (twilioSafetySmsWebhook, rescueCardFlow.ts). The code reveals nothing about the traveler. Written only by getMyRescueCard and the safety SMS webhook, as the service role.",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "6-character rescue code printed on the card, from an alphabet with no look-alike characters (no 0, O, 1, I or L). Always at least two digits and two letters."
+    },
+    "client_email": {
+      "type": "string",
+      "description": "The traveler the card belongs to."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "The trip the card was made for. When the card is used, alerts go to the traveler's current trip, falling back to this one, so one card keeps working from trip to trip."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "replaced"],
+      "default": "active",
+      "description": "active: texting the code alerts the traveler's people. replaced: the traveler made a new card; this code only tells the care team it was used."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "replaced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "use_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many helpers have texted this code."
+    },
+    "last_used_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["code", "client_email", "status", "created_at"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.client_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": { "role": "platform_admin" }
+    }
+  }
+}

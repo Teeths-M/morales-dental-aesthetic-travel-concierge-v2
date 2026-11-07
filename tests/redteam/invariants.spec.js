@@ -7880,3 +7880,125 @@ test('LEGAL FIXES: payment screens make no HIPAA claim', () => {
     expect(read(file), file).not.toMatch(/HIPAA/i);
   }
 });
+
+// ---- Rescue card: a printed card lets a stranger text M-Care for help when
+// the traveler's phone is dead. The stranger is told nothing about the
+// traveler, their text can only add alerts (never quiet the check-in
+// ladder), and every alert goes out the same guarded way as the rest of the
+// app. Uses this file's existing `test`, `expect`, and `read` helpers.
+
+const rescStrip = (s) => s
+  .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
+  .replace(/^[ \t]*\/\/.*$/gm, '');
+
+const rescRls = (rel) => JSON.parse(rescStrip(read(rel))).rls;
+const rescAdminOnly = (rule) => JSON.stringify(rule).includes('"role":"admin"') && !JSON.stringify(rule).includes('data.');
+
+test('RESCUE CARD: cards and helper conversations are written only by the server', () => {
+  const card = rescRls('base44/entities/RescueCard.jsonc');
+  expect(JSON.stringify(card.read), 'a traveler may read their own card').toContain('"data.client_email":"{{user.email}}"');
+  for (const op of ['create', 'update']) expect(rescAdminOnly(card[op]), `RescueCard ${op} must be admin-only`).toBe(true);
+
+  // A helper's number and messages are never readable from the app; the
+  // guardian page gets a filtered view through getGuardianViewData.
+  const contact = rescRls('base44/entities/RescueContact.jsonc');
+  for (const op of ['read', 'create', 'update']) expect(rescAdminOnly(contact[op]), `RescueContact ${op} must be admin-only`).toBe(true);
+});
+
+test('RESCUE CARD: getMyRescueCard only ever serves the signed-in traveler', () => {
+  const src = rescStrip(read('base44/functions/getMyRescueCard/entry.ts'));
+  expect(src).toContain('requireAuth: true');
+  expect(src, 'the traveler is the session user').toContain('client_email: user.email');
+  const schema = src.slice(src.indexOf('strictObject({'), src.indexOf('});', src.indexOf('strictObject({')));
+  expect(schema, 'the request must not name whose card it is').not.toMatch(/email|client|user/);
+});
+
+test('RESCUE CARD: nothing M-Care texts a helper can carry the traveler\'s details', () => {
+  const text = rescStrip(read('base44/shared/rescueCardText.ts'));
+  const replies = text.slice(text.indexOf('const REPLIES'), text.indexOf('const UNKNOWN_EMERGENCY_NUMBER'));
+  const placeholders = new Set([...replies.matchAll(/\{([a-z_]+)\}/g)].map((m) => m[1]));
+  expect([...placeholders], 'a reply may only fill in the emergency number').toEqual(['em']);
+  expect(text, 'helperReply takes only the language, the reply and the emergency number')
+    .toMatch(/export function helperReply\(lang: RescueLang, key: ReplyKey, emergencyNumber\?: string \| null\)/);
+
+  const flow = rescStrip(read('base44/shared/rescueCardFlow.ts'));
+  for (const m of flow.matchAll(/helperReply\(([^)]*)\)/g)) {
+    expect(m[1], `helperReply(${m[1]}) must not be given traveler data`).not.toMatch(/case|client|name|location|phone|email/i);
+  }
+});
+
+test('RESCUE CARD: a stranger\'s text never quiets the missed check-in ladder', () => {
+  // "A flag never closes a safety path": the rescue flow adds alerts only.
+  const flow = rescStrip(read('base44/shared/rescueCardFlow.ts'));
+  expect(flow, 'the rescue flow must not touch check-ins').not.toContain('SoloCheckIn');
+
+  const hook = rescStrip(read('base44/functions/twilioSafetySmsWebhook/entry.ts'));
+  const signature = hook.indexOf('validateTwilioSignature(webhookUrl');
+  const rescue = hook.indexOf('handleRescueSms(base44');
+  const safe = hook.indexOf('if (isSafe)');
+  expect(signature, 'the signature check must still exist').toBeGreaterThan(-1);
+  expect(rescue, 'rescue texts are handled only after the signature check').toBeGreaterThan(signature);
+  expect(rescue, 'and before the SAFE command').toBeLessThan(safe);
+});
+
+test('RESCUE CARD: every alert goes out through the link-only helpers or the emergency exception', () => {
+  const flow = rescStrip(read('base44/shared/rescueCardFlow.ts'));
+  // Each send uses a body built by smsBody/emailBody (or, for the traveler's
+  // own SOS, smsText/mail), which only use the guarded helpers.
+  for (const m of flow.matchAll(/\b(sendSms|sendWhatsApp)\(([^,]+),\s*([^)]+)\)/g)) {
+    expect(['sms', 'smsText'], `${m[1]} must send a guarded body, not ${m[3]}`).toContain(m[3].trim());
+  }
+  expect(flow).toMatch(/const sms = smsBody\(/);
+  expect(flow).toMatch(/const smsText = ALERT_DETAIL === 'emergency'\s*\?\s*emergencyDispatch\(/);
+  for (const m of flow.matchAll(/emergencyDispatch\(\{\s*reason:\s*'([a-z_]+)'/g)) {
+    expect(m[1], 'the emergency exception is for an active SOS only').toBe('sos_triggered');
+  }
+  const smsFn = flow.slice(flow.indexOf('function smsBody('), flow.indexOf('function emailBody('));
+  expect(smsFn).toContain('emergencyDispatch(');
+  expect(smsFn).toContain('linkOnlySms(');
+
+  // A helper's own words are passed on with links removed.
+  const text = rescStrip(read('base44/shared/rescueCardText.ts'));
+  expect(text, 'reported places are cleaned before they reach family').toContain('safeForwardText(o.location');
+});
+
+test('RESCUE CARD: SOS texts match numbers by digits, and say only what really happened', () => {
+  const hook = rescStrip(read('base44/functions/twilioSafetySmsWebhook/entry.ts'));
+  expect(hook, 'check-ins must match however the number was typed').toContain('sameStoredPhone(c.user_phone, from)');
+  // "Help is being dispatched" only when a check-in matched, since that's
+  // when the security step really runs.
+  const sos = hook.slice(hook.indexOf('if (isSOS)'), hook.indexOf('if (isSafe)'));
+  expect(sos).toMatch(/if \(checkIn\) return twimlReply\('SOS received\. M-Care emergency team has been alerted\. Stay where you are\. Help is being dispatched\.'\)/);
+  expect(sos, 'an SOS that reached nobody must be reported, not hidden').toContain('reportUnheardSos(');
+  expect(hook, 'the wilderness reply must not promise dispatch').not.toContain('Rescue escalation started. Stay where you are if safe. Help is being dispatched.');
+
+  // The SOS record types the code writes are on SOSEvent's list, so the
+  // records really save.
+  const sosEvent = JSON.parse(rescStrip(read('base44/entities/SOSEvent.jsonc')));
+  for (const t of ['wilderness_injury', 'covert_gesture']) expect(sosEvent.properties.trigger_type.enum).toContain(t);
+  expect(sosEvent.properties.status.enum).toContain('dispatching');
+  const covert = rescStrip(read('base44/functions/triggerCovertSOS/entry.ts'));
+  const create = covert.slice(covert.indexOf('SOSEvent.create({'), covert.indexOf('}).catch', covert.indexOf('SOSEvent.create({')));
+  expect(create, 'the covert SOS record must use SOSEvent\'s own field names')
+    .not.toMatch(/^\s*(gps_lat|gps_lng|strike|trigger_method|destination)\b\s*[:,]/m);
+});
+
+test('DASHBOARD: every quick-action button names a colour the table has, so the dashboard home cannot crash on it', () => {
+  // "Read Discharge Papers" asked for amber, which the table lacked, from June 29 to Nov 6: the dashboard home
+  // crashed for every patient with a consultation whenever this grid rendered.
+  const src = read('src/pages/Dashboard.jsx');
+  const actions = src.slice(src.indexOf('const quickActions = ['), src.indexOf('];', src.indexOf('const quickActions = [')));
+  const map = src.slice(src.indexOf('const colorMap = {'), src.indexOf('};', src.indexOf('const colorMap = {')));
+  const used = [...actions.matchAll(/color: '(\w+)'/g)].map((m) => m[1]);
+  const known = new Set([...map.matchAll(/^\s+(\w+):\s+\{ bg:/gm)].map((m) => m[1]));
+  expect(used.length, 'found the buttons').toBeGreaterThan(3);
+  for (const c of used) expect(known.has(c), `colour ${c} is missing from colorMap`).toBe(true);
+  expect(src, 'an unknown colour falls back instead of crashing').toMatch(/const c = colorMap\[color\] \|\| colorMap\.emerald;/);
+});
+
+test('GUARDIAN PAGE: never tells the family the traveller is safe without knowing it', () => {
+  // The location card said "Location not yet shared. The traveler is safe." whenever no location had come in,
+  // including during missed check-ins, an SOS or a rescue.
+  const page = nsStrip(read('src/pages/GuardianView.jsx'));
+  expect(page).not.toMatch(/traveler is safe|traveller is safe/i);
+});
