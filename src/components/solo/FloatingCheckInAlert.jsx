@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, CheckCircle2, AlertTriangle, MapPin, X, Heart } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { answerCheckIn } from '@/lib/checkInCode';
+import { useCheckInCodePrompt } from './useCheckInCodePrompt';
 
 const POLL_INTERVAL_MS = 60 * 1000; // re-check every 60s
 
@@ -23,6 +25,7 @@ export default function FloatingCheckInAlert({ user }) {
   const [locStatus, setLoc]     = useState('idle'); // idle|acquiring|ready|none
   const locRef  = useRef(null);
   const timerRef = useRef(null);
+  const { askCode, codeDialog } = useCheckInCodePrompt();
 
   const poll = () => {
     if (!user?.email) return;
@@ -80,7 +83,8 @@ export default function FloatingCheckInAlert({ user }) {
     setLoading(true);
     const loc = locRef.current;
     try {
-      await base44.functions.invoke('acknowledgeSoloCheckIn', {
+      // Asks for the traveler's check-in code when they have set one (src/lib/checkInCode.js).
+      await answerCheckIn((name, payload) => base44.functions.invoke(name, payload), 'acknowledgeSoloCheckIn', {
         case_id:          checkIn.case_id,
         response_method:  'app',
         location_lat:     loc?.lat     ?? null,
@@ -89,7 +93,7 @@ export default function FloatingCheckInAlert({ user }) {
         location_source:  loc?.source   ?? null,
         country:          loc?.country  ?? null,
         city:             loc?.city     ?? null,
-      });
+      }, askCode);
       setDone(true);
       setCheckIn(null);
       // Auto-hide after 4 seconds
@@ -105,6 +109,8 @@ export default function FloatingCheckInAlert({ user }) {
   const visible   = (!!checkIn && !dismissed) || done;
 
   return (
+    <>
+    {codeDialog}
     <AnimatePresence>
       {visible && (
         <motion.div
@@ -226,5 +232,6 @@ export default function FloatingCheckInAlert({ user }) {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 }

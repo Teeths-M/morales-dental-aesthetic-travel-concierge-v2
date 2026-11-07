@@ -8002,3 +8002,74 @@ test('GUARDIAN PAGE: never tells the family the traveller is safe without knowin
   const page = nsStrip(read('src/pages/GuardianView.jsx'));
   expect(page).not.toMatch(/traveler is safe|traveller is safe/i);
 });
+
+test('PHONE LOCK: check-in codes are stored only as hashes, and only the server can touch them', () => {
+  const entity = JSON.parse(read('base44/entities/CheckInCode.jsonc'));
+  for (const op of ['read', 'create', 'update', 'delete']) {
+    const roles = (entity.rls[op].$or || []).map((r) => r.user_condition?.role);
+    expect(roles.sort(), `CheckInCode ${op} is admin-only`).toEqual(['admin', 'platform_admin']);
+  }
+  const fields = Object.keys(entity.properties);
+  expect(fields.filter((f) => /code|duress/.test(f) && !/_(hash|salt)$/.test(f)), 'no field holds a code itself').toEqual([]);
+  const manage = nsStrip(read('base44/functions/manageCheckInCode/entry.ts'));
+  expect(manage, 'the codes are never sent back').not.toMatch(/ok\(\{[^}]*\b(code|duress_code|code_hash|duress_hash)\b/);
+  // Changing a code needs the real current code; the duress code can never change them.
+  expect(manage).toMatch(/if \(check !== 'valid'\) return err\(/);
+});
+
+test('PHONE LOCK: once a traveler has a check-in code, no path marks them safe without it', () => {
+  // Texting SAFE: the code check comes before the check-in is marked acknowledged, and a missing, wrong or locked
+  // code returns before it.
+  const sms = nsStrip(read('base44/functions/twilioSafetySmsWebhook/entry.ts'));
+  const safeAt = sms.indexOf('if (isSafe) {');
+  const smsCheck = sms.indexOf('checkCheckInCode(base44, checkIn.user_email, codeFromSms(rawBody))', safeAt);
+  const smsAck = sms.indexOf("status: 'acknowledged'", safeAt);
+  expect(smsCheck).toBeGreaterThan(safeAt);
+  expect(smsCheck).toBeLessThan(smsAck);
+  expect(sms.slice(smsCheck, smsAck)).toMatch(/if \(codeCheck === 'missing' \|\| codeCheck === 'invalid' \|\| codeCheck === 'locked'\) \{[\s\S]*?return twimlReply\(/);
+
+  // The emailed link and the in-app button: the same order, and the refusals return first.
+  for (const [name, ackMarker] of [['confirmSoloCheckIn', "status: 'acknowledged'"], ['acknowledgeSoloCheckIn', "status: 'acknowledged'"]]) {
+    const src = nsStrip(read(`base44/functions/${name}/entry.ts`));
+    const check = src.indexOf('checkCheckInCode(');
+    expect(check, `${name} checks the code`).toBeGreaterThan(-1);
+    expect(check, `${name} checks it before marking safe`).toBeLessThan(src.indexOf(ackMarker));
+    expect(src).toMatch(/code: 'CODE_REQUIRED' \}, \{ status: 401 \}/);
+    expect(src).toMatch(/code: 'INVALID_CODE' \}, \{ status: 401 \}/);
+  }
+});
+
+test('PHONE LOCK: the duress code looks exactly like the real one, and raises an alarm the phone never shows', () => {
+  const sms = nsStrip(read('base44/functions/twilioSafetySmsWebhook/entry.ts'));
+  expect(sms).toMatch(/if \(duress\) await raiseDuressAlarm\(base44, \{ checkIn, channel: 'sms', now \}\);/);
+  // One success reply for both; no reply that would tell a watcher the duress code was noticed.
+  expect(sms.match(/You are marked safe\. Thank you\. Your next check-in is in 12 hours\./g)?.length).toBe(1);
+  expect(sms, 'no "confirmed safe" email to the care team after a duress code').toMatch(/if \(wasEscalated && !duress\)/);
+  expect(nsStrip(read('base44/functions/confirmSoloCheckIn/entry.ts'))).toMatch(/if \(codeCheck === 'duress'\) await raiseDuressAlarm\(/);
+  expect(nsStrip(read('base44/functions/acknowledgeSoloCheckIn/entry.ts'))).toMatch(/if \(duress\) await raiseDuressAlarm\(/);
+
+  const shared = nsStrip(read('base44/shared/checkInCode.ts'));
+  const alarm = shared.slice(shared.indexOf('export async function raiseDuressAlarm'));
+  expect(alarm).toMatch(/SOSEvent\.create\(\{[\s\S]*?trigger_type: 'checkin_duress'[\s\S]*?is_silent: true/);
+  expect(alarm, 'nothing the traveler\'s own screens show (M-Care chat)').not.toMatch(/logJourneyEvent|JourneyEvent\.create/);
+  expect(alarm).toMatch(/emergency_contact_number/);
+  expect(alarm).toMatch(/reason: 'sos_triggered'/);
+  // The types it writes are on their lists, or Base44 rejects the records (folder 10).
+  expect(read('base44/entities/SOSEvent.jsonc')).toMatch(/"checkin_duress"/);
+  expect(read('base44/entities/AuditLog.jsonc')).toMatch(/"checkin_duress_code_used"/);
+  expect(read('base44/entities/AuditLog.jsonc')).toMatch(/"checkin_code_set"/);
+});
+
+test('PHONE LOCK: only the traveler (or an admin) can answer their own check-in in the app', () => {
+  // This used to accept any signed-in account that knew the trip's id, which could switch off someone else's alarm.
+  const src = nsStrip(read('base44/functions/acknowledgeSoloCheckIn/entry.ts'));
+  const owner = src.indexOf("return Response.json({ error: 'This check-in belongs to another traveler.' }, { status: 403 });");
+  expect(owner).toBeGreaterThan(-1);
+  expect(owner).toBeLessThan(src.indexOf("status: 'acknowledged'"));
+});
+
+test('PHONE LOCK: the covert SOS texts the family on the real field, and no real check-in reports a demo location', () => {
+  expect(nsStrip(read('base44/functions/triggerCovertSOS/entry.ts'))).toMatch(/const guardianPhone = caseRec\?\.emergency_contact_number \|\| '';/);
+  const banner = read('src/components/solo/SoloCheckInBanner.jsx');
+  expect(banner).toMatch(/\{import\.meta\.env\.DEV && \(locStatus === 'none' \|\| locStatus === 'ip_geo'\) && \(/);
+});

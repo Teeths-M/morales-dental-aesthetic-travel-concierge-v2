@@ -13,6 +13,9 @@ import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import LiveBeaconPanel from '@/components/solo/LiveBeaconPanel';
 import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
 import PersonalEmergencyContactsPanel from '@/components/emergency/PersonalEmergencyContactsPanel';
+import CheckInCodePanel from '@/components/solo/CheckInCodePanel';
+import { useCheckInCodePrompt } from '@/components/solo/useCheckInCodePrompt';
+import { answerCheckIn, checkInCodeError } from '@/lib/checkInCode';
 
 const PENDING_SAFE_KEY = 'morales_pending_safe_checkins';
 
@@ -30,6 +33,7 @@ async function syncPendingSafeCheckins() {
     if (!pending.length || !navigator.onLine) return;
 
     const synced = [];
+    let needsCode = false;
     for (const item of pending) {
       try {
         await base44.functions.invoke('acknowledgeSoloCheckIn', {
@@ -37,8 +41,13 @@ async function syncPendingSafeCheckins() {
           response_method: 'app_offline_sync',
         });
         synced.push(item);
-      } catch (_) {}
+      } catch (e) {
+        // A traveler with a check-in code has to type it, so a tap saved offline can't count on its own. Drop it and
+        // say so, rather than retrying forever while they believe they answered. The check-in stays open.
+        if (checkInCodeError(e)) { synced.push(item); needsCode = true; }
+      }
     }
+    if (needsCode) toast.error('Your offline check-in needs your check-in code. Please answer the check-in again.');
 
     if (synced.length) {
       const remaining = pending.filter(p => !synced.includes(p));
@@ -145,6 +154,7 @@ export default function SoloCheckInSettings() {
   const [refreshing, setRefreshing] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
   const locRef = useRef(null);
+  const { askCode, codeDialog } = useCheckInCodePrompt();
 
   // Derive stats from all check-ins
   const stats = {
@@ -211,7 +221,8 @@ export default function SoloCheckInSettings() {
       if (cases.length === 0) { toast.error('No active journey found.'); return; }
       const ac = cases.find(c => c.status !== 'Completed') || cases[0];
       const loc = locRef.current;
-      await base44.functions.invoke('acknowledgeSoloCheckIn', {
+      // Asks for the traveler's check-in code when they have set one (src/lib/checkInCode.js).
+      await answerCheckIn((name, payload) => base44.functions.invoke(name, payload), 'acknowledgeSoloCheckIn', {
         case_id: ac.id,
         response_method: 'app',
         location_lat: loc?.lat ?? null,
@@ -223,10 +234,11 @@ export default function SoloCheckInSettings() {
         city: loc?.city ?? null,
         region: loc?.region ?? null,
         timezone: loc?.timezone ?? null,
-      });
+      }, askCode);
       toast.success('You are safe! Location and check-in recorded.');
       loadCheckIns(user);
     } catch (err) {
+      if (err?.cancelled) return;
       const isNetworkError = !navigator.onLine
         || (err?.message && (err.message.toLowerCase().includes('network') || err.message.toLowerCase().includes('fetch')));
       if (isNetworkError) {
@@ -441,6 +453,10 @@ export default function SoloCheckInSettings() {
               onCaseSaved={loadCheckIns}
             />
           </div>
+
+          {/* ── Check-in code and duress code ── */}
+          <CheckInCodePanel />
+          {codeDialog}
 
           {/* ── Covert SOS Setup ── */}
           <CovertSOSPanel />

@@ -4,6 +4,8 @@ import { Shield, CheckCircle2, AlertTriangle, MapPin, Globe } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import { answerCheckIn } from '@/lib/checkInCode';
+import { useCheckInCodePrompt } from './useCheckInCodePrompt';
 
 export default function SoloCheckInBanner() {
   const [pendingCheckIn, setPendingCheckIn] = useState(null);
@@ -12,6 +14,7 @@ export default function SoloCheckInBanner() {
   const [locStatus, setLocStatus] = useState('idle'); // 'idle'|'acquiring'|'gps'|'ip_geo'|'none'
   const locRef = useRef(null);
   const { toast } = useToast();
+  const { askCode, codeDialog } = useCheckInCodePrompt();
 
   useEffect(() => {
     base44.functions.invoke('getSoloCheckInStatus')
@@ -58,7 +61,8 @@ export default function SoloCheckInBanner() {
     setLoading(true);
     const loc = locRef.current;
     try {
-      await base44.functions.invoke('acknowledgeSoloCheckIn', {
+      // Asks for the traveler's check-in code when they have set one (src/lib/checkInCode.js).
+      await answerCheckIn((name, payload) => base44.functions.invoke(name, payload), 'acknowledgeSoloCheckIn', {
         case_id: pendingCheckIn.case_id,
         response_method: 'app',
         location_lat: loc?.lat ?? null,
@@ -70,11 +74,11 @@ export default function SoloCheckInBanner() {
         city: loc?.city ?? null,
         region: loc?.region ?? null,
         timezone: loc?.timezone ?? null,
-      });
+      }, askCode);
       setConfirmed(true);
       setPendingCheckIn(null);
-    } catch {
-      toast({ title: 'Failed to acknowledge', description: 'Please try again.', variant: 'destructive' });
+    } catch (e) {
+      if (!e?.cancelled) toast({ title: 'Failed to acknowledge', description: 'Please try again.', variant: 'destructive' });
     }
     setLoading(false);
   };
@@ -103,6 +107,8 @@ export default function SoloCheckInBanner() {
   const scheduledTime = new Date(pendingCheckIn.scheduled_time);
 
   return (
+    <>
+    {codeDialog}
     <AnimatePresence>
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
         className={`rounded-2xl p-4 border-2 shadow-sm mb-4 ${isOverdue ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-200'}`}>
@@ -134,7 +140,9 @@ export default function SoloCheckInBanner() {
                 Approximate network location
               </div>
             )}
-            {(locStatus === 'none' || locStatus === 'ip_geo') && (
+            {/* Development only: on a real check-in this reported a made-up location (Tijuana) to the care team and
+                family. */}
+            {import.meta.env.DEV && (locStatus === 'none' || locStatus === 'ip_geo') && (
               <button
                 type="button"
                 onClick={() => {
@@ -155,5 +163,6 @@ export default function SoloCheckInBanner() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </>
   );
 }

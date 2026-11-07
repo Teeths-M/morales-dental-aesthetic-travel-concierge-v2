@@ -70,7 +70,9 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   const patientName  = caseRec?.client_name  || user?.full_name || user?.email || 'Patient';
   const patientPhone = caseRec?.client_phone || user?.phone || '';
-  const guardianPhone = caseRec?.emergency_contact_phone || '';
+  // emergency_contact_number is the real field (CaseRecord has no emergency_contact_phone), so until Nov 6 the covert
+  // SOS never texted the family.
+  const guardianPhone = caseRec?.emergency_contact_number || '';
   const guardianName  = caseRec?.emergency_contact       || '';
   const destination   = caseRec?.procedure_country || 'unknown location';
   const adminEmail    = Deno.env.get('ADMIN_EMAIL') || '';

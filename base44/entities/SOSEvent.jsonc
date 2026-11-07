@@ -26,7 +26,8 @@
         "panic_call_simulation",
         "manual",
         "wilderness_injury",
-        "covert_gesture"
+        "covert_gesture",
+        "checkin_duress"
       ],
       "default": "manual"
     },

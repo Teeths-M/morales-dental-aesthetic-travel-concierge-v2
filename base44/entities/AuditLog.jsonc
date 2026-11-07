@@ -168,7 +168,9 @@
         "walkie_talkie_session_ended",
         "rescue_card_created",
         "rescue_card_replaced",
-        "rescue_card_used"
+        "rescue_card_used",
+        "checkin_code_set",
+        "checkin_duress_code_used"
       ]
     },
     "actor_id": {

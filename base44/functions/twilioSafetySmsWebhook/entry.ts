@@ -14,6 +14,7 @@ import { alertContactsOfSosText, findActiveCaseForSender, handleRescueSms } from
 import { sameStoredPhone } from '../../shared/phoneMatch.ts';
 import { logJourneyEvent } from '../../shared/logJourneyEvent.ts';
 import { generateIncidentCode, reportIncident } from '../../shared/incidentReporting.ts';
+import { checkCheckInCode, codeFromSms, raiseDuressAlarm } from '../../shared/checkInCode.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -409,6 +410,17 @@ Deno.serve(async (req) => {
         return twimlReply('You are already marked safe. Thank you!');
       }
 
+      // Once the traveler has set a check-in code, SAFE alone no longer counts, so someone holding a stolen phone
+      // can't switch the alarm off (checkInCode.ts). No code, a wrong one or a locked one is no answer: the ladder
+      // carries on. The duress code gets exactly the same reply as the real one, and silently raises an alarm.
+      const codeCheck = await checkCheckInCode(base44, checkIn.user_email, codeFromSms(rawBody));
+      if (codeCheck === 'missing' || codeCheck === 'invalid' || codeCheck === 'locked') {
+        await logEntry('safe_code_rejected', `SAFE without a valid check-in code (${codeCheck})`, checkIn.case_id);
+        return twimlReply('To confirm you are safe, text SAFE followed by your 4-digit check-in code, for example SAFE 1234.');
+      }
+      const duress = codeCheck === 'duress';
+      if (duress) await raiseDuressAlarm(base44, { checkIn, channel: 'sms', now });
+
       const wasEscalated = ['escalated_2h', 'escalated_3h', 'escalated_5h'].includes(checkIn.status);
 
       await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
@@ -439,8 +451,9 @@ Deno.serve(async (req) => {
         });
       } catch (_) {}
 
-      // If escalation was already started, notify guardian/admin that traveler is safe
-      if (wasEscalated) {
+      // If escalation was already started, notify guardian/admin that traveler is safe (never after a duress code:
+      // they are not safe, and the care team already has the duress alarm)
+      if (wasEscalated && !duress) {
         const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
         if (adminEmail) {
           try {
@@ -475,7 +488,7 @@ Deno.serve(async (req) => {
     // without losing the SAFE/SOS lifeline.
     await logEntry('unrecognized_command', `Body: ${body}`, checkIn?.case_id || '');
     return twimlReply(
-      'M-Care Safety: Reply SAFE to confirm you are okay, or SOS for emergency help. '
+      'M-Care Safety: Reply SAFE (with your check-in code, if you set one) to confirm you are okay, or SOS for emergency help. '
       + 'For anything else, please log in to the M-Care app — we do not handle requests by reply.',
     );
 

@@ -1,4 +1,5 @@
 import { createHandler } from '../../shared/createHandler.ts';
+import { checkCheckInCode, raiseDuressAlarm } from '../../shared/checkInCode.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -14,6 +15,7 @@ async function getLastAuditHash(base44) {
 Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
       case_id,
+      code,
       response_method = 'app',
       location_lat, location_lng,
       accuracy_meters,
@@ -50,6 +52,33 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     const fresh = freshCheckIns[0];
     if (!fresh || fresh.status === 'acknowledged' || fresh.status === 'resolved') {
       return Response.json({ success: true, message: 'Already acknowledged' });
+    }
+
+    // Only the traveler can say they're safe (or an admin who reached them some other way). This used to accept any
+    // signed-in account that knew the trip's id, which could switch off someone else's alarm.
+    const isAdmin = user.role === 'admin' || user.role === 'platform_admin';
+    let ownerEmail = String(fresh.user_email || checkIn.user_email || '').trim().toLowerCase();
+    if (!ownerEmail) {
+      const caseRec = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
+      ownerEmail = String(caseRec?.client_email || '').trim().toLowerCase();
+    }
+    if (!isAdmin && (!ownerEmail || ownerEmail !== String(user.email || '').trim().toLowerCase())) {
+      return Response.json({ error: 'This check-in belongs to another traveler.' }, { status: 403 });
+    }
+
+    // Once the traveler has set a check-in code, the button alone no longer marks them safe, so someone holding
+    // their unlocked phone can't switch the alarm off (checkInCode.ts). A wrong or locked code is no answer, and the
+    // ladder carries on. A duress code gets the same success answer and silently raises an alarm.
+    let duress = false;
+    if (!isAdmin) {
+      const codeCheck = await checkCheckInCode(base44, ownerEmail, code);
+      if (codeCheck === 'missing') {
+        return Response.json({ error: 'Enter your 4-digit check-in code.', code: 'CODE_REQUIRED' }, { status: 401 });
+      }
+      if (codeCheck === 'invalid' || codeCheck === 'locked') {
+        return Response.json({ error: "That code didn't match. Check it and try again.", code: 'INVALID_CODE' }, { status: 401 });
+      }
+      duress = codeCheck === 'duress';
     }
 
     // Determine place label
@@ -93,6 +122,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       status: 'acknowledged',
       acknowledged_at: now,
     });
+    if (duress) await raiseDuressAlarm(base44, { checkIn: fresh, channel: 'in_app', now });
 
     // Audit log
     const prevHash = await getLastAuditHash(base44);

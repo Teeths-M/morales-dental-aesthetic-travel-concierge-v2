@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../../shared/createHandler.ts';
+import { checkCheckInCode, raiseDuressAlarm } from '../../shared/checkInCode.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -15,12 +16,12 @@ async function getLastAuditHash(base44) {
 
 // Public endpoint — no user auth required. Validates one-time token from email link.
 // Called when user clicks "I'M SAFE" button in their check-in email.
-// POST body: { check_in_id, token }
+// POST body: { check_in_id, token, code? } — code is the traveler's 4-digit check-in code, needed once they set one.
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { check_in_id, token } = await req.json();
+    const { check_in_id, token, code } = await req.json();
 
     if (!check_in_id || !token) {
       return Response.json({ error: 'Missing check_in_id or token', code: 'MISSING_PARAMS' }, { status: 400 });
@@ -76,6 +77,19 @@ Deno.serve(createHandler(async ({ req }) => {
       await base44.asServiceRole.entities.CheckInToken.update(tokenRecord.id, { used_at: now.toISOString() });
       return Response.json({ code: 'ALREADY_ACKNOWLEDGED', message: 'You have already confirmed you are safe.' }, { status: 200 });
     }
+
+    // Once the traveler has set a check-in code, the link alone no longer marks them safe: a thief with their email
+    // open could otherwise switch the alarm off (checkInCode.ts). The link stays unused on a wrong code, so it can be
+    // retried; a wrong or locked code is no answer, and the ladder carries on. A duress code gets the same success
+    // answer as the real one and silently raises an alarm.
+    const codeCheck = await checkCheckInCode(base44, checkIn.user_email, code);
+    if (codeCheck === 'missing') {
+      return Response.json({ error: 'Enter your 4-digit check-in code.', code: 'CODE_REQUIRED' }, { status: 401 });
+    }
+    if (codeCheck === 'invalid' || codeCheck === 'locked') {
+      return Response.json({ error: "That code didn't match. Check it and try again.", code: 'INVALID_CODE' }, { status: 401 });
+    }
+    if (codeCheck === 'duress') await raiseDuressAlarm(base44, { checkIn, channel: 'email_link', now: now.toISOString() });
 
     // BUG-01 FIX: Must update using checkIn.id (the loaded entity's real ID),
     // NOT check_in_id from the request body (which equals the case_id / trip_id,

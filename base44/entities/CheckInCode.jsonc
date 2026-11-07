@@ -1,0 +1,70 @@
+{
+  "name": "CheckInCode",
+  "type": "object",
+  "description": "A traveler's 4-digit check-in code and duress code (base44/shared/checkInCode.ts). Once set, a missed check-in is only marked safe with the code: texting SAFE alone, the emailed link or the in-app button no longer works for someone holding a stolen phone. The duress code looks exactly like the real one to whoever is watching but silently raises an alarm. Both are stored only as PBKDF2 hashes, never as digits. Admin-only: every write goes through manageCheckInCode or the check-in paths as the server.",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "The traveler, lowercased. One row per traveler."
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "code_hash": {
+      "type": "string"
+    },
+    "code_salt": {
+      "type": "string"
+    },
+    "duress_hash": {
+      "type": "string"
+    },
+    "duress_salt": {
+      "type": "string"
+    },
+    "iterations": {
+      "type": "number",
+      "description": "PBKDF2 rounds used for both hashes. Verification always uses this stored count."
+    },
+    "set_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_attempts": {
+      "type": "number",
+      "default": 0,
+      "description": "Wrong codes in a row. Five locks the code for 30 minutes; a wrong or locked code counts as no answer, so the check-in alarm carries on."
+    },
+    "locked_until": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["user_email", "code_hash", "code_salt", "duress_hash", "duress_salt", "iterations"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    }
+  }
+}
